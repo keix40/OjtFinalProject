@@ -1,0 +1,22 @@
+# --- Angular ---
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.angular/cache/
+
+# --- Java Spring Boot ---
+/backend/target/
+/backend/.mvn/
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+
+# --- OS / Editor files ---
+*.log
+*.class
+*.iml
+*.DS_Store
+.idea/
+.vscode/
+
+# --- Environment files ---
+.env
