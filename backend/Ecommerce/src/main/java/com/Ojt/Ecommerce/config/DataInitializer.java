@@ -1,10 +1,13 @@
-package com.test.SpringSecurity.config;
+package com.Ojt.Ecommerce.config;
 
-import com.test.SpringSecurity.entity.Role;
-import com.test.SpringSecurity.repository.RoleRepository;
+
+import com.Ojt.Ecommerce.entity.Role;
+import com.Ojt.Ecommerce.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -14,14 +17,21 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (!roleRepository.existsByName("STUDENT")) {
-            System.out.println("Creating STUDENT role...");
-            roleRepository.save(new Role("STUDENT"));
-        }
 
-        if (!roleRepository.existsByName("TEACHER")) {
-            System.out.println("Creating TEACHER role...");
-            roleRepository.save(new Role("TEACHER"));
+        List<String> roles = List.of(
+                "ADMIN",
+                "MANAGER",
+                "SALES/MARKETING",
+                "CUSTOMER SUPPORT",
+                "WAREHOUSE STAFF",
+                "CUSTOMER"
+        );
+
+        for (String roleName : roles) {
+            if (!roleRepository.existsByName(roleName)) {
+                System.out.println("Creating role: " + roleName);
+                roleRepository.save(Role.builder().name(roleName).build());
+            }
         }
     }
 }

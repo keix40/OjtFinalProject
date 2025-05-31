@@ -1,7 +1,7 @@
-package com.test.SpringSecurity.repository;
+package com.Ojt.Ecommerce.repository;
 
-import com.test.SpringSecurity.entity.RefreshToken;
-import com.test.SpringSecurity.entity.User;
+import com.Ojt.Ecommerce.entity.RefreshToken;
+import com.Ojt.Ecommerce.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

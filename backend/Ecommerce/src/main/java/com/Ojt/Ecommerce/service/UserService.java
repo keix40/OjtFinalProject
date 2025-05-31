@@ -1,9 +1,11 @@
-package com.test.SpringSecurity.service;
+package com.Ojt.Ecommerce.service;
 
-import com.test.SpringSecurity.dto.LoginRequest;
-import com.test.SpringSecurity.dto.LoginResponse;
-import com.test.SpringSecurity.dto.RegisterRequest;
-import com.test.SpringSecurity.entity.User;
+
+
+import com.Ojt.Ecommerce.dto.LoginRequest;
+import com.Ojt.Ecommerce.dto.LoginResponse;
+import com.Ojt.Ecommerce.dto.RegisterRequest;
+import com.Ojt.Ecommerce.entity.User;
 
 import java.util.List;
 

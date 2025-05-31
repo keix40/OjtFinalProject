@@ -1,8 +1,8 @@
-package com.test.SpringSecurity.config;
+package com.Ojt.Ecommerce.config;
 
-import com.test.SpringSecurity.security.JwtTokenProvider;
-import com.test.SpringSecurity.service.TokenBlacklistService;
-import com.test.SpringSecurity.service.UserDetailsServiceImpl;
+import com.Ojt.Ecommerce.security.JwtTokenProvider;
+import com.Ojt.Ecommerce.service.TokenBlacklistService;
+import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

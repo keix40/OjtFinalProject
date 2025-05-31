@@ -1,4 +1,4 @@
-package com.test.SpringSecurity.exception;
+package com.Ojt.Ecommerce.exception;
 
 public class CustomException extends RuntimeException {
 

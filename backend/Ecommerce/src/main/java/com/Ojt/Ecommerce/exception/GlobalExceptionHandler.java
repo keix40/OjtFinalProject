@@ -1,4 +1,4 @@
-package com.test.SpringSecurity.exception;
+package com.Ojt.Ecommerce.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

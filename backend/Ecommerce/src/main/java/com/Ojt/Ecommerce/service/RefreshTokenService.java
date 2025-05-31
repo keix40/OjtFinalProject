@@ -1,9 +1,9 @@
-package com.test.SpringSecurity.service;
+package com.Ojt.Ecommerce.service;
 
-import com.test.SpringSecurity.entity.RefreshToken;
-import com.test.SpringSecurity.entity.User;
-import com.test.SpringSecurity.repository.RefreshTokenRepository;
-import com.test.SpringSecurity.repository.UserRepository;
+import com.Ojt.Ecommerce.entity.RefreshToken;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.repository.RefreshTokenRepository;
+import com.Ojt.Ecommerce.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

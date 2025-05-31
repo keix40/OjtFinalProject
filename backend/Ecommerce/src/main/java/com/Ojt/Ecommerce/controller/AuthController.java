@@ -1,14 +1,13 @@
-package com.test.SpringSecurity.controller;
+package com.Ojt.Ecommerce.controller;
 
-import com.test.SpringSecurity.dto.*;
-import com.test.SpringSecurity.entity.RefreshToken;
-import com.test.SpringSecurity.entity.User;
-import com.test.SpringSecurity.exception.CustomException;
-import com.test.SpringSecurity.repository.UserRepository;
-import com.test.SpringSecurity.security.JwtTokenProvider;
-import com.test.SpringSecurity.service.RefreshTokenService;
-import com.test.SpringSecurity.service.TokenBlacklistService;
-import com.test.SpringSecurity.service.UserService;
+import com.Ojt.Ecommerce.dto.*;
+import com.Ojt.Ecommerce.entity.RefreshToken;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.repository.UserRepository;
+import com.Ojt.Ecommerce.security.JwtTokenProvider;
+import com.Ojt.Ecommerce.service.RefreshTokenService;
+import com.Ojt.Ecommerce.service.TokenBlacklistService;
+import com.Ojt.Ecommerce.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;

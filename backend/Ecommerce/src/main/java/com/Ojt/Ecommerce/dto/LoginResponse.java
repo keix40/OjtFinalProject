@@ -1,4 +1,4 @@
-package com.test.SpringSecurity.dto;
+package com.Ojt.Ecommerce.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

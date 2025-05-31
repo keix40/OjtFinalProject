@@ -2,6 +2,7 @@ package com.Ojt.Ecommerce.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,11 +13,12 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private long id;
 
     @Column(length = 45, nullable = false)
     private String name;
@@ -24,7 +26,7 @@ public class User {
     @Column(length = 45, nullable = false, unique = true)
     private String email;
 
-    @Column(length = 45, nullable = false)
+    @Column(length = 150, nullable = false)
     private String password;
 
     private LocalDate createdDate;
@@ -32,6 +34,7 @@ public class User {
     @Column(length = 10)
     private String gender;
 
+    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
     @Column(length = 45)

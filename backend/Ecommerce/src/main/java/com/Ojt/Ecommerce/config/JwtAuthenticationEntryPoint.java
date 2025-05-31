@@ -1,4 +1,4 @@
-package com.test.SpringSecurity.config;
+package com.Ojt.Ecommerce.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
