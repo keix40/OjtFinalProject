@@ -1,8 +1,7 @@
-package com.test.SpringSecurity.security;
+package com.Ojt.Ecommerce.security;
 
-import com.test.SpringSecurity.entity.User;
+import com.Ojt.Ecommerce.entity.User;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -42,9 +41,8 @@ public class JwtTokenProvider implements InitializingBean {
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
         // Create roles string: ROLE_ADMIN,ROLE_USER etc.
-        String roles = user.getRoles().stream()
-                .map(role -> "ROLE_" + role.getName())
-                .collect(Collectors.joining(","));
+        String roles = "ROLE_" + user.getRole().getName();
+
 
         return Jwts.builder()
                 .setSubject(user.getEmail())

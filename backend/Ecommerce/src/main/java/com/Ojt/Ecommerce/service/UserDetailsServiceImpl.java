@@ -1,7 +1,7 @@
-package com.test.SpringSecurity.service;
+package com.Ojt.Ecommerce.service;
 
-import com.test.SpringSecurity.entity.User;
-import com.test.SpringSecurity.repository.UserRepository;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,9 +26,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
-                user.getRoles().stream()
-                        .map(role -> new SimpleGrantedAuthority(role.getName()))
-                        .collect(Collectors.toList())
+                List.of(new SimpleGrantedAuthority(user.getRole().getName()))
         );
     }
 }

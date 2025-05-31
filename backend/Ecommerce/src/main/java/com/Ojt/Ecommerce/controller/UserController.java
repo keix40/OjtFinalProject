@@ -1,11 +1,14 @@
-package com.test.SpringSecurity.controller;
+package com.Ojt.Ecommerce.controller;
 
-import com.test.SpringSecurity.entity.User;
-import com.test.SpringSecurity.service.UserService;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 

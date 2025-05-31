@@ -1,7 +1,10 @@
-package com.test.SpringSecurity.entity;
+package com.Ojt.Ecommerce.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 

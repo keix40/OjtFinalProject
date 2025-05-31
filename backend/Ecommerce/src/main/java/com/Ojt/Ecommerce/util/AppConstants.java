@@ -1,4 +1,4 @@
-package com.test.SpringSecurity.util;
+package com.Ojt.Ecommerce.util;
 
 public class AppConstants {
     public static final String ROLE_USER = "ROLE_USER";
