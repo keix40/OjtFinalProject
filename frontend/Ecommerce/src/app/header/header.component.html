@@ -1,0 +1,144 @@
+<div class="main-header">
+    <div class="container-fluid container-xl">
+        <div class="d-flex py-3 align-items-center justify-content-between">
+            <!-- Logo -->
+            <a routerLink="/home" class="logo d-flex align-items-center">
+                <h1 class="sitename">Fashion<span>Store</span></h1>
+            </a>
+
+            <!-- Search -->
+            <form class="search-form desktop-search-form">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search for products...">
+                    <button class="btn search-btn" type="submit">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Actions -->
+            <div class="header-actions d-flex align-items-center justify-content-end">
+                <!-- Mobile Search Toggle -->
+                <button class="header-action-btn mobile-search-toggle d-xl-none" type="button" (click)="toggleMobileSearch()">
+                    <i class="bi bi-search"></i>
+                </button>
+
+                <!-- Account -->
+                <div class="dropdown account-dropdown">
+                    <button class="header-action-btn" type="button" (click)="toggleDropdown($event, 'account-dropdown')">
+                        <i class="bi bi-person"></i>
+                        <span class="action-text d-none d-md-inline-block">Account</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-header">
+                            <h6>Welcome to <span class="sitename">FashionStore</span></h6>
+                            <p class="mb-0">Access account &amp; manage orders</p>
+                        </div>
+                        <div class="dropdown-body">
+                            <ng-container *ngIf="isAuthenticated; else notAuthenticated">
+                                <a class="dropdown-item d-flex align-items-center" routerLink="/profile">
+                                    <i class="bi bi-person-circle me-2"></i>
+                                    <span>My Profile</span>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" routerLink="/orders">
+                                    <i class="bi bi-bag-check me-2"></i>
+                                    <span>My Orders</span>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" routerLink="/wishlist">
+                                    <i class="bi bi-heart me-2"></i>
+                                    <span>My Wishlist</span>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" routerLink="/returns">
+                                    <i class="bi bi-arrow-return-left me-2"></i>
+                                    <span>Returns &amp; Refunds</span>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" routerLink="/settings">
+                                    <i class="bi bi-gear me-2"></i>
+                                    <span>Settings</span>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" (click)="logout()">
+                                    <i class="bi bi-box-arrow-right me-2"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </ng-container>
+                            <ng-template #notAuthenticated>
+                                <a class="dropdown-item d-flex align-items-center" routerLink="/login">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                                    <span>Sign In</span>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" routerLink="/register">
+                                    <i class="bi bi-person-plus me-2"></i>
+                                    <span>Register</span>
+                                </a>
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wishlist -->
+                <a *ngIf="isAuthenticated" routerLink="/wishlist" class="header-action-btn d-none d-md-flex">
+                    <i class="bi bi-heart"></i>
+                    <span class="action-text d-none d-md-inline-block">Wishlist</span>
+                    <span class="badge">0</span>
+                </a>
+
+                <!-- Cart -->
+                <div *ngIf="isAuthenticated" class="dropdown cart-dropdown">
+                    <button class="header-action-btn" type="button" (click)="toggleDropdown($event, 'cart-dropdown')">
+                        <i class="bi bi-cart3"></i>
+                        <span class="action-text d-none d-md-inline-block">Cart</span>
+                        <span class="badge">{{cartItems.length}}</span>
+                    </button>
+                    <div class="dropdown-menu cart-dropdown-menu">
+                        <div class="dropdown-header">
+                            <h6>Shopping Cart ({{cartItems.length}})</h6>
+                        </div>
+                        <div class="dropdown-body">
+                            <div class="cart-items">
+                                <div class="cart-item" *ngFor="let item of cartItems">
+                                    <div class="cart-item-image">
+                                        <img [src]="item.image" [alt]="item.title" class="img-fluid">
+                                    </div>
+                                    <div class="cart-item-content">
+                                        <h6 class="cart-item-title">{{item.title}}</h6>
+                                        <div class="cart-item-meta">{{item.quantity}} × ${{item.price}}</div>
+                                    </div>
+                                    <button class="cart-item-remove" (click)="removeCartItem(item.id)">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown-footer">
+                            <div class="cart-total">
+                                <span>Total:</span>
+                                <span class="cart-total-price">${{cartTotal.toFixed(2)}}</span>
+                            </div>
+                            <div class="cart-actions">
+                                <a routerLink="/cart" class="btn btn-outline-primary">View Cart</a>
+                                <a routerLink="/checkout" class="btn btn-primary">Checkout</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mobile Navigation Toggle -->
+                <i class="mobile-nav-toggle d-xl-none bi bi-list me-0"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Search Collapse -->
+<div class="collapse mobile-search-container" [class.show]="isMobileSearchVisible">
+    <div class="container-fluid py-2 bg-light">
+        <form class="mobile-search-form">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search for products...">
+                <button class="btn search-btn" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

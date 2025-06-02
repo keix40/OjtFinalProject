@@ -1,11 +1,10 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { LoginRequest } from '../login-request';
 import { LoginResponse } from '../login-response';
 import { RegisterRequest } from '../register-request';
 import { jwtDecode } from 'jwt-decode';
-
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -17,11 +16,13 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, data);
   }
 
-  register(data: RegisterRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/register`, data);
+  register(data: RegisterRequest): Observable<any> {
+    const headers = new HttpHeaders().set('Accept', 'text/plain, application/json');
+    return this.http.post(`${this.baseUrl}/register`, data, { 
+      headers: headers,
+      responseType: 'text'
+    });
   }
-
-
 
   saveToken(token: string) {
     localStorage.setItem('token', token);
@@ -31,7 +32,6 @@ export class AuthService {
     const token = this.getToken();
     return token ? jwtDecode(token) : null;
   }
-
 
   getToken(): string | null {
     return localStorage.getItem('token');
@@ -68,6 +68,4 @@ export class AuthService {
     const decoded = this.getDecodedToken();
     return decoded?.roles ? decoded.roles.split(',') : [];
   }
-
-  
 }
