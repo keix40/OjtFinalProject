@@ -1,0 +1,261 @@
+/* Unique, cool, and responsive styles for user personal info */
+
+:root {
+    --personal-info-bg: #ffffff; /* White background for the section */
+    --personal-info-border: #e0e0e0; /* Light gray border */
+    --personal-info-shadow: rgba(0, 0, 0, 0.05); /* Subtle shadow */
+    --personal-info-heading-color: var(--primary-color); /* Use primary color for headings */
+    --personal-info-label-color: #555; /* Dark gray for labels */
+    --personal-info-input-border: #ccc; /* Default input border */
+    --personal-info-input-focus-border: var(--primary-color); /* Primary color on input focus */
+    --personal-info-input-disabled-bg: #f9f9f9; /* Light gray for disabled inputs */
+    --personal-info-icon-color: #777; /* Gray color for icons */
+    --personal-info-button-gap: 1.5rem; /* Increased gap */
+}
+
+.personal-info-section {
+    background: linear-gradient(120deg, #fff 60%, #f7e9c7 100%);
+    padding: 2.5rem 1.5rem;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(44, 62, 80, 0.10);
+    border: 2px solid var(--secondary-color, #d4a762);
+    margin-bottom: 30px;
+    animation: fadeInSection 0.7s;
+    transition: box-shadow 0.3s, border 0.3s;
+}
+
+@keyframes fadeInSection {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.personal-info-section:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); /* Larger shadow on hover */
+}
+
+.personal-info-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem; /* More space below header */
+    border-bottom: 1px solid var(--personal-info-border); /* Subtle border */
+    padding-bottom: 1rem; /* Padding below border */
+}
+
+.personal-info-section h3 {
+    font-size: 2rem;
+    color: var(--primary-color, #2a2a2a);
+    font-weight: 800;
+    margin-bottom: 2rem;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.personal-info-section .btn-icon.edit-icon {
+    background: none;
+    border: none;
+    color: var(--personal-info-icon-color);
+    font-size: 1.5rem; /* Larger icon */
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+    padding: 0.5rem;
+    margin-right: -0.5rem; /* Negative margin to align icon visually */
+}
+
+.personal-info-section .btn-icon.edit-icon:hover {
+    color: var(--primary-color); /* Highlight color on hover */
+    transform: scale(1.1); /* Subtle scale effect */
+}
+
+.personal-info-section .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive grid */
+    gap: 1.5rem; /* Gap between form groups */
+    margin-bottom: 2rem; /* Space before buttons */
+}
+
+.personal-info-section .form-group {
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+.personal-info-section label {
+    font-weight: 700;
+    color: var(--secondary-color, #d4a762);
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.personal-info-section input[type="text"],
+.personal-info-section input[type="email"],
+.personal-info-section input[type="date"],
+.personal-info-section select {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 1.5px solid #b0b0b0;
+    border-radius: 10px;
+    font-size: 1rem;
+    color: #333;
+    background: #fdfdfd;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.personal-info-section input:focus,
+.personal-info-section select:focus {
+    border-color: var(--secondary-color, #d4a762);
+    box-shadow: 0 0 0 0.2rem rgba(212, 167, 98, 0.15);
+}
+
+.personal-info-section input[type="text"]:disabled,
+.personal-info-section input[type="email"]:disabled,
+.personal-info-section input[type="date"]:disabled,
+.personal-info-section select:disabled {
+    background-color: var(--personal-info-input-disabled-bg);
+    cursor: not-allowed;
+    border-color: #eee;
+    color: #777;
+}
+
+.personal-info-section .button-group {
+    margin-top: 2rem; /* Space above buttons */
+    display: flex;
+    gap: var(--personal-info-button-gap);
+    justify-content: flex-end; /* Align buttons to the right */
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+}
+
+.personal-info-section .btn {
+    padding: 0.9rem 2.5rem;
+    border-radius: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 1rem;
+    transition: all 0.2s;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+}
+
+.personal-info-section .btn-edit {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.personal-info-section .btn-edit:hover {
+    background-color: #c1914b;
+    transform: translateY(-2px); /* More pronounced hover effect */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.personal-info-section .btn-save {
+    background: linear-gradient(90deg, #2a2a2a 60%, #d4a762 100%);
+    color: white;
+    border: none;
+}
+
+.personal-info-section .btn-save:hover {
+    background: linear-gradient(90deg, #d4a762 0%, #2a2a2a 100%);
+    color: #fffbe6;
+}
+
+.personal-info-section .btn-cancel {
+    background: #e0e0e0;
+    color: #333;
+    border: none;
+}
+
+.personal-info-section .btn-cancel:hover {
+    background: #ccc;
+    color: #000;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .personal-info-section {
+        padding: 1.2rem 0.5rem;
+    }
+    .personal-info-section h3 {
+        font-size: 1.3rem;
+    }
+    .personal-info-section .btn {
+        font-size: 0.95rem;
+        padding: 0.8rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .personal-info-section {
+        padding: 1rem;
+    }
+
+    .personal-info-section h3 {
+        font-size: 1.5rem;
+    }
+
+    .personal-info-section .btn-icon.edit-icon {
+        font-size: 1.3rem;
+    }
+
+    .personal-info-section .form-grid {
+        gap: 0.8rem;
+    }
+
+    .personal-info-section label {
+        font-size: 0.8rem;
+    }
+
+    .personal-info-section input[type="text"],
+    .personal-info-section input[type="email"],
+    .personal-info-section input[type="date"],
+    .personal-info-section select {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .personal-info-section .button-group {
+        gap: 0.6rem;
+    }
+
+    .personal-info-section .btn {
+        padding: 0.7rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.refresh-icon {
+    color: #666;
+}
+
+.refresh-icon:hover {
+    color: #2196f3;
+    transform: rotate(180deg);
+}
+
+.edit-icon {
+    color: #666;
+}
+
+.edit-icon:hover {
+    color: #2196f3;
+}

@@ -31,12 +31,19 @@
                     </button>
                     <div class="dropdown-menu">
                         <div class="dropdown-header">
-                            <h6>Welcome to <span class="sitename">FashionStore</span></h6>
-                            <p class="mb-0">Access account &amp; manage orders</p>
+                            <ng-container *ngIf="isAuthenticated; else notAuthenticatedHeader">
+                                <h6>Welcome, <span class="sitename">{{name}}</span></h6>
+                                <p class="mb-0">{{userId}}</p>
+                                <p class="mb-0">Your account overview</p>
+                            </ng-container>
+                            <ng-template #notAuthenticatedHeader>
+                                <h6>Welcome to <span class="sitename">FashionStore</span></h6>
+                                <p class="mb-0">Access account &amp; manage orders</p>
+                            </ng-template>
                         </div>
                         <div class="dropdown-body">
                             <ng-container *ngIf="isAuthenticated; else notAuthenticated">
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/profile">
+                                <a class="dropdown-item d-flex align-items-center" [routerLink]="['/profile', userId]">
                                     <i class="bi bi-person-circle me-2"></i>
                                     <span>My Profile</span>
                                 </a>

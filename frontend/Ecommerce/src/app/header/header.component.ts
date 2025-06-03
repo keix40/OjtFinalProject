@@ -9,27 +9,30 @@ import { AuthService } from '../auth/auth.service';
   styleUrl: './header.component.css'
 })
 export class HeaderComponent implements OnInit {
+
+  name: string | null = null;
+  userId: number | null = null;
   cartItems = [
     {
       id: 1,
       title: 'Wireless Headphones',
       price: 89.99,
       quantity: 1,
-      image: 'https://via.placeholder.com/70'
+      image: 'assets/images/test.jpg'
     },
     {
       id: 2,
       title: 'Smart Watch',
       price: 129.99,
       quantity: 1,
-      image: 'https://via.placeholder.com/70'
+      image: 'assets/images/test.jpg'
     },
     {
       id: 3,
       title: 'Bluetooth Speaker',
       price: 59.99,
       quantity: 1,
-      image: 'https://via.placeholder.com/70'
+      image: 'assets/images/test.jpg'
     }
   ];
 
@@ -45,6 +48,8 @@ export class HeaderComponent implements OnInit {
   ngOnInit() {
     this.updateCartTotal();
     this.checkAuthStatus();
+    this.name = this.authService.getUsername();
+    this.userId = this.authService.getUserId();
   }
 
   private checkAuthStatus() {

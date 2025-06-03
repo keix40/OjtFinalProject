@@ -2,11 +2,11 @@
 <div class="account-dashboard">
     <div class="sidebar">
         <div class="user-info">
-            <div class="avatar">{{ userDetails.username ? userDetails.username.charAt(0).toUpperCase() : '' }}</div>
+            <div class="avatar">{{ userDetails.name ? userDetails.name.charAt(0).toUpperCase() : '' }}</div>
             <div class="details">
-                <h4>{{userDetails.username}}</h4>
-                <p>{{userDetails.roles.join(', ')}}</p>
-                <p class="bonuses">100 bonuses available</p>
+                <h4>{{userDetails.name}}</h4>
+                <p>{{userDetails.roles?.join(', ')}}</p>
+                <p>{{userDetails.id}}</p>
             </div>
         </div>
         <nav class="account-nav">
@@ -34,261 +34,37 @@
     <div class="main-content">
         <!-- Orders Section -->
         <div *ngIf="activeSection === 'orders'" class="orders-section">
-            <h3>Orders</h3>
-            <div class="orders-controls">
-                <select class="form-select">
-                    <option value="">Select status</option>
-                    <option value="all">All Orders</option>
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
-                <select class="form-select">
-                    <option value="">For all time</option>
-                    <option value="last30">Last 30 days</option>
-                    <option value="last90">Last 90 days</option>
-                    <option value="lastyear">Last year</option>
-                </select>
-            </div>
-            <div class="orders-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order #</th>
-                            <th>Order date <i class="bi bi-arrow-down-up"></i></th>
-                            <th>Status</th>
-                            <th>Total <i class="bi bi-arrow-down-up"></i></th>
-                            <th></th> <!-- For dropdown arrow -->
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <ng-container *ngFor="let order of userOrders">
-                            <tr (click)="toggleOrderDetails(order.id)" [class.expanded]="expandedOrderId === order.id">
-                                <td>
-                                    {{order.orderNumber}}
-                                    <div class="product-previews">
-                                        <img *ngFor="let product of order.items.slice(0, 3)" [src]="product.image" [alt]="product.title">
-                                        <span *ngIf="order.items.length > 3" class="more-items">+{{order.items.length - 3}}</span>
-                                    </div>
-                                </td>
-                                <td>{{order.orderDate | date:'MM/dd/yyyy'}}</td>
-                                <td><span class="status {{order.status.toLowerCase().replace(' ', '-')}}">• {{order.status}}</span></td>
-                                <td>{{order.total | currency}}</td>
-                                <td>
-                                    <i class="bi" [class.bi-chevron-down]="expandedOrderId !== order.id" [class.bi-chevron-up]="expandedOrderId === order.id"></i>
-                                </td>
-                            </tr>
-                            <tr *ngIf="expandedOrderId === order.id" class="order-details-row">
-                                <td colspan="5">
-                                    <div class="order-details-panel">
-                                        <h4>Order Details</h4>
-                                        <div class="d-flex justify-content-between detail-line">
-                                            <span>Order Date: {{order.orderDate | date:'MM/dd/yyyy'}}</span>
-                                            <span>Payment Method: {{order.paymentMethod}}</span>
-                                        </div>
-                                        
-                                        <!-- List of products in the order -->
-                                        <div class="order-items-list">
-                                            <div class="order-item" *ngFor="let item of order.items">
-                                                <div class="item-image">
-                                                    <img [src]="item.image" [alt]="item.title">
-                                                </div>
-                                                <div class="item-details">
-                                                    <h4>{{item.title}}</h4>
-                                                    <p class="sku-qty">SKU: {{item.sku}} Qty: {{item.quantity}}</p>
-                                                </div>
-                                                <div class="item-price">{{item.price * item.quantity | currency}}</div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Order Totals -->
-                                        <div class="order-totals">
-                                            <div class="total-line">
-                                                <span>Subtotal:</span>
-                                                <span>{{order.subtotal | currency}}</span>
-                                            </div>
-                                             <div class="total-line">
-                                                <span>Shipping:</span>
-                                                <span>{{order.shippingCost | currency}}</span>
-                                            </div>
-                                             <div class="total-line">
-                                                <span>Tax:</span>
-                                                <span>{{order.tax | currency}}</span>
-                                            </div>
-                                             <div class="total-line total">
-                                                <span>Total:</span>
-                                                <span>{{order.total | currency}}</span>
-                                            </div>
-                                        </div>
-
-                                        <!-- Shipping Info -->
-                                        <div class="shipping-info row">
-                                            <div class="col-md-6">
-                                                <h4>Shipping Address</h4>
-                                                <p>{{order.shippingAddress.street}}</p>
-                                                <p>{{order.shippingAddress.apt}}</p>
-                                                <p>{{order.shippingAddress.city}}, {{order.shippingAddress.state}} {{order.shippingAddress.zip}}</p>
-                                                <p>{{order.shippingAddress.country}}</p>
-                                            </div>
-                                             <div class="col-md-6">
-                                                <h4>Shipping Method</h4>
-                                                <p>{{order.shippingMethod}}</p>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </td>
-                            </tr>
-                        </ng-container>
-                         <tr *ngIf="userOrders.length === 0">
-                            <td colspan="5" class="text-center">
-                                <p>No orders found.</p>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-             <!-- Pagination Placeholder -->
-            <div class="pagination">
-                <a class="active">1</a>
-                <a>2</a>
-                <a>3</a>
-                <a>4</a>
-            </div>
+           <app-user-orders></app-user-orders>
         </div>
 
         <!-- Wishlist Section -->
         <div *ngIf="activeSection === 'wishlist'" class="wishlist-section">
-            <h3>My Wishlist</h3>
-            <div class="wishlist-items">
-                <div class="wishlist-item" *ngFor="let item of wishlistItems">
-                    <div class="item-image">
-                        <img [src]="item.image" [alt]="item.title">
-                    </div>
-                    <div class="item-details">
-                        <h4>{{item.title}}</h4>
-                        <p class="price">${{item.price}}</p>
-                        <button class="btn btn-primary btn-sm" (click)="addToCart(item)">Add to Cart</button>
-                    </div>
-                    <button class="remove-item" (click)="removeFromWishlist(item)">
-                        <i class="bi bi-x-lg"></i>
-                    </button>
-                </div>
-                <div *ngIf="wishlistItems.length === 0" class="empty-state">
-                    <i class="bi bi-heart"></i>
-                    <p>Your wishlist is empty</p>
-                    <a routerLink="/products" class="btn btn-primary">Start Shopping</a>
-                </div>
-            </div>
+            <app-user-wishlist></app-user-wishlist>
         </div>
 
         <!-- Payment Methods Section -->
         <div *ngIf="activeSection === 'payment'" class="payment-section">
-            <h3>Payment Methods</h3>
-            <div class="payment-methods">
-                <div class="saved-cards">
-                    <h4>Saved Cards</h4>
-                    <div class="card-list">
-                        <div class="card-item" *ngFor="let card of savedCards">
-                            <div class="card-info">
-                                <i class="bi bi-credit-card"></i>
-                                <span>**** **** **** {{card.last4}}</span>
-                                <span class="expiry">Expires {{card.expiry}}</span>
-                            </div>
-                            <button class="btn btn-outline-danger btn-sm" (click)="removeCard(card)">
-                                Remove
-                            </button>
-                        </div>
-                    </div>
-                    <button class="btn btn-primary" (click)="addNewCard()">
-                        <i class="bi bi-plus"></i> Add New Card
-                    </button>
-                </div>
-            </div>
+            <app-user-payment-methods></app-user-payment-methods>
         </div>
 
         <!-- My Reviews Section -->
         <div *ngIf="activeSection === 'reviews'" class="reviews-section">
-            <h3>My Reviews</h3>
-            <div class="reviews-list">
-                <div class="review-item" *ngFor="let review of userReviews">
-                    <div class="review-header">
-                        <div class="product-info">
-                            <img [src]="review.productImage" [alt]="review.productName">
-                            <h4>{{review.productName}}</h4>
-                        </div>
-                        <div class="review-rating">
-                            <span class="stars">
-                                <i class="bi bi-star-fill" *ngFor="let star of [1,2,3,4,5]" 
-                                   [class.active]="star <= review.rating"></i>
-                            </span>
-                            <span class="date">{{review.date}}</span>
-                        </div>
-                    </div>
-                    <div class="review-content">
-                        <p>{{review.comment}}</p>
-                    </div>
-                    <div class="review-actions">
-                        <button class="btn btn-outline-primary btn-sm" (click)="editReview(review)">Edit</button>
-                        <button class="btn btn-outline-danger btn-sm" (click)="deleteReview(review)">Delete</button>
-                    </div>
-                </div>
-                <div *ngIf="userReviews.length === 0" class="empty-state">
-                    <i class="bi bi-star"></i>
-                    <p>You haven't written any reviews yet</p>
-                    <a routerLink="/products" class="btn btn-primary">Browse Products</a>
-                </div>
-            </div>
+            <app-user-reviews></app-user-reviews>
         </div>
 
         <!-- Personal Info Section -->
         <div *ngIf="activeSection === 'personal-info'" class="personal-info-section">
-            <h3>Personal Information</h3>
-            <form [formGroup]="personalInfoForm" (ngSubmit)="updatePersonalInfo()" class="personal-info-form">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" formControlName="fullName" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" formControlName="email" class="form-control" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" formControlName="phone" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <input type="date" formControlName="dateOfBirth" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label>Gender</label>
-                    <select formControlName="gender" class="form-control">
-                        <option value="">Select Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary" [disabled]="!personalInfoForm.valid || !personalInfoForm.dirty">
-                        Save Changes
-                    </button>
-                </div>
-            </form>
+            <app-user-personal-info [userDetails]="userDetails"></app-user-personal-info>
         </div>
 
         <!-- Addresses Section -->
         <div *ngIf="activeSection === 'addresses'">
-            <h3>Addresses</h3>
-            <!-- Addresses content will go here -->
+            <app-user-addresses></app-user-addresses>
         </div>
 
         <!-- Notifications Section -->
         <div *ngIf="activeSection === 'notifications'">
-            <h3>Notifications</h3>
-            <!-- Notifications content will go here -->
+            <app-user-notifications></app-user-notifications>
         </div>
 
     </div>

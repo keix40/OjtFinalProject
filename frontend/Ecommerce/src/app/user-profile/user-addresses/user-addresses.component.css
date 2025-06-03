@@ -1,0 +1,386 @@
+:root {
+  --address-accent: #880e4f;
+  --address-accent-hover: #ad1457;
+  --address-font: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+}
+
+.address-page-root {
+  font-family: var(--address-font);
+}
+
+/* Address Section Styles - Clean, Unique, Responsive */
+.address-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding: 0 0.5rem;
+  position: relative;
+}
+
+.address-section-header h3 {
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--address-accent);
+  letter-spacing: 1.5px;
+  font-family: var(--address-font);
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(212, 167, 98, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-address-btn {
+  background: #111;
+  color: #fff;
+  border: none;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  border-radius: 12px;
+  padding: 0.7rem 2.2rem 0.7rem 1.2rem;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.10);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  font-family: var(--address-font);
+}
+
+.add-address-btn i {
+  font-size: 1.3rem;
+  margin-right: 0.5rem;
+}
+
+.add-address-btn:hover {
+  background: #333;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.15);
+  transform: scale(1.05);
+}
+
+.address-list {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  margin-bottom: 2rem;
+  padding: 0 0.5rem;
+  font-family: var(--address-font);
+}
+
+.address-item {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(44, 62, 80, 0.10);
+  border: 1.5px solid #f0f0f0;
+  transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+  padding: 1.5rem 1.2rem 1.2rem 1.2rem;
+  font-family: var(--address-font);
+  max-width: 100%;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.address-item:hover {
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.13);
+  transform: translateY(-3px) scale(1.02);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #2a2a2a;
+  margin-bottom: 0.7rem;
+  letter-spacing: 0.5px;
+  font-family: var(--address-font);
+}
+
+.mb-1 strong {
+  color: var(--address-accent);
+  font-weight: 700;
+  font-family: var(--address-font);
+}
+
+@media (max-width: 992px) {
+  .address-list {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .address-section-header h3 {
+    font-size: 1.3rem;
+  }
+  .add-address-btn {
+    font-size: 0.95rem;
+    padding: 0.6rem 1.2rem 0.6rem 0.8rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .address-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .address-list {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Add margin between header/button and cards */
+.address-section-header {
+  margin-bottom: 2.5rem;
+}
+.address-list {
+  margin-top: 1.5rem;
+}
+
+.custom-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 1050;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  animation: fadeInBackdrop 0.2s;
+  overflow-y: auto;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.custom-modal {
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid #e0e0e0;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.15);
+  padding: 2.5rem 2rem 2rem 2rem;
+  width: 98vw;
+  max-width: 700px;
+  margin: 4rem auto 2.5rem auto;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "San Francisco", "Segoe UI", Roboto, sans-serif;
+}
+
+.address-info-box {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafbfc;
+  padding: 2.5rem 2rem 2rem 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.address-info-box .address-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.address-info-box .address-header i {
+  font-size: 1.1rem;
+  color: #111;
+  margin-bottom: 0.1rem;
+}
+
+.address-info-box h4 {
+  font-size: 1.18rem;
+  font-weight: 700;
+  margin-bottom: 0;
+  letter-spacing: 0.01em;
+  display: inline-block;
+}
+
+.address-info-box .address-desc {
+  color: #6c757d;
+  font-size: 0.98rem;
+  margin-bottom: 1.1rem;
+  margin-left: 1.7rem;
+}
+
+.address-info-box .form-label {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.7rem;
+  margin-top: 1.5rem;
+  letter-spacing: 0.01em;
+  display: block;
+}
+
+.address-info-box .form-label:first-of-type {
+  margin-top: 0.2rem;
+}
+
+.address-info-box .form-control,
+.address-info-box .form-select {
+  width: 100% !important;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1.5px solid #d0d0d0;
+  font-size: 1rem;
+  color: #222;
+  background: #fff;
+  box-shadow: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 1.3rem;
+  padding: 1rem 1.2rem;
+  display: block;
+  outline: none;
+}
+
+.address-info-box .form-control:focus,
+.address-info-box .form-select:focus {
+  border-color: #111;
+  box-shadow: 0 0 0 0.15rem rgba(44, 62, 80, 0.08);
+  background: #fff;
+}
+
+.address-info-box .row.g-3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
+  margin-left: 0;
+  margin-right: 0;
+}
+.address-info-box .row.g-3 > .col-md-6 {
+  flex: 0 0 48%;
+  max-width: 48%;
+  min-width: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.validate-btn {
+  width: 100%;
+  background: #111;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 8px;
+  font-size: 1.12rem;
+  padding: 1rem 0;
+  border: none;
+  transition: background 0.2s, color 0.2s;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.09);
+}
+.validate-btn:hover {
+  background: #333;
+  color: #fff;
+}
+
+.map-preview-box {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fafbfc;
+  margin-bottom: 0;
+  margin-top: 2.5rem;
+  padding: 2.2rem 2rem 2rem 2rem;
+}
+
+.map-preview-box h5 {
+  font-size: 1.13rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
+}
+
+.map-placeholder {
+  min-height: 160px;
+  background: #f4f5f7;
+  border-radius: 10px;
+  border: 1.5px dashed #d0d0d0;
+  color: #888;
+  font-size: 1.08rem;
+  margin-top: 0.7rem;
+  margin-bottom: 0.7rem;
+  text-align: center;
+  padding: 3rem 0 2.2rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-modal-footer {
+  border-top: none;
+  background: transparent;
+  padding-top: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.2rem;
+  padding-bottom: 1.2rem;
+  padding-right: 2rem;
+}
+
+.custom-modal-header {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .custom-modal {
+    max-width: 99vw;
+    margin: 2rem auto 1rem auto;
+  }
+  .address-info-box .row.g-3 > .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  .address-info-box .row.g-3 {
+    gap: 0;
+  }
+}
+@media (max-width: 700px) {
+  .custom-modal {
+    max-width: 100vw;
+    margin: 1.2rem 0.2rem 1.2rem 0.2rem;
+  }
+  .address-info-box, .map-preview-box {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+  }
+  .address-info-box .row.g-3 {
+    flex-direction: column;
+  }
+  .address-info-box .row.g-3 > .col-md-6 {
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+    min-width: 0;
+  }
+  .custom-modal-footer {
+    padding-right: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+}
+@media (max-width: 500px) {
+  .custom-modal {
+    padding: 0;
+    margin: 0.5rem 0.1rem 0.5rem 0.1rem;
+  }
+  .address-info-box, .map-preview-box {
+    padding: 0.7rem 0.2rem 0.7rem 0.2rem;
+  }
+  .validate-btn {
+    font-size: 1rem;
+    padding: 0.6rem 0;
+  }
+}
+
+#map {
+  width: 100%;
+  height: 300px;
+  border-radius: 10px;
+  margin-bottom: 1rem;
+}

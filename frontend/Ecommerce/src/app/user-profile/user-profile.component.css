@@ -159,25 +159,96 @@
 
 .account-dashboard {
     display: flex;
-    min-height: calc(100vh - 80px - 60px); /* Adjust for header height if needed, added more buffer */
-    background-color: var(--light-color);
-    padding: 30px; /* Increased padding */
-    gap: 30px; /* Gap between sidebar and main content */
+    min-height: calc(100vh - 80px - 60px);
+    background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+    padding: 30px;
+    gap: 30px;
+    animation: fadeInMain 0.7s;
+}
+
+@keyframes fadeInMain {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .sidebar {
     width: 280px;
-    background-color: #fff;
+    background: linear-gradient(135deg, #fff 60%, #f7e9c7 100%);
     box-shadow: var(--card-shadow);
-    padding: 2rem 1.5rem; /* Adjusted padding */
+    padding: 2rem 1.5rem;
     flex-shrink: 0;
-    border-radius: 10px; /* Slightly larger border-radius */
-    border: 1px solid var(--border-color); /* Added a subtle border */
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    animation: fadeInSidebar 0.8s;
+}
+
+@keyframes fadeInSidebar {
+    from { opacity: 0; transform: translateX(-40px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.avatar {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.13);
+    margin-bottom: 1rem;
+    transition: box-shadow 0.3s;
+}
+.avatar:hover {
+    box-shadow: 0 6px 18px rgba(44, 62, 80, 0.18);
+}
+
+.details h4 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.2rem;
+}
+.details p {
+    color: var(--gray-color);
+    margin-bottom: 0.1rem;
+}
+
+.account-nav a {
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    padding: 0.7rem 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.account-nav a.active, .account-nav a:hover {
+    background: linear-gradient(90deg, var(--secondary-color) 60%, #fffbe6 100%);
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(212, 167, 98, 0.13);
 }
 
 .main-content {
     flex-grow: 1;
     padding: 0;
+    animation: fadeInContent 0.8s;
+}
+@keyframes fadeInContent {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add fade-in to all main sections */
+.orders-section, .wishlist-section, .payment-section, .reviews-section, .personal-info-section, .addresses-section, .notifications-section {
+    animation: fadeInSection 0.7s;
+}
+@keyframes fadeInSection {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
 }
 
 /* Refined User Info */
@@ -187,35 +258,6 @@
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
     border-bottom: 1px solid var(--border-color); /* Using refined border color */
-}
-
-.avatar {
-    width: 60px; /* Slightly larger avatar */
-    height: 60px; /* Slightly larger avatar */
-    background-color: var(--secondary-color);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem; /* Adjusted font size */
-    font-weight: bold;
-    margin-right: 1.2rem; /* Adjusted margin */
-    flex-shrink: 0;
-}
-
-.details h4 {
-    margin: 0;
-    font-size: 1.2rem; /* Slightly larger font size */
-    font-weight: 700; /* Bolder font weight */
-    color: var(--primary-color);
-}
-
-.details p {
-    margin: 0;
-    font-size: 0.95rem; /* Slightly larger font size */
-    color: var(--gray-color);
-    line-height: 1.4; /* Improved line height */
 }
 
 .details .bonuses {
@@ -233,51 +275,6 @@
 
 .account-nav li {
     margin-bottom: 0.4rem; /* Slightly reduced margin */
-}
-
-.account-nav a {
-    display: flex;
-    align-items: center;
-    padding: 0.8rem 1.2rem;
-    color: var(--primary-color);
-    text-decoration: none;
-    border-radius: 8px;
-    transition: var(--transition-ease);
-    position: relative;
-    overflow: hidden;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-.account-nav a::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background-color: var(--secondary-color);
-    transform: translateX(-4px);
-    transition: transform 0.3s ease;
-}
-
-.account-nav a:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    color: var(--primary-color);
-}
-
-.account-nav a.active {
-    background-color: #000;
-    color: #fff;
-    font-weight: 700;
-    transform: scale(1.02);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.account-nav a:hover::before,
-.account-nav a.active::before {
-    transform: translateX(0);
-    background-color: var(--secondary-color);
 }
 
 .account-nav a i {
@@ -559,91 +556,20 @@
 @media (max-width: 992px) {
     .account-dashboard {
         flex-direction: column;
-        padding: 20px; /* Adjusted padding */
-        gap: 20px; /* Adjusted gap */
+        padding: 10px;
     }
-
     .sidebar {
         width: 100%;
-        padding: 1.5rem;
-    }
-
-    .main-content {
-        padding: 0;
+        margin-bottom: 1.5rem;
     }
 }
 
 @media (max-width: 768px) {
-    .account-dashboard {
-        padding: 15px; /* Further adjusted padding */
-        gap: 15px; /* Further adjusted gap */
-    }
-
     .sidebar {
-         padding: 1rem;
+        padding: 1rem 0.5rem;
     }
-
-    .user-info {
-         flex-direction: column; /* Stack user info items */
-         text-align: center;
-    }
-
-    .avatar {
-        margin-right: 0;
-        margin-bottom: 1rem;
-    }
-
-     .account-nav ul,
-    .customer-service ul {
-        flex-direction: column; /* Stack nav items */
-        align-items: center;
-    }
-
-    .account-nav li,
-    .customer-service li {
-        margin: 0.3rem 0; /* Adjusted margin */
-        width: 100%; /* Full width items */
-    }
-
-     .account-nav a,
-    .customer-service a {
-        justify-content: center; /* Center align text and icon */
-    }
-
-     .account-nav a i,
-    .customer-service a i {
-        margin-right: 0.5rem; /* Adjusted margin */
-    }
-
-    .orders-section,
-    .profile-container .profile-card {
-        padding: 1.5rem; /* Adjusted padding */
-    }
-
-    .orders-controls {
-        flex-direction: column;
-        gap: 0.75rem; /* Adjusted gap */
-    }
-
-    .orders-controls .form-select {
-        width: 100%;
-    }
-
-    .orders-table td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: #555;
-        text-align: left;
-        position: absolute;
-        left: 1rem; /* Adjusted position */
-        width: calc(50% - 1.5rem); /* Adjusted width */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-     .orders-table td {
-        padding-left: calc(50% + 1rem); /* Adjusted padding */
-         text-align: right;
+    .main-content {
+        padding: 0.5rem;
     }
 }
 

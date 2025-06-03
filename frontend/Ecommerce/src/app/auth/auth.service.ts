@@ -56,7 +56,7 @@ export class AuthService {
 
   getUsername(): string | null {
     const decoded = this.getDecodedToken();
-    return decoded?.username || null;
+    return decoded?.name || null;
   }
 
   getUserId(): number | null {
@@ -68,4 +68,30 @@ export class AuthService {
     const decoded = this.getDecodedToken();
     return decoded?.roles ? decoded.roles.split(',') : [];
   }
+
+  updateUserDetails(details: any): Observable<any> {
+    const token = this.getToken();
+    if (!token) {
+      console.error('No token found in localStorage');
+      return new Observable(subscriber => {
+        subscriber.error(new Error('No token found'));
+      });
+    }
+    
+    console.log('Token being used:', token);
+    const decoded = this.getDecodedToken();
+    console.log('Decoded token:', decoded);
+    
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+    
+    console.log('Request URL:', `${this.baseUrl}/user/${details.id}`);
+    console.log('Request payload:', JSON.stringify(details, null, 2));
+    console.log('Request headers:', headers);
+    
+    return this.http.put(`${this.baseUrl}/user/${details.id}`, details, { headers });
+  }
+    
 }

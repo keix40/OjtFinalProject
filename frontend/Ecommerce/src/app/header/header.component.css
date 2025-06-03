@@ -12,12 +12,17 @@
 }
 
 .main-header {
-    background-color: #fff;
+    background: linear-gradient(90deg, #fff 80%, #f7e9c7 100%);
     box-shadow: var(--shadow-md);
     position: sticky;
     top: 0;
     z-index: 1000;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    animation: fadeInHeader 0.7s;
+}
+@keyframes fadeInHeader {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .container-fluid {
@@ -55,21 +60,23 @@
     text-decoration: none;
     color: var(--primary-color);
     font-weight: 700;
-    font-size: 1.75rem;
+    font-size: 2rem;
     transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
-
 .logo:hover {
     color: var(--secondary-color);
+    text-shadow: 0 2px 8px rgba(212, 167, 98, 0.13);
 }
-
 .sitename {
     font-family: 'Playfair Display', serif;
-    font-weight: 700;
+    font-weight: 800;
     margin: 0;
-    font-size: 1.75rem;
+    font-size: 2rem;
+    letter-spacing: 1px;
 }
-
 .sitename span {
     color: var(--secondary-color);
 }
@@ -79,73 +86,94 @@
     flex-grow: 1;
     max-width: 500px;
     margin: 0 2rem;
+    animation: fadeInHeader 0.7s;
 }
-
 .input-group {
     position: relative;
     display: flex;
     width: 100%;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+    border-radius: 30px;
+    background: #fff;
+    overflow: hidden;
 }
-
 .form-control {
     flex: 1;
     padding: 0.75rem 1.25rem;
-    font-size: 0.95rem;
-    border: 1px solid #ddd;
+    font-size: 1rem;
+    border: none;
     border-radius: 30px 0 0 30px;
     transition: var(--transition);
     height: 45px;
+    background: #fdfdfd;
+    box-shadow: none;
 }
-
 .form-control:focus {
     outline: none;
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 0.2rem rgba(212, 167, 98, 0.25);
-}
-
-.search-btn {
-    background-color: var(--secondary-color);
-    color: white;
     border: none;
-    border-radius: 0 30px 30px 0;
-    padding: 0 1.5rem;
+    box-shadow: 0 0 0 0.2rem rgba(212, 167, 98, 0.15);
+}
+.search-btn {
+    background: linear-gradient(135deg, #d4a762 60%, #fffbe6 100%);
+    color: #222;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    min-height: 45px;
+    max-width: 45px;
+    max-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: var(--transition);
-    height: 45px;
+    margin-left: -10px;
+    box-shadow: 0 2px 8px rgba(212, 167, 98, 0.13);
+    font-size: 1.2rem;
+    padding: 0;
 }
-
-.search-btn:hover {
-    background-color: #c1914b;
+.search-btn:hover, .search-btn:focus {
+    background: linear-gradient(135deg, #fffbe6 0%, #d4a762 100%);
+    color: #000;
+    box-shadow: 0 4px 16px rgba(212, 167, 98, 0.18);
+}
+.search-btn i {
+    font-size: 1.2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Header Actions */
 .header-actions {
     gap: 1.5rem;
+    animation: fadeInHeader 0.7s;
 }
-
 .header-action-btn {
     background: none;
     border: none;
     color: var(--primary-color);
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     cursor: pointer;
     position: relative;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
     transition: var(--transition);
 }
-
 .header-action-btn:hover {
     color: var(--secondary-color);
+    background: #f7e9c7;
 }
-
 .action-text {
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 1rem;
+    font-weight: 600;
 }
-
 .badge {
     position: absolute;
     top: -5px;
@@ -158,8 +186,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     font-weight: bold;
+    box-shadow: 0 2px 8px rgba(230, 57, 70, 0.13);
 }
 
 /* Dropdown Styles */
@@ -182,6 +211,11 @@
     transform: translateY(10px);
     transition: var(--transition);
     z-index: 1000;
+    animation: fadeInDropdown 0.4s;
+}
+@keyframes fadeInDropdown {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .dropdown.show .dropdown-menu {
@@ -367,48 +401,97 @@
 /* Responsive Styles */
 @media (max-width: 1199.98px) {
     .search-form {
+        max-width: 350px;
         margin: 0 1rem;
     }
 }
-
 @media (max-width: 991.98px) {
-    .search-form {
-        display: none;
-    }
-
-    .mobile-search-toggle {
-        display: block;
-    }
-}
-
-@media (max-width: 767.98px) {
-    .header-actions {
+    .main-header .container-fluid.container-xl {
+        flex-direction: column !important;
+        align-items: stretch !important;
         gap: 1rem;
     }
-
-    .action-text {
-        display: none;
+    .d-flex.py-3.align-items-center.justify-content-between {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 1rem;
     }
-
     .logo {
-        font-size: 1.5rem;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: 0.5rem;
     }
-
-    .sitename {
-        font-size: 1.5rem;
+    .search-form {
+        max-width: 100%;
+        width: 100%;
+        margin: 0 auto 1rem auto;
+        display: flex;
+        justify-content: center;
+    }
+    .input-group {
+        width: 100%;
+    }
+    .header-actions {
+        justify-content: center;
+        width: 100%;
+        gap: 1rem;
     }
 }
-
-@media (max-width: 575.98px) {
-    .header-actions {
-        gap: 0.75rem;
+@media (max-width: 767.98px) {
+    .main-header {
+        padding: 0.5rem 0;
     }
-
+    .logo, .sitename {
+        font-size: 1.1rem;
+    }
+    .search-form {
+        margin: 0 0 1rem 0;
+        padding: 0;
+    }
+    .form-control, .search-btn {
+        height: 40px;
+        font-size: 0.95rem;
+    }
+    .search-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        min-height: 40px;
+        max-width: 40px;
+        max-height: 40px;
+        font-size: 1rem;
+    }
+    .header-actions {
+        gap: 0.5rem;
+    }
+}
+@media (max-width: 575.98px) {
+    .main-header {
+        padding: 0.2rem 0;
+    }
+    .logo, .sitename {
+        font-size: 0.9rem;
+    }
+    .search-form {
+        margin: 0 0 0.7rem 0;
+    }
+    .form-control, .search-btn {
+        height: 36px;
+        font-size: 0.9rem;
+    }
+    .search-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+        max-width: 36px;
+        max-height: 36px;
+        font-size: 0.95rem;
+    }
     .dropdown-menu {
         width: 280px;
         right: -50px;
     }
-
     .cart-dropdown-menu {
         width: 300px;
     }
