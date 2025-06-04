@@ -30,7 +30,7 @@ export class RegisterComponent {
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      password: ['', Validators.required],
+      // password: ['', Validators.required],
       gender: ['', Validators.required],
       dateOfBirth: ['', Validators.required],
       phoneNumber: ['', Validators.required],
@@ -59,36 +59,36 @@ export class RegisterComponent {
     const formData = this.registerForm.value;
 
     this.authService.register(formData).subscribe({
-      next: (response: string) => {
-        // Since we set responseType to 'text', response will be a string
-        this.successMessage = response;
-        // After successful registration, automatically log in the user
-        this.authService.login({
-          email: formData.email,
-          password: formData.password
-        }).subscribe({
-          next: (loginResponse) => {
-            this.authService.saveToken(loginResponse.accessToken);
-            setTimeout(() => {
-              this.router.navigate(['/home']);
-            }, 1500);
-          },
-          error: (loginError) => {
-            console.error('Auto-login failed:', loginError);
-            // Even if auto-login fails, redirect to login page
-            setTimeout(() => {
-              this.router.navigate(['/login']);
-            }, 1500);
-          }
-        });
-      },
-      error: (error: HttpErrorResponse) => {
-        console.error('Registration error:', error);
-        this.errorMessage = error.error?.message || 'Registration failed. Please try again.';
-        this.submitted = false;
-    if (this.registerForm.invalid) return;
+    //   next: (response: string) => {
+    //     // Since we set responseType to 'text', response will be a string
+    //     this.successMessage = response;
+    //     // After successful registration, automatically log in the user
+    //     this.authService.login({
+    //       email: formData.email,
+    //       password: formData.password
+    //     }).subscribe({
+    //       next: (loginResponse) => {
+    //         this.authService.saveToken(loginResponse.accessToken);
+    //         setTimeout(() => {
+    //           this.router.navigate(['/home']);
+    //         }, 1500);
+    //       },
+    //       error: (loginError) => {
+    //         console.error('Auto-login failed:', loginError);
+    //         // Even if auto-login fails, redirect to login page
+    //         setTimeout(() => {
+    //           this.router.navigate(['/login']);
+    //         }, 1500);
+    //       }
+    //     });
+    //   },
+    //   error: (error: HttpErrorResponse) => {
+    //     console.error('Registration error:', error);
+    //     this.errorMessage = error.error?.message || 'Registration failed. Please try again.';
+    //     this.submitted = false;
+    // if (this.registerForm.invalid) return;
 
-    this.authService.register(this.registerForm.value).subscribe({
+    // this.authService.register(this.registerForm.value).subscribe({
       next: (res: RegisterResponse) => {
         this.emailForOtp = this.registerForm.value.email;
         this.isOtpStep = true;
@@ -134,3 +134,4 @@ export class RegisterComponent {
     });
   }
 }
+  
