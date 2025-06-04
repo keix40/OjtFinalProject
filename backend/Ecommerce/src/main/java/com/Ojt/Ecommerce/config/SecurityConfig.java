@@ -47,7 +47,11 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+
+                        .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
+                        .requestMatchers("product/**").permitAll()
+                        .requestMatchers("/category/**").permitAll()
+                        .requestMatchers("/brand/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
                         .anyRequest().authenticated()

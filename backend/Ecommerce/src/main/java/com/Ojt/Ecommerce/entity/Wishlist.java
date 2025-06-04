@@ -24,6 +24,8 @@ public class Wishlist {
     @JoinColumn(name = "product_id")
     private Product  product;
 
+
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
     private Integer status;
 
     @Column(name = "wishlist_date")

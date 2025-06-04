@@ -25,6 +25,7 @@ public class Product {
     @Column(name = "product_code", length = 45)
     private String productCode;
 
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
     private Integer status;
 
     @Column(columnDefinition = "TEXT")
@@ -35,6 +36,9 @@ public class Product {
 
     @Column(name = "update_date")
     private LocalDateTime updateDate;
+
+    @Column(name = "quantity")
+    private Long quantity;
 
     @ManyToOne
     @JoinColumn(name = "brand_id")
@@ -60,4 +64,10 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PurchaseProducts> purchaseProducts;
 
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }
