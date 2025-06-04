@@ -25,10 +25,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
+        if (!user.isVerified()) {
+            throw new RuntimeException("Email not verified. Please verify your email.");
+        }
+
+
         return new org.springframework.security.core.userdetails.User(
                 user.getEmail(),
                 user.getPassword(),
                 List.of(new SimpleGrantedAuthority(user.getRole().getName()))
         );
     }
+
 }

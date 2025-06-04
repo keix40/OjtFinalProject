@@ -3,8 +3,10 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { LoginRequest } from '../login-request';
 import { LoginResponse } from '../login-response';
+import { RegisterResponse } from './auth.types';
 import { RegisterRequest } from '../register-request';
 import { jwtDecode } from 'jwt-decode';
+
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -16,13 +18,19 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, data);
   }
 
-  register(data: RegisterRequest): Observable<any> {
-    const headers = new HttpHeaders().set('Accept', 'text/plain, application/json');
-    return this.http.post(`${this.baseUrl}/register`, data, { 
-      headers: headers,
-      responseType: 'text'
-    });
-  }
+
+//   register(data: RegisterRequest): Observable<any> {
+//     const headers = new HttpHeaders().set('Accept', 'text/plain, application/json');
+//     return this.http.post(`${this.baseUrl}/register`, data, { 
+//       headers: headers,
+//       responseType: 'text'
+//     });
+//   }
+
+  register(data: RegisterRequest): Observable<RegisterResponse> {
+  return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
+}
+
 
   saveToken(token: string) {
     localStorage.setItem('token', token);
@@ -68,6 +76,16 @@ export class AuthService {
     const decoded = this.getDecodedToken();
     return decoded?.roles ? decoded.roles.split(',') : [];
   }
+  verifyOtp(email: string, otp: string): Observable<any> {
+  return this.http.post(`${this.baseUrl}/verify-otp`, { email, otp });
+}
+
+resendOtp(email: string): Observable<any> {
+  return this.http.post(`${this.baseUrl}/resend-otp`, { email });
+}
+
+
+
 
   updateUserDetails(details: any): Observable<any> {
     const token = this.getToken();
@@ -93,5 +111,5 @@ export class AuthService {
     
     return this.http.put(`${this.baseUrl}/user/${details.id}`, details, { headers });
   }
-    
+
 }
