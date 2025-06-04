@@ -1,0 +1,23 @@
+<div class="wishlist-section">
+    <h3>My Wishlist</h3>
+    <div class="wishlist-items">
+        <div class="wishlist-item" *ngFor="let item of wishlistItems">
+            <div class="item-image">
+                <img [src]="item.image" [alt]="item.title">
+            </div>
+            <div class="item-details">
+                <h4>{{item.title}}</h4>
+                <p class="price">${{item.price}}</p>
+                <button class="btn btn-primary btn-sm" (click)="addToCart(item)">Add to Cart</button>
+            </div>
+            <button class="remove-item" (click)="removeFromWishlist(item)">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div *ngIf="wishlistItems.length === 0" class="empty-state">
+            <i class="bi bi-heart"></i>
+            <p>Your wishlist is empty</p>
+            <a routerLink="/products" class="btn btn-primary">Start Shopping</a>
+        </div>
+    </div>
+</div>

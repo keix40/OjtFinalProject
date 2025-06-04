@@ -1,0 +1,45 @@
+<div class="personal-info-section">
+    <div class="section-header">
+        <h3>Personal Information</h3>
+        <div class="header-actions">
+            <button class="btn-icon edit-icon" (click)="toggleEditMode()">
+                <i class="bi bi-pencil-square"></i>
+            </button>
+        </div>
+    </div>
+    <form [formGroup]="personalInfoForm">
+        <div class="form-group" style="display: none;">
+            <label for="userId">User ID</label>
+            <input id="userId" type="text" [value]="userDetails?.id || ''" disabled>
+        </div>
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input id="name" type="text" formControlName="name" [attr.disabled]="!isEditing ? true : null">
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" type="email" formControlName="email" [attr.disabled]="!isEditing ? true : null">
+        </div>
+        <div class="form-group">
+            <label for="gender">Gender</label>
+            <select id="gender" formControlName="gender" [attr.disabled]="!isEditing ? true : null">
+                <option value="">Select Gender</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="dateOfBirth">Date of Birth</label>
+            <input id="dateOfBirth" type="date" formControlName="dateOfBirth" [attr.disabled]="!isEditing ? true : null">
+        </div>
+        <div class="form-group">
+            <label for="phoneNumber">Phone Number</label>
+            <input id="phoneNumber" type="text" formControlName="phoneNumber" [attr.disabled]="!isEditing ? true : null">
+        </div>
+        <div class="button-group" *ngIf="isEditing">
+            <button type="button" class="btn btn-save" (click)="saveChanges()">Save Changes</button>
+            <button type="button" class="btn btn-cancel" (click)="cancelEdit()">Cancel</button>
+        </div>
+    </form>
+</div>

@@ -2,7 +2,9 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RegisterResponse } from '../auth.types';
+
 
 @Component({
   selector: 'app-register',
@@ -17,6 +19,7 @@ export class RegisterComponent {
   emailForOtp = '';
   errorMessage = '';
   successMessage = '';
+  submitted = false;
 
   constructor(
     private fb: FormBuilder,
@@ -26,11 +29,13 @@ export class RegisterComponent {
     this.registerForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       password: ['', Validators.required],
       gender: ['', Validators.required],
       dateOfBirth: ['', Validators.required],
       phoneNumber: ['', Validators.required],
-      role: ['STUDENT']
+      roleId: [2, Validators.required] // Default to 2 for regular user
+
     });
 
     this.otpForm = this.fb.group({
@@ -38,7 +43,49 @@ export class RegisterComponent {
     });
   }
 
+   get f() {
+    return this.registerForm.controls;
+  }
+  
   onSubmit(): void {
+    this.submitted = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    if (this.registerForm.invalid) {
+      return;
+    }
+
+    const formData = this.registerForm.value;
+
+    this.authService.register(formData).subscribe({
+      next: (response: string) => {
+        // Since we set responseType to 'text', response will be a string
+        this.successMessage = response;
+        // After successful registration, automatically log in the user
+        this.authService.login({
+          email: formData.email,
+          password: formData.password
+        }).subscribe({
+          next: (loginResponse) => {
+            this.authService.saveToken(loginResponse.accessToken);
+            setTimeout(() => {
+              this.router.navigate(['/home']);
+            }, 1500);
+          },
+          error: (loginError) => {
+            console.error('Auto-login failed:', loginError);
+            // Even if auto-login fails, redirect to login page
+            setTimeout(() => {
+              this.router.navigate(['/login']);
+            }, 1500);
+          }
+        });
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Registration error:', error);
+        this.errorMessage = error.error?.message || 'Registration failed. Please try again.';
+        this.submitted = false;
     if (this.registerForm.invalid) return;
 
     this.authService.register(this.registerForm.value).subscribe({
