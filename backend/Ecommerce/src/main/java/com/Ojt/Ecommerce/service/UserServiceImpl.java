@@ -11,11 +11,13 @@ import com.Ojt.Ecommerce.repository.RoleRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,6 +31,7 @@ public class UserServiceImpl implements UserService {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;  // Inject RefreshTokenService
+    private final ModelMapper modelMapper;
 
     @Override
     public String register(RegisterRequest request) {
@@ -42,6 +45,10 @@ public class UserServiceImpl implements UserService {
         User user = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
+                .dateOfBirth(request.getDateOfBirth())
+                .gender((request.getGender()))
+                .phoneNumber(request.getPhoneNumber())
+                .createdDate(LocalDate.now())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(roleUser)
                 .build();
@@ -69,5 +76,22 @@ public class UserServiceImpl implements UserService {
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
         return new LoginResponse(accessToken, refreshToken.getToken());
+    }
+
+
+    //update User method(kei_3)
+    @Override
+    public RegisterRequest updateUser(Long id, RegisterRequest dto){
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setName(dto.getName());
+        user.setEmail(dto.getEmail());
+        user.setGender(dto.getGender());
+        user.setPhoneNumber(dto.getPhoneNumber());
+        user.setDateOfBirth(dto.getDateOfBirth());
+
+        userRepository.save(user);
+
+        return modelMapper.map(user, RegisterRequest.class);
     }
 }

@@ -29,6 +29,8 @@ public class JwtTokenProvider implements InitializingBean {
 
     private SecretKey secretKey;
 
+
+    //adding more detail to show in token (kei)
     @Override
     public void afterPropertiesSet() {
 
@@ -46,7 +48,13 @@ public class JwtTokenProvider implements InitializingBean {
 
         return Jwts.builder()
                 .setSubject(user.getEmail())
+                .claim("id",user.getId())
                 .claim("roles", roles)
+                .claim("name", user.getName())
+                .claim("gender", user.getGender())
+                .claim("phNumber", user.getPhoneNumber())
+                .claim("dateofbirth", user.getDateOfBirth().toString()) // 👈 convert LocalDate to String
+                .claim("createdate", user.getCreatedDate().toString())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(secretKey, SignatureAlgorithm.HS512)

@@ -13,5 +13,6 @@ public interface UserService {
     LoginResponse login(LoginRequest request);
     String register(RegisterRequest request);
     List<User> getAllUsers();
+    public RegisterRequest updateUser(Long id, RegisterRequest userDTO);
 
 }
