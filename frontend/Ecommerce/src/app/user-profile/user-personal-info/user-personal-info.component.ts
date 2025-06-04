@@ -100,9 +100,9 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       next: (response: any) => {
         if (response.token) this.authService.saveToken(response.token);
         if (response.user) this.userDetails = { ...this.userDetails, ...response.user };
-        this.isEditing = false;
+      this.isEditing = false;
         this.originalDetails = { ...this.personalInfoForm.value };
-        this.personalInfoForm.disable();
+      this.personalInfoForm.disable();
         this.router.navigate(['/profile', updatedData.id]).then(() => {
            window.location.reload();
          });
@@ -112,7 +112,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
         if (error.status === 401) {
           this.authService.logout();
           this.router.navigate(['/login']);
-        }
+    }
       }
     });
   }

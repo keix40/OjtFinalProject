@@ -20,16 +20,10 @@ export class UserAddressesComponent implements OnInit {
   private mapInitialized = false;
   latitude: number | null = null;
   longitude: number | null = null;
-  private pendingLatLng: { lat: number, lng: number } | null = null;
   private geocodeTimeout: any = null;
-
-  // Address form fields
-  address: string = '';
-  city: string = '';
-  state: string = '';
-  postalCode: string = '';
-  country: string = '';
-  addressType: string = '';
+  private forwardGeocodeTimeout: any = null;
+  private skipReverseGeocode = false;
+  private latLngSource: 'manual' | 'forward' | 'location' | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -43,7 +37,8 @@ export class UserAddressesComponent implements OnInit {
       postalCode: ['', Validators.required],
       country: ['', Validators.required],
       latitude: [null, Validators.required],
-      longitude: [null, Validators.required]
+      longitude: [null, Validators.required],
+      addressType: ['']
     });
   }
 
@@ -66,7 +61,29 @@ export class UserAddressesComponent implements OnInit {
       ) {
         this.marker.setLatLng([latNum, lngNum]);
         this.map.setView([latNum, lngNum], 13);
+        if (this.latLngSource === 'forward' || this.latLngSource === 'location') {
+          this.latLngSource = null;
+          return; // Do NOT call reverse geocode
+        }
         this.debouncedReverseGeocode(latNum, lngNum);
+      }
+    });
+
+    combineLatest([
+      this.addressForm.get('address')!.valueChanges,
+      this.addressForm.get('city')!.valueChanges,
+      this.addressForm.get('state')!.valueChanges,
+      this.addressForm.get('postalCode')!.valueChanges,
+      this.addressForm.get('country')!.valueChanges
+    ]).subscribe(([address, city, state, postalCode, country]) => {
+      if (address || city || state || postalCode || country) {
+        const query = [address, city, state, postalCode, country].filter(Boolean).join(', ');
+        if (query) {
+          if (this.forwardGeocodeTimeout) clearTimeout(this.forwardGeocodeTimeout);
+          this.forwardGeocodeTimeout = setTimeout(() => {
+            this.forwardGeocode(query);
+          }, 500);
+        }
       }
     });
   }
@@ -104,20 +121,16 @@ export class UserAddressesComponent implements OnInit {
     });
   }
 
-  ngAfterViewInit() {
-    // Map is initialized when modal opens
-  }
+  ngAfterViewInit() {}
 
   initMap() {
     if (this.map) {
       this.map.invalidateSize();
       return;
     }
-    // Use a default location for the map center, but do NOT set latitude/longitude in the form
     const defaultLat = 21.9162;
     const defaultLng = 95.9560;
     this.createMap(defaultLat, defaultLng);
-    // Do NOT call reverseGeocode or set lat/lng in the form here!
   }
 
   createMap(lat: number, lng: number) {
@@ -125,14 +138,22 @@ export class UserAddressesComponent implements OnInit {
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(this.map);
-    this.marker = L.marker([lat, lng], { draggable: true }).addTo(this.map);
+    const customIcon = L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34]
+    });
+    this.marker = L.marker([lat, lng], { draggable: true, icon: customIcon }).addTo(this.map);
 
     this.map.on('click', (e: any) => {
       const { lat, lng } = e.latlng;
+      this.latLngSource = 'manual';
       this.addressForm.patchValue({ latitude: lat, longitude: lng });
     });
     this.marker.on('dragend', () => {
       const { lat, lng } = this.marker!.getLatLng();
+      this.latLngSource = 'manual';
       this.addressForm.patchValue({ latitude: lat, longitude: lng });
     });
   }
@@ -146,23 +167,10 @@ export class UserAddressesComponent implements OnInit {
           this.map.setView([lat, lng], 15);
           this.marker.setLatLng([lat, lng]);
         }
-        this.latitude = lat;
-        this.longitude = lng;
         this.addressForm.patchValue({ latitude: lat, longitude: lng });
         this.reverseGeocode(lat, lng);
       });
     }
-  }
-
-  isValidLatLng(lat: any, lng: any): boolean {
-    return (
-      typeof lat === 'number' &&
-      typeof lng === 'number' &&
-      !isNaN(lat) &&
-      !isNaN(lng) &&
-      lat >= -90 && lat <= 90 &&
-      lng >= -180 && lng <= 180
-    );
   }
 
   debouncedReverseGeocode(lat: number, lng: number) {
@@ -176,24 +184,11 @@ export class UserAddressesComponent implements OnInit {
     fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
       .then(response => response.json())
       .then(data => {
-        console.log('Nominatim data:', data);
         const patch: any = {};
         if (data.display_name) patch.address = data.display_name;
         if (data.address) {
-          patch.city =
-            data.address.city ||
-            data.address.town ||
-            data.address.village ||
-            data.address.hamlet ||
-            data.address.suburb ||
-            data.address.county ||
-            '';
-          patch.state =
-            data.address.state ||
-            data.address.state_district ||
-            data.address.region ||
-            data.address.province ||
-            '';
+          patch.city = data.address.city || data.address.town || data.address.village || data.address.hamlet || data.address.suburb || data.address.county || '';
+          patch.state = data.address.state || data.address.state_district || data.address.region || data.address.province || '';
           patch.postalCode = data.address.postcode || '';
           patch.country = data.address.country || '';
         }
@@ -202,15 +197,16 @@ export class UserAddressesComponent implements OnInit {
   }
 
   submitAddress() {
+    const formValue = this.addressForm.value;
     const newAddress = {
-      address: this.address,
-      city: this.city,
-      state: this.state,
-      postalCode: this.postalCode,
-      country: this.country,
-      addressType: this.addressType,
-      latitude: this.latitude,
-      longitude: this.longitude
+      address: formValue.address,
+      city: formValue.city,
+      state: formValue.state,
+      postalCode: formValue.postalCode,
+      country: formValue.country,
+      addressType: formValue.addressType,
+      latitude: formValue.latitude,
+      longitude: formValue.longitude
     };
     console.log('Submitting address:', newAddress);
     this.closeAddModal();
@@ -222,13 +218,57 @@ export class UserAddressesComponent implements OnInit {
         (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
+          if (this.map && this.marker) {
+            this.marker.setLatLng([lat, lng]);
+            this.map.setView([lat, lng], 13);
+          }
+          this.latLngSource = 'location';
           this.addressForm.patchValue({ latitude: lat, longitude: lng });
-          this.debouncedReverseGeocode(lat, lng);
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`)
+            .then(response => response.json())
+            .then(data => {
+              const patch: any = {
+                latitude: lat,
+                longitude: lng,
+                address: data.display_name || '',
+                city: data.address?.city || data.address?.town || data.address?.village || data.address?.hamlet || data.address?.suburb || data.address?.county || '',
+                state: data.address?.state || data.address?.state_district || data.address?.region || data.address?.province || '',
+                postalCode: data.address?.postcode || '',
+                country: data.address?.country || ''
+              };
+              this.addressForm.patchValue(patch);
+            })
+            .catch(error => {
+              alert('Could not reach the geocoding service. Please check your internet connection or try again later.');
+              console.error('Reverse geocoding error:', error);
+            });
         },
-        (error) => {
+        (error: GeolocationPositionError) => {
           alert('Unable to retrieve your location.');
         }
       );
     }
+  }
+
+  forwardGeocode(query: string) {
+    fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&addressdetails=1`)
+      .then(response => response.json())
+      .then(results => {
+        if (results && results.length > 0) {
+          const result = results[0];
+          const lat = parseFloat(result.lat);
+          const lng = parseFloat(result.lon);
+          this.latLngSource = 'forward';
+          this.addressForm.patchValue({ latitude: lat, longitude: lng });
+          if (this.map && this.marker) {
+            this.marker.setLatLng([lat, lng]);
+            this.map.setView([lat, lng], 13);
+          }
+        }
+      })
+      .catch(error => {
+        alert('Could not reach the geocoding service. Please check your internet connection or try again later.');
+        console.error('Geocoding error:', error);
+      });
   }
 }
