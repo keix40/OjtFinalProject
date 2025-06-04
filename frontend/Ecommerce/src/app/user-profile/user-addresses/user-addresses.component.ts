@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnInit, OnDestroy } from '@angular/core';
+import { Component, AfterViewInit, OnInit, OnDestroy, AfterViewChecked } from '@angular/core';
 import * as L from 'leaflet';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Address, AddressService } from '../../services/address.service';
@@ -12,7 +12,7 @@ import { takeUntil } from 'rxjs/operators';
   templateUrl: './user-addresses.component.html',
   styleUrl: './user-addresses.component.css'
 })
-export class UserAddressesComponent implements OnInit, OnDestroy {
+export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewChecked {
   addresses: Address[] = [];
   showAddModal = false;
   addressForm: FormGroup;
@@ -26,6 +26,12 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
   private skipReverseGeocode = false;
   private latLngSource: 'manual' | 'forward' | 'location' | null = null;
   private destroy$ = new Subject<void>();
+  private addressMaps: { [id: number]: L.Map } = {};
+  private renderedAddressIds: Set<number> = new Set();
+  globalMapType: 'default' | 'satellite' | 'terrain' = 'default';
+  tileLayers: { [id: number]: L.TileLayer } = {};
+  isEditMode = false;
+  editingAddressId: number | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -46,6 +52,13 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.loadAddresses();
+
+    // Address input parsing for Myanmar format
+    this.addressForm.get('address')!.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        this.trimAddressInput();
+      });
 
     combineLatest([
       this.addressForm.get('latitude')!.valueChanges,
@@ -82,9 +95,7 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
         const query = [address, city, state, postalCode, country].filter(Boolean).join(', ');
         if (query) {
           if (this.forwardGeocodeTimeout) clearTimeout(this.forwardGeocodeTimeout);
-          this.forwardGeocodeTimeout = setTimeout(() => {
-            this.forwardGeocode(query);
-          }, 500);
+          this.forwardGeocode(query);
         }
       }
     });
@@ -93,6 +104,36 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  ngAfterViewChecked() {
+    // Initialize maps for each address if not already done
+    this.addresses.forEach(address => {
+      if (address.id && !this.renderedAddressIds.has(address.id) && address.latitude && address.longitude) {
+        const mapId = 'map-' + address.id;
+        const mapContainer = document.getElementById(mapId);
+        if (mapContainer && !this.addressMaps[address.id]) {
+          const map = L.map(mapId, {
+            center: [address.latitude, address.longitude],
+            zoom: 15,
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false
+          });
+          // Use global map type
+          let tileLayer: L.TileLayer = this.getTileLayer(this.globalMapType);
+          tileLayer.addTo(map);
+          this.tileLayers[address.id] = tileLayer;
+          L.marker([address.latitude, address.longitude]).addTo(map);
+          this.addressMaps[address.id] = map;
+          this.renderedAddressIds.add(address.id);
+        }
+      }
+    });
   }
 
   loadAddresses() {
@@ -108,6 +149,7 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
         next: (addresses: Address[]) => {
           console.log('Addresses loaded:', addresses);
           this.addresses = addresses;
+          this.renderedAddressIds.clear(); // Reset so maps can be re-initialized
         },
         error: (error: any) => {
           console.error('Error loading addresses:', error);
@@ -123,7 +165,10 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
   }
 
   closeAddModal() {
+    console.log('closeAddModal called');
     this.showAddModal = false;
+    this.isEditMode = false;
+    this.editingAddressId = null;
     this.map = undefined;
     this.marker = undefined;
     this.addressForm.reset({
@@ -210,6 +255,7 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
           patch.country = data.address.country || '';
         }
         this.addressForm.patchValue(patch, { emitEvent: false });
+        this.trimAddressInput();
       });
   }
 
@@ -230,9 +276,8 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
 
       this.addressService.addAddress(newAddress as Address).subscribe({
         next: (response) => {
-          this.addresses.push(response);
-          this.closeAddModal();
-          alert('Address added successfully!');
+          // Auto reload the page after successful address creation
+          window.location.reload();
         },
         error: (error) => {
           alert('Failed to add address. Please try again.');
@@ -272,6 +317,7 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
                 country: data.address?.country || ''
               };
               this.addressForm.patchValue(patch);
+              this.trimAddressInput();
             })
             .catch(error => {
               alert('Could not reach the geocoding service. Please check your internet connection or try again later.');
@@ -305,5 +351,92 @@ export class UserAddressesComponent implements OnInit, OnDestroy {
         alert('Could not reach the geocoding service. Please check your internet connection or try again later.');
         console.error('Geocoding error:', error);
       });
+  }
+
+  private trimAddressInput() {
+    const val = this.addressForm.get('address')!.value;
+    if (val && (val.match(/,/g) || []).length >= 3) {
+      const parts = val.split(',').map((p: string) => p.trim());
+      if (parts.length >= 4) {
+        const trimmedAddress = parts.slice(0, 3).join(', ');
+        this.addressForm.get('address')!.setValue(trimmedAddress, { emitEvent: false });
+        if (!this.addressForm.get('city')!.value) this.addressForm.get('city')!.setValue(parts[3], { emitEvent: false });
+        if (parts[4] && !this.addressForm.get('state')!.value) this.addressForm.get('state')!.setValue(parts[4], { emitEvent: false });
+        if (parts[5] && !this.addressForm.get('postalCode')!.value) this.addressForm.get('postalCode')!.setValue(parts[5], { emitEvent: false });
+        if (parts[6] && !this.addressForm.get('country')!.value) this.addressForm.get('country')!.setValue(parts[6], { emitEvent: false });
+        console.log('Trimmed address input:', trimmedAddress);
+      }
+    }
+  }
+
+  onAddressEnter() {
+    this.trimAddressInput();
+    // Optionally, trigger geocoding here if you want
+    // For example:
+    const address = this.addressForm.get('address')!.value;
+    const city = this.addressForm.get('city')!.value;
+    const state = this.addressForm.get('state')!.value;
+    const postalCode = this.addressForm.get('postalCode')!.value;
+    const country = this.addressForm.get('country')!.value;
+    const query = [address, city, state, postalCode, country].filter(Boolean).join(', ');
+    if (query) {
+      this.forwardGeocode(query);
+    }
+  }
+
+  reloadPage() {
+    window.location.reload();
+  }
+
+  setGlobalMapType(type: 'default' | 'satellite' | 'terrain') {
+    this.globalMapType = type;
+    // Update all maps
+    Object.keys(this.addressMaps).forEach(idStr => {
+      const id = Number(idStr);
+      const map = this.addressMaps[id];
+      if (map) {
+        // Remove old tile layer
+        if (this.tileLayers[id]) {
+          map.removeLayer(this.tileLayers[id]);
+        }
+        // Add new tile layer
+        const tileLayer = this.getTileLayer(type);
+        tileLayer.addTo(map);
+        this.tileLayers[id] = tileLayer;
+      }
+    });
+  }
+
+  getTileLayer(type: 'default' | 'satellite' | 'terrain'): L.TileLayer {
+    if (type === 'satellite') {
+      return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri'
+      });
+    } else if (type === 'terrain') {
+      return L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenTopoMap contributors'
+      });
+    } else {
+      return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      });
+    }
+  }
+
+  editAddress(address: Address) {
+    this.isEditMode = true;
+    this.editingAddressId = address.id!;
+    this.showAddModal = true;
+    this.addressForm.patchValue({
+      address: address.address,
+      city: address.city,
+      state: address.state,
+      postalCode: address.postalCode,
+      country: address.country,
+      latitude: address.latitude,
+      longitude: address.longitude,
+      addressType: address.type
+    });
+    setTimeout(() => this.initMap(), 0);
   }
 }

@@ -13,12 +13,12 @@
         <div class="address-info-box mb-4">
           <div class="address-header">
             <i class="bi bi-geo-alt-fill"></i>
-            <h4 class="fw-bold mb-0">Address Information</h4>
+            <h4 class="fw-bold mb-0">{{ isEditMode ? 'Edit Address' : 'Add New Address' }}</h4>
           </div>
           <div class="address-desc">Enter your complete address details. We'll validate the information and show a map preview.</div>
           <div class="mb-3">
             <label for="addressInput" class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="addressInput" placeholder="Enter address" formControlName="address">
+            <input type="text" class="form-control" id="addressInput" placeholder="Enter address" formControlName="address" (keydown.enter)="onAddressEnter()">
           </div>
           <div class="mb-3">
             <label for="cityInput" class="form-label fw-semibold">City <span class="text-danger">*</span></label>
@@ -67,16 +67,33 @@
         </div>
         <div class="custom-modal-footer px-4 pb-4">
           <button type="button" class="btn btn-outline-secondary me-2" (click)="closeAddModal()">Cancel</button>
-          <button type="button" class="btn btn-primary" (click)="submitAddress()">Save Address</button>
+          <button type="button" class="btn btn-primary me-2" (click)="submitAddress()">{{ isEditMode ? 'Save Changes' : 'Save Address' }}</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
+<!-- Global map view toggle -->
+<div class="global-map-toggle mb-4 d-flex align-items-center gap-2">
+  <label for="mapViewSelect" class="mb-0 fw-semibold">Map view:</label>
+  <select id="mapViewSelect" class="form-select form-select-sm w-auto"
+          [(ngModel)]="globalMapType"
+          (change)="setGlobalMapType(globalMapType)">
+    <option value="default">Default</option>
+    <option value="satellite">Satellite</option>
+    <option value="terrain">Terrain</option>
+  </select>
+</div>
+
 <!-- Address List -->
 <div class="address-list">
-  <div *ngFor="let address of addresses" class="address-item card mb-3 p-3">
+  <div *ngFor="let address of addresses" class="address-item card mb-3 p-3 position-relative">
+    <ng-container *ngIf="address.id != null">
+      <!-- Map view -->
+      <div [id]="'map-' + address.id" class="address-map mb-2" style="height: 180px; width: 100%; border-radius: 8px;"></div>
+    </ng-container>
+    <!-- Address details -->
     <h5 class="card-title mb-2">{{address.address}}</h5>
     <div class="mb-1"><strong>City:</strong> {{address.city}}</div>
     <div class="mb-1"><strong>State:</strong> {{address.state}}</div>
@@ -85,6 +102,16 @@
     <div class="mb-1"><strong>Type:</strong> {{address.type}}</div>
     <div class="mb-1" *ngIf="address.latitude"><strong>Latitude:</strong> {{address.latitude}}</div>
     <div class="mb-1" *ngIf="address.longitude"><strong>Longitude:</strong> {{address.longitude}}</div>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button class="btn btn-outline-dark btn-sm d-flex align-items-center gap-1" (click)="editAddress(address)">
+        <i class="bi bi-pencil"></i> Edit
+      </button>
+      <!--
+      <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" (click)="deleteAddress(address)">
+        <i class="bi bi-trash"></i> Delete
+      </button>
+      -->
+    </div>
   </div>
 </div>
 
