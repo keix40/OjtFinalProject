@@ -1,0 +1,87 @@
+<form #createBrandForm="ngForm" (ngSubmit)="createBrand(createBrandForm)">
+  <div class="modal-header">
+    <h5 class="modal-title">Create Brand</h5>
+    <button type="button" class="btn-close" (click)="activeModal.dismiss()"></button>
+  </div>
+
+  <div class="modal-body">
+    <!-- Brand Name -->
+    <div class="mb-3">
+      <label class="form-label"><strong>Brand Name:</strong></label>
+      <input
+        type="text"
+        class="form-control"
+        name="brandName"
+        required
+        [(ngModel)]="brand.brandName"
+        #brandName="ngModel"
+        [ngClass]="{ 'is-invalid': brandName.invalid && brandName.touched }"
+      />
+      <div class="invalid-feedback" *ngIf="brandName.invalid && brandName.touched">
+        Brand name is required.
+      </div>
+    </div>
+
+    <!-- Category Type -->
+    <div class="mb-3">
+    <label><strong>Category Type:</strong></label><br />
+    <div class="form-check form-check-inline">
+        <input
+        class="form-check-input"
+        type="radio"
+        name="categoryOption"
+        value="old"
+        [(ngModel)]="categoryOption"
+        id="oldCategory"
+        />
+        <label class="form-check-label" for="oldCategory">Old Category</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input
+        class="form-check-input"
+        type="radio"
+        name="categoryOption"
+        value="new"
+        [(ngModel)]="categoryOption"
+        id="newCategory"
+        />
+        <label class="form-check-label" for="newCategory">New Category</label>
+    </div>
+    </div>
+
+    <!-- MULTI SELECT Dropdown for Old Category -->
+    <div class="mb-3" *ngIf="categoryOption === 'old'">
+    <label for="categorySelect" class="form-label"><strong>Select Categories:</strong></label>
+    <select
+        multiple
+        class="form-select"
+        id="categorySelect"
+        name="selectedCategoryIds"
+        [(ngModel)]="selectedCategoryIds"
+        required
+    >
+        <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+    </select>
+    </div>
+
+    <!-- Input for New Category -->
+    <div class="mb-3" *ngIf="categoryOption === 'new'">
+    <label class="form-label"><strong>New Category Name:</strong></label>
+    <input
+        type="text"
+        class="form-control"
+        name="newCategoryName"
+        [(ngModel)]="newCategoryName"
+        placeholder="Enter new category name"
+        required
+    />
+    </div>
+
+  </div>
+
+  <div class="modal-footer">
+    <button type="submit" class="btn btn-primary" [disabled]="!createBrandForm.valid">
+      Create Brand
+    </button>
+  </div>
+</form>

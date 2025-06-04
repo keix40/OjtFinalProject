@@ -1,9 +1,10 @@
-import { Component, AfterViewInit, OnInit } from '@angular/core';
+import { Component, AfterViewInit, OnInit, OnDestroy } from '@angular/core';
 import * as L from 'leaflet';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Address, AddressService } from '../../services/address.service';
 import { AuthService } from '../../auth/auth.service';
-import { combineLatest } from 'rxjs';
+import { combineLatest, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'app-user-addresses',
@@ -11,7 +12,7 @@ import { combineLatest } from 'rxjs';
   templateUrl: './user-addresses.component.html',
   styleUrl: './user-addresses.component.css'
 })
-export class UserAddressesComponent implements OnInit {
+export class UserAddressesComponent implements OnInit, OnDestroy {
   addresses: Address[] = [];
   showAddModal = false;
   addressForm: FormGroup;
@@ -24,6 +25,7 @@ export class UserAddressesComponent implements OnInit {
   private forwardGeocodeTimeout: any = null;
   private skipReverseGeocode = false;
   private latLngSource: 'manual' | 'forward' | 'location' | null = null;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private fb: FormBuilder,
@@ -88,15 +90,30 @@ export class UserAddressesComponent implements OnInit {
     });
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   loadAddresses() {
-    this.addressService.getAddresses().subscribe({
-      next: (addresses: Address[]) => {
-        this.addresses = addresses;
-      },
-      error: (error: Error) => {
-        console.error('Error loading addresses:', error);
-      }
-    });
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      console.error('No user ID available');
+      return;
+    }
+
+    this.addressService.getAddresses()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (addresses: Address[]) => {
+          console.log('Addresses loaded:', addresses);
+          this.addresses = addresses;
+        },
+        error: (error: any) => {
+          console.error('Error loading addresses:', error);
+          // You might want to show a user-friendly error message here
+        }
+      });
   }
 
   openAddModal() {
@@ -197,19 +214,37 @@ export class UserAddressesComponent implements OnInit {
   }
 
   submitAddress() {
-    const formValue = this.addressForm.value;
-    const newAddress = {
-      address: formValue.address,
-      city: formValue.city,
-      state: formValue.state,
-      postalCode: formValue.postalCode,
-      country: formValue.country,
-      addressType: formValue.addressType,
-      latitude: formValue.latitude,
-      longitude: formValue.longitude
-    };
-    console.log('Submitting address:', newAddress);
-    this.closeAddModal();
+    if (this.addressForm.valid) {
+      const formValue = this.addressForm.value;
+      const newAddress = {
+        address: formValue.address,
+        city: formValue.city,
+        state: formValue.state,
+        postalCode: formValue.postalCode,
+        country: formValue.country,
+        latitude: formValue.latitude,
+        longitude: formValue.longitude,
+        type: formValue.addressType,
+        userId: this.authService.getUserId()
+      };
+
+      this.addressService.addAddress(newAddress as Address).subscribe({
+        next: (response) => {
+          this.addresses.push(response);
+          this.closeAddModal();
+          alert('Address added successfully!');
+        },
+        error: (error) => {
+          alert('Failed to add address. Please try again.');
+        }
+      });
+    } else {
+      Object.keys(this.addressForm.controls).forEach(key => {
+        const control = this.addressForm.get(key);
+        control?.markAsTouched();
+      });
+      alert('Please fill in all required fields correctly.');
+    }
   }
 
   useMyLocation() {

@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 
@@ -39,10 +39,12 @@ export class HeaderComponent implements OnInit {
   cartTotal = 0;
   isMobileSearchVisible = false;
   isAuthenticated = false;
+  openDropdown: string | null = null;
 
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private elementRef: ElementRef
   ) {}
 
   ngOnInit() {
@@ -56,36 +58,10 @@ export class HeaderComponent implements OnInit {
     this.isAuthenticated = this.authService.isLoggedIn();
   }
 
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
-    const dropdowns = document.querySelectorAll('.dropdown');
-    dropdowns.forEach(dropdown => {
-      if (!dropdown.contains(event.target as Node)) {
-        dropdown.classList.remove('show');
-      }
-    });
-  }
-
-  toggleDropdown(event: Event, dropdownClass: string) {
-    event.preventDefault();
-    const dropdown = document.querySelector(`.${dropdownClass}`);
-    if (dropdown) {
-      const isOpen = dropdown.classList.contains('show');
-      
-      // Close all other dropdowns
-      document.querySelectorAll('.dropdown').forEach(d => {
-        if (d !== dropdown) {
-          d.classList.remove('show');
-        }
-      });
-      
-      // Toggle current dropdown
-      if (!isOpen) {
-        dropdown.classList.add('show');
-      } else {
-        dropdown.classList.remove('show');
-      }
-    }
+  toggleDropdown(event: Event, dropdownName: string) {
+    event.stopPropagation();
+    this.openDropdown = this.openDropdown === dropdownName ? null : dropdownName;
+    console.log('toggleDropdown called:', dropdownName, 'openDropdown:', this.openDropdown);
   }
 
   toggleMobileSearch() {
@@ -113,5 +89,34 @@ export class HeaderComponent implements OnInit {
     this.authService.logout();
     this.isAuthenticated = false;
     this.router.navigate(['/login']);
+  }
+
+  onAccountClick(event: Event) {
+    console.log('Account button clicked');
+    this.toggleDropdown(event, 'account-dropdown');
+    console.log('openDropdown value:', this.openDropdown);
+  }
+
+  navigateToOrders() {
+    this.openDropdown = null;
+    this.router.navigate(['/profile', this.userId], { queryParams: { section: 'orders' } });
+  }
+
+  navigateToProfile() {
+    this.openDropdown = null;
+    this.router.navigate(['/profile', this.userId], { queryParams: { section: 'personal-info' } });
+  }
+
+  navigateToWishlist() {
+    this.openDropdown = null;
+    this.router.navigate(['/profile', this.userId], { queryParams: { section: 'wishlist' } });
+  }
+
+  @HostListener('document:click', ['$event'])
+  handleDocumentClick(event: MouseEvent) {
+    // Only close dropdown if click is outside any .dropdown in this component
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.openDropdown = null;
+    }
   }
 }

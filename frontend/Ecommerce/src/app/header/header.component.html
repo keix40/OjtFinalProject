@@ -24,12 +24,12 @@
                 </button>
 
                 <!-- Account -->
-                <div class="dropdown account-dropdown">
+                <div class="dropdown account-dropdown" [class.show]="openDropdown === 'account-dropdown'">
                     <button class="header-action-btn" type="button" (click)="toggleDropdown($event, 'account-dropdown')">
                         <i class="bi bi-person"></i>
                         <span class="action-text d-none d-md-inline-block">Account</span>
                     </button>
-                    <div class="dropdown-menu">
+                    <div class="dropdown-menu" [class.show]="openDropdown === 'account-dropdown'">
                         <div class="dropdown-header">
                             <ng-container *ngIf="isAuthenticated; else notAuthenticatedHeader">
                                 <h6>Welcome, <span class="sitename">{{name}}</span></h6>
@@ -43,15 +43,15 @@
                         </div>
                         <div class="dropdown-body">
                             <ng-container *ngIf="isAuthenticated; else notAuthenticated">
-                                <a class="dropdown-item d-flex align-items-center" [routerLink]="['/profile', userId]">
+                                <a class="dropdown-item d-flex align-items-center" (click)="navigateToProfile()">
                                     <i class="bi bi-person-circle me-2"></i>
                                     <span>My Profile</span>
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/orders">
+                                <a class="dropdown-item d-flex align-items-center" (click)="navigateToOrders()">
                                     <i class="bi bi-bag-check me-2"></i>
                                     <span>My Orders</span>
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/wishlist">
+                                <a class="dropdown-item d-flex align-items-center" (click)="navigateToWishlist()">
                                     <i class="bi bi-heart me-2"></i>
                                     <span>My Wishlist</span>
                                 </a>
@@ -90,13 +90,13 @@
                 </a>
 
                 <!-- Cart -->
-                <div *ngIf="isAuthenticated" class="dropdown cart-dropdown">
+                <div *ngIf="isAuthenticated" class="dropdown cart-dropdown" [class.show]="openDropdown === 'cart-dropdown'">
                     <button class="header-action-btn" type="button" (click)="toggleDropdown($event, 'cart-dropdown')">
                         <i class="bi bi-cart3"></i>
                         <span class="action-text d-none d-md-inline-block">Cart</span>
                         <span class="badge">{{cartItems.length}}</span>
                     </button>
-                    <div class="dropdown-menu cart-dropdown-menu">
+                    <div class="dropdown-menu cart-dropdown-menu" [class.show]="openDropdown === 'cart-dropdown'">
                         <div class="dropdown-header">
                             <h6>Shopping Cart ({{cartItems.length}})</h6>
                         </div>

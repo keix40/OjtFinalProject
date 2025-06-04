@@ -66,88 +66,29 @@
           <button type="button" class="btn w-100 validate-btn mb-2" (click)="submitAddress()">Validate Address</button>
         </div>
         <div class="custom-modal-footer px-4 pb-4">
-          <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
+          <button type="button" class="btn btn-outline-secondary me-2" (click)="closeAddModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="submitAddress()">Save Address</button>
         </div>
       </form>
     </div>
   </div>
 </div>
 
-<!-- Address list placeholder -->
+<!-- Address List -->
 <div class="address-list">
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
+  <div *ngFor="let address of addresses" class="address-item card mb-3 p-3">
+    <h5 class="card-title mb-2">{{address.address}}</h5>
+    <div class="mb-1"><strong>City:</strong> {{address.city}}</div>
+    <div class="mb-1"><strong>State:</strong> {{address.state}}</div>
+    <div class="mb-1"><strong>Postal Code:</strong> {{address.postalCode}}</div>
+    <div class="mb-1"><strong>Country:</strong> {{address.country}}</div>
+    <div class="mb-1"><strong>Type:</strong> {{address.type}}</div>
+    <div class="mb-1" *ngIf="address.latitude"><strong>Latitude:</strong> {{address.latitude}}</div>
+    <div class="mb-1" *ngIf="address.longitude"><strong>Longitude:</strong> {{address.longitude}}</div>
   </div>
-
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-  <!-- More address items can be added here -->
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-   
 </div>
+
+<!-- Add Address Button -->
+<!-- <button class="btn btn-primary" (click)="openAddModal()">
+  <i class="bi bi-plus-circle me-2"></i>Add New Address
+</button> -->
