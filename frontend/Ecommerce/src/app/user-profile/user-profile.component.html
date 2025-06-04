@@ -1,0 +1,71 @@
+<app-header></app-header>
+<div class="account-dashboard">
+    <div class="sidebar">
+        <div class="user-info">
+            <div class="avatar">{{ userDetails.name ? userDetails.name.charAt(0).toUpperCase() : '' }}</div>
+            <div class="details">
+                <h4>{{userDetails.name}}</h4>
+                <p>{{userDetails.roles?.join(', ')}}</p>
+                <p>{{userDetails.id}}</p>
+            </div>
+        </div>
+        <nav class="account-nav">
+            <ul>
+                <li><a [class.active]="activeSection === 'orders'" (click)="selectSection('orders')"><i class="bi bi-box-seam me-2"></i> Orders <span class="badge">1</span></a></li>
+                <li><a [class.active]="activeSection === 'wishlist'" (click)="selectSection('wishlist')"><i class="bi bi-heart me-2"></i> Wishlist</a></li>
+                <li><a [class.active]="activeSection === 'payment'" (click)="selectSection('payment')"><i class="bi bi-credit-card me-2"></i> Payment methods</a></li>
+                <li><a [class.active]="activeSection === 'reviews'" (click)="selectSection('reviews')"><i class="bi bi-star me-2"></i> My reviews</a></li>
+                <li><a [class.active]="activeSection === 'personal-info'" (click)="selectSection('personal-info')"><i class="bi bi-person me-2"></i> Personal info</a></li>
+                <li><a [class.active]="activeSection === 'addresses'" (click)="selectSection('addresses')"><i class="bi bi-geo-alt me-2"></i> Addresses</a></li>
+                <li><a [class.active]="activeSection === 'notifications'" (click)="selectSection('notifications')"><i class="bi bi-bell me-2"></i> Notifications</a></li>
+            </ul>
+            <div class="customer-service">
+                <h5>CUSTOMER SERVICE</h5>
+                <ul>
+                    <li><a (click)="selectSection('help')"><i class="bi bi-question-circle me-2"></i> Help center</a></li>
+                    <li><a (click)="selectSection('terms')"><i class="bi bi-journal-text me-2"></i> Terms and conditions</a></li>
+                </ul>
+            </div>
+            <div class="logout">
+                <a (click)="logout()"><i class="bi bi-box-arrow-right me-2"></i> Log out</a>
+            </div>
+        </nav>
+    </div>
+    <div class="main-content">
+        <!-- Orders Section -->
+        <div *ngIf="activeSection === 'orders'" class="orders-section">
+           <app-user-orders></app-user-orders>
+        </div>
+
+        <!-- Wishlist Section -->
+        <div *ngIf="activeSection === 'wishlist'" class="wishlist-section">
+            <app-user-wishlist></app-user-wishlist>
+        </div>
+
+        <!-- Payment Methods Section -->
+        <div *ngIf="activeSection === 'payment'" class="payment-section">
+            <app-user-payment-methods></app-user-payment-methods>
+        </div>
+
+        <!-- My Reviews Section -->
+        <div *ngIf="activeSection === 'reviews'" class="reviews-section">
+            <app-user-reviews></app-user-reviews>
+        </div>
+
+        <!-- Personal Info Section -->
+        <div *ngIf="activeSection === 'personal-info'" class="personal-info-section">
+            <app-user-personal-info [userDetails]="userDetails"></app-user-personal-info>
+        </div>
+
+        <!-- Addresses Section -->
+        <div *ngIf="activeSection === 'addresses'">
+            <app-user-addresses></app-user-addresses>
+        </div>
+
+        <!-- Notifications Section -->
+        <div *ngIf="activeSection === 'notifications'">
+            <app-user-notifications></app-user-notifications>
+        </div>
+
+    </div>
+</div> 

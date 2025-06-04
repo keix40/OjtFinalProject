@@ -1,0 +1,648 @@
+:root {
+    --primary-color: #2a2a2a;
+    --secondary-color: #d4a762; /* Your existing secondary color */
+    --accent-color: #e63946;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --gray-color: #6c757d;
+    --border-color: #e0e0e0; /* A lighter border color */
+    --card-shadow: 0 6px 12px rgba(0, 0, 0, 0.08); /* Softer, more spread out shadow */
+    --transition-ease: all 0.3s ease;
+}
+
+.profile-container {
+    padding: 2rem;
+    min-height: calc(100vh - 80px);
+    background-color: #f8f9fa;
+}
+
+.profile-card {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.profile-header {
+    background: var(--secondary-color);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 1rem;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-avatar i {
+    font-size: 4rem;
+    color: var(--secondary-color);
+}
+
+.profile-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.user-role {
+    margin: 0.5rem 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.profile-details {
+    padding: 2rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item i {
+    font-size: 1.5rem;
+    color: var(--secondary-color);
+    margin-right: 1rem;
+    width: 24px;
+}
+
+.detail-content {
+    flex: 1;
+}
+
+.detail-content label {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.25rem;
+}
+
+.detail-content p {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+}
+
+.profile-actions {
+    padding: 1.5rem 2rem;
+    background: #f8f9fa;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn i {
+    margin-right: 0.5rem;
+}
+
+.btn-primary {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #c1914b;
+}
+
+.btn-outline {
+    background: white;
+    color: var(--secondary-color);
+    border: 2px solid var(--secondary-color);
+}
+
+.btn-outline:hover {
+    background: var(--secondary-color);
+    color: white;
+}
+
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+
+    .profile-actions {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+.account-dashboard {
+    display: flex;
+    min-height: calc(100vh - 80px - 60px);
+    background: linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%);
+    padding: 30px;
+    gap: 30px;
+    animation: fadeInMain 0.7s;
+}
+
+@keyframes fadeInMain {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.sidebar {
+    width: 280px;
+    background: linear-gradient(135deg, #fff 60%, #f7e9c7 100%);
+    box-shadow: var(--card-shadow);
+    padding: 2rem 1.5rem;
+    flex-shrink: 0;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    animation: fadeInSidebar 0.8s;
+}
+
+@keyframes fadeInSidebar {
+    from { opacity: 0; transform: translateX(-40px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.avatar {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.13);
+    margin-bottom: 1rem;
+    transition: box-shadow 0.3s;
+}
+.avatar:hover {
+    box-shadow: 0 6px 18px rgba(44, 62, 80, 0.18);
+}
+
+.details h4 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.2rem;
+}
+.details p {
+    color: var(--gray-color);
+    margin-bottom: 0.1rem;
+}
+
+.account-nav a {
+    border-radius: 8px;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    padding: 0.7rem 1.2rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+}
+.account-nav a.active, .account-nav a:hover {
+    background: linear-gradient(90deg, var(--secondary-color) 60%, #fffbe6 100%);
+    color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(212, 167, 98, 0.13);
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 0;
+    animation: fadeInContent 0.8s;
+}
+@keyframes fadeInContent {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add fade-in to all main sections */
+.orders-section, .wishlist-section, .payment-section, .reviews-section, .personal-info-section, .addresses-section, .notifications-section {
+    animation: fadeInSection 0.7s;
+}
+@keyframes fadeInSection {
+    from { opacity: 0; transform: scale(0.98); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Refined User Info */
+.user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color); /* Using refined border color */
+}
+
+.details .bonuses {
+    color: var(--secondary-color);
+    font-weight: 600; /* Bolder font weight */
+    margin-top: 0.3rem; /* Added margin */
+}
+
+/* Refined Account Navigation */
+.account-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.account-nav li {
+    margin-bottom: 0.4rem; /* Slightly reduced margin */
+}
+
+.account-nav a i {
+    font-size: 1.3rem;
+    margin-right: 1rem;
+    color: var(--gray-color);
+    transition: var(--transition-ease);
+}
+
+.account-nav a:hover i {
+     color: var(--primary-color); /* Darker icon color on hover */
+}
+
+.account-nav a.active i {
+     color: var(--secondary-color); /* Highlight icon color on active */
+}
+
+.account-nav .badge {
+    margin-left: auto;
+    background-color: var(--secondary-color); /* Use secondary color for badge */
+    color: white;
+    padding: 0.3em 0.7em; /* Adjusted padding */
+    border-radius: 10px; /* More rounded badge */
+    font-size: 0.8rem; /* Slightly larger font size */
+}
+
+/* Refined Customer Service and Logout */
+.customer-service {
+    margin-top: 2.5rem; /* Increased margin */
+    padding-top: 2rem; /* Increased padding */
+    border-top: 1px solid var(--border-color); /* Using refined border color */
+}
+
+.customer-service h5 {
+    font-size: 0.95rem; /* Slightly larger font size */
+    color: #888;
+    margin-bottom: 1.2rem; /* Adjusted margin */
+    padding-left: 1.2rem; /* Adjusted padding */
+}
+
+.customer-service ul {
+     list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.customer-service li {
+    margin-bottom: 0.4rem; /* Consistent margin */
+}
+
+.customer-service a {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1.2rem; /* Consistent padding */
+    color: var(--primary-color);
+    text-decoration: none;
+    border-radius: 8px; /* Consistent border-radius */
+    transition: var(--transition-ease);
+    font-weight: 500; /* Added font weight */
+}
+
+.customer-service a:hover {
+    background-color: #f1f1f1;
+}
+
+.customer-service a i {
+    font-size: 1.3rem; /* Consistent icon size */
+     margin-right: 1rem; /* Consistent margin */
+     color: var(--gray-color); /* Default icon color */
+     transition: var(--transition-ease);
+}
+
+.customer-service a:hover i {
+     color: var(--primary-color); /* Darker icon color on hover */
+}
+
+.logout {
+    margin-top: 2.5rem; /* Consistent margin */
+    padding-top: 2rem; /* Consistent padding */
+    border-top: 1px solid var(--border-color); /* Using refined border color */
+}
+
+.logout a {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 1.2rem; /* Consistent padding */
+    color: var(--accent-color); /* Use accent color for logout */
+    text-decoration: none;
+    border-radius: 8px; /* Consistent border-radius */
+    transition: var(--transition-ease);
+    font-weight: 500; /* Added font weight */
+}
+
+.logout a:hover {
+    background-color: rgba(var(--accent-color), 0.1); /* Lighter hover background using accent color */
+}
+
+.logout a i {
+    font-size: 1.3rem; /* Consistent icon size */
+    margin-right: 1rem; /* Consistent margin */
+    color: var(--accent-color); /* Icon color matches text */
+}
+
+/* Refined Main Content Area */
+.orders-section,
+.profile-container .profile-card { /* Applied similar card styles to profile info */
+    background-color: #fff;
+    padding: 2.5rem; /* Increased padding */
+    border-radius: 10px; /* Consistent border-radius */
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color); /* Added a subtle border */
+    margin-bottom: 20px; /* Add margin if multiple sections are stacked (not the case here, but good practice) */
+}
+
+/* Ensure personal info card within main content doesn't have extra margin/padding from .profile-container */
+.main-content .profile-container {
+    padding: 0; /* Remove padding from the container */
+    min-height: auto; /* Remove min-height constraint */
+    background-color: transparent; /* Transparent background */
+}
+
+.main-content .profile-card {
+    margin: 0; /* Remove auto margin */
+}
+
+/* Refined Orders Table Styles */
+.orders-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem; /* Increased margin */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.orders-controls .form-select {
+    width: 200px; /* Increased width */
+    padding: 0.6rem 1rem; /* Adjusted padding */
+    border-radius: 8px; /* Consistent border-radius */
+    border: 1px solid var(--border-color); /* Using refined border color */
+    background-color: #fff;
+    font-size: 0.95rem;
+}
+
+.orders-table {
+    width: 100%;
+    border-collapse: separate; /* Use separate for rounded corners/borders */
+    border-spacing: 0;
+    margin-bottom: 2rem; /* Increased margin */
+    border: 1px solid var(--border-color); /* Add border to the table container */
+    border-radius: 8px; /* Rounded corners for the table */
+    overflow: hidden; /* Hide overflow for rounded corners */
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 1.2rem 1rem; /* Adjusted padding */
+    text-align: left;
+    border-bottom: 1px solid var(--border-color); /* Using refined border color */
+}
+
+.orders-table th {
+    font-weight: 700; /* Bolder font weight */
+    color: var(--primary-color); /* Darker text color */
+    text-transform: uppercase;
+    font-size: 0.85rem; /* Slightly smaller font size */
+    background-color: #f9f9f9; /* Subtle background for header */
+}
+
+.orders-table th:first-child {
+    border-top-left-radius: 8px; /* Rounded top-left corner */
+}
+
+.orders-table th:last-child {
+    border-top-right-radius: 8px; /* Rounded top-right corner */
+}
+
+.orders-table tbody tr:last-child td {
+    border-bottom: none; /* Remove border from last row */
+}
+
+.orders-table tbody tr:hover {
+    background-color: #f0f0f0; /* Subtle hover effect */
+}
+
+.product-previews {
+    display: flex;
+    gap: 8px; /* Increased gap */
+    margin-top: 8px; /* Increased margin */
+}
+
+.product-previews img {
+    width: 45px; /* Slightly larger images */
+    height: 45px; /* Slightly larger images */
+    object-fit: cover;
+    border-radius: 6px; /* Slightly larger border-radius */
+    border: 1px solid #eee;
+}
+
+.more-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px; /* Match image size */
+    height: 45px; /* Match image size */
+    background-color: #f0f0f0; /* Lighter background */
+    border-radius: 6px; /* Consistent border-radius */
+    font-size: 0.9rem; /* Slightly larger font size */
+    color: #555;
+}
+
+.status {
+    display: inline-block;
+    padding: 0.3em 0.8em; /* Adjusted padding */
+    border-radius: 16px; /* More rounded pills */
+    font-size: 0.85rem;
+    font-weight: 600; /* Bolder font weight */
+}
+
+.status.in-progress {
+    color: #a1887f; /* A more subtle, unique color */
+    background-color: #fff3e0; /* Light background */
+}
+
+.status.delivered {
+    color: #4caf50; /* Material Green */
+    background-color: #e8f5e9; /* Light background */
+}
+
+.status.canceled {
+    color: #ef5350; /* Material Red */
+    background-color: #ffebee; /* Light background */
+}
+
+.orders-table td .bi-chevron-down {
+    cursor: pointer;
+    font-size: 1.1rem; /* Slightly larger icon */
+    color: var(--gray-color);
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem; /* Slightly adjusted gap */
+    margin-top: 2rem;
+}
+
+.pagination a {
+    display: inline-flex; /* Use flex to center content */
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem; /* Adjusted padding for pill shape */
+    border: 1px solid var(--border-color);
+    border-radius: 25px; /* Increased border-radius for pill shape */
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition-ease);
+    font-weight: 500;
+    min-width: 40px; /* Ensure consistent size */
+    height: 40px; /* Ensure consistent height */
+    box-sizing: border-box; /* Include border in sizing */
+}
+
+.pagination a:hover {
+    background-color: var(--secondary-color); /* Secondary color background on hover */
+    color: white; /* White text on hover */
+    border-color: var(--secondary-color); /* Secondary color border on hover */
+    /* Removed transform and shadow from hover */
+}
+
+.pagination a.active {
+    background-color: #000; /* Black background for active */
+    color: #fff; /* White text for active */
+    border-color: #000; /* Border color matches background */
+    font-weight: 700; /* Bolder font for active */
+    /* Subtle animation on active (keep for click effect) */
+    transform: scale(1.05); 
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15); 
+}
+
+@media (max-width: 992px) {
+    .account-dashboard {
+        flex-direction: column;
+        padding: 10px;
+    }
+    .sidebar {
+        width: 100%;
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        padding: 1rem 0.5rem;
+    }
+    .main-content {
+        padding: 0.5rem;
+    }
+}
+
+.wishlist-section {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+}
+
+.wishlist-section h3 {
+     font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+.wishlist-items {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid */
+}
+
+.wishlist-item {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+}
+
+.item-image img {
+    width: 80px; /* Adjusted image size */
+    height: 80px; /* Adjusted image size */
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 1rem;
+     border: 1px solid #eee;
+}
+
+.item-details {
+    flex-grow: 1;
+}
+
+.item-details h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+}
+
+.item-details .price {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+
+.remove-item {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: var(--gray-color);
+    cursor: pointer;
+    transition: var(--transition-ease);
+}
+
+.remove-item:hover {
+    color: var(--accent-color);
+} 
