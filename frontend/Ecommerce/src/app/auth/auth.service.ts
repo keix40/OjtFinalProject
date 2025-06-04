@@ -3,8 +3,10 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { LoginRequest } from '../login-request';
 import { LoginResponse } from '../login-response';
+import { RegisterResponse } from './auth.types';
 import { RegisterRequest } from '../register-request';
 import { jwtDecode } from 'jwt-decode';
+
 
 
 @Injectable({ providedIn: 'root' })
@@ -17,9 +19,9 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.baseUrl}/login`, data);
   }
 
-  register(data: RegisterRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/register`, data);
-  }
+  register(data: RegisterRequest): Observable<RegisterResponse> {
+  return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
+}
 
 
 
@@ -68,6 +70,14 @@ export class AuthService {
     const decoded = this.getDecodedToken();
     return decoded?.roles ? decoded.roles.split(',') : [];
   }
+  verifyOtp(email: string, otp: string): Observable<any> {
+  return this.http.post(`${this.baseUrl}/verify-otp`, { email, otp });
+}
 
-  
+resendOtp(email: string): Observable<any> {
+  return this.http.post(`${this.baseUrl}/resend-otp`, { email });
+}
+
+
+
 }

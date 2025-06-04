@@ -11,32 +11,32 @@
             --green: #0F9D58; /* Google green */
             --yellow: #F4B400; /* Google yellow */
         }
-        
+
         body {
             font-family: 'Space Grotesk', sans-serif;
             background-color: var(--white);
             color: var(--black);
             line-height: 1.2;
         }
-        
+
         /* Brutalist UI Elements */
         .brutal-border {
             border: 3px solid var(--black) !important;
             box-shadow: 8px 8px 0 var(--black) !important;
         }
-        
+
         .brutal-card {
             position: relative;
             overflow: hidden;
             transition: all 0.3s ease;
             border-radius: 0 !important;
         }
-        
+
         .brutal-card:hover {
             transform: translateY(-5px);
             box-shadow: 8px 8px 0 var(--black) !important;
         }
-        
+
         .brutal-btn {
             border: 3px solid var(--black) !important;
             box-shadow: 4px 4px 0 var(--black) !important;
@@ -46,41 +46,41 @@
             transition: all 0.2s !important;
             padding: 0.75rem 1.5rem !important;
         }
-        
+
         .brutal-btn:hover {
             transform: translate(-2px, -2px);
             box-shadow: 6px 6px 0 var(--black) !important;
         }
-        
+
         .brutal-btn-primary {
             background-color: var(--blue) !important;
             color: var(--white) !important;
         }
-        
+
         .brutal-btn-success {
             background-color: var(--green) !important;
             color: var(--white) !important;
         }
-        
+
         .brutal-btn-warning {
             background-color: var(--yellow) !important;
             color: var(--black) !important;
         }
-        
+
         .brutal-nav {
             border-bottom: 3px solid var(--black) !important;
         }
-        
+
         .brutal-divider {
             border-top: 3px solid var(--black) !important;
             opacity: 1 !important;
         }
-        
+
         .brutal-badge {
             border: 2px solid var(--black) !important;
             font-weight: 700 !important;
         }
-        
+
         /* Custom Dashboard Styles */
         .sidebar {
             border-right: 3px solid var(--black);
@@ -89,51 +89,51 @@
             top: 0;
             transition: all 0.3s;
         }
-        
+
         .sidebar.collapsed {
             margin-left: -250px;
         }
-        
+
         .class-card {
             transition: all 0.3s;
         }
-        
+
         .class-card:hover {
             transform: scale(1.02);
         }
-        
+
         .announcement-card {
             border-left: 5px solid var(--blue);
         }
-        
+
         .assignment-card {
             border-left: 5px solid var(--red);
         }
-        
+
         .material-card {
             border-left: 5px solid var(--yellow);
         }
-        
+
         /* Account Dropdown */
         .account-dropdown {
             border: 3px solid var(--black);
             box-shadow: 6px 6px 0 var(--black);
         }
-        
+
         /* Create/Join Class Modal */
         .brutal-modal {
             border: 3px solid var(--black);
             box-shadow: 12px 12px 0 var(--black);
         }
-        
+
         .brutal-modal-header {
             border-bottom: 3px solid var(--black);
         }
-        
+
         .brutal-modal-footer {
             border-top: 3px solid var(--black);
         }
-        
+
         /* Calendar Styles */
         .calendar-grid .col {
             aspect-ratio: 1;
@@ -308,7 +308,7 @@
             z-index: 2;
         }
 
-        
+
 
 /* styles.css or component css */
 .fixed-sidebar {
