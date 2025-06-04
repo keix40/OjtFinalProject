@@ -3,6 +3,8 @@
     --white: #fff;
 }/* You can add global styles to this file, and also import other style files */
 
+
 body, html {
     font-family: 'Poppins', sans-serif;
+    background: url('assets/project_img/store.jpg') no-repeat center center/cover;
 }
