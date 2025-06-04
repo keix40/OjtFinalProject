@@ -17,6 +17,9 @@ public class ProductImage {
 
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
+    
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")

@@ -34,6 +34,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
+                        .requestMatchers("product/**").permitAll()
+                        .requestMatchers("/category/**").permitAll()
+                        .requestMatchers("/brand/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/test/**").authenticated()
                         .anyRequest().authenticated()
