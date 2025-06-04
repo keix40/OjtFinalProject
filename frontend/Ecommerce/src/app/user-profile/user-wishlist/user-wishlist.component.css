@@ -1,0 +1,150 @@
+.wishlist-section {
+    background-color: #fff;
+    padding: 2.5rem;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    margin-bottom: 30px;
+}
+
+.wishlist-section h3 {
+     font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    display: inline-block;
+    padding-bottom: 0.5rem;
+}
+
+.wishlist-items {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.wishlist-item {
+    display: flex;
+    align-items: center;
+    background-color: #fefefe;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+    transition: all 0.3s ease-in-out;
+}
+
+.wishlist-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    background-color: #fff;
+}
+
+.item-image img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-right: 1.5rem;
+    border: 1px solid #eee;
+    flex-shrink: 0;
+    transition: transform 0.3s ease;
+}
+
+.wishlist-item:hover .item-image img {
+    transform: scale(1.05);
+}
+
+.item-details {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.item-details h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+    color: var(--primary-color);
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.item-details .price {
+    margin: 0 0 1.2rem 0;
+    font-size: 1.1rem;
+    color: var(--secondary-color);
+    font-weight: 800;
+}
+
+.item-details .btn-primary {
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    align-self: flex-start;
+    border-radius: 6px;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.item-details .btn-primary:hover {
+    background-color: #000;
+}
+
+.remove-item {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    color: var(--gray-color);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 5px;
+    z-index: 1;
+}
+
+.remove-item:hover {
+    color: var(--accent-color);
+    transform: scale(1.2) rotate(90deg);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--gray-color);
+    grid-column: 1 / -1;
+    background-color: #fff;
+    border-radius: 10px;
+    border: 1px dashed var(--border-color);
+    margin-top: 1rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: #ddd;
+    margin-bottom: 1.5rem;
+}
+
+.empty-state p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: #555;
+}
+
+.empty-state .btn {
+    padding: 0.8rem 2.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+     background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.empty-state .btn:hover {
+     background-color: #c1914b;
+}

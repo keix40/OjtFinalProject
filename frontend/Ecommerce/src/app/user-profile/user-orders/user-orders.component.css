@@ -1,0 +1,392 @@
+/* Add styles specific to user orders here */
+
+/* Styles for the main orders section container */
+.orders-section {
+    background-color: #fff;
+    padding: 2.5rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.orders-section h3 {
+    font-size: 1.5rem;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+}
+
+/* Styles for the orders controls (selects) */
+.orders-controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.orders-controls .form-select {
+    width: 200px;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background-color: #fff;
+    font-size: 0.95rem;
+}
+
+/* Styles for the orders table */
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    margin-bottom: 2rem;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    max-width: none;
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.orders-table th {
+    font-weight: 700;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    background-color: #f9f9f9;
+}
+
+.orders-table th:first-child {
+    border-top-left-radius: 8px;
+}
+
+.orders-table th:last-child {
+    border-top-right-radius: 8px;
+}
+
+.orders-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.orders-table tbody tr:hover {
+    background-color: #f5f5f5;
+}
+
+/* Styles for product previews in the main row */
+.product-previews {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.product-previews img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.more-items {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #eee;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #555;
+}
+
+/* Styles for status pills */
+.status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.3em 0.8em;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status::before {
+    content: '•';
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
+.status.in-progress {
+    color: #a1887f;
+    background-color: #fff3e0;
+}
+
+.status.delivered {
+    color: #4caf50;
+    background-color: #e8f5e9;
+}
+
+.status.canceled {
+    color: #ef5350;
+    background-color: #ffebee;
+}
+
+/* Styles for the chevron icon */
+.orders-table td .bi-chevron-down {
+    cursor: pointer;
+    font-size: 1rem;
+    color: #777;
+    transition: transform 0.2s ease;
+}
+
+.orders-table td .bi-chevron-down.rotated {
+    transform: rotate(180deg);
+}
+
+/* Styles for the expanded order details row */
+.order-details-row td {
+    padding: 0 !important;
+    border-bottom: none;
+}
+
+.order-details-panel {
+    background-color: #f9f9f9;
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.order-details-panel h4 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+}
+
+.order-details-panel .detail-line {
+    margin-bottom: 0.8rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.order-details-panel .detail-line span:first-child {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Styles for the list of items within the order details */
+.order-items-list {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8rem 0;
+    border-bottom: 1px dashed #ddd;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.order-item .item-image img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 1rem;
+    border: 1px solid #eee;
+}
+
+.order-item .item-details {
+    flex-grow: 1;
+}
+
+.order-item .item-details h4 {
+    margin: 0 0 0.3rem 0;
+    font-size: 1rem;
+    color: var(--primary-color);
+}
+
+.order-item .sku-qty {
+    font-size: 0.85rem;
+    color: var(--gray-color);
+}
+
+.order-item .item-price {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+}
+
+/* Styles for Order Totals */
+.order-totals {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    width: 200px;
+    margin-left: auto;
+}
+
+.order-totals .total-line {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.order-totals .total-line span:first-child {
+    color: #555;
+}
+
+.order-totals .total-line.total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    border-top: 1px dashed #ddd;
+    padding-top: 0.5rem;
+    margin-top: 0.8rem;
+}
+
+.order-totals .total-line.total span:last-child {
+    color: var(--secondary-color);
+}
+
+/* Styles for Shipping Info */
+.shipping-info {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.shipping-info h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.8rem;
+    color: var(--primary-color);
+}
+
+.shipping-info p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+/* Styles for pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+
+.pagination a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: var(--transition-ease);
+    font-weight: 500;
+    min-width: 40px;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.pagination a:hover {
+    background-color: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+.pagination a.active {
+    background-color: #000;
+    color: #fff;
+    border-color: #000;
+    font-weight: 700;
+    transform: scale(1.05);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments for orders table */
+@media (max-width: 768px) {
+    .orders-table table,
+    .orders-table thead,
+    .orders-table tbody,
+    .orders-table th,
+    .orders-table td,
+    .orders-table tr {
+        display: block;
+    }
+
+    .orders-table thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .orders-table tr {
+        border: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+    }
+
+    .orders-table td {
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        padding-left: 50%;
+        text-align: right;
+    }
+
+    .orders-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 1rem;
+        width: calc(50% - 1.5rem);
+        font-weight: 600;
+        color: #555;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .orders-table td:last-child {
+        border-bottom: 0;
+    }
+
+    .order-details-row td {
+        padding: 0 !important;
+        border-bottom: none;
+    }
+
+    .order-details-panel {
+        border-radius: 0 0 8px 8px;
+    }
+
+    .order-totals {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .shipping-info .col-md-6 {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+
+    .shipping-info .col-md-6:last-child {
+        margin-bottom: 0;
+    }
+}

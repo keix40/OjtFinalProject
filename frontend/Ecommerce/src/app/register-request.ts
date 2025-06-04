@@ -2,5 +2,8 @@ export interface RegisterRequest {
   name: string;
   email: string;
   password: string;
-  role: 'STUDENT' | 'TEACHER';
+  gender?: string;
+  dateOfBirth?: string; 
+  phoneNumber?: string;
+  roleId: number;
 }

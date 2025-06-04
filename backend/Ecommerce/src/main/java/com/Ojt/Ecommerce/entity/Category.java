@@ -20,6 +20,9 @@ public class Category {
 
     private String name;
 
+    @ManyToMany(mappedBy = "categories")
+    private List<Brand> brands;
+
     @OneToMany(mappedBy = "category")
     @JsonIgnore
     private List<Product> products;

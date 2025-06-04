@@ -1,0 +1,23 @@
+<div class="payment-section container-fluid">
+    <h3 class="mb-4">Payment Methods</h3>
+    <div class="payment-methods row justify-content-center">
+        <div class="saved-cards col-12 col-md-8">
+            <h4 class="mb-3">Saved Cards</h4>
+            <div class="card-list">
+                <div class="card-item animate__animated animate__fadeIn" *ngFor="let card of savedCards">
+                    <div class="card-info">
+                        <i class="bi bi-credit-card"></i>
+                        <span>**** **** **** {{card.last4}}</span>
+                        <span class="expiry">Expires {{card.expiry}}</span>
+                    </div>
+                    <button class="btn btn-outline-danger btn-sm ms-2" (click)="removeCard(card)">
+                        <i class="bi bi-x-circle"></i> Remove
+                    </button>
+                </div>
+            </div>
+            <button class="btn btn-gradient w-100 mt-3 d-flex align-items-center justify-content-center" (click)="addNewCard()">
+                <i class="bi bi-plus me-2"></i> Add New Card
+            </button>
+        </div>
+    </div>
+</div>
