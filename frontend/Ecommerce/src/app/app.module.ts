@@ -23,6 +23,7 @@ import { UserAddressesComponent } from './user-profile/user-addresses/user-addre
 import { UserNotificationsComponent } from './user-profile/user-notifications/user-notifications.component';
 import { AddressService } from './services/address.service';
 import { AuthService } from './auth/auth.service';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @NgModule({
   declarations: [
@@ -47,6 +48,7 @@ import { AuthService } from './auth/auth.service';
     HttpClientModule,
     ReactiveFormsModule,
     FormsModule,
+    NgbModule,
     GoogleMapsModule,
   ],
   providers: [
