@@ -8,7 +8,7 @@
         <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
   <div class="input-group">
     <label for="name">Full Name</label>
-    <input type="text" id="username" formControlName="username" required />
+    <input type="text" id="name" formControlName="name" required />
     <i class="fas fa-user icon"></i>
   </div>
 
@@ -18,18 +18,34 @@
     <i class="fas fa-envelope icon"></i>
   </div>
 
+ <div class="input-group">
+  <label for="gender">Gender</label>
+  <select id="gender" formControlName="gender" class="styled-select" required>
+    <option value="" disabled selected>Select Gender</option>
+    <option value="Male">Male</option>
+    <option value="Female">Female</option>
+    <option value="Other">Other</option>
+  </select>
+</div>
+
+
+<div class="input-group">
+  <label for="dateOfBirth">Date of Birth</label>
+  <input type="date" id="dateOfBirth" formControlName="dateOfBirth" required />
+</div>
+
+<div class="input-group">
+  <label for="phoneNumber">Phone Number</label>
+  <input type="tel" id="phoneNumber" formControlName="phoneNumber" required />
+</div>
+
+
   <div class="input-group">
     <label for="password">Password</label>
     <input type="password" id="password" formControlName="password" required />
     <i class="fas fa-eye icon password-toggle"></i>
   </div>
 
-  <!-- Optional: Add Confirm Password for validation later -->
-  <div class="input-group">
-    <label for="confirm-password">Confirm Password</label>
-    <input type="password" id="confirm-password" />
-    <i class="fas fa-eye icon password-toggle"></i>
-  </div>
 
   <!-- <div class="input-group">
     <label for="role">Role</label>
@@ -39,12 +55,12 @@
     </select>
   </div> -->
 
-  <div class="checkbox-group">
+  <!-- <div class="checkbox-group">
     <input type="checkbox" id="terms" required />
     <label for="terms">
       I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
     </label>
-  </div>
+  </div> -->
 
   <button type="submit" class="btn" [disabled]="registerForm.invalid">Create Account</button>
 
@@ -52,6 +68,23 @@
     Already have an account? <a routerLink="/">Log In</a>
   </div>
 </form>
+
+<form *ngIf="!isOtpStep" [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+  <!-- your form controls -->
+</form>
+
+<div *ngIf="isOtpStep">
+  <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+    <label for="otp">Enter OTP sent to {{ emailForOtp }}</label>
+    <input formControlName="otp" placeholder="Enter OTP" />
+    <button type="submit" class="btn">Verify</button>
+    <button type="button" class="btn" (click)="resendOtp()">Resend OTP</button>
+  </form>
+</div>
+
+<div *ngIf="successMessage" class="success">{{ successMessage }}</div>
+<div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
+
 
     </div>
 </div>
