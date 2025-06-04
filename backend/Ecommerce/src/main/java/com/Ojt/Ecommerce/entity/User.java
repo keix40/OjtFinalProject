@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -41,17 +42,25 @@ public class User {
     @Column(length = 45)
     private String phoneNumber;
 
-    // Role Relationship
+    @Column(name = "is_verified")
+    private boolean isVerified = false;
+
+    @Column(name = "reset_token")
+    private String resetToken;
+
+    @Column(name = "otp_code")
+    private String otpCode;
+
+    @Column(name = "otp_expiry")
+    private LocalDateTime otpExpiry;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
 
-    // Add to User class
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserOrder> orders;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;
-
-
 }
