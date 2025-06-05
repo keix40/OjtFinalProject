@@ -15,24 +15,24 @@ export class HeaderComponent implements OnInit {
   cartItems = [
     {
       id: 1,
-      title: 'Wireless Headphones',
-      price: 89.99,
+      title: 'VINGLI 56\" Modern Sofa, Small Corduroy Couch Deep Seat',
+      price: 259.00,
       quantity: 1,
-      image: 'assets/images/test.jpg'
+      image: 'assets/images/sofa.jpg'
     },
     {
       id: 2,
-      title: 'Smart Watch',
-      price: 129.99,
+      title: 'Fabric Recliner Chair Single Sofa',
+      price: 109.00,
       quantity: 1,
-      image: 'assets/images/test.jpg'
+      image: 'assets/images/recliner.jpg'
     },
     {
       id: 3,
-      title: 'Bluetooth Speaker',
-      price: 59.99,
+      title: 'Stuffed Animal Storage Bean Bag Chair Cover (No Filler)',
+      price: 79.00,
       quantity: 1,
-      image: 'assets/images/test.jpg'
+      image: 'assets/images/beanbag.jpg'
     }
   ];
 
@@ -40,6 +40,7 @@ export class HeaderComponent implements OnInit {
   isMobileSearchVisible = false;
   isAuthenticated = false;
   openDropdown: string | null = null;
+  showCartSidebar = false;
 
   constructor(
     private router: Router,
@@ -118,5 +119,13 @@ export class HeaderComponent implements OnInit {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.openDropdown = null;
     }
+  }
+
+  openSidebar() {
+    this.showCartSidebar = true;
+  }
+
+  closeSidebar() {
+    this.showCartSidebar = false;
   }
 }

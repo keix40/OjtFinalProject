@@ -1,0 +1,26 @@
+body, .container-fluid {
+  background: #111 !important;
+}
+.cart-item-card {
+  background: #181c24 !important;
+  color: #fff !important;
+  border: none;
+  box-shadow: 0 4px 24px rgba(44,62,80,0.13);
+}
+.bg-dark {
+  background: #181c24 !important;
+}
+.text-light {
+  color: #fff !important;
+}
+.btn-outline-light {
+  border-color: #fff;
+  color: #fff;
+}
+.btn-outline-light:hover {
+  background: #fff;
+  color: #181c24;
+}
+.rounded-4 {
+  border-radius: 1.5rem !important;
+} 

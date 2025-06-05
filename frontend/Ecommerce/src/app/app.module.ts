@@ -3,7 +3,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { RouterModule } from '@angular/router';
-
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TestComponent } from './test/test.component';
@@ -30,6 +29,8 @@ import { ProductComponent } from './product/product.component';
 import { LayoutComponent } from './layout/layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { NavbarComponent } from './layout/navbar/navbar.component';
+import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
+import { CartPageComponent } from './cart-page/cart-page.component';
 
 @NgModule({
   declarations: [
@@ -52,7 +53,8 @@ import { NavbarComponent } from './layout/navbar/navbar.component';
     ProductComponent,
     LayoutComponent,
     SidebarComponent,
-    NavbarComponent
+    NavbarComponent,
+    CartPageComponent,
   ],
   imports: [
     BrowserModule,
@@ -62,7 +64,8 @@ import { NavbarComponent } from './layout/navbar/navbar.component';
     FormsModule,
     NgbModule,
     GoogleMapsModule,
-    RouterModule
+    RouterModule,
+    CartSidebarComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

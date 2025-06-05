@@ -32,6 +32,7 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
   tileLayers: { [id: number]: L.TileLayer } = {};
   isEditMode = false;
   editingAddressId: number | null = null;
+  private formSubscriptions: any[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -54,56 +55,68 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
     this.loadAddresses();
 
     // Address input parsing for Myanmar format
-    this.addressForm.get('address')!.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(() => {
-        this.trimAddressInput();
-      });
+    this.formSubscriptions.push(
+      this.addressForm.get('address')!.valueChanges
+        .pipe(takeUntil(this.destroy$))
+        .subscribe(() => {
+          this.trimAddressInput();
+        })
+    );
 
-    combineLatest([
-      this.addressForm.get('latitude')!.valueChanges,
-      this.addressForm.get('longitude')!.valueChanges
-    ]).subscribe(([lat, lng]) => {
-      const latNum = Number(lat);
-      const lngNum = Number(lng);
-      if (
-        this.map &&
-        this.marker &&
-        !isNaN(latNum) &&
-        !isNaN(lngNum) &&
-        latNum >= -90 && latNum <= 90 &&
-        lngNum >= -180 && lngNum <= 180
-      ) {
-        this.marker.setLatLng([latNum, lngNum]);
-        this.map.setView([latNum, lngNum], 13);
-        if (this.latLngSource === 'forward' || this.latLngSource === 'location') {
-          this.latLngSource = null;
-          return; // Do NOT call reverse geocode
+    this.formSubscriptions.push(
+      combineLatest([
+        this.addressForm.get('latitude')!.valueChanges,
+        this.addressForm.get('longitude')!.valueChanges
+      ]).subscribe(([lat, lng]) => {
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+        if (
+          this.map &&
+          this.marker &&
+          !isNaN(latNum) &&
+          !isNaN(lngNum) &&
+          latNum >= -90 && latNum <= 90 &&
+          lngNum >= -180 && lngNum <= 180
+        ) {
+          this.marker.setLatLng([latNum, lngNum]);
+          this.map.setView([latNum, lngNum], 13);
+          if (this.latLngSource === 'forward' || this.latLngSource === 'location') {
+            this.latLngSource = null;
+            return;
+          }
+          this.debouncedReverseGeocode(latNum, lngNum);
         }
-        this.debouncedReverseGeocode(latNum, lngNum);
-      }
-    });
+      })
+    );
 
-    combineLatest([
-      this.addressForm.get('address')!.valueChanges,
-      this.addressForm.get('city')!.valueChanges,
-      this.addressForm.get('state')!.valueChanges,
-      this.addressForm.get('postalCode')!.valueChanges,
-      this.addressForm.get('country')!.valueChanges
-    ]).subscribe(([address, city, state, postalCode, country]) => {
-      if (address || city || state || postalCode || country) {
-        const query = [address, city, state, postalCode, country].filter(Boolean).join(', ');
-        if (query) {
-          if (this.forwardGeocodeTimeout) clearTimeout(this.forwardGeocodeTimeout);
-          this.forwardGeocode(query);
+    this.formSubscriptions.push(
+      combineLatest([
+        this.addressForm.get('address')!.valueChanges,
+        this.addressForm.get('city')!.valueChanges,
+        this.addressForm.get('state')!.valueChanges,
+        this.addressForm.get('postalCode')!.valueChanges,
+        this.addressForm.get('country')!.valueChanges
+      ]).subscribe(([address, city, state, postalCode, country]) => {
+        if (address || city || state || postalCode || country) {
+          const query = [address, city, state, postalCode, country].filter(Boolean).join(', ');
+          if (query) {
+            if (this.forwardGeocodeTimeout) clearTimeout(this.forwardGeocodeTimeout);
+            this.forwardGeocode(query);
+          }
         }
-      }
-    });
+      })
+    );
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    this.unsubscribeFormSubscriptions();
+  }
+
+  private unsubscribeFormSubscriptions() {
+    this.formSubscriptions.forEach(sub => sub.unsubscribe());
+    this.formSubscriptions = [];
   }
 
   ngAfterViewChecked() {
@@ -160,12 +173,36 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
 
   openAddModal() {
     this.showAddModal = true;
+    this.isEditMode = false;
+    this.editingAddressId = null;
+    // Clear any existing timeouts
+    if (this.geocodeTimeout) {
+      clearTimeout(this.geocodeTimeout);
+      this.geocodeTimeout = null;
+    }
+    if (this.forwardGeocodeTimeout) {
+      clearTimeout(this.forwardGeocodeTimeout);
+      this.forwardGeocodeTimeout = null;
+    }
     this.addressForm.patchValue({ latitude: null, longitude: null });
     setTimeout(() => this.initMap(), 0);
   }
 
   closeAddModal() {
     console.log('closeAddModal called');
+    // Clear any pending geocoding timeouts
+    if (this.geocodeTimeout) {
+      clearTimeout(this.geocodeTimeout);
+      this.geocodeTimeout = null;
+    }
+    if (this.forwardGeocodeTimeout) {
+      clearTimeout(this.forwardGeocodeTimeout);
+      this.forwardGeocodeTimeout = null;
+    }
+    
+    // Unsubscribe from form subscriptions
+    this.unsubscribeFormSubscriptions();
+    
     this.showAddModal = false;
     this.isEditMode = false;
     this.editingAddressId = null;
@@ -181,6 +218,7 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
       longitude: null,
       addressType: ''
     });
+    window.location.reload();
   }
 
   ngAfterViewInit() {}

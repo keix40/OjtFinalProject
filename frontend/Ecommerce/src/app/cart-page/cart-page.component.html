@@ -1,0 +1,73 @@
+<app-header></app-header>
+<div class="container-fluid py-4" style="background:#111; min-height:100vh;">
+  <div class="row">
+    <div class="col-lg-8">
+      <h2 class="text-success mb-4">Excellent choices!</h2>
+      <div class="mb-3 d-flex gap-2">
+        <button class="btn btn-outline-primary"><i class="bi bi-arrow-left"></i> Continue shopping</button>
+        <button class="btn btn-outline-secondary"><i class="bi bi-heart"></i> Move all items into wishlist</button>
+      </div>
+      <div class="cart-item-card bg-dark text-light rounded-4 p-4 mb-4 shadow-sm">
+        <div class="d-flex align-items-center mb-3">
+          <input type="checkbox" checked class="form-check-input me-3" />
+          <div class="flex-grow-1">
+            <span class="fw-bold">Stuffed Animal Storage Bean Bag Chair Cover (No Filler)</span>
+            <span class="badge bg-warning text-dark ms-2">1 remaining</span>
+          </div>
+        </div>
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <img src="assets/images/test.jpg" alt="Bean Bag" class="rounded-3" style="width:100px;height:100px;object-fit:cover;">
+          </div>
+          <div class="col">
+            <div class="mb-2">
+              <span class="text-muted">Size:</span> <span class="fw-bold">XL</span>
+              <span class="text-muted ms-3">Color:</span> <span class="fw-bold">Gray</span>
+            </div>
+            <div class="mb-2">
+              <span class="text-decoration-line-through text-muted me-2">$160.00</span>
+              <span class="fw-bold fs-5 text-white">$79.00</span>
+              <span class="badge bg-success ms-2">Save 30%</span>
+            </div>
+            <div class="mb-2">
+              <input type="checkbox" class="form-check-input me-2" /> Send as a gift
+              <a href="#" class="ms-3 text-info">Details</a>
+            </div>
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <span>Quantity:</span>
+              <button class="btn btn-outline-light btn-sm px-2 py-0">-</button>
+              <span class="fw-bold">1</span>
+              <button class="btn btn-outline-light btn-sm px-2 py-0">+</button>
+            </div>
+            <div>
+              <a href="#" class="text-danger me-3">Remove</a>
+              <a href="#" class="text-info">Move to wishlist</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-4">
+        <span>1 item selected</span>
+        <span class="fw-bold fs-5">total <span class="text-white">$79.00</span></span>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="bg-dark text-light rounded-4 p-4 mb-4 shadow-sm">
+        <div class="mb-3">
+          <input type="text" class="form-control bg-secondary border-0 text-light" placeholder="Enter a coupon or a reward code">
+          <button class="btn btn-primary w-100 mt-2">Apply</button>
+          <div class="small text-success mt-2">You have applied coupon <b>TAKE100</b><br>Which saves you $100.00</div>
+        </div>
+        <div class="mb-3">
+          <h5 class="mb-3">Summary</h5>
+          <div class="d-flex justify-content-between"><span>Subtotal</span><span>$79.00</span></div>
+          <div class="d-flex justify-content-between"><span>Shipping cost</span><span>TBA</span></div>
+          <div class="d-flex justify-content-between"><span>Discount</span><span class="text-success">-$100.00</span></div>
+          <div class="d-flex justify-content-between fw-bold fs-5 mt-3"><span>Total</span><span class="text-success">-$21.00</span></div>
+        </div>
+        <div class="text-success mb-2">Yay! you saved 30% in total</div>
+        <button class="btn btn-primary w-100">Checkout as guest</button>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -90,44 +90,11 @@
                 </a>
 
                 <!-- Cart -->
-                <div *ngIf="isAuthenticated" class="dropdown cart-dropdown" [class.show]="openDropdown === 'cart-dropdown'">
-                    <button class="header-action-btn" type="button" (click)="toggleDropdown($event, 'cart-dropdown')">
-                        <i class="bi bi-cart3"></i>
-                        <span class="action-text d-none d-md-inline-block">Cart</span>
-                        <span class="badge">{{cartItems.length}}</span>
-                    </button>
-                    <div class="dropdown-menu cart-dropdown-menu" [class.show]="openDropdown === 'cart-dropdown'">
-                        <div class="dropdown-header">
-                            <h6>Shopping Cart ({{cartItems.length}})</h6>
-                        </div>
-                        <div class="dropdown-body">
-                            <div class="cart-items">
-                                <div class="cart-item" *ngFor="let item of cartItems">
-                                    <div class="cart-item-image">
-                                        <img [src]="item.image" [alt]="item.title" class="img-fluid">
-                                    </div>
-                                    <div class="cart-item-content">
-                                        <h6 class="cart-item-title">{{item.title}}</h6>
-                                        <div class="cart-item-meta">{{item.quantity}} × ${{item.price}}</div>
-                                    </div>
-                                    <button class="cart-item-remove" (click)="removeCartItem(item.id)">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="dropdown-footer">
-                            <div class="cart-total">
-                                <span>Total:</span>
-                                <span class="cart-total-price">${{cartTotal.toFixed(2)}}</span>
-                            </div>
-                            <div class="cart-actions">
-                                <a routerLink="/cart" class="btn btn-outline-primary">View Cart</a>
-                                <a routerLink="/checkout" class="btn btn-primary">Checkout</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <button class="header-action-btn position-relative" type="button" (click)="openSidebar()">
+                    <i class="bi bi-cart3"></i>
+                    <span class="action-text d-none d-md-inline-block">Cart</span>
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle">{{cartItems.length}}</span>
+                </button>
 
                 <!-- Mobile Navigation Toggle -->
                 <i class="mobile-nav-toggle d-xl-none bi bi-list me-0"></i>
@@ -149,3 +116,9 @@
         </form>
     </div>
 </div>
+
+<!-- Cart Sidebar Component -->
+<app-cart-sidebar 
+    [showCartSidebar]="showCartSidebar" 
+    (closeSidebar)="closeSidebar()">
+</app-cart-sidebar>

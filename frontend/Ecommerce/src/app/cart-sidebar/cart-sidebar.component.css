@@ -1,0 +1,210 @@
+.cart-sidebar-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  
+  .cart-sidebar-backdrop.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  
+  .cart-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 520px;
+    max-width: 100vw;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -5px 0 24px rgba(44,62,80,0.13);
+    border-top-left-radius: 18px;
+    border-bottom-left-radius: 18px;
+    overflow: hidden;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1050;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .cart-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .cart-header {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+    background: #fff;
+  }
+  
+  .cart-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem 1.5rem;
+    background: #fff;
+  }
+  
+  .cart-footer {
+    border-top: 1px solid #eee;
+    background: #fff;
+    padding: 1.5rem;
+  }
+  
+  .cart-item {
+    transition: all 0.2s ease;
+    border-radius: 0.5rem;
+  }
+  
+  .cart-item:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .cart-item img {
+    object-fit: cover;
+    border-radius: 0.25rem;
+    border: 1px solid #dee2e6;
+  }
+  
+  .input-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 576px) {
+    .cart-sidebar {
+      width: 100vw;
+      border-radius: 0;
+    }
+    
+    .cart-item {
+      flex-direction: column;
+    }
+    
+    .cart-item img {
+      width: 100%;
+      height: auto;
+      margin-bottom: 1rem;
+    }
+    
+    .input-group {
+      width: 100% !important;
+      margin-top: 0.5rem;
+    }
+    
+    .cart-body {
+      padding: 1rem 0.5rem;
+    }
+    
+    .cart-item.card {
+      padding: 1rem 0.7rem !important;
+    }
+  }
+  
+  /* Scrollbar styling */
+  .cart-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .cart-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  .cart-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+  
+  .cart-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* Animation for cart items */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  .cart-item {
+    animation: fadeIn 0.3s ease forwards;
+  }
+  
+  .cart-item:nth-child(1) { animation-delay: 0.1s; }
+  .cart-item:nth-child(2) { animation-delay: 0.2s; }
+  .cart-item:nth-child(3) { animation-delay: 0.3s; }
+  
+  .cart-item.card {
+    border-radius: 18px;
+    background: #f8f9fa;
+    color: #222;
+    border: none;
+    box-shadow: 0 2px 12px rgba(44,62,80,0.08);
+    margin-bottom: 2rem !important;
+    padding: 2rem 1.5rem !important;
+    min-height: 170px;
+    transition: box-shadow 0.2s, background 0.2s;
+  }
+  
+  .cart-item.card:hover {
+    background: #f1f3f6;
+    box-shadow: 0 8px 32px rgba(44,62,80,0.13);
+  }
+  
+  .cart-item img {
+    border-radius: 12px;
+    border: 1.5px solid #e0e0e0;
+    background: #fff;
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+  }
+  
+  .cart-item .fw-semibold,
+  .cart-item .fw-bold,
+  .cart-item .text-primary {
+    color: #222 !important;
+  }
+  
+  .cart-item .badge.bg-success {
+    font-size: 0.85rem;
+    padding: 0.35em 0.7em;
+    border-radius: 8px;
+  }
+  
+  .cart-item .text-muted {
+    color: #6c757d !important;
+  }
+  
+  .cart-item .btn-outline-secondary {
+    border-radius: 8px;
+    font-weight: bold;
+    background: #fff;
+    color: #222;
+    border: 1.5px solid #d0d0d0;
+    transition: background 0.2s, color 0.2s, border 0.2s;
+  }
+  
+  .cart-item .btn-outline-secondary:hover {
+    background: #222;
+    color: #fff;
+    border-color: #222;
+  }
+  
+  .cart-item .btn-link.text-danger {
+    color: #ff5c5c !important;
+    font-size: 1.3rem;
+    opacity: 0.7;
+    transition: opacity 0.2s, color 0.2s;
+  }
+  
+  .cart-item .btn-link.text-danger:hover {
+    color: #ff1a1a !important;
+    opacity: 1;
+  }
