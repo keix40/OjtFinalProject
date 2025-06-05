@@ -13,6 +13,7 @@ import com.Ojt.Ecommerce.service.RefreshTokenService;
 import com.Ojt.Ecommerce.service.TokenBlacklistService;
 import com.Ojt.Ecommerce.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Map;
@@ -41,11 +43,15 @@ public class AuthController {
     private final TokenBlacklistService tokenBlacklistService;
     private final EmailService emailService;
 
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        String result = userService.register(request);
+    @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> register(
+            @RequestPart("user") RegisterRequest request,
+            @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
+
+        String result = userService.register(request, profileImage);
         return ResponseEntity.ok(Map.of("message", result));
     }
+
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {

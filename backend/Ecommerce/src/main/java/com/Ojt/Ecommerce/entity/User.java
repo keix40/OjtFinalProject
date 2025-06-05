@@ -1,10 +1,7 @@
 package com.Ojt.Ecommerce.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,6 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Getter
+@Setter
 public class User {
 
     @Id
@@ -31,7 +30,7 @@ public class User {
     @Column(length = 150, nullable = false)
     private String password;
 
-    private LocalDate createdDate;
+    private LocalDateTime createdDate;
 
     @Column(length = 10)
     private String gender;
@@ -39,11 +38,19 @@ public class User {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Column(length = 45)
+    @Column(name="phone_number",length = 45)
     private String phoneNumber;
 
+
+    @Column(name = "profile_image", columnDefinition = "TEXT")
+    private String profileImage;
+
     @Column(name = "is_verified")
-    private boolean isVerified = false;
+    private boolean verified = false;
+
+//    @Column(name = "is_verified")
+//    private boolean isVerified = false;
+
 
     @Column(name = "reset_token")
     private String resetToken;
@@ -54,6 +61,8 @@ public class User {
     @Column(name = "otp_expiry")
     private LocalDateTime otpExpiry;
 
+
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
@@ -63,4 +72,10 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdDate = LocalDateTime.now();
+    }
+
 }
