@@ -12,14 +12,32 @@ import { RegisterResponse } from '../auth.types';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css']
 })
-export class RegisterComponent {
+export class RegisterComponent  {
   registerForm: FormGroup;
+  showEmailVerifyModal: boolean = false;
   otpForm: FormGroup;
   isOtpStep = false;
   emailForOtp = '';
   errorMessage = '';
   successMessage = '';
   submitted = false;
+  selectedFile?: File;
+  today: string;
+  fileTypeInvalid: boolean = false;
+  otpVerified: boolean = false;
+  otpError: string | null = null;
+
+  user = {
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: 'customer',
+    dob: '',
+    gender: ''
+  };
+
+  errors: { [key: string]: string } = {};
 
   constructor(
     private fb: FormBuilder,
@@ -34,19 +52,23 @@ export class RegisterComponent {
       gender: ['', Validators.required],
       dateOfBirth: ['', Validators.required],
       phoneNumber: ['', Validators.required],
-      roleId: [2, Validators.required] // Default to 2 for regular user
-
+      roleId: [2, Validators.required]
     });
 
     this.otpForm = this.fb.group({
       otp: ['', Validators.required]
     });
+
+    const now = new Date();
+    this.today = now.toISOString().split('T')[0];
   }
 
-   get f() {
+  // For easier template access
+  get f() {
     return this.registerForm.controls;
+    
   }
-  
+
   onSubmit(): void {
     this.submitted = true;
     this.errorMessage = '';
@@ -84,7 +106,7 @@ export class RegisterComponent {
     //   },
     //   error: (error: HttpErrorResponse) => {
     //     console.error('Registration error:', error);
-    //     this.errorMessage = error.error?.message || 'Registration failed. Please try again.';
+    //     this.errorMessage = error.error?.message  'Registration failed. Please try again.';
     //     this.submitted = false;
     // if (this.registerForm.invalid) return;
 
@@ -97,7 +119,7 @@ export class RegisterComponent {
       },
       error: (err) => {
         console.error('Registration error:', err);
-        this.errorMessage = err?.error?.message || err?.message || 'Registration failed';
+        this.errorMessage = err?.error?.message ||  err?.message || 'Registration failed';
         this.successMessage = '';
       }
     });
@@ -128,10 +150,169 @@ export class RegisterComponent {
       },
       error: (err) => {
         console.error('Resend OTP error:', err);
-        this.errorMessage = err?.error?.message || err?.message || 'Failed to resend OTP.';
+        this.errorMessage = err?.error?.message ||  err?.message || 'Failed to resend OTP.';
         this.successMessage = '';
       }
     });
   }
-}
-  
+
+  doFinalRegistration() {
+    const formData = new FormData();
+    const requestPayload = {
+      name: this.user.name,
+      email: this.user.email,
+      password: this.user.password,
+      role: this.user.role,
+      dateOfBirth: this.user.dob,
+      gender: this.user.gender
+    };
+
+    formData.append('request', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+    if (this.selectedFile) {
+      formData.append('profileImage', this.selectedFile);
+    }
+
+//     this.authService.register(formData).subscribe({
+//   next: (response) => {
+//     console.log('Access Token:', response.accessToken); // ✅ correct property
+//     console.log('Refresh Token:', response.refreshToken);
+
+//     this.authService.saveToken(response.accessToken); // ✅ Save to localStorage
+
+//     this.successMessage = 'Registered successfully. Redirecting to home...';
+//     setTimeout(() => {
+//       this.router.navigate(['/home']);
+//     }, 1500);
+//   },
+//   error: (error) => {
+//     this.errorMessage = error.error.message || 'Registration failed';
+//   }
+// });
+
+this.authService.register(formData).subscribe({
+  next: (response) => {
+    console.log('Access Token:', response.accessToken);
+    this.authService.saveToken(response.accessToken!);
+    this.successMessage = 'Registered successfully. Redirecting to home...';
+    setTimeout(() => this.router.navigate(['/home']), 1500);
+  },
+  error: (error) => {
+    this.errorMessage = error.error.message || 'Registration failed';
+  }
+});
+  }
+validate() {
+    this.errors = {};
+
+    if (!this.user.name.trim()) {
+      this.errors['name'] = 'Name is required.';
+    }
+
+    if (!this.user.email.trim()) {
+      this.errors['email'] = 'Email is required.';
+    } else if (!this.isEmailFormatValid()) {
+      this.errors['email'] = 'Email must be a valid Gmail address.';
+    }
+
+    if (!this.user.dob) {
+      this.errors['dob'] = 'Date of birth is required.';
+    } else {
+      const dobDate = new Date(this.user.dob);
+      const today = new Date();
+      const minAllowedDob = new Date('2010-12-31');
+
+      if (dobDate > today) {
+        this.errors['dob'] = 'Date of birth cannot be in the future.';
+      } else if (dobDate > minAllowedDob) {
+        this.errors['dob'] = 'You must be 15 years or older.';
+      }
+    }
+
+    if (!this.user.gender) {
+      this.errors['gender'] = 'Please select your gender.';
+    }
+
+    if (!this.user.password) {
+      this.errors['password'] = 'Password is required.';
+    } else if (this.user.password.length < 8) {
+      this.errors['password'] = 'Password must be at least 8 characters.';
+    }
+
+    if (!this.user.confirmPassword) {
+      this.errors['confirmPassword'] = 'Confirm password is required.';
+    } else if (this.user.confirmPassword !== this.user.password) {
+      this.errors['confirmPassword'] = 'Passwords do not match.';
+    }
+
+    if (this.selectedFile) {
+      const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validImageTypes.includes(this.selectedFile.type)) {
+        this.errors['file'] = 'Invalid image type.';
+        this.fileTypeInvalid = true;
+      }
+    }
+  }
+
+  isEmailFormatValid(): boolean {
+    return /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(this.user.email);
+  }
+
+  onFileSelected(event: any): void {
+    const file: File = event.target.files[0];
+    this.errors['file'] = '';
+    this.fileTypeInvalid = false;
+
+    if (file) {
+      const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!validImageTypes.includes(file.type)) {
+        this.errors['file'] = 'Invalid image type.';
+        this.fileTypeInvalid = true;
+        this.selectedFile = undefined;
+        return;
+      }
+      this.selectedFile = file;
+      if (this.submitted) this.validate();
+    }
+  }
+
+  onNameChange(): void {
+    if (this.submitted) this.validate();
+  }
+
+  onEmailChange(): void {
+    if (this.submitted) this.validate();
+    this.otpVerified = false;
+    this.isOtpStep = false;
+    this.otpError = null;
+    this.otpForm.reset();
+  }
+
+  onDobChange(): void {
+    if (this.submitted) this.validate();
+  }
+
+  onGenderChange(): void {
+    if (this.submitted) this.validate();
+  }
+
+  onPasswordChange(): void {
+    if (this.submitted) this.validate();
+  }
+
+  onConfirmPasswordChange(): void {
+    if (this.submitted) this.validate();
+  }
+
+  onInputChange(field: string): void {
+    if (this.errors[field]) {
+      delete this.errors[field];
+    }
+  }
+
+
+
+
+
+
+  }
+

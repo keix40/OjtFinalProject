@@ -27,7 +27,11 @@ export class AuthService {
 //     });
 //   }
 
-  register(data: RegisterRequest): Observable<RegisterResponse> {
+//   register(data: RegisterRequest): Observable<RegisterResponse> {
+//   return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
+// }
+
+register(data: any): Observable<RegisterResponse> {
   return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
 }
 
