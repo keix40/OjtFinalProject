@@ -1,47 +1,44 @@
 <ng-container *ngIf="showCartSidebar">
   <div class="cart-sidebar-backdrop" (click)="onClose()"></div>
-  <div class="cart-sidebar open">
-    <div class="cart-header d-flex justify-content-between align-items-center p-3 border-bottom bg-white">
-      <h5 class="mb-0 text-primary"><i class="bi bi-cart4 me-2"></i>Cart</h5>
-      <button class="btn-close" (click)="onClose()"></button>
+  <div class="cart-sidebar shadow-lg bg-white rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0">Your Cart</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="onClose()"></button>
     </div>
-    <div class="cart-body p-4">
-      <div *ngFor="let item of cartItems" class="cart-item card mb-4 p-4 border-0 shadow-sm position-relative">
-        <div class="row g-3 align-items-center">
-          <div class="col-auto">
-            <img [src]="item.image" class="rounded" style="width:90px;height:90px;object-fit:cover;">
+    <div class="cart-items-list mb-4">
+      <!-- Cart items -->
+      <div *ngFor="let item of cartItems" class="cart-item-card d-flex align-items-center mb-4 p-3 rounded-3 shadow-sm">
+        <img [src]="item.image" class="cart-item-img rounded-3 me-3" [alt]="item.title">
+        <div class="flex-grow-1">
+          <div class="fw-semibold fs-5 mb-1">{{ item.title }}</div>
+          <div class="text-muted small mb-1">Size: {{ item.size }}</div>
+          <div class="text-muted small mb-2">Color: {{ item.color }}</div>
+          <div class="d-flex align-items-center mb-2">
+            <button class="btn btn-outline-secondary btn-sm px-2 py-0 me-2" (click)="decrementQty(item)">-</button>
+            <span class="mx-2">{{ item.quantity }}</span>
+            <button class="btn btn-outline-secondary btn-sm px-2 py-0 ms-2" (click)="incrementQty(item)">+</button>
           </div>
-          <div class="col">
-            <div class="fw-semibold text-dark mb-1">{{item.title}}</div>
-            <div class="small text-muted mb-1">Size: <span class="fw-bold text-body">{{item.size}}</span></div>
-            <div class="small text-muted mb-1">Color: <span class="fw-bold text-body">{{item.color}}</span></div>
-            <div>
-              <span class="text-decoration-line-through text-muted me-2">${{item.oldPrice}}</span>
-              <span class="fw-bold text-primary fs-5">${{item.price}}</span>
-              <span class="badge bg-success ms-2">Save {{item.discount}}</span>
-            </div>
+          <div class="d-flex align-items-center">
+            <span class="fw-bold fs-5 me-2">${{ item.price }}</span>
+            <span *ngIf="item.originalPrice && item.originalPrice > item.price" class="text-decoration-line-through text-danger me-2">${{ item.originalPrice }}</span>
+            <span *ngIf="item.savings" class="badge bg-success bg-opacity-10 text-success fw-normal">Save ${{ item.savings }}</span>
           </div>
-          <div class="col-auto d-flex flex-column align-items-end">
-            <button class="btn btn-link text-danger p-0" style="font-size:1.3rem;"><i class="bi bi-x-lg"></i></button>
-          </div>
+          <div class="fw-bold text-primary fs-6 mt-2">Total: ${{ item.price * item.quantity }}</div>
         </div>
-        <div class="d-flex align-items-center mt-3">
-          <span class="me-2">Quantity</span>
-          <button class="btn btn-outline-secondary btn-sm px-2 py-0 me-2" (click)="decreaseQty(item)">-</button>
-          <span class="fw-bold">{{item.quantity}}</span>
-          <button class="btn btn-outline-secondary btn-sm px-2 py-0 ms-2" (click)="increaseQty(item)">+</button>
-          <span class="ms-auto fw-bold text-primary">Total: ${{getItemTotal(item)}}</span>
-        </div>
+        <button class="btn btn-link text-danger ms-3 fs-5 p-0" title="Remove" (click)="removeItem(item)">
+          <i class="bi bi-trash"></i>
+        </button>
       </div>
+      <!-- End cart item -->
     </div>
-    <div class="cart-footer p-3 border-top bg-light">
-      <div class="d-flex justify-content-between mb-2">
-        <span class="fw-semibold">Cart Total:</span>
-        <span class="fw-bold text-primary">${{getCartTotal()}}</span>
+    <div class="cart-sidebar-footer mt-auto">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="fw-semibold">Total</span>
+        <span class="fw-bold fs-4">${{ getTotal() }}</span>
       </div>
-      <div class="d-flex gap-2">
-        <a routerLink="/cart" class="btn btn-outline-primary w-50"><i class="bi bi-bag me-1"></i>Go to cart</a>
-        <a routerLink="/checkout" class="btn btn-primary w-50"><i class="bi bi-credit-card me-1"></i>Proceed to payment</a>
+      <div class="d-grid gap-2">
+        <button class="btn btn-light btn-lg border" (click)="goToCart()">Go to cart</button>
+        <button class="btn btn-primary btn-lg" (click)="proceedToPayment()">Proceed to payment</button>
       </div>
     </div>
   </div>

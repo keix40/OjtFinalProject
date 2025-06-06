@@ -116,4 +116,7 @@ resendOtp(email: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/user/${details.id}`, details, { headers });
   }
 
+  sendOtp(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/send-otp`, { email });
+  }
 }

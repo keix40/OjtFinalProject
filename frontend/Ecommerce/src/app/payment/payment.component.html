@@ -1,0 +1,89 @@
+<app-header></app-header>
+<div class="container-fluid py-5 bg-light min-vh-100">
+  <div class="row justify-content-center checkout-row">
+    <!-- Main Content (Left) -->
+    <div class="col-lg-8 col-xl-5 col-md-11 mb-4">
+      <div class="mx-auto animate-fadein" style="max-width: 950px;">
+        <!-- Order Details Card (one data per line, two columns) -->
+        <div class="bg-white rounded-5 shadow-lg p-5 order-detail-card animate-slidein" style="box-shadow:0 8px 32px rgba(0,0,0,0.10);">
+          <h4 class="fw-bold mb-4 text-success">Your order has been placed!</h4>
+          <div class="mb-2"><strong>Order ID</strong> <span class="fw-bold">#{{orderNumber}}</span></div>
+          <div class="mb-3 text-muted small">A confirmation email will be sent to <b>{{customer?.email}}</b></div>
+          <div class="order-detail-list">
+            <div class="row mb-2 align-items-center">
+              <div class="col-md-4 fw-semibold">Customer Name</div>
+              <div class="col-md-8">{{customer?.firstName}} {{customer?.lastName}}</div>
+            </div>
+            <div class="row mb-2 align-items-center">
+              <div class="col-md-4 fw-semibold">Phone Number</div>
+              <div class="col-md-8">{{customer?.phone}}</div>
+            </div>
+            <div class="row mb-2 align-items-center">
+              <div class="col-md-4 fw-semibold">Shipping Address</div>
+              <div class="col-md-8">{{shipping?.address}}, {{shipping?.city}}, {{shipping?.state}}, {{shipping?.postal}}, {{shipping?.country}}</div>
+            </div>
+            <div class="row mb-2 align-items-center">
+              <div class="col-md-4 fw-semibold">Billing Address</div>
+              <div class="col-md-8">{{shipping?.address}}, {{shipping?.city}}, {{shipping?.state}}, {{shipping?.postal}}, {{shipping?.country}}</div>
+            </div>
+            <div class="row mb-2 align-items-center">
+              <div class="col-md-4 fw-semibold">Delivery Option</div>
+              <div class="col-md-8">{{delivery?.method}}</div>
+            </div>
+          </div>
+        </div>
+        <!-- Payment Method Section (pill style, no card, minimal margin) -->
+        <div class="payment-method-section" style="margin-top:0;">
+          <h5 class="fw-bold mb-3">Please choose a payment method</h5>
+          <div class="payment-methods">
+            <div class="form-check payment-pill mb-3" [class.selected]="paymentMethod==='card'">
+              <label class="w-100 d-flex align-items-center gap-3 p-4 rounded-pill shadow-sm" [class.selected-label]="paymentMethod==='card'">
+                <input class="form-check-input me-3" type="radio" name="paymentMethod" [(ngModel)]="paymentMethod" value="card">
+                <i class="bi bi-credit-card fs-2 text-primary"></i>
+                <span>
+                  <span class="fw-semibold fs-5">Pay via Card</span><br>
+                  <span class="small text-muted">Pay with your debit or credit card</span>
+                </span>
+              </label>
+            </div>
+            <div class="form-check payment-pill mb-2" [class.selected]="paymentMethod==='cod'">
+              <label class="w-100 d-flex align-items-center gap-3 p-4 rounded-pill shadow-sm" [class.selected-label]="paymentMethod==='cod'">
+                <input class="form-check-input me-3" type="radio" name="paymentMethod" [(ngModel)]="paymentMethod" value="cod">
+                <i class="bi bi-cash-coin fs-2 text-success"></i>
+                <span>
+                  <span class="fw-semibold fs-5">Cash on delivery</span><br>
+                  <span class="small text-muted">Pay when you receive your product</span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Payment Summary (Right) -->
+    <div class="col-lg-5 col-xl-4 mb-4">
+      <div class="bg-white rounded-5 shadow-lg p-5 sticky-top animate-fadein payment-summary-card" style="top: 32px; min-width: 360px; width: 100%;max-width: 800PX; box-shadow:0 8px 32px rgba(0,0,0,0.10);">
+        <h5 class="fw-bold mb-3">Cart Items</h5>
+        <div *ngFor="let item of cartItems" class="d-flex align-items-center mb-3 cart-summary-item">
+          <img [src]="item.image" alt="{{item.title}}" class="rounded-3 me-3" style="width:56px;height:56px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div class="flex-grow-1">
+            <div class="fw-semibold">{{item.title}}</div>
+            <div class="small text-muted">Size: {{item.size}}</div>
+            <div class="small text-muted">Color: {{item.color}}</div>
+            <div class="small text-muted">Quantity: {{item.quantity}}</div>
+          </div>
+          <div class="fw-bold ms-2">${{item.price * item.quantity}}</div>
+        </div>
+        <hr>
+        <h6 class="fw-bold mt-3 mb-2">Summary</h6>
+        <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>${{getSubtotal()}}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>${{getDeliveryCost()}}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-$100.00</span></div>
+        <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">${{getTotal()}}</span></div>
+        <div class="text-success mt-2">Yay! you saved 30% in total</div>
+        <button class="btn btn-primary w-100 mt-4 rounded-pill py-2 fs-5" [disabled]="!paymentMethod" (click)="submitOrder()">Submit order</button>
+      </div>
+    </div>
+  </div>
+</div>
+

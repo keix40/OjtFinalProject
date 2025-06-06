@@ -31,6 +31,9 @@ import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { NavbarComponent } from './layout/navbar/navbar.component';
 import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
 import { CartPageComponent } from './cart-page/cart-page.component';
+import { CheckoutComponent } from './checkout/checkout.component';
+import { PaymentComponent } from './payment/payment.component';
+import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
 
 @NgModule({
   declarations: [
@@ -55,6 +58,9 @@ import { CartPageComponent } from './cart-page/cart-page.component';
     SidebarComponent,
     NavbarComponent,
     CartPageComponent,
+    CheckoutComponent,
+    PaymentComponent,
+    OrderConfirmComponent,
   ],
   imports: [
     BrowserModule,

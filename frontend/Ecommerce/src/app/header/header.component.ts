@@ -128,4 +128,8 @@ export class HeaderComponent implements OnInit {
   closeSidebar() {
     this.showCartSidebar = false;
   }
+
+  navigateToCart() {
+    this.router.navigate(['/cart']);
+  }
 }

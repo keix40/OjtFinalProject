@@ -1,0 +1,43 @@
+<app-header></app-header>
+<div class="container-fluid py-5 bg-light min-vh-100">
+  <div class="row justify-content-center checkout-row">
+    <div class="col-lg-8 col-xl-7 col-md-10 mb-4 mx-auto">
+      <div class="mx-auto animate-fadein" style="max-width: 700px;">
+        <div class="bg-white rounded-5 shadow-lg p-5 text-center">
+          <div class="mb-4">
+            <i class="bi bi-bag-check-fill text-success" style="font-size: 3rem;"></i>
+          </div>
+          <h3 class="fw-bold mb-3">Order Confirmed!</h3>
+          <div class="mb-2">Thank you for your purchase.</div>
+          <div class="mb-3">Order Number: <span class="fw-bold">#{{orderNumber}}</span></div>
+          <div class="row g-3 mb-4 text-start">
+            <div class="col-md-6">
+              <div class="bg-light rounded-3 p-3 mb-2"><strong>Customer Name</strong><br>{{customer?.firstName}} {{customer?.lastName}}</div>
+              <div class="bg-light rounded-3 p-3 mb-2"><strong>Phone Number</strong><br>{{customer?.phone}}</div>
+              <div class="bg-light rounded-3 p-3 mb-2"><strong>Shipping Address</strong><br>{{shipping?.address}}, {{shipping?.city}}, {{shipping?.state}}, {{shipping?.postal}}, {{shipping?.country}}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="bg-light rounded-3 p-3 mb-2"><strong>Delivery Option</strong><br>{{delivery?.method}}</div>
+              <div class="bg-light rounded-3 p-3 mb-2"><strong>Payment Method</strong><br>{{paymentMethod === 'card' ? 'Card' : 'Cash on delivery'}}</div>
+              <div class="bg-light rounded-3 p-3 mb-2"><strong>Order Items</strong>
+                <ul class="list-unstyled mb-0">
+                  <li *ngFor="let item of cartItems" class="mb-1">
+                    <span class="fw-semibold">{{item.title}}</span> x{{item.quantity}}<br>
+                    <span class="small text-muted">{{item.size}}, {{item.color}}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <h6 class="fw-bold mt-4 mb-2">Summary</h6>
+          <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>${{getSubtotal()}}</span></div>
+          <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>${{getDeliveryCost()}}</span></div>
+          <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-$100.00</span></div>
+          <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">${{getTotal()}}</span></div>
+          <div class="text-success mt-2">Yay! you saved 30% in total</div>
+          <a routerLink="/home" class="btn btn-outline-primary mt-4 rounded-pill px-4">Back to Shop</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
