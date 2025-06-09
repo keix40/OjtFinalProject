@@ -50,8 +50,10 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
                         .requestMatchers("product/**").permitAll()
+                        .requestMatchers("/product_image/**").permitAll()
                         .requestMatchers("/category/**").permitAll()
                         .requestMatchers("/brand/**").permitAll()
+                        .requestMatchers("/attribute/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
                         .anyRequest().authenticated()

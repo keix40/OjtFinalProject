@@ -35,46 +35,66 @@ public class CategoryController {
 
     @PostMapping("/addcategory")
     public ResponseEntity<?> saveBrand(@RequestBody CategoryDTO dto) {
-        BrandHasCategory bcObj = new BrandHasCategory();
+        Brand brand = null;
 
-        Brand brand;
-        if (dto.getBrandId() != null) {
+        if (dto.getBrandId() != null && dto.getBrandId() != 0) {
             brand = new Brand();
-            brand.setId(dto.getBrandId()); // Use existing brand
-        } else {
-            boolean brandExist = brandService.checkNameExist(dto.getBrandName());
+            brand.setId(dto.getBrandId());
+        }
+        else if (dto.getBrandName() != null && !dto.getBrandName().trim().isEmpty()) {
+            boolean brandExist = brandService.checkNameExist(dto.getBrandName().trim());
             if (brandExist) {
                 return ResponseEntity.badRequest().body("Brand already exists. Please select it.");
             }
 
             Brand newBrand = new Brand();
-            newBrand.setName(dto.getBrandName());
+            newBrand.setName(dto.getBrandName().trim());
             brand = brandService.saveBrand(newBrand);
+
             if (brand == null) {
                 return ResponseEntity.badRequest().body("Brand Register Failed.");
             }
         }
-        bcObj.setBrand(brand);
 
-        Category category = service.findByName(dto.getCateName());
-        if (category == null) {
-            // create new category if not exist
-            Category newCate = new Category();
-            newCate.setName(dto.getCateName());
-            category = service.saveCategory(newCate);
-            if (category == null) {
-                return ResponseEntity.badRequest().body("Category Register Failed.");
+        Category parentCategory = null;
+        if (dto.getParentId() != null) {
+            parentCategory = service.getCategoryById(dto.getParentId());
+            if (parentCategory == null) {
+                return ResponseEntity.badRequest().body("Parent category not found.");
             }
         }
 
-        bcObj.setCategory(category);
+        for (String cateName : dto.getCateNames()) {
+            if (cateName == null || cateName.trim().isEmpty()) continue;
 
-        BrandHasCategory savedBc = bcService.saveBrandAndCat(bcObj);
-        if (savedBc == null) {
-            return ResponseEntity.badRequest().body("BrandHasCategory Register Failed.");
+            Category category = service.findByName(cateName.trim());
+            if (category == null) {
+                Category newCate = new Category();
+                newCate.setName(cateName.trim());
+                if (parentCategory != null) {
+                    newCate.setParent(parentCategory);
+                }
+
+                category = service.saveCategory(newCate);
+                if (category == null) {
+                    return ResponseEntity.badRequest().body("Category Register Failed for: " + cateName);
+                }
+            }
+
+            if (brand != null) {
+                BrandHasCategory bcObj = new BrandHasCategory();
+                bcObj.setBrand(brand);
+                bcObj.setCategory(category);
+
+                BrandHasCategory savedBc = bcService.saveBrandAndCat(bcObj);
+                if (savedBc == null) {
+                    return ResponseEntity.badRequest().body("Failed to link brand with category: " + cateName);
+                }
+            }
         }
 
         return ResponseEntity.ok("Success");
     }
+
 
 }

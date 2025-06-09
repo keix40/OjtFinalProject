@@ -33,4 +33,8 @@ public class CategoryService {
     public Category findByName(String name){
         return repo.findByName(name);
     }
+
+    public Category getCategoryById(Long id) {
+        return repo.findById(id).orElse(null);
+    }
 }

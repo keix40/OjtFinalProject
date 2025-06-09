@@ -32,6 +32,7 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;  // Inject RefreshTokenService
     private final ModelMapper modelMapper;
+    private final EmailService emailService;
 
     @Override
     public String register(RegisterRequest request) {
@@ -53,9 +54,17 @@ public class UserServiceImpl implements UserService {
                 .role(roleUser)
                 .build();
 
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        user.setOtpCode(otp);
+        user.setOtpExpiry(java.time.LocalDateTime.now().plusMinutes(10));
+
+        // ✅ Save the user with OTP
         userRepository.save(user);
 
-        return "User registered successfully";
+        // ✅ Send OTP via email
+        emailService.sendEmail(user.getEmail(), "OTP Verification Code", "Your OTP is: " + otp);
+
+        return "User registered successfully. Please check your email for OTP.";
     }
 
     @Override
