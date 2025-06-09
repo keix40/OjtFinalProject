@@ -1,124 +1,148 @@
 <div class="orders-section">
-    <h3>Orders</h3>
-    <div class="orders-controls">
-        <select class="form-select">
+  <div class="container-fluid p-0">
+    <div class="card rounded-4 shadow-sm border-0 bg-white p-2 p-sm-3 p-md-4 p-lg-5 mb-4 mx-auto" style="max-width: 1100px;">
+      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
+        <h3 class="fw-bold fs-2 mb-0 text-primary"><i class="bi bi-box-seam me-2"></i> Orders</h3>
+        <div class="d-flex flex-column flex-sm-row flex-wrap gap-2 w-100 w-md-auto">
+          <select class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition mb-2 mb-sm-0">
             <option value="">Select status</option>
             <option value="all">All Orders</option>
             <option value="pending">Pending</option>
             <option value="processing">Processing</option>
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>
-        </select>
-        <select class="form-select">
+          </select>
+          <select class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition">
             <option value="">For all time</option>
             <option value="last30">Last 30 days</option>
             <option value="last90">Last 90 days</option>
             <option value="lastyear">Last year</option>
-        </select>
-    </div>
-    <div class="orders-table">
-        <table width="100%">
-            <thead>
-                <tr>
-                    <th>Order #</th>
-                    <th>Order date <i class="bi bi-arrow-down-up"></i></th>
-                    <th>Status</th>
-                    <th>Total <i class="bi bi-arrow-down-up"></i></th>
-                    <th></th> <!-- For dropdown arrow -->
-                </tr>
-            </thead>
-            <tbody>
-                <ng-container *ngFor="let order of userOrders">
-                    <tr (click)="toggleOrderDetails(order.id)" [class.expanded]="expandedOrderId === order.id">
-                        <td>
-                            {{order.orderNumber}}
-                            <div class="product-previews">
-                                <img *ngFor="let product of order.items.slice(0, 3)" [src]="product.image" [alt]="product.title">
-                                <span *ngIf="order.items.length > 3" class="more-items">+{{order.items.length - 3}}</span>
-                            </div>
-                        </td>
-                        <td>{{order.orderDate | date:'MM/dd/yyyy'}}</td>
-                        <td><span class="status {{order.status.toLowerCase().replace(' ', '-')}}">• {{order.status}}</span></td>
-                        <td>{{order.total | currency}}</td>
-                        <td>
-                            <i class="bi" [class.bi-chevron-down]="expandedOrderId !== order.id" [class.bi-chevron-up]="expandedOrderId === order.id"></i>
-                        </td>
-                    </tr>
-                    <tr *ngIf="expandedOrderId === order.id" class="order-details-row">
-                        <td colspan="5">
-                            <div class="order-details-panel">
-                                <h4>Order Details</h4>
-                                <div class="d-flex justify-content-between detail-line">
-                                    <span>Order Date: {{order.orderDate | date:'MM/dd/yyyy'}}</span>
-                                    <span>Payment Method: {{order.paymentMethod}}</span>
-                                </div>
-                                
-                                <!-- List of products in the order -->
-                                <div class="order-items-list">
-                                    <div class="order-item" *ngFor="let item of order.items">
-                                        <div class="item-image">
-                                            <img [src]="item.image" [alt]="item.title">
-                                        </div>
-                                        <div class="item-details">
-                                            <h4>{{item.title}}</h4>
-                                            <p class="sku-qty">SKU: {{item.sku}} Qty: {{item.quantity}}</p>
-                                        </div>
-                                        <div class="item-price">{{item.price * item.quantity | currency}}</div>
-                                    </div>
-                                </div>
-
-                                <!-- Order Totals -->
-                                <div class="order-totals">
-                                    <div class="total-line">
-                                        <span>Subtotal:</span>
-                                        <span>{{order.subtotal | currency}}</span>
-                                    </div>
-                                     <div class="total-line">
-                                        <span>Shipping:</span>
-                                        <span>{{order.shippingCost | currency}}</span>
-                                    </div>
-                                     <div class="total-line">
-                                        <span>Tax:</span>
-                                        <span>{{order.tax | currency}}</span>
-                                    </div>
-                                     <div class="total-line total">
-                                        <span>Total:</span>
-                                        <span>{{order.total | currency}}</span>
-                                    </div>
-                                </div>
-
-                                <!-- Shipping Info -->
-                                <div class="shipping-info row">
-                                    <div class="col-md-6">
-                                        <h4>Shipping Address</h4>
-                                        <p>{{order.shippingAddress.street}}</p>
-                                        <p>{{order.shippingAddress.apt}}</p>
-                                        <p>{{order.shippingAddress.city}}, {{order.shippingAddress.state}} {{order.shippingAddress.zip}}</p>
-                                        <p>{{order.shippingAddress.country}}</p>
-                                    </div>
-                                     <div class="col-md-6">
-                                        <h4>Shipping Method</h4>
-                                        <p>{{order.shippingMethod}}</p>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </td>
-                    </tr>
-                </ng-container>
-                 <tr *ngIf="userOrders.length === 0">
-                    <td colspan="5" class="text-center">
-                        <p>No orders found.</p>
-                    </td>
-                </tr>
-            </tbody>
+          </select>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table align-middle table-hover rounded-4 overflow-hidden shadow-sm bg-white">
+          <thead class="table-light">
+            <tr>
+              <th>Order #</th>
+              <th>Order date <i class="bi bi-arrow-down-up"></i></th>
+              <th>Status</th>
+              <th>Total <i class="bi bi-arrow-down-up"></i></th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let order of userOrders">
+              <tr class="transition" (click)="toggleOrderDetails(order.id)" [ngClass]="{'table-primary': expandedOrderId === order.id, 'cursor-pointer': true}">
+                <td>
+                  <div class="fw-bold">{{order.orderNumber}}</div>
+                  <div class="d-flex align-items-center gap-1 mt-1">
+                    <img *ngFor="let product of order.items.slice(0, 3)" [src]="product.image" [alt]="product.title" class="rounded-circle shadow-sm border border-2" style="width: 32px; height: 32px; object-fit: cover;">
+                    <span *ngIf="order.items.length > 3" class="badge bg-secondary ms-1">+{{order.items.length - 3}}</span>
+                  </div>
+                </td>
+                <td class="text-nowrap">{{order.orderDate | date:'MM/dd/yyyy'}}</td>
+                <td><span class="badge rounded-pill px-3 py-2 bg-info text-dark fs-6">{{order.status}}</span></td>
+                <td class="fw-semibold">{{order.total | currency}}</td>
+                <td>
+                  <i class="bi transition fs-4" [class.bi-chevron-down]="expandedOrderId !== order.id" [class.bi-chevron-up]="expandedOrderId === order.id"></i>
+                </td>
+              </tr>
+              <tr *ngIf="expandedOrderId === order.id">
+                <td colspan="5" class="p-0">
+                  <div class="card rounded-4 shadow-lg my-3 p-4 animate__animated animate__fadeIn">
+                    <h4 class="fw-bold mb-3 fs-5">Order Details</h4>
+                    <div class="row g-3 mb-3">
+                      <div class="col-md-6">
+                        <div class="mb-2"><span class="fw-semibold">Order Date:</span> {{order.orderDate | date:'MM/dd/yyyy'}}</div>
+                      </div>
+                      <div class="col-md-6">
+                        <div class="mb-2"><span class="fw-semibold">Payment Method:</span> {{order.paymentMethod}}</div>
+                      </div>
+                    </div>
+                    <div class="order-items-list mb-4">
+                      <div class="d-flex flex-column gap-3">
+                        <div class="card shadow-sm rounded-3 p-3 d-flex flex-row align-items-center gap-3 flex-wrap flex-md-nowrap" *ngFor="let item of order.items">
+                          <img [src]="item.image" [alt]="item.title" class="rounded-3 border border-2 flex-shrink-0" style="width: 48px; height: 48px; object-fit: cover;">
+                          <div class="flex-grow-1 min-w-0">
+                            <h5 class="mb-1 fs-6 text-truncate">{{item.title}}</h5>
+                            <p class="mb-0 text-muted small text-truncate">SKU: {{item.sku}} | Qty: {{item.quantity}}</p>
+                          </div>
+                          <div class="fw-semibold text-end ms-auto">{{item.price * item.quantity | currency}}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="order-totals mb-4">
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <div class="d-flex justify-content-between py-1">
+                            <span class="fw-semibold">Subtotal:</span>
+                            <span>{{order.subtotal | currency}}</span>
+                          </div>
+                          <div class="d-flex justify-content-between py-1">
+                            <span class="fw-semibold">Shipping:</span>
+                            <span>{{order.shippingCost | currency}}</span>
+                          </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="d-flex justify-content-between py-1">
+                            <span class="fw-semibold">Tax:</span>
+                            <span>{{order.tax | currency}}</span>
+                          </div>
+                          <div class="d-flex justify-content-between py-2 border-top mt-2">
+                            <span class="fw-bold fs-5">Total:</span>
+                            <span class="fw-bold fs-5">{{order.total | currency}}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="d-flex justify-content-between py-1">
+                        <span class="fw-semibold">Shipping:</span>
+                        <span>{{order.shippingCost | currency}}</span>
+                      </div>
+                      <div class="d-flex justify-content-between py-1">
+                        <span class="fw-semibold">Tax:</span>
+                        <span>{{order.tax | currency}}</span>
+                      </div>
+                      <div class="d-flex justify-content-between py-2 border-top mt-2">
+                        <span class="fw-bold fs-5">Total:</span>
+                        <span class="fw-bold fs-5">{{order.total | currency}}</span>
+                      </div>
+                    </div>
+                    <div class="row g-4">
+                      <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">Shipping Address</h6>
+                        <div class="mb-1">{{order.shippingAddress.street}}</div>
+                        <div class="mb-1">{{order.shippingAddress.apt}}</div>
+                        <div class="mb-1">{{order.shippingAddress.city}}, {{order.shippingAddress.state}} {{order.shippingAddress.zip}}</div>
+                        <div class="mb-1">{{order.shippingAddress.country}}</div>
+                      </div>
+                      <div class="col-md-6">
+                        <h6 class="fw-bold mb-2">Shipping Method</h6>
+                        <div>{{order.shippingMethod}}</div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            </ng-container>
+            <tr *ngIf="userOrders.length === 0">
+              <td colspan="5" class="text-center py-5">
+                <p class="text-muted">No orders found.</p>
+              </td>
+            </tr>
+          </tbody>
         </table>
+      </div>
     </div>
-     <!-- Pagination Placeholder -->
-    <div class="pagination">
-        <a class="active">1</a>
-        <a>2</a>
-        <a>3</a>
-        <a>4</a>
+    <!-- Pagination Placeholder -->
+    <div class="d-flex justify-content-center mt-4">
+      <nav aria-label="Orders pagination">
+        <ul class="pagination pagination-rounded mb-0 gap-2">
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item"><a class="page-link" href="#">2</a></li>
+          <li class="page-item"><a class="page-link" href="#">3</a></li>
+        </ul>
+      </nav>
     </div>
+  </div>
 </div>

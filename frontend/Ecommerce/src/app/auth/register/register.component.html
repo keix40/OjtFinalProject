@@ -143,25 +143,17 @@
   </div>
   
   <!-- OTP Modal -->
-  <div class="modal-overlay" *ngIf="showEmailVerifyModal">
-    <div class="modal">
-      <h3>Email Verification</h3>
-      <p>We've sent an OTP to <strong>{{ user.email }}</strong>. Please enter it below to continue.</p>
-  
-      <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
-        <input
-          type="text"
-          formControlName="otp"
-          placeholder="Enter OTP"
-          class="input-field"
-        />
-        <div class="error" *ngIf="otpError">{{ otpError }}</div>
-  
-        <div class="btn-group">
-          <button class="btn" type="submit" [disabled]="otpForm.invalid">Verify OTP</button>
-          <button class="btn" type="button" (click)="resendOtp()">Resend OTP</button>
-          <button class="btn btn-close" type="button" (click)="showEmailVerifyModal = false">Cancel</button>
-        </div>
-      </form>
-    </div>
+  <!-- OTP Modal -->
+<div *ngIf="showEmailVerifyModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>Enter OTP</h3>
+    <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+      <input formControlName="otp" placeholder="OTP" />
+      <button type="submit" [disabled]="otpForm.invalid">Verify OTP</button>
+      <button type="button" (click)="resendOtp()">Resend OTP</button>
+      <button type="button" (click)="showEmailVerifyModal = false">Cancel</button>
+    </form>
+    <div *ngIf="errorMessage" class="error">{{errorMessage}}</div>
+    <div *ngIf="successMessage" class="success">{{successMessage}}</div>
   </div>
+</div>

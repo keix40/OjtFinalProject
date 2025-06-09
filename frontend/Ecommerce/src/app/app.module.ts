@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GoogleMapsModule } from '@angular/google-maps';
 import { RouterModule } from '@angular/router';
@@ -25,7 +26,6 @@ import { AuthService } from './auth/auth.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { CreateBrandComponent } from './create-brand/create-brand.component';
 import { CreateCategoryComponent } from './create-category/create-category.component';
-import { ProductComponent } from './product/product.component';
 import { LayoutComponent } from './layout/layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { NavbarComponent } from './layout/navbar/navbar.component';
@@ -34,6 +34,7 @@ import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
+
 
 @NgModule({
   declarations: [
@@ -53,7 +54,6 @@ import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
     UserNotificationsComponent,
     CreateBrandComponent,
     CreateCategoryComponent,
-    ProductComponent,
     LayoutComponent,
     SidebarComponent,
     NavbarComponent,
@@ -67,11 +67,12 @@ import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
     AppRoutingModule,
     HttpClientModule,
     ReactiveFormsModule,
-    FormsModule,
+    FormsModule, // Required for ngModel/ngForm
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CartSidebarComponent
+    CommonModule, // Required for pipes like date, currency, number
+    CartSidebarComponent // Standalone component must be imported here
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

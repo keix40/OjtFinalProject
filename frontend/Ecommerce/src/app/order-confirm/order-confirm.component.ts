@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { CartService } from '../services/cart.service';
 
 @Component({
   selector: 'app-order-confirm',
@@ -15,7 +16,7 @@ export class OrderConfirmComponent implements OnInit {
   paymentMethod: string = '';
   orderNumber: string = '';
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private cartService: CartService) {}
 
   ngOnInit() {
     const nav = window.history.state;
@@ -25,6 +26,8 @@ export class OrderConfirmComponent implements OnInit {
     this.cartItems = nav.cartItems;
     this.paymentMethod = nav.paymentMethod;
     this.orderNumber = nav.orderNumber;
+    // Clear the cart after order confirmation
+    this.cartService.clearCart();
   }
 
   getSubtotal() {

@@ -6,11 +6,11 @@ import { RegisterComponent } from './auth/register/register.component';
 import { AuthGuard } from './auth/guards/auth.guard.service';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { LayoutComponent } from './layout/layout.component';
-import { ProductComponent } from './product/product.component';
 import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
+
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
@@ -22,7 +22,8 @@ const routes: Routes = [
     component: LayoutComponent,
     canActivate: [AuthGuard], // optional
     children: [
-      { path: 'product', component: ProductComponent },
+      // {path: 'products', component: ProductListComponent},
+      // {path: 'products', component: ProductDetailComponent},
       // add more routes here
     ],},
   { path: 'cart', component: CartPageComponent },

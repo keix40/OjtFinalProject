@@ -20,8 +20,6 @@
           </div>
           <div class="d-flex align-items-center">
             <span class="fw-bold fs-5 me-2">${{ item.price }}</span>
-            <span *ngIf="item.originalPrice && item.originalPrice > item.price" class="text-decoration-line-through text-danger me-2">${{ item.originalPrice }}</span>
-            <span *ngIf="item.savings" class="badge bg-success bg-opacity-10 text-success fw-normal">Save ${{ item.savings }}</span>
           </div>
           <div class="fw-bold text-primary fs-6 mt-2">Total: ${{ item.price * item.quantity }}</div>
         </div>

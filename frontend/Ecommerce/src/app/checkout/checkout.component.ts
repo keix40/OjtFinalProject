@@ -1,5 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
+import { CartService, CartItem } from '../services/cart.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-checkout',
@@ -7,18 +9,16 @@ import { Router } from '@angular/router';
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.css'
 })
-export class CheckoutComponent {
+export class CheckoutComponent implements OnInit, OnDestroy {
   activeStep = 1;
   orderNumber = '';
 
   // Track completed steps
   stepCompleted: { [key: number]: boolean } = {};
 
-  // Cart items (example data)
-  cartItems = [
-    { image: 'assets/images/test.jpg', title: 'Modern Sofa', size: 'L', color: 'Gray', quantity: 1, price: 259 },
-    { image: 'assets/images/test.jpg', title: 'Recliner Chair', size: 'M', color: 'Blue', quantity: 2, price: 109 }
-  ];
+  // Cart items
+  cartItems: CartItem[] = [];
+  private subscriptions: Subscription[] = [];
 
   // Customer info
   customer = {
@@ -57,7 +57,19 @@ export class CheckoutComponent {
     paypalEmail: ''
   };
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private cartService: CartService) {}
+
+  ngOnInit() {
+    this.subscriptions.push(
+      this.cartService.getCartItems().subscribe(items => {
+        this.cartItems = items;
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
 
   // Step navigation
   setActiveStep(step: number) {

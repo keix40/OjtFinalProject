@@ -1,20 +1,8 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-
-interface CartItem {
-  id: number;
-  title: string;
-  price: number;
-  oldPrice?: number;
-  originalPrice?: number;
-  quantity: number;
-  image: string;
-  size: string;
-  color: string;
-  discount?: string;
-  savings?: number;
-}
+import { CartService, CartItem } from '../services/cart.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-cart-sidebar',
@@ -23,68 +11,47 @@ interface CartItem {
   templateUrl: './cart-sidebar.component.html',
   styleUrls: ['./cart-sidebar.component.css']
 })
-export class CartSidebarComponent {
+export class CartSidebarComponent implements OnInit, OnDestroy {
   @Input() showCartSidebar = false;
   @Output() closeSidebar = new EventEmitter<void>();
 
-  constructor(private router: Router) {}
+  cartItems: CartItem[] = [];
+  cartTotal: number = 0;
+  private subscriptions: Subscription[] = [];
 
-  cartItems: CartItem[] = [
-    {
-      id: 1,
-      title: 'VINGLI 56" Modern Sofa, Small Corduroy Couch Deep Seat',
-      price: 259,
-      oldPrice: 440,
-      originalPrice: 440,
-      quantity: 1,
-      image: 'assets/images/test.jpg',
-      size: 'S',
-      color: 'Satin linen',
-      discount: '40%',
-      savings: 181
-    },
-    {
-      id: 2,
-      title: 'Fabric Recliner Chair Single Sofa',
-      price: 109,
-      oldPrice: 400,
-      originalPrice: 400,
-      quantity: 1,
-      image: 'assets/images/test.jpg',
-      size: 'S',
-      color: 'Satin linen',
-      discount: '73%',
-      savings: 291
-    },
-    {
-      id: 3,
-      title: 'Stuffed Animal Storage Bean Bag Chair Cover (No Filler)',
-      price: 79,
-      oldPrice: 160,
-      originalPrice: 160,
-      quantity: 1,
-      image: 'assets/images/test.jpg',
-      size: 'S',
-      color: 'Satin linen',
-      discount: '51%',
-      savings: 81
-    }
-  ];
+  constructor(private router: Router, private cartService: CartService) {}
+
+  ngOnInit() {
+    this.subscriptions.push(
+      this.cartService.getCartItems().subscribe(items => {
+        this.cartItems = items;
+      }),
+      this.cartService.getCartTotal().subscribe(total => {
+        this.cartTotal = total;
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
 
   decrementQty(item: CartItem) {
-    if (item.quantity > 1) item.quantity--;
+    if (item.quantity > 1) {
+      this.cartService.updateQuantity(item.id, item.quantity - 1);
+    }
   }
 
   incrementQty(item: CartItem) {
-    item.quantity++;
+    this.cartService.updateQuantity(item.id, item.quantity + 1);
   }
 
   removeItem(item: CartItem) {
-    this.cartItems = this.cartItems.filter(i => i.id !== item.id);
+    this.cartService.removeFromCart(item.id);
   }
 
   getTotal(): number {
-    return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return this.cartTotal;
   }
 
   goToCart() {

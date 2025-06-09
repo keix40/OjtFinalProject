@@ -1,6 +1,8 @@
-import { Component, OnInit, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { CartService, CartItem } from '../services/cart.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -8,51 +10,42 @@ import { AuthService } from '../auth/auth.service';
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
 
   name: string | null = null;
   userId: number | null = null;
-  cartItems = [
-    {
-      id: 1,
-      title: 'VINGLI 56\" Modern Sofa, Small Corduroy Couch Deep Seat',
-      price: 259.00,
-      quantity: 1,
-      image: 'assets/images/sofa.jpg'
-    },
-    {
-      id: 2,
-      title: 'Fabric Recliner Chair Single Sofa',
-      price: 109.00,
-      quantity: 1,
-      image: 'assets/images/recliner.jpg'
-    },
-    {
-      id: 3,
-      title: 'Stuffed Animal Storage Bean Bag Chair Cover (No Filler)',
-      price: 79.00,
-      quantity: 1,
-      image: 'assets/images/beanbag.jpg'
-    }
-  ];
-
+  cartItems: CartItem[] = [];
   cartTotal = 0;
   isMobileSearchVisible = false;
   isAuthenticated = false;
   openDropdown: string | null = null;
   showCartSidebar = false;
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private router: Router,
     private authService: AuthService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private cartService: CartService
   ) {}
 
   ngOnInit() {
-    this.updateCartTotal();
     this.checkAuthStatus();
     this.name = this.authService.getUsername();
     this.userId = this.authService.getUserId();
+
+    this.subscriptions.push(
+      this.cartService.getCartItems().subscribe(items => {
+        this.cartItems = items;
+      }),
+      this.cartService.getCartTotal().subscribe(total => {
+        this.cartTotal = total;
+      })
+    );
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
   private checkAuthStatus() {
@@ -70,12 +63,7 @@ export class HeaderComponent implements OnInit {
   }
 
   removeCartItem(itemId: number) {
-    this.cartItems = this.cartItems.filter(item => item.id !== itemId);
-    this.updateCartTotal();
-  }
-
-  private updateCartTotal() {
-    this.cartTotal = this.cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    this.cartService.removeFromCart(itemId);
   }
 
   navigateTo(route: string) {

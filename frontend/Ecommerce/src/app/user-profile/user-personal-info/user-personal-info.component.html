@@ -1,45 +1,60 @@
 <div class="personal-info-section">
-    <div class="section-header">
-        <h3>Personal Information</h3>
-        <div class="header-actions">
-            <button class="btn-icon edit-icon" (click)="toggleEditMode()">
-                <i class="bi bi-pencil-square"></i>
-            </button>
+  <div class="card rounded-4 mx-auto p-4 p-md-5 bg-white" style="max-width: 700px;">
+    <div class="d-flex flex-column flex-md-row align-items-center gap-4 mb-4">
+      <div class="d-flex flex-column align-items-center justify-content-center">
+        <div class="rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 84px; height: 84px;">
+          <i class="bi bi-person-circle text-secondary fs-1"></i>
         </div>
+        <div class="fw-semibold text-secondary small">Profile Avatar</div>
+      </div>
+      <div class="flex-grow-1 w-100">
+        <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+          <h3 class="fw-bold fs-3 mb-0">Personal Information</h3>
+          <button class="btn btn-outline-primary rounded-pill px-4 py-2 fs-6 fw-semibold d-flex align-items-center transition" (click)="toggleEditMode()">
+            <i class="bi bi-pencil-square me-2"></i> <span class="d-none d-md-inline">{{ isEditing ? 'Editing' : 'Edit' }}</span>
+          </button>
+        </div>
+        <div class="text-muted mb-2">Manage your profile details. All fields are kept private and secure.</div>
+      </div>
     </div>
-    <form [formGroup]="personalInfoForm">
-        <div class="form-group" style="display: none;">
-            <label for="userId">User ID</label>
-            <input id="userId" type="text" [value]="userDetails?.id || ''" disabled>
-        </div>
-        <div class="form-group">
-            <label for="name">Full Name</label>
-            <input id="name" type="text" formControlName="name" [attr.disabled]="!isEditing ? true : null">
-        </div>
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input id="email" type="email" formControlName="email" [attr.disabled]="!isEditing ? true : null">
-        </div>
-        <div class="form-group">
-            <label for="gender">Gender</label>
-            <select id="gender" formControlName="gender" [attr.disabled]="!isEditing ? true : null">
-                <option value="">Select Gender</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-                <option value="OTHER">Other</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="dateOfBirth">Date of Birth</label>
-            <input id="dateOfBirth" type="date" formControlName="dateOfBirth" [attr.disabled]="!isEditing ? true : null">
-        </div>
-        <div class="form-group">
-            <label for="phoneNumber">Phone Number</label>
-            <input id="phoneNumber" type="text" formControlName="phoneNumber" [attr.disabled]="!isEditing ? true : null">
-        </div>
-        <div class="button-group" *ngIf="isEditing">
-            <button type="button" class="btn btn-save" (click)="saveChanges()">Save Changes</button>
-            <button type="button" class="btn btn-cancel" (click)="cancelEdit()">Cancel</button>
-        </div>
+    <form [formGroup]="personalInfoForm" class="row g-4">
+      <div class="col-12 col-md-6 d-none">
+        <label for="userId" class="form-label">User ID</label>
+        <input id="userId" type="text" class="form-control" [value]="userDetails?.id || ''" disabled>
+      </div>
+      <div class="col-12 col-md-6">
+        <label for="name" class="form-label fw-semibold">Full Name</label>
+        <input id="name" type="text" class="form-control rounded-3 fs-6" formControlName="name" [attr.disabled]="!isEditing ? true : null">
+      </div>
+      <div class="col-12 col-md-6">
+        <label for="email" class="form-label fw-semibold">Email</label>
+        <input id="email" type="email" class="form-control rounded-3 fs-6" formControlName="email" [attr.disabled]="!isEditing ? true : null">
+      </div>
+      <div class="col-12 col-md-6">
+        <label for="gender" class="form-label fw-semibold">Gender</label>
+        <select id="gender" class="form-select rounded-pill fs-6" formControlName="gender" [attr.disabled]="!isEditing ? true : null">
+          <option value="">Select Gender</option>
+          <option value="MALE">Male</option>
+          <option value="FEMALE">Female</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-6">
+        <label for="dateOfBirth" class="form-label fw-semibold">Date of Birth</label>
+        <input id="dateOfBirth" type="date" class="form-control rounded-3 fs-6" formControlName="dateOfBirth" [attr.disabled]="!isEditing ? true : null">
+      </div>
+      <div class="col-12 col-md-6">
+        <label for="phoneNumber" class="form-label fw-semibold">Phone Number</label>
+        <input id="phoneNumber" type="text" class="form-control rounded-3 fs-6" formControlName="phoneNumber" [attr.disabled]="!isEditing ? true : null">
+      </div>
+      <div class="col-12 d-flex flex-wrap gap-2 mt-3" *ngIf="isEditing">
+        <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fs-6 fw-semibold transition" (click)="saveChanges()">
+          <i class="bi bi-save me-2"></i> Save Changes
+        </button>
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4 py-2 fs-6 fw-semibold transition" (click)="cancelEdit()">
+          <i class="bi bi-x-lg me-2"></i> Cancel
+        </button>
+      </div>
     </form>
+  </div>
 </div>
