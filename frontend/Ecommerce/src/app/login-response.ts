@@ -5,5 +5,4 @@ export interface LoginResponse {
   username: string;
   userId: number;
   role: string;
-
 }

@@ -1,0 +1,75 @@
+<div class="p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fw-bold">Product Management</h2>
+      <a routerLink="/product" class="btn btn-primary">+ Add Product</a>
+    </div>
+  
+    <div class="container mb-4">
+        <div class="row g-2 align-items-center mb-2">
+          <div class="col-md-3">
+            <select class="form-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
+              <option [ngValue]="0" selected>All Categories</option>
+              <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" [(ngModel)]="selectedBrand">
+              <option [ngValue]="0" selected>All Brands</option>
+              <option *ngFor="let brand of brands" [value]="brand.id">{{ brand.name }}</option>
+            </select>
+          </div>
+        </div>
+      
+        <div class="row">
+          <div class="col">
+            <button class="btn btn-outline-secondary me-2" [disabled]="selectedProducts.length > 1|| selectedProducts.length === 0">Edit</button>
+            <button (click)="showDeleteConfirm()" class="btn btn-outline-danger" [disabled]="selectedProducts.length === 0">Delete</button>
+          </div>
+        </div>
+      </div>    
+      
+    <!-- Product Table -->
+    <div class="table-responsive shadow-sm rounded">
+      <table id="productTable" class="table table-hover align-middle border mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>
+                <input type="checkbox" [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
+            </th>
+            <th>Product</th>
+            <th>SKU</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of products">
+            <td>
+                <input type="checkbox" [(ngModel)]="product.checked" (change)="updateSelection()">
+            </td>
+            <td class="d-flex align-items-center gap-2">
+              <img
+                *ngIf="product.productImages.length > 0"
+                [src]="getProductImageUrl(product.productImages[0].imageUrl)"
+                alt="Product Image"
+                class="rounded"
+                style="width: 45px; height: 45px; object-fit: cover;"
+                (error)="product.productImages[0].imageUrl = 'assets/image-not-found.png'"
+            >
+              <span>{{ product.productName }}</span>
+            </td>
+            <td>{{ product.productCode }}</td>
+            <td>{{ product.price }} ks</td>
+            <td>{{ product.quantity }}</td>
+            <td>
+              <span *ngIf="product.quantity === 0" class="badge bg-danger">Low Stock</span>
+              <span *ngIf="product.status === 1 && product.quantity > 0" class="badge bg-success">Active</span>
+              <span *ngIf="product.status === 0" class="badge bg-secondary">Inactive</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  

@@ -1,0 +1,20 @@
+select.form-select option {
+    color: #000;
+  }
+  
+  .btn-outline-primary:hover,
+  .btn-outline-danger:hover,
+  .btn-dark:hover {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+  }
+  
+  .form-check-label {
+    color: #000;
+  }
+  
+  ::placeholder {
+    color: #333;
+  }
+  

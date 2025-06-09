@@ -1,0 +1,24 @@
+/* Make select dropdown options appear black text */
+select.form-select option {
+    color: #000;
+  }
+  
+  /* Make hover effect on buttons black with white text */
+  .btn-outline-primary:hover,
+  .btn-outline-danger:hover,
+  .btn-dark:hover {
+    background-color: #000 !important;
+    color: #fff !important;
+    border-color: #000 !important;
+  }
+  
+  /* Make radio and checkbox labels black */
+  .form-check-label {
+    color: #000;
+  }
+  
+  /* Optional: make input placeholder black */
+  ::placeholder {
+    color: #333;
+  }
+  

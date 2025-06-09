@@ -1,15 +1,54 @@
-<div class="sidebar bg-light p-3 vh-100">
-  <h3 class="text-primary mb-4"><i class="fa fa-hashtag me-2"></i>DASHMIN</h3>
-  <div class="d-flex align-items-center mb-3">
-    <img class="rounded-circle" src="assets/img/user.jpg" style="width: 40px;">
-    <div class="ms-2">
-      <h6>John Doe</h6><span>Admin</span>
-    </div>
-  </div>
+<div class="sidebar bg-black text-white p-3 h-100">
   <ul class="nav flex-column">
-    <li class="nav-item"><a class="nav-link" routerLink="/dashboard">Dashboard</a></li>
-    <li class="nav-item"><a class="nav-link" routerLink="/products">Products</a></li>
-    <li class="nav-item"><a class="nav-link" routerLink="/forms">Forms</a></li>
-    <!-- Add more as needed -->
+    <!-- Dashboard -->
+    <li class="nav-item">
+      <a
+        class="nav-link text-white d-flex align-items-center"
+        [routerLink]="'/dashboard'"
+        routerLinkActive="active bg-secondary"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <i class="fa fa-tachometer-alt me-2"></i>Dashboard
+      </a>
+    </li>
+
+    <!-- Products with expandable submenu -->
+    <li class="nav-item">
+      <a
+        class="nav-link text-white d-flex justify-content-between align-items-center"
+        href="#"
+        (click)="isProductsOpen = !isProductsOpen; $event.preventDefault()">
+        <span><i class="fa fa-box me-2"></i>Products</span>
+        <i class="fa" [ngClass]="isProductsOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </a>
+
+      <ul class="list-unstyled ms-4 mt-2" *ngIf="isProductsOpen">
+        <li>
+          <a class="nav-link text-white" [routerLink]="'/product'" routerLinkActive="text-warning">Add Product</a>
+        </li>
+        <li>
+          <a class="nav-link text-white" [routerLink]="'/productlist'" routerLinkActive="text-warning">Product List</a>
+        </li>
+      </ul>
+    </li>
+
+    <!-- Users -->
+    <li class="nav-item">
+      <a
+        class="nav-link text-white d-flex align-items-center"
+        [routerLink]="'/users'"
+        routerLinkActive="active bg-secondary">
+        <i class="fa fa-users me-2"></i>Users
+      </a>
+    </li>
+
+    <!-- Analytics -->
+    <li class="nav-item">
+      <a
+        class="nav-link text-white d-flex align-items-center"
+        [routerLink]="'/analytics'"
+        routerLinkActive="active bg-secondary">
+        <i class="fa fa-chart-line me-2"></i>Analytics
+      </a>
+    </li>
   </ul>
 </div>

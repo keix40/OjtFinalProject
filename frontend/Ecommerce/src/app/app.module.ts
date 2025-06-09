@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { GoogleMapsModule } from '@angular/google-maps';
+import { RouterModule } from '@angular/router';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -10,7 +11,6 @@ import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { ReactiveFormsModule } from '@angular/forms';
 import { JwtInterceptor } from './interceptors/jwt.interceptors.service';
 import { HeaderComponent } from './header/header.component';
 import { UserProfileComponent } from './user-profile/user-profile.component';
@@ -24,6 +24,15 @@ import { UserNotificationsComponent } from './user-profile/user-notifications/us
 import { AddressService } from './services/address.service';
 import { AuthService } from './auth/auth.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { CreateBrandComponent } from './create-brand/create-brand.component';
+import { CreateCategoryComponent } from './create-category/create-category.component';
+import { ProductComponent } from './product/product.component';
+import { LayoutComponent } from './layout/layout.component';
+import { SidebarComponent } from './layout/sidebar/sidebar.component';
+import { NavbarComponent } from './layout/navbar/navbar.component';
+import { CreateAttributeValueComponent } from './create-attribute-value/create-attribute-value.component';
+import { ProductMangementComponent } from './product-mangement/product-mangement.component';
+import { ConfirmModelComponent } from './confirm-model/confirm-model.component';
 
 @NgModule({
   declarations: [
@@ -40,7 +49,16 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     UserReviewsComponent,
     UserPersonalInfoComponent,
     UserAddressesComponent,
-    UserNotificationsComponent
+    UserNotificationsComponent,
+    CreateBrandComponent,
+    CreateCategoryComponent,
+    ProductComponent,
+    LayoutComponent,
+    SidebarComponent,
+    NavbarComponent,
+    CreateAttributeValueComponent,
+    ProductMangementComponent,
+    ConfirmModelComponent
   ],
   imports: [
     BrowserModule,
@@ -50,6 +68,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
     FormsModule,
     NgbModule,
     GoogleMapsModule,
+    RouterModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

@@ -16,7 +16,7 @@ export class CategoryService {
     return this.http.get<Category[]>(`${this.baseUrl}/getallcategory`);
   }
 
-  createCategory(cateDto : CategoryDTO): Observable<any> {
-    return this.http.post(`${this.baseUrl}/addcategory`, cateDto, {responseType : 'text'});
+  createCategory(cateDto : CategoryDTO): Observable<CategoryDTO> {
+    return this.http.post<CategoryDTO>(`${this.baseUrl}/addcategory`, cateDto,{responseType : 'text' as 'json'});
   }
 }

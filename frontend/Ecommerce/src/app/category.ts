@@ -4,7 +4,8 @@ export interface Category {
 }
 
 export interface CategoryDTO{
-    cateName : String;
+    cateNames : String[];
     brandId : number;
     brandName : String;
+    parentId?: number;
 }

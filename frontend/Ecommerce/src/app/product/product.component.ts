@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Optional } from '@angular/core';
 import { Product } from '../product';
 import { ProductService } from '../product.service';
 import { NgForm } from '@angular/forms';
@@ -8,7 +8,8 @@ import { Brand } from '../brand';
 import { Category } from '../category';
 import { Router } from '@angular/router';
 import { ModalService } from '../modal.service';
-import { CreateBrandComponent } from '../create-brand/create-brand.component';
+// import { AttributeValue, Attribute } from '../attribute';
+import { AttributeService } from '../attribute.service';
 
 @Component({
   selector: 'app-product',
@@ -17,150 +18,163 @@ import { CreateBrandComponent } from '../create-brand/create-brand.component';
   styleUrl: './product.component.css'
 })
 export class ProductComponent{
-product: Product = {
+
+  product: Product = {
     productName: '',
     price: 0,
     quantity: 0,
     description: '',
-    brand: { id: 0 },
-    category: { id: 0 }
+    categoryBrandPairs: []
   };
 
-  brands: Brand[] = [];
   categories: Category[] = [];
 
+  categoryBrandPairs: {
+    category: number | null;
+    brand: number | null;
+    availableBrands: Brand[];
+  }[] = [
+    { category: null, brand: null, availableBrands: [] }
+  ];
+
   selectedImages: File[] = [];
-  selectedCategoryId: number = 0;
+  selectedImagesPreview: string[] = [];
+
+  hasVariant: boolean = false;
 
   constructor(
     private proService: ProductService,
     private cateService: CategoryService,
     private brandService: BrandService,
     private router: Router,
-    private modalService: ModalService
+    private modalService: ModalService,
   ) {}
 
   ngOnInit(): void {
     this.loadCategory();
-    this.loadBrand();
-    this.selectedCategoryId = this.product.category.id || 0;
   }
 
   loadCategory() {
     this.cateService.getAllCategory().subscribe({
-      next: (data) => {
-        this.categories = data;
-        console.log('Category Success');
-      },
-      error: (err) => {
-        console.log('Category Fail', err.status, err.message, err.error);
-      }
+      next: (data) => this.categories = data,
+      error: (err) => console.error('Category error:', err)
     });
   }
 
-  loadBrand() {
-    this.brandService.getAllBrand().subscribe({
-      next: (data) => {
-        this.brands = data;
-        console.log('Brand Success');
-      },
-      error: (err) => {
-        console.log('Brand Fail', err.status, err.message, err.error);
+  onImageSelect(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      const files = Array.from(input.files);
+      for (let file of files) {
+        this.selectedImages.push(file);
+  
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.selectedImagesPreview.push(reader.result as string);
+        };
+        reader.readAsDataURL(file);
       }
-    });
-  }
-
-  onCategoryChange() {
-    if (this.selectedCategoryId === 0) {
-      this.showCreateCategoryModal();
-      return;
+  
+      input.value = '';
     }
+  }
+  
+  removeImage(index: number): void {
+    this.selectedImages.splice(index, 1);
+    this.selectedImagesPreview.splice(index, 1);
+  }
 
-    if (this.selectedCategoryId) {
-      this.product.category.id = this.selectedCategoryId;
+  addCategoryBrandPair() {
+    this.categoryBrandPairs.push({
+      category: null,
+      brand: null,
+      availableBrands: []
+    });
+  }
 
-      this.brandService.getBrandByCateId(this.selectedCategoryId).subscribe({
-        next: (data) => {
-          this.brands = data;
+  async onCategoryChange(index: number) {
+    const selectedCategory = this.categoryBrandPairs[index].category;
 
-          if (!this.brands.find(b => b.id === this.product.brand.id)) {
-            this.product.brand.id = 0;
+    if (selectedCategory === 0) {
+      try {
+        const newCategory = await this.modalService.openCreateCategoryModal();
+        if (newCategory) {
+          this.loadCategory();
+          this.categoryBrandPairs[index].category = newCategory.id;
+        } else {
+          this.categoryBrandPairs[index].category = null;
+        }
+      } catch {
+        this.categoryBrandPairs[index].category = null;
+      }
+    } else if (selectedCategory) {
+      this.brandService.getBrandByCateId(selectedCategory).subscribe({
+        next: (brands) => {
+          this.categoryBrandPairs[index].availableBrands = brands;
+          if (!brands.find(b => b.id === this.categoryBrandPairs[index].brand)) {
+            this.categoryBrandPairs[index].brand = null;
           }
         },
-        error: (err) => {
-          console.error('Error loading brands by category', err);
-          this.brands = [];
-          this.product.brand.id = 0;
+        error: () => {
+          this.categoryBrandPairs[index].availableBrands = [];
+          this.categoryBrandPairs[index].brand = null;
         }
       });
-    } else {
-      this.brands = [];
-      this.product.category.id = 0;
-      this.product.brand.id = 0;
     }
   }
 
-  onImageSelect(event: any) {
-    this.selectedImages = Array.from(event.target.files);
+  async onBrandChange(index: number) {
+    const selectedBrand = this.categoryBrandPairs[index].brand;
+
+    if (selectedBrand === 0) {
+      try {
+        const newBrand = await this.modalService.openCreateBrandModal();
+        if (newBrand) {
+          this.onCategoryChange(index); // Reload brands
+          this.categoryBrandPairs[index].brand = newBrand.id;
+        } else {
+          this.categoryBrandPairs[index].brand = null;
+        }
+      } catch {
+        this.categoryBrandPairs[index].brand = null;
+      }
+    }
   }
 
   onSubmit(form: NgForm) {
+    if (!form.valid) return;
+  
+    this.product.categoryBrandPairs = this.categoryBrandPairs
+      .filter(pair => pair.category !== null)
+      .map(pair => ({
+        categoryId: pair.category!,
+        brandId: pair.brand ?? null
+      }));
+  
     const formData = new FormData();
-
-    const productBlob = new Blob([JSON.stringify(this.product)], { type: 'application/json' });
-    formData.append('product', productBlob);
-
-    this.selectedImages.forEach((image) => {
-      formData.append('images', image);
+    const productBlob = new Blob([JSON.stringify(this.product)], {
+      type: 'application/json'
     });
-
+    formData.append('product', productBlob);
+  
+    this.selectedImages.forEach(image => formData.append('images', image));
+  
     this.proService.createProduct(formData).subscribe({
-      next: (res) => {
-        console.log(res);
+      next: () => {
         form.resetForm();
         this.selectedImages = [];
-        this.router.navigate(['/product']);
+        this.categoryBrandPairs = [{ category: null, brand: null, availableBrands: [] }];
+        this.router.navigate(['/productlist']);
       },
       error: (err) => {
-        console.error(err);
+        console.error('Product creation failed:', err);
         this.router.navigate(['/product']);
       }
     });
+  }  
+
+  removeCategoryBrandPair(index: number) {
+    this.categoryBrandPairs.splice(index, 1);
   }
-
-  selectedBrandId: number | string | null = null;
-
-  onBrandChange() {
-    if (this.product.brand.id === 0) {
-      this.showCreateBrandModal();
-    }
-  }
-
-  showCreateBrandModal() {
-    this.modalService.openCreateBrandModal()
-      .then((newBrand) => {
-        if (newBrand) {
-           this.loadBrand();
-          this.product.brand.id = newBrand.id;
-        }
-      })
-      .catch(() => {
-        console.log('Modal dismissed');
-      });
-  }
-
-  showCreateCategoryModal() {
-    this.modalService.openCreateCategoryModal().then((newCategory) => {
-      if (newCategory) {
-        this.loadCategory();
-        this.selectedCategoryId = newCategory.id;
-        this.product.category.id = newCategory.id;
-        
-        this.onCategoryChange();
-      }
-    }).catch(() => {
-      console.log('Category modal dismissed');
-    });
-  }
-
+  
 }

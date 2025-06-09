@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Product } from './product';
+import { Product, ProductList } from './product';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -16,4 +16,19 @@ export class ProductService {
     return this.http.post(`${this.baseUrl}/create`, formData);
   }
 
+  getAllProduct(): Observable<ProductList[]>{
+    return this.http.get<ProductList[]>(`${this.baseUrl}/getallproduct`);
+  }
+
+  activeProduct(id : number){
+    return this.http.put(`${this.baseUrl}/active/${id}`, null);  
+  }
+
+  inactiveProduct(id : number){
+    return this.http.put(`${this.baseUrl}/inactive/${id}`, null);  
+  }
+  
+  deleteProduct(id : number){
+    return this.http.put(`${this.baseUrl}/delete/${id}`, null);  
+  }
 }

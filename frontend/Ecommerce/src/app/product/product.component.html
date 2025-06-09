@@ -1,89 +1,147 @@
-<div class="container bg-light rounded p-4">
-  <h4>Add Product</h4>
-  <form #productForm="ngForm" (ngSubmit)="onSubmit(productForm)">
-    
-    <!-- Product Name -->
-    <div class="mb-3">
-      <label>Product Name</label>
-      <input type="text" class="form-control" [(ngModel)]="product.productName" name="productName" required #productName="ngModel">
-      <div *ngIf="productName.invalid && productName.touched" class="text-danger">
-        Product name is required.
+<div class="container py-5">
+
+  <div class="card shadow-lg bg-white bg-opacity-95 mx-auto" style="max-width: 700px;">
+    <div class="card-body p-5">
+      <h2 class="card-title text-center mb-4 text-dark" style="font-size: 2.25rem;">Add Product</h2>
+
+      <form #productForm="ngForm" (ngSubmit)="onSubmit(productForm)">
+        <!-- Product Name -->
+        <div class="form-group mb-3">
+          <label class="form-label fw-bold">Product Name</label>
+          <input type="text" class="form-control" [(ngModel)]="product.productName" name="productName" required #productName="ngModel" placeholder="Enter Product Name">
+          <div *ngIf="productName.invalid && productName.touched" class="text-danger small">
+            Product name is required.
+          </div>
+        </div>
+
+        <!-- Price -->
+        <div class="form-group mb-3">
+          <label class="form-label fw-bold">Price</label>
+          <input type="number" class="form-control" [(ngModel)]="product.price" name="price" required min="0.01" #price="ngModel" placeholder="Enter Price">
+          <div *ngIf="price.invalid && price.touched" class="text-danger small">
+            Price must be greater than 0.
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group mb-3">
+          <label class="form-label fw-bold">Description</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="product.description" name="description" placeholder="Enter Description"></textarea>
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group mb-3">
+          <label class="form-label fw-bold">Quantity</label>
+          <input type="number" class="form-control" [(ngModel)]="product.quantity" name="quantity" required min="1" #quantity="ngModel" placeholder="Enter Quantity">
+          <div *ngIf="quantity.invalid && quantity.touched" class="text-danger small">
+            Quantity is required.
+          </div>
+        </div>
+
+       <!-- Category & Brand Pairs -->
+      <div *ngFor="let pair of categoryBrandPairs; let i = index" class="row mb-3 align-items-end">
+
+        <!-- Category -->
+        <div class="col">
+          <label class="form-label fw-bold">Category</label>
+          <select
+            class="form-select"
+            [(ngModel)]="pair.category"
+            name="category{{ i }}"
+            (change)="onCategoryChange(i)"
+            required>
+            <option [ngValue]="null" disabled>Select Category</option>
+            <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
+            <option [ngValue]="0">+ Add New Category</option>
+          </select>
+        </div>
+
+        <!-- Brand -->
+        <div class="col">
+          <label class="form-label fw-bold">Brand</label>
+          <select
+            class="form-select"
+            [(ngModel)]="pair.brand"
+            name="brand{{ i }}"
+            (change)="onBrandChange(i)"
+            >
+            <option [ngValue]="null" disabled>Select Brand</option>
+            <option *ngFor="let b of pair.availableBrands" [ngValue]="b.id">{{ b.name }}</option>
+            <option [ngValue]="0">+ Add New Brand</option>
+          </select>
+        </div>
+
+        <!-- Remove Button -->
+        <div class="col-auto" *ngIf="categoryBrandPairs.length > 1">
+          <button type="button" class="btn btn-danger" (click)="removeCategoryBrandPair(i)">
+            Remove
+          </button>
+        </div>
       </div>
-    </div>
 
-    <!-- Price -->
-    <div class="mb-3">
-      <label>Price</label>
-      <input type="number" class="form-control" [(ngModel)]="product.price" name="price" required min="0.01" #price="ngModel">
-      <div *ngIf="price.invalid && price.touched" class="text-danger">
-        Price must be greater than 0.
+      <!-- Add More Button -->
+      <div class="mb-4">
+        <button type="button" class="btn btn-outline-secondary" (click)="addCategoryBrandPair()">
+          + Add More Category & Brand
+        </button>
       </div>
-    </div>
 
-    <!-- Description -->
-    <div class="mb-3">
-      <label>Description</label>
-      <textarea class="form-control" [(ngModel)]="product.description" name="description"></textarea>
-    </div>
+        <!-- Image Upload -->
+        <div class="form-group mb-4">
+          <label class="form-label fw-bold d-block">Product Images</label>
+          <button type="button" class="btn btn-outline-secondary mb-4" (click)="fileInput.click()">Choose Images</button>
+          <input type="file" #fileInput (change)="onImageSelect($event)" multiple class="d-none">
 
-    <!-- Quantity -->
-    <div class="mb-3">
-      <label>Quantity</label>
-      <input type="number" class="form-control" [(ngModel)]="product.quantity" name="quantity" required min="1" #quantity="ngModel">
-      <div *ngIf="quantity.invalid && quantity.touched" class="text-danger">
-        Quantity is required
-      </div>
-    </div>
+          <div *ngIf="productForm.submitted && selectedImages.length === 0" class="text-danger small mt-2">
+            At least one image is required.
+          </div>
 
-    <!-- Category -->
-    <div class="mb-3">
-      <label>Category</label>
-      <select
-        class="form-select"
-        [(ngModel)]="selectedCategoryId"
-        name="category"
-        (change)="onCategoryChange()"
-        required
-      >
-        <option [ngValue]="null">Select Category</option>
-        <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
-        <option [ngValue]="0">Add New Category</option>
-      </select>
-    </div>
+        <!-- Image Previews -->
+        <div class="row mt-3" *ngIf="selectedImages.length > 0">
+          <div class="col-auto mb-2" *ngFor="let image of selectedImagesPreview; let i = index">
+            <div class="position-relative" style="width: 80px; height: 80px;">
+              <img
+                [src]="image"
+                class="img-thumbnail rounded shadow-sm"
+                style="width: 100%; height: 100%; object-fit: cover;"
+              />
+              <button
+                type="button"
+                class="btn btn-sm btn-light text-danger border position-absolute top-0 end-0 p-0"
+                (click)="removeImage(i)"
+                style="width: 18px; height: 18px; line-height: 15px; font-size: 12px; text-align: center; transform: translate(30%, -30%); border-radius: 50%;">
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
 
-    <!-- Brand -->
-    <div class="mb-3">
-      <label>Brand</label>
-      <select
-        class="form-select"
-        [(ngModel)]="product.brand.id"
-        name="brand"
-        (change)="onBrandChange()"
-        required
-      >
-        <option [ngValue]="null" selected>Select Brand</option>
-        <option *ngFor="let b of brands" [ngValue]="b.id">{{ b.name }}</option>
-        <option [ngValue]="0">Add New Brand</option>
-      </select>
-    </div>
+        <!-- Variation -->
+        <div class="form-group mb-3">
+          <label class="form-label fw-bold">Variation</label>
 
-   <!-- Image Upload -->
-    <div class="mb-3">
-      <label>Product Images</label><br>
-      <button type="button" class="btn btn-outline-secondary" (click)="fileInput.click()">Choose Images</button>
-      <input type="file" #fileInput (change)="onImageSelect($event)" multiple class="d-none">
-      <div *ngIf="productForm.submitted && selectedImages.length === 0" class="text-danger mt-2">
-        At least one image is required.
-      </div>
-      <div *ngIf="selectedImages.length > 0" class="text-success mt-2">
-        {{ selectedImages.length }} image(s) selected.
-      </div>
-    </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="noVariant" name="variantOption" [(ngModel)]="hasVariant" [value]="false">
+            <label class="form-check-label" for="noVariant">
+              This product does not have variants
+            </label>
+          </div>
 
-    <!-- Submit -->
-    <button class="btn btn-primary w-100" type="submit"
-      [disabled]="productForm.invalid || selectedImages.length === 0">
-      Add Product
-    </button>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="hasVariant" name="variantOption" [(ngModel)]="hasVariant" [value]="true">
+            <label class="form-check-label" for="hasVariant">
+              This product has variants, like size or color
+            </label>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-dark w-100 py-2 rounded-pill"
+          [disabled]="productForm.invalid || selectedImages.length === 0">
+          Add Product
+      </button>      
+    </div>
   </form>
+  </div>
 </div>

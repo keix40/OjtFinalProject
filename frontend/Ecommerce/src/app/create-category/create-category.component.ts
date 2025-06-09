@@ -14,18 +14,18 @@ import { NgForm } from '@angular/forms';
   styleUrl: './create-category.component.css'
 })
 export class CreateCategoryComponent {
-category : CategoryDTO = {
-    cateName : "",
-    brandId : 0,
-    brandName : ""
-  };
+  categoryNames: string[] = ['']; // Multiple category names
+  selectedParentCategoryId?: number;
 
-  categories: Category[] = [];
   selectedBrandId: number = 0;
-  brands: Brand[] = [];
-
-  brandOption: 'old' | 'new' | 'none' = 'old';
   newBrandName: string = '';
+  brandOption: 'old' | 'new' | 'none' = 'old';
+
+  brands: Brand[] = [];
+  categories: Category[] = [];
+
+  brandId: number | null = null;
+  brandName: string | null = null;
 
   constructor(
     public activeModal: NgbActiveModal,
@@ -36,51 +36,78 @@ category : CategoryDTO = {
 
   ngOnInit(): void {
     this.loadBrand();
+    this.loadCategory();
   }
 
   loadBrand() {
     this.brandService.getAllBrand().subscribe({
-      next: (data) => {
-        this.brands = data;
-        console.log('Brand Success');
-      },
-      error: (err) => {
-        console.log('Brand Fail', err.status, err.message, err.error);
-      }
+      next: (data) => (this.brands = data),
+      error: (err) => console.error('Brand load error:', err)
     });
   }
 
   loadCategory() {
     this.cateService.getAllCategory().subscribe({
-      next: (data) => {
-        this.categories = data;
-      },
-      error: (err) => {
-        console.log('Category load error:', err);
-      }
+      next: (data) => (this.categories = data),
+      error: (err) => console.error('Category load error:', err)
     });
+  }
+
+  addCategoryField() {
+    this.categoryNames.push('');
+  }
+  
+  removeCategoryField(index: number) {
+    if (this.categoryNames.length > 1) {
+      this.categoryNames.splice(index, 1);
+    }
   }
 
   createCategory(form: NgForm) {
     if (form.invalid) return;
-
     if (this.brandOption === 'old') {
-      this.category.brandId = this.selectedBrandId;
-      this.category.brandName = ''; 
+      this.brandId = this.selectedBrandId;
+      this.brandName = null;
+    } else if (this.brandOption === 'none') {
+      this.brandId = 0;
+      this.brandName = null;
     } else {
-      this.category.brandId = 0;
-      this.category.brandName = this.newBrandName.trim();
+      this.brandId = null;
+      this.brandName = this.newBrandName.trim();
     }
 
-    this.cateService.createCategory(this.category).subscribe({
-      next: (data) => {
-        console.log('Category created:', data);
-        this.activeModal.close(data);
-        this.router.navigate(['/product']);
-      },
-      error: (err) => {
-        console.error('Category create error:', err);
-      }
+      const uniqueNames = Array.from(new Set(
+        this.categoryNames
+          .map(name => name.trim())
+          .filter(name => name.length > 0)
+      ));
+  
+      if (uniqueNames.length === 0) return;
+
+    const requests = this.categoryNames.map((name) => {
+      const dto: CategoryDTO = {
+        cateNames: uniqueNames,
+        brandId: this.brandId ?? 0,
+        brandName: this.brandName ?? '',
+        parentId: this.selectedParentCategoryId || undefined
+      };
+
+      return this.cateService.createCategory(dto);
     });
+
+    Promise.all(requests.map(req => req.toPromise()))
+      .then((results) => {
+        console.log('All categories created:', results);
+        this.activeModal.close(results);
+        this.router.navigate(['/product']);
+      })
+      .catch((err) => {
+        console.error('Error creating categories:', err);
+      });
   }
+
+  trackByIndex(index: number, obj: any): any {
+    return index;
+  }
+  
 }
