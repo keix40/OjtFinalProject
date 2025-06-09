@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
 interface UserDetails {
@@ -35,11 +35,18 @@ export class UserProfileComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit() {
     this.loadUserDetails();
+    // Get section from query params
+    this.route.queryParams.subscribe(params => {
+      if (params['section']) {
+        this.activeSection = params['section'];
+      }
+    });
   }
 
   private loadUserDetails() {
@@ -58,6 +65,12 @@ export class UserProfileComponent implements OnInit {
 
   selectSection(section: string) {
     this.activeSection = section;
+    // Update URL with the selected section
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { section: section },
+      queryParamsHandling: 'merge'
+    });
   }
 
   logout() {

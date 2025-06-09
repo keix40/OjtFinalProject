@@ -1,0 +1,268 @@
+<app-header></app-header>
+<div class="container-fluid py-5 bg-light min-vh-100">
+  <div class="checkout-margin"></div>
+  <div class="row justify-content-center checkout-row">
+    <!-- Main Checkout Steps (Left) -->
+    <div class="col-lg-7 col-xl-8 col-md-10 mb-4">
+      <div class="mx-auto animate-fadein" style="max-width: 820px;">
+        <div class="accordion checkout-accordion animate-slidein" id="checkoutAccordion">
+          <!-- Step 1: Customer Information -->
+          <div class="accordion-item mb-3">
+            <h2 class="accordion-header" id="headingCustomer">
+              <button class="accordion-button d-flex align-items-center" type="button" [attr.aria-expanded]="activeStep === 1" [class.collapsed]="activeStep !== 1" (click)="setActiveStep(1)">
+                <span class="badge rounded-circle bg-primary me-2">1</span>
+                <span class="fw-bold">Customer information</span>
+                <span *ngIf="stepCompleted[1]" class="ms-2 text-success"><i class="bi bi-check-circle-fill"></i></span>
+                <span *ngIf="stepCompleted[1]" class="ms-auto"><button class="btn btn-link btn-sm p-0" (click)="editStep($event, 1)">Edit</button></span>
+              </button>
+            </h2>
+            <div [id]="'collapseCustomer'" class="accordion-collapse collapse" [class.show]="activeStep === 1" [attr.aria-labelledby]="'headingCustomer'" data-bs-parent="#checkoutAccordion">
+              <div class="accordion-body">
+                <form #customerForm="ngForm" (ngSubmit)="nextStep(customerForm)">
+                  <div class="mb-3">
+                    <label class="form-label">Email address*</label>
+                    <input type="email" class="form-control" [(ngModel)]="customer.email" name="email" required>
+                  </div>
+                  <div class="row g-2 mb-3">
+                    <div class="col">
+                      <label class="form-label">First name*</label>
+                      <input type="text" class="form-control" [(ngModel)]="customer.firstName" name="firstName" required>
+                    </div>
+                    <div class="col">
+                      <label class="form-label">Last name*</label>
+                      <input type="text" class="form-control" [(ngModel)]="customer.lastName" name="lastName" required>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Phone number*</label>
+                    <input type="tel" class="form-control" [(ngModel)]="customer.phone" name="phone" required>
+                  </div>
+                  <button class="btn btn-primary w-100" [disabled]="!customerForm.valid">Continue</button>
+                </form>
+              </div>
+            </div>
+            <div *ngIf="stepCompleted[1] && activeStep !== 1" class="accordion-summary bg-light p-3 border-top">
+              <div><strong>Email:</strong> {{customer.email}}</div>
+              <div><strong>Name:</strong> {{customer.firstName}} {{customer.lastName}}</div>
+              <div><strong>Phone:</strong> {{customer.phone}}</div>
+            </div>
+          </div>
+
+          <!-- Step 2: Shipping Address -->
+          <div class="accordion-item mb-3">
+            <h2 class="accordion-header" id="headingShipping">
+              <button class="accordion-button d-flex align-items-center" type="button" [attr.aria-expanded]="activeStep === 2" [class.collapsed]="activeStep !== 2" (click)="setActiveStep(2)" [disabled]="!stepCompleted[1]">
+                <span class="badge rounded-circle bg-primary me-2">2</span>
+                <span class="fw-bold">Shipping address</span>
+                <span *ngIf="stepCompleted[2]" class="ms-2 text-success"><i class="bi bi-check-circle-fill"></i></span>
+                <span *ngIf="stepCompleted[2]" class="ms-auto"><button class="btn btn-link btn-sm p-0" (click)="editStep($event, 2)">Edit</button></span>
+              </button>
+            </h2>
+            <div [id]="'collapseShipping'" class="accordion-collapse collapse" [class.show]="activeStep === 2" [attr.aria-labelledby]="'headingShipping'" data-bs-parent="#checkoutAccordion">
+              <div class="accordion-body">
+                <form #shippingForm="ngForm" (ngSubmit)="nextStep(shippingForm)">
+                  <div class="mb-3">
+                    <label class="form-label">Street address*</label>
+                    <input type="text" class="form-control" [(ngModel)]="shipping.address" name="address" required>
+                  </div>
+                  <div class="row g-2 mb-3">
+                    <div class="col">
+                      <label class="form-label">City*</label>
+                      <input type="text" class="form-control" [(ngModel)]="shipping.city" name="city" required>
+                    </div>
+                    <div class="col">
+                      <label class="form-label">State*</label>
+                      <input type="text" class="form-control" [(ngModel)]="shipping.state" name="state" required>
+                    </div>
+                  </div>
+                  <div class="row g-2 mb-3">
+                    <div class="col">
+                      <label class="form-label">Postal code*</label>
+                      <input type="text" class="form-control" [(ngModel)]="shipping.postal" name="postal" required>
+                    </div>
+                    <div class="col">
+                      <label class="form-label">Country*</label>
+                      <input type="text" class="form-control" [(ngModel)]="shipping.country" name="country" required>
+                    </div>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Phone*</label>
+                    <input type="tel" class="form-control" [(ngModel)]="shipping.phone" name="shippingPhone" required>
+                  </div>
+                  <button class="btn btn-primary w-100" [disabled]="!shippingForm.valid">Continue</button>
+                </form>
+              </div>
+            </div>
+            <div *ngIf="stepCompleted[2] && activeStep !== 2" class="accordion-summary bg-light p-3 border-top">
+              <div><strong>Address:</strong> {{shipping.address}}, {{shipping.city}}, {{shipping.state}}, {{shipping.postal}}, {{shipping.country}}</div>
+              <div><strong>Phone:</strong> {{shipping.phone}}</div>
+            </div>
+          </div>
+
+          <!-- Step 3: Delivery Options -->
+          <div class="accordion-item mb-3">
+            <h2 class="accordion-header" id="headingDelivery">
+              <button class="accordion-button d-flex align-items-center" type="button" [attr.aria-expanded]="activeStep === 3" [class.collapsed]="activeStep !== 3" (click)="setActiveStep(3)" [disabled]="!stepCompleted[2]">
+                <span class="badge rounded-circle bg-primary me-2">3</span>
+                <span class="fw-bold">Delivery options</span>
+                <span *ngIf="stepCompleted[3]" class="ms-2 text-success"><i class="bi bi-check-circle-fill"></i></span>
+                <span *ngIf="stepCompleted[3]" class="ms-auto"><button class="btn btn-link btn-sm p-0" (click)="editStep($event, 3)">Edit</button></span>
+              </button>
+            </h2>
+            <div [id]="'collapseDelivery'" class="accordion-collapse collapse" [class.show]="activeStep === 3" [attr.aria-labelledby]="'headingDelivery'" data-bs-parent="#checkoutAccordion">
+              <div class="accordion-body">
+                <form #deliveryForm="ngForm" (ngSubmit)="goToPayment(deliveryForm)">
+                  <div class="mb-3">
+                    <label class="form-label">Select a delivery method*</label>
+                    <select class="form-select" [(ngModel)]="delivery.method" name="deliveryMethod" required>
+                      <option value="">Choose...</option>
+                      <option *ngFor="let option of deliveryOptions" [value]="option.name">{{option.name}} - ${{option.cost}} ({{option.estimated}})</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-primary w-100" [disabled]="!deliveryForm.valid">Place order and continue to payment</button>
+                </form>
+              </div>
+            </div>
+            <div *ngIf="stepCompleted[3] && activeStep !== 3" class="accordion-summary bg-light p-3 border-top">
+              <div><strong>Method:</strong> {{delivery.method}}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Cart Summary (Right) -->
+    <div class="col-lg-5 col-xl-4 d-none d-lg-block">
+      <div class="bg-white rounded-5 shadow-lg p-5 sticky-top animate-fadein" style="top: 32px; min-width: 360px; max-width: 520px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0">Summary</h5>
+          <a routerLink="/cart" class="btn btn-link">Edit cart</a>
+        </div>
+        <div *ngFor="let item of cartItems" class="d-flex align-items-center mb-3 cart-summary-item">
+          <img [src]="item.image" alt="{{item.title}}" class="rounded-3 me-3" style="width:56px;height:56px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div class="flex-grow-1">
+            <div class="fw-semibold">{{item.title}}</div>
+            <div class="small text-muted">Size: {{item.size}}</div>
+            <div class="small text-muted">Color: {{item.color}}</div>
+            <div class="small text-muted">Quantity: {{item.quantity}}</div>
+          </div>
+          <div class="fw-bold ms-2">${{item.price * item.quantity}}</div>
+        </div>
+        <hr>
+        <input type="text" class="form-control bg-light border-0 mb-2" placeholder="Enter a coupon or a reward code">
+        <button class="btn btn-outline-primary w-100 mb-2 rounded-pill">Apply</button>
+        <div class="small text-success mb-2">You have applied coupon <b>TAKE100</b><br>Which saves you $100.00</div>
+        <h6 class="fw-bold mt-3 mb-2">Summary</h6>
+        <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>${{getSubtotal()}}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>TBA</span></div>
+        <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-$100.00</span></div>
+        <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">${{getTotal()}}</span></div>
+        <div class="text-success mt-2">Yay! you saved 30% in total</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Stepper Indicator Styles -->
+<style>
+  .checkout-margin {
+    margin-top: 2.5rem;
+  }
+  .checkout-accordion .accordion-item {
+    border: none;
+    border-radius: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    background: #fff;
+    overflow: hidden;
+    font-size: 1.13rem;
+  }
+  .checkout-accordion .accordion-header .accordion-button {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: #f8fafc;
+    border: none;
+    border-radius: 2rem 2rem 0 0;
+    padding: 1.5rem 2rem;
+    transition: background 0.2s;
+  }
+  .checkout-accordion .accordion-header .accordion-button:not(.collapsed) {
+    background: #e9f3ff;
+    color: #0d6efd;
+  }
+  .checkout-accordion .accordion-body {
+    padding: 2.5rem 2rem 2rem 2rem;
+    background: #fff;
+    border-radius: 0 0 2rem 2rem;
+    font-size: 1.13rem;
+  }
+  .accordion-summary {
+    border-radius: 0 0 2rem 2rem;
+    font-size: 1.08rem;
+    color: #222;
+    border-top: 1px solid #f0f0f0;
+    padding: 1.25rem 2rem;
+  }
+  .cart-summary-item {
+    background: #f8fafc;
+    border-radius: 1.5rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transition: box-shadow 0.2s;
+    font-size: 1.08rem;
+  }
+  .cart-summary-item:hover {
+    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+  }
+  .form-control, .form-select {
+    font-size: 1.13rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: 1rem;
+  }
+  .form-control:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.10);
+    border-color: #b6d4fe;
+  }
+  .btn-primary, .btn-outline-primary {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    font-size: 1.13rem;
+    border-radius: 2rem;
+    padding: 0.85rem 2.2rem;
+  }
+  .animate-fadein {
+    animation: fadeIn 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  .animate-slidein {
+    animation: slideIn 0.7s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: none; }
+  }
+  .checkout-row {
+    --checkout-gap: 50px;
+    gap: var(--checkout-gap);
+  }
+  @media (min-width: 992px) {
+    .checkout-row {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: var(--checkout-gap);
+    }
+    .col-lg-7.col-xl-8 {
+      flex: 0 0 auto;
+      width: 60%;
+      max-width: 820px;
+    }
+    .col-lg-5.col-xl-4 {
+      flex: 0 0 auto;
+      width: 36%;
+      max-width: 520px;
+    }
+  }
+</style>

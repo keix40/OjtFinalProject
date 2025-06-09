@@ -1,81 +1,73 @@
-<div class="main-header">
+<div class="main-header bg-white shadow-sm sticky-top">
     <div class="container-fluid container-xl">
-        <div class="d-flex py-3 align-items-center justify-content-between">
-            <!-- Logo -->
-            <a routerLink="/home" class="logo d-flex align-items-center">
-                <h1 class="sitename">Fashion<span>Store</span></h1>
+        <div class="d-flex py-3 align-items-center">
+            <!-- Logo - Left -->
+            <a routerLink="/home" class="logo d-flex align-items-center me-4">
+                <h1 class="sitename m-0">Britium <span class="text-primary">Gallary</span></h1>
             </a>
 
-            <!-- Search -->
-            <form class="search-form desktop-search-form">
+            <!-- Search - Center -->
+            <form class="search-form desktop-search-form mx-auto" style="max-width: 500px;">
                 <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search for products...">
-                    <button class="btn search-btn" type="submit">
+                    <input type="text" class="form-control rounded-start-pill" placeholder="Search for products...">
+                    <button class="btn btn-outline-secondary rounded-end-pill" type="submit">
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
             </form>
 
-            <!-- Actions -->
-            <div class="header-actions d-flex align-items-center justify-content-end">
+            <!-- Actions - Right -->
+            <div class="header-actions d-flex align-items-center ms-auto gap-3">
                 <!-- Mobile Search Toggle -->
                 <button class="header-action-btn mobile-search-toggle d-xl-none" type="button" (click)="toggleMobileSearch()">
                     <i class="bi bi-search"></i>
                 </button>
 
                 <!-- Account -->
-                <div class="dropdown account-dropdown">
-                    <button class="header-action-btn" type="button" (click)="toggleDropdown($event, 'account-dropdown')">
-                        <i class="bi bi-person"></i>
+                <div class="dropdown account-dropdown" [class.show]="openDropdown === 'account-dropdown'">
+                    <button class="header-action-btn d-flex align-items-center gap-2" type="button" (click)="toggleDropdown($event, 'account-dropdown')">
+                        <i class="bi bi-person-circle"></i>
                         <span class="action-text d-none d-md-inline-block">Account</span>
                     </button>
-                    <div class="dropdown-menu">
-                        <div class="dropdown-header">
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3" [class.show]="openDropdown === 'account-dropdown'">
+                        <div class="dropdown-header p-3 border-bottom">
                             <ng-container *ngIf="isAuthenticated; else notAuthenticatedHeader">
-                                <h6>Welcome, <span class="sitename">{{name}}</span></h6>
-                                <p class="mb-0">{{userId}}</p>
-                                <p class="mb-0">Your account overview</p>
+                                <h6 class="mb-1">Welcome, <span class="text-primary">{{name}}</span></h6>
+                                <p class="mb-0 text-muted small">{{userId}}</p>
                             </ng-container>
                             <ng-template #notAuthenticatedHeader>
-                                <h6>Welcome to <span class="sitename">FashionStore</span></h6>
-                                <p class="mb-0">Access account &amp; manage orders</p>
+                                <h6 class="mb-1">Welcome to <span class="text-primary">Britium Gallary</span></h6>
+                                <p class="mb-0 text-muted small">Access account & manage orders</p>
                             </ng-template>
                         </div>
-                        <div class="dropdown-body">
+                        <div class="dropdown-body p-2">
                             <ng-container *ngIf="isAuthenticated; else notAuthenticated">
-                                <a class="dropdown-item d-flex align-items-center" [routerLink]="['/profile', userId]">
-                                    <i class="bi bi-person-circle me-2"></i>
-                                    <span>My Profile</span>
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2" (click)="navigateToProfile()">
+                                    <i class="bi bi-person-circle me-2"></i>My Profile
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/orders">
-                                    <i class="bi bi-bag-check me-2"></i>
-                                    <span>My Orders</span>
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2" (click)="navigateToOrders()">
+                                    <i class="bi bi-bag-check me-2"></i>My Orders
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/wishlist">
-                                    <i class="bi bi-heart me-2"></i>
-                                    <span>My Wishlist</span>
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2" (click)="navigateToWishlist()">
+                                    <i class="bi bi-heart me-2"></i>My Wishlist
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/returns">
-                                    <i class="bi bi-arrow-return-left me-2"></i>
-                                    <span>Returns &amp; Refunds</span>
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2" routerLink="/returns">
+                                    <i class="bi bi-arrow-return-left me-2"></i>Returns & Refunds
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/settings">
-                                    <i class="bi bi-gear me-2"></i>
-                                    <span>Settings</span>
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2" routerLink="/settings">
+                                    <i class="bi bi-gear me-2"></i>Settings
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" (click)="logout()">
-                                    <i class="bi bi-box-arrow-right me-2"></i>
-                                    <span>Logout</span>
+                                <hr class="dropdown-divider">
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2 text-danger" (click)="logout()">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Logout
                                 </a>
                             </ng-container>
                             <ng-template #notAuthenticated>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/login">
-                                    <i class="bi bi-box-arrow-in-right me-2"></i>
-                                    <span>Sign In</span>
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2" routerLink="/login">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
                                 </a>
-                                <a class="dropdown-item d-flex align-items-center" routerLink="/register">
-                                    <i class="bi bi-person-plus me-2"></i>
-                                    <span>Register</span>
+                                <a class="dropdown-item d-flex align-items-center py-2 px-3 rounded-2" routerLink="/register">
+                                    <i class="bi bi-person-plus me-2"></i>Register
                                 </a>
                             </ng-template>
                         </div>
@@ -83,51 +75,18 @@
                 </div>
 
                 <!-- Wishlist -->
-                <a *ngIf="isAuthenticated" routerLink="/wishlist" class="header-action-btn d-none d-md-flex">
+                <a *ngIf="isAuthenticated" routerLink="/wishlist" class="header-action-btn d-flex align-items-center gap-2">
                     <i class="bi bi-heart"></i>
                     <span class="action-text d-none d-md-inline-block">Wishlist</span>
-                    <span class="badge">0</span>
+                    <span class="badge bg-danger rounded-pill">0</span>
                 </a>
 
                 <!-- Cart -->
-                <div *ngIf="isAuthenticated" class="dropdown cart-dropdown">
-                    <button class="header-action-btn" type="button" (click)="toggleDropdown($event, 'cart-dropdown')">
-                        <i class="bi bi-cart3"></i>
-                        <span class="action-text d-none d-md-inline-block">Cart</span>
-                        <span class="badge">{{cartItems.length}}</span>
-                    </button>
-                    <div class="dropdown-menu cart-dropdown-menu">
-                        <div class="dropdown-header">
-                            <h6>Shopping Cart ({{cartItems.length}})</h6>
-                        </div>
-                        <div class="dropdown-body">
-                            <div class="cart-items">
-                                <div class="cart-item" *ngFor="let item of cartItems">
-                                    <div class="cart-item-image">
-                                        <img [src]="item.image" [alt]="item.title" class="img-fluid">
-                                    </div>
-                                    <div class="cart-item-content">
-                                        <h6 class="cart-item-title">{{item.title}}</h6>
-                                        <div class="cart-item-meta">{{item.quantity}} × ${{item.price}}</div>
-                                    </div>
-                                    <button class="cart-item-remove" (click)="removeCartItem(item.id)">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="dropdown-footer">
-                            <div class="cart-total">
-                                <span>Total:</span>
-                                <span class="cart-total-price">${{cartTotal.toFixed(2)}}</span>
-                            </div>
-                            <div class="cart-actions">
-                                <a routerLink="/cart" class="btn btn-outline-primary">View Cart</a>
-                                <a routerLink="/checkout" class="btn btn-primary">Checkout</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <button class="header-action-btn position-relative d-flex align-items-center gap-2" type="button" (click)="openSidebar()">
+                    <i class="bi bi-cart3"></i>
+                    <span class="action-text d-none d-md-inline-block">Cart</span>
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">{{cartItems.length}}</span>
+                </button>
 
                 <!-- Mobile Navigation Toggle -->
                 <i class="mobile-nav-toggle d-xl-none bi bi-list me-0"></i>
@@ -136,16 +95,23 @@
     </div>
 </div>
 
-<!-- Mobile Search Collapse -->
+<!-- Mobile Search -->
 <div class="collapse mobile-search-container" [class.show]="isMobileSearchVisible">
     <div class="container-fluid py-2 bg-light">
         <form class="mobile-search-form">
             <div class="input-group">
-                <input type="text" class="form-control" placeholder="Search for products...">
-                <button class="btn search-btn" type="submit">
+                <input type="text" class="form-control rounded-start-pill" placeholder="Search for products...">
+                <button class="btn btn-outline-secondary rounded-end-pill" type="submit">
                     <i class="bi bi-search"></i>
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<!-- Cart Sidebar -->
+<app-cart-sidebar 
+    [showCartSidebar]="showCartSidebar" 
+    (closeSidebar)="closeSidebar()">
+</app-cart-sidebar>
+

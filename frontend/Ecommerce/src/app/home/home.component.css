@@ -1,0 +1,11 @@
+body, .container-fluid, .bg-white {
+  background: #fff !important;
+}
+.card, .product-card, .bg-white {
+  color: #212529 !important;
+  font-weight: bold !important;
+}
+.form-check-label, .form-label, .badge {
+  color: #212529 !important;
+  font-weight: bold !important;
+}

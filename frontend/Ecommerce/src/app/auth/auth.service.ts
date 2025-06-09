@@ -27,7 +27,11 @@ export class AuthService {
 //     });
 //   }
 
-  register(data: RegisterRequest): Observable<RegisterResponse> {
+//   register(data: RegisterRequest): Observable<RegisterResponse> {
+//   return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
+// }
+
+register(data: any): Observable<RegisterResponse> {
   return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
 }
 
@@ -112,4 +116,7 @@ resendOtp(email: string): Observable<any> {
     return this.http.put(`${this.baseUrl}/user/${details.id}`, details, { headers });
   }
 
+  sendOtp(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/send-otp`, { email });
+  }
 }

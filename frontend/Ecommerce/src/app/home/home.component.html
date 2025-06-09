@@ -1,1 +1,257 @@
 <app-header></app-header>
+<body class="bg-dark text-white">
+    <div class="container-fluid py-4 min-vh-100 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="fw-bold text-dark">Products</h2>
+        <button class="btn btn-outline-dark fw-bold" (click)="toggleFilter()">
+          <i class="fa fa-sliders me-2"></i>
+          {{ showFilter ? 'Hide Filter' : 'Show Filter' }}
+        </button>
+      </div>
+      <div class="row">
+        <!-- Sidebar Filters -->
+        <aside *ngIf="showFilter" class="col-12 col-md-4 col-lg-3 mb-4">
+          <div class="bg-white rounded-4 shadow-lg p-4 sticky-top" style="top: 32px;">
+            <h5 class="fw-bold text-dark mb-3">
+              <i class="fa fa-filter me-2 text-primary"></i>Filters
+            </h5>
+            <div class="accordion" id="filterAccordion">
+              <div class="accordion-item border-0 mb-2">
+                <h2 class="accordion-header" id="headingAvail">
+                  <button class="accordion-button bg-white fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAvail" aria-expanded="true" aria-controls="collapseAvail">
+                    <i class="fa fa-box me-2 text-primary"></i>Availability
+                  </button>
+                </h2>
+                <div id="collapseAvail" class="accordion-collapse collapse show" aria-labelledby="headingAvail" data-bs-parent="#filterAccordion">
+                  <div class="accordion-body py-2">
+                    <div class="mb-3">
+                      <div class="fw-semibold text-dark mb-2">Availability</div>
+                      <div *ngFor="let opt of availabilityOptions" class="form-check mb-1">
+                        <input
+                          #availCheck
+                          class="form-check-input accent-check"
+                          type="checkbox"
+                          [id]="'avail-' + opt"
+                          [checked]="filters.availability.includes(opt)"
+                          (change)="onFilterCheckboxChange('availability', opt, availCheck.checked)">
+                        <label class="form-check-label text-dark fw-bold" [for]="'avail-' + opt">{{ opt }}</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Repeat for Sale, Material, Category -->
+              <div class="accordion-item border-0 mb-2">
+                <h2 class="accordion-header" id="headingSale">
+                  <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSale" aria-expanded="false" aria-controls="collapseSale">
+                    <i class="fa fa-tags me-2 text-primary"></i>Sale
+                  </button>
+                </h2>
+                <div id="collapseSale" class="accordion-collapse collapse" aria-labelledby="headingSale" data-bs-parent="#filterAccordion">
+                  <div class="accordion-body py-2">
+                    <div class="mb-3">
+                      <div class="fw-semibold text-dark mb-2">Sale</div>
+                      <div *ngFor="let opt of saleOptions" class="form-check mb-1">
+                        <input
+                          #saleCheck
+                          class="form-check-input accent-check"
+                          type="checkbox"
+                          [id]="'sale-' + opt"
+                          [checked]="filters.sale.includes(opt)"
+                          (change)="onFilterCheckboxChange('sale', opt, saleCheck.checked)">
+                        <label class="form-check-label text-dark fw-bold" [for]="'sale-' + opt">{{ opt }}</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item border-0 mb-2">
+                <h2 class="accordion-header" id="headingMaterial">
+                  <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMaterial" aria-expanded="false" aria-controls="collapseMaterial">
+                    <i class="fa fa-couch me-2 text-primary"></i>Material
+                  </button>
+                </h2>
+                <div id="collapseMaterial" class="accordion-collapse collapse" aria-labelledby="headingMaterial" data-bs-parent="#filterAccordion">
+                  <div class="accordion-body py-2">
+                    <div class="mb-3">
+                      <div class="fw-semibold text-dark mb-2">Material</div>
+                      <div *ngFor="let opt of materialOptions" class="form-check mb-1">
+                        <input
+                          #matCheck
+                          class="form-check-input accent-check"
+                          type="checkbox"
+                          [id]="'mat-' + opt"
+                          [checked]="filters.material.includes(opt)"
+                          (change)="onFilterCheckboxChange('material', opt, matCheck.checked)">
+                        <label class="form-check-label text-dark fw-bold" [for]="'mat-' + opt">{{ opt }}</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="accordion-item border-0 mb-2">
+                <h2 class="accordion-header" id="headingCategory">
+                  <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="false" aria-controls="collapseCategory">
+                    <i class="fa fa-th-large me-2 text-primary"></i>Category
+                  </button>
+                </h2>
+                <div id="collapseCategory" class="accordion-collapse collapse" aria-labelledby="headingCategory" data-bs-parent="#filterAccordion">
+                  <div class="accordion-body py-2">
+                    <div class="mb-3">
+                      <div class="fw-semibold text-dark mb-2">Category</div>
+                      <div *ngFor="let opt of categoryOptions" class="form-check mb-1">
+                        <input
+                          #catCheck
+                          class="form-check-input accent-check"
+                          type="checkbox"
+                          [id]="'cat-' + opt"
+                          [checked]="filters.category.includes(opt)"
+                          (change)="onFilterCheckboxChange('category', opt, catCheck.checked)">
+                        <label class="form-check-label text-dark fw-bold" [for]="'cat-' + opt">{{ opt }}</label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Price Range -->
+            <div class="mt-3">
+              <label class="form-label text-dark fw-bold">Price Range</label>
+              <div class="d-flex align-items-center mb-2">
+                <span class="me-2">${{ filters.price[0] }}</span>
+                <input type="range" class="form-range flex-grow-1 accent-range" min="0" max="2000" step="10"
+                  [(ngModel)]="filters.price[1]" [ngModelOptions]="{standalone: true}">
+                <span class="ms-2">${{ filters.price[1] }}</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+  
+        <!-- Product Grid -->
+        <main [class.col-lg-9]="showFilter" [class.col-12]="!showFilter" class="col-md-8">
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            <div *ngFor="let product of filteredProducts" class="col d-flex">
+              <div class="card rounded-4 shadow-lg border-0 p-3 pt-4 position-relative h-100 product-card bg-white text-dark fw-bold w-100"
+                style="transition: box-shadow 0.3s, transform 0.2s;">
+                <!-- New/Best Seller Badge -->
+                <span *ngIf="product.sold > 1500" class="badge bg-gradient-primary position-absolute top-0 start-0 m-2 px-3 py-2 shadow">Best Seller</span>
+                <!-- Quick View Icon -->
+                <button class="btn btn-light position-absolute top-0 end-0 m-2 p-2 rounded-circle shadow-sm"
+                  style="z-index:2; font-size:1.1rem;">
+                  <i class="fa fa-eye text-primary"></i>
+                </button>
+                <img [src]="product.image" class="card-img-top rounded-3 mb-3" [alt]="product.title"
+                  style="object-fit:cover; height:180px;">
+                <div class="card-body p-0 d-flex flex-column justify-content-between h-100">
+                  <div>
+                    <h6 class="card-title fw-bold mb-1 text-truncate" style="max-width: 100%;">{{ product.title }}</h6>
+                    <div class="mb-2">
+                      <span *ngFor="let tag of product.tags" class="badge bg-secondary text-white fw-bold me-1">{{ tag }}</span>
+                    </div>
+                    <div class="mb-2">
+                      <span *ngIf="product.stock === 'low'" class="badge bg-warning text-dark fw-bold">Low stock</span>
+                      <span *ngIf="product.stock === 'out'" class="badge bg-danger fw-bold">Out of stock</span>
+                      <span *ngIf="product.stock === 'in'" class="badge bg-success fw-bold">In stock</span>
+                    </div>
+                    <div class="mb-2 d-flex align-items-center">
+                      <span class="me-1 text-warning">
+                        <i *ngFor="let s of [].constructor(product.rating)" class="fa-solid fa-star"></i>
+                        <i *ngFor="let s of [].constructor(5-product.rating)" class="fa-regular fa-star"></i>
+                      </span>
+                      <span class="small text-muted ms-1">({{ product.sold | number }}+ sold)</span>
+                    </div>
+                    <div class="mb-2">
+                      <span class="text-decoration-line-through text-muted me-2">${{ product.originalPrice }}</span>
+                      <span class="fs-5 fw-bold text-success">${{ product.price }}</span>
+                      <span class="badge bg-danger ms-2 fw-bold animate__animated animate__pulse animate__infinite">Save {{ product.discount }}%</span>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center mt-3">
+                    <button class="btn btn-primary fw-bold flex-grow-1 me-2" (click)="addToCart(product)">
+                      <i class="fa fa-cart-plus me-2"></i> Add to Cart
+                    </button>
+                    <button
+                      class="btn btn-outline-secondary p-0 d-flex align-items-center justify-content-center wishlist-btn"
+                      [ngClass]="{'text-danger bg-white border-2': wishlist.has(product.id)}"
+                      (click)="toggleWishlist(product.id)"
+                      style="width:44px; height:44px; border-radius:50%; z-index:2; border-width:2px;">
+                      <i class="fa"
+                        [ngClass]="wishlist.has(product.id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"
+                        style="font-size: 1.3em;"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="filteredProducts.length === 0" class="text-center text-muted py-5">
+              <i class="fa fa-box-open fa-2x mb-2"></i>
+              <div>No products found for selected filters.</div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  
+    <!-- Card and Heart Hover Effects and Custom Styles -->
+    <style>
+    /* Accent for checkboxes and range */
+    .accent-check:checked {
+      background-color: #0d6efd !important;
+      border-color: #0d6efd !important;
+    }
+    .accent-range::-webkit-slider-thumb {
+      background: #0d6efd !important;
+    }
+    .bg-gradient-primary {
+      background: linear-gradient(90deg, #0d6efd 0%, #6610f2 100%) !important;
+      color: #fff !important;
+    }
+    .animate__pulse {
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4);}
+      70% { box-shadow: 0 0 0 10px rgba(220,53,69,0);}
+      100% { box-shadow: 0 0 0 0 rgba(220,53,69,0);}
+    }
+    .sticky-top {
+      position: sticky;
+      top: 32px;
+      z-index: 10;
+    }
+    .card-title {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 2.5em;
+    }
+    .product-card {
+      transition: box-shadow 0.3s, transform 0.2s;
+    }
+    .product-card:hover {
+      transform: scale(1.03);
+      box-shadow: 0 12px 32px rgba(58,97,134,0.13);
+      border: 1.5px solid #0d6efd;
+      z-index: 2;
+    }
+    .wishlist-btn {
+      transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .wishlist-btn.text-danger,
+    .wishlist-btn:hover {
+      background: #fff !important;
+      color: #dc3545 !important;
+      border: 2px solid #dc3545 !important;
+    }
+    .wishlist-btn .fa-heart {
+      transition: color 0.2s;
+    }
+    .wishlist-btn.text-danger .fa-heart,
+    .wishlist-btn:hover .fa-heart {
+      color: #dc3545 !important;
+    }
+    </style>
+  </body>

@@ -1,10 +1,77 @@
- :root {
-    --black: #000;
-    --white: #fff;
-}/* You can add global styles to this file, and also import other style files */
+@import 'bootstrap/dist/css/bootstrap.min.css';
 
+/* You can add global styles to this file, and also import other style files */
 
 body, html {
     font-family: 'Poppins', sans-serif;
-    background: url('assets/project_img/store.jpg') no-repeat center center/cover;
+    /* background: url('assets/project_img/store.jpg') no-repeat center center/cover; */
+}
+
+/* Custom styles */
+/* body {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+} */
+
+/* .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+} */
+
+/* Form styles */
+/* .form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+} */
+
+/* Button styles */
+/* .btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+} */
+
+/* Card styles */
+/* .card {
+  border-radius: 0.5rem;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+} */
+
+/* Navbar styles */
+/* .navbar {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+} */
+
+/* Sidebar styles */
+/* .sidebar {
+  min-height: 100vh;
+  background-color: #343a40;
+  color: #fff;
+} */
+
+/* Responsive utilities */
+/* @media (max-width: 768px) {
+  .container {
+    padding: 10px;
+  }
+} */
+
+/* Ensure Bootstrap dropdowns work with Angular */
+.dropdown-menu {
+  /* display: none !important; */
+  opacity: 0;
+  transition: opacity 0.2s;
+  position: absolute;
+  will-change: transform;
+}
+
+.dropdown-menu.show {
+  /* display: block !important; */
+  opacity: 1;
+  z-index: 1000;
 }

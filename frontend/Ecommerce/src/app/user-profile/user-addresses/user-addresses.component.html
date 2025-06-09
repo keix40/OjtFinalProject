@@ -1,153 +1,119 @@
-<div class="address-section-header">
-  <h3><i class="bi bi-geo-alt-fill"></i> My Addresses</h3>
-  <button class="add-address-btn" type="button" (click)="openAddModal()">
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+  <h3 class="fw-bold fs-3 mb-0"><i class="bi bi-geo-alt-fill text-primary me-2"></i> My Addresses</h3>
+  <button class="btn btn-primary rounded-pill shadow-sm d-flex align-items-center gap-2 px-4 py-2 transition" type="button" (click)="openAddModal()">
     <i class="bi bi-plus-lg"></i> Add new address
   </button>
 </div>
 
 <!-- Add Address Modal (Angular controlled) -->
-<div *ngIf="showAddModal" class="custom-modal-backdrop">
-  <div class="custom-modal">
-    <div class="p-4">
-      <form [formGroup]="addressForm">
-        <div class="address-info-box mb-4">
-          <div class="address-header">
-            <i class="bi bi-geo-alt-fill"></i>
-            <h4 class="fw-bold mb-0">Address Information</h4>
-          </div>
-          <div class="address-desc">Enter your complete address details. We'll validate the information and show a map preview.</div>
-          <div class="mb-3">
-            <label for="addressInput" class="form-label fw-semibold">Address <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="addressInput" placeholder="Enter address" formControlName="address">
-          </div>
-          <div class="mb-3">
-            <label for="cityInput" class="form-label fw-semibold">City <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="cityInput" placeholder="Enter city" formControlName="city">
-          </div>
-          <div class="mb-3">
-            <label for="stateInput" class="form-label fw-semibold">State <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="stateInput" placeholder="Enter state" formControlName="state">
-          </div>
-          <div class="mb-3">
-            <label for="postalCodeInput" class="form-label fw-semibold">Postal Code <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="postalCodeInput" placeholder="Enter postal code" formControlName="postalCode">
-          </div>
-          <div class="mb-3">
-            <label for="countryInput" class="form-label fw-semibold">Country <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="countryInput" placeholder="Enter country" formControlName="country">
-          </div>
-          <div class="row">
-            <div class="col">
-              <label for="latitudeInput">Latitude</label>
-              <input type="number" class="form-control" id="latitudeInput" formControlName="latitude" placeholder="Latitude">
+<div *ngIf="showAddModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.3);">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">{{ isEditMode ? 'Edit Address' : 'Add New Address' }}</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeAddModal()"></button>
+      </div>
+      <div class="modal-body pt-0">
+        <form [formGroup]="addressForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="addressInput" class="form-label">Address <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="addressInput" placeholder="Enter address" formControlName="address" (keydown.enter)="onAddressEnter()">
             </div>
-            <div class="col">
-              <label for="longitudeInput">Longitude</label>
-              <input type="number" class="form-control" id="longitudeInput" formControlName="longitude" placeholder="Longitude">
+            <div class="col-md-6">
+              <label for="cityInput" class="form-label">City <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="cityInput" placeholder="Enter city" formControlName="city">
+            </div>
+            <div class="col-md-6">
+              <label for="stateInput" class="form-label">State <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="stateInput" placeholder="Enter state" formControlName="state">
+            </div>
+            <div class="col-md-6">
+              <label for="postalCodeInput" class="form-label">Postal Code <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="postalCodeInput" placeholder="Enter postal code" formControlName="postalCode">
+            </div>
+            <div class="col-md-6">
+              <label for="countryInput" class="form-label">Country <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="countryInput" placeholder="Enter country" formControlName="country">
+            </div>
+            <div class="col-md-3">
+              <label for="latitudeInput" class="form-label">Latitude</label>
+              <input type="number" class="form-control rounded-3" id="latitudeInput" formControlName="latitude" placeholder="Latitude">
+            </div>
+            <div class="col-md-3">
+              <label for="longitudeInput" class="form-label">Longitude</label>
+              <input type="number" class="form-control rounded-3" id="longitudeInput" formControlName="longitude" placeholder="Longitude">
             </div>
           </div>
-          <div class="mb-3 d-flex align-items-center gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="getCurrentLocation()">
+          <div class="d-flex align-items-center gap-2 mt-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" (click)="getCurrentLocation()">
               <i class="bi bi-geo-alt-fill"></i> Use My Location
             </button>
           </div>
-          <div class="mb-4">
-            <div id="map"></div>
+          <div class="my-3">
+            <div id="map" class="rounded-4 border shadow-sm" style="min-height: 180px;"></div>
           </div>
-          <div class="mb-4">
-            <label for="typeInput" class="form-label fw-semibold">Address Type <span class="text-danger">*</span></label>
-            <select class="form-select" id="typeInput" formControlName="addressType">
+          <div class="mb-3">
+            <label for="typeInput" class="form-label">Address Type <span class="text-danger">*</span></label>
+            <select class="form-select rounded-pill" id="typeInput" formControlName="addressType">
               <option value="">Select type</option>
               <option value="SHIPPING">Shipping</option>
               <option value="WORK">Work</option>
               <option value="OTHER">Other</option>
             </select>
           </div>
-          <button type="button" class="btn w-100 validate-btn mb-2" (click)="submitAddress()">Validate Address</button>
-        </div>
-        <div class="custom-modal-footer px-4 pb-4">
-          <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Cancel</button>
-        </div>
-      </form>
+        </form>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="closeAddModal()">Cancel</button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" (click)="submitAddress()">{{ isEditMode ? 'Save Changes' : 'Save Address' }}</button>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Address list placeholder -->
-<div class="address-list">
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-  <!-- More address items can be added here -->
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-  <div class="address-item card mb-3 p-3">
-    <h5 class="card-title mb-2">123 Main St, Springfield</h5>
-    <div class="mb-1"><strong>City:</strong> Springfield</div>
-    <div class="mb-1"><strong>State:</strong> IL</div>
-    <div class="mb-1"><strong>Postal Code:</strong> 62704</div>
-    <div class="mb-1"><strong>Country:</strong> USA</div>
-    <div class="mb-1"><strong>Type:</strong> Shipping</div>
-    <div class="mb-1"><strong>Latitude:</strong> 39.7817</div>
-    <div class="mb-1"><strong>Longitude:</strong> -89.6501</div>
-  </div>
-   
+<!-- Global map view toggle -->
+<div class="global-map-toggle mb-4 d-flex align-items-center gap-2">
+  <label for="mapViewSelect" class="mb-0 fw-semibold">Map view:</label>
+  <select id="mapViewSelect" class="form-select form-select-sm w-auto"
+          [(ngModel)]="globalMapType"
+          (change)="setGlobalMapType(globalMapType)">
+    <option value="default">Default</option>
+    <option value="satellite">Satellite</option>
+    <option value="terrain">Terrain</option>
+  </select>
 </div>
+
+<!-- Address List -->
+<div class="address-list">
+  <div *ngFor="let address of addresses" class="address-item card mb-3 p-3 position-relative">
+    <ng-container *ngIf="address.id != null">
+      <!-- Map view -->
+      <div [id]="'map-' + address.id" class="address-map mb-2" style="height: 180px; width: 100%; border-radius: 8px;"></div>
+    </ng-container>
+    <!-- Address details -->
+    <h5 class="card-title mb-2">{{address.address}}</h5>
+    <div class="mb-1"><strong>City:</strong> {{address.city}}</div>
+    <div class="mb-1"><strong>State:</strong> {{address.state}}</div>
+    <div class="mb-1"><strong>Postal Code:</strong> {{address.postalCode}}</div>
+    <div class="mb-1"><strong>Country:</strong> {{address.country}}</div>
+    <div class="mb-1"><strong>Type:</strong> {{address.type}}</div>
+    <div class="mb-1" *ngIf="address.latitude"><strong>Latitude:</strong> {{address.latitude}}</div>
+    <div class="mb-1" *ngIf="address.longitude"><strong>Longitude:</strong> {{address.longitude}}</div>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button class="btn btn-outline-dark btn-sm d-flex align-items-center gap-1" (click)="editAddress(address)">
+        <i class="bi bi-pencil"></i> Edit
+      </button>
+      <!--
+      <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" (click)="deleteAddress(address)">
+        <i class="bi bi-trash"></i> Delete
+      </button>
+      -->
+    </div>
+  </div>
+</div>
+
+<!-- Add Address Button -->
+<!-- <button class="btn btn-primary" (click)="openAddModal()">
+  <i class="bi bi-plus-circle me-2"></i>Add New Address
+</button> -->

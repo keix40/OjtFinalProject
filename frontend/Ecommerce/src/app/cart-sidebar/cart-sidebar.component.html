@@ -1,0 +1,43 @@
+<ng-container *ngIf="showCartSidebar">
+  <div class="cart-sidebar-backdrop" (click)="onClose()"></div>
+  <div class="cart-sidebar shadow-lg bg-white rounded-4 p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="fw-bold mb-0">Your Cart</h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="onClose()"></button>
+    </div>
+    <div class="cart-items-list mb-4">
+      <!-- Cart items -->
+      <div *ngFor="let item of cartItems" class="cart-item-card d-flex align-items-center mb-4 p-3 rounded-3 shadow-sm">
+        <img [src]="item.image" class="cart-item-img rounded-3 me-3" [alt]="item.title">
+        <div class="flex-grow-1">
+          <div class="fw-semibold fs-5 mb-1">{{ item.title }}</div>
+          <div class="text-muted small mb-1">Size: {{ item.size }}</div>
+          <div class="text-muted small mb-2">Color: {{ item.color }}</div>
+          <div class="d-flex align-items-center mb-2">
+            <button class="btn btn-outline-secondary btn-sm px-2 py-0 me-2" (click)="decrementQty(item)">-</button>
+            <span class="mx-2">{{ item.quantity }}</span>
+            <button class="btn btn-outline-secondary btn-sm px-2 py-0 ms-2" (click)="incrementQty(item)">+</button>
+          </div>
+          <div class="d-flex align-items-center">
+            <span class="fw-bold fs-5 me-2">${{ item.price }}</span>
+          </div>
+          <div class="fw-bold text-primary fs-6 mt-2">Total: ${{ item.price * item.quantity }}</div>
+        </div>
+        <button class="btn btn-link text-danger ms-3 fs-5 p-0" title="Remove" (click)="removeItem(item)">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+      <!-- End cart item -->
+    </div>
+    <div class="cart-sidebar-footer mt-auto">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <span class="fw-semibold">Total</span>
+        <span class="fw-bold fs-4">${{ getTotal() }}</span>
+      </div>
+      <div class="d-grid gap-2">
+        <button class="btn btn-light btn-lg border" (click)="goToCart()">Go to cart</button>
+        <button class="btn btn-primary btn-lg" (click)="proceedToPayment()">Proceed to payment</button>
+      </div>
+    </div>
+  </div>
+</ng-container>
