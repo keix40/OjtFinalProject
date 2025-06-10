@@ -152,7 +152,7 @@ export class RegisterComponent  {
       gender: this.user.gender
     };
 
-    formData.append('request', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+    formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
 
     if (this.selectedFile) {
       formData.append('profileImage', this.selectedFile);
@@ -259,7 +259,7 @@ export class RegisterComponent  {
       gender: this.user.gender
     };
 
-    formData.append('request', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+    formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
     if (this.selectedFile) {
       formData.append('profileImage', this.selectedFile);
     }
