@@ -32,7 +32,7 @@ export class HomeComponent {
     {
       id: 1,
       title: 'Modern Living Room Armchair with Extra Padding',
-      image: 'assets/images/LeisureMod-Jefferson-Modern-Leather-Design-Accent-Armchair-With-Elegant-Gold-Frame-Modern-Living-Room-Armchair-White_59f9273c-dae5-4244-b952-003d28c2d964.2bef0d540e6e990707cbc51ab4055fe9.webp',
+      image: 'assets/images/soba.webp',
       tags: ['Living Room', 'Armchair'],
       stock: 'low',
       rating: 4,
@@ -48,7 +48,7 @@ export class HomeComponent {
     {
       id: 2,
       title: 'Sectional Sofa with Storage',
-      image: 'assets/images/Belffin Modular Sectional Sofa with Storage Seats Velvet L Shaped Corner Couch Convertible Sectional Sofa with Chaise (Blue, L Shape-1)….jfif',
+      image: 'assets/images/soba.webp',
       tags: ['Living Room', 'Sectional'],
       stock: 'out',
       rating: 3,
