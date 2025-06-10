@@ -19,6 +19,8 @@ import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlis
 import { UserPaymentMethodsComponent } from './user-profile/user-payment-methods/user-payment-methods.component';
 import { UserReviewsComponent } from './user-profile/user-reviews/user-reviews.component';
 import { UserPersonalInfoComponent } from './user-profile/user-personal-info/user-personal-info.component';
+import { ProductComponent } from './product/product.component';
+import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { UserAddressesComponent } from './user-profile/user-addresses/user-addresses.component';
 import { UserNotificationsComponent } from './user-profile/user-notifications/user-notifications.component';
 import { AddressService } from './services/address.service';
@@ -61,6 +63,8 @@ import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
     CheckoutComponent,
     PaymentComponent,
     OrderConfirmComponent,
+    ProductComponent,
+    ProductMangementComponent,
   ],
   imports: [
     BrowserModule,
