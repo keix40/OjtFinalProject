@@ -11,7 +11,6 @@ import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
 
-import { LayoutComponent } from './layout/layout.component';
 import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 
