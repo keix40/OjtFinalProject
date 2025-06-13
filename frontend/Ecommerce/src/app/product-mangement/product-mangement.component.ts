@@ -8,6 +8,7 @@ import { BrandService } from '../brand.service';
 import { ModalService } from '../modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmModelComponent } from '../confirm-model/confirm-model.component';
+import Swal from 'sweetalert2';
 declare var $: any;
 
 @Component({
@@ -47,8 +48,7 @@ export class ProductMangementComponent {
       next: (data) => {
         this.products = data.map(p => ({ ...p, checked: false }));
   
-        setTimeout(() =>
-           {
+        setTimeout(() => {
           $('#productTable').DataTable({
             destroy: true,
             columnDefs: [
@@ -57,7 +57,16 @@ export class ProductMangementComponent {
           });
         }, 100);
       },
-      error: (err) => console.error('Product error:', err)
+      error: (err) => {
+        console.error('Product error:', err);
+        // Show error to user
+        Swal.fire({
+          icon: 'error',
+          title: 'Error Loading Products',
+          text: 'There was an error loading the products. Please try again later.',
+          confirmButtonColor: '#3085d6'
+        });
+      }
     });
   }
 

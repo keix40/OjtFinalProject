@@ -34,6 +34,8 @@ import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
+import { ProductComponent } from './product/product.component';
+import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 
 
 @NgModule({
@@ -61,6 +63,8 @@ import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
     CheckoutComponent,
     PaymentComponent,
     OrderConfirmComponent,
+    ProductComponent,
+    ProductMangementComponent
   ],
   imports: [
     BrowserModule,
