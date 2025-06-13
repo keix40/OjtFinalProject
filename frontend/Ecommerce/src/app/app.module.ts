@@ -19,6 +19,8 @@ import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlis
 import { UserPaymentMethodsComponent } from './user-profile/user-payment-methods/user-payment-methods.component';
 import { UserReviewsComponent } from './user-profile/user-reviews/user-reviews.component';
 import { UserPersonalInfoComponent } from './user-profile/user-personal-info/user-personal-info.component';
+import { ProductComponent } from './product/product.component';
+import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { UserAddressesComponent } from './user-profile/user-addresses/user-addresses.component';
 import { UserNotificationsComponent } from './user-profile/user-notifications/user-notifications.component';
 import { AddressService } from './services/address.service';
@@ -34,8 +36,8 @@ import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
-import { ProductComponent } from './product/product.component';
-import { ProductMangementComponent } from './product-mangement/product-mangement.component';
+import { ProductDisplayComponent } from './product-display/product-display.component';
+
 
 
 @NgModule({
@@ -64,7 +66,8 @@ import { ProductMangementComponent } from './product-mangement/product-mangement
     PaymentComponent,
     OrderConfirmComponent,
     ProductComponent,
-    ProductMangementComponent
+    ProductMangementComponent,
+    ProductDisplayComponent,
   ],
   imports: [
     BrowserModule,

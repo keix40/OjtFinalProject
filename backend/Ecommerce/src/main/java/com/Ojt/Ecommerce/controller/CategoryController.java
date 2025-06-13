@@ -5,6 +5,7 @@ import com.Ojt.Ecommerce.dto.CategoryDTO;
 import com.Ojt.Ecommerce.entity.Brand;
 import com.Ojt.Ecommerce.entity.BrandHasCategory;
 import com.Ojt.Ecommerce.entity.Category;
+import com.Ojt.Ecommerce.entity.ProductHasCategory;
 import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
@@ -96,5 +97,8 @@ public class CategoryController {
         return ResponseEntity.ok("Success");
     }
 
-
+    @GetMapping("/getallcatewithbrand")
+    public List<ProductHasCategory> getAllCategoryWithBrand(){
+        return service.getAllCategoryWithBrand();
+    }
 }

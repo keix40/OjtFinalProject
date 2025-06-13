@@ -21,7 +21,7 @@ export class AuthService {
 
 //   register(data: RegisterRequest): Observable<any> {
 //     const headers = new HttpHeaders().set('Accept', 'text/plain, application/json');
-//     return this.http.post(`${this.baseUrl}/register`, data, { 
+//     return this.http.post(`${this.baseUrl}/register`, data, {
 //       headers: headers,
 //       responseType: 'text'
 //     });
@@ -99,24 +99,24 @@ resendOtp(email: string): Observable<any> {
         subscriber.error(new Error('No token found'));
       });
     }
-    
+
     console.log('Token being used:', token);
     const decoded = this.getDecodedToken();
     console.log('Decoded token:', decoded);
-    
+
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
-    
+
     console.log('Request URL:', `${this.baseUrl}/user/${details.id}`);
     console.log('Request payload:', JSON.stringify(details, null, 2));
     console.log('Request headers:', headers);
-    
+
     return this.http.put(`${this.baseUrl}/user/${details.id}`, details, { headers });
   }
 
-  sendOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/send-otp`, { email });
+  sendRegisterOtp(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/sendOtp`, { email });
   }
 }

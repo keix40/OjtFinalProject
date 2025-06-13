@@ -66,13 +66,15 @@ export class RegisterComponent  {
   // For easier template access
   get f() {
     return this.registerForm.controls;
-    
+
   }
 
-  onSubmit(): void {
+  /*onSubmit(): void {
     this.submitted = true;
     this.errorMessage = '';
     this.successMessage = '';
+
+    this.validate();// for validate
 
     if (this.registerForm.invalid) {
       return;
@@ -111,28 +113,117 @@ export class RegisterComponent  {
     // if (this.registerForm.invalid) return;
 
     // this.authService.register(this.registerForm.value).subscribe({
-      next: (res: RegisterResponse) => {
-        this.emailForOtp = this.registerForm.value.email;
-        this.isOtpStep = true;
-        this.successMessage = res?.message || 'OTP sent to your email.';
-        this.errorMessage = ''; // clear any previous error
-      },
+     next: (res: RegisterResponse) => {
+  this.emailForOtp = this.registerForm.value.email;
+  this.isOtpStep = true;
+  this.showEmailVerifyModal = true; // show otp pop up
+  this.successMessage = res?.message || 'OTP sent to your email.';
+  this.errorMessage = '';
+},
+
       error: (err) => {
         console.error('Registration error:', err);
         this.errorMessage = err?.error?.message ||  err?.message || 'Registration failed';
         this.successMessage = '';
       }
     });
+  }*/
+  
+    onSubmit() {                          //Change onSubmit method
+    this.submitted = true;
+    this.validate();
+
+    if (Object.keys(this.errors).length > 0) {
+      return; // Form is invalid, do not proceed
+    }
+
+    if (!this.otpVerified) {
+      this.sendOtp(true); // Try sending OTP and open modal only on success
+      return;
+    }
+
+    const formData = new FormData();
+    const requestPayload = {
+      name: this.user.name,
+      email: this.user.email,
+      password: this.user.password,
+      role: this.user.role,
+      dateOfBirth: this.user.dob,
+      gender: this.user.gender
+    };
+
+    formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+
+    if (this.selectedFile) {
+      formData.append('profileImage', this.selectedFile);
+    }
+
+    this.authService.register(formData).subscribe({
+      next: (response) => {
+        this.successMessage = response?.message || 'Registration successful.';
+        this.errorMessage = '';
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 2000);
+      },
+      error: (error) => {
+        const msg = error.error?.message || error.message || 'Registration failed';
+        this.errorMessage = msg;
+        console.error("error :"+error)
+
+        if (msg.toLowerCase().includes('email')) {
+          this.errors['email'] = msg;
+        } else if (msg.toLowerCase().includes('date')) {
+          this.errors['dob'] = msg;
+        } else if (msg.toLowerCase().includes('role')) {
+          this.errors['role'] = msg;
+        } else if (msg.toLowerCase().includes('image')) {
+          this.errors['profileImage'] = msg;
+        } else {
+          this.errors['general'] = msg;
+        }
+      }
+    });
   }
 
+//add Sent OTP 
+   sendOtp(showModal: boolean = false): void {
+    this.errors['email'] = '';
+    this.successMessage = '';
+    this.errorMessage = '';
+    this.isOtpStep = false;
+    this.otpVerified = false;
+
+    if (!this.user.email || !this.isEmailFormatValid()) {
+      this.errors['email'] = 'Enter a valid Gmail address.';
+      return;
+    }
+
+    this.authService.sendRegisterOtp(this.user.email).subscribe({
+      next: (res) => {
+        this.emailForOtp = this.user.email;
+        this.isOtpStep = true;
+        this.successMessage = res?.message || 'OTP sent to your email.';
+        if (showModal) this.showEmailVerifyModal = true;
+        console.log("OPT Sent");
+      },
+      error: (err) => {
+        const msg = err?.error?.message || err?.message || 'Failed to send OTP.';
+        this.errors['email'] = msg;
+        this.showEmailVerifyModal = false;
+        console.error('Opt sent error: '+err);
+      }
+    });
+  }
   verifyOtp(): void {
     if (this.otpForm.invalid) return;
-
+  
     this.authService.verifyOtp(this.emailForOtp, this.otpForm.value.otp).subscribe({
       next: () => {
-        this.successMessage = 'Email verified successfully. You can now login.';
+        this.otpVerified = true;  // ✅ Mark OTP as verified
+        this.showEmailVerifyModal = false;  // ✅ Optional: close modal
+        this.successMessage = 'Email verified successfully. You can now continue.';
         this.errorMessage = '';
-        setTimeout(() => this.router.navigate(['/']), 1500);
       },
       error: (err) => {
         console.error('OTP verification error:', err);
@@ -141,6 +232,7 @@ export class RegisterComponent  {
       }
     });
   }
+  
 
   resendOtp(): void {
     this.authService.resendOtp(this.emailForOtp).subscribe({
@@ -167,7 +259,7 @@ export class RegisterComponent  {
       gender: this.user.gender
     };
 
-    formData.append('request', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+    formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
     if (this.selectedFile) {
       formData.append('profileImage', this.selectedFile);
     }
@@ -315,4 +407,3 @@ validate() {
 
 
   }
-

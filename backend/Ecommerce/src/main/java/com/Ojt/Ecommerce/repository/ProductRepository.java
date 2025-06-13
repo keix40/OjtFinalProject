@@ -11,8 +11,11 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     public boolean existsByProductCode(String productCode);
 
-    @Query("Select p from Product p where p.status != 2")
+    @Query("Select p from Product p where p.status <> 2")
     public List<Product> findAllProduct();
+
+    @Query("Select p from Product p where p.quantity <> 0 and p.status <> 2")
+    public List<Product> getAllActiveProduct();
 
     @Modifying
     @Query("Update Product p set p.status = 2 where p.id = :id")

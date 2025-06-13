@@ -19,4 +19,8 @@ export class CategoryService {
   createCategory(cateDto : CategoryDTO): Observable<CategoryDTO> {
     return this.http.post<CategoryDTO>(`${this.baseUrl}/addcategory`, cateDto,{responseType : 'text' as 'json'});
   }
+
+  getAllCateWithBrand(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/getallcatewithbrand/${id}`);
+  }
 }

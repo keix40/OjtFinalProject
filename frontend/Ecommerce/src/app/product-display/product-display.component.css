@@ -1,34 +1,38 @@
-/* Product Display */
+body, .container-fluid, .bg-white {
+  background: #fff !important;
+}
+.card, .product-card, .bg-white {
+  color: #212529 !important;
+  font-weight: bold !important;
+}
+.form-check-label, .form-label, .badge {
+  color: #212529 !important;
+  font-weight: bold !important;
+}
 .accent-check:checked {
   background-color: #0d6efd !important;
   border-color: #0d6efd !important;
 }
-
 .accent-range::-webkit-slider-thumb {
   background: #0d6efd !important;
 }
-
 .bg-gradient-primary {
   background: linear-gradient(90deg, #0d6efd 0%, #6610f2 100%) !important;
   color: #fff !important;
 }
-
-.sticky-top {
-  position: sticky;
-  top: 60px;
-  z-index: 10;
-}
-
 .animate__pulse {
   animation: pulse 1.2s infinite;
 }
-
 @keyframes pulse {
   0% { box-shadow: 0 0 0 0 rgba(220,53,69,0.4);}
   70% { box-shadow: 0 0 0 10px rgba(220,53,69,0);}
   100% { box-shadow: 0 0 0 0 rgba(220,53,69,0);}
 }
-
+.sticky-top {
+  position: sticky;
+  top: 32px;
+  z-index: 10;
+}
 .card-title {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -37,57 +41,29 @@
   text-overflow: ellipsis;
   min-height: 2.5em;
 }
-
 .product-card {
   transition: box-shadow 0.3s, transform 0.2s;
 }
-
 .product-card:hover {
   transform: scale(1.03);
-  box-shadow: 0 12px 32px rgba(58, 97, 134, 0.13);
+  box-shadow: 0 12px 32px rgba(58,97,134,0.13);
   border: 1.5px solid #0d6efd;
   z-index: 2;
 }
-
 .wishlist-btn {
   transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
-
 .wishlist-btn.text-danger,
 .wishlist-btn:hover {
   background: #fff !important;
   color: #dc3545 !important;
   border: 2px solid #dc3545 !important;
 }
-
 .wishlist-btn .fa-heart {
   transition: color 0.2s;
 }
-
 .wishlist-btn.text-danger .fa-heart,
 .wishlist-btn:hover .fa-heart {
   color: #dc3545 !important;
-}
-
-.product-img {
-  height: 100%;       /* taller height */
-  width: 100%;         /* full width */
-  object-fit: fill;    /* stretch image to fill both width and height */
-  border-radius: 0.75rem;
-}
-
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-}
-
-.btn {
-  min-width: 40px;
-}
-.product-img-wrapper {
-  height: 350px;
-  overflow: hidden;
-  border-radius: 0.75rem;
 }

@@ -20,13 +20,13 @@ public class Brand {
 
     private String name;
 
-    @ManyToMany
-    @JoinTable(
-            name = "brand_category",
-            joinColumns = @JoinColumn(name = "brand_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id")
-    )
-    private List<Category> categories;
+//    @ManyToMany
+//    @JoinTable(
+//            name = "brand_category",
+//            joinColumns = @JoinColumn(name = "brand_id"),
+//            inverseJoinColumns = @JoinColumn(name = "category_id")
+//    )
+//    private List<Category> categories;
 
 
     @OneToMany(mappedBy = "brand")

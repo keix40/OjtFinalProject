@@ -1,7 +1,9 @@
 package com.Ojt.Ecommerce.service;
 
 import com.Ojt.Ecommerce.entity.Category;
+import com.Ojt.Ecommerce.entity.ProductHasCategory;
 import com.Ojt.Ecommerce.repository.CategoryRepository;
+import com.Ojt.Ecommerce.repository.ProductHasCategoryRepository;
 import org.hibernate.dialect.unique.CreateTableUniqueDelegate;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +16,9 @@ public class CategoryService {
 
     @Autowired
     private CategoryRepository repo;
+
+    @Autowired
+    private ProductHasCategoryRepository pcRepo;
 
     @Autowired
     private ModelMapper mapper;
@@ -36,5 +41,9 @@ public class CategoryService {
 
     public Category getCategoryById(Long id) {
         return repo.findById(id).orElse(null);
+    }
+
+    public List<ProductHasCategory> getAllCategoryWithBrand(){
+        return pcRepo.findAll();
     }
 }

@@ -1,8 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Product, ProductList } from './product';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { Product, ProductDTO, ProductList } from './product';
+
 
 @Injectable({
   providedIn: 'root'
@@ -52,5 +53,9 @@ export class ProductService {
   
   deleteProduct(id: number) {
     return this.http.put(`${this.baseUrl}/delete/${id}`, null);
+  }
+
+  getAllAcProduct(): Observable<ProductDTO[]>{
+    return this.http.get<ProductDTO[]>(`${this.baseUrl}/productlist`);
   }
 }
