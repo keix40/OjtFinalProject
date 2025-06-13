@@ -128,7 +128,7 @@ export class RegisterComponent  {
       }
     });
   }*/
-
+  
     onSubmit() {                          //Change onSubmit method
     this.submitted = true;
     this.validate();
@@ -152,7 +152,7 @@ export class RegisterComponent  {
       gender: this.user.gender
     };
 
-    formData.append('request', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+    formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
 
     if (this.selectedFile) {
       formData.append('profileImage', this.selectedFile);
@@ -186,7 +186,7 @@ export class RegisterComponent  {
     });
   }
 
-//add Sent OTP
+//add Sent OTP 
    sendOtp(showModal: boolean = false): void {
     this.errors['email'] = '';
     this.successMessage = '';
@@ -217,12 +217,13 @@ export class RegisterComponent  {
   }
   verifyOtp(): void {
     if (this.otpForm.invalid) return;
-
+  
     this.authService.verifyOtp(this.emailForOtp, this.otpForm.value.otp).subscribe({
       next: () => {
-        this.successMessage = 'Email verified successfully. You can now login.';
+        this.otpVerified = true;  // ✅ Mark OTP as verified
+        this.showEmailVerifyModal = false;  // ✅ Optional: close modal
+        this.successMessage = 'Email verified successfully. You can now continue.';
         this.errorMessage = '';
-        setTimeout(() => this.router.navigate(['/']), 1500);
       },
       error: (err) => {
         console.error('OTP verification error:', err);
@@ -231,6 +232,7 @@ export class RegisterComponent  {
       }
     });
   }
+  
 
   resendOtp(): void {
     this.authService.resendOtp(this.emailForOtp).subscribe({
@@ -257,7 +259,7 @@ export class RegisterComponent  {
       gender: this.user.gender
     };
 
-    formData.append('request', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+    formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
     if (this.selectedFile) {
       formData.append('profileImage', this.selectedFile);
     }

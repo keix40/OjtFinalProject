@@ -41,10 +41,15 @@ public class ProductController {
         return service.getAllProduct();
     }
 
+    @GetMapping("/productlist")
+    public List<ProductDTO> getAllActiveProducts() {
+        return service.getAllActiveProductDTOs();
+    }
+
     @PutMapping("/delete/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable Long id){
-        service.deleteProduce(id);
+        service.deleteProduct(id);
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Delete Product successfully.");
         return ResponseEntity.ok(response);
@@ -53,7 +58,7 @@ public class ProductController {
     @PutMapping("/active/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> activeProduct(@PathVariable Long id){
-        service.deleteProduce(id);
+        service.activeProduct(id);
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Active product successfully.");
         return ResponseEntity.ok(response);
@@ -62,7 +67,7 @@ public class ProductController {
     @PutMapping("/inactive/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> inactiveProduct(@PathVariable Long id){
-        service.deleteProduce(id);
+        service.inactiveProduct(id);
         Map<String, Object> response = new HashMap<>();
         response.put("message", "Inactive Product successfully.");
         return ResponseEntity.ok(response);

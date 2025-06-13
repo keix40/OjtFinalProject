@@ -26,3 +26,39 @@ export interface ProductList{
   }[];
   checked?: boolean;
 }
+
+// export interface CategoryBrandPair {
+//   categoryId: number;
+//   categoryName?: string;
+//   brandId: number | null;
+//   brandName?: string | null;
+// }
+
+// export interface ProductImageDTO {
+//   id: number;
+//   imageUrl: string;
+//   status: number;
+// }
+
+export interface ProductDTO {
+  id: number;
+  productName: string;
+  productCode: string;
+  price: number;
+  quantity: number;
+  description: string;
+  status: number;
+
+  categoryBrandPairs: {
+    categoryId: number;
+    categoryName?: string;
+    brandId: number | null;
+    brandName?: string | null;
+  }[];
+  
+  productImages: {
+    id: number;
+    imageUrl: string;
+    status: number;
+  }[];
+}

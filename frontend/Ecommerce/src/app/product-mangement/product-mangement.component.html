@@ -63,9 +63,21 @@
             <td>{{ product.price }} ks</td>
             <td>{{ product.quantity }}</td>
             <td>
-              <span *ngIf="product.quantity === 0" class="badge bg-danger">Low Stock</span>
-              <span *ngIf="product.status === 1 && product.quantity > 0" class="badge bg-success">Active</span>
-              <span *ngIf="product.status === 0" class="badge bg-secondary">Inactive</span>
+              <ng-container *ngIf="product.quantity <= 5; else checkStatus">
+                <span class="badge bg-danger">Low Stock</span>
+              </ng-container>
+            
+              <ng-template #checkStatus>
+                <ng-container *ngIf="product.status === 1 && product.quantity > 0; else inactiveStatus">
+                  <span class="badge bg-success">Active</span>
+                </ng-container>
+              </ng-template>
+            
+              <ng-template #inactiveStatus>
+                <ng-container *ngIf="product.status === 0">
+                  <span class="badge bg-secondary">Inactive</span>
+                </ng-container>
+              </ng-template>
             </td>
           </tr>
         </tbody>

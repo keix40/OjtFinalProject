@@ -2,6 +2,7 @@ package com.Ojt.Ecommerce.service;
 
 import com.Ojt.Ecommerce.dto.CategoryBrandPair;
 import com.Ojt.Ecommerce.dto.ProductDTO;
+import com.Ojt.Ecommerce.dto.ProductImageDTO;
 import com.Ojt.Ecommerce.entity.*;
 import com.Ojt.Ecommerce.repository.BrandRepository;
 import com.Ojt.Ecommerce.repository.CategoryRepository;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
@@ -111,8 +113,41 @@ public class ProductService {
         return proRepo.findAllProduct();
     }
 
+    public List<ProductDTO> getAllActiveProductDTOs() {
+        List<Product> products = proRepo.getAllActiveProduct();
+        return products.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private ProductDTO convertToDTO(Product product) {
+        ProductDTO dto = mapper.map(product, ProductDTO.class);
+
+        // Map category-brand pairs
+        List<CategoryBrandPair> pairs = product.getProductCategories().stream()
+                .map(pc -> new CategoryBrandPair(
+                        pc.getCategory().getId(),
+                        pc.getCategory().getName(),
+                        pc.getBrand() != null ? pc.getBrand().getId() : null,
+                        pc.getBrand() != null ? pc.getBrand().getName() : null
+                ))
+                .collect(Collectors.toList());
+        dto.setCategoryBrandPairs(pairs);
+
+        List<ProductImageDTO> images = product.getProductImages().stream()
+                .map(img -> new ProductImageDTO(
+                        img.getId(),
+                        img.getImageUrl(),
+                        img.getStatus()
+                ))
+                .collect(Collectors.toList());
+        dto.setProductImages(images);
+
+        return dto;
+    }
+
     @Transactional
-    public void deleteProduce(Long id) {
+    public void deleteProduct(Long id) {
         proRepo.deleteProduct(id);
     }
 
