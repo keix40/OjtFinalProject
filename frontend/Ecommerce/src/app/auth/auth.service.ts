@@ -117,6 +117,6 @@ resendOtp(email: string): Observable<any> {
   }
 
   sendRegisterOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/sendOtp`, { email });
+    return this.http.post(`${this.baseUrl}/send-otp`, { email });//need to change
   }
 }
