@@ -1,10 +1,7 @@
 package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.dto.*;
-import com.Ojt.Ecommerce.entity.OtpVerification;
-import com.Ojt.Ecommerce.entity.RefreshToken;
-import com.Ojt.Ecommerce.entity.User;
-import com.Ojt.Ecommerce.entity.VerificationToken;
+import com.Ojt.Ecommerce.entity.*;
 import com.Ojt.Ecommerce.exception.CustomException;
 import com.Ojt.Ecommerce.repository.OtpVerificationRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
@@ -19,6 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,6 +41,7 @@ public class AuthController {
     private final EmailService emailService;
     private final OtpVerificationRepository otpVerificationRepository;
     private final EmailVerificationService emailVerificationService;
+    private final PasswordEncoder passwordEncoder;
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> register(
@@ -180,9 +179,9 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "OTP resent. Please check your email."));
     }
 
-    @PostMapping("/sendOtp")
+    @PostMapping("/send-register-otp")
     public ResponseEntity<?> sendOtp(@RequestBody EmailRequest request) {
-        String email = request.getEmail();
+        String email = request.getEmail().trim().toLowerCase();
         System.out.println("email is :"+email);
         if (!emailVerificationService.isEmailReal(email)) {
             throw new CustomException("Email not found.");
@@ -213,5 +212,98 @@ public class AuthController {
         emailService.sendEmail(email, "Your OTP Code", "Your OTP is: " + otp);
 
         return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
+    }
+    //add (for otp code for password reset)
+    @PostMapping("/send-reset-otp")
+    public ResponseEntity<?> sendResetOtp(@RequestBody EmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        System.out.println("email is :"+email);
+
+        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new CustomException("Invalid email format.");
+        }
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new CustomException("No account found with this email.");
+        }
+
+        if (!userOpt.get().isVerified()) {
+            throw new CustomException("No account found with this email.");
+        }
+
+        // Generate OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        // Save to DB
+        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
+                .orElse(new OtpVerification());
+        otpVerification.setEmail(email);
+        otpVerification.setOtpCode(otp);
+        otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
+        otpVerification.setVerified(false);
+        otpVerificationRepository.save(otpVerification);
+
+        emailService.sendEmail(email, "Password Reset OTP", "Your OTP is: " + otp);
+
+        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
+    }
+
+    @PostMapping("/forgot-password")   //for forgot passward
+    public ResponseEntity<?> forgotPassword(@RequestBody EmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+
+        // ✅ Check if user exists and is verified
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("User not found"));
+
+        if (!user.isVerified()) {
+            throw new CustomException("User email is not verified.");
+        }
+
+        // ✅ Generate OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+
+        // ✅ Save or update OTP
+        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
+                .orElse(new OtpVerification());
+
+        otpVerification.setEmail(email);
+        otpVerification.setOtpCode(otp);
+        otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
+        otpVerification.setVerified(false); // mark for reset, not for registration
+        otpVerificationRepository.save(otpVerification);
+
+        // ✅ Send OTP via email
+        emailService.sendEmail(email, "Reset Password OTP", "Your OTP for password reset is: " + otp);
+        return ResponseEntity.ok(Map.of("message", "OTP sent for password reset."));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        String newPassword = request.getNewPassword();
+
+        // ✅ Get user
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("User not found"));
+
+        // ✅ Check OTP is verified
+        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("No OTP found for this email"));
+
+        if (!otpVerification.isVerified() || otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new CustomException("OTP not verified or expired");
+        }
+
+        // ✅ Set new password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        // ✅ Invalidate OTP after reset
+        otpVerification.setVerified(false);
+        otpVerificationRepository.save(otpVerification);
+
+        return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
 }
