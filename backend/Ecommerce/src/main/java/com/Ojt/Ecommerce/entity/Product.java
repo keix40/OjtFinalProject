@@ -52,13 +52,13 @@ public class Product {
 //    @JsonIgnore
 //    private List<ProductHasCategory> productCategories;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonIgnore
     @ToString.Exclude //add this two line to fix infinite loop error
     @EqualsAndHashCode.Exclude
     private Set<ProductHasCategory> productCategories; // Changed from List to Set
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ProductImage> productImages; // Keep this as List
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
