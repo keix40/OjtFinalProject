@@ -14,7 +14,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("Select p from Product p where p.status <> 2")
     public List<Product> findAllProduct();
 
-    @Query("Select p from Product p where p.quantity <> 0 and p.status <> 2")
+    @Query("Select p from Product p where p.quantity <> 0 and p.status <> 2 ORDER BY p.id DESC")
     public List<Product> getAllActiveProduct();
 
     @Modifying

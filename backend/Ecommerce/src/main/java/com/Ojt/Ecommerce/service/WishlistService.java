@@ -36,6 +36,6 @@ public class WishlistService {
     }
 
     public List<Wishlist> getAllWishlistByUserID(Long userId){
-        return repo.findByUserIdAndStatus(userId,1);
+        return repo.findByUserIdAndStatusOrderByWishlistDateDesc(userId,1);
     }
 }

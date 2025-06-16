@@ -18,8 +18,8 @@ public interface WishlistRepository extends JpaRepository<Wishlist,Long> {
     public void removeWishlist(@Param("userId") Long userId, @Param("proId") Long proId);
 
     @Modifying
-    @Query("Update Wishlist w set w.status = 1 where w.user.id = :userId AND w.product.id = :proId")
-    public void readdWishlist(@Param("userId") Long userId, @Param("proId") Long proId);
+    @Query("UPDATE Wishlist w SET w.status = 1, w.wishlistDate = CURRENT_TIMESTAMP WHERE w.user.id = :userId AND w.product.id = :proId")
+    void readdWishlist(@Param("userId") Long userId, @Param("proId") Long proId);
 
-    List<Wishlist> findByUserIdAndStatus(Long userId, int status);
+    List<Wishlist> findByUserIdAndStatusOrderByWishlistDateDesc(Long userId, int status);
 }

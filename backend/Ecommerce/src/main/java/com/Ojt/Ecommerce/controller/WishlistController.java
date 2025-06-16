@@ -47,10 +47,15 @@ public class WishlistController {
     }
 
     @GetMapping("/wishlistbyuserid/{id}")
-    public List<Long> wishlistListByUserId(@PathVariable long id){
+    public List<Long> wishlistListIDByUserId(@PathVariable long id){
         List<Wishlist> wishlistItems = service.getAllWishlistByUserID(id);
         return wishlistItems.stream()
                 .map(w -> w.getProduct().getId())
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/getwishlist/{id}")
+    public List<Wishlist> wishlistListByUserId(@PathVariable long id){
+        return service.getAllWishlistByUserID(id);
     }
 }

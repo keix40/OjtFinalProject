@@ -123,7 +123,6 @@ public class ProductService {
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = mapper.map(product, ProductDTO.class);
 
-        // Map category-brand pairs
         List<CategoryBrandPair> pairs = product.getProductCategories().stream()
                 .map(pc -> new CategoryBrandPair(
                         pc.getCategory().getId(),
