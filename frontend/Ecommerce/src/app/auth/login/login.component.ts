@@ -11,6 +11,7 @@ import { AuthService } from '../auth.service';
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
+  showPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -25,6 +26,10 @@ export class LoginComponent implements OnInit {
     });
   }
 
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
   submitLogin() {
     if (this.loginForm.invalid) return;
 
@@ -32,8 +37,7 @@ export class LoginComponent implements OnInit {
       next: (res) => {
         this.auth.saveToken(res.accessToken);
         this.router.navigate(['/home']);
-      }
-      ,
+      },
       error: (err) => {
         console.error(err);
         alert('Login failed');

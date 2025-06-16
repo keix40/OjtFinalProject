@@ -1,159 +1,186 @@
-  <div class="body">
+<div class="body">
+  <div class="container">
     <div class="bold-form">
       <div class="form-header">
-        <h2>Register</h2>
+        <h2>Create Account</h2>
+        <p>Join us today and start shopping!</p>
       </div>
-  
-      <!-- Global Messages -->
-      <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
-      <div *ngIf="successMessage" class="success">{{ successMessage }}</div>
-  
-      <div class="form-body">
-        <form (ngSubmit)="onSubmit()">
-          <!-- Name -->
-          <div class="input-group">
-            <label for="name">Name:</label>
-            <input
-              type="text"
-              id="name"
-              [(ngModel)]="user.name"
-              name="name"
-              (ngModelChange)="onNameChange()"
-              placeholder="Enter your name"
-              class="input-field"
-            />
-            <div class="error" *ngIf="errors['name']">{{ errors['name'] }}</div>
-          </div>
-  
-          <!-- Email -->
-          <div class="input-group">
-            <label for="email">Email:</label>
-            <input
-              type="email"
-              id="email"
-              [(ngModel)]="user.email"
-              name="email"
-              (ngModelChange)="onEmailChange()"
-              placeholder="Example123@gmail.com"
-              class="input-field"
-            />
-            <div class="error" *ngIf="errors['email']">{{ errors['email'] }}</div>
-            <div *ngIf="otpVerified" class="success" style="margin-top: 10px;">✅ Email verified successfully.</div>
-          </div>
-  
-          <!-- Date of Birth -->
-          <div class="input-group">
-            <label for="dob">Date of Birth:</label>
-            <input
-              type="date"
-              id="dob"
-              [(ngModel)]="user.dob"
-              name="dob"
-              (ngModelChange)="onDobChange()"
-              class="input-field"
-              [max]="today"
-            />
-            <div class="error" *ngIf="errors['dob']">{{ errors['dob'] }}</div>
-          </div>
-  
-          <!-- Gender -->
-          <div class="input-group">
-            <label>Gender:</label>
-            <div class="radio-group">
-              <label class="radio-option">
-                <input type="radio" [(ngModel)]="user.gender" name="gender" value="male" (change)="onGenderChange()" />
-                Male
-              </label>
-              <label class="radio-option">
-                <input type="radio" [(ngModel)]="user.gender" name="gender" value="female" (change)="onGenderChange()" />
-                Female
-              </label>
-              <label class="radio-option">
-                <input type="radio" [(ngModel)]="user.gender" name="gender" value="other" (change)="onGenderChange()" />
-                Other
-              </label>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <div class="form-columns">
+          <!-- Left Column -->
+          <div class="form-column">
+            <!-- Name -->
+            <div class="input-group">
+              <label for="name">Name:</label>
+              <input
+                type="text"
+                id="name"
+                [(ngModel)]="user.name"
+                name="name"
+                (ngModelChange)="onNameChange()"
+                placeholder="Enter your name"
+                class="input-field"
+              />
+              <div class="error" *ngIf="errors['name']">{{ errors['name'] }}</div>
             </div>
-            <div class="error" *ngIf="errors['gender']">{{ errors['gender'] }}</div>
+
+            <!-- Email -->
+            <div class="input-group">
+              <label for="email">Email:</label>
+              <input
+                type="email"
+                id="email"
+                [(ngModel)]="user.email"
+                name="email"
+                (ngModelChange)="onEmailChange()"
+                placeholder="Example123@gmail.com"
+                class="input-field"
+              />
+              <div class="error" *ngIf="errors['email']">{{ errors['email'] }}</div>
+              <div *ngIf="otpVerified" class="success" style="margin-top: 10px;">✅ Email verified successfully.</div>
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="input-group">
+              <label for="dob">Date of Birth:</label>
+              <input
+                type="date"
+                id="dob"
+                [(ngModel)]="user.dob"
+                name="dob"
+                (ngModelChange)="onDobChange()"
+                class="input-field"
+                [max]="today"
+              />
+              <div class="error" *ngIf="errors['dob']">{{ errors['dob'] }}</div>
+            </div>
+
+            <!-- Gender -->
+            <div class="input-group">
+              <label>Gender:</label>
+              <div class="radio-group">
+                <label class="radio-option">
+                  <input type="radio" [(ngModel)]="user.gender" name="gender" value="male" (change)="onGenderChange()" />
+                  Male
+                </label>
+                <label class="radio-option">
+                  <input type="radio" [(ngModel)]="user.gender" name="gender" value="female" (change)="onGenderChange()" />
+                  Female
+                </label>
+                <label class="radio-option">
+                  <input type="radio" [(ngModel)]="user.gender" name="gender" value="other" (change)="onGenderChange()" />
+                  Other
+                </label>
+              </div>
+              <div class="error" *ngIf="errors['gender']">{{ errors['gender'] }}</div>
+            </div>
           </div>
-  
-          <!-- Password -->
-          <div class="input-group">
-            <label for="password">Password:</label>
-            <input
-              type="password"
-              id="password"
-              [(ngModel)]="user.password"
-              name="password"
-              (ngModelChange)="onPasswordChange()"
-              class="input-field"
-              placeholder="Enter your password"
-            />
-            <div class="error" *ngIf="errors['password']">{{ errors['password'] }}</div>
+
+          <!-- Right Column -->
+          <div class="form-column">
+            <!-- Password -->
+            <div class="input-group">
+              <label for="password">Password:</label>
+              <div class="password-input-container">
+                <input
+                  [type]="showPassword ? 'text' : 'password'"
+                  id="password"
+                  [(ngModel)]="user.password"
+                  name="password"
+                  (ngModelChange)="onPasswordChange()"
+                  class="input-field"
+                  placeholder="Enter your password"
+                />
+                <span class="password-toggle" (click)="togglePasswordVisibility()">
+                  <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+                </span>
+              </div>
+              <div class="error" *ngIf="errors['password']">{{ errors['password'] }}</div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="input-group">
+              <label for="confirmPassword">Confirm Password:</label>
+              <div class="password-input-container">
+                <input
+                  [type]="showConfirmPassword ? 'text' : 'password'"
+                  id="confirmPassword"
+                  [(ngModel)]="user.confirmPassword"
+                  name="confirmPassword"
+                  (ngModelChange)="onConfirmPasswordChange()"
+                  class="input-field"
+                  placeholder="Confirm your password"
+                />
+                <span class="password-toggle" (click)="toggleConfirmPasswordVisibility()">
+                  <i class="fas" [class.fa-eye]="!showConfirmPassword" [class.fa-eye-slash]="showConfirmPassword"></i>
+                </span>
+              </div>
+              <div class="error" *ngIf="errors['confirmPassword']">{{ errors['confirmPassword'] }}</div>
+            </div>
+
+            <!-- Profile Image -->
+            <div class="input-group">
+              <label for="profileImage">Profile Image:</label>
+              <input
+                type="file"
+                (change)="onFileSelected($event)"
+                accept="image/*"
+                class="input-field"
+                title="Upload profile image"
+              />
+              <div class="error" *ngIf="errors['file']">{{ errors['file'] }}</div>
+              <div class="error" *ngIf="errors['profileImage']">{{ errors['profileImage'] }}</div>
+            </div>
           </div>
-  
-          <!-- Confirm Password -->
-          <div class="input-group">
-            <label for="confirmPassword">Confirm Password:</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              [(ngModel)]="user.confirmPassword"
-              name="confirmPassword"
-              (ngModelChange)="onConfirmPasswordChange()"
-              class="input-field"
-              placeholder="Confirm your password"
-            />
-            <div class="error" *ngIf="errors['confirmPassword']">{{ errors['confirmPassword'] }}</div>
-          </div>
-  
-          <!-- Profile Image -->
-          <div class="input-group">
-            <label for="profileImage">Profile Image:</label>
-            <input
-              type="file"
-              (change)="onFileSelected($event)"
-              accept="image/*"
-              class="input-field"
-            />
-            <div class="error" *ngIf="errors['file']">{{ errors['file'] }}</div>
-            <div class="error" *ngIf="errors['profileImage']">{{ errors['profileImage'] }}</div>
-          </div>
-  
-          <!-- Terms and Conditions -->
-          <div class="checkbox-group">
-            <input type="checkbox" id="terms" required />
-            <label for="terms">
-              I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
-            </label>
-          </div>
-  
-          <!-- Submit Button -->
-          <button type="submit" class="btn">Create Account</button>
-  
-          <!-- General Error -->
-          <div class="error" *ngIf="errors['general']">{{ errors['general'] }}</div>
-  
-          <!-- Footer -->
-          <div class="form-footer">
-            Already have an account? <a routerLink="/">Log In</a>
-          </div>
-        </form>
-      </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-group">
+          <button type="submit" class="submit-button" [disabled]="submitted">
+            {{ submitted ? 'Creating Account...' : 'Create Account' }}
+          </button>
+        </div>
+
+        <!-- Error and Success Messages -->
+        <div class="message-container">
+          <div class="error-message" *ngIf="errorMessage">{{ errorMessage }}</div>
+          <div class="success-message" *ngIf="successMessage">{{ successMessage }}</div>
+        </div>
+
+        <!-- Login Link -->
+        <div class="login-link">
+          Already have an account? <a routerLink="/login">Login here</a>
+        </div>
+      </form>
     </div>
   </div>
-  
-  <!-- OTP Modal -->
-  <!-- OTP Modal -->
-<div *ngIf="showEmailVerifyModal" class="modal-overlay">
+</div>
+
+<!-- Email Verification Modal -->
+<div class="modal" *ngIf="showEmailVerifyModal">
   <div class="modal-content">
-    <h3>Enter OTP</h3>
-    <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
-      <input formControlName="otp" placeholder="OTP" />
-      <button type="submit" [disabled]="otpForm.invalid">Verify OTP</button>
-      <button type="button" (click)="resendOtp()">Resend OTP</button>
-      <button type="button" (click)="showEmailVerifyModal = false">Cancel</button>
-    </form>
-    <div *ngIf="errorMessage" class="error">{{errorMessage}}</div>
-    <div *ngIf="successMessage" class="success">{{successMessage}}</div>
+    <div class="modal-header">
+      <h3>Verify Your Email</h3>
+      <button class="close-button" (click)="showEmailVerifyModal = false">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Please enter the OTP sent to your email address.</p>
+      <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+        <div class="form-group">
+          <input type="text" formControlName="otp" placeholder="Enter OTP" class="input-field" />
+          <div class="error" *ngIf="otpForm.get('otp')?.errors?.['required'] && otpForm.get('otp')?.touched">
+            OTP is required
+          </div>
+        </div>
+        <div class="form-group">
+          <button type="submit" class="submit-button">Verify OTP</button>
+        </div>
+      </form>
+      <div class="resend-otp">
+        <p>Didn't receive the OTP?</p>
+        <button type="button" class="resend-button" (click)="resendOtp()">Resend OTP</button>
+      </div>
+    </div>
   </div>
 </div>
