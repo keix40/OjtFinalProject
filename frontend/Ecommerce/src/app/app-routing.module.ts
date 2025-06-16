@@ -13,6 +13,7 @@ import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { LayoutComponent } from './layout/layout.component';
 import { ProductDisplayComponent } from './product-display/product-display.component';
+import { WishlistComponent } from './wishlist/wishlist.component';
 
 
 const routes: Routes = [
@@ -35,6 +36,7 @@ const routes: Routes = [
   { path: 'checkout/payment', component: PaymentComponent },
   { path: 'checkout/confirm', component: OrderConfirmComponent },
   { path: 'display', component: ProductDisplayComponent },
+  { path: 'wishlist', component: WishlistComponent },
 ];
 
 @NgModule({

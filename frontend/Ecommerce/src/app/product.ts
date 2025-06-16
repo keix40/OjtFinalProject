@@ -27,19 +27,6 @@ export interface ProductList{
   checked?: boolean;
 }
 
-// export interface CategoryBrandPair {
-//   categoryId: number;
-//   categoryName?: string;
-//   brandId: number | null;
-//   brandName?: string | null;
-// }
-
-// export interface ProductImageDTO {
-//   id: number;
-//   imageUrl: string;
-//   status: number;
-// }
-
 export interface ProductDTO {
   id: number;
   productName: string;
@@ -51,7 +38,7 @@ export interface ProductDTO {
 
   categoryBrandPairs: {
     categoryId: number;
-    categoryName?: string;
+    cateName?: string;
     brandId: number | null;
     brandName?: string | null;
   }[];

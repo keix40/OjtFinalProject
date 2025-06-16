@@ -98,17 +98,17 @@
             </div>
           </div>
 
-          <!-- Category Filter -->
-          <div class="accordion-item border-0 mb-2">
-            <h2 class="accordion-header" id="headingCategory">
-              <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="false" aria-controls="collapseCategory">
-                <i class="fa fa-th-large me-2 text-primary"></i>Category
-              </button>
-            </h2>
-            <div id="collapseCategory" class="accordion-collapse collapse" aria-labelledby="headingCategory" data-bs-parent="#filterAccordion">
-              <div class="accordion-body py-2">
-                <div class="mb-3">
-                  <div class="fw-semibold text-dark mb-2">Category</div>
+        <!-- Category Filter -->
+        <div class="accordion-item border-0 mb-2">
+          <h2 class="accordion-header" id="headingCategory">
+            <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="false" aria-controls="collapseCategory">
+              <i class="fa fa-th-large me-2 text-primary"></i>Category
+            </button>
+          </h2>
+          <div id="collapseCategory" class="accordion-collapse collapse" aria-labelledby="headingCategory" data-bs-parent="#filterAccordion">
+            <div class="accordion-body py-2">
+              <div class="mb-3">
+                <div class="fw-semibold text-dark mb-2">Category</div>
                   <div *ngFor="let opt of categoryOptions" class="form-check mb-1">
                     <input
                       #catCheck
@@ -116,32 +116,67 @@
                       type="checkbox"
                       [id]="'cat-' + opt"
                       [checked]="filters.category.includes(opt)"
-                      (change)="onFilterCheckboxChange('category', opt, catCheck.checked)">
+                      (change)="onFilterCheckboxChange('category', opt.trim(), catCheck.checked)">
                     <label class="form-check-label text-dark fw-bold" [for]="'cat-' + opt">{{ opt }}</label>
-                  </div>
-                </div>
+                </div>                  
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Price Range -->
-        <div class="mt-3">
-          <label class="form-label text-dark fw-bold">Price Range</label>
-          <div class="d-flex align-items-center mb-2">
-            <span class="me-2">${{ filters.price[0] }}</span>
-            <input type="range" class="form-range flex-grow-1 accent-range" min="0" max="2000" step="10"
-              [(ngModel)]="filters.price[1]" [ngModelOptions]="{standalone: true}">
-            <span class="ms-2">${{ filters.price[1] }}</span>
-          </div>
+      <!-- Price Range -->
+      <div class="mt-3">
+        <label class="form-label text-dark fw-bold">Price Range</label>
+
+        <!-- Min and Max Number Inputs -->
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2">Min</span>
+          <input
+            type="number"
+            class="form-control form-control-sm me-2"
+            style="width: 100px"
+            [(ngModel)]="filters.price[0]"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="applyFilters()"
+            min="0"
+          />
+
+          <span class="me-2">Max</span>
+          <input
+            type="number"
+            class="form-control form-control-sm"
+            style="width: 100px"
+            [(ngModel)]="filters.price[1]"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="applyFilters()"
+            [min]="filters.price[0]"
+          />
         </div>
 
-        <!-- Clear Filters Button -->
-        <div class="d-grid my-3">
-          <button class="btn btn-outline-danger fw-bold" (click)="clearFilters()">
+        <!-- Optional Range Slider for Max -->
+        <div class="d-flex align-items-center mb-2">
+          <span class="me-2">{{ filters.price[0] }} MMK</span>
+          <input
+            type="range"
+            class="form-range flex-grow-1 accent-range"
+            min="0"
+            max="2000"
+            step="10"
+            [(ngModel)]="filters.price[1]"
+            [ngModelOptions]="{ standalone: true }"
+            (ngModelChange)="applyFilters()"
+          />
+          <span class="ms-2">{{ filters.price[1] }} MMK</span>
+        </div>
+      </div>
+
+      <!-- Clear Filters Button -->
+      <div class="d-grid my-3">
+        <button class="btn btn-outline-danger fw-bold" (click)="clearFilters()">
             <i class="fa fa-times-circle me-2"></i> Clear Filters
-          </button>
-        </div>
+        </button>
+      </div>
         
       </div>
     </aside>
@@ -150,8 +185,11 @@
     <main [class.col-md-8]="showFilter" [class.col-lg-9]="showFilter" [class.col-12]="!showFilter">
       <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3" [ngClass]="showFilter ? 'row-cols-lg-4 g-4' : 'row-cols-lg-5 g-4'">
         <div *ngFor="let product of products" class="col d-flex">
-          <div class="card rounded-4 shadow-lg border-0 p-3 pt-3 position-relative w-100 product-card bg-white text-dark fw-bold"
-               style="transition: box-shadow 0.3s, transform 0.2s;">
+          <div
+            class="card rounded-4 shadow-lg border-0 p-3 pt-3 position-relative w-100 product-card bg-white text-dark fw-bold"
+            style="transition: box-shadow 0.3s, transform 0.2s; cursor: pointer;"
+            (click)="goToProductDetail(product.id)"
+          >
             <div class="product-img-wrapper mb-3" style="height: 140px; overflow: hidden;">
               <img [src]="getProductImageUrl(product)" class="product-img" [alt]="product.productName">
             </div>
@@ -165,13 +203,14 @@
               <div class="fw-semibold text-primary fs-5 mb-2">{{ product.price }} MMK</div>
 
               <div class="d-flex justify-content-between align-items-center mt-auto">
-                <button class="btn btn-outline-primary btn-sm rounded-4 px-3" (click)="addToCart(product)">
+                <button class="btn btn-outline-primary btn-sm rounded-4 px-3"
+                        (click)="addToCart(product); $event.stopPropagation()">
                   <i class="fa fa-cart-plus me-2"></i>Add to Cart
                 </button>
                 <button
                   class="btn btn-sm rounded-4 px-3"
                   [ngClass]="wishlist.has(product.id) ? 'btn-danger' : 'btn-outline-danger'"
-                  (click)="toggleWishlist(product.id)">
+                  (click)="toggleWishlist(product.id); $event.stopPropagation()">
                   <i [ngClass]="wishlist.has(product.id) ? 'fas fa-heart' : 'far fa-heart'"></i>
                 </button>    
               </div>

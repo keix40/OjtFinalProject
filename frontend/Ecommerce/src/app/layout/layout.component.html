@@ -1,9 +1,11 @@
-<div class="d-flex flex-column vh-100">
+<div class="d-flex flex-column vh-100 custom-layout">
   <app-navbar class="shadow-sm"></app-navbar>
-  <div class="d-flex flex-grow-1">
+  <div class="d-flex flex-grow-1 layout-container">
     <app-sidebar class="sidebar shadow-sm"></app-sidebar>
-    <div class="main-content p-4 bg-light flex-grow-1">
-      <router-outlet></router-outlet>
+    <div class="main-content p-4 flex-grow-1">
+      <div class="content-wrapper">
+        <router-outlet></router-outlet>
+      </div>
     </div>
   </div>
 </div>

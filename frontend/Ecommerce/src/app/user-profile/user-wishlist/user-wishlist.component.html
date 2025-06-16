@@ -7,7 +7,7 @@
             </div>
             <div class="item-details">
                 <h4>{{item.title}}</h4>
-                <p class="price">${{item.price}}</p>
+                <p class="price">{{item.price}} MMK</p>
                 <button class="btn btn-primary btn-sm" (click)="addToCart(item)">Add to Cart</button>
             </div>
             <button class="remove-item" (click)="removeFromWishlist(item)">

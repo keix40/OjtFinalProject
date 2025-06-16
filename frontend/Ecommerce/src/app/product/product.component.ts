@@ -1,15 +1,15 @@
 import { Component, Input, OnInit, Optional } from '@angular/core';
 import { Product } from '../product';
-import { ProductService } from '../product.service';
+import { ProductService } from '../services/product.service';
 import { NgForm } from '@angular/forms';
-import { CategoryService } from '../category.service';
-import { BrandService } from '../brand.service';
+import { CategoryService } from '../services/category.service';
+import { BrandService } from '../services/brand.service';
 import { Brand } from '../brand';
 import { Category } from '../category';
 import { Router } from '@angular/router';
-import { ModalService } from '../modal.service';
+import { ModalService } from '../services/modal.service';
 // import { AttributeValue, Attribute } from '../attribute';
-import { AttributeService } from '../attribute.service';
+import { AttributeService } from '../services/attribute.service';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 
 interface AttributeValue {

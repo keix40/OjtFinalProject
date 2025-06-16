@@ -1,11 +1,11 @@
 import { Component } from '@angular/core';
 import { ProductList } from '../product';
-import { ProductService } from '../product.service';
+import { ProductService } from '../services/product.service';
 import { Brand } from '../brand';
 import { Category } from '../category';
-import { CategoryService } from '../category.service';
-import { BrandService } from '../brand.service';
-import { ModalService } from '../modal.service';
+import { CategoryService } from '../services/category.service';
+import { BrandService } from '../services/brand.service';
+import { ModalService } from '../services/modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmModelComponent } from '../confirm-model/confirm-model.component';
 import Swal from 'sweetalert2';

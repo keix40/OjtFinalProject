@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CreateBrandComponent } from './create-brand/create-brand.component';
-import { CreateCategoryComponent } from './create-category/create-category.component';
-import { CreateAttributeValueComponent } from './create-attribute-value/create-attribute-value.component';
-import { ProductComponent } from './product/product.component';
+import { CreateBrandComponent } from '../create-brand/create-brand.component';
+import { CreateCategoryComponent } from '../create-category/create-category.component';
+import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
+import { ProductComponent } from '../product/product.component';
 
 @Injectable({
   providedIn: 'root'

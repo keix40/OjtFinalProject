@@ -1,12 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
+import { Router } from '@angular/router';
 import { CartService } from '../services/cart.service';
 import Swal from 'sweetalert2';
 import { ProductDTO } from '../product';
-import { ProductService } from '../product.service';
-import { CategoryService } from '../category.service';
-import { WishlistService } from '../wishlist.service';
+import { ProductService } from '../services/product.service';
+import { CategoryService } from '../services/category.service';
+import { WishlistService } from '../services/wishlist.service';
 import { AuthService } from '../auth/auth.service';
-import { BrandService } from '../brand.service';
+import { BrandService } from '../services/brand.service';
 
 @Component({
   selector: 'app-home',
@@ -15,6 +16,7 @@ import { BrandService } from '../brand.service';
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
+  @Output() wishlistChanged = new EventEmitter<void>();
   allProducts: ProductDTO[] = [];
   products: ProductDTO[] = [];
   wishlist: Set<number> = new Set();
@@ -41,7 +43,8 @@ export class HomeComponent {
     private cateService: CategoryService,
     private wishlistService: WishlistService,
     private authService: AuthService,
-    private brandService: BrandService
+    private brandService: BrandService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -56,7 +59,7 @@ export class HomeComponent {
       next: data => {
         this.allProducts = data;
         this.products = data;
-        this.applyFilters(); // ensure filter applies on load
+        this.applyFilters();
       },
       error: err => console.error('Failed to load products', err)
     });
@@ -133,21 +136,59 @@ export class HomeComponent {
     if (this.wishlist.has(productId)) {
       this.wishlist.delete(productId);
       this.wishlistService.removeWishlist(userId, productId).subscribe({
-        next: () => {},
+        next: () => {
+          // Update wishlist count immediately
+          const headerComponent = document.querySelector('app-header') as any;
+          if (headerComponent) {
+            headerComponent.wishlistCount = this.wishlist.size;
+          }
+          // Notify wishlist update
+          this.wishlistService.notifyWishlistUpdated();
+          // Show toast message
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Removed from wishlist',
+            showConfirmButton: false,
+            timer: 1200,
+            timerProgressBar: true,
+            customClass: { popup: 'swal2-toast' }
+          });
+        },
         error: err => {
           console.error('Failed to remove wishlist');
           alert(`Error: ${err.status} - ${err.error?.message || err.message}`);
-          this.wishlist.add(productId); // revert change
+          this.wishlist.add(productId);
         }
       });
     } else {
       this.wishlist.add(productId);
       this.wishlistService.saveWishlist(userId, productId).subscribe({
-        next: () => {},
+        next: () => {
+          // Update wishlist count immediately
+          const headerComponent = document.querySelector('app-header') as any;
+          if (headerComponent) {
+            headerComponent.wishlistCount = this.wishlist.size;
+          }
+          // Notify wishlist update
+          this.wishlistService.notifyWishlistUpdated();
+          // Show toast message
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Added to wishlist',
+            showConfirmButton: false,
+            timer: 1200,
+            timerProgressBar: true,
+            customClass: { popup: 'swal2-toast' }
+          });
+        },
         error: err => {
           console.error('Failed to save wishlist');
           alert(`Error: ${err.status} - ${err.error?.message || err.message}`);
-          this.wishlist.delete(productId); // revert change
+          this.wishlist.delete(productId);
         }
       });
     }
@@ -163,49 +204,49 @@ export class HomeComponent {
   }
 
   applyFilters(): void {
+    // Ensure valid price range (min should not exceed max)
+    if (this.filters.price[0] > this.filters.price[1]) {
+      const temp = this.filters.price[0];
+      this.filters.price[0] = this.filters.price[1];
+      this.filters.price[1] = temp;
+    }
+  
     this.products = this.allProducts.filter(product => {
       const inAvailability =
         this.filters.availability.length === 0 ||
         (this.filters.availability.includes('In Stock') && product.quantity > 0) ||
         (this.filters.availability.includes('Out of Stock') && product.quantity === 0);
-
+  
       const inSale =
         this.filters.sale.length === 0 ||
         (this.filters.sale.includes('On Sale') && product.price < 100) ||
         (this.filters.sale.includes('Regular') && product.price >= 100);
-
+  
       const inBrand =
         this.filters.brand.length === 0 ||
         product.categoryBrandPairs.some(cb =>
           cb.brandName && this.filters.brand.includes(cb.brandName)
         );
-
+  
       const inCategory =
         this.filters.category.length === 0 ||
-        product.categoryBrandPairs.some(cb =>
-          cb.categoryName && this.filters.category.includes(cb.categoryName)
-        );
-
+        product.categoryBrandPairs.some(cb => {
+          const categoryName = cb.cateName || cb['cateName'];
+          return (
+            categoryName &&
+            this.filters.category.map(c => c.toLowerCase().trim()).includes(categoryName.toLowerCase().trim())
+          );
+        });
+  
       const inPrice = product.price >= this.filters.price[0] && product.price <= this.filters.price[1];
-
+  
       return inAvailability && inSale && inBrand && inCategory && inPrice;
     });
-  }
+  }  
 
   toggleFilter(): void {
     this.showFilter = !this.showFilter;
   }
-
-  // resetFilters(): void {
-  //   this.filters = {
-  //     availability: [],
-  //     sale: [],
-  //     brand: [],
-  //     category: [],
-  //     price: [0, 2000]
-  //   };
-  //   this.applyFilters();
-  // }
 
   clearFilters() {
     this.filters = {
@@ -217,5 +258,8 @@ export class HomeComponent {
     };
     this.applyFilters();
   }
-  
+
+  goToProductDetail(productId: number) {
+    this.router.navigate(['/product', productId]);
+  }
 }

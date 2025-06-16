@@ -1,3 +1,172 @@
 th.no-sort::after {
     display: none !important;
   }  
+
+/* Table Container */
+.custom-table-container {
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* Table Styles */
+.table {
+  margin-bottom: 0;
+}
+
+.table thead {
+  background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%);
+  color: white;
+}
+
+.table thead th {
+  font-weight: 500;
+  padding: 1rem;
+  border: none;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  color: #2d2d3f;
+}
+
+/* Checkbox Column */
+.checkbox-column {
+  width: 50px;
+  text-align: center;
+}
+
+.form-check-input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #2d2d3f;
+}
+
+.form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Product Cell */
+.product-cell {
+  min-width: 300px;
+}
+
+.product-image-container {
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.product-image:hover {
+  transform: scale(1.1);
+}
+
+.product-name {
+  font-weight: 500;
+  color: #2d2d3f;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Custom Select */
+.custom-select {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.custom-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+/* Action Buttons */
+.action-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+  }
+
+  .table tbody td {
+    display: block;
+    text-align: right;
+    padding: 0.5rem 1rem;
+    border: none;
+  }
+
+  .table tbody td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .checkbox-column {
+    width: 100%;
+    text-align: right;
+  }
+
+  .product-cell {
+    min-width: auto;
+  }
+}  

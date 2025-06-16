@@ -37,6 +37,7 @@ import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
 import { ProductDisplayComponent } from './product-display/product-display.component';
+import { WishlistComponent } from './wishlist/wishlist.component';
 
 
 
@@ -68,6 +69,7 @@ import { ProductDisplayComponent } from './product-display/product-display.compo
     ProductComponent,
     ProductMangementComponent,
     ProductDisplayComponent,
+    WishlistComponent
   ],
   imports: [
     BrowserModule,

@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Brand, BrandDTO } from '../brand';
-import { BrandService } from '../brand.service';
-import { CategoryService } from '../category.service';
+import { BrandService } from '../services/brand.service';
+import { CategoryService } from '../services/category.service';
 import { Category } from '../category';
 import { Router } from '@angular/router';
 

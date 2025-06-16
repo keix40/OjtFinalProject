@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Attribute, AttributeAndValueDTO, AttributeValue } from './attribute';
+import { Attribute, AttributeAndValueDTO, AttributeValue } from '../attribute';
 
 @Injectable({
   providedIn: 'root'

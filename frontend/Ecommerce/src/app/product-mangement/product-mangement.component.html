@@ -1,40 +1,55 @@
 <div class="p-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="fw-bold">Product Management</h2>
-      <a routerLink="/product" class="btn btn-primary">+ Add Product</a>
+      <h2 class="fw-bold text-primary">Product Management</h2>
+      <a routerLink="/product" class="btn btn-primary d-flex align-items-center gap-2">
+        <i class="bi bi-plus-circle"></i>
+        Add Product
+      </a>
     </div>
   
     <div class="container mb-4">
-        <div class="row g-2 align-items-center mb-2">
+        <div class="row g-2 align-items-center mb-3">
           <div class="col-md-3">
-            <select class="form-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
-              <option [ngValue]="0" selected>All Categories</option>
-              <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-            </select>
+            <div class="form-group">
+              <label class="form-label text-muted small">Category</label>
+              <select class="form-select custom-select" [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
+                <option [ngValue]="0" selected>All Categories</option>
+                <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+              </select>
+            </div>
           </div>
           <div class="col-md-3">
-            <select class="form-select" [(ngModel)]="selectedBrand">
-              <option [ngValue]="0" selected>All Brands</option>
-              <option *ngFor="let brand of brands" [value]="brand.id">{{ brand.name }}</option>
-            </select>
+            <div class="form-group">
+              <label class="form-label text-muted small">Brand</label>
+              <select class="form-select custom-select" [(ngModel)]="selectedBrand">
+                <option [ngValue]="0" selected>All Brands</option>
+                <option *ngFor="let brand of brands" [value]="brand.id">{{ brand.name }}</option>
+              </select>
+            </div>
           </div>
         </div>
       
         <div class="row">
           <div class="col">
-            <button class="btn btn-outline-secondary me-2" [disabled]="selectedProducts.length > 1|| selectedProducts.length === 0">Edit</button>
-            <button (click)="showDeleteConfirm()" class="btn btn-outline-danger" [disabled]="selectedProducts.length === 0">Delete</button>
+            <button class="btn btn-outline-primary me-2 action-btn" [disabled]="selectedProducts.length > 1 || selectedProducts.length === 0">
+              <i class="bi bi-pencil-square me-1"></i>Edit
+            </button>
+            <button (click)="showDeleteConfirm()" class="btn btn-outline-danger action-btn" [disabled]="selectedProducts.length === 0">
+              <i class="bi bi-trash me-1"></i>Delete
+            </button>
           </div>
         </div>
       </div>    
       
     <!-- Product Table -->
-    <div class="table-responsive shadow-sm rounded">
-      <table id="productTable" class="table table-hover align-middle border mb-0">
-        <thead class="table-light">
+    <div class="table-responsive custom-table-container">
+      <table id="productTable" class="table table-hover align-middle mb-0">
+        <thead>
           <tr>
-            <th>
-                <input type="checkbox" [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
+            <th class="checkbox-column">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
+              </div>
             </th>
             <th>Product</th>
             <th>SKU</th>
@@ -44,38 +59,43 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let product of products">
-            <td>
-                <input type="checkbox" [(ngModel)]="product.checked" (change)="updateSelection()">
+          <tr *ngFor="let product of products" class="table-row">
+            <td class="checkbox-column">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" [(ngModel)]="product.checked" (change)="updateSelection()">
+              </div>
             </td>
-            <td class="d-flex align-items-center gap-2">
-              <img
-                *ngIf="product.productImages.length > 0"
-                [src]="getProductImageUrl(product.productImages[0].imageUrl)"
-                alt="Product Image"
-                class="rounded"
-                style="width: 45px; height: 45px; object-fit: cover;"
-                (error)="product.productImages[0].imageUrl = 'assets/image-not-found.png'"
-            >
-              <span>{{ product.productName }}</span>
+            <td class="product-cell">
+              <div class="d-flex align-items-center gap-3">
+                <div class="product-image-container">
+                  <img
+                    *ngIf="product.productImages.length > 0"
+                    [src]="getProductImageUrl(product.productImages[0].imageUrl)"
+                    alt="Product Image"
+                    class="product-image"
+                    (error)="product.productImages[0].imageUrl = 'assets/image-not-found.png'"
+                  >
+                </div>
+                <span class="product-name">{{ product.productName }}</span>
+              </div>
             </td>
-            <td>{{ product.productCode }}</td>
-            <td>{{ product.price }} ks</td>
-            <td>{{ product.quantity }}</td>
-            <td>
+            <td class="sku-cell">{{ product.productCode }}</td>
+            <td class="price-cell">{{ product.price }} ks</td>
+            <td class="stock-cell">{{ product.quantity }}</td>
+            <td class="status-cell">
               <ng-container *ngIf="product.quantity <= 5; else checkStatus">
-                <span class="badge bg-danger">Low Stock</span>
+                <span class="badge bg-danger status-badge">Low Stock</span>
               </ng-container>
             
               <ng-template #checkStatus>
                 <ng-container *ngIf="product.status === 1 && product.quantity > 0; else inactiveStatus">
-                  <span class="badge bg-success">Active</span>
+                  <span class="badge bg-success status-badge">Active</span>
                 </ng-container>
               </ng-template>
             
               <ng-template #inactiveStatus>
                 <ng-container *ngIf="product.status === 0">
-                  <span class="badge bg-secondary">Inactive</span>
+                  <span class="badge bg-secondary status-badge">Inactive</span>
                 </ng-container>
               </ng-template>
             </td>

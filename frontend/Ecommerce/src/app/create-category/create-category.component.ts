@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { BrandService } from '../brand.service';
-import { CategoryService } from '../category.service';
+import { BrandService } from '../services/brand.service';
+import { CategoryService } from '../services/category.service';
 import { Router } from '@angular/router';
 import { Category, CategoryDTO } from '../category';
 import { Brand } from '../brand';

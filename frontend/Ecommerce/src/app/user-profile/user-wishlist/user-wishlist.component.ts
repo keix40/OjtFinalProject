@@ -1,4 +1,8 @@
 import { Component, OnInit } from '@angular/core';
+import { WishlistService } from '../../services/wishlist.service';
+import { AuthService } from '../../auth/auth.service';
+import { ProductService } from '../../services/product.service';
+import { ProductDTO } from '../../product';
 
 interface WishlistItem {
   id: number;
@@ -14,32 +18,60 @@ interface WishlistItem {
   styleUrl: './user-wishlist.component.css'
 })
 export class UserWishlistComponent implements OnInit {
-
   wishlistItems: WishlistItem[] = [];
+  userId: number | null = null;
+  allProducts: ProductDTO[] = [];
 
-  constructor() { }
+  constructor(
+    private wishlistService: WishlistService,
+    private authService: AuthService,
+    private productService: ProductService
+  ) { }
 
   ngOnInit(): void {
-    this.loadWishlistItems();
+    this.userId = this.authService.getUserId();
+    if (this.userId) {
+      this.loadAllProducts();
+    }
   }
 
-  // Wishlist Methods
-  private loadWishlistItems() {
-    // TODO: Implement API call to load wishlist items
-    this.wishlistItems = [
-      {
-        id: 1,
-        title: 'Sample Product 1',
-        price: 99.99,
-        image: 'assets/images/test.jpg'
+  private loadAllProducts() {
+    this.productService.getAllAcProduct().subscribe({
+      next: (products) => {
+        this.allProducts = products;
+        this.loadWishlistItems();
       },
-      {
-        id: 2,
-        title: 'Sample Product 2',
-        price: 149.99,
-        image: 'assets/images/test.jpg'
+      error: (error) => {
+        console.error('Error loading products:', error);
       }
-    ];
+    });
+  }
+
+  private loadWishlistItems() {
+    if (!this.userId) return;
+
+    this.wishlistService.getWishlist(this.userId).subscribe({
+      next: (productIds: number[]) => {
+        this.wishlistItems = [];
+        productIds.forEach(productId => {
+          const product = this.allProducts.find(p => p.id === productId);
+          if (product) {
+            const wishlistItem: WishlistItem = {
+              id: product.id,
+              title: product.productName,
+              price: product.price,
+              image: product.productImages && product.productImages.length > 0 
+                ? 'http://localhost:8080' + product.productImages[0].imageUrl 
+                : '/assets/project_img/fashion_store.jpg'
+            };
+            this.wishlistItems.push(wishlistItem);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('Error loading wishlist:', error);
+      }
+    });
   }
 
   addToCart(item: WishlistItem) {
@@ -48,8 +80,18 @@ export class UserWishlistComponent implements OnInit {
   }
 
   removeFromWishlist(item: WishlistItem) {
-    // TODO: Implement remove from wishlist functionality
-    this.wishlistItems = this.wishlistItems.filter(i => i.id !== item.id);
-  }
+    if (!this.userId) return;
 
+    this.wishlistService.removeWishlist(this.userId, item.id).subscribe({
+      next: () => {
+        // Remove item from local array
+        this.wishlistItems = this.wishlistItems.filter(i => i.id !== item.id);
+        // Notify wishlist update
+        this.wishlistService.notifyWishlistUpdated();
+      },
+      error: (error) => {
+        console.error('Error removing from wishlist:', error);
+      }
+    });
+  }
 }
