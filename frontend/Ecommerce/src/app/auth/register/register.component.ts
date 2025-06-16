@@ -128,7 +128,7 @@ export class RegisterComponent  {
       }
     });
   }*/
-  
+
     onSubmit() {                          //Change onSubmit method
     this.submitted = true;
     this.validate();
@@ -186,7 +186,7 @@ export class RegisterComponent  {
     });
   }
 
-//add Sent OTP 
+//add Sent OTP
    sendOtp(showModal: boolean = false): void {
     this.errors['email'] = '';
     this.successMessage = '';
@@ -217,7 +217,7 @@ export class RegisterComponent  {
   }
   verifyOtp(): void {
     if (this.otpForm.invalid) return;
-  
+
     this.authService.verifyOtp(this.emailForOtp, this.otpForm.value.otp).subscribe({
       next: () => {
         this.otpVerified = true;  // ✅ Mark OTP as verified
@@ -225,14 +225,18 @@ export class RegisterComponent  {
         this.successMessage = 'Email verified successfully. You can now continue.';
         this.errorMessage = '';
       },
-      error: (err) => {
-        console.error('OTP verification error:', err);
-        this.errorMessage = err?.error?.message || err?.message || 'OTP verification failed.';
-        this.successMessage = '';
-      }
+    error: (err) => {
+    console.error('OTP verification error:', err);
+    if (err?.error?.message?.includes('No OTP request')) {
+    this.errorMessage = 'No OTP found. Please request a new OTP.';
+   } else {
+    this.errorMessage = err?.error?.message || err?.message || 'OTP verification failed.';
+  }
+}
+
     });
   }
-  
+
 
   resendOtp(): void {
     this.authService.resendOtp(this.emailForOtp).subscribe({

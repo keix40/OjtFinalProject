@@ -117,6 +117,14 @@ resendOtp(email: string): Observable<any> {
   }
 
   sendRegisterOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/send-otp`, { email });//need to change
+    return this.http.post(`${this.baseUrl}/sendOtp`, { email });//need to change
   }
+
+  sendResetOtp(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/send-reset-otp`, { email });
+  }
+
+  resetPassword(email: string, newPassword: string) {
+  return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, newPassword });
+}
 }

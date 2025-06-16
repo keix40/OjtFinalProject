@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-login',
@@ -11,33 +12,220 @@ import { AuthService } from '../auth.service';
 })
 export class LoginComponent implements OnInit {
   loginForm!: FormGroup;
+  showPassword = false
+
+  // Modal control
+  showForgotPasswordModal = false;
+  showOtpModal = false;
+  showResetModal = false;
+
+  // Forgot/reset state
+  forgotEmail = '';
+  enteredOtp = '';
+  newPassword = '';
+  confirmPassword = '';
+
+  // Flags to track validation display
+  submittedLogin = false;
+  submittedForgot = false;
+  submittedOtp = false;
+  submittedReset = false;
+
+  // Error messages
+  forgotError = '';
+  otpError = '';
+  resetError = '';
+  loginError = '';
+  forgotEmailError = '';
+  resetPasswordError='';
+  resetConfirmPasswordError='';
+
 
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router
-  ) { }
+  ) {}
 
   ngOnInit(): void {
     this.loginForm = this.fb.group({
-      email: ['', Validators.required],
-      password: ['', Validators.required]
-    });
-  }
+  email: ['', [
+    Validators.required,
+    Validators.pattern(/^[a-zA-Z0-9._%+-]+@gmail\.com$/)
+  ]],
+  password: ['', Validators.required]
+});
 
+
+    // Live clear login errors
+ this.loginForm.get('email')?.valueChanges.subscribe(() => {
+  this.loginError = ''; // only clear API error
+});
+
+this.loginForm.get('password')?.valueChanges.subscribe(() => {
+  this.loginError = ''; // only clear API error
+});
+
+}
+
+  // ---------- LOGIN ----------
   submitLogin() {
-    if (this.loginForm.invalid) return;
+  this.submittedLogin = true;
 
-    this.auth.login(this.loginForm.value).subscribe({
-      next: (res) => {
-        this.auth.saveToken(res.accessToken);
-        this.router.navigate(['/home']);
-      }
-      ,
-      error: (err) => {
-        console.error(err);
-        alert('Login failed');
-      }
-    });
+  if (this.loginForm.invalid) return;
+
+  this.auth.login(this.loginForm.value).subscribe({
+    next: (res) => {
+      this.auth.saveToken(res.accessToken);
+      this.router.navigate(['/home']);
+    },
+    error: (err) => {
+      console.error(err);
+       this.loginError = 'Invalid email or password.';
+    }
+  });
   }
+
+  // ---------- FORGOT PASSWORD ----------
+  openForgotModal() {
+    this.forgotEmail = '';
+    this.forgotError = '';
+    this.submittedForgot = false;
+    this.enteredOtp = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
+    this.otpError = '';
+    this.resetError = '';
+    this.showForgotPasswordModal = true;
+    this.showOtpModal = false;
+    this.showResetModal = false;
+  }
+
+ sendForgotPasswordOtp() {
+  this.submittedForgot = true;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+  // Revalidate after submit
+  if (!this.forgotEmail) {
+    this.forgotError = 'Email is required.';
+    return;
+  }
+  if (!emailRegex.test(this.forgotEmail)) {
+    this.forgotError = 'Enter a valid Gmail address.';
+    return;
+  }
+
+  this.forgotError = '';
+
+  this.auth.sendResetOtp(this.forgotEmail).subscribe({
+    next: () => {
+      this.showForgotPasswordModal = false;
+      this.showOtpModal = true;
+    },
+    error: (err) => {
+      this.forgotError = err.error?.message || 'User not found.';
+    }
+  });
+}
+
+
+  // ---------- VERIFY OTP ----------
+ verifyOtp() {
+  this.submittedOtp = true;
+
+  if (!this.enteredOtp) {
+    this.otpError = 'OTP is required.';
+    return;
+  }
+
+  this.otpError = ''; // clear before calling
+
+  this.auth.verifyOtp(this.forgotEmail, this.enteredOtp).subscribe({
+    next: () => {
+      this.showOtpModal = false;
+      this.showResetModal = true;
+    },
+    error: (err) => {
+      this.otpError = err.error?.message || 'Invalid code.';
+    }
+  });
+}
+
+  // ---------- RESET PASSWORD ----------
+ resetPassword() {
+  this.submittedReset = true;
+  this.resetPasswordError = '';
+  this.resetConfirmPasswordError='';
+
+  if (!this.newPassword) {
+    this.resetPasswordError = 'Password is required.';
+    return;
+  } else if (this.newPassword.length < 8) {
+    this.resetPasswordError = 'Password must be at least 8 characters.';
+    return;
+  }
+
+  if (!this.confirmPassword) {
+    this.resetConfirmPasswordError = 'Confirm password is required.';
+    return;
+  } else if (this.newPassword !== this.confirmPassword) {
+    this.resetConfirmPasswordError = 'Passwords do not match.';
+    return;
+  }
+
+  this.auth.resetPassword(this.forgotEmail, this.newPassword).subscribe({
+    next: () => {
+      this.showResetModal = false;
+      this.router.navigate(['/home']);
+    },
+    error: (err) => {
+      console.error('reset error :'+err)
+      this.resetError = err.error?.message || 'Reset failed.';
+    }
+  });
+}
+
+  get email() {
+  return this.loginForm.get('email');
+}
+
+get password() {
+  return this.loginForm.get('password');
+}
+
+onForgotEmailChange() {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+  // If the user has clicked submit at least once
+  if (this.submittedForgot) {
+    if (!this.forgotEmail) {
+      this.forgotError = 'Email is required.';
+    } else if (!emailRegex.test(this.forgotEmail)) {
+      this.forgotError = 'Enter a valid Gmail address.';
+    } else {
+      this.forgotError = '';
+    }
+  } else {
+    // If typing before submit, always clear error
+    this.forgotError = '';
+  }
+}
+
+onOtpChange() {
+  if (this.submittedOtp) {
+    if (!this.enteredOtp) {
+      this.otpError = 'OTP is required.';
+    } else {
+      this.otpError = '';
+    }
+  } else {
+    this.otpError = '';
+  }
+}
+
+togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
+  }
+
+
 }

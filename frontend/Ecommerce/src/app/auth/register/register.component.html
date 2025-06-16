@@ -3,11 +3,11 @@
       <div class="form-header">
         <h2>Register</h2>
       </div>
-  
+
       <!-- Global Messages -->
       <div *ngIf="errorMessage" class="error">{{ errorMessage }}</div>
       <div *ngIf="successMessage" class="success">{{ successMessage }}</div>
-  
+
       <div class="form-body">
         <form (ngSubmit)="onSubmit()">
           <!-- Name -->
@@ -24,7 +24,7 @@
             />
             <div class="error" *ngIf="errors['name']">{{ errors['name'] }}</div>
           </div>
-  
+
           <!-- Email -->
           <div class="input-group">
             <label for="email">Email:</label>
@@ -40,7 +40,7 @@
             <div class="error" *ngIf="errors['email']">{{ errors['email'] }}</div>
             <div *ngIf="otpVerified" class="success" style="margin-top: 10px;">✅ Email verified successfully.</div>
           </div>
-  
+
           <!-- Date of Birth -->
           <div class="input-group">
             <label for="dob">Date of Birth:</label>
@@ -55,7 +55,7 @@
             />
             <div class="error" *ngIf="errors['dob']">{{ errors['dob'] }}</div>
           </div>
-  
+
           <!-- Gender -->
           <div class="input-group">
             <label>Gender:</label>
@@ -75,7 +75,7 @@
             </div>
             <div class="error" *ngIf="errors['gender']">{{ errors['gender'] }}</div>
           </div>
-  
+
           <!-- Password -->
           <div class="input-group">
             <label for="password">Password:</label>
@@ -90,7 +90,7 @@
             />
             <div class="error" *ngIf="errors['password']">{{ errors['password'] }}</div>
           </div>
-  
+
           <!-- Confirm Password -->
           <div class="input-group">
             <label for="confirmPassword">Confirm Password:</label>
@@ -105,7 +105,7 @@
             />
             <div class="error" *ngIf="errors['confirmPassword']">{{ errors['confirmPassword'] }}</div>
           </div>
-  
+
           <!-- Profile Image -->
           <div class="input-group">
             <label for="profileImage">Profile Image:</label>
@@ -118,7 +118,7 @@
             <div class="error" *ngIf="errors['file']">{{ errors['file'] }}</div>
             <div class="error" *ngIf="errors['profileImage']">{{ errors['profileImage'] }}</div>
           </div>
-  
+
           <!-- Terms and Conditions -->
           <div class="checkbox-group">
             <input type="checkbox" id="terms" required />
@@ -126,13 +126,13 @@
               I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
             </label>
           </div>
-  
+
           <!-- Submit Button -->
           <button type="submit" class="btn">Create Account</button>
-  
+
           <!-- General Error -->
           <div class="error" *ngIf="errors['general']">{{ errors['general'] }}</div>
-  
+
           <!-- Footer -->
           <div class="form-footer">
             Already have an account? <a routerLink="/">Log In</a>
@@ -141,7 +141,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- OTP Modal -->
   <!-- OTP Modal -->
 <div *ngIf="showEmailVerifyModal" class="modal-overlay">
