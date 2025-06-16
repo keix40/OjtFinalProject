@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class Brand {
 
     @Id
@@ -31,9 +32,13 @@ public class Brand {
 
     @OneToMany(mappedBy = "brand")
     @JsonIgnore
+    @ToString.Exclude  // ✅ Add this
+    @EqualsAndHashCode.Exclude
     private List<Product> products;
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL)
     @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<BrandHasCategory> brandCategories;
 }

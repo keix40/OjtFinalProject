@@ -33,3 +33,9 @@ public class ProductImage {
     @JsonIgnore
     private ProductVariant productVariant;
 }
+
+    @ManyToOne(fetch = FetchType.LAZY) /// add this relationship with product variant 14.6.25
+    @JoinColumn(name = "variant_id", referencedColumnName = "id", nullable = true)
+    @JsonIgnore
+    private ProductVariant productVariant;
+}
