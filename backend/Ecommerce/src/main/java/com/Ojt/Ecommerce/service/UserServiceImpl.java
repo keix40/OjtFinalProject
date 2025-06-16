@@ -45,7 +45,6 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final OtpVerificationRepository otpVerificationRepository;
     private final ModelMapper modelMapper;
-    private final EmailService emailService;
 
     @Override
     public String register(RegisterRequest request, MultipartFile profileImage) {

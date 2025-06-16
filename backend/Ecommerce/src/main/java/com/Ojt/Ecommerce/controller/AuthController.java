@@ -56,19 +56,21 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+        String email = loginRequest.getEmail().trim().toLowerCase();// add for case
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
+                        email,
                         loginRequest.getPassword()
                 )
         );
+
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         org.springframework.security.core.userdetails.User springUser =
                 (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
 
-        User user = userRepository.findByEmail(springUser.getUsername())
+        User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         if (!user.isVerified()) {
@@ -148,7 +150,7 @@ public class AuthController {
 
     @PostMapping("/resend-otp")
     public ResponseEntity<?> resendOtp(@RequestBody EmailRequest request) {
-        String email = request.getEmail();
+        String email = request.getEmail().trim().toLowerCase();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException("User not found"));
 
@@ -177,9 +179,9 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "OTP resent. Please check your email."));
     }
-    @PostMapping("/send-otp")
+    @PostMapping("/sendOtp")
     public ResponseEntity<?> sendOtp(@RequestBody EmailRequest request) {
-        String email = request.getEmail();
+        String email = request.getEmail().trim().toLowerCase();
         System.out.println("email is :"+email);
         if (!emailVerificationService.isEmailReal(email)) {
             throw new CustomException("Email not found.");
