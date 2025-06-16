@@ -1,22 +1,64 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-black sticky-top px-4 py-2">
-  <!-- <a class="navbar-brand d-lg-none" href="#"><h2 class="text-light mb-0"><i class="fa fa-hashtag"></i></h2></a> -->
-  <h3 class="text-light mb-0"><i class="bi bi-person"></i> ADMIN</h3>
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top px-4 py-2 shadow-sm custom-navbar">
+  <div class="d-flex align-items-center">
+    <h3 class="text-light mb-0 fw-bold">
+      <i class="bi bi-shop me-2 text-primary"></i>
+      Britium <span class="text-primary">Gallery</span>
+    </h3>
+  </div>
+  
   <div class="navbar-nav ms-auto align-items-center">
-    <div class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle text-white" data-bs-toggle="dropdown">
-        <i class="fa fa-envelope"></i><span class="d-none d-lg-inline-flex">Messages</span>
+    <!-- <div class="nav-item dropdown me-3">
+      <a class="nav-link dropdown-toggle text-white d-flex align-items-center" data-bs-toggle="dropdown">
+        <i class="fa fa-envelope me-2"></i>
+        <span class="d-none d-lg-inline-flex">Messages</span>
+        <span class="badge bg-danger rounded-pill ms-1">3</span>
       </a>
     </div>
-    <div class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle text-white" data-bs-toggle="dropdown">
-        <i class="fa fa-bell"></i><span class="d-none d-lg-inline-flex">Notifications</span>
+    
+    <div class="nav-item dropdown me-3">
+      <a class="nav-link dropdown-toggle text-white d-flex align-items-center" data-bs-toggle="dropdown">
+        <i class="fa fa-bell me-2"></i>
+        <span class="d-none d-lg-inline-flex">Notifications</span>
+        <span class="badge bg-warning rounded-pill ms-1">5</span>
       </a>
-    </div>
-    <div class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle text-white" data-bs-toggle="dropdown">
-        <img class="rounded-circle me-2" src="assets/img/user.jpg" style="width: 40px;"> John Doe
+    </div> -->
+    
+    <div class="nav-item dropdown me-3">
+      <a class="nav-link dropdown-toggle text-white d-flex align-items-center" data-bs-toggle="dropdown">
+        <img class="rounded-circle me-2 border border-primary" src="/assets/project_img/fashion_store.jpg" style="width: 40px; height: 40px; object-fit: cover;">
+        <span class="d-none d-lg-inline-flex fw-medium">{{ userName || 'Guest' }}</span>
       </a>
+      <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 custom-dropdown">
+        <div class="dropdown-header p-3 border-bottom">
+          <ng-container *ngIf="isLoggedIn; else notAuthenticatedHeader">
+            <h6 class="mb-1">Welcome, <span class="text-primary fw-bold">{{ userName }}</span></h6>
+            <p class="mb-0 text-muted small">{{ userRoles.join(', ') }}</p>
+          </ng-container>
+          <ng-template #notAuthenticatedHeader>
+            <h6 class="mb-1">Welcome to <span class="text-primary fw-bold">Britium Gallery</span></h6>
+            <p class="mb-0 text-muted small">Please login to access your account</p>
+          </ng-template>
+        </div>
+        <div class="dropdown-body p-2">
+          <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded-3 hover-effect" (click)="navigateToProfile()">
+            <i class="bi bi-person text-primary"></i>
+            <span>My Profile</span>
+          </a>
+          <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded-3 hover-effect" href="#">
+            <i class="bi bi-gear text-primary"></i>
+            <span>Settings</span>
+          </a>
+          <!-- <div class="dropdown-divider"></div>
+          <a class="dropdown-item d-flex align-items-center gap-2 py-2 px-3 rounded-3 text-danger hover-effect" (click)="logout()">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Logout</span>
+          </a> -->
+        </div>
+      </div>
     </div>
-    <a class="sidebar-toggler text-white me-3" (click)="toggleSidebar()"><i class="fa fa-bars"></i></a>
+    
+    <button class="btn btn-primary sidebar-toggler rounded-circle" (click)="toggleSidebar()">
+      <i class="fa fa-bars"></i>
+    </button>
   </div>
 </nav>

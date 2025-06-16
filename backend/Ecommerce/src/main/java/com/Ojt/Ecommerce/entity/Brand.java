@@ -12,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@ToString(onlyExplicitlyIncluded = true)
 public class Brand {
 
     @Id
@@ -20,20 +21,24 @@ public class Brand {
 
     private String name;
 
-    @ManyToMany
-    @JoinTable(
-            name = "brand_category",
-            joinColumns = @JoinColumn(name = "brand_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id")
-    )
-    private List<Category> categories;
+//    @ManyToMany
+//    @JoinTable(
+//            name = "brand_category",
+//            joinColumns = @JoinColumn(name = "brand_id"),
+//            inverseJoinColumns = @JoinColumn(name = "category_id")
+//    )
+//    private List<Category> categories;
 
 
     @OneToMany(mappedBy = "brand")
     @JsonIgnore
+    @ToString.Exclude  // ✅ Add this
+    @EqualsAndHashCode.Exclude
     private List<Product> products;
 
     @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL)
     @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<BrandHasCategory> brandCategories;
 }

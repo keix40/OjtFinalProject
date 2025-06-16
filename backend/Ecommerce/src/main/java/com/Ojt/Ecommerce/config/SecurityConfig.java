@@ -54,6 +54,7 @@ public class SecurityConfig {
                         .requestMatchers("/category/**").permitAll()
                         .requestMatchers("/brand/**").permitAll()
                         .requestMatchers("/attribute/**").permitAll()
+                        .requestMatchers("/wishlist/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
                         .anyRequest().authenticated()

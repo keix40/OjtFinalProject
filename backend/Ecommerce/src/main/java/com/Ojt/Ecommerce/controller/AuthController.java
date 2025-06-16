@@ -150,7 +150,7 @@ public class AuthController {
 
     @PostMapping("/resend-otp")
     public ResponseEntity<?> resendOtp(@RequestBody EmailRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
+        String email = request.getEmail();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException("User not found"));
 
@@ -179,9 +179,10 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "OTP resent. Please check your email."));
     }
+
     @PostMapping("/sendOtp")
     public ResponseEntity<?> sendOtp(@RequestBody EmailRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
+        String email = request.getEmail();
         System.out.println("email is :"+email);
         if (!emailVerificationService.isEmailReal(email)) {
             throw new CustomException("Email not found.");

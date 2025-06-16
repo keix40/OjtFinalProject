@@ -18,12 +18,20 @@ public class ProductImage {
 
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
-    
+
     @Column(name = "status", columnDefinition = "INT DEFAULT 1")
     private Integer status;
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     @JsonIgnore
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY) /// add this relationship with product variant 14.6.25
+    @JoinColumn(name = "variant_id", referencedColumnName = "id", nullable = true)
+    @JsonIgnore
+    private ProductVariant productVariant;
 }
+
+

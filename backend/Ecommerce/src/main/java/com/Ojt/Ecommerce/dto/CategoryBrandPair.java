@@ -11,5 +11,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class CategoryBrandPair {
     private Long categoryId;
+    private String cateName;
     private Long brandId;
+    private String brandName;
 }

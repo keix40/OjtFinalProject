@@ -1,54 +1,87 @@
-<div class="sidebar bg-black text-white p-3 h-100">
-  <ul class="nav flex-column">
-    <!-- Dashboard -->
-    <li class="nav-item">
-      <a
-        class="nav-link text-white d-flex align-items-center"
-        [routerLink]="'/dashboard'"
-        routerLinkActive="active bg-secondary"
-        [routerLinkActiveOptions]="{ exact: true }">
-        <i class="fa fa-tachometer-alt me-2"></i>Dashboard
-      </a>
-    </li>
+<div class="sidebar bg-dark text-white p-3 h-100 shadow-sm custom-sidebar">
+  <div class="sidebar-content d-flex flex-column h-100">
+    <div class="sidebar-header mb-4">
+      <h5 class="text-center text-light mb-0 fw-bold">
+        <i class="bi bi-shield-lock text-primary me-2"></i>
+        Admin Panel
+      </h5>
+    </div>
+    
+    <ul class="nav flex-column">
+      <!-- Dashboard -->
+      <li class="nav-item mb-2">
+        <a
+          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+          [routerLink]="'/dashboard'"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }">
+          <i class="fa fa-tachometer-alt me-3 text-primary"></i>
+          <span>Dashboard</span>
+        </a>
+      </li>
 
-    <!-- Products with expandable submenu -->
-    <li class="nav-item">
-      <a
-        class="nav-link text-white d-flex justify-content-between align-items-center"
-        href="#"
-        (click)="isProductsOpen = !isProductsOpen; $event.preventDefault()">
-        <span><i class="fa fa-box me-2"></i>Products</span>
-        <i class="fa" [ngClass]="isProductsOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-      </a>
+      <!-- Products with expandable submenu -->
+      <li class="nav-item mb-2">
+        <a
+          class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
+          href="#"
+          (click)="isProductsOpen = !isProductsOpen; $event.preventDefault()">
+          <span>
+            <i class="fa fa-box me-3 text-primary"></i>
+            <span>Products</span>
+          </span>
+          <i class="fa text-primary" [ngClass]="isProductsOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </a>
 
-      <ul class="list-unstyled ms-4 mt-2" *ngIf="isProductsOpen">
-        <li>
-          <a class="nav-link text-white" [routerLink]="'/product'" routerLinkActive="text-warning">Add Product</a>
-        </li>
-        <li>
-          <a class="nav-link text-white" [routerLink]="'/productlist'" routerLinkActive="text-warning">Product List</a>
-        </li>
-      </ul>
-    </li>
+        <ul class="list-unstyled ms-4 mt-2" *ngIf="isProductsOpen">
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
+               [routerLink]="'/product'" 
+               routerLinkActive="active">
+              <i class="fa fa-plus-circle me-3 text-primary"></i>
+              <span>Add Product</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
+               [routerLink]="'/productlist'" 
+               routerLinkActive="active">
+              <i class="fa fa-list me-3 text-primary"></i>
+              <span>Product List</span>
+            </a>
+          </li>
+        </ul>
+      </li>
 
-    <!-- Users -->
-    <li class="nav-item">
-      <a
-        class="nav-link text-white d-flex align-items-center"
-        [routerLink]="'/users'"
-        routerLinkActive="active bg-secondary">
-        <i class="fa fa-users me-2"></i>Users
-      </a>
-    </li>
+      <!-- Users -->
+      <li class="nav-item mb-2">
+        <a
+          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+          [routerLink]="'/users'"
+          routerLinkActive="active">
+          <i class="fa fa-users me-3 text-primary"></i>
+          <span>Users</span>
+        </a>
+      </li>
 
-    <!-- Analytics -->
-    <li class="nav-item">
-      <a
-        class="nav-link text-white d-flex align-items-center"
-        [routerLink]="'/analytics'"
-        routerLinkActive="active bg-secondary">
-        <i class="fa fa-chart-line me-2"></i>Analytics
-      </a>
-    </li>
-  </ul>
+      <!-- Analytics -->
+      <li class="nav-item mb-2">
+        <a
+          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+          [routerLink]="'/analytics'"
+          routerLinkActive="active">
+          <i class="fa fa-chart-line me-3 text-primary"></i>
+          <span>Analytics</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Logout Button -->
+    <div class="sidebar-footer mt-4">
+      <button class="btn btn-logout w-100 d-flex align-items-center justify-content-center gap-2" (click)="logout()">
+        <i class="fa fa-sign-out-alt text-danger"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </div>
 </div>

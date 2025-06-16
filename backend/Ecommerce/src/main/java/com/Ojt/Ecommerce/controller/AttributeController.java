@@ -1,11 +1,13 @@
 package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.dto.AttributeAndValueDTO;
+import com.Ojt.Ecommerce.dto.AttributeValueDTO;
 import com.Ojt.Ecommerce.entity.Attribute;
 import com.Ojt.Ecommerce.entity.AttributeValue;
 import com.Ojt.Ecommerce.service.AttributeService;
 import com.Ojt.Ecommerce.service.AttributeValueService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
@@ -32,10 +34,30 @@ public class AttributeController {
         return avService.getAllAttributeValue();
     }
 
+//    @GetMapping("/getvaluebyid/{id}")
+//    public List<AttributeValue> getValueByAttributeValue(@PathVariable Long id){
+//        return avService.findAvByAttributeId(id);
+//    }
+
+//    @GetMapping("/getvaluebyid/{id}")
+//    public List<AttributeAndValueDTO> getValueByAttributeValue(@PathVariable Long id) {
+//        return attService.getAttributeWithValues(id);
+//    }
+
     @GetMapping("/getvaluebyid/{id}")
-    public List<AttributeValue> getValueByAttributeValue(@PathVariable Long id){
-        return avService.findAvByAttributeId(id);
+    public ResponseEntity<?> getValueByAttributeValue(@PathVariable Long id) {
+        try {
+            List<AttributeAndValueDTO> result = attService.getAttributeWithValues(id);
+            return ResponseEntity.ok(result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Server error");
+        }
     }
+
+
+
 
     @PostMapping("/create")
     public ResponseEntity<?> saveAttributeAndValue(@RequestBody AttributeAndValueDTO dto) {
@@ -61,7 +83,10 @@ public class AttributeController {
             return ResponseEntity.badRequest().body("Either attributeId or attributeName must be provided.");
         }
         List<String> errors = new ArrayList<>();
-        for (String value : dto.getValues()) {
+
+        for (AttributeValueDTO valueDTO : dto.getValues()) {
+            String value = valueDTO.getValue();
+
             boolean valueExist = avService.checkExists(value, attribute.getId());
             if (!valueExist) {
                 AttributeValue av = new AttributeValue();

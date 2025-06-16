@@ -10,5 +10,6 @@ import java.util.List;
 public class AttributeAndValueDTO {
     private Long attributeId;
     private String attributeName;
-    private List<String> values;
+    private List<AttributeValueDTO> values;
+
 }

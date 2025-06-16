@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { CartService, CartItem } from '../services/cart.service';
 import { Subscription } from 'rxjs';
+import { WishlistService } from '../services/wishlist.service';
 
 @Component({
   selector: 'app-header',
@@ -20,13 +21,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isAuthenticated = false;
   openDropdown: string | null = null;
   showCartSidebar = false;
+  public wishlistCount = 0;
   private subscriptions: Subscription[] = [];
 
   constructor(
     private router: Router,
     private authService: AuthService,
     private elementRef: ElementRef,
-    private cartService: CartService
+    private cartService: CartService,
+    private wishlistService: WishlistService
   ) {}
 
   ngOnInit() {
@@ -40,8 +43,28 @@ export class HeaderComponent implements OnInit, OnDestroy {
       }),
       this.cartService.getCartTotal().subscribe(total => {
         this.cartTotal = total;
+      }),
+      this.wishlistService.wishlistUpdated$.subscribe(() => {
+        if (this.isAuthenticated && this.userId) {
+          this.loadWishlistCount();
+        }
       })
     );
+
+    if (this.isAuthenticated && this.userId) {
+      this.loadWishlistCount();
+    }
+  }
+
+  private loadWishlistCount() {
+    this.wishlistService.getWishlist(this.userId!).subscribe({
+      next: (productIds: any) => {
+        this.wishlistCount = productIds.length;
+      },
+      error: () => {
+        console.error("Failed to load wishlist count");
+      }
+    });
   }
 
   ngOnDestroy() {

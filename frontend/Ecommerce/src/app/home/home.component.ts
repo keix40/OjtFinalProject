@@ -1,23 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, Output, EventEmitter } from '@angular/core';
+import { Router } from '@angular/router';
 import { CartService } from '../services/cart.service';
 import Swal from 'sweetalert2';
-
-interface Product {
-  id: number;
-  title: string;
-  image: string;
-  tags: string[];
-  stock: 'in' | 'low' | 'out';
-  rating: number;
-  sold: number;
-  price: number;
-  originalPrice: number;
-  discount: number;
-  categories: string[];
-  material: string;
-  sale: string;
-  availability: string;
-}
+import { ProductDTO } from '../product';
+import { ProductService } from '../services/product.service';
+import { CategoryService } from '../services/category.service';
+import { WishlistService } from '../services/wishlist.service';
+import { AuthService } from '../auth/auth.service';
+import { BrandService } from '../services/brand.service';
 
 @Component({
   selector: 'app-home',
@@ -26,120 +16,104 @@ interface Product {
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
-  showFilter = true;
-
-  products: Product[] = [
-    {
-      id: 1,
-      title: 'Modern Living Room Armchair with Extra Padding',
-      image: 'assets/images/soba.webp',
-      tags: ['Living Room', 'Armchair'],
-      stock: 'low',
-      rating: 4,
-      sold: 2000,
-      price: 199,
-      originalPrice: 400,
-      discount: 50,
-      categories: ['Chair'],
-      material: 'Upholstered',
-      sale: 'Clearance Sale',
-      availability: 'Low Stock'
-    },
-    {
-      id: 2,
-      title: 'Sectional Sofa with Storage',
-      image: 'assets/images/soba.webp',
-      tags: ['Living Room', 'Sectional'],
-      stock: 'out',
-      rating: 3,
-      sold: 1200,
-      price: 399,
-      originalPrice: 800,
-      discount: 50,
-      categories: ['Sofa', 'Sectional'],
-      material: 'Cotton',
-      sale: 'Voucher',
-      availability: 'Out of Stock'
-    },
-    // Add more products as needed
-  ];
-
+  @Output() wishlistChanged = new EventEmitter<void>();
+  allProducts: ProductDTO[] = [];
+  products: ProductDTO[] = [];
   wishlist: Set<number> = new Set();
 
-  // Filter state
-  filters: {
-    availability: string[];
-    sale: string[];
-    material: string[];
-    category: string[];
-    price: number[];
-  } = {
-    availability: [],
-    sale: [],
-    material: [],
-    category: [],
-    price: [0, 2000]
+  brandOptions: string[] = [];
+  categoryOptions: string[] = [];
+
+  filters = {
+    availability: [] as string[],
+    sale: [] as string[],
+    brand: [] as string[], // replaced 'material' with 'brand' for clarity
+    category: [] as string[],
+    price: [0, 2000] as [number, number]
   };
 
-  // Demo filter options
-  availabilityOptions = ['In Stock', 'Low Stock', 'Out of Stock'];
-  saleOptions = ['Clearance Sale', 'Voucher', 'Regular Price'];
-  materialOptions = ['Cotton', 'Upholstered', 'Metal', 'Wood'];
-  categoryOptions = ['Chair', 'Divan', 'Sofa', 'Sectional'];
+  availabilityOptions = ['In Stock', 'Out of Stock'];
+  saleOptions = ['On Sale', 'Regular'];
 
-  constructor(private cartService: CartService) {}
+  showFilter = true;
 
-  // Toggle sidebar
-  toggleFilter() {
-    this.showFilter = !this.showFilter;
+  constructor(
+    private productService: ProductService,
+    private cartService: CartService,
+    private cateService: CategoryService,
+    private wishlistService: WishlistService,
+    private authService: AuthService,
+    private brandService: BrandService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.loadProducts();
+    this.loadCategories();
+    this.loadBrands();
+    this.loadWishlist();
   }
 
-  // Wishlist toggle
-  toggleWishlist(id: number) {
-    if (this.wishlist.has(id)) this.wishlist.delete(id);
-    else this.wishlist.add(id);
-  }
-
-  // Filtered products
-  get filteredProducts() {
-    return this.products.filter(product => {
-      // Availability
-      if (this.filters.availability.length) {
-        if (!this.filters.availability.includes(product.availability)) return false;
-      }
-      // Sale
-      if (this.filters.sale.length) {
-        if (!this.filters.sale.includes(product.sale)) return false;
-      }
-      // Material
-      if (this.filters.material.length) {
-        if (!this.filters.material.includes(product.material)) return false;
-      }
-      // Category
-      if (this.filters.category.length) {
-        if (!product.categories.some(cat => this.filters.category.includes(cat))) return false;
-      }
-      // Price
-      if (
-        product.price < this.filters.price[0] ||
-        product.price > this.filters.price[1]
-      )
-        return false;
-      return true;
+  loadProducts(): void {
+    this.productService.getAllAcProduct().subscribe({
+      next: data => {
+        this.allProducts = data;
+        this.products = data;
+        this.applyFilters();
+      },
+      error: err => console.error('Failed to load products', err)
     });
   }
 
-  // Add to cart method
-  addToCart(product: Product) {
+  loadCategories(): void {
+    this.cateService.getAllCategory().subscribe({
+      next: data => {
+        this.categoryOptions = data.map(c => c.name.toString());
+      }
+    });
+  }
+
+  loadBrands(): void {
+    this.brandService.getAllBrand().subscribe({
+      next: data => {
+        this.brandOptions = data.map(b => b.name.toString());
+      },
+      error: err => console.error("Failed to load brands", err)
+    });
+  }
+
+  loadWishlist() {
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+
+    this.wishlistService.getWishlist(userId).subscribe({
+      next: (productIds: number[]) => {
+        this.wishlist = new Set(productIds);
+      },
+      error: () => {
+        console.error("Failed to load wishlist");
+      }
+    });
+  }
+
+  getProductImageUrl(product: ProductDTO): string {
+    if (product.productImages?.length > 0) {
+      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+    }
+    return '/assets/project_img/fashion_store.jpg';
+  }
+
+  addToCart(product: ProductDTO): void {
     this.cartService.addToCart({
       id: product.id,
-      title: product.title,
+      title: product.productName,
       price: product.price,
       quantity: 1,
-      image: product.image,
+      image: this.getProductImageUrl(product),
       size: undefined,
       color: undefined
     });
+
     Swal.fire({
       toast: true,
       position: 'top-end',
@@ -148,20 +122,144 @@ export class HomeComponent {
       showConfirmButton: false,
       timer: 1200,
       timerProgressBar: true,
-      customClass: {
-        popup: 'swal2-toast'
-      }
+      customClass: { popup: 'swal2-toast' }
     });
   }
 
-  // Add this method for checkbox group logic
-  onFilterCheckboxChange(filterKey: 'availability' | 'sale' | 'material' | 'category', value: string, checked: boolean) {
-    const arr = this.filters[filterKey];
-    if (checked) {
-      if (!arr.includes(value)) arr.push(value);
-    } else {
-      const idx = arr.indexOf(value);
-      if (idx > -1) arr.splice(idx, 1);
+  toggleWishlist(productId: number): void {
+    const userId = this.authService.getUserId();
+    if (!userId) {
+      alert("You must be logged in to use the wishlist.");
+      return;
     }
+
+    if (this.wishlist.has(productId)) {
+      this.wishlist.delete(productId);
+      this.wishlistService.removeWishlist(userId, productId).subscribe({
+        next: () => {
+          // Update wishlist count immediately
+          const headerComponent = document.querySelector('app-header') as any;
+          if (headerComponent) {
+            headerComponent.wishlistCount = this.wishlist.size;
+          }
+          // Notify wishlist update
+          this.wishlistService.notifyWishlistUpdated();
+          // Show toast message
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Removed from wishlist',
+            showConfirmButton: false,
+            timer: 1200,
+            timerProgressBar: true,
+            customClass: { popup: 'swal2-toast' }
+          });
+        },
+        error: err => {
+          console.error('Failed to remove wishlist');
+          alert(`Error: ${err.status} - ${err.error?.message || err.message}`);
+          this.wishlist.add(productId);
+        }
+      });
+    } else {
+      this.wishlist.add(productId);
+      this.wishlistService.saveWishlist(userId, productId).subscribe({
+        next: () => {
+          // Update wishlist count immediately
+          const headerComponent = document.querySelector('app-header') as any;
+          if (headerComponent) {
+            headerComponent.wishlistCount = this.wishlist.size;
+          }
+          // Notify wishlist update
+          this.wishlistService.notifyWishlistUpdated();
+          // Show toast message
+          Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: 'Added to wishlist',
+            showConfirmButton: false,
+            timer: 1200,
+            timerProgressBar: true,
+            customClass: { popup: 'swal2-toast' }
+          });
+        },
+        error: err => {
+          console.error('Failed to save wishlist');
+          alert(`Error: ${err.status} - ${err.error?.message || err.message}`);
+          this.wishlist.delete(productId);
+        }
+      });
+    }
+  }
+
+  onFilterCheckboxChange(type: 'availability' | 'sale' | 'brand' | 'category', value: string, checked: boolean): void {
+    if (checked) {
+      this.filters[type].push(value);
+    } else {
+      this.filters[type] = this.filters[type].filter(v => v !== value);
+    }
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
+    // Ensure valid price range (min should not exceed max)
+    if (this.filters.price[0] > this.filters.price[1]) {
+      const temp = this.filters.price[0];
+      this.filters.price[0] = this.filters.price[1];
+      this.filters.price[1] = temp;
+    }
+  
+    this.products = this.allProducts.filter(product => {
+      const inAvailability =
+        this.filters.availability.length === 0 ||
+        (this.filters.availability.includes('In Stock') && product.quantity > 0) ||
+        (this.filters.availability.includes('Out of Stock') && product.quantity === 0);
+  
+      const inSale =
+        this.filters.sale.length === 0 ||
+        (this.filters.sale.includes('On Sale') && product.price < 100) ||
+        (this.filters.sale.includes('Regular') && product.price >= 100);
+  
+      const inBrand =
+        this.filters.brand.length === 0 ||
+        product.categoryBrandPairs.some(cb =>
+          cb.brandName && this.filters.brand.includes(cb.brandName)
+        );
+  
+      const inCategory =
+        this.filters.category.length === 0 ||
+        product.categoryBrandPairs.some(cb => {
+          const categoryName = cb.cateName || cb['cateName'];
+          return (
+            categoryName &&
+            this.filters.category.map(c => c.toLowerCase().trim()).includes(categoryName.toLowerCase().trim())
+          );
+        });
+  
+      const inPrice = product.price >= this.filters.price[0] && product.price <= this.filters.price[1];
+  
+      return inAvailability && inSale && inBrand && inCategory && inPrice;
+    });
+  }  
+
+  toggleFilter(): void {
+    this.showFilter = !this.showFilter;
+  }
+
+  clearFilters() {
+    this.filters = {
+      availability: [],
+      sale: [],
+      brand: [],
+      category: [],
+      price: [0, 2000],
+    };
+    this.applyFilters();
+  }
+
+  goToProductDetail(productId: number) {
+    this.router.navigate(['/product', productId]);
   }
 }

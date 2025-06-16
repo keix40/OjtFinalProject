@@ -159,3 +159,70 @@ body {
   margin-top: 6px;
   font-weight: 500;
 }
+
+/* Forgot Password / OTP / Reset Modal Styles */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
+.modal-box h4 {
+  margin-bottom: 1rem;
+  font-weight: bold;
+  text-align: center;
+  color: #0b0217;
+}
+
+.modal-box input.form-control {
+  width: 100%;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 14px;
+}
+
+.modal-box .btn {
+  width: 100%;
+}
+
+.modal-box .error {
+  color: red;
+  font-size: 0.9rem;
+}
+
+/* Make the 'Forgot Password?' button look like a link */
+.btn.btn-bold[href-like] {
+  background: none;
+  color: #7d2ae8;
+  padding: 0;
+  border: none;
+  font-size: 12px;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.btn.btn-bold[href-like]:hover {
+  text-decoration: underline;
+  background: none;
+  color: #5a1fc1;
+  cursor: pointer;
+}

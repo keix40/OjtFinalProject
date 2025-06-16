@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Brand, BrandDTO } from './brand';
+import { Brand, BrandDTO } from '../brand';
 
 @Injectable({
   providedIn: 'root'

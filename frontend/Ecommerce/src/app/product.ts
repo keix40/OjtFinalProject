@@ -26,3 +26,26 @@ export interface ProductList{
   }[];
   checked?: boolean;
 }
+
+export interface ProductDTO {
+  id: number;
+  productName: string;
+  productCode: string;
+  price: number;
+  quantity: number;
+  description: string;
+  status: number;
+
+  categoryBrandPairs: {
+    categoryId: number;
+    cateName?: string;
+    brandId: number | null;
+    brandName?: string | null;
+  }[];
+  
+  productImages: {
+    id: number;
+    imageUrl: string;
+    status: number;
+  }[];
+}

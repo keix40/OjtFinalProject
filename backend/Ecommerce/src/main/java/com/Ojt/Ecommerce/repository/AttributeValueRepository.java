@@ -8,5 +8,6 @@ import java.util.List;
 public interface AttributeValueRepository extends JpaRepository<AttributeValue, Long> {
     boolean existsByValueAndAttributeId(String value, Long attributeId);
 
-    public List<AttributeValue> findByAttributeId(Long id);
+    //    public List<AttributeValue> findByAttributeId(Long id);
+    List<AttributeValue> findByAttribute_Id(Long attributeId);
 }

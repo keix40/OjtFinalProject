@@ -1,6 +1,14 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
 /* You can add global styles to this file, and also import other style files */
+:root {
+  --primary: #2563eb;
+  --secondary: #64748b;
+  --accent: #f59e42;
+  --bg-light: #f8fafc;
+  --text-main: #222;
+  --card-shadow: 0 2px 8px rgba(37,99,235,0.08);
+}
 
 body, html {
     font-family: 'Poppins', sans-serif;

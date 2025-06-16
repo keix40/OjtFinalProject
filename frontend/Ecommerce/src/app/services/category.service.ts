@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Category, CategoryDTO } from './category';
+import { Category, CategoryDTO } from '../category';
 
 @Injectable({
   providedIn: 'root'
@@ -18,5 +18,9 @@ export class CategoryService {
 
   createCategory(cateDto : CategoryDTO): Observable<CategoryDTO> {
     return this.http.post<CategoryDTO>(`${this.baseUrl}/addcategory`, cateDto,{responseType : 'text' as 'json'});
+  }
+
+  getAllCateWithBrand(id: number): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/getallcatewithbrand/${id}`);
   }
 }

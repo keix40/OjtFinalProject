@@ -196,6 +196,7 @@ public class UserServiceImpl implements UserService {
         user.setPhoneNumber(dto.getPhoneNumber());
         user.setDateOfBirth(dto.getDateOfBirth());
 
+
         userRepository.save(user);
 
         return modelMapper.map(user, RegisterRequest.class);

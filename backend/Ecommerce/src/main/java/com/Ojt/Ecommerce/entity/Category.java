@@ -20,8 +20,8 @@ public class Category {
 
     private String name;
 
-    @ManyToMany(mappedBy = "categories")
-    private List<Brand> brands;
+//    @ManyToMany(mappedBy = "categories")
+//    private List<Brand> brands;
 
 //    @OneToMany(mappedBy = "category")
 //    @JsonIgnore
@@ -29,6 +29,8 @@ public class Category {
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private List<ProductHasCategory> productCategories;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
