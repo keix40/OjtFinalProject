@@ -57,7 +57,7 @@
                 style="width: 45px; height: 45px; object-fit: cover;"
                 (error)="product.productImages[0].imageUrl = 'assets/image-not-found.png'"
             >
-              <span>{{ product.productName }}</span>
+              <span [routerLink]="['/admin/products', product.id]" style="cursor: pointer; color: #0d6efd; text-decoration: underline;">{{ product.productName }}</span>
             </td>
             <td>{{ product.productCode }}</td>
             <td>{{ product.price }} ks</td>
