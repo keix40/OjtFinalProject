@@ -18,7 +18,7 @@ public class AttributeValueService {
     private ModelMapper mapper;
 
     public List<AttributeValue> findAvByAttributeId(Long id){
-        return repo.findByAttributeId(id);
+        return repo.findByAttribute_Id(id);
     }
 
     public List<AttributeValue> getAllAttributeValue(){
