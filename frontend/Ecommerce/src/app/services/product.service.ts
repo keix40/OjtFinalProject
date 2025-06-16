@@ -58,4 +58,8 @@ export class ProductService {
   getAllAcProduct(): Observable<ProductDTO[]>{
     return this.http.get<ProductDTO[]>(`${this.baseUrl}/productlist`);
   }
+
+  getProductDetailById(id: string) {
+    return this.http.get<any>(`${this.baseUrl}/adminProductDetail/${id}`);
+  }
 }

@@ -13,6 +13,8 @@ import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { LayoutComponent } from './layout/layout.component';
 import { ProductDisplayComponent } from './product-display/product-display.component';
+import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+
 import { WishlistComponent } from './wishlist/wishlist.component';
 
 
@@ -28,6 +30,7 @@ const routes: Routes = [
     children: [
       { path: 'product', component: ProductComponent },
       { path: 'productlist', component: ProductMangementComponent },
+      { path: 'admin/products/:id', component: ProductDetailComponent },
       // add more routes here
     ],},
   { path: '', redirectTo: 'home', pathMatch: 'full' },

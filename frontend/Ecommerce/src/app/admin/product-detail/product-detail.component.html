@@ -1,0 +1,166 @@
+<div class="container-fluid py-4">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Product Detail (Admin)</h2>
+    <button class="btn btn-primary" routerLink="/admin/products">
+      <i class="bi bi-arrow-left"></i> Back to Products
+    </button>
+  </div>
+
+  <div class="row" *ngIf="product">
+    <!-- Product Images Section -->
+    <div class="col-lg-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Product Images</h5>
+        </div>
+        <div class="card-body">
+          <!-- Main Image -->
+          <div class="main-image-container mb-3">
+            <img [src]="selectedImage" 
+                 class="img-fluid rounded main-image" 
+                 alt="Main product image"
+                 (click)="openImageModal(selectedImage!)">
+          </div>
+          <!-- Thumbnails -->
+          <div class="row g-2">
+            <div class="col-3" *ngFor="let image of product.images">
+              <div class="thumbnail-container position-relative">
+                <img [src]="image.url" 
+                     class="img-fluid rounded thumbnail" 
+                     [class.active]="selectedImage === image.url"
+                     (click)="selectedImage = image.url"
+                     alt="Product thumbnail">
+                <i class="bi position-absolute top-0 end-0 m-1" 
+                   [class]="getImageStatusIcon(image.status)"
+                   [title]="image.status"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Info Section -->
+    <div class="col-lg-6 mb-4">
+      <div class="card h-100">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Product Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <h3 class="mb-2">{{product.name}}</h3>
+            <span class="badge" [class]="getStatusBadgeClass(product.status)">
+              {{product.status}}
+            </span>
+          </div>
+          <div class="mb-3">
+            <strong>Product Code:</strong> {{product.code}}
+          </div>
+          <div class="mb-3">
+            <strong>Description:</strong>
+            <p class="mt-2">{{product.description}}</p>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <strong>Created:</strong>
+              <p class="text-muted">{{product.createdDate | date:'medium'}}</p>
+            </div>
+            <div class="col-md-6">
+              <strong>Updated:</strong>
+              <p class="text-muted">{{product.updatedDate | date:'medium'}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand & Categories Section -->
+    <div class="col-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Brand & Categories</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6 mb-3 mb-md-0">
+              <strong>Brand:</strong>
+              <p class="mb-0">{{product.brand}}</p>
+            </div>
+            <div class="col-md-6">
+              <strong>Categories:</strong>
+              <p class="mb-0">{{product.categories.join(', ')}}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variants Section -->
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="card-title mb-0">Product Variants</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-4">
+            <div class="col-md-6 col-lg-4" *ngFor="let variant of product.variants">
+              <div class="card h-100 variant-card">
+                <div class="card-body">
+                  <h6 class="card-subtitle mb-2 text-muted">SKU: {{variant.sku}}</h6>
+                  <div class="mb-2">
+                    <strong>Price:</strong> ${{variant.price}}
+                  </div>
+                  <div class="mb-2">
+                    <strong>Stock:</strong> {{variant.stock}}
+                  </div>
+                  <div class="mb-3">
+                    <strong>Attributes:</strong>
+                    <ul class="list-unstyled mt-2">
+                      <li *ngFor="let attr of variant.attributes">
+                        {{attr.attributeName}}: {{attr.value}}
+                      </li>
+                    </ul>
+                  </div>
+                  <!-- Variant Images -->
+                  <div class="variant-images">
+                    <strong>Images:</strong>
+                    <div class="row g-2 mt-2">
+                      <div class="col-4" *ngFor="let image of variant.images">
+                        <div class="position-relative">
+                          <img [src]="image.url" 
+                               class="img-fluid rounded variant-thumbnail" 
+                               (click)="openImageModal(image.url)"
+                               alt="Variant thumbnail">
+                          <i class="bi position-absolute top-0 end-0 m-1" 
+                             [class]="getImageStatusIcon(image.status)"
+                             [title]="image.status"></i>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="modal fade" [class.show]="showImageModal" [style.display]="showImageModal ? 'block' : 'none'">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Product Image</h5>
+          <button type="button" class="btn-close" (click)="closeImageModal()"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img [src]="selectedImage" class="img-fluid" alt="Enlarged product image">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade" [class.show]="showImageModal" [style.display]="showImageModal ? 'block' : 'none'"></div>
+</div> 

@@ -1,0 +1,162 @@
+/* Main Image Styles */
+.main-image-container {
+  position: relative;
+  width: 100%;
+  height: 400px;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+}
+
+.main-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.main-image:hover {
+  transform: scale(1.02);
+}
+
+/* Thumbnail Styles */
+.thumbnail-container {
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+}
+
+.thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+}
+
+.thumbnail:hover {
+  transform: scale(1.05);
+}
+
+.thumbnail.active {
+  border-color: #0d6efd;
+}
+
+/* Variant Card Styles */
+.variant-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid #dee2e6;
+}
+
+.variant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.variant-thumbnail {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.variant-thumbnail:hover {
+  transform: scale(1.1);
+}
+
+/* Status Badge Styles */
+.badge {
+  padding: 0.5em 1em;
+  font-weight: 500;
+}
+
+/* Modal Styles */
+.modal-content {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-body img {
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .main-image-container {
+    height: 300px;
+  }
+
+  .variant-card {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .main-image-container {
+    height: 250px;
+  }
+
+  .thumbnail-container {
+    aspect-ratio: 4/3;
+  }
+}
+
+/* Card Header Styles */
+.card-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+  background-color: #f8f9fa;
+}
+
+.card-title {
+  color: #212529;
+  font-weight: 600;
+}
+
+/* Status Icon Styles */
+.bi {
+  font-size: 1rem;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Back Button Styles */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+}
+
+.btn-primary i {
+  font-size: 1.1rem;
+}
+
+/* Description Text */
+.card-body p {
+  color: #6c757d;
+  line-height: 1.6;
+}
+
+/* Attribute List Styles */
+.list-unstyled li {
+  padding: 0.25rem 0;
+  color: #495057;
+}
+
+/* Price and Stock Styles */
+strong {
+  color: #212529;
+  font-weight: 600;
+}
+
+/* SKU Text */
+.card-subtitle {
+  color: #6c757d;
+  font-size: 0.9rem;
+} 

@@ -13,4 +13,14 @@ public class ProductImageDTO {
     private Long id;
     private String imageUrl;
     private Integer status;
+    private Long variantId;
+
+    public ProductImageDTO(Long id, String imageUrl, Integer status) {
+        this.id = id;
+        this.imageUrl = imageUrl;
+        this.status = status;
+    }
+
 }
+
+

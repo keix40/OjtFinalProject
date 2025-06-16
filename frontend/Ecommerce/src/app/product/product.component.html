@@ -69,27 +69,39 @@
         </div>
       </div>
 
-      <!-- Category and Brand -->
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Category</label>
-          <select class="form-select" formControlName="category">
-            <option [ngValue]="null" disabled>Select Category</option>
-            <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
-          </select>
-          <div *ngIf="productForm.get('category')?.invalid && productForm.get('category')?.touched" class="error-message">
-            Category is required
-          </div>
+      <!-- Category and Brand Card -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Categories & Brands</h5>
         </div>
-
-        <div class="form-group">
-          <label class="form-label">Brand</label>
-          <select class="form-select" formControlName="brand">
-            <option [ngValue]="null" disabled>Select Brand</option>
-            <option *ngFor="let brand of brands" [ngValue]="brand.id">{{ brand.name }}</option>
-          </select>
-          <div *ngIf="productForm.get('brand')?.invalid && productForm.get('brand')?.touched" class="error-message">
-            Brand is required
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label">Categories</label>
+              <div formArrayName="categories">
+                <div *ngFor="let ctrl of categoriesArray.controls; let i = index" class="input-group mb-2">
+                  <select class="form-select" [formControlName]="i" (change)="onCategorySelectChange($event, i)">
+                    <option [ngValue]="null" disabled>Select Category</option>
+                    <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                    <option value="create-new">+ Create New Category</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-danger" (click)="removeCategorySelect(i)" [disabled]="categoriesArray.length === 1">&times;</button>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Brands</label>
+              <div formArrayName="brands">
+                <div *ngFor="let ctrl of brandsArray.controls; let i = index" class="input-group mb-2">
+                  <select class="form-select" [formControlName]="i" (change)="onBrandSelectChange($event, i)">
+                    <option [ngValue]="null" disabled>Select Brand</option>
+                    <option *ngFor="let brand of brands" [ngValue]="brand.id">{{ brand.name }}</option>
+                    <option value="create-new">+ Create New Brand</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-danger" (click)="removeBrandSelect(i)" [disabled]="brandsArray.length === 1">&times;</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -98,9 +110,9 @@
       <div class="form-group">
         <label class="form-label">Status</label>
         <select class="form-select" formControlName="status">
-          <option value="active">Active</option>
-          <option value="draft">Draft</option>
-          <option value="archived">Archived</option>
+          <option value=1>Active</option>
+          <option value=2>Draft</option>
+          <option value=3>Archived</option>
         </select>
       </div>
 
@@ -167,35 +179,23 @@
           <div class="row g-3">
             <div *ngFor="let attr of productAttributes; let i = index" class="col-12">
               <div class="attribute-card shadow-sm rounded-3 bg-white mb-3 p-3">
-                <div class="d-flex flex-row align-items-center gap-3 flex-wrap">
-                  <span class="fw-bold fs-5 me-2">{{ attr.attributeName }}</span>
-                  <div class="d-flex flex-wrap gap-2 align-items-center flex-grow-1">
-                    <label class="form-label mb-0 me-2">Original Values:</label>
-                    <ng-container *ngFor="let value of getOriginalValues(attr)">
-                      <button type="button"
-                              class="btn btn-sm px-3 py-1 rounded-pill"
-                              [ngClass]="value.selected ? 'btn-secondary' : 'btn-outline-secondary'"
-                              (click)="toggleAttributeValue(i, attr.allowedValues.indexOf(value))">
-                        {{ value.value }}
-                      </button>
-                    </ng-container>
-                  </div>
-                  <button type="button" class="btn btn-outline-danger btn-sm ms-auto" (click)="removeProductAttribute(i)"><i class="fas fa-trash"></i></button>
-                </div>
-                <div class="input-group mt-3" style="max-width: 300px;">
-                  <input type="text" class="form-control" placeholder="Add new value" #newValueInput>
-                  <button type="button" class="btn btn-outline-primary" (click)="addNewAttributeValueToAttribute(i, newValueInput.value, true); newValueInput.value=''">Add</button>
-                </div>
-                <div class="d-flex flex-wrap gap-2 align-items-center mt-2" *ngIf="getNewValues(attr).length > 0">
-                  <label class="form-label mb-0 me-2">New Values:</label>
-                  <ng-container *ngFor="let value of getNewValues(attr)">
+                <span class="fw-bold fs-5 me-2">{{ attr.attributeName }}</span>
+                <!-- REPLACED ATTRIBUTE VALUE DISPLAY -->
+                <div class="d-flex flex-wrap gap-2">
+                  <ng-container *ngFor="let value of attr.allowedValues; let j = index">
                     <button type="button"
                             class="btn btn-sm px-3 py-1 rounded-pill"
-                            [ngClass]="value.selected ? 'btn-secondary' : 'btn-outline-secondary'"
-                            (click)="toggleAttributeValue(i, attr.allowedValues.indexOf(value))">
+                            [class.btn-primary]="value.selected"
+                            [class.btn-outline-secondary]="!value.selected"
+                            (click)="toggleAttributeValue(i, j)">
                       {{ value.value }}
                     </button>
                   </ng-container>
+                </div>
+                <!-- END REPLACED ATTRIBUTE VALUE DISPLAY -->
+                <div class="input-group mt-3" style="max-width: 300px;">
+                  <input type="text" class="form-control" placeholder="Add new value" #newValueInput>
+                  <button type="button" class="btn btn-outline-primary" (click)="addNewAttributeValueToAttribute(i, newValueInput.value, true); newValueInput.value=''">Add</button>
                 </div>
               </div>
             </div>
@@ -216,51 +216,61 @@
         </div>
 
         <!-- Product Variants Section -->
-        <div *ngIf="productForm.get('hasVariant')?.value && productAttributes.length > 0" class="generated-variants-section mt-4">
-          <h4>Product Variants</h4>
+        <div *ngIf="productForm.get('hasVariant')?.value && variants.length > 0" class="generated-variants-section mt-4">
+          <h4>Product Variants ({{variants.length}})</h4>
           <div class="row">
             <div class="col-12 mb-4" *ngFor="let variant of variantFormGroups; let i = index" [formGroup]="variant">
               <div class="variant-card p-3 shadow-sm rounded-3 bg-white">
-                <div class="d-flex flex-wrap align-items-center gap-3">
-                  <div class="flex-grow-1">
-                    <label class="form-label mb-1">Variant Name</label>
-                    <input type="text" class="form-control" formControlName="sku" placeholder="e.g., Red, Large">
+                <div class="variant-header mb-3">
+                  <span class="badge bg-primary me-2">Variant {{i+1}}</span>
+                  <span class="text-muted">{{variant.get('sku')?.value}}</span>
+                </div>
+                
+                <!-- Attribute display -->
+                <div class="mb-3">
+                  <div *ngFor="let attr of variant.get('attributes')?.value" class="attribute-badge">
+                    <strong>{{attr.attributeName}}:</strong> {{attr.value}}
                   </div>
-                  <div>
-                    <label class="form-label mb-1">Price</label>
-                    <input type="number" class="form-control" formControlName="price" placeholder="0.00">
+                </div>
+                
+                <!-- Price/Stock inputs -->
+                <div class="row g-3">
+                  <div class="col-md-4">
+                    <label>Price</label>
+                    <input type="number" class="form-control" formControlName="price" min="0.01" step="0.01">
                   </div>
-                  <div>
-                    <label class="form-label mb-1">Stock</label>
-                    <input type="number" class="form-control" formControlName="stock" placeholder="0">
+                  <div class="col-md-4">
+                    <label>Stock</label>
+                    <input type="number" class="form-control" formControlName="stock" min="0">
                   </div>
-                  <div>
-                    <label class="form-label mb-1">Images</label>
-                    <button class="btn btn-light border d-flex align-items-center px-3" style="height:38px;" type="button" (click)="onVariantImageSelect(i)">
-                      <i class="fas fa-upload me-2"></i> Upload
+                  <div class="col-md-4">
+                    <label>Images</label>
+                    <button class="btn btn-outline-secondary btn-sm w-100" 
+                            type="button" 
+                            (click)="onVariantImageSelect(i)">
+                      <i class="fas fa-image me-2"></i>Add Images
                     </button>
-                    <input type="file" class="d-none" [attr.id]="'variantImageInput' + i" (change)="onVariantImageChange($event, i)" multiple accept="image/jpeg,image/png,image/gif,image/webp">
+                    <input
+                      type="file"
+                      id="variantImageInput{{i}}"
+                      (change)="onVariantImageChange($event, i)"
+                      multiple
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      style="display: none;"
+                    >
                   </div>
                 </div>
-                <!-- Attribute-Value Badges -->
-                <div class="mt-3 mb-2 d-flex flex-wrap gap-2">
-                  <span *ngFor="let attr of variant.get('attributes')?.value" class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-3 py-2 rounded-pill">
-                    {{ attr.attributeName }}: <span class="fw-bold">{{ attr.value }}</span>
-                  </span>
-                </div>
-                <!-- Variant Images Preview -->
-                <div *ngIf="variant.get('images')?.value?.length > 0" class="variant-images-preview mt-3">
-                  <div class="d-flex flex-wrap gap-2">
-                    <div *ngFor="let image of variant.get('images')?.value; let imgIndex = index" class="variant-image-item">
-                      <img [src]="image.preview" class="rounded-2 border" style="width:60px;height:60px;object-fit:cover;">
-                      <button class="btn btn-link text-danger position-absolute top-0 end-0 p-0" type="button" (click)="removeVariantImage(i, imgIndex)">
+                
+                <!-- Image previews -->
+                <div *ngIf="variant.get('images')?.value?.length > 0" class="mt-3">
+                  <div class="image-thumbnails d-flex flex-row flex-wrap gap-2">
+                    <div *ngFor="let img of variant.get('images')?.value; let imgIdx = index" class="thumbnail p-0 m-0" style="width: 40px; height: 40px;">
+                      <img [src]="img.preview" class="variant-image-thumb" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
+                      <button class="remove-thumbnail" (click)="removeVariantImage(i, imgIdx)" style="top: -8px; right: -8px; width: 20px; height: 20px; font-size: 0.8em;">
                         <i class="fas fa-times"></i>
                       </button>
                     </div>
                   </div>
-                </div>
-                <div *ngIf="uploadError" class="error-message mt-2">
-                  {{ uploadError }}
                 </div>
               </div>
             </div>
@@ -311,3 +321,6 @@
     </div>
   </div>
 </div>
+
+
+

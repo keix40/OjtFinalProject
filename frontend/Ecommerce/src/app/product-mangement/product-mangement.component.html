@@ -76,7 +76,7 @@
                     (error)="product.productImages[0].imageUrl = 'assets/image-not-found.png'"
                   >
                 </div>
-                <span class="product-name">{{ product.productName }}</span>
+                <span class="product-name" [routerLink]="['/admin/products', product.id]" style="cursor: pointer; color: #0d6efd; text-decoration: underline;">{{ product.productName }}</span>
               </div>
             </td>
             <td class="sku-cell">{{ product.productCode }}</td>
