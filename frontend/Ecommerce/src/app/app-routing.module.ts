@@ -16,6 +16,8 @@ import { ProductDisplayComponent } from './product-display/product-display.compo
 import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
 
 import { WishlistComponent } from './wishlist/wishlist.component';
+import { CustomersComponent } from './customers/customers.component';
+import { CreateUserComponent } from './create-user/create-user.component';
 
 
 const routes: Routes = [
@@ -23,23 +25,33 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard] },
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
-  {path: '',
-    component: LayoutComponent,
-    canActivate: [AuthGuard],
-    children: [
-      { path: 'product', component: ProductComponent },
-      { path: 'productlist', component: ProductMangementComponent },
-      { path: 'admin/products/:id', component: ProductDetailComponent },
-      // add more routes here
-    ],},
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: 'cart', component: CartPageComponent },
   { path: 'checkout', component: CheckoutComponent },
   { path: 'checkout/payment', component: PaymentComponent },
   { path: 'checkout/confirm', component: OrderConfirmComponent },
   { path: 'display', component: ProductDisplayComponent },
   { path: 'wishlist', component: WishlistComponent },
+  {
+    path: '',
+    component: LayoutComponent,
+    canActivate: [AuthGuard],
+    children: [
+      { path: 'product', component: ProductComponent },
+      { path: 'productlist', component: ProductMangementComponent },
+      { path: 'admin/products/:id', component: ProductDetailComponent },
+      { path: 'users/customers', component: CustomersComponent },
+      { path: 'users/create', component: CreateUserComponent },
+      // { path: 'users/list', component: UserListComponent},
+      // { path: 'users/edit/:id', component: EditUserComponent},
+      // { path: 'users/delete/:id', component: DeleteUserComponent},
+      // { path: 'users/view/:id', component: ViewUserComponent},
+      // { path: 'users/search', component: SearchUserComponent},
+      // { path: 'users/export', component: ExportUserComponent},
+      // { path: 'users/import', component: ImportUserComponent},
+      { path: '', redirectTo: 'home', pathMatch: 'full' }
+    ]
+  },
+  { path: '**', redirectTo: 'home', pathMatch: 'full' }
 ];
 
 @NgModule({

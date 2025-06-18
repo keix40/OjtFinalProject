@@ -38,6 +38,8 @@ import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
 import { ProductDisplayComponent } from './product-display/product-display.component';
 import { WishlistComponent } from './wishlist/wishlist.component';
+import { CustomersComponent } from './customers/customers.component';
+import { CreateUserComponent } from './create-user/create-user.component';
 
 
 
@@ -69,7 +71,9 @@ import { WishlistComponent } from './wishlist/wishlist.component';
     ProductComponent,
     ProductMangementComponent,
     ProductDisplayComponent,
-    WishlistComponent
+    WishlistComponent,
+    CustomersComponent,
+    CreateUserComponent
   ],
   imports: [
     BrowserModule,

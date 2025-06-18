@@ -10,11 +10,24 @@ import { AuthService } from '../../auth/auth.service';
 })
 export class SidebarComponent {
   isProductsOpen = false;
+  isUsersOpen: boolean = false;
+  isOrdersOpen: boolean = false;
+  isContentOpen: boolean = false;
+  isSettingsOpen: boolean = false;
+  // Add to your component
+  totalCustomers: number = 0;
+  vipCount: number = 0;
+  blacklistCount: number = 0;
+  adminCount: number = 0;
+  suspiciousLogins: number = 0;
+  recentSecurityEvents: number = 0;
+
+  // Fetch these values from your backend
 
   constructor(
     private router: Router,
     private authService: AuthService
-  ) {}
+  ) { }
 
   logout() {
     this.authService.logout();
