@@ -1,0 +1,769 @@
+/* Unique VIP Theme Colors */
+
+
+/* Container and Layout */
+.vip-customers-container {
+  background: var(--vip-bg);
+  min-height: 100vh;
+  padding-bottom: 2rem;
+  color: var(--vip-text-dark);
+}
+
+/* Header Styles */
+.page-header {
+  background: linear-gradient(90deg, var(--vip-primary) 0%, var(--vip-gold) 100%);
+  color: var(--vip-text-light);
+  padding: 2.5rem 0 2rem 0;
+  margin-bottom: 2.5rem;
+  border-bottom: 4px solid var(--vip-gold);
+  box-shadow: var(--vip-shadow);
+}
+
+.header-content .page-title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+  color: var(--vip-gold);
+  text-shadow: 0 2px 16px rgba(108, 63, 197, 0.18);
+}
+
+.header-content .page-title i {
+  color: var(--vip-gold);
+  margin-right: 1rem;
+  text-shadow: 0 0 16px rgba(255, 215, 0, 0.3);
+}
+
+.page-description {
+  font-size: 1.15rem;
+  opacity: 0.95;
+  color: #f8f8f8;
+  text-shadow: 0 1px 8px rgba(76, 63, 197, 0.12);
+}
+
+.header-actions .btn {
+  padding: 0.7rem 1.7rem;
+  font-weight: 600;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(32, 207, 207, 0.08);
+}
+
+.header-actions .btn-primary {
+  background: var(--vip-primary-dark);
+  border: 2px solid var(--vip-gold);
+  color: var(--vip-gold);
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(108, 63, 197, 0.13);
+}
+
+.header-actions .btn-primary:hover {
+  background: var(--vip-gold);
+  color: var(--vip-primary-dark);
+  border-color: var(--vip-primary-dark);
+}
+
+.header-actions .btn-outline-info {
+  border-color: var(--vip-teal);
+  color: var(--vip-teal);
+}
+
+.header-actions .btn-outline-info:hover {
+  background: var(--vip-teal);
+  color: var(--vip-text-light);
+  border-color: var(--vip-primary-dark);
+}
+
+.header-actions .btn-outline-secondary {
+  border-color: var(--vip-primary-dark);
+  color: var(--vip-primary-dark);
+  background: #fff;
+}
+
+.header-actions .btn-outline-secondary:hover {
+  background: var(--vip-gold);
+  color: var(--vip-primary-dark);
+  border-color: var(--vip-gold);
+}
+
+/* VIP Statistics Cards */
+.stats-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  box-shadow: var(--vip-shadow);
+  border: 2px solid var(--vip-border);
+  margin-bottom: 1rem;
+  position: relative;
+  transition: box-shadow 0.2s, border 0.2s;
+}
+
+.stats-card:hover {
+  box-shadow: 0 12px 40px rgba(108, 63, 197, 0.13);
+  border-color: var(--vip-primary);
+}
+
+.stats-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #fff;
+  margin-bottom: 1.2rem;
+  background: linear-gradient(135deg, var(--vip-primary), var(--vip-gold));
+  box-shadow: 0 2px 12px rgba(32, 207, 207, 0.12);
+}
+
+.stats-icon.bg-gold { background: linear-gradient(135deg, var(--vip-gold), #fffbe6); color: var(--vip-primary); }
+.stats-icon.bg-success { background: linear-gradient(135deg, #20cfcf, #b2fff6); color: var(--vip-primary); }
+.stats-icon.bg-primary { background: linear-gradient(135deg, var(--vip-primary), #b2a4e6); color: #fff; }
+.stats-icon.bg-info { background: linear-gradient(135deg, #20cfcf, #fff); color: var(--vip-primary); }
+
+.stats-content h3 {
+  font-size: 2.1rem;
+  font-weight: 800;
+  color: var(--vip-primary-dark);
+  margin-bottom: 0.2rem;
+}
+
+.stats-content p {
+  color: var(--vip-primary);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.stats-trend {
+  font-size: 0.95rem;
+  color: var(--vip-teal);
+  font-weight: 600;
+}
+
+.tiers-overview-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--vip-shadow);
+  border: 2px solid var(--vip-border);
+  margin-bottom: 1.5rem;
+}
+
+.tiers-overview-card .card-header {
+  background: linear-gradient(90deg, var(--vip-primary) 0%, var(--vip-gold) 100%);
+  color: var(--vip-gold);
+  border-radius: 18px 18px 0 0;
+  padding: 1.2rem 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 8px rgba(108, 63, 197, 0.12);
+}
+
+.tiers-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  padding: 1.5rem 1rem 1rem 1rem;
+}
+
+.tier-card {
+  flex: 1 1 220px;
+  min-width: 220px;
+  background: linear-gradient(135deg, #fff, #f6f3ff 80%);
+  border: 2px solid var(--vip-border);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(108, 63, 197, 0.06);
+  padding: 1.2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.tier-card:hover {
+  border-color: var(--vip-primary);
+  box-shadow: 0 8px 32px rgba(108, 63, 197, 0.13);
+}
+
+.tier-icon {
+  font-size: 2.2rem;
+  color: var(--vip-primary);
+  margin-bottom: 0.7rem;
+}
+
+.tier-info h6 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--vip-primary-dark);
+  margin-bottom: 0.2rem;
+}
+
+.tier-info p {
+  font-size: 0.95rem;
+  color: var(--vip-primary);
+  margin-bottom: 0.5rem;
+}
+
+.tier-stats {
+  font-size: 0.85rem;
+  color: var(--vip-gold-dark);
+  margin-bottom: 0.5rem;
+}
+
+.tier-benefits {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.benefit-item {
+  font-size: 0.85rem;
+  color: var(--vip-teal);
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+}
+
+.benefit-item i {
+  color: var(--vip-primary);
+  margin-right: 0.4rem;
+}
+
+.more-benefits {
+  font-size: 0.8rem;
+  color: #b39ddb;
+}
+
+/* Filters Card */
+.filters-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: var(--vip-shadow);
+  border: 2px solid var(--vip-border);
+  margin-bottom: 1.5rem;
+}
+
+.filters-card .card-body {
+  padding: 1.2rem 1.5rem;
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--vip-primary);
+  z-index: 2;
+}
+
+.form-control {
+  border-radius: 10px;
+  border: 1.5px solid var(--vip-border);
+  padding-left: 2.2rem;
+}
+
+.form-select {
+  border-radius: 10px;
+  border: 1.5px solid var(--vip-border);
+}
+
+/* Customers Card */
+.customers-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--vip-shadow);
+  border: 2px solid var(--vip-border);
+  margin-bottom: 2rem;
+}
+
+.customers-card .card-header {
+  background: linear-gradient(90deg, var(--vip-primary) 0%, var(--vip-gold) 100%);
+  color: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 1.2rem 1.5rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.selected-count {
+  color: var(--vip-primary);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.table-header {
+  background: var(--vip-table-header);
+  border-bottom: 2px solid var(--vip-primary);
+}
+
+.table-header th {
+  font-weight: 700;
+  color: var(--vip-primary-dark);
+  border-bottom: none;
+  padding: 1.1rem 0.8rem;
+}
+
+.table tbody tr {
+  transition: background-color 0.2s;
+}
+
+.table tbody tr:hover {
+  background-color: var(--vip-table-row) !important;
+}
+
+.table-row-selected {
+  background-color: #fbeee6 !important;
+}
+
+/* Customer Info Styles */
+.customer-info {
+  display: flex;
+  align-items: center;
+}
+
+.customer-avatar {
+  position: relative;
+  margin-right: 1rem;
+}
+
+.avatar-img {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(108, 63, 197, 0.08);
+}
+
+.vip-badge {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: linear-gradient(135deg, var(--vip-gold), var(--vip-primary));
+  color: #fff;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.13);
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.45rem 1.1rem;
+  border-radius: 22px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--vip-gold-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  background: linear-gradient(135deg, var(--vip-gold), var(--vip-primary));
+  box-shadow: 0 2px 8px rgba(108, 63, 197, 0.13);
+  border: 2px solid var(--vip-primary-dark);
+  text-shadow: 0 1px 4px #fff;
+}
+
+.tier-badge i {
+  margin-right: 0.5rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.9rem;
+  border-radius: 18px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.2rem;
+  background: #f6f3ff;
+  color: var(--vip-primary-dark);
+  border: 1.5px solid var(--vip-primary-dark);
+}
+
+.status-badge i {
+  margin-right: 0.4rem;
+}
+
+.segment-badge, .segment-badge-small {
+  display: inline-block;
+  background: var(--vip-teal);
+  color: var(--vip-text-light);
+  border-radius: 12px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-right: 0.3rem;
+  margin-bottom: 0.2rem;
+  box-shadow: 0 1px 4px rgba(32, 207, 207, 0.08);
+}
+
+/* Cards View */
+.cards-container {
+  padding: 1.5rem 0.5rem;
+}
+
+.customer-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--vip-shadow);
+  border: 2px solid var(--vip-border);
+  transition: box-shadow 0.2s, border 0.2s;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+}
+
+.customer-card.selected {
+  border-color: var(--vip-gold);
+  box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.18);
+}
+
+.customer-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 1.2rem 0.5rem 1.2rem;
+  border-radius: 18px 18px 0 0;
+  background: linear-gradient(90deg, #f6f3ff 60%, #fff 100%);
+}
+
+.customer-avatar-large {
+  position: relative;
+}
+
+.customer-avatar-large .avatar-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(108, 63, 197, 0.08);
+}
+
+.vip-badge-large {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, var(--vip-gold), var(--vip-primary));
+  color: #fff;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.13);
+}
+
+.card-selection {
+  margin-left: auto;
+}
+
+.card-body {
+  padding: 1.2rem 1.2rem 0.5rem 1.2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.tier-info-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tier-badge-large {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.3rem;
+  border-radius: 24px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--vip-gold-dark);
+  background: linear-gradient(135deg, var(--vip-gold), var(--vip-primary));
+  box-shadow: 0 2px 8px rgba(108, 63, 197, 0.13);
+  border: 2px solid var(--vip-primary-dark);
+  margin-right: 0.7rem;
+  text-shadow: 0 1px 4px #fff;
+}
+
+.status-badge {
+  margin-left: 0.5rem;
+}
+
+.customer-stats {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  flex: 1;
+  background: #f6f3ff;
+  border-radius: 10px;
+  padding: 0.7rem 0.5rem;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(108, 63, 197, 0.04);
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: #7a5fa4;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--vip-primary);
+  margin-bottom: 0.2rem;
+}
+
+.stat-trend {
+  font-size: 0.85rem;
+  color: var(--vip-teal);
+  font-weight: 600;
+}
+
+.customer-segments {
+  margin-top: 0.5rem;
+}
+
+.segment-badge-small {
+  font-size: 0.75rem;
+  padding: 0.18rem 0.6rem;
+}
+
+.card-footer {
+  background: #f6f3ff;
+  border-top: 2px solid var(--vip-border);
+  border-radius: 0 0 18px 18px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  gap: 0.7rem;
+}
+
+.card-footer .btn {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(32, 207, 207, 0.08);
+}
+
+.card-footer .btn-outline-primary {
+  border-color: var(--vip-primary);
+  color: var(--vip-primary);
+}
+
+.card-footer .btn-outline-primary:hover {
+  background: var(--vip-primary);
+  color: #fff;
+}
+
+.card-footer .btn-outline-success {
+  border-color: var(--vip-teal);
+  color: var(--vip-teal);
+}
+
+.card-footer .btn-outline-success:hover {
+  background: var(--vip-teal);
+  color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .tiers-grid { flex-direction: column; gap: 1rem; }
+  .tier-card { min-width: 0; }
+}
+@media (max-width: 992px) {
+  .stats-card, .customers-card, .tiers-overview-card, .filters-card { padding: 1rem; }
+  .cards-container { padding: 1rem 0.2rem; }
+  .customer-card { min-height: 320px; }
+}
+@media (max-width: 768px) {
+  .page-header { padding: 1.5rem 0 1rem 0; }
+  .header-content .page-title { font-size: 1.5rem; }
+  .stats-card, .customers-card, .tiers-overview-card, .filters-card { border-radius: 10px; }
+  .cards-container { padding: 0.5rem 0; }
+  .customer-card { min-height: 260px; }
+  .header-content .page-title,
+  .stats-content h3,
+  .stats-content p,
+  .table-header th,
+  .customer-name,
+  .customer-info-card .customer-name {
+    color: var(--vip-primary-dark);
+  }
+  .btn,
+  .card-footer .btn,
+  .action-buttons .btn {
+    color: var(--vip-primary-dark);
+    background: #fff;
+    border-color: var(--vip-primary-dark);
+  }
+}
+@media (max-width: 576px) {
+  .page-header { padding: 1rem 0 0.5rem 0; }
+  .header-content .page-title { font-size: 1.1rem; }
+  .stats-card, .customers-card, .tiers-overview-card, .filters-card { padding: 0.5rem; }
+  .cards-container { padding: 0.2rem 0; }
+  .customer-card { min-height: 180px; }
+}
+
+/* Animation Classes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.customer-card,
+.table tbody tr {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Focus States */
+.form-control:focus,
+.form-select:focus,
+.btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(241, 196, 15, 0.25);
+}
+
+/* Custom Scrollbar */
+.tab-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* VIP Glow Effects */
+.tier-badge.tier-diamond,
+.tier-badge-card.tier-diamond,
+.tier-badge-large.tier-diamond {
+  box-shadow: 0 0 20px rgba(52, 152, 219, 0.3);
+}
+
+.tier-badge.tier-gold,
+.tier-badge-card.tier-gold,
+.tier-badge-large.tier-gold {
+  box-shadow: 0 0 20px rgba(241, 196, 15, 0.3);
+}
+
+/* Loading States */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Print Styles */
+@media print {
+  .vip-customers-container {
+    background: white;
+  }
+
+  .page-header,
+  .header-actions,
+  .action-buttons,
+  .table-pagination,
+  .modal {
+    display: none;
+  }
+
+  .stats-card,
+  .customer-card {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+}
+
+/* --- UNIQUE COLORS FOR VIP TIERS: SILVER, GOLD, PLATINUM --- */
+
+.tier-badge.tier-silver,
+.tier-badge-large.tier-silver,
+.vip-badge.tier-silver,
+.vip-badge-large.tier-silver {
+  background: linear-gradient(135deg, #C0C0C0 60%, #f8f8f8 100%);
+  color: #555;
+  border: 2px solid #b0b0b0;
+  box-shadow: 0 2px 8px rgba(192,192,192,0.18);
+}
+
+.tier-badge.tier-gold,
+.tier-badge-large.tier-gold,
+.vip-badge.tier-gold,
+.vip-badge-large.tier-gold {
+  background: linear-gradient(135deg, #FFD700 60%, #fffbe6 100%);
+  color: #8a6d1b;
+  border: 2px solid #FFD700;
+  box-shadow: 0 2px 8px rgba(255,215,0,0.18);
+}
+
+.tier-badge.tier-platinum,
+.tier-badge-large.tier-platinum,
+.vip-badge.tier-platinum,
+.vip-badge-large.tier-platinum {
+  background: linear-gradient(135deg, #B3E0FF 60%, #e6f7ff 100%);
+  color: #1a4d6c;
+  border: 2px solid #7ec6e3;
+  box-shadow: 0 2px 8px rgba(179,224,255,0.18);
+}
+
+/* Ensure icon color inside badge is also visible */
+.tier-badge.tier-silver i,
+.tier-badge-large.tier-silver i,
+.vip-badge.tier-silver i,
+.vip-badge-large.tier-silver i {
+  color: #888;
+}
+.tier-badge.tier-gold i,
+.tier-badge-large.tier-gold i,
+.vip-badge.tier-gold i,
+.vip-badge-large.tier-gold i {
+  color: #FFD700;
+}
+.tier-badge.tier-platinum i,
+.tier-badge-large.tier-platinum i,
+.vip-badge.tier-platinum i,
+.vip-badge-large.tier-platinum i {
+  color: #1a4d6c;
+}
+  

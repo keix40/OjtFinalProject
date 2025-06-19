@@ -10,6 +10,86 @@
   --card-shadow: 0 2px 8px rgba(37,99,235,0.08);
 }
 
+:root {
+  --primary-color: #2563eb;
+  --secondary-color: #64748b;
+  --success-color: #059669;
+  --warning-color: #d97706;
+  --danger-color: #dc2626;
+  --info-color: #0891b2;
+
+  --diamond-color: #3b82f6;
+  --platinum-color: #6b7280;
+  --gold-color: #f59e0b;
+  --emerald-color: #10b981;
+
+  --border-color: #e2e8f0;
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-muted: #f1f5f9;
+}
+
+:root {
+  --vip-primary: #6c3fc5;
+  --vip-primary-dark: #4b278a;
+  --vip-gold: #ffd700;
+  --vip-gold-dark: #bfa100;
+  --vip-teal: #20cfcf;
+  --vip-bg: #f6f3ff;
+  --vip-border: #e0d7f7;
+  --vip-shadow: 0 6px 32px rgba(108, 63, 197, 0.08);
+  --vip-text-dark: #2c1a4d;
+  --vip-text-light: #fff;
+  --vip-table-header: #e6d6ff;
+  --vip-table-row: #f3eaff;
+}
+
+/* --- CLEAN, SOLID COLORS FOR VIP TIERS AND UI --- */
+:root {
+  --vip-silver: #e0e0e0;
+  --vip-gold: #ffd700;
+  --vip-platinum: #b3e0ff;
+  --vip-primary: #6c63ff;
+  --vip-bg: #f8f9fa;
+  --vip-card-bg: #fff;
+  --vip-table-header: #f0f0f0;
+  --vip-text: #222;
+}
+
+:root {
+  --primary-color: #2563eb;
+  --secondary-color: #64748b;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+  --info-color: #06b6d4;
+  --light-bg: #f8fafc;
+  --white: #ffffff;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --border-radius: 8px;
+  --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --box-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
 body, html {
     font-family: 'Poppins', sans-serif;
     margin: 0;

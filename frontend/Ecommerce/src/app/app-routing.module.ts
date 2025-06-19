@@ -18,6 +18,12 @@ import { ProductDetailComponent } from './admin/product-detail/product-detail.co
 import { WishlistComponent } from './wishlist/wishlist.component';
 import { CustomersComponent } from './customers/customers.component';
 import { CreateUserComponent } from './create-user/create-user.component';
+import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
+import { AdminUsersComponent } from './admin-users/admin-users.component';
+import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
+import { VipCustomersComponent } from './vip-customers/vip-customers.component';
+import { BlacklistComponent } from './blacklist/blacklist.component';
+import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
 
 
 const routes: Routes = [
@@ -41,13 +47,12 @@ const routes: Routes = [
       { path: 'admin/products/:id', component: ProductDetailComponent },
       { path: 'users/customers', component: CustomersComponent },
       { path: 'users/create', component: CreateUserComponent },
-      // { path: 'users/list', component: UserListComponent},
-      // { path: 'users/edit/:id', component: EditUserComponent},
-      // { path: 'users/delete/:id', component: DeleteUserComponent},
-      // { path: 'users/view/:id', component: ViewUserComponent},
-      // { path: 'users/search', component: SearchUserComponent},
-      // { path: 'users/export', component: ExportUserComponent},
-      // { path: 'users/import', component: ImportUserComponent},
+      { path: 'users/activity', component: ActivityLogsComponent},
+      { path: 'users/admins', component: AdminUsersComponent},
+      { path: 'users/roles', component: RolesPermissionsComponent},
+      { path: 'users/vip', component: VipCustomersComponent},
+      { path: 'users/blacklist', component: BlacklistComponent},
+      { path: 'users/login-attempts', component: LoginAttemptsComponent},
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },

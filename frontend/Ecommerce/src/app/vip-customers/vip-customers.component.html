@@ -1,0 +1,802 @@
+<div class="vip-customers-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="container-fluid">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="header-content">
+              <h1 class="page-title">
+                <i class="fas fa-crown"></i>
+                VIP Customers
+              </h1>
+              <p class="page-description">Manage high-value customers and build lasting loyalty relationships</p>
+            </div>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <div class="header-actions">
+              <button class="btn btn-outline-secondary me-2" (click)="refreshData()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Refresh
+              </button>
+              <button class="btn btn-outline-info me-2" (click)="exportVipCustomers()">
+                <i class="fas fa-download me-1"></i>
+                Export
+              </button>
+              <div class="dropdown d-inline-block me-2">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-bullhorn me-1"></i>
+                  Bulk Actions
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" (click)="sendTargetedPromotion()">
+                    <i class="fas fa-percentage me-2"></i>Send Promotion
+                  </a></li>
+                  <li><a class="dropdown-item" (click)="sendExclusiveOffer()">
+                    <i class="fas fa-gift me-2"></i>Exclusive Offer
+                  </a></li>
+                  <li><a class="dropdown-item" (click)="inviteToEvent()">
+                    <i class="fas fa-calendar me-2"></i>Event Invitation
+                  </a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" (click)="updateVipTier()">
+                    <i class="fas fa-star me-2"></i>Update VIP Tier
+                  </a></li>
+                </ul>
+              </div>
+              <button class="btn btn-primary" (click)="openAddVipModal()">
+                <i class="fas fa-user-plus me-1"></i>
+                Add VIP
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Statistics Cards -->
+        <div class="col-12 mb-4">
+          <div class="row">
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-gold">
+                  <i class="fas fa-crown"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>{{ totalVipCustomers }}</h3>
+                  <p>Total VIP Customers</p>
+                  <div class="stats-trend">
+                    <span class="trend-up">
+                      <i class="fas fa-arrow-up"></i>
+                      +12% this month
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-success">
+                  <i class="fas fa-dollar-sign"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>${{ totalVipRevenue | number:'1.0-0' }}</h3>
+                  <p>VIP Revenue (YTD)</p>
+                  <div class="stats-trend">
+                    <span class="trend-up">
+                      <i class="fas fa-arrow-up"></i>
+                      +18% vs last year
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-primary">
+                  <i class="fas fa-shopping-bag"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>${{ averageOrderValue | number:'1.0-0' }}</h3>
+                  <p>Avg Order Value</p>
+                  <div class="stats-trend">
+                    <span class="trend-up">
+                      <i class="fas fa-arrow-up"></i>
+                      +8% vs regular
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-info">
+                  <i class="fas fa-heart"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>{{ loyaltyScore }}%</h3>
+                  <p>Loyalty Score</p>
+                  <div class="stats-trend">
+                    <span class="trend-up">
+                      <i class="fas fa-arrow-up"></i>
+                      +5% this quarter
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- VIP Tiers Overview -->
+        <div class="col-12 mb-4">
+          <div class="tiers-overview-card">
+            <div class="card-header">
+              <h5><i class="fas fa-layer-group me-2"></i>VIP Tiers Overview</h5>
+            </div>
+            <div class="card-body">
+              <div class="tiers-grid">
+                <div *ngFor="let tier of vipTiers" class="tier-card" [ngClass]="'tier-' + tier.level">
+                  <div class="tier-icon">
+                    <i [class]="tier.icon"></i>
+                  </div>
+                  <div class="tier-info">
+                    <h6>{{ tier.name }}</h6>
+                    <p>{{ tier.description }}</p>
+                    <div class="tier-stats">
+                      <span class="customer-count">{{ tier.customerCount }} customers</span>
+                      <span class="revenue-share">${{ tier.revenue | number:'1.0-0' }} revenue</span>
+                    </div>
+                  </div>
+                  <div class="tier-benefits">
+                    <div class="benefit-item" *ngFor="let benefit of tier.benefits.slice(0, 2)">
+                      <i class="fas fa-check"></i>
+                      {{ benefit }}
+                    </div>
+                    <div class="more-benefits" *ngIf="tier.benefits.length > 2">
+                      +{{ tier.benefits.length - 2 }} more benefits
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Filters and Search -->
+        <div class="col-12 mb-4">
+          <div class="filters-card">
+            <div class="card-body">
+              <div class="row align-items-end">
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Search Customers</label>
+                  <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input 
+                      type="text" 
+                      class="form-control ps-4" 
+                      placeholder="Search by name, email..."
+                      [(ngModel)]="searchTerm"
+                      (input)="applyFilters()"
+                    >
+                  </div>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">VIP Tier</label>
+                  <select class="form-select" [(ngModel)]="tierFilter" (change)="applyFilters()">
+                    <option value="">All Tiers</option>
+                    <option value="platinum">Platinum</option>
+                    <option value="gold">Gold</option>
+                    <option value="silver">Silver</option>
+                  </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Status</label>
+                  <select class="form-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Segment</label>
+                  <select class="form-select" [(ngModel)]="segmentFilter" (change)="applyFilters()">
+                    <option value="">All Segments</option>
+                    <option value="high_spender">High Spender</option>
+                    <option value="frequent_buyer">Frequent Buyer</option>
+                    <option value="influencer">Influencer</option>
+                    <option value="wholesale">Wholesale</option>
+                  </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">View Mode</label>
+                  <div class="btn-group w-100" role="group">
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-secondary"
+                      [class.active]="viewMode === 'table'"
+                      (click)="setViewMode('table')"
+                    >
+                      <i class="fas fa-list"></i>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-outline-secondary"
+                      [class.active]="viewMode === 'cards'"
+                      (click)="setViewMode('cards')"
+                    >
+                      <i class="fas fa-th"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-1 mb-3">
+                  <button class="btn btn-outline-warning w-100" (click)="clearFilters()">
+                    <i class="fas fa-times"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- VIP Customers List -->
+        <div class="col-12">
+          <div class="customers-card">
+            <div class="card-header">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <h5>
+                    <i class="fas fa-users me-2"></i>
+                    VIP Customers ({{ filteredCustomers.length }})
+                  </h5>
+                </div>
+                <div class="col-md-6 text-md-end">
+                  <div class="table-controls">
+                    <div class="form-check me-3" *ngIf="viewMode === 'table'">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        id="selectAll"
+                        (change)="selectAll($event)"
+                        [checked]="selectedCustomers.length === paginatedCustomers.length && paginatedCustomers.length > 0"
+                      >
+                      <label class="form-check-label" for="selectAll">
+                        Select All
+                      </label>
+                    </div>
+                    <span class="selected-count" *ngIf="selectedCustomers.length > 0">
+                      {{ selectedCustomers.length }} selected
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <!-- Table View -->
+              <div *ngIf="viewMode === 'table'" class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="table-header">
+                    <tr>
+                      <th width="50">
+                        <input 
+                          type="checkbox" 
+                          class="form-check-input"
+                          (change)="selectAll($event)"
+                          [checked]="selectedCustomers.length === paginatedCustomers.length && paginatedCustomers.length > 0"
+                        >
+                      </th>
+                      <th>Customer</th>
+                      <th>VIP Tier</th>
+                      <th>Total Spent</th>
+                      <th>Orders</th>
+                      <th>Last Order</th>
+                      <th>Segment</th>
+                      <th>Status</th>
+                      <th width="120">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr 
+                      *ngFor="let customer of paginatedCustomers; trackBy: trackByCustomerId"
+                      [class.table-row-selected]="selectedCustomers.includes(customer.id)"
+                    >
+                      <td>
+                        <input 
+                          type="checkbox" 
+                          class="form-check-input"
+                          [checked]="selectedCustomers.includes(customer.id)"
+                          (change)="toggleCustomerSelection(customer.id, $event)"
+                        >
+                      </td>
+                      <td>
+                        <div class="customer-info">
+                          <div class="customer-avatar">
+                            <img [src]="customer.avatar" [alt]="customer.name" class="avatar-img">
+                            <div class="vip-badge" [ngClass]="'tier-' + customer.vipTier">
+                              <i [class]="getVipIcon(customer.vipTier)"></i>
+                            </div>
+                          </div>
+                          <div class="customer-details">
+                            <div class="customer-name">{{ customer.name }}</div>
+                            <div class="customer-email">{{ customer.email }}</div>
+                            <div class="customer-location" *ngIf="customer.location">
+                              <i class="fas fa-map-marker-alt me-1"></i>
+                              {{ customer.location }}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="tier-badge" [ngClass]="'tier-' + customer.vipTier">
+                          <i [class]="getVipIcon(customer.vipTier)"></i>
+                          {{ customer.vipTier | titlecase }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="spending-info">
+                          <div class="total-spent">${{ customer.totalSpent | number:'1.0-0' }}</div>
+                          <div class="spending-trend" [ngClass]="customer.spendingTrend">
+                            <i [class]="customer.spendingTrend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                            {{ customer.spendingChange }}%
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="orders-info">
+                          <div class="order-count">{{ customer.totalOrders }}</div>
+                          <div class="avg-order">Avg: ${{ customer.avgOrderValue | number:'1.0-0' }}</div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="last-order-info">
+                          <div class="order-date">{{ customer.lastOrderDate | date:'MMM dd, yyyy' }}</div>
+                          <div class="order-amount">${{ customer.lastOrderAmount | number:'1.0-0' }}</div>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="segments">
+                          <span 
+                            *ngFor="let segment of customer.segments" 
+                            class="segment-badge"
+                            [ngClass]="'segment-' + segment"
+                          >
+                            {{ getSegmentLabel(segment) }}
+                          </span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="status-badge" [ngClass]="'status-' + customer.status">
+                          <i [class]="getStatusIcon(customer.status)"></i>
+                          {{ customer.status | titlecase }}
+                        </span>
+                      </td>
+                      <td>
+                        <div class="action-buttons">
+                          <button 
+                            class="btn btn-sm btn-outline-primary" 
+                            (click)="viewCustomerDetails(customer)"
+                            title="View Details"
+                          >
+                            <i class="fas fa-eye"></i>
+                          </button>
+                          <div class="dropdown d-inline-block">
+                            <button 
+                              class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                              type="button" 
+                              data-bs-toggle="dropdown"
+                            >
+                              <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                              <li><a class="dropdown-item" (click)="editCustomer(customer)">
+                                <i class="fas fa-edit me-2"></i>Edit
+                              </a></li>
+                              <li><a class="dropdown-item" (click)="sendPersonalOffer(customer)">
+                                <i class="fas fa-gift me-2"></i>Send Offer
+                              </a></li>
+                              <li><a class="dropdown-item" (click)="viewOrderHistory(customer)">
+                                <i class="fas fa-history me-2"></i>Order History
+                              </a></li>
+                              <li><hr class="dropdown-divider"></li>
+                              <li><a class="dropdown-item" (click)="changeVipTier(customer)">
+                                <i class="fas fa-star me-2"></i>Change Tier
+                              </a></li>
+                              <li><a class="dropdown-item text-danger" (click)="removeVipStatus(customer)">
+                                <i class="fas fa-user-minus me-2"></i>Remove VIP
+                              </a></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+  
+              <!-- Cards View -->
+              <div *ngIf="viewMode === 'cards'" class="cards-container">
+                <div class="row">
+                  <div 
+                    *ngFor="let customer of paginatedCustomers; trackBy: trackByCustomerId" 
+                    class="col-xl-4 col-lg-6 mb-4"
+                  >
+                    <div 
+                      class="customer-card"
+                      [class.selected]="selectedCustomers.includes(customer.id)"
+                      (click)="toggleCustomerSelection(customer.id, $event)"
+                    >
+                      <div class="card-header">
+                        <div class="customer-avatar-large">
+                          <img [src]="customer.avatar" [alt]="customer.name" class="avatar-img">
+                          <div class="vip-badge-large" [ngClass]="'tier-' + customer.vipTier">
+                            <i [class]="getVipIcon(customer.vipTier)"></i>
+                          </div>
+                        </div>
+                        <div class="customer-info-card">
+                          <div class="customer-name">{{ customer.name }}</div>
+                          <div class="customer-email">{{ customer.email }}</div>
+                          <div class="customer-location" *ngIf="customer.location">
+                            <i class="fas fa-map-marker-alt me-1"></i>
+                            {{ customer.location }}
+                          </div>
+                        </div>
+                        <div class="card-selection">
+                          <input 
+                            type="checkbox" 
+                            class="form-check-input"
+                            [checked]="selectedCustomers.includes(customer.id)"
+                            (click)="$event.stopPropagation()"
+                          >
+                        </div>
+                      </div>
+                      <div class="card-body">
+                        <div class="tier-info-card">
+                          <span class="tier-badge-large" [ngClass]="'tier-' + customer.vipTier">
+                            <i [class]="getVipIcon(customer.vipTier)"></i>
+                            {{ customer.vipTier | titlecase }} VIP
+                          </span>
+                          <span class="status-badge" [ngClass]="'status-' + customer.status">
+                            <i [class]="getStatusIcon(customer.status)"></i>
+                            {{ customer.status | titlecase }}
+                          </span>
+                        </div>
+                        <div class="customer-stats">
+                          <div class="stat-item">
+                            <div class="stat-label">Total Spent</div>
+                            <div class="stat-value">${{ customer.totalSpent | number:'1.0-0' }}</div>
+                            <div class="stat-trend" [ngClass]="customer.spendingTrend">
+                              <i [class]="customer.spendingTrend === 'up' ? 'fas fa-arrow-up' : 'fas fa-arrow-down'"></i>
+                              {{ customer.spendingChange }}%
+                            </div>
+                          </div>
+                          <div class="stat-item">
+                            <div class="stat-label">Total Orders</div>
+                            <div class="stat-value">{{ customer.totalOrders }}</div>
+                            <div class="stat-sub">Avg: ${{ customer.avgOrderValue | number:'1.0-0' }}</div>
+                          </div>
+                          <div class="stat-item">
+                            <div class="stat-label">Last Order</div>
+                            <div class="stat-value">{{ customer.lastOrderDate | date:'MMM dd' }}</div>
+                            <div class="stat-sub">${{ customer.lastOrderAmount | number:'1.0-0' }}</div>
+                          </div>
+                        </div>
+                        <div class="customer-segments">
+                          <span 
+                            *ngFor="let segment of customer.segments" 
+                            class="segment-badge-small"
+                            [ngClass]="'segment-' + segment"
+                          >
+                            {{ getSegmentLabel(segment) }}
+                          </span>
+                        </div>
+                      </div>
+                      <div class="card-footer">
+                        <button class="btn btn-outline-primary btn-sm" (click)="viewCustomerDetails(customer); $event.stopPropagation()">
+                          <i class="fas fa-eye me-1"></i>View Details
+                        </button>
+                        <button class="btn btn-outline-success btn-sm" (click)="sendPersonalOffer(customer); $event.stopPropagation()">
+                          <i class="fas fa-gift me-1"></i>Send Offer
+                        </button>
+                        <div class="dropdown d-inline-block">
+                          <button 
+                            class="btn btn-outline-secondary btn-sm dropdown-toggle" 
+                            type="button" 
+                            data-bs-toggle="dropdown"
+                            (click)="$event.stopPropagation()"
+                          >
+                            <i class="fas fa-ellipsis-v"></i>
+                          </button>
+                          <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" (click)="editCustomer(customer)">
+                              <i class="fas fa-edit me-2"></i>Edit
+                            </a></li>
+                            <li><a class="dropdown-item" (click)="changeVipTier(customer)">
+                              <i class="fas fa-star me-2"></i>Change Tier
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" (click)="removeVipStatus(customer)">
+                              <i class="fas fa-user-minus me-2"></i>Remove VIP
+                            </a></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+  
+              <!-- Empty State -->
+              <div *ngIf="filteredCustomers.length === 0" class="empty-state">
+                <div class="empty-icon">
+                  <i class="fas fa-crown"></i>
+                </div>
+                <h4>No VIP Customers Found</h4>
+                <p>No customers match your current filters. Try adjusting your search criteria.</p>
+                <button class="btn btn-primary" (click)="clearFilters()">
+                  <i class="fas fa-times me-1"></i>
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+  
+            <!-- Pagination -->
+            <div class="card-footer" *ngIf="filteredCustomers.length > 0">
+              <div class="row align-items-center">
+                <div class="col-md-6">
+                  <div class="pagination-info">
+                    Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
+                    {{ Math.min(currentPage * itemsPerPage, filteredCustomers.length) }} 
+                    of {{ filteredCustomers.length }} customers
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <nav>
+                    <ul class="pagination justify-content-end mb-0">
+                      <li class="page-item" [class.disabled]="currentPage === 1">
+                        <a class="page-link" (click)="goToPage(currentPage - 1)">Previous</a>
+                      </li>
+                      <li 
+                        *ngFor="let page of getPageNumbers()" 
+                        class="page-item"
+                        [class.active]="page === currentPage"
+                      >
+                        <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+                      </li>
+                      <li class="page-item" [class.disabled]="currentPage === totalPages">
+                        <a class="page-link" (click)="goToPage(currentPage + 1)">Next</a>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Add VIP Customer Modal -->
+    <div class="modal fade" id="addVipModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-user-plus me-2"></i>
+              Add VIP Customer
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form [formGroup]="vipForm" (ngSubmit)="saveVipCustomer()">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="customerSearch" class="form-label">Search Customer *</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="customerSearch"
+                    formControlName="customerSearch"
+                    placeholder="Search by name or email..."
+                  >
+                  <div class="search-results" *ngIf="searchResults.length > 0">
+                    <div 
+                      *ngFor="let result of searchResults" 
+                      class="search-result-item"
+                      (click)="selectCustomerFromSearch(result)"
+                    >
+                      <img [src]="result.avatar" [alt]="result.name" class="result-avatar">
+                      <div class="result-info">
+                        <div class="result-name">{{ result.name }}</div>
+                        <div class="result-email">{{ result.email }}</div>
+                      </div>
+                      <div class="result-stats">
+                        <small>{{ result.totalOrders }} orders • ${{ result.totalSpent | number:'1.0-0' }}</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="vipTier" class="form-label">VIP Tier *</label>
+                  <select class="form-select" id="vipTier" formControlName="vipTier">
+                    <option value="">Select VIP Tier</option>
+                    <option value="silver">Silver VIP</option>
+                    <option value="gold">Gold VIP</option>
+                    <option value="platinum">Platinum VIP</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Segments</label>
+                  <div class="segment-checkboxes">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="highSpender" formControlName="highSpender">
+                      <label class="form-check-label" for="highSpender">High Spender</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="frequentBuyer" formControlName="frequentBuyer">
+                      <label class="form-check-label" for="frequentBuyer">Frequent Buyer</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="influencer" formControlName="influencer">
+                      <label class="form-check-label" for="influencer">Influencer</label>
+                    </div>
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" id="wholesale" formControlName="wholesale">
+                      <label class="form-check-label" for="wholesale">Wholesale Buyer</label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="specialNotes" class="form-label">Special Notes</label>
+                  <textarea 
+                    class="form-control" 
+                    id="specialNotes"
+                    formControlName="specialNotes"
+                    rows="4"
+                    placeholder="Add any special notes about this VIP customer..."
+                  ></textarea>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveVipCustomer()" [disabled]="vipForm.invalid">
+              <i class="fas fa-save me-1"></i>
+              Add VIP Customer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Customer Details Modal -->
+    <div class="modal fade" id="customerDetailsModal" tabindex="-1" *ngIf="selectedCustomerDetails">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-user me-2"></i>
+              {{ selectedCustomerDetails.name }} - VIP Details
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="customer-profile">
+                  <div class="profile-avatar">
+                    <img [src]="selectedCustomerDetails.avatar" [alt]="selectedCustomerDetails.name">
+                    <div class="vip-badge-profile" [ngClass]="'tier-' + selectedCustomerDetails.vipTier">
+                      <i [class]="getVipIcon(selectedCustomerDetails.vipTier)"></i>
+                    </div>
+                  </div>
+                  <div class="profile-info">
+                    <h6>{{ selectedCustomerDetails.name }}</h6>
+                    <p>{{ selectedCustomerDetails.email }}</p>
+                    <div class="profile-tier">
+                      <span class="tier-badge-large" [ngClass]="'tier-' + selectedCustomerDetails.vipTier">
+                        <i [class]="getVipIcon(selectedCustomerDetails.vipTier)"></i>
+                        {{ selectedCustomerDetails.vipTier | titlecase }} VIP
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="customer-metrics">
+                  <div class="row">
+                    <div class="col-md-3">
+                      <div class="metric-card">
+                        <div class="metric-value">${{ selectedCustomerDetails.totalSpent | number:'1.0-0' }}</div>
+                        <div class="metric-label">Total Spent</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="metric-card">
+                        <div class="metric-value">{{ selectedCustomerDetails.totalOrders }}</div>
+                        <div class="metric-label">Total Orders</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="metric-card">
+                        <div class="metric-value">${{ selectedCustomerDetails.avgOrderValue | number:'1.0-0' }}</div>
+                        <div class="metric-label">Avg Order</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="metric-card">
+                        <div class="metric-value">{{ selectedCustomerDetails.loyaltyPoints | number:'1.0-0' }}</div>
+                        <div class="metric-label">Loyalty Points</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="customer-details-tabs mt-4">
+              <ul class="nav nav-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#orders-tab">
+                    <i class="fas fa-shopping-bag me-1"></i>Recent Orders
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#benefits-tab">
+                    <i class="fas fa-gift me-1"></i>VIP Benefits
+                  </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button class="nav-link" data-bs-toggle="tab" data-bs-target="#activity-tab">
+                    <i class="fas fa-chart-line me-1"></i>Activity
+                  </button>
+                </li>
+              </ul>
+              <div class="tab-content">
+                <div class="tab-pane fade show active" id="orders-tab">
+                  <div class="recent-orders">
+                    <div *ngFor="let order of selectedCustomerDetails.recentOrders" class="order-item">
+                      <div class="order-info">
+                        <div class="order-id">#{{ order.id }}</div>
+                        <div class="order-date">{{ order.date | date:'MMM dd, yyyy' }}</div>
+                      </div>
+                      <div class="order-details">
+                        <div class="order-amount">${{ order.amount | number:'1.0-0' }}</div>
+                        <div class="order-status" [ngClass]="'status-' + order.status">{{ order.status | titlecase }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="benefits-tab">
+                  <div class="vip-benefits">
+                    <div *ngFor="let benefit of getVipBenefits(selectedCustomerDetails.vipTier)" class="benefit-item">
+                      <i class="fas fa-check-circle"></i>
+                      <span>{{ benefit }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tab-pane fade" id="activity-tab">
+                  <div class="activity-chart">
+                    <p>Customer activity and engagement metrics would be displayed here.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-outline-primary" (click)="editCustomer(selectedCustomerDetails)">
+              <i class="fas fa-edit me-1"></i>Edit Customer
+            </button>
+            <button type="button" class="btn btn-primary" (click)="sendPersonalOffer(selectedCustomerDetails)">
+              <i class="fas fa-gift me-1"></i>Send Personal Offer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  

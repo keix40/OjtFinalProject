@@ -40,6 +40,11 @@ import { ProductDisplayComponent } from './product-display/product-display.compo
 import { WishlistComponent } from './wishlist/wishlist.component';
 import { CustomersComponent } from './customers/customers.component';
 import { CreateUserComponent } from './create-user/create-user.component';
+import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
+import { AdminUsersComponent } from './admin-users/admin-users.component';
+import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
+import { VipCustomersComponent } from './vip-customers/vip-customers.component';
+import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
 
 
 
@@ -73,7 +78,12 @@ import { CreateUserComponent } from './create-user/create-user.component';
     ProductDisplayComponent,
     WishlistComponent,
     CustomersComponent,
-    CreateUserComponent
+    CreateUserComponent,
+    ActivityLogsComponent,
+    AdminUsersComponent,
+    RolesPermissionsComponent,
+    VipCustomersComponent,
+    LoginAttemptsComponent,
   ],
   imports: [
     BrowserModule,
@@ -85,7 +95,7 @@ import { CreateUserComponent } from './create-user/create-user.component';
     GoogleMapsModule,
     RouterModule,
     CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent // Standalone component must be imported here
+    CartSidebarComponent, // Standalone component must be imported here
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
