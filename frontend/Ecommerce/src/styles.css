@@ -54,17 +54,7 @@
   --vip-table-row: #f3eaff;
 }
 
-/* --- CLEAN, SOLID COLORS FOR VIP TIERS AND UI --- */
-:root {
-  --vip-silver: #e0e0e0;
-  --vip-gold: #ffd700;
-  --vip-platinum: #b3e0ff;
-  --vip-primary: #6c63ff;
-  --vip-bg: #f8f9fa;
-  --vip-card-bg: #fff;
-  --vip-table-header: #f0f0f0;
-  --vip-text: #222;
-}
+
 
 :root {
   --primary-color: #2563eb;

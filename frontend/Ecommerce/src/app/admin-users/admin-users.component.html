@@ -214,7 +214,7 @@
                       <td>
                         <div class="admin-info">
                           <div class="admin-avatar">
-                            <img [src]="admin.avatar" [alt]="admin.name" class="avatar-img">
+                            <img [src]="imageService.getAvatarImageUrl(admin)" [alt]="admin.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', admin.name)">
                             <span class="online-indicator" [class.online]="admin.isOnline"></span>
                           </div>
                           <div class="admin-details">
@@ -320,7 +320,7 @@
                     <div class="admin-card" [class.selected]="selectedAdmins.includes(admin.id)">
                       <div class="card-header">
                         <div class="admin-avatar-large">
-                          <img [src]="admin.avatar" [alt]="admin.name" class="avatar-img">
+                          <img [src]="imageService.getAvatarImageUrl(admin)" [alt]="admin.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', admin.name)">
                           <span class="online-indicator" [class.online]="admin.isOnline"></span>
                         </div>
                         <div class="admin-info-card">

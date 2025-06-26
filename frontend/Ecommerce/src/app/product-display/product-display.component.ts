@@ -3,6 +3,7 @@ import { ProductDTO } from '../product';
 import { ProductService } from '../services/product.service';
 import { CartService } from '../services/cart.service';
 import Swal from 'sweetalert2';
+import { ImageService } from '../services/image.service';
 
 interface Product {
   id: number;
@@ -90,7 +91,10 @@ export class ProductDisplayComponent{
   materialOptions = ['Cotton', 'Upholstered', 'Metal', 'Wood'];
   categoryOptions = ['Chair', 'Divan', 'Sofa', 'Sectional'];
 
-  constructor(private cartService: CartService) {}
+  constructor(
+    private cartService: CartService,
+    public imageService: ImageService
+  ) {}
 
   // Toggle sidebar
   toggleFilter() {

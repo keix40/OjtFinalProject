@@ -312,7 +312,7 @@
                       <td>
                         <div class="customer-info">
                           <div class="customer-avatar">
-                            <img [src]="customer.avatar" [alt]="customer.name" class="avatar-img">
+                            <img [src]="imageService.getAvatarImageUrl(customer)" [alt]="customer.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', customer.name)">
                             <div class="vip-badge" [ngClass]="'tier-' + customer.vipTier">
                               <i [class]="getVipIcon(customer.vipTier)"></i>
                             </div>
@@ -428,7 +428,7 @@
                     >
                       <div class="card-header">
                         <div class="customer-avatar-large">
-                          <img [src]="customer.avatar" [alt]="customer.name" class="avatar-img">
+                          <img [src]="imageService.getAvatarImageUrl(customer)" [alt]="customer.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', customer.name)">
                           <div class="vip-badge-large" [ngClass]="'tier-' + customer.vipTier">
                             <i [class]="getVipIcon(customer.vipTier)"></i>
                           </div>
@@ -605,7 +605,7 @@
                       class="search-result-item"
                       (click)="selectCustomerFromSearch(result)"
                     >
-                      <img [src]="result.avatar" [alt]="result.name" class="result-avatar">
+                      <img [src]="imageService.getAvatarImageUrl(result)" [alt]="result.name" class="result-avatar" (error)="imageService.handleImageError($event, 'avatar', result.name)">
                       <div class="result-info">
                         <div class="result-name">{{ result.name }}</div>
                         <div class="result-email">{{ result.email }}</div>
@@ -688,7 +688,7 @@
               <div class="col-md-4">
                 <div class="customer-profile">
                   <div class="profile-avatar">
-                    <img [src]="selectedCustomerDetails.avatar" [alt]="selectedCustomerDetails.name">
+                    <img [src]="imageService.getAvatarImageUrl(selectedCustomerDetails)" [alt]="selectedCustomerDetails.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', selectedCustomerDetails.name)">
                     <div class="vip-badge-profile" [ngClass]="'tier-' + selectedCustomerDetails.vipTier">
                       <i [class]="getVipIcon(selectedCustomerDetails.vipTier)"></i>
                     </div>

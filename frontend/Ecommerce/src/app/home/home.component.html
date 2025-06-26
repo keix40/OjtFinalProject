@@ -191,7 +191,7 @@
             (click)="goToProductDetail(product.id)"
           >
             <div class="product-img-wrapper mb-3" style="height: 140px; overflow: hidden;">
-              <img [src]="getProductImageUrl(product)" class="product-img" [alt]="product.productName">
+              <img [src]="imageService.getProductImageUrl(product)" class="product-img" [alt]="product.productName" (error)="imageService.handleImageError($event, 'product')">
             </div>
             <div class="card-body p-0 d-flex flex-column">
               <h6 class="card-title fw-bold mb-1 text-truncate" style="max-width: 100%;">{{ product.productName }}</h6>

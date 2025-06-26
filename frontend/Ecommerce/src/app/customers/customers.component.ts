@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ImageService } from '../services/image.service';
 
 interface Customer {
   id: string;
@@ -54,6 +55,11 @@ export class CustomersComponent implements OnInit {
 
   // Utility property for template
   Math = Math;
+
+  constructor(
+    public imageService: ImageService
+  ) {
+  }
 
   ngOnInit(): void {
     this.loadCustomers();

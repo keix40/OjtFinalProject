@@ -8,6 +8,7 @@ import { CategoryService } from '../services/category.service';
 import { WishlistService } from '../services/wishlist.service';
 import { AuthService } from '../auth/auth.service';
 import { BrandService } from '../services/brand.service';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-home',
@@ -44,7 +45,8 @@ export class HomeComponent {
     private wishlistService: WishlistService,
     private authService: AuthService,
     private brandService: BrandService,
-    private router: Router
+    private router: Router,
+    public imageService: ImageService
   ) {}
 
   ngOnInit(): void {
@@ -109,7 +111,7 @@ export class HomeComponent {
       title: product.productName,
       price: product.price,
       quantity: 1,
-      image: this.getProductImageUrl(product),
+      image: this.imageService.getProductImageUrl(product),
       size: undefined,
       color: undefined
     });

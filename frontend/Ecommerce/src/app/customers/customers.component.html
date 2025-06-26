@@ -153,7 +153,7 @@
                 <td>
                   <div class="customer-info">
                     <div class="customer-avatar">
-                      <img [src]="customer.avatar" [alt]="customer.name" class="avatar-img">
+                      <img [src]="imageService.getAvatarImageUrl(customer)" [alt]="customer.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', customer.name)">
                     </div>
                     <div class="customer-details">
                       <div class="customer-name">{{ customer.name }}</div>
@@ -301,7 +301,7 @@
         <div class="modal-body">
           <div class="row">
             <div class="col-md-4 text-center mb-3">
-              <img [src]="selectedCustomerDetails.avatar" class="customer-detail-avatar mb-3">
+              <img [src]="imageService.getAvatarImageUrl(selectedCustomerDetails)" class="customer-detail-avatar mb-3" (error)="imageService.handleImageError($event, 'avatar', selectedCustomerDetails.name)">
               <h5>{{ selectedCustomerDetails.name }}</h5>
               <span class="status-badge" [ngClass]="'status-' + selectedCustomerDetails.status">
                 {{ selectedCustomerDetails.status | titlecase }}

@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
+import { ImageService } from '../services/image.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -57,7 +58,11 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     paypalEmail: ''
   };
 
-  constructor(private router: Router, private cartService: CartService) {}
+  constructor(
+    private router: Router,
+    private cartService: CartService,
+    public imageService: ImageService
+  ) {}
 
   ngOnInit() {
     this.subscriptions.push(

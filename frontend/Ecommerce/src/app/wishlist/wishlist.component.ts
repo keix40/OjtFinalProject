@@ -9,6 +9,7 @@ import { RouterModule } from '@angular/router';
 import { Wishlist } from '../wishlist';
 import { CartService } from '../services/cart.service';
 import Swal from 'sweetalert2';
+import { ImageService } from '../services/image.service';
 
 interface WishlistItem {
   id: number;
@@ -37,7 +38,8 @@ export class WishlistComponent implements OnInit {
     private authService: AuthService,
     private productService: ProductService,
     private router: Router,
-    private cartService: CartService
+    private cartService: CartService,
+    public imageService: ImageService
   ) { }
 
   ngOnInit(): void {
@@ -72,9 +74,7 @@ export class WishlistComponent implements OnInit {
           id: entry.product.id,
           title: entry.product.productName,
           price: entry.product.price,
-          image: entry.product.productImages && entry.product.productImages.length > 0
-            ? 'http://localhost:8080' + entry.product.productImages[0].imageUrl
-            : '/assets/project_img/fashion_store.jpg',
+          image: this.imageService.getProductImageUrl(entry.product),
           oldPrice: (entry.product as any).oldPrice,
           wishlistDate: entry.wishlistDate
         }));

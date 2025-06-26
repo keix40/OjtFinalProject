@@ -33,7 +33,7 @@
         <button class="wishlist-delete-btn" (click)="removeFromWishlist(item)">
           <i class="bi bi-trash"></i>
         </button>
-        <img [src]="item.image" [alt]="item.title" class="wishlist-product-img" />
+        <img [src]="item.image" [alt]="item.title" class="wishlist-product-img" (error)="imageService.handleImageError($event, 'product')" />
         <span class="wishlist-product-title">{{ item.title }}</span>
       </div>
       <div class="col-2">

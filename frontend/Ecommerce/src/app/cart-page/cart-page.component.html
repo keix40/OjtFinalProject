@@ -10,7 +10,7 @@
       <!-- Cart Items -->
       <div class="col-lg-8">
         <div *ngFor="let item of cartItems" class="cart-product-card bg-white rounded-3 shadow-sm mb-4 p-4 d-flex align-items-center gap-4" style="border-radius:12px;">
-          <img [src]="item.image" [alt]="item.title" class="rounded-3 flex-shrink-0" style="width:80px;height:80px;object-fit:cover;">
+          <img [src]="item.image" [alt]="item.title" class="rounded-3 flex-shrink-0" style="width:80px;height:80px;object-fit:cover;" (error)="imageService.handleImageError($event, 'product')">
           <div class="flex-grow-1">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div>

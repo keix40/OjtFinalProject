@@ -19,21 +19,21 @@ export class AuthService {
   }
 
 
-//   register(data: RegisterRequest): Observable<any> {
-//     const headers = new HttpHeaders().set('Accept', 'text/plain, application/json');
-//     return this.http.post(`${this.baseUrl}/register`, data, {
-//       headers: headers,
-//       responseType: 'text'
-//     });
-//   }
+  //   register(data: RegisterRequest): Observable<any> {
+  //     const headers = new HttpHeaders().set('Accept', 'text/plain, application/json');
+  //     return this.http.post(`${this.baseUrl}/register`, data, {
+  //       headers: headers,
+  //       responseType: 'text'
+  //     });
+  //   }
 
-//   register(data: RegisterRequest): Observable<RegisterResponse> {
-//   return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
-// }
+  //   register(data: RegisterRequest): Observable<RegisterResponse> {
+  //   return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
+  // }
 
-register(data: any): Observable<RegisterResponse> {
-  return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
-}
+  register(data: any): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
+  }
 
 
   saveToken(token: string) {
@@ -44,6 +44,18 @@ register(data: any): Observable<RegisterResponse> {
     const token = this.getToken();
     return token ? jwtDecode(token) : null;
   }
+
+  getPermissions(): string[] {
+    const decoded = this.getDecodedToken();
+    if (!decoded || !decoded.permissions) return [];
+    return decoded.permissions.split(',');
+  }
+
+  hasPermission(permission: string): boolean {
+    const permissions = this.getPermissions();
+    return permissions.includes(permission);
+  }
+
 
   getToken(): string | null {
     return localStorage.getItem('token');
@@ -81,12 +93,12 @@ register(data: any): Observable<RegisterResponse> {
     return decoded?.roles ? decoded.roles.split(',') : [];
   }
   verifyOtp(email: string, otp: string): Observable<any> {
-  return this.http.post(`${this.baseUrl}/verify-otp`, { email, otp });
-}
+    return this.http.post(`${this.baseUrl}/verify-otp`, { email, otp });
+  }
 
-resendOtp(email: string): Observable<any> {
-  return this.http.post(`${this.baseUrl}/resend-otp`, { email });
-}
+  resendOtp(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/resend-otp`, { email });
+  }
 
 
 
@@ -125,6 +137,20 @@ resendOtp(email: string): Observable<any> {
   }
 
   resetPassword(email: string, newPassword: string) {
-  return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, newPassword });
-}
+    return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, newPassword });
+  }
+
+  assignRoleToUser(userId: number, roleId: number): Observable<any> {
+    return this.http.put(`${this.baseUrl}/users/${userId}/assign-role?roleId=${roleId}`, {});
+  }
+
+  getUsersByRoleId(roleId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/user/roles/${roleId}/users`);
+  }
+
+  getAllUsers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/user/all`);
+  }
+  
+
 }

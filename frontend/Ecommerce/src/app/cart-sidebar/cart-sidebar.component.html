@@ -8,7 +8,7 @@
     <div class="cart-items-list mb-4">
       <!-- Cart items -->
       <div *ngFor="let item of cartItems" class="cart-item-card d-flex align-items-center mb-4 p-3 rounded-3 shadow-sm">
-        <img [src]="item.image" class="cart-item-img rounded-3 me-3" [alt]="item.title">
+        <img [src]="item.image" class="cart-item-img rounded-3 me-3" [alt]="item.title" (error)="imageService.handleImageError($event, 'product')">
         <div class="flex-grow-1">
           <div class="fw-semibold fs-5 mb-1">{{ item.title }}</div>
           <div class="text-muted small mb-1">Size: {{ item.size }}</div>

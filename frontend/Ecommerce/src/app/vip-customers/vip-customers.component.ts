@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ImageService } from '../services/image.service';
 
 interface VipCustomer {
   id: string;
@@ -138,7 +139,10 @@ export class VipCustomersComponent implements OnInit {
     }
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    public imageService: ImageService
+  ) {
     this.vipForm = this.fb.group({
       customerSearch: ['', Validators.required],
       vipTier: ['', Validators.required],

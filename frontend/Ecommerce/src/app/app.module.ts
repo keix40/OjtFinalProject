@@ -45,6 +45,8 @@ import { AdminUsersComponent } from './admin-users/admin-users.component';
 import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
 import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+import { RoleService } from './services/role.service';
+import { PermissionService } from './services/permission.service';
 
 
 
@@ -100,7 +102,10 @@ import { LoginAttemptsComponent } from './login-attempts/login-attempts.componen
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
-    AddressService
+    AddressService,
+    RoleService,
+    PermissionService,
+    AuthService,
   ],
   bootstrap: [AppComponent]
 })

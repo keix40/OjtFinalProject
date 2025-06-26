@@ -140,8 +140,7 @@
                   style="z-index:2; font-size:1.1rem;">
                   <i class="fa fa-eye text-primary"></i>
                 </button>
-                <img [src]="product.image" class="card-img-top rounded-3 mb-3" [alt]="product.title"
-                  style="object-fit:cover; height:180px;">
+                <img [src]="imageService.getProductImageUrl(product)" class="card-img-top rounded-3 mb-3" [alt]="product.title" (error)="imageService.handleImageError($event, 'product')">
                 <div class="card-body p-0 d-flex flex-column justify-content-between h-100">
                   <div>
                     <h6 class="card-title fw-bold mb-1 text-truncate" style="max-width: 100%;">{{ product.title }}</h6>

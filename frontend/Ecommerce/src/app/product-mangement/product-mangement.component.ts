@@ -9,6 +9,7 @@ import { ModalService } from '../services/modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmModelComponent } from '../confirm-model/confirm-model.component';
 import Swal from 'sweetalert2';
+import { ImageService } from '../services/image.service';
 declare var $: any;
 
 @Component({
@@ -33,8 +34,8 @@ export class ProductMangementComponent {
     private productService: ProductService,
     private cateService: CategoryService,
     private brandService: BrandService,
-    private ngbModel: NgbModal
-
+    private ngbModel: NgbModal,
+    public imageService: ImageService
   ) {}
 
   ngOnInit(): void {
@@ -156,11 +157,6 @@ export class ProductMangementComponent {
       .catch(err => {
         console.error('Error deleting products', err);
       });
-  }
-  
-  getProductImageUrl(imagePath: string): string {
-    // console.log('http://localhost:8080' + imagePath);
-    return 'http://localhost:8080' + imagePath;
   }
   
 }

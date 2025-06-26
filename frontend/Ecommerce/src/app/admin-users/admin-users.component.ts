@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ImageService } from '../services/image.service';
 
 interface AdminUser {
   id: string;
@@ -137,6 +138,11 @@ export class AdminUsersComponent implements OnInit {
       ]
     }
   ];
+
+  constructor(
+    public imageService: ImageService
+  ) {
+  }
 
   ngOnInit(): void {
     this.loadAdminUsers();
