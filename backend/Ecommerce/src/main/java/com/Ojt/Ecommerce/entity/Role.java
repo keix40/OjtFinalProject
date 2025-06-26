@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "role")
@@ -31,4 +32,10 @@ public class Role {
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JsonIgnore
     private List<RolePermission> rolePermissions;
+
+    public List<Permission> getPermissions() {
+        return rolePermissions.stream()
+                .map(RolePermission::getPermission)
+                .collect(Collectors.toList());
+    }
 }

@@ -13,4 +13,6 @@ public @interface RequiresPermission {
     String value();                   // key like "users.view"
     String level() default "basic";  // permission level
     String description() default "Auto-registered"; // optional
+
+    String route() default "";
 }

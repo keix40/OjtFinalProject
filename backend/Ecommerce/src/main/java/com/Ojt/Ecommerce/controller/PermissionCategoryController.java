@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import com.Ojt.Ecommerce.dto.PermissionCategoryDTO;
 import com.Ojt.Ecommerce.entity.PermissionCategory;
 import com.Ojt.Ecommerce.service.PermissionCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +22,11 @@ public class PermissionCategoryController {
         this.categoryService = categoryService;
     }
 
+
     @GetMapping
-    public ResponseEntity<List<PermissionCategory>> getAllCategories() {
-        return ResponseEntity.ok(categoryService.getAllCategoriesWithPermissions());
+    public ResponseEntity<List<PermissionCategoryDTO>> getAllCategories() {
+        List<PermissionCategoryDTO> dtos = categoryService.getAllCategoriesWithPermissions();
+        return ResponseEntity.ok(dtos);
     }
+
 }

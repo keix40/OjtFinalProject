@@ -1,6 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
-import com.Ojt.Ecommerce.annotations.PermissionCategory;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import com.Ojt.Ecommerce.dto.RegisterRequest;
 import com.Ojt.Ecommerce.dto.UserDTO;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/auth/user")
 @RequiredArgsConstructor  // Lombok annotation to generate constructor for final fields
-@PermissionCategory(value = "users", name = "User Management", icon = "fas fa-users") // add
+@PermissionCategoryTag(value = "users", name = "User Management", icon = "fas fa-users") // add
 public class UserController {
 
     private final UserService userService;  // Inject UserService
@@ -67,7 +67,7 @@ public class UserController {
     //to show userProfile userinfo (kei_1)
     @PutMapping("/{id}")
     @Transactional
-    @RequiresPermission(value = "users.update", level = "intermediate") // add
+    @RequiresPermission(value = "users.update", level = "intermediate",route = "/users/update") // add
     public ResponseEntity<Map<String, Object>>  updateUser(@PathVariable Long id ,@RequestBody RegisterRequest dto,@RequestHeader("Authorization") String token){
         RegisterRequest updatedUser = userService.updateUser(id,dto);
 
@@ -83,7 +83,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/assign-role")
-    @RequiresPermission(value = "users.assign_role", level = "intermediate") // add
+    @RequiresPermission(value = "users.assign_role", level = "intermediate",route = "/users/assign") // add
     public ResponseEntity<String> assignRoleToUser(
             @PathVariable Long userId,
             @RequestParam Long roleId

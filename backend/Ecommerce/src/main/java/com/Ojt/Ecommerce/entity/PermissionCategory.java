@@ -28,8 +28,16 @@ public class PermissionCategory {
 
     private String icon;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL)
+
+    @OneToMany(mappedBy = "permissionCategory", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Permission> permissions = new ArrayList<>();
 
-    // Getters, Setters, Constructors
+
+
+    public PermissionCategory(String key, String name, String icon) {
+        this.key = key;
+        this.name = name;
+        this.icon = icon;
+    }
+
 }
