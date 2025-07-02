@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -22,9 +23,12 @@ public class Wishlist {
     @JsonIgnore
     private User user;
 
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id")
-    private Product  product;
+    @JsonIgnoreProperties({"productCategories", "orderProducts", "productVariants", "wishlists", "purchaseProducts"})//add this line to fix json error
+    private Product product;
+
 
     @Column(name = "status", columnDefinition = "INT DEFAULT 1")
     private Integer status;

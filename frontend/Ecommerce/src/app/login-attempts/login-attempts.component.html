@@ -1,0 +1,416 @@
+<div class="login-attempts-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="header-left">
+          <h1 class="page-title">
+            <i class="fas fa-shield-alt"></i>
+            Login Attempts Monitor
+          </h1>
+          <p class="page-subtitle">Real-time security monitoring and threat detection</p>
+        </div>
+        <div class="header-right">
+          <div class="status-indicator" [ngClass]="{'active': isRealTimeActive}">
+            <span class="status-dot"></span>
+            <span class="status-text">{{ isRealTimeActive ? 'Live Monitoring' : 'Monitoring Paused' }}</span>
+          </div>
+          <button class="btn btn-toggle" (click)="toggleRealTimeMonitoring()">
+            <i class="fas" [ngClass]="isRealTimeActive ? 'fa-pause' : 'fa-play'"></i>
+            {{ isRealTimeActive ? 'Pause' : 'Resume' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Alert Banner -->
+    <div class="alert-banner" *ngIf="criticalAlerts.length > 0">
+      <div class="alert-content">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span class="alert-text">{{ criticalAlerts.length }} Critical Security Alert(s) Detected</span>
+        <button class="btn btn-alert-action" (click)="viewAlerts()">View Details</button>
+      </div>
+    </div>
+  
+    <!-- Statistics Dashboard -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon success">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ statistics.successfulLogins | number }}</h3>
+          <p class="stat-label">Successful Logins</p>
+          <span class="stat-change positive">+{{ statistics.successfulLoginsChange }}%</span>
+        </div>
+      </div>
+  
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ statistics.failedLogins | number }}</h3>
+          <p class="stat-label">Failed Attempts</p>
+          <span class="stat-change negative">+{{ statistics.failedLoginsChange }}%</span>
+        </div>
+      </div>
+  
+      <div class="stat-card">
+        <div class="stat-icon danger">
+          <i class="fas fa-ban"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ statistics.blockedIPs | number }}</h3>
+          <p class="stat-label">Blocked IPs</p>
+          <span class="stat-change neutral">{{ statistics.blockedIPsChange }}%</span>
+        </div>
+      </div>
+  
+      <div class="stat-card">
+        <div class="stat-icon info">
+          <i class="fas fa-lock"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-number">{{ statistics.lockedAccounts | number }}</h3>
+          <p class="stat-label">Locked Accounts</p>
+          <span class="stat-change negative">+{{ statistics.lockedAccountsChange }}%</span>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Controls Section -->
+    <div class="controls-section">
+      <div class="controls-left">
+        <div class="filter-group">
+          <label class="filter-label">Time Range:</label>
+          <select class="form-select" [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange()">
+            <option value="1h">Last Hour</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
+  
+        <div class="filter-group">
+          <label class="filter-label">Status:</label>
+          <select class="form-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+            <option value="all">All Attempts</option>
+            <option value="failed">Failed Only</option>
+            <option value="successful">Successful Only</option>
+            <option value="blocked">Blocked IPs</option>
+            <option value="suspicious">Suspicious Activity</option>
+          </select>
+        </div>
+  
+        <div class="search-group">
+          <div class="search-input-wrapper">
+            <i class="fas fa-search search-icon"></i>
+            <input 
+              type="text" 
+              class="form-control search-input" 
+              placeholder="Search by IP, username, or location..."
+              [(ngModel)]="searchTerm"
+              (input)="onSearch()"
+            >
+            <button class="btn btn-clear" *ngIf="searchTerm" (click)="clearSearch()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+  
+      <div class="controls-right">
+        <button class="btn btn-export" (click)="exportData()">
+          <i class="fas fa-download"></i>
+          Export
+        </button>
+        <button class="btn btn-refresh" (click)="refreshData()">
+          <i class="fas fa-sync-alt" [ngClass]="{'fa-spin': isLoading}"></i>
+          Refresh
+        </button>
+      </div>
+    </div>
+  
+    <!-- Threat Level Indicators -->
+    <div class="threat-indicators">
+      <div class="threat-card" [ngClass]="getThreatLevelClass('low')">
+        <div class="threat-icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="threat-info">
+          <h4>Low Risk</h4>
+          <p>{{ getThreatCount('low') }} attempts</p>
+        </div>
+      </div>
+  
+      <div class="threat-card" [ngClass]="getThreatLevelClass('medium')">
+        <div class="threat-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="threat-info">
+          <h4>Medium Risk</h4>
+          <p>{{ getThreatCount('medium') }} attempts</p>
+        </div>
+      </div>
+  
+      <div class="threat-card" [ngClass]="getThreatLevelClass('high')">
+        <div class="threat-icon">
+          <i class="fas fa-skull-crossbones"></i>
+        </div>
+        <div class="threat-info">
+          <h4>High Risk</h4>
+          <p>{{ getThreatCount('high') }} attempts</p>
+        </div>
+      </div>
+  
+      <div class="threat-card" [ngClass]="getThreatLevelClass('critical')">
+        <div class="threat-icon">
+          <i class="fas fa-fire"></i>
+        </div>
+        <div class="threat-info">
+          <h4>Critical</h4>
+          <p>{{ getThreatCount('critical') }} attempts</p>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Login Attempts Table -->
+    <div class="table-container">
+      <div class="table-header">
+        <h3 class="table-title">Recent Login Attempts</h3>
+        <div class="table-actions">
+          <button class="btn btn-bulk" [disabled]="selectedAttempts.length === 0" (click)="bulkBlock()">
+            <i class="fas fa-ban"></i>
+            Block Selected ({{ selectedAttempts.length }})
+          </button>
+        </div>
+      </div>
+  
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>
+                <input 
+                  type="checkbox" 
+                  class="form-check-input"
+                  [checked]="isAllSelected()"
+                  (change)="toggleSelectAll()"
+                >
+              </th>
+              <th (click)="sort('timestamp')" class="sortable">
+                Timestamp
+                <i class="fas fa-sort sort-icon"></i>
+              </th>
+              <th (click)="sort('username')" class="sortable">
+                Username
+                <i class="fas fa-sort sort-icon"></i>
+              </th>
+              <th (click)="sort('ipAddress')" class="sortable">
+                IP Address
+                <i class="fas fa-sort sort-icon"></i>
+              </th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Threat Level</th>
+              <th>Attempts</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let attempt of paginatedAttempts; trackBy: trackByAttempt" 
+                [ngClass]="getRowClass(attempt)">
+              <td>
+                <input 
+                  type="checkbox" 
+                  class="form-check-input"
+                  [checked]="isSelected(attempt)"
+                  (change)="toggleSelect(attempt)"
+                >
+              </td>
+              <td>
+                <div class="timestamp-cell">
+                  <span class="timestamp-main">{{ attempt.timestamp | date:'MMM dd, HH:mm:ss' }}</span>
+                  <span class="timestamp-relative">{{ getRelativeTime(attempt.timestamp) }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="username-cell">
+                  <span class="username">{{ attempt.username }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="ip-cell">
+                  <span class="ip-address">{{ attempt.ipAddress }}</span>
+                  <span class="ip-info" *ngIf="attempt.isVPN">VPN</span>
+                  <span class="ip-info proxy" *ngIf="attempt.isProxy">Proxy</span>
+                </div>
+              </td>
+              <td>
+                <div class="location-cell">
+                  <i class="fas fa-map-marker-alt location-icon"></i>
+                  <span class="location-text">{{ attempt.location }}</span>
+                  <span class="country-flag" [innerHTML]="getCountryFlag(attempt.countryCode)"></span>
+                </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="attempt.status">
+                  <i class="fas" [ngClass]="getStatusIcon(attempt.status)"></i>
+                  {{ attempt.status | titlecase }}
+                </span>
+              </td>
+              <td>
+                <span class="threat-badge" [ngClass]="attempt.threatLevel">
+                  {{ attempt.threatLevel | titlecase }}
+                </span>
+              </td>
+              <td>
+                <div class="attempts-cell">
+                  <span class="attempts-count">{{ attempt.attemptCount }}</span>
+                  <span class="attempts-timeframe">in {{ attempt.timeframe }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button 
+                    class="btn btn-action btn-details" 
+                    (click)="viewDetails(attempt)"
+                    title="View Details"
+                  >
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button 
+                    class="btn btn-action btn-block" 
+                    (click)="blockIP(attempt)"
+                    title="Block IP"
+                    [disabled]="attempt.isBlocked"
+                  >
+                    <i class="fas fa-ban"></i>
+                  </button>
+                  <button 
+                    class="btn btn-action btn-whitelist" 
+                    (click)="whitelistIP(attempt)"
+                    title="Whitelist IP"
+                  >
+                    <i class="fas fa-check"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+  
+      <!-- Pagination -->
+      <div class="pagination-container">
+        <div class="pagination-info">
+          Showing {{ getStartIndex() + 1 }} to {{ getEndIndex() }} of {{ filteredAttempts.length }} entries
+        </div>
+        <nav class="pagination-nav">
+          <ul class="pagination">
+            <li class="page-item" [ngClass]="{'disabled': currentPage === 1}">
+              <button class="page-link" (click)="goToPage(currentPage - 1)">
+                <i class="fas fa-chevron-left"></i>
+              </button>
+            </li>
+            <li 
+              class="page-item" 
+              *ngFor="let page of getPageNumbers()" 
+              [ngClass]="{'active': page === currentPage}"
+            >
+              <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
+            </li>
+            <li class="page-item" [ngClass]="{'disabled': currentPage === totalPages}">
+              <button class="page-link" (click)="goToPage(currentPage + 1)">
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  
+    <!-- Real-time Activity Feed -->
+    <div class="activity-feed" *ngIf="isRealTimeActive">
+      <div class="feed-header">
+        <h3 class="feed-title">
+          <i class="fas fa-broadcast-tower"></i>
+          Live Activity Feed
+        </h3>
+        <button class="btn btn-clear-feed" (click)="clearActivityFeed()">
+          <i class="fas fa-trash"></i>
+          Clear
+        </button>
+      </div>
+      <div class="feed-content">
+        <div 
+          class="feed-item" 
+          *ngFor="let activity of realtimeActivities; trackBy: trackByActivity"
+          [ngClass]="activity.type"
+        >
+          <div class="feed-icon">
+            <i class="fas" [ngClass]="getActivityIcon(activity.type)"></i>
+          </div>
+          <div class="feed-details">
+            <p class="feed-message">{{ activity.message }}</p>
+            <span class="feed-time">{{ activity.timestamp | date:'HH:mm:ss' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modals -->
+  <!-- Details Modal -->
+  <div class="modal fade" id="detailsModal" tabindex="-1" *ngIf="selectedAttemptDetails">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Login Attempt Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Timestamp:</label>
+              <span>{{ selectedAttemptDetails.timestamp | date:'full' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Username:</label>
+              <span>{{ selectedAttemptDetails.username }}</span>
+            </div>
+            <div class="detail-item">
+              <label>IP Address:</label>
+              <span>{{ selectedAttemptDetails.ipAddress }}</span>
+            </div>
+            <div class="detail-item">
+              <label>User Agent:</label>
+              <span>{{ selectedAttemptDetails.userAgent }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Location:</label>
+              <span>{{ selectedAttemptDetails.location }}</span>
+            </div>
+            <div class="detail-item">
+              <label>ISP:</label>
+              <span>Unknown ISP</span>
+            </div>
+            <div class="detail-item">
+              <label>Threat Score:</label>
+              <span>{{ selectedAttemptDetails.threatScore }}/100</span>
+            </div>
+            <div class="detail-item">
+              <label>Session ID:</label>
+              <span>{{ selectedAttemptDetails.sessionId }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-danger" (click)="blockIP(selectedAttemptDetails)">Block IP</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  

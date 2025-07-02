@@ -233,7 +233,7 @@
           >
             <!-- Product Image -->
             <div class="product-img-wrapper mb-3 position-relative" style="height: 140px; overflow: hidden;">
-              <img [src]="getProductImageUrl(product)" class="product-img" [alt]="product.productName">
+              <img [src]="imageService.getProductImageUrl(product)" class="product-img" [alt]="product.productName" (error)="imageService.handleImageError($event, 'product')">
               <button
                 class="btn btn-sm p-0 d-flex align-items-center justify-content-center position-absolute"
                 [ngClass]="wishlist.has(product.id) ? 'bg-danger text-white' : 'bg-light text-danger border border-danger'"

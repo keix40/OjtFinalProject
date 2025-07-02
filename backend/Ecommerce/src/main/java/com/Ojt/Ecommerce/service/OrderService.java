@@ -355,9 +355,9 @@ public class OrderService {
                 userDTO.setId(user.getId());
                 userDTO.setName(user.getName());
                 userDTO.setEmail(user.getEmail());
-                userDTO.setDob(user.getDateOfBirth());
+                userDTO.setDateOfBirth(user.getDateOfBirth());
                 userDTO.setGender(user.getGender());
-                userDTO.setPhNo(user.getPhoneNumber());
+                userDTO.setPhoneNumber(user.getPhoneNumber());
                 userDTO.setCreatedDate(user.getCreatedDate());
                 userDTO.setTotalPoints(user.getTotalPoints());
                 dto.setUser(userDTO);

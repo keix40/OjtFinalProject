@@ -204,4 +204,30 @@ public class UserServiceImpl implements UserService {
 
         return modelMapper.map(user, RegisterRequest.class);
     }
+
+    //add method
+    @Override
+    public void assignRoleToUser(Long userId, Long roleId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        Optional<Role> optionalRole = roleRepository.findById(roleId);
+
+        if (optionalUser.isEmpty()) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        if (optionalRole.isEmpty()) {
+            throw new RuntimeException("Role not found with ID: " + roleId);
+        }
+
+        User user = optionalUser.get();
+        Role role = optionalRole.get();
+
+        user.setRole(role);
+        userRepository.save(user);
+    }
+
+    public List<User> findUsersByRoleId(Long roleId) {
+        return userRepository.findByRoleId(roleId);
+    }
+
 }

@@ -48,7 +48,10 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name = "brand_id")
+    @JsonIgnoreProperties({"products"}) // or everything lazy inside Brand
     private Brand brand;
+
+
 
 //    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
 //    @JsonIgnore

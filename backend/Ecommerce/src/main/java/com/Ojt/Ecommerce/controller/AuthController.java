@@ -8,7 +8,9 @@ import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.repository.VerificationTokenRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
 import com.Ojt.Ecommerce.service.*;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,6 +33,9 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class AuthController {
 
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
@@ -43,6 +48,11 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
 
+
+
+
+
+
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> register(
             @RequestPart("user") RegisterRequest request,
@@ -53,34 +63,121 @@ public class AuthController {
     }
 
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-        String email = loginRequest.getEmail().trim().toLowerCase();// add for case
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        email,
-                        loginRequest.getPassword()
-                )
-        );
+//    @PostMapping("/login")
+//    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
+//        String email = loginRequest.getEmail().trim().toLowerCase();// add for case
+//        Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(
+//                        email,
+//                        loginRequest.getPassword()
+//                )
+//        );
+//
+//
+//        SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//        org.springframework.security.core.userdetails.User springUser =
+//                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+//
+//        User user = userRepository.findByEmail(email)
+//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+//
+//        if (!user.isVerified()) {
+//            throw new CustomException("Please verify your email before logging in.");
+//        }
+//
+//        String accessToken = jwtTokenProvider.generateToken(user);
+//        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+//
+//        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
+//    }
 
+    @PostMapping("/login") // test login attempt
+    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
+        String email = loginRequest.getEmail().trim().toLowerCase();
+        String ip = request.getRemoteAddr();
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        org.springframework.security.core.userdetails.User springUser =
-                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        if (!user.isVerified()) {
-            throw new CustomException("Please verify your email before logging in.");
+        // ✅ Blocked IP check (MUST be before authentication)
+        if (loginAttemptService.isBlockedIP(ip)) {
+            throw new CustomException("This IP address has been blocked due to suspicious activity.");
         }
 
-        String accessToken = jwtTokenProvider.generateToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, loginRequest.getPassword())
+            );
 
-        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            org.springframework.security.core.userdetails.User springUser =
+                    (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+            if (!user.isVerified()) {
+                throw new CustomException("Please verify your email before logging in.");
+            }
+
+            // ✅ Save successful attempt
+            // ➕ Prepare DTO for successful attempt
+            LoginAttemptDTO successDTO = LoginAttemptDTO.builder()
+                    .username(email)
+                    .ipAddress(ip)
+                    .userAgent(request.getHeader("User-Agent"))
+                    .timestamp(LocalDateTime.now())
+                    .status("successful")
+                    .isBlocked(false)
+                    .isVPN(false)  // you can set real detection here
+                    .isProxy(false)
+                    .location("Unknown") // or real geo location
+                    .attemptCount(1)
+                    .build();
+
+            // ➕ Calculate threat score and level
+            int score = loginAttemptService.calculateThreatScore(successDTO);
+            successDTO.setThreatScore(score);
+            successDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
+
+            // 💾 Save
+            loginAttemptService.saveAttempt(successDTO);
+
+            String accessToken = jwtTokenProvider.generateToken(user);
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+            return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
+
+        } catch (Exception ex) {
+            // ❌ Save failed attempt
+            // ➕ Prepare DTO for failed attempt
+            LoginAttemptDTO failDTO = LoginAttemptDTO.builder()
+                    .username(email)
+                    .ipAddress(ip)
+                    .userAgent(request.getHeader("User-Agent"))
+                    .timestamp(LocalDateTime.now())
+                    .status("failed")
+                    .isBlocked(false)
+                    .isVPN(false)
+                    .isProxy(false)
+                    .location("Unknown")
+                    .attemptCount(1)
+                    .build();
+
+            // ➕ Calculate threat score and level
+            int score = loginAttemptService.calculateThreatScore(failDTO);
+            failDTO.setThreatScore(score);
+            failDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
+
+            // 💾 Save
+            loginAttemptService.saveAttempt(failDTO);
+
+            throw ex;
+        }
     }
+
+
+
+
 
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {

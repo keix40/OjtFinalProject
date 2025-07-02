@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { ImageService } from '../services/image.service';
 declare var $: any;
 
 @Component({
@@ -36,8 +37,8 @@ export class ProductMangementComponent {
     private productService: ProductService,
     private cateService: CategoryService,
     private brandService: BrandService,
-    private ngbModel: NgbModal
-
+    private ngbModel: NgbModal,
+    public imageService: ImageService
   ) {}
 
   ngOnInit(): void {
@@ -159,11 +160,6 @@ export class ProductMangementComponent {
       .catch(err => {
         console.error('Error deleting products', err);
       });
-  }
-  
-  getProductImageUrl(imagePath: string): string {
-    // console.log('http://localhost:8080' + imagePath);
-    return 'http://localhost:8080' + imagePath;
   }
   
   // Export to Excel

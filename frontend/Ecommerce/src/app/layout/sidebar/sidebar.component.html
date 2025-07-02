@@ -6,15 +6,12 @@
         Admin Panel
       </h5>
     </div>
-    
+
     <ul class="nav flex-column">
       <!-- Dashboard -->
       <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
-          [routerLink]="'/dashboard'"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }">
+        <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/dashboard'"
+          routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
           <i class="fa fa-tachometer-alt me-3 text-primary"></i>
           <span>Dashboard</span>
         </a>
@@ -22,9 +19,7 @@
 
       <!-- Products with expandable submenu -->
       <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
-          href="#"
+        <a class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2" href="#"
           (click)="isProductsOpen = !isProductsOpen; $event.preventDefault()">
           <span>
             <i class="fa fa-box me-3 text-primary"></i>
@@ -35,24 +30,22 @@
 
         <ul class="list-unstyled ms-4 mt-2" *ngIf="isProductsOpen">
           <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/product'" 
-               routerLinkActive="active">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/product'"
+              routerLinkActive="active">
               <i class="fa fa-plus-circle me-3 text-primary"></i>
               <span>Add Product</span>
             </a>
           </li>
           <li>
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/productlist'" 
-               routerLinkActive="active">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/productlist'"
+              routerLinkActive="active">
               <i class="fa fa-list me-3 text-primary"></i>
               <span>Product List</span>
             </a>
           </li>
         </ul>
       </li>
-
+      
       <!-- Orders -->
       <li class="nav-item mb-2">
         <a
@@ -64,26 +57,198 @@
         </a>
       </li>
 
-      <!-- Users -->
       <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
-          [routerLink]="'/users'"
-          routerLinkActive="active">
-          <i class="fa fa-users me-3 text-primary"></i>
-          <span>Users</span>
+        <a class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2" href="#"
+          (click)="isUsersOpen = !isUsersOpen; $event.preventDefault()">
+          <span>
+            <i class="fa fa-users me-3 text-primary"></i>
+            <span>User Management</span>
+          </span>
+          <i class="fa text-primary" [ngClass]="isUsersOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
         </a>
+
+        <ul class="list-unstyled ms-4 mt-2" *ngIf="isUsersOpen">
+          <!-- ========== CUSTOMER MANAGEMENT ========== -->
+          <li class="mb-3 mt-2">
+            <small class="fw-bold" style="color: rgba(255,255,255,0.6);">CUSTOMERS</small>
+          </li>
+
+          <!-- Customer List -->
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+              [routerLink]="'/users/customers'" routerLinkActive="active">
+              <i class="fa fa-user me-3 text-primary"></i>
+              <span>All Customers</span>
+              <span class="badge bg-primary ms-auto">{{ totalCustomers }}</span>
+            </a>
+          </li>
+
+          <!-- VIP Customers -->
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/users/vip'"
+              routerLinkActive="active">
+              <i class="fas fa-crown me-3 text-warning"></i>
+              <span>VIP Customers</span>
+              <span class="badge bg-warning ms-auto">{{ vipCount }}</span>
+            </a>
+          </li>
+
+          <!-- Blacklist -->
+          <li class="mb-3">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+              [routerLink]="'/users/blacklist'" routerLinkActive="active">
+              <i class="fas fa-ban me-3 text-danger"></i>
+              <span>Blacklisted Users</span>
+              <span *ngIf="blacklistCount > 0" class="badge bg-danger ms-auto">{{ blacklistCount }}</span>
+            </a>
+          </li>
+
+          <!-- ========== USER MANAGEMENT ========== -->
+          <li class="mb-3 mt-2">
+            <small class="fw-bold" style="color: rgba(255,255,255,0.6);">USER CONTROLS</small>
+          </li>
+
+
+          <!-- Create User -->
+          <!-- <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/users/create'"
+              routerLinkActive="active">
+              <i class="fa fa-user-plus me-3 text-success"></i>
+              <span>Create User</span>
+            </a>
+          </li> -->
+
+          <li class="mb-2" *ngIf="permissionService.hasPermission('Users Create')">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/users/create'"
+              routerLinkActive="active">
+              <i class="fa fa-user-plus me-3 text-success"></i>
+              <span>Create User</span>
+            </a>
+          </li>
+
+
+          <!-- Admin Users -->
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/users/admins'"
+              routerLinkActive="active">
+              <i class="fa fa-user-shield me-3 text-info"></i>
+              <span>Admin Users</span>
+              <span class="badge bg-info ms-auto">{{ adminCount }}</span>
+            </a>
+          </li>
+
+          <!-- Roles & Permissions -->
+          <li class="mb-3">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/users/roles'"
+              routerLinkActive="active">
+              <i class="fa fa-key me-3 text-purple"></i>
+              <span>Roles & Permissions</span>
+            </a>
+          </li>
+
+          <!-- ========== SECURITY ========== -->
+          <li class="mb-3 mt-2">
+            <small class="fw-bold" style="color: rgba(255,255,255,0.6);">SECURITY</small>
+          </li>
+
+          <!-- Login Attempts -->
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+              [routerLink]="'/users/login-attempts'" routerLinkActive="active">
+              <i class="fas fa-user-lock me-3"
+                [ngClass]="{'text-primary': suspiciousLogins === 0, 'text-danger': suspiciousLogins > 0}"></i>
+              <span>Login Attempts</span>
+              <span *ngIf="suspiciousLogins > 0" class="badge bg-danger ms-auto">{{ suspiciousLogins }}</span>
+            </a>
+          </li>
+
+          <!-- Activity Logs -->
+          <li>
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+              [routerLink]="'/users/activity'" routerLinkActive="active">
+              <i class="fa fa-history me-3"
+                [ngClass]="{'text-primary': recentSecurityEvents === 0, 'text-warning': recentSecurityEvents > 0}"></i>
+              <span>Activity Logs</span>
+              <span *ngIf="recentSecurityEvents > 0" class="badge bg-warning ms-auto">!</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+      <!-- Expanded User Management -->
+
+
+      <!-- Orders Management -->
+      <li class="nav-item mb-2">
+        <a class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2" href="#"
+          (click)="isOrdersOpen = !isOrdersOpen; $event.preventDefault()">
+          <span>
+            <i class="fa fa-shopping-cart me-3 text-primary"></i>
+            <span>Orders</span>
+          </span>
+          <i class="fa text-primary" [ngClass]="isOrdersOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </a>
+
+        <ul class="list-unstyled ms-4 mt-2" *ngIf="isOrdersOpen">
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/orders/list'"
+              routerLinkActive="active">
+              <i class="fa fa-list me-3 text-primary"></i>
+              <span>All Orders</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+              [routerLink]="'/orders/returns'" routerLinkActive="active">
+              <i class="fa fa-exchange-alt me-3 text-primary"></i>
+              <span>Returns & Refunds</span>
+            </a>
+          </li>
+        </ul>
       </li>
 
-      <!-- Analytics -->
+      <!-- Orders -->
       <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
-          [routerLink]="'/analytics'"
+        <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/analytics'"
           routerLinkActive="active">
           <i class="fa fa-chart-line me-3 text-primary"></i>
           <span>Analytics</span>
         </a>
+      </li>
+
+      <!-- Content Management -->
+      <li class="nav-item mb-2">
+        <a class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2" href="#"
+          (click)="isContentOpen = !isContentOpen; $event.preventDefault()">
+          <span>
+            <i class="fa fa-file-alt me-3 text-primary"></i>
+            <span>Content</span>
+          </span>
+          <i class="fa text-primary" [ngClass]="isContentOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+        </a>
+
+        <ul class="list-unstyled ms-4 mt-2" *ngIf="isContentOpen">
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/content/pages'"
+              routerLinkActive="active">
+              <i class="fa fa-file me-3 text-primary"></i>
+              <span>Pages</span>
+            </a>
+          </li>
+          <li class="mb-2">
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" [routerLink]="'/content/blog'"
+              routerLinkActive="active">
+              <i class="fa fa-blog me-3 text-primary"></i>
+              <span>Blog</span>
+            </a>
+          </li>
+          <li>
+            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
+              [routerLink]="'/content/banners'" routerLinkActive="active">
+              <i class="fa fa-image me-3 text-primary"></i>
+              <span>Banners</span>
+            </a>
+          </li>
+        </ul>
       </li>
     </ul>
 

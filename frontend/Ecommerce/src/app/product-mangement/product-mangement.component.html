@@ -120,10 +120,10 @@
                 <div class="product-image-container">
                   <img
                     *ngIf="product.productImages.length > 0"
-                    [src]="getProductImageUrl(product.productImages[0].imageUrl)"
+                    [src]="imageService.getFullImageUrl(product.productImages[0].imageUrl)"
                     alt="Product Image"
                     class="product-image"
-                    (error)="product.productImages[0].imageUrl = 'assets/image-not-found.png'"
+                    (error)="imageService.handleImageError($event, 'product')"
                   >
                 </div>
                 <span class="product-name" [routerLink]="['/admin/products', product.id]" style="cursor: pointer; color: #0d6efd; text-decoration: underline;">{{ product.productName }}</span>

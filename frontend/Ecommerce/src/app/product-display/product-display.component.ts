@@ -5,6 +5,7 @@ import { CartService } from '../services/cart.service';
 import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { ImageService } from '../services/image.service';
 
 interface Product {
   id: number;
@@ -95,7 +96,10 @@ export class ProductDisplayComponent implements OnInit {
   userId: number | null = null;
 
   constructor(
+    
     private cartService: CartService,
+    public imageService: ImageService
+  ,
     private authService: AuthService,
     private router: Router
   ) {}
