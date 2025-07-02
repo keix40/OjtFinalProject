@@ -36,4 +36,5 @@ public class PermissionCategory {
         this.name = name;
         this.icon = icon;
     }
+
 }
