@@ -18,21 +18,20 @@ public class Permission {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 100, nullable = false, unique = true)
-    private String key; // ✅ key like "users.view"
+    @Column(name = "`key`", length = 100, nullable = false, unique = true)
+    private String key;
 
-    @Column(length = 100, nullable = false)
-    private String name; // ✅ name like "View"
+    @Column(name = "`name`", length = 100, nullable = false)
+    private String name;
 
     @Column(length = 255)
     private String description;
 
     @Column(length = 30)
-    private String level; // e.g., basic, intermediate, critical
-
+    private String level;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "permission_category_id") // Foreign key to category
+    @JoinColumn(name = "permission_category_id")
     private PermissionCategory permissionCategory;
 
     @OneToMany(mappedBy = "permission", cascade = CascadeType.ALL)
@@ -46,7 +45,4 @@ public class Permission {
         this.level = level;
         this.permissionCategory = category;
     }
-
 }
-
-
