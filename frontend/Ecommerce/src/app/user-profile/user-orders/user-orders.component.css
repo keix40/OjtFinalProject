@@ -1,4 +1,4 @@
-/* Add styles specific to user orders here */
+Add styles specific to user orders here
 
 /* Styles for the main orders section container */
 .orders-section {
@@ -234,8 +234,12 @@
     padding-top: 1.5rem;
     border-top: 1px solid var(--border-color);
     width: 200px;
-    margin-left: auto;
+    margin-left: 400px;
 }
+
+.order-totals .row > div {
+    min-width: 280px;
+}  
 
 .order-totals .total-line {
     display: flex;

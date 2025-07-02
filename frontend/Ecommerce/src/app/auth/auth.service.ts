@@ -50,7 +50,7 @@ register(data: any): Observable<RegisterResponse> {
   }
 
   isLoggedIn(): boolean {
-    const token = this.getToken();
+    const token = this.getToken(); 
     if (!token) return false;
 
     try {
@@ -127,4 +127,5 @@ resendOtp(email: string): Observable<any> {
   resetPassword(email: string, newPassword: string) {
   return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, newPassword });
 }
+
 }

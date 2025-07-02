@@ -1,0 +1,30 @@
+<app-header></app-header>
+<div class="tracking-bg">
+  <div class="tracking-card">
+    <h2 class="title">TRACK ORDER</h2>
+    <!-- <p class="subtitle">Enter your order number to track the status of your shipment.</p>
+    <form class="track-form" (ngSubmit)="trackOrder()">
+      <input class="order-input" type="text" placeholder="Order Code" [(ngModel)]="orderCode" name="orderCode" required />
+      <button class="track-btn" type="submit">TRACK</button>
+    </form> -->
+
+    <div *ngIf="!isLoading && order" class="tracking-info">
+      <div class="order-info">
+        <strong class="order-code">{{ order.orderCode }}</strong>
+        <div class="delivery-date">Estimated Delivery: {{ order.updatedDate | date:'longDate' }}</div>
+      </div>
+      <div class="tracking-steps" role="list" aria-label="Order status steps">
+        <div *ngFor="let step of statusSteps; let i = index" 
+             class="step" 
+             [class.active]="i <= getCurrentStep()"
+             role="listitem"
+             [attr.aria-current]="i === getCurrentStep() ? 'step' : null">
+          <div class="dot"></div>
+          <div class="label">{{ step }}</div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="isLoading" class="loading">Loading...</div>
+    <div *ngIf="error" class="error-message">{{ error }}</div>
+  </div>
+</div>

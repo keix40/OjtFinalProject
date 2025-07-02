@@ -99,6 +99,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   logout() {
     this.authService.logout();
+    this.cartService.refreshCart();
     this.isAuthenticated = false;
     this.router.navigate(['/login']);
   }

@@ -87,6 +87,9 @@ export class ProductComponent implements OnInit {
   // ===== Data Properties =====
   availableAttributes: Attribute[] = [];
 
+  // ===== New Form Array =====
+  categoryBrandArray!: FormArray;
+
   // ===== Constructor =====
   constructor(
     private fb: FormBuilder,
@@ -115,19 +118,36 @@ export class ProductComponent implements OnInit {
 
   // ===== Form Initialization =====
   private initForm(): void {
+    this.categoryBrandArray = this.fb.array([
+      this.fb.group({
+        categoryId: [null, Validators.required],
+        brandId: [null], // brand is optional
+        availableBrands: [this.brands]
+      })
+    ]);
+    
     this.productForm = this.fb.group({
       productName: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       price: [0, [Validators.required, Validators.min(0.01)]],
       quantity: [0, [Validators.required, Validators.min(0)]],
       status: [1, Validators.required],
-      brands: this.fb.array([this.fb.control(null, Validators.required)]),
-      categories: this.fb.array([this.fb.control(null, Validators.required)]),
       hasVariant: [false],
       attributes: this.fb.array([]),
-      variants: this.fb.array([])
+      variants: this.fb.array([]),
+      categoryBrandArray: this.categoryBrandArray,
+      brands: this.fb.array([]),
+      categories: this.fb.array([])
     });
+    
+  
+    // Assign reference for convenience
+    this.categoryBrandArray = this.productForm.get('categoryBrandArray') as FormArray;
+  
+    // Sync and setup
     this.submitted = false;
+  
+    // Watch hasVariant changes
     this.productForm.get('hasVariant')?.valueChanges.subscribe(hasVariant => {
       this.hasVariant = hasVariant;
       if (!hasVariant) {
@@ -156,6 +176,10 @@ export class ProductComponent implements OnInit {
     return this.productForm.get('brands') as FormArray;
   }
 
+  get categoryBrandArrayFormArray(): FormArray {
+    return this.productForm.get('categoryBrandArray') as FormArray;
+  }
+
   // ===== Data Loading Methods =====
   private loadCategories(): void {
     this.cateService.getAllCategory().subscribe({
@@ -166,7 +190,15 @@ export class ProductComponent implements OnInit {
 
   private loadBrands(): void {
     this.brandService.getAllBrand().subscribe({
-      next: (data: Brand[]) => this.brands = data,
+      next: (data: Brand[]) => {
+        this.brands = data;
+        // Update availableBrands for all existing pairs
+        if (this.categoryBrandArray && this.categoryBrandArray.length > 0) {
+          this.categoryBrandArray.controls.forEach(group => {
+            group.patchValue({ availableBrands: this.brands });
+          });
+        }
+      },
       error: (err: any) => console.error('Brand error:', err)
     });
   }
@@ -679,116 +711,43 @@ export class ProductComponent implements OnInit {
   // ===== Form Submission Methods =====
   onSubmit(): void {
     this.submitted = true;
+  
     if (this.productForm.valid) {
       const formData = this.productForm.value;
-      console.log('Form Data to be submitted:', formData);
-      let payload: any = formData;
-      // If you are using FormData for file upload, log the FormData as well
-      if (this.selectedImages && this.selectedImages.length > 0) {
-        const fd = new FormData();
-        formData.categoryBrandPairs = [];
-        const categoryIds = this.productForm.value.categories;
-        const brandIds = this.productForm.value.brands;
-
-        for (let i = 0; i < categoryIds.length; i++) {
-          formData.categoryBrandPairs.push({
-            categoryId: categoryIds[i],
-            brandId: brandIds[i] || null
-          });
-        }
-        console.log('Form Data with categoryBrandPairs:', formData);
-        const productBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
-        fd.append('product', productBlob);
-        
-        // Add main product images
-        for (const file of this.selectedImages) {
-          fd.append('images', file);
-        }
-
-        // Add variant images
-        if (formData.variants && formData.variants.length > 0) {
-          formData.variants.forEach((variant: any, variantIndex: number) => {
-            if (variant.images && variant.images.length > 0) {
-              variant.images.forEach((image: any, imgIndex: number) => {
-                if (image.file) {
-                  fd.append(`variantImages_${variantIndex}`, image.file);
-                }
-              });
-            }
-          });
-        }
-
-        // Log FormData keys and values
-        for (const pair of fd.entries()) {
-          console.log('FormData:', pair[0], pair[1]);
-        }
-
-        // Add debug logging for variant images
-        if (formData.variants && formData.variants.length > 0) {
-          console.log('Variant Images Debug:');
-          formData.variants.forEach((variant: any, index: number) => {
-            console.log(`Variant ${index + 1} Images:`, variant.images);
-            if (variant.images && variant.images.length > 0) {
-              variant.images.forEach((image: any, imgIndex: number) => {
-                console.log(`Variant ${index + 1} Image ${imgIndex + 1}:`, {
-                  fileName: image.file?.name,
-                  fileSize: image.file?.size,
-                  fileType: image.file?.type,
-                  previewUrl: image.preview
-                });
-              });
-            }
-          });
-        }
-
-        payload = fd;
+  
+      const fd = new FormData();
+  
+      // Map category-brand pairs from the FormArray
+      const categoryBrandPairs = this.categoryBrandArray.controls.map((group: any) => ({
+        categoryId: group.get('categoryId')?.value,
+        brandId: group.get('brandId')?.value || null
+      }));
+  
+      formData.categoryBrandPairs = categoryBrandPairs;
+  
+      const productBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
+      fd.append('product', productBlob);
+  
+      for (const file of this.selectedImages) {
+        fd.append('images', file);
       }
-      this.proService.createProduct(payload,).subscribe({
-        next: (data) => {
-          const productId = data.id || data.productId || data;
-          let categoryName: string | null = null;
-          let brandName: string | null = null;
-          const foundCategory = this.categories.find(c => c.id === this.productForm.value.category);
-          if (foundCategory && typeof foundCategory.name === 'string') {
-            categoryName = foundCategory.name;
-          }
-          const foundBrand = this.brands.find(b => b.id === this.productForm.value.brand);
-          if (foundBrand && typeof foundBrand.name === 'string') {
-            brandName = foundBrand.name;
-          }
-          let attr1: string | null = null;
-          let attr2: string | null = null;
-          let attrValues: string[] = [];
-          if (this.productAttributes && this.productAttributes.length > 0) {
-            for (const attr of this.productAttributes) {
-              if (attr.allowedValues && attr.allowedValues.length > 0) {
-                console.log('Attribute:', attr.attributeName, 'Values:', attr.allowedValues);
-                const selected = attr.allowedValues.find((v: any) => v.selected);
-                if (selected) {
-                  console.log('Selected value for', attr.attributeName, ':', selected.value);
-                }
-                const valueToUse = selected || attr.allowedValues[0];
-                if (valueToUse && valueToUse.value) {
-                  attrValues.push(valueToUse.value);
-                }
+  
+      if (formData.variants && formData.variants.length > 0) {
+        formData.variants.forEach((variant: any, variantIndex: number) => {
+          if (variant.images && variant.images.length > 0) {
+            variant.images.forEach((image: any) => {
+              if (image.file) {
+                fd.append(`variantImages_${variantIndex}`, image.file);
               }
-              if (attrValues.length === 2) break;
-            }
+            });
           }
-          console.log('Attribute values used for SKU:', attrValues);
-          attr1 = attrValues[0] || null;
-          attr2 = attrValues[1] || null;
-          this.sku = this.generateSKU12(
-            this.productForm.value.productName,
-            [categoryName !== null ? String(categoryName) : ''],
-            [brandName !== null ? String(brandName) : ''],
-            [
-              { attributeName: 'attr1', value: attrValues[0] || '' },
-              { attributeName: 'attr2', value: attrValues[1] || '' }
-            ],
-            0 // variantIndex
-          );
-          console.log('Generated SKU:', this.sku);
+        });
+      }
+  
+      this.proService.createProduct(fd).subscribe({
+        next: (data) => {
+          console.log('Product created:', data);
+          this.router.navigate(['/productlist']);
         },
         error: (err) => {
           console.error('Error creating product:', err);
@@ -797,7 +756,7 @@ export class ProductComponent implements OnInit {
     } else {
       this.markFormGroupTouched(this.productForm);
     }
-  }
+  }  
 
   private markFormGroupTouched(formGroup: FormGroup): void {
     Object.values(formGroup.controls).forEach(control => {
@@ -809,11 +768,28 @@ export class ProductComponent implements OnInit {
   }
 
   openNewCategoryModal(): void {
-    this.modalService.openCreateCategoryModal();
+    this.modalService.openCreateCategoryModal().then((result) => {
+      if (result === 'success') {
+        this.loadCategories();
+      }
+    }).catch(() => {
+      // Modal dismissed — do nothing
+    });
   }
 
   openNewBrandModal(): void {
-    this.modalService.openCreateBrandModal();
+    this.modalService.openCreateBrandModal().then((result) => {
+      if (result === 'success') {
+        this.loadBrands();
+        if (this.categoryBrandArray && this.categoryBrandArray.length > 0) {
+          this.categoryBrandArray.controls.forEach(group => {
+            group.patchValue({ availableBrands: this.brands });
+          });
+        }
+      }
+    }).catch(() => {
+      // Modal dismissed — do nothing
+    });
   }
 
   addCategorySelect(): void {
@@ -851,5 +827,49 @@ export class ProductComponent implements OnInit {
   openNewCategoryOrBrandModal(): void {
     // You can implement a combined modal, or for now just open category modal as an example
     this.openNewCategoryModal();
+  }
+
+  // ===== New Form Array Methods =====
+  addCategoryBrandPair() {
+    const group = this.fb.group({
+      categoryId: [null, Validators.required],
+      brandId: [null],
+      availableBrands: [this.brands]
+    });
+    this.categoryBrandArray.push(group);
+  }  
+
+  removeCategoryBrandPair(index: number) {
+    if (this.categoryBrandArray.length > 1) {
+      this.categoryBrandArray.removeAt(index);
+    }
+  }
+
+  onCategoryChange(index: number) {
+    const group = this.categoryBrandArray.at(index);
+    const categoryId = group.get('categoryId')?.value;
+    if (categoryId === 'add_new_category') {
+      this.openNewCategoryModal();
+      group.patchValue({ categoryId: null });
+      return;
+    }
+    if (!categoryId) {
+      // If no category selected, show all brands
+      group.patchValue({ availableBrands: this.brands, brandId: null });
+      return;
+    }
+    this.brandService.getBrandByCateId(categoryId).subscribe((brands: Brand[]) => {
+      group.patchValue({ availableBrands: brands, brandId: null });
+    });
+  }
+
+  onBrandChange(index: number) {
+    const group = this.categoryBrandArray.at(index);
+    const brandId = group.get('brandId')?.value;
+    if (brandId === 'add_new_brand') {
+      this.openNewBrandModal();
+      group.patchValue({ brandId: null });
+      return;
+    }
   }
 }

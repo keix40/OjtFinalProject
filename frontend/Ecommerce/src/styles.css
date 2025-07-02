@@ -15,7 +15,7 @@ body, html {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('assets/project_img/shop.jpeg') no-repeat center center fixed;
+    /* background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('assets/project_img/shop.jpeg') no-repeat center center fixed; */
     background-size: cover;
 }
 
@@ -100,3 +100,103 @@ body, html {
     box-sizing: border-box;
     font-family: "Poppins", sans-serif;
 }
+
+/* === GLOBAL PRINT STYLES FOR INVOICE (FINAL) === */
+@media print {
+  /* 1. Hide everything on the page by default */
+  body > *:not(ngb-modal-window) {
+    display: none !important;
+  }
+
+  /* 2. Make the modal window the main container for the print view */
+  ngb-modal-window {
+    position: static !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /* 3. Force the modal dialog to fill the entire page width */
+  ngb-modal-window .modal-dialog {
+    transform: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  /* 4. Remove screen-specific styling from the modal content wrapper */
+  ngb-modal-window .modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* 5. Apply print margins and ensure the invoice container is visible and styled */
+  .invoice-container {
+    display: block !important;
+    padding: 1cm !important;
+    width: 100% !important;
+    page-break-inside: avoid; /* Try to keep the whole invoice on one page */
+  }
+  
+  /* 6. Override Bootstrap's grid system for print */
+  .invoice-container .row {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+  }
+  .invoice-container .col-6 {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+  .invoice-container .justify-content-end {
+      justify-content: flex-end !important;
+  }
+  .invoice-container .col-md-5 {
+      flex: 0 0 41.666667% !important;
+      max-width: 41.666667% !important;
+  }
+
+  /* 7. Hide all elements that should not be printed */
+  .d-print-none {
+    display: none !important;
+  }
+
+  /* 8. Ensure all text is black for readability on paper */
+  h1, h6, p, td, th, strong, span, li, a {
+    color: #000 !important;
+  }
+
+  /* 9. Style the status badge to be simple and clear for print */
+  .badge {
+    border: 1px solid #000 !important;
+    background-color: #FFF !important;
+    color: #000 !important;
+    padding: .25em .5em;
+  }
+
+  /* 10. Ensure table styles are consistent and printer-friendly */
+  .table-responsive {
+    overflow-x: visible !important;
+  }
+  
+  .invoice-table, .totals-table {
+    width: 100%;
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    border-collapse: collapse !important;
+  }
+  
+  .invoice-table thead {
+    background-color: #e9ecef !important;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    border: 1px solid #aaa !important;
+  }
+  
+  .totals-table td {
+      border: none !important;
+  }
+}
+/* === END OF GLOBAL PRINT STYLES === */

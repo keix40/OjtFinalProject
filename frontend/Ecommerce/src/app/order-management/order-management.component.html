@@ -1,0 +1,250 @@
+<div class="p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-primary">Order Management</h2>
+    <div class="d-flex gap-2">
+      <button class="btn btn-success d-flex align-items-center gap-2" (click)="exportToExcel()" title="Export to Excel">
+        <i class="bi bi-file-earmark-excel"></i>
+        Export Excel
+      </button>
+      <button class="btn btn-danger d-flex align-items-center gap-2" (click)="exportToPDF()" title="Export to PDF">
+        <i class="bi bi-file-earmark-pdf"></i>
+        Export PDF
+      </button>
+      <button class="btn btn-outline-primary d-flex align-items-center gap-2" (click)="loadOrders()">
+        <i class="bi bi-arrow-clockwise"></i>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div class="container mb-4">
+    <div class="row g-2 align-items-center mb-3">
+      <div class="col-md-3">
+        <div class="form-group">
+          <label class="form-label text-muted small">Status</label>
+          <select class="form-select custom-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+            <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="form-group">
+          <label class="form-label text-muted small">Date Range</label>
+          <select class="form-select custom-select" [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
+            <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col">
+        <button class="btn btn-outline-danger me-2 action-btn" [disabled]="selectedOrders.length === 0">
+          <i class="bi bi-x-circle me-1"></i>Cancel Orders
+        </button>
+        <button class="btn btn-outline-success action-btn" (click)="exportSelected()" [disabled]="selectedOrders.length === 0">
+          <i class="bi bi-download me-1"></i>Export Selected
+        </button>
+      </div>
+    </div>
+  </div>    
+  
+  <!-- Order Table -->
+  <div class="table-responsive">
+    <table id="orderTable" class="table table-hover align-middle mb-0 w-100">
+      <thead>
+        <tr>
+          <th class="checkbox-column">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
+            </div>
+          </th>
+          <th style="min-width: 120px;">Order</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of filteredOrders" class="table-row">
+          <td class="checkbox-column">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" [(ngModel)]="order.checked" (change)="updateSelection()">
+            </div>
+          </td>
+          <td class="order-cell">
+            <div class="d-flex flex-column">
+              <span class="order-code fw-bold">{{ order.orderCode }}</span>
+              <small class="text-muted">{{ order.deliveryMethod }}</small>
+            </div>
+          </td>
+          <td class="date-cell">
+            <div class="d-flex flex-column">
+              <span class="fw-medium">{{ formatDate(order.orderDate) }}</span>
+            </div>
+          </td>
+          <td class="items-cell">
+            <div class="d-flex flex-column">
+              <span class="fw-medium">{{ getTotalItems(order) }} items</span>
+              <small class="text-muted">{{ order.products.length }} products</small>
+            </div>
+          </td>
+          <td class="total-cell">
+            <div class="d-flex flex-column">
+              <span class="fw-bold text-primary">{{ order.total }} ks</span>
+              <small class="text-muted" *ngIf="order.discountAmount > 0">
+                -{{ order.discountAmount }} ks discount
+              </small>
+            </div>
+          </td>
+          <td class="status-cell">
+            <span class="badge status-badge" [ngClass]="getStatusBadgeClass(order.status)">
+              {{ order.status }}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <div class="d-flex gap-1">
+              <button class="btn btn-sm btn-outline-primary" (click)="viewOrderDetails(order, orderDetailsModal)" title="View Details">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button 
+                class="btn btn-sm btn-outline-danger" 
+                (click)="cancelOrder(order)" 
+                title="Cancel Order"
+                [disabled]="order.status === 'DELIVERED' || order.status === 'CANCELLED'">
+                <i class="bi bi-x-circle"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="filteredOrders.length === 0" class="text-center py-5">
+    <div class="empty-state">
+      <i class="bi bi-box-seam display-1 text-muted"></i>
+      <h4 class="mt-3 text-muted">No Orders Found</h4>
+      <p class="text-muted">No orders match your current filters.</p>
+      <button class="btn btn-primary" (click)="selectedStatus = 'all'; selectedDateRange = 'all'; applyFilters()">
+        Clear Filters
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Order Details Modal -->
+<ng-template #orderDetailsModal let-modal>
+  <div class="invoice-container">
+    <div class="modal-header d-print-none">
+      <h4 class="modal-title">
+        <i class="bi bi-receipt-cutoff me-2"></i>
+        Invoice - {{ selectedOrder?.orderCode }}
+      </h4>
+      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    
+    <div class="modal-body" *ngIf="selectedOrder">
+      <!-- SLEEK BILL Style -->
+      <div class="receipt-container">
+        <div class="receipt-header">
+          <h2 class="receipt-title">Britium Gallery</h2>
+          <!-- <p>Britium Gallery, Panshil Square, Tapovan Road</p>
+          <p>Camp, Amravati, 444602, IN</p>
+          <p>PHONE: +911234567890</p>
+          <p>GSTIN: 27AAFCV2449G1Z7</p> -->
+        </div>
+
+        <hr class="dotted">
+        
+        <div class="customer-info">
+          <p><strong>Bill To:</strong> {{ selectedOrder.user.name }}</p>
+          <p>{{ selectedOrder.user.email }}</p>
+          <p>{{ selectedOrder.user.phNo }}</p>
+          <br>
+          <p><strong>Ship To:</strong></p>
+          <p>{{ selectedOrder.address.address }}</p>
+          <p>{{ selectedOrder.address.city }}, {{ selectedOrder.address.state }} {{ selectedOrder.address.postalCode }}</p>
+          <p>{{ selectedOrder.address.country }}</p>
+        </div>
+
+        <div class="receipt-info">
+          <span>Bill No: {{ selectedOrder.orderCode }}</span>
+          <span>Date: {{ formatDate(selectedOrder.orderDate) }}</span>
+        </div>
+
+        <hr class="dotted">
+
+        <table class="receipt-table">
+          <thead>
+            <tr>
+              <th>SN</th>
+              <th>Item</th>
+              <th class="text-end">Qty</th>
+              <th class="text-end">Price</th>
+              <th class="text-end">Amt</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of selectedOrder.products; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ product.productName }}</td>
+              <td class="text-end">{{ product.quantity }}</td>
+              <td class="text-end">{{ product.unitPrice | number:'1.2-2' }}</td>
+              <td class="text-end">{{ (product.quantity * product.unitPrice) | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <hr class="dotted">
+
+        <div class="receipt-totals">
+          <div class="totals-row">
+            <span>Subtotal</span>
+            <span>{{ selectedOrder.subtotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="totals-row" *ngIf="selectedOrder.deliveryFee > 0">
+            <span>Delivery Fee</span>
+            <span>{{ selectedOrder.deliveryFee | number:'1.2-2' }}</span>
+          </div>
+          <div class="totals-row" *ngIf="selectedOrder.discountAmount > 0">
+            <span>Discount</span>
+            <span class="text-danger">-{{ selectedOrder.discountAmount | number:'1.2-2' }}</span>
+          </div>
+          
+          <hr class="dotted-bold">
+          
+          <div class="totals-row total">
+            <span>TOTAL</span>
+            <span>{{ selectedOrder.total | number:'1.2-2' }} ks</span>
+          </div>
+        </div>
+
+        <div class="receipt-footer">
+          <p>Thank You</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal-footer d-print-none">
+       <!-- Status Management -->
+       <div class="d-flex align-items-center gap-2 me-auto">
+        <label for="status-select" class="form-label mb-0 small">Status:</label>
+        <select id="status-select" class="form-select form-select-sm" [(ngModel)]="selectedStatusInModal">
+          <option *ngFor="let status of availableStatuses" [value]="status.value">{{ status.label }}</option>
+        </select>
+        <button class="btn btn-primary btn-sm" (click)="changeOrderStatus()" [disabled]="selectedOrder?.status === selectedStatusInModal">
+          Update
+        </button>
+      </div>
+      <!-- Action Buttons -->
+      <button type="button" class="btn btn-secondary" (click)="modal.close()">Close</button>
+      <button type="button" class="btn btn-success" (click)="printInvoice()">
+        <i class="bi bi-printer me-1"></i>Print Invoice
+      </button>
+    </div>
+  </div>
+</ng-template>

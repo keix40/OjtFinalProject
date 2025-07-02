@@ -67,4 +67,8 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
   onClose() {
     this.closeSidebar.emit();
   }
+
+  goToProductDetail(productId: number): void {
+    this.router.navigate(['/product', productId]);
+  }
 } 

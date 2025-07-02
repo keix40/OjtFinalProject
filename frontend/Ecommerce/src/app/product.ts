@@ -36,7 +36,7 @@ export interface ProductDTO {
   description: string;
   status: number;
 
-  categoryBrandPairs: {
+  categoryBrandArray: {
     categoryId: number;
     cateName?: string;
     brandId: number | null;

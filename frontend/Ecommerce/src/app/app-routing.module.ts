@@ -13,10 +13,12 @@ import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { LayoutComponent } from './layout/layout.component';
 import { ProductDisplayComponent } from './product-display/product-display.component';
-import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
-
+import { OrderManagementComponent } from './order-management/order-management.component';
 import { WishlistComponent } from './wishlist/wishlist.component';
-
+import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
+import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
+import { ReviewComponent } from './review/review.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
@@ -31,6 +33,7 @@ const routes: Routes = [
       { path: 'product', component: ProductComponent },
       { path: 'productlist', component: ProductMangementComponent },
       { path: 'admin/products/:id', component: ProductDetailComponent },
+      { path: 'orders', component: OrderManagementComponent },
       // add more routes here
     ],},
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -40,6 +43,10 @@ const routes: Routes = [
   { path: 'checkout/confirm', component: OrderConfirmComponent },
   { path: 'display', component: ProductDisplayComponent },
   { path: 'wishlist', component: WishlistComponent },
+  { path: 'ordertracking/:orderId', component: OrderTrackingComponent },
+  { path: 'user-product-detail/:id', component: UserProductDetailComponent },
+  { path: 'product/:id', component: UserProductDetailComponent },
+  { path: 'review', component: ReviewComponent },
 ];
 
 @NgModule({

@@ -20,30 +20,24 @@
               <div class="accordion-body">
                 <form #customerForm="ngForm" (ngSubmit)="nextStep(customerForm)">
                   <div class="mb-3">
-                    <label class="form-label">Email address*</label>
-                    <input type="email" class="form-control" [(ngModel)]="customer.email" name="email" required>
-                  </div>
-                  <div class="row g-2 mb-3">
-                    <div class="col">
-                      <label class="form-label">First name*</label>
-                      <input type="text" class="form-control" [(ngModel)]="customer.firstName" name="firstName" required>
-                    </div>
-                    <div class="col">
-                      <label class="form-label">Last name*</label>
-                      <input type="text" class="form-control" [(ngModel)]="customer.lastName" name="lastName" required>
-                    </div>
+                    <label class="form-label">Email address<span class="text-danger">*</span></label>
+                    <input type="email" class="form-control" [(ngModel)]="customer.email" name="email" required [disabled]="true">
                   </div>
                   <div class="mb-3">
-                    <label class="form-label">Phone number*</label>
+                    <label class="form-label">Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" [(ngModel)]="customer.name" name="name" required [disabled]="true">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Phone number <span class="text-danger">*</span></label>
                     <input type="tel" class="form-control" [(ngModel)]="customer.phone" name="phone" required>
                   </div>
-                  <button class="btn btn-primary w-100" [disabled]="!customerForm.valid">Continue</button>
+                  <button class="btn btn-primary w-100" [disabled]="customer.phone === ''">Continue</button>
                 </form>
               </div>
             </div>
             <div *ngIf="stepCompleted[1] && activeStep !== 1" class="accordion-summary bg-light p-3 border-top">
               <div><strong>Email:</strong> {{customer.email}}</div>
-              <div><strong>Name:</strong> {{customer.firstName}} {{customer.lastName}}</div>
+              <div><strong>Name:</strong> {{customer.name}}</div>
               <div><strong>Phone:</strong> {{customer.phone}}</div>
             </div>
           </div>
@@ -60,42 +54,45 @@
             </h2>
             <div [id]="'collapseShipping'" class="accordion-collapse collapse" [class.show]="activeStep === 2" [attr.aria-labelledby]="'headingShipping'" data-bs-parent="#checkoutAccordion">
               <div class="accordion-body">
-                <form #shippingForm="ngForm" (ngSubmit)="nextStep(shippingForm)">
-                  <div class="mb-3">
-                    <label class="form-label">Street address*</label>
-                    <input type="text" class="form-control" [(ngModel)]="shipping.address" name="address" required>
-                  </div>
-                  <div class="row g-2 mb-3">
-                    <div class="col">
-                      <label class="form-label">City*</label>
-                      <input type="text" class="form-control" [(ngModel)]="shipping.city" name="city" required>
-                    </div>
-                    <div class="col">
-                      <label class="form-label">State*</label>
-                      <input type="text" class="form-control" [(ngModel)]="shipping.state" name="state" required>
-                    </div>
-                  </div>
-                  <div class="row g-2 mb-3">
-                    <div class="col">
-                      <label class="form-label">Postal code*</label>
-                      <input type="text" class="form-control" [(ngModel)]="shipping.postal" name="postal" required>
-                    </div>
-                    <div class="col">
-                      <label class="form-label">Country*</label>
-                      <input type="text" class="form-control" [(ngModel)]="shipping.country" name="country" required>
+                <!-- Address List -->
+                <div *ngIf="addresses.length > 0" class="mb-3">
+                  <div class="row g-3">
+                    <div *ngFor="let addr of addresses; let i = index" class="col-12">
+                      <div class="card address-card shadow-sm border-2 mb-2"
+                           [ngClass]="{'border-primary': selectedAddressIndex === i, 'border-light': selectedAddressIndex !== i}"
+                           (click)="onSelectAddress(i)"
+                           style="cursor: pointer;">
+                        <div class="card-body d-flex align-items-center">
+                          <input class="form-check-input me-3" type="radio" [checked]="selectedAddressIndex === i" [id]="'address'+i" style="transform: scale(1.3);" (click)="$event.stopPropagation()">
+                          <div class="flex-grow-1">
+                            <div class="fw-semibold">{{addr.address}}</div>
+                            <div class="small text-muted">{{addr.city}}, {{addr.state}}, {{addr.postalCode}}, {{addr.country}}</div>
+                            <!-- <div class="small text-muted">Phone: {{addr.phone}}</div> -->
+                          </div>
+                          <span *ngIf="selectedAddressIndex === i" class="badge bg-primary ms-2">Selected</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div class="mb-3">
-                    <label class="form-label">Phone*</label>
-                    <input type="tel" class="form-control" [(ngModel)]="shipping.phone" name="shippingPhone" required>
-                  </div>
-                  <button class="btn btn-primary w-100" [disabled]="!shippingForm.valid">Continue</button>
-                </form>
+                </div>
+                <!-- Add New Address Button -->
+                <div class="mb-3">
+                  <button class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center py-2" (click)="openAddAddressModal()" style="font-size: 1.1rem;">
+                    <i class="bi bi-plus-circle me-2"></i>
+                    Add New Address
+                  </button>
+                </div>
+                <!-- Continue Button -->
+                <div class="mt-4">
+                  <button class="btn btn-primary w-100" (click)="continueToDelivery()" [disabled]="selectedAddressIndex === null">
+                    Continue
+                      </button>
+                </div>
               </div>
             </div>
             <div *ngIf="stepCompleted[2] && activeStep !== 2" class="accordion-summary bg-light p-3 border-top">
               <div><strong>Address:</strong> {{shipping.address}}, {{shipping.city}}, {{shipping.state}}, {{shipping.postal}}, {{shipping.country}}</div>
-              <div><strong>Phone:</strong> {{shipping.phone}}</div>
+              <!-- <div><strong>Phone:</strong> {{shipping.phone}}</div> -->
             </div>
           </div>
 
@@ -114,9 +111,11 @@
                 <form #deliveryForm="ngForm" (ngSubmit)="goToPayment(deliveryForm)">
                   <div class="mb-3">
                     <label class="form-label">Select a delivery method*</label>
-                    <select class="form-select" [(ngModel)]="delivery.method" name="deliveryMethod" required>
+                    <select class="form-select" [(ngModel)]="selectedDelivery" name="deliveryMethod" required (ngModelChange)="onDeliveryChange($event)">
                       <option value="">Choose...</option>
-                      <option *ngFor="let option of deliveryOptions" [value]="option.name">{{option.name}} - ${{option.cost}} ({{option.estimated}})</option>
+                      <option *ngFor="let option of deliveryOptions" [ngValue]="option">
+                        {{option.name}} - {{option.fee}} MMK ({{option.description}})
+                      </option>
                     </select>
                   </div>
                   <button class="btn btn-primary w-100" [disabled]="!deliveryForm.valid">Place order and continue to payment</button>
@@ -132,7 +131,7 @@
     </div>
     <!-- Cart Summary (Right) -->
     <div class="col-lg-5 col-xl-4 d-none d-lg-block">
-      <div class="bg-white rounded-5 shadow-lg p-5 sticky-top animate-fadein" style="top: 32px; min-width: 360px; max-width: 520px;">
+      <div class="bg-white rounded-5 shadow-lg p-5 animate-fadein" style="top: 100px; min-width: 360px; max-width: 520px;">
         <div class="d-flex justify-content-between align-items-center mb-3">
           <h5 class="fw-bold mb-0">Summary</h5>
           <a routerLink="/cart" class="btn btn-link">Edit cart</a>
@@ -141,128 +140,122 @@
           <img [src]="item.image" alt="{{item.title}}" class="rounded-3 me-3" style="width:56px;height:56px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
           <div class="flex-grow-1">
             <div class="fw-semibold">{{item.title}}</div>
-            <div class="small text-muted">Size: {{item.size}}</div>
-            <div class="small text-muted">Color: {{item.color}}</div>
+            <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-muted small mb-2">
+              <div *ngFor="let attr of item.variantAttributes; let last = last">
+                {{ attr }}
+              </div>
+            </div>
             <div class="small text-muted">Quantity: {{item.quantity}}</div>
           </div>
-          <div class="fw-bold ms-2">${{item.price * item.quantity}}</div>
+          <div class="fw-bold ms-2">{{ (item.price * item.quantity) | number:'1.0-0' }} MMK</div>
         </div>
         <hr>
-        <input type="text" class="form-control bg-light border-0 mb-2" placeholder="Enter a coupon or a reward code">
-        <button class="btn btn-outline-primary w-100 mb-2 rounded-pill">Apply</button>
-        <div class="small text-success mb-2">You have applied coupon <b>TAKE100</b><br>Which saves you $100.00</div>
+        <input type="text" class="form-control bg-light border-0 mb-2" placeholder="Enter a coupon or a reward code" [(ngModel)]="couponCode">
+        <button class="btn btn-outline-primary w-100 mb-2 rounded-pill" (click)="applyCoupon()">Apply</button>
+        <p [ngClass]="{'text-success': isCouponValid, 'text-danger': !isCouponValid}">
+          {{ discountMessage }}
+        </p>
         <h6 class="fw-bold mt-3 mb-2">Summary</h6>
-        <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>${{getSubtotal()}}</span></div>
-        <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>TBA</span></div>
-        <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-$100.00</span></div>
-        <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">${{getTotal()}}</span></div>
-        <div class="text-success mt-2">Yay! you saved 30% in total</div>
+        <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>{{ getSubtotal() | number:'1.0-0' }} MMK</span></div>
+        <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>{{ deliveryFee | number:'1.0-0' }} MMK</span></div>
+        <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-{{ discountAmount | number:'1.0-0' }} MMK</span></div>
+        <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">{{ getTotal() | number:'1.0-0' }} MMK</span></div>
+        <div class="text-success mt-2" *ngIf="discountAmount > 0 && discount">
+          Yay! You saved
+          <span *ngIf="discount.discountType === 'PERCENTAGE'">
+            {{ (discount.discountValue * 100) | number:'1.0-0' }}%
+          </span>
+          <span *ngIf="discount.discountType === 'FIXED'">
+            {{ discountAmount | number:'1.0-0' }} MMK
+          </span>
+          in total
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Stepper Indicator Styles -->
-<style>
-  .checkout-margin {
-    margin-top: 2.5rem;
-  }
-  .checkout-accordion .accordion-item {
-    border: none;
-    border-radius: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-    background: #fff;
-    overflow: hidden;
-    font-size: 1.13rem;
-  }
-  .checkout-accordion .accordion-header .accordion-button {
-    font-size: 1.25rem;
-    font-weight: 700;
-    background: #f8fafc;
-    border: none;
-    border-radius: 2rem 2rem 0 0;
-    padding: 1.5rem 2rem;
-    transition: background 0.2s;
-  }
-  .checkout-accordion .accordion-header .accordion-button:not(.collapsed) {
-    background: #e9f3ff;
-    color: #0d6efd;
-  }
-  .checkout-accordion .accordion-body {
-    padding: 2.5rem 2rem 2rem 2rem;
-    background: #fff;
-    border-radius: 0 0 2rem 2rem;
-    font-size: 1.13rem;
-  }
-  .accordion-summary {
-    border-radius: 0 0 2rem 2rem;
-    font-size: 1.08rem;
-    color: #222;
-    border-top: 1px solid #f0f0f0;
-    padding: 1.25rem 2rem;
-  }
-  .cart-summary-item {
-    background: #f8fafc;
-    border-radius: 1.5rem;
-    padding: 1rem 1.25rem;
-    margin-bottom: 1.25rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    transition: box-shadow 0.2s;
-    font-size: 1.08rem;
-  }
-  .cart-summary-item:hover {
-    box-shadow: 0 6px 24px rgba(0,0,0,0.12);
-  }
-  .form-control, .form-select {
-    font-size: 1.13rem;
-    padding: 0.9rem 1.1rem;
-    border-radius: 1rem;
-  }
-  .form-control:focus, .form-select:focus {
-    box-shadow: 0 0 0 0.2rem rgba(13,110,253,.10);
-    border-color: #b6d4fe;
-  }
-  .btn-primary, .btn-outline-primary {
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    font-size: 1.13rem;
-    border-radius: 2rem;
-    padding: 0.85rem 2.2rem;
-  }
-  .animate-fadein {
-    animation: fadeIn 0.7s cubic-bezier(.4,0,.2,1);
-  }
-  .animate-slidein {
-    animation: slideIn 0.7s cubic-bezier(.4,0,.2,1);
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(40px); }
-    to { opacity: 1; transform: none; }
-  }
-  .checkout-row {
-    --checkout-gap: 50px;
-    gap: var(--checkout-gap);
-  }
-  @media (min-width: 992px) {
-    .checkout-row {
-      display: flex;
-      flex-wrap: nowrap;
-      gap: var(--checkout-gap);
-    }
-    .col-lg-7.col-xl-8 {
-      flex: 0 0 auto;
-      width: 60%;
-      max-width: 820px;
-    }
-    .col-lg-5.col-xl-4 {
-      flex: 0 0 auto;
-      width: 36%;
-      max-width: 520px;
-    }
-  }
-</style>
+<!-- Add Address Modal -->
+<div *ngIf="showAddAddressModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1050;">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-lg">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">Add New Address</h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="closeAddAddressModal()"></button>
+      </div>
+      <div class="modal-body pt-0">
+        <form [formGroup]="addressForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="addressInput" class="form-label">Address <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="addressInput" placeholder="Enter address" formControlName="address" [class.is-invalid]="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
+              <div class="invalid-feedback" *ngIf="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
+                Address is required.
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="cityInput" class="form-label">City <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="cityInput" placeholder="Enter city" formControlName="city" [class.is-invalid]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
+              <div class="invalid-feedback" *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
+                City is required.
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="stateInput" class="form-label">State <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="stateInput" placeholder="Enter state" formControlName="state" [class.is-invalid]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
+              <div class="invalid-feedback" *ngIf="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
+                State is required.
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="postalCodeInput" class="form-label">Postal Code <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="postalCodeInput" placeholder="Enter postal code" formControlName="postalCode" [class.is-invalid]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
+              <div class="invalid-feedback" *ngIf="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
+                Postal code is required.
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label for="countryInput" class="form-label">Country <span class="text-danger">*</span></label>
+              <input type="text" class="form-control rounded-3" id="countryInput" placeholder="Enter country" formControlName="country" [class.is-invalid]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
+              <div class="invalid-feedback" *ngIf="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
+                Country is required.
+              </div>
+            </div>
+            <div class="col-md-3">
+              <label for="latitudeInput" class="form-label">Latitude</label>
+              <input type="number" class="form-control rounded-3" id="latitudeInput" formControlName="latitude" placeholder="Latitude">
+            </div>
+            <div class="col-md-3">
+              <label for="longitudeInput" class="form-label">Longitude</label>
+              <input type="number" class="form-control rounded-3" id="longitudeInput" formControlName="longitude" placeholder="Longitude">
+            </div>
+          </div>
+          <div class="mb-3 mt-3">
+            <label for="typeInput" class="form-label">Address Type <span class="text-danger">*</span></label>
+            <select class="form-select rounded-pill" id="typeInput" formControlName="addressType">
+              <option value="SHIPPING">Shipping</option>
+              <option value="WORK">Work</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div class="d-flex align-items-center gap-2 mt-3">
+            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" (click)="getCurrentLocation()">
+              <i class="bi bi-geo-alt-fill"></i> Use My Location
+            </button>
+          </div>
+          <div class="my-3">
+            <div id="map" class="rounded-4 border shadow-sm" style="min-height: 180px;"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="closeAddAddressModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary rounded-pill px-4" (click)="submitAddressForm()" [disabled]="!addressForm.valid">
+          Save Address
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

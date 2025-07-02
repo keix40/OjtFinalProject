@@ -88,7 +88,13 @@ export class WishlistComponent implements OnInit {
   }
 
   addToCart(item: WishlistItem) {
+    if (!this.userId) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.cartService.addToCart({
+      userId: this.userId,
       id: item.id,
       title: item.title,
       price: item.price,
@@ -121,5 +127,9 @@ export class WishlistComponent implements OnInit {
         console.error('Error removing from wishlist:', error);
       }
     });
+  }
+
+  goToProductDetail(productId: number) {
+    this.router.navigate(['/product', productId]);
   }
 } 
