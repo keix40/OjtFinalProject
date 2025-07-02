@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,7 +56,9 @@ public class WishlistController {
     }
 
     @GetMapping("/getwishlist/{id}")
-    public List<Wishlist> wishlistListByUserId(@PathVariable long id){
-        return service.getAllWishlistByUserID(id);
+    public ResponseEntity<List<Wishlist>> wishlistListByUserId(@PathVariable long id){
+        List<Wishlist> list = service.getAllWishlistByUserID(id);
+        return ResponseEntity.ok(list != null ? list : new ArrayList<>());
     }
+
 }

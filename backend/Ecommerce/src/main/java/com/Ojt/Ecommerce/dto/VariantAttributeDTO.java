@@ -12,5 +12,7 @@ import lombok.Setter;
 public class VariantAttributeDTO {
     private Long attributeId;
     private Long valueId;
+    private String value;
     private String attributeName;  // optional
+
 }

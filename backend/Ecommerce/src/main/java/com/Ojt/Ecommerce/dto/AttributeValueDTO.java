@@ -8,4 +8,5 @@ import lombok.Setter;
 public class AttributeValueDTO {
     private Long id;
     private String value;
+
 }

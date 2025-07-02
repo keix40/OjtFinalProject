@@ -179,7 +179,7 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "OTP resent. Please check your email."));
     }
 
-    @PostMapping("/send-register-otp")
+    @PostMapping("/sendOtp")
     public ResponseEntity<?> sendOtp(@RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         System.out.println("email is :"+email);
@@ -306,4 +306,6 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
+
+
 }

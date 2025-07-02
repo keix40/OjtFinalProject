@@ -27,4 +27,9 @@ public class UserOrderHasProduct {
 
     @Column(name = "unit_price")
     private Double unitPrice;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id")
+    private ProductVariant productVariant;
+
 }

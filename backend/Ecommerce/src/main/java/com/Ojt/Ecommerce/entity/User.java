@@ -1,10 +1,12 @@
 package com.Ojt.Ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -51,7 +53,6 @@ public class User {
 //    @Column(name = "is_verified")
 //    private boolean isVerified = false;
 
-
     @Column(name = "reset_token")
     private String resetToken;
 
@@ -60,8 +61,6 @@ public class User {
 
     @Column(name = "otp_expiry")
     private LocalDateTime otpExpiry;
-
-
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
@@ -72,6 +71,13 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;
+
+    @Column(name = "total_points")
+    private Integer totalPoints;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Review> reviews = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

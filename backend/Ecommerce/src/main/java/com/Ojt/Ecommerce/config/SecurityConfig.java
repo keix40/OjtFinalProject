@@ -49,12 +49,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
+                        .requestMatchers("/ws-review/**", "/ws-review/info/**").permitAll()
                         .requestMatchers("product/**").permitAll()
                         .requestMatchers("/product_image/**").permitAll()
+                        .requestMatchers("/review/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/category/**").permitAll()
                         .requestMatchers("/brand/**").permitAll()
                         .requestMatchers("/attribute/**").permitAll()
                         .requestMatchers("/wishlist/**").permitAll()
+                        .requestMatchers("/order/**").permitAll()
+                        .requestMatchers("/review/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
                         .anyRequest().authenticated()

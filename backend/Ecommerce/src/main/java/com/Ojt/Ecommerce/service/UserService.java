@@ -12,8 +12,10 @@ import java.util.List;
 
 public interface UserService {
     LoginResponse login(LoginRequest request);
-    public String register(RegisterRequest request, MultipartFile profileImage);
-    List<User> getAllUsers();
-    public RegisterRequest updateUser(Long id, RegisterRequest userDTO);
 
+    public String register(RegisterRequest request, MultipartFile profileImage);
+
+    List<User> getAllUsers();
+
+    public RegisterRequest updateUser(Long id, RegisterRequest userDTO);
 }

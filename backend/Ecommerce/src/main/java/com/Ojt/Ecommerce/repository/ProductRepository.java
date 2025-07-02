@@ -1,12 +1,14 @@
 package com.Ojt.Ecommerce.repository;
 
 import com.Ojt.Ecommerce.entity.Product;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     public boolean existsByProductCode(String productCode);
@@ -73,4 +75,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         """,
             nativeQuery = true)
     List<Object[]> getAdminProductDetail(@Param("productId") Long productId);
+
+    @EntityGraph(attributePaths = {
+            "productCategories.category",
+            "productCategories.brand",
+            "brand",
+            "productImages",
+            "productVariants",
+            "productVariants.variantAttributeValues",
+            "productVariants.variantAttributeValues.attributeValue",
+            "productVariants.variantAttributeValues.attributeValue.attribute"
+    })
+    Optional<Product> findById(Long id);
 }
+

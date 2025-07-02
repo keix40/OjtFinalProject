@@ -28,11 +28,7 @@ public class ProductController {
     public ResponseEntity<?> createProduct(
             @RequestPart("product") ProductDTO dto,
             @RequestPart("images") MultipartFile[] images,
-            @RequestParam MultiValueMap<String, MultipartFile> fileMap) throws IOException {//for multiple image for varient
-        System.out.println("productDto debug"+dto);
-        System.out.println("Product name: " + dto.getProductName());
-        System.out.println("Number of images: " + images.length);
-        List<MultipartFile[]> variantImagesList = new ArrayList<>();
+            @RequestParam MultiValueMap<String, MultipartFile> fileMap) throws IOException {
 
         Map<String, List<MultipartFile>> variantImageMap = new HashMap<>();
         for (Map.Entry<String, List<MultipartFile>> entry : fileMap.entrySet()) {
@@ -41,7 +37,8 @@ public class ProductController {
                 variantImageMap.put(key, entry.getValue());
             }
         }
-        Product savedProduct = service.saveProductWithImages(dto, images,variantImageMap);
+
+        Product savedProduct = service.saveProductWithImages(dto, images, variantImageMap);
 
         if (savedProduct == null) {
             return ResponseEntity.badRequest().body(Map.of("message", "Failed to save product"));
@@ -49,7 +46,6 @@ public class ProductController {
 
         return ResponseEntity.ok(Map.of("message", "Product created successfully"));
     }
-
 
 
 //    @GetMapping("/getallproduct")
@@ -96,13 +92,7 @@ public class ProductController {
     }
 
     @GetMapping("/adminProductDetail/{id}")
-    public ResponseEntity<?> getProductDetail(@PathVariable Long id) {
-        ProductDTO product = service.getProductDetailById(id);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(product);
+    public ProductDTO getProductDetail(@PathVariable Long id) {
+        return service.getProductDetailById(id);
     }
-
-
 }
