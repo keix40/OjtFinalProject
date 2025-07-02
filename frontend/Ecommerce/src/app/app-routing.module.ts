@@ -71,7 +71,7 @@ const routes: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
-  { path: '**', redirectTo: 'home', pathMatch: 'full' }
+  { path: '**', redirectTo: 'home', pathMatch: 'full' },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent },
   { path: 'user-product-detail/:id', component: UserProductDetailComponent },
   { path: 'product/:id', component: UserProductDetailComponent },
