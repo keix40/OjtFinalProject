@@ -8,7 +8,7 @@ import { NotifcationService } from './notifcation.service';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'final_Prj';
+  title = 'Britium Gallary';
   constructor(private notificationService: NotifcationService) {
   }
 }

@@ -50,7 +50,11 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
                         .requestMatchers("/product/**").permitAll()
+                        .requestMatchers("/ws-review/**", "/ws-review/info/**").permitAll()
+                        .requestMatchers("product/**").permitAll()
                         .requestMatchers("/product_image/**").permitAll()
+                        .requestMatchers("/review/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/category/**").permitAll()
                         .requestMatchers("/brand/**").permitAll()
                         .requestMatchers("/attribute/**").permitAll()
@@ -58,6 +62,8 @@ public class SecurityConfig {
                         .requestMatchers("/upload/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/wishlist/**").permitAll()
+                        .requestMatchers("/order/**").permitAll()
+                        .requestMatchers("/review/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
                         .requestMatchers("/api/admin/discounts/**").permitAll()

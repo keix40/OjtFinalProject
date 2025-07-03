@@ -1,8 +1,18 @@
 <app-header></app-header>
-<body>
+<!-- <body> -->
 <div class="container-fluid py-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="fw-bold text-dark">Products</h2>
+    <div>
+      <h2 class="fw-bold text-dark">Products</h2>
+      <!-- Filter Status Indicator -->
+      <div *ngIf="isAnyFilterActive()" class="small text-muted">
+        <i class="bi bi-funnel-fill me-1"></i>
+        Showing {{ products.length }} of {{ allProducts.length }} products
+        <span *ngIf="isPriceFilterActive" class="ms-2">
+          (Price: {{ filters.price[0] }} - {{ filters.price[1] }} MMK)
+        </span>
+      </div>
+    </div>
 
     <!-- Toggle Filter Button -->
     <button class="btn btn-outline-dark fw-bold" (click)="toggleFilter()">
@@ -14,184 +24,225 @@
   <div class="row">
     <!-- Sidebar Filters: only show if showFilter = true -->
     <aside *ngIf="showFilter" class="col-12 col-md-4 col-lg-3 mb-4">
-      <div class="bg-white rounded-4 shadow-lg p-4 sticky-top" style="top: 60px;">
-        <h5 class="fw-bold text-dark mb-3">
-          <i class="fa fa-filter me-2 text-primary"></i>Filters
-        </h5>
+      <div class="filter-sidebar">
+        <div class="filter-container">
+          <h5 class="fw-bold text-dark mb-3">
+            <i class="fa fa-filter me-2 text-primary"></i>Filters
+          </h5>
 
-        <div class="accordion" id="filterAccordion">
-          <!-- Availability Filter -->
-          <div class="accordion-item border-0 mb-2">
-            <h2 class="accordion-header" id="headingAvail">
-              <button class="accordion-button bg-white fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAvail" aria-expanded="true" aria-controls="collapseAvail">
-                <i class="fa fa-box me-2 text-primary"></i>Availability
-              </button>
-            </h2>
-            <div id="collapseAvail" class="accordion-collapse collapse show" aria-labelledby="headingAvail" data-bs-parent="#filterAccordion">
-              <div class="accordion-body py-2">
-                <div class="mb-3">
-                  <div class="fw-semibold text-dark mb-2">Availability</div>
-                  <div *ngFor="let opt of availabilityOptions" class="form-check mb-1">
-                    <input
-                      #availCheck
-                      class="form-check-input accent-check"
-                      type="checkbox"
-                      [id]="'avail-' + opt"
-                      [checked]="filters.availability.includes(opt)"
-                      (change)="onFilterCheckboxChange('availability', opt, availCheck.checked)">
-                    <label class="form-check-label text-dark fw-bold" [for]="'avail-' + opt">{{ opt }}</label>
+          <div class="accordion" id="filterAccordion">
+            <!-- Availability Filter -->
+            <div class="accordion-item border-0 mb-2">
+              <h2 class="accordion-header" id="headingAvail">
+                <button class="accordion-button bg-white fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAvail" aria-expanded="true" aria-controls="collapseAvail">
+                  <i class="fa fa-box me-2 text-primary"></i>Availability
+                </button>
+              </h2>
+              <div id="collapseAvail" class="accordion-collapse collapse show" aria-labelledby="headingAvail" data-bs-parent="#filterAccordion">
+                <div class="accordion-body py-2">
+                  <div class="mb-3">
+                    <div class="fw-semibold text-dark mb-2">Availability</div>
+                    <div *ngFor="let opt of availabilityOptions" class="form-check mb-1">
+                      <input
+                        #availCheck
+                        class="form-check-input accent-check"
+                        type="checkbox"
+                        [id]="'avail-' + opt"
+                        [checked]="filters.availability.includes(opt)"
+                        (change)="onFilterCheckboxChange('availability', opt, availCheck.checked)">
+                      <label class="form-check-label text-dark fw-bold" [for]="'avail-' + opt">{{ opt }}</label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Sale Filter -->
-          <div class="accordion-item border-0 mb-2">
-            <h2 class="accordion-header" id="headingSale">
-              <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSale" aria-expanded="false" aria-controls="collapseSale">
-                <i class="fa fa-tags me-2 text-primary"></i>Sale
-              </button>
-            </h2>
-            <div id="collapseSale" class="accordion-collapse collapse" aria-labelledby="headingSale" data-bs-parent="#filterAccordion">
-              <div class="accordion-body py-2">
-                <div class="mb-3">
-                  <div class="fw-semibold text-dark mb-2">Sale</div>
-                  <div *ngFor="let opt of saleOptions" class="form-check mb-1">
-                    <input
-                      #saleCheck
-                      class="form-check-input accent-check"
-                      type="checkbox"
-                      [id]="'sale-' + opt"
-                      [checked]="filters.sale.includes(opt)"
-                      (change)="onFilterCheckboxChange('sale', opt, saleCheck.checked)">
-                    <label class="form-check-label text-dark fw-bold" [for]="'sale-' + opt">{{ opt }}</label>
+            <!-- Sale Filter -->
+            <div class="accordion-item border-0 mb-2">
+              <h2 class="accordion-header" id="headingSale">
+                <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSale" aria-expanded="false" aria-controls="collapseSale">
+                  <i class="fa fa-tags me-2 text-primary"></i>Sale
+                </button>
+              </h2>
+              <div id="collapseSale" class="accordion-collapse collapse" aria-labelledby="headingSale" data-bs-parent="#filterAccordion">
+                <div class="accordion-body py-2">
+                  <div class="mb-3">
+                    <div class="fw-semibold text-dark mb-2">Sale</div>
+                    <div *ngFor="let opt of saleOptions" class="form-check mb-1">
+                      <input
+                        #saleCheck
+                        class="form-check-input accent-check"
+                        type="checkbox"
+                        [id]="'sale-' + opt"
+                        [checked]="filters.sale.includes(opt)"
+                        (change)="onFilterCheckboxChange('sale', opt, saleCheck.checked)">
+                      <label class="form-check-label text-dark fw-bold" [for]="'sale-' + opt">{{ opt }}</label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Brand Filter (replaces Material) -->
-          <div class="accordion-item border-0 mb-2">
-            <h2 class="accordion-header" id="headingBrand">
-              <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBrand" aria-expanded="false" aria-controls="collapseBrand">
-                <i class="fa fa-industry me-2 text-primary"></i>Brand
-              </button>
-            </h2>
-            <div id="collapseBrand" class="accordion-collapse collapse" aria-labelledby="headingBrand" data-bs-parent="#filterAccordion">
-              <div class="accordion-body py-2">
-                <div class="mb-3">
-                  <div class="fw-semibold text-dark mb-2">Brand</div>
-                  <div *ngFor="let opt of brandOptions" class="form-check mb-1">
-                    <input
-                      #brandCheck
-                      class="form-check-input accent-check"
-                      type="checkbox"
-                      [id]="'brand-' + opt"
-                      [checked]="filters.brand.includes(opt)"
-                      (change)="onFilterCheckboxChange('brand', opt, brandCheck.checked)">
-                    <label class="form-check-label text-dark fw-bold" [for]="'brand-' + opt">{{ opt }}</label>
+            <!-- Brand Filter (replaces Material) -->
+            <div *ngIf="hasBrandData" class="accordion-item border-0 mb-2">
+              <h2 class="accordion-header" id="headingBrand">
+                <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBrand" aria-expanded="false" aria-controls="collapseBrand">
+                  <i class="fa fa-industry me-2 text-primary"></i>Brand
+                </button>
+              </h2>
+              <div id="collapseBrand" class="accordion-collapse collapse" aria-labelledby="headingBrand" data-bs-parent="#filterAccordion">
+                <div class="accordion-body py-2">
+                  <div class="mb-3">
+                    <div class="fw-semibold text-dark mb-2">Brand</div>
+                    <div *ngFor="let opt of brandOptions" class="form-check mb-1">
+                      <input
+                        #brandCheck
+                        class="form-check-input accent-check"
+                        type="checkbox"
+                        [id]="'brand-' + opt"
+                        [checked]="filters.brand.includes(opt)"
+                        (change)="onFilterCheckboxChange('brand', opt, brandCheck.checked)"
+                      />
+                      <label class="form-check-label text-dark fw-bold" [for]="'brand-' + opt">{{ opt }}</label>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-        <!-- Category Filter -->
-        <div class="accordion-item border-0 mb-2">
-          <h2 class="accordion-header" id="headingCategory">
-            <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="false" aria-controls="collapseCategory">
-              <i class="fa fa-th-large me-2 text-primary"></i>Category
-            </button>
-          </h2>
-          <div id="collapseCategory" class="accordion-collapse collapse" aria-labelledby="headingCategory" data-bs-parent="#filterAccordion">
-            <div class="accordion-body py-2">
-              <div class="mb-3">
-                <div class="fw-semibold text-dark mb-2">Category</div>
-                  <div *ngFor="let opt of categoryOptions" class="form-check mb-1">
-                    <input
-                      #catCheck
+          <!-- Category Filter -->
+          <div *ngIf="hasCategoryData" class="accordion-item border-0 mb-2">
+            <h2 class="accordion-header" id="headingCategory">
+              <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="false" aria-controls="collapseCategory">
+                <i class="fa fa-th-large me-2 text-primary"></i>Category
+              </button>
+            </h2>
+            <div id="collapseCategory" class="accordion-collapse collapse" aria-labelledby="headingCategory" data-bs-parent="#filterAccordion">
+              <div class="accordion-body py-2">
+                <div class="mb-3">
+                  <div class="fw-semibold text-dark mb-2">Category</div>
+                    <div *ngFor="let opt of categoryOptions" class="form-check mb-1">            
+                      <input
+                      #categoryCheck
                       class="form-check-input accent-check"
                       type="checkbox"
                       [id]="'cat-' + opt"
                       [checked]="filters.category.includes(opt)"
-                      (change)="onFilterCheckboxChange('category', opt.trim(), catCheck.checked)">
-                    <label class="form-check-label text-dark fw-bold" [for]="'cat-' + opt">{{ opt }}</label>
-                </div>                  
+                      (change)="onFilterCheckboxChange('category', opt, categoryCheck.checked)"
+                      />
+                      <label class="form-check-label text-dark fw-bold" [for]="'cat-' + opt">{{ opt }}</label>
+                  </div>                  
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Price Range -->
-      <div class="mt-3">
-        <label class="form-label text-dark fw-bold">Price Range</label>
-
-        <!-- Min and Max Number Inputs -->
-        <div class="d-flex align-items-center mb-2">
-          <span class="me-2">Min</span>
-          <input
-            type="number"
-            class="form-control form-control-sm me-2"
-            style="width: 100px"
-            [(ngModel)]="filters.price[0]"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="applyFilters()"
-            min="0"
-          />
-
-          <span class="me-2">Max</span>
-          <input
-            type="number"
-            class="form-control form-control-sm"
-            style="width: 100px"
-            [(ngModel)]="filters.price[1]"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="applyFilters()"
-            [min]="filters.price[0]"
-          />
+        <!-- Info message when no brand/category data -->
+        <div *ngIf="!hasBrandData || !hasCategoryData" class="mt-3 p-3 bg-light rounded-3">
+          <div class="text-muted small">
+            <i class="fa fa-info-circle me-2"></i>
+            <span *ngIf="!hasBrandData && !hasCategoryData">Brand and category filters are not available as product data is incomplete.</span>
+            <span *ngIf="!hasBrandData && hasCategoryData">Brand filter is not available as product brand data is incomplete.</span>
+            <span *ngIf="hasBrandData && !hasCategoryData">Category filter is not available as product category data is incomplete.</span>
+          </div>
         </div>
 
-        <!-- Optional Range Slider for Max -->
-        <div class="d-flex align-items-center mb-2">
-          <span class="me-2">{{ filters.price[0] }} MMK</span>
-          <input
-            type="range"
-            class="form-range flex-grow-1 accent-range"
-            min="0"
-            max="2000"
-            step="10"
-            [(ngModel)]="filters.price[1]"
-            [ngModelOptions]="{ standalone: true }"
-            (ngModelChange)="applyFilters()"
-          />
-          <span class="ms-2">{{ filters.price[1] }} MMK</span>
-        </div>
-      </div>
+        <!-- Price Range -->
+        <div class="mt-3">
+          <label class="form-label text-dark fw-bold">Price Range</label>
 
-      <!-- Clear Filters Button -->
-      <div class="d-grid my-3">
-        <button class="btn btn-outline-danger fw-bold" (click)="clearFilters()">
-            <i class="fa fa-times-circle me-2"></i> Clear Filters
-        </button>
-      </div>
-        
+          <!-- Min and Max Number Inputs -->
+          <div class="row g-2 align-items-center mb-2">
+            <div class="col-6">
+              <label class="form-label mb-0 small">Min</label>
+              <input
+                type="number"
+                class="form-control form-control-sm"
+                [(ngModel)]="filters.price[0]"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onPriceFilterChange()"
+                min="0"
+                [max]="filters.price[1]"
+              />
+            </div>
+            <div class="col-6">
+              <label class="form-label mb-0 small">Max</label>
+              <input
+                type="number"
+                class="form-control form-control-sm"
+                [(ngModel)]="filters.price[1]"
+                [ngModelOptions]="{ standalone: true }"
+                (ngModelChange)="onPriceFilterChange()"
+                [min]="filters.price[0]"
+                [max]="maxPriceInProducts"
+              />
+            </div>
+          </div>
+
+          <!-- Range Slider for Max Price -->
+          <div class="d-flex align-items-center mb-2">
+            <!-- Fixed Min Price Label -->
+            <span class="me-2">{{ filters.price[0] }} MMK</span>
+          
+            <!-- Slider controls only max price -->
+            <input
+              type="range"
+              class="form-range flex-grow-1 accent-range"
+              [min]="filters.price[0]"
+              [max]="maxPriceInProducts"
+              step="10"
+              [(ngModel)]="filters.price[1]"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="onPriceFilterChange()"
+            />
+          
+            <!-- Max Price Label -->
+            <span class="ms-2">{{ filters.price[1] }} MMK</span>
+          </div>
+
+          <!-- Price Filter Status -->
+          <div class="small text-muted" *ngIf="isPriceFilterActive">
+            <i class="bi bi-funnel-fill me-1"></i>
+            Price filter active: {{ filters.price[0] }} - {{ filters.price[1] }} MMK
+          </div>
+        </div>
+
+        <!-- Clear Filters Button -->
+        <div class="d-grid my-3">
+          <button class="btn btn-outline-danger fw-bold" (click)="clearFilters()">
+              <i class="fa fa-times-circle me-2"></i> Clear Filters
+          </button>
+        </div>
+          
+        </div>
       </div>
     </aside>
 
     <!-- Product Grid -->
-    <main [class.col-md-8]="showFilter" [class.col-lg-9]="showFilter" [class.col-12]="!showFilter">
-      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3" [ngClass]="showFilter ? 'row-cols-lg-4 g-4' : 'row-cols-lg-5 g-4'">
-        <div *ngFor="let product of products" class="col d-flex">
+    <main [class.col-md-8]="showFilter" [class.col-lg-9]="showFilter" [class.col-12]="!showFilter" class="main-content">
+      <div class="row g-4" [ngClass]="{
+        'row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4': showFilter,
+        'row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5': !showFilter
+      }">
+        <div *ngFor="let product of paginatedProducts" class="col d-flex">
           <div
             class="card rounded-4 shadow-lg border-0 p-3 pt-3 position-relative w-100 product-card bg-white text-dark fw-bold"
             style="transition: box-shadow 0.3s, transform 0.2s; cursor: pointer;"
             (click)="goToProductDetail(product.id)"
           >
-            <div class="product-img-wrapper mb-3" style="height: 140px; overflow: hidden;">
-              <img [src]="getProductImageUrl(product)" class="product-img" [alt]="product.productName">
+            <!-- Product Image -->
+            <div class="product-img-wrapper mb-3 position-relative" style="height: 140px; overflow: hidden;">
+              <img [src]="imageService.getProductImageUrl(product)" class="product-img" [alt]="product.productName" (error)="imageService.handleImageError($event, 'product')">
+              <button
+                class="btn btn-sm p-0 d-flex align-items-center justify-content-center position-absolute"
+                [ngClass]="wishlist.has(product.id) ? 'bg-danger text-white' : 'bg-light text-danger border border-danger'"
+                (click)="toggleWishlist(product.id); $event.stopPropagation()"
+                style="width: 32px; height: 32px; border-radius: 50%; top: 10px; right: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); z-index: 2; border: 2px solid #fff;"
+                title="Add to Wishlist"
+              >
+                <i [ngClass]="wishlist.has(product.id) ? 'fas fa-heart' : 'far fa-heart'" class="fs-5"></i>
+              </button>
             </div>
             <div class="card-body p-0 d-flex flex-column">
               <h6 class="card-title fw-bold mb-1 text-truncate" style="max-width: 100%;">{{ product.productName }}</h6>
@@ -201,24 +252,39 @@
               </div>
               <!-- <p class="card-text small text-truncate" style="max-height: 2.6em; overflow: hidden;">{{ product.description }}</p> -->
               <div class="fw-semibold text-primary fs-5 mb-2">{{ product.price }} MMK</div>
-
-              <div class="d-flex justify-content-between align-items-center mt-auto">
-                <button class="btn btn-outline-primary btn-sm rounded-4 px-3"
-                        (click)="addToCart(product); $event.stopPropagation()">
-                  <i class="fa fa-cart-plus me-2"></i>Add to Cart
-                </button>
-                <button
-                  class="btn btn-sm rounded-4 px-3"
-                  [ngClass]="wishlist.has(product.id) ? 'btn-danger' : 'btn-outline-danger'"
-                  (click)="toggleWishlist(product.id); $event.stopPropagation()">
-                  <i [ngClass]="wishlist.has(product.id) ? 'fas fa-heart' : 'far fa-heart'"></i>
-                </button>    
-              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Pagination Controls -->
+      <nav *ngIf="totalPages > 1" class="mt-4 d-flex justify-content-center">
+        <ul class="pagination">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button class="page-link" (click)="setPage(currentPage - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li
+            class="page-item"
+            *ngFor="let page of [].constructor(totalPages); let i = index"
+            [class.active]="currentPage === i + 1"
+          >
+            <button class="page-link" (click)="setPage(i + 1)">{{ i + 1 }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <button class="page-link" (click)="setPage(currentPage + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      <div *ngIf="products.length === 0" class="text-center text-muted py-5">
+        <i class="fa fa-search fa-2x mb-3"></i>
+        <p>No products match your filters.</p>
+      </div>
     </main>
   </div>
 </div>
-</body>
+<!-- </body> -->

@@ -35,6 +35,7 @@ public class WishlistService {
         repo.readdWishlist(userId, proId);
     }
 
+    @Transactional
     public List<Wishlist> getAllWishlistByUserID(Long userId){
         return repo.findByUserIdAndStatusOrderByWishlistDateDesc(userId,1);
     }

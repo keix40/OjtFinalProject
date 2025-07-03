@@ -34,9 +34,59 @@
             <button class="btn btn-outline-primary me-2 action-btn" [disabled]="selectedProducts.length > 1 || selectedProducts.length === 0">
               <i class="bi bi-pencil-square me-1"></i>Edit
             </button>
-            <button (click)="showDeleteConfirm()" class="btn btn-outline-danger action-btn" [disabled]="selectedProducts.length === 0">
+            <button (click)="showDeleteConfirm()" class="btn btn-outline-danger action-btn me-3" [disabled]="selectedProducts.length === 0">
               <i class="bi bi-trash me-1"></i>Delete
             </button>
+            
+            <!-- Export Dropdown -->
+            <div class="dropdown d-inline-block me-2">
+              <button class="btn btn-outline-success dropdown-toggle export-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-file-earmark-excel me-2"></i>
+                Export Excel
+              </button>
+              <ul class="dropdown-menu export-dropdown">
+                <li>
+                  <a class="dropdown-item" (click)="exportSelectedToExcel()" [class.disabled]="selectedProducts.length === 0">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Selected Products
+                    <small class="text-muted d-block">Export only checked items</small>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item" (click)="exportToExcel()">
+                    <i class="bi bi-collection me-2"></i>
+                    All Products
+                    <small class="text-muted d-block">Export complete list</small>
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            <!-- PDF Export Dropdown -->
+            <div class="dropdown d-inline-block">
+              <button class="btn btn-outline-warning dropdown-toggle export-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-file-earmark-pdf me-2"></i>
+                Export PDF
+              </button>
+              <ul class="dropdown-menu export-dropdown">
+                <li>
+                  <a class="dropdown-item" (click)="exportSelectedToPDF()" [class.disabled]="selectedProducts.length === 0">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Selected Products
+                    <small class="text-muted d-block">Export only checked items</small>
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <a class="dropdown-item" (click)="exportToPDF()">
+                    <i class="bi bi-collection me-2"></i>
+                    All Products
+                    <small class="text-muted d-block">Export complete list</small>
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>    
@@ -70,10 +120,10 @@
                 <div class="product-image-container">
                   <img
                     *ngIf="product.productImages.length > 0"
-                    [src]="getProductImageUrl(product.productImages[0].imageUrl)"
+                    [src]="imageService.getFullImageUrl(product.productImages[0].imageUrl)"
                     alt="Product Image"
                     class="product-image"
-                    (error)="product.productImages[0].imageUrl = 'assets/image-not-found.png'"
+                    (error)="imageService.handleImageError($event, 'product')"
                   >
                 </div>
                 <span class="product-name" [routerLink]="['/admin/products', product.id]" style="cursor: pointer; color: #0d6efd; text-decoration: underline;">{{ product.productName }}</span>

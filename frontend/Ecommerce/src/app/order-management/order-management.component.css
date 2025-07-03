@@ -1,0 +1,711 @@
+/* Table Container */
+.custom-table-container {
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* Table Styles */
+.table {
+  margin-bottom: 0;
+}
+
+.table thead {
+  background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%);
+  color: white;
+}
+
+.table thead th {
+  font-weight: 500;
+  padding: 1rem;
+  border: none;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.table tbody td {
+  padding: 1rem;
+  vertical-align: middle;
+  color: #2d2d3f;
+}
+
+/* Checkbox Column */
+.checkbox-column {
+  width: 50px;
+  text-align: center;
+}
+
+.form-check-input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #2d2d3f;
+}
+
+.form-check-input:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+/* Order Cell */
+.order-cell {
+  min-width: 200px;
+}
+
+.order-code {
+  font-weight: 500;
+  color: #2d2d3f;
+  transition: color 0.3s ease;
+}
+
+.order-code:hover {
+  color: #0056b3 !important;
+}
+
+/* Date Cell */
+.date-cell {
+  min-width: 150px;
+}
+
+/* Items Cell */
+.items-cell {
+  min-width: 120px;
+}
+
+/* Total Cell */
+.total-cell {
+  min-width: 150px;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Actions Cell */
+.actions-cell {
+  min-width: 100px;
+}
+
+.actions-cell .btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.actions-cell .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.actions-cell .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Custom Select */
+.custom-select {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  transition: all 0.3s ease;
+}
+
+.custom-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+}
+
+/* Action Buttons */
+.action-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Export Buttons */
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+}
+
+.btn-success:hover {
+  background-color: #157347;
+  border-color: #146c43;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #bb2d3b;
+  border-color: #b02a37;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-outline-success {
+  color: #198754;
+  border-color: #198754;
+}
+
+.btn-outline-success:hover {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Button Icons */
+.btn i {
+  font-size: 0.9em;
+}
+
+/* Modal Styles */
+.modal-content {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%);
+  color: white;
+  border-radius: 15px 15px 0 0;
+  border-bottom: none;
+}
+
+.modal-header .btn-close {
+  filter: invert(1);
+}
+
+.modal-title {
+  font-weight: 600;
+  font-size: 1.25rem;
+}
+
+.modal-body {
+  padding: 2.5rem;
+  background: #fff;
+}
+
+.modal-footer {
+  border-top: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-radius: 0 0 15px 15px;
+}
+
+/* Invoice-specific Styles */
+.invoice-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.invoice-header {
+  margin-bottom: 2rem;
+}
+
+.invoice-title {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #1e1e2d;
+  margin: 0;
+}
+
+.invoice-brand {
+  font-size: 1.2rem;
+  color: #6c757d;
+  margin-top: -5px;
+}
+
+.invoice-table thead {
+  background-color: #f2f2f2;
+}
+
+.invoice-table th {
+  color: #333;
+  font-weight: 600;
+  border: none;
+  padding: 0.75rem 1rem;
+}
+
+.invoice-table td {
+  vertical-align: middle;
+  padding: 0.75rem 1rem;
+}
+
+.totals-table td {
+  padding: 0.5rem 0;
+}
+
+.invoice-footer {
+  border-top: 2px solid #f2f2f2;
+  padding-top: 1.5rem;
+}
+
+/* Print Styles */
+@media print {
+  /* Hide every element on the page by default */
+  body > * {
+    display: none !important;
+  }
+
+  /* Make only the ng-bootstrap modal window and its backdrop visible */
+  body > ngb-modal-window, 
+  body > ngb-modal-backdrop {
+    display: block !important;
+  }
+
+  /* Hide the dark backdrop itself, leaving an empty, non-visible placeholder */
+  ngb-modal-backdrop {
+    background-color: transparent !important;
+  }
+
+  /* Reset the modal window to be a static, full-page element */
+  ngb-modal-window {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  /* Reset the dialog box to remove centering and margins */
+  ngb-modal-window .modal-dialog {
+    transform: none !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  
+  /* Ensure the content and body fill the dialog */
+  ngb-modal-window .modal-content,
+  ngb-modal-window .modal-body {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 1.5cm !important; /* Standard print margin */
+  }
+
+  /* Ensure text is black for printing */
+  h1, h6, p, td, th, strong, span, li, a {
+    color: #000 !important;
+  }
+
+  /* Style the status badge for print */
+  .badge {
+    border: 1px solid #000 !important;
+    background-color: #FFF !important;
+    color: #000 !important;
+    padding: .25em .5em;
+  }
+
+  /* Ensure table backgrounds and borders print correctly */
+  .invoice-table {
+    color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    border-collapse: collapse !important;
+    border: 1px solid #aaa !important;
+  }
+
+  .invoice-table thead {
+    background-color: #e9ecef !important;
+  }
+
+  .invoice-table th,
+  .invoice-table td {
+    border: 1px solid #aaa !important;
+  }
+}
+
+/* Card Styles in Modal */
+.card {
+  border-radius: 10px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  border-bottom: none;
+  padding: 1rem 1.25rem;
+  font-weight: 600;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+/* Status Management Buttons */
+.btn-outline-warning {
+  color: #ffc107;
+  border-color: #ffc107;
+}
+
+.btn-outline-warning:hover {
+  background-color: #ffc107;
+  border-color: #ffc107;
+  color: #000;
+}
+
+.btn-outline-info {
+  color: #0dcaf0;
+  border-color: #0dcaf0;
+}
+
+.btn-outline-info:hover {
+  background-color: #0dcaf0;
+  border-color: #0dcaf0;
+  color: #000;
+}
+
+.btn-outline-primary {
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+}
+
+.btn-outline-success {
+  color: #198754;
+  border-color: #198754;
+}
+
+.btn-outline-success:hover {
+  background-color: #198754;
+  border-color: #198754;
+  color: #fff;
+}
+
+.btn-outline-danger {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  border-color: #dc3545;
+  color: #fff;
+}
+
+.btn-outline-secondary {
+  color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #6c757d;
+  border-color: #6c757d;
+  color: #fff;
+}
+
+/* Table in Modal */
+.modal-body .table {
+  margin-bottom: 0;
+}
+
+.modal-body .table th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+}
+
+.modal-body .table td {
+  vertical-align: middle;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Financial Summary */
+.fw-bold {
+  font-weight: 700 !important;
+}
+
+.text-primary {
+  color: #0d6efd !important;
+}
+
+.text-danger {
+  color: #dc3545 !important;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 3rem 1rem;
+}
+
+.empty-state i {
+  opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .table thead {
+    display: none;
+  }
+
+  .table tbody tr {
+    display: block;
+    margin-bottom: 1rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+  }
+
+  .table tbody td {
+    display: block;
+    text-align: right;
+    padding: 0.5rem 1rem;
+    border: none;
+  }
+
+  .table tbody td::before {
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .checkbox-column {
+    width: 100%;
+    text-align: right;
+  }
+
+  .order-cell,
+  .date-cell,
+  .items-cell,
+  .total-cell,
+  .status-cell,
+  .actions-cell {
+    min-width: auto;
+  }
+
+  .actions-cell {
+    text-align: center !important;
+  }
+
+  .actions-cell::before {
+    display: none;
+  }
+
+  /* Responsive export buttons */
+  .d-flex.gap-2 {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+
+  .d-flex.gap-2 .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Responsive modal */
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-body .row {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+  }
+
+  .modal-body .col-md-6 {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Additional Order-specific styles */
+.fw-medium {
+  font-weight: 500;
+}
+
+.text-primary {
+  color: #007bff !important;
+}
+
+.text-muted {
+  color: #6c757d !important;
+}
+
+.small {
+  font-size: 0.875em;
+}
+
+/* Hover effects for interactive elements */
+.order-code:hover,
+.btn:hover {
+  transform: translateY(-1px);
+  transition: all 0.3s ease;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Animation for table rows */
+.table tbody tr {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === START OF NEW INVOICE STYLES === */
+
+/* Remove old invoice styles to avoid conflicts */
+.invoice-container, .invoice-header, .invoice-table, .totals-table, .invoice-footer {
+  all: unset;
+}
+
+/* New Receipt Styles */
+.receipt-container {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  color: #000;
+  background-color: #fff;
+  padding: 20px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.receipt-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.receipt-header .receipt-title {
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.receipt-header p {
+  margin: 2px 0;
+  font-size: 12px;
+}
+
+.customer-info p {
+  margin: 2px 0;
+  font-size: 12px;
+}
+
+.receipt-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+hr.dotted {
+  border: none;
+  border-top: 1px dashed #000;
+  margin: 10px 0;
+}
+
+hr.dotted-bold {
+  border: none;
+  border-top: 2px dashed #000;
+  margin: 10px 0;
+}
+
+.receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.receipt-table th, .receipt-table td {
+  padding: 5px 0;
+}
+
+.receipt-table thead th {
+  text-align: left;
+  font-weight: bold;
+}
+
+.receipt-table .text-end {
+  text-align: right;
+}
+
+.receipt-totals {
+  margin-top: 10px;
+}
+
+.totals-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.totals-row.total {
+  font-weight: bold;
+  font-size: 16px;
+  margin-top: 5px;
+}
+
+.receipt-footer {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 12px;
+}
+/* === END OF NEW INVOICE STYLES === */
+

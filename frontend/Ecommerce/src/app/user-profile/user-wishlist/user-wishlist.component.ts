@@ -3,6 +3,7 @@ import { WishlistService } from '../../services/wishlist.service';
 import { AuthService } from '../../auth/auth.service';
 import { ProductService } from '../../services/product.service';
 import { ProductDTO } from '../../product';
+import { ImageService } from '../../services/image.service';
 
 interface WishlistItem {
   id: number;
@@ -25,7 +26,8 @@ export class UserWishlistComponent implements OnInit {
   constructor(
     private wishlistService: WishlistService,
     private authService: AuthService,
-    private productService: ProductService
+    private productService: ProductService,
+    public imageService: ImageService
   ) { }
 
   ngOnInit(): void {
@@ -60,9 +62,7 @@ export class UserWishlistComponent implements OnInit {
               id: product.id,
               title: product.productName,
               price: product.price,
-              image: product.productImages && product.productImages.length > 0 
-                ? 'http://localhost:8080' + product.productImages[0].imageUrl 
-                : '/assets/project_img/fashion_store.jpg'
+              image: this.imageService.getProductImageUrl(product)
             };
             this.wishlistItems.push(wishlistItem);
           }

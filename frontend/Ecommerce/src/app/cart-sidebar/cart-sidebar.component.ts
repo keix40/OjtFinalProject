@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
 import { Subscription } from 'rxjs';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-cart-sidebar',
@@ -19,7 +20,11 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
   cartTotal: number = 0;
   private subscriptions: Subscription[] = [];
 
-  constructor(private router: Router, private cartService: CartService) {}
+  constructor(
+    private router: Router, 
+    private cartService: CartService,
+    public imageService: ImageService
+  ) {}
 
   ngOnInit() {
     this.subscriptions.push(
@@ -66,5 +71,9 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
 
   onClose() {
     this.closeSidebar.emit();
+  }
+
+  goToProductDetail(productId: number): void {
+    this.router.navigate(['/product', productId]);
   }
 } 

@@ -12,8 +12,15 @@ import java.util.List;
 
 public interface UserService {
     LoginResponse login(LoginRequest request);
+
     public String register(RegisterRequest request, MultipartFile profileImage);
+
     List<User> getAllUsers();
+
     public RegisterRequest updateUser(Long id, RegisterRequest userDTO);
+    void assignRoleToUser(Long userId, Long roleId);
+    public List<User> findUsersByRoleId(Long roleId) ;
+
+
     String uploadProfileImage(String token, MultipartFile image);
 }

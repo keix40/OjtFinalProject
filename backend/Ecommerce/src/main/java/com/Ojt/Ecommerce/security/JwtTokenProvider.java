@@ -45,11 +45,17 @@ public class JwtTokenProvider implements InitializingBean {
         // Create roles string: ROLE_ADMIN,ROLE_USER etc.
         String roles = "ROLE_" + user.getRole().getName();
 
+        //add this for role and permissions 20.6.25
+        String permissions = user.getRole().getRolePermissions().stream()
+                .map(rolePermission -> rolePermission.getPermission().getName())// e.g. VIEW_USER, CREATE_USER
+                .collect(Collectors.joining(","));
+
 
         return Jwts.builder()
                 .setSubject(user.getEmail())
                 .claim("id",user.getId())
                 .claim("roles", roles)
+                .claim("permissions", permissions)
                 .claim("name", user.getName())
                 .claim("gender", user.getGender())
                 .claim("phoneNumber", user.getPhoneNumber())
@@ -96,7 +102,7 @@ public class JwtTokenProvider implements InitializingBean {
     }
 
     // Helper method to parse claims with unified exception handling
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) { //change private to pubile
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()

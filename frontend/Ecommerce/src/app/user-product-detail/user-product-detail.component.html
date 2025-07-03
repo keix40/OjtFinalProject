@@ -1,0 +1,354 @@
+<app-header></app-header>
+
+<!-- Main section, now full width -->
+<div *ngIf="product">
+  <div class="row justify-content-center m-0">
+    <div class="col-12 p-0">
+      <div class="card shadow-lg border-0 p-4 product-detail-main-card bg-white rounded-5 w-100">
+        <div class="row g-4 align-items-start">
+          <!-- Left: Image Gallery -->
+          <div class="col-md-6 mb-4 mb-md-0">
+            <div class="main-image-container mb-3 position-relative">
+              <img 
+                [@fadeIn]="selectedImage"
+                [src]="selectedImage" 
+                class="img-fluid main-image rounded-4 border" 
+                alt="Main Product Image">
+              <!-- Left Arrow (icon only, overlay) -->
+              <span *ngIf="displayedImages.length > 1"
+                    class="image-arrow-overlay left-arrow"
+                    (click)="previousImage()"
+                    [class.disabled]="currentImageIndex === 0">
+                <i class="bi bi-chevron-left"></i>
+              </span>
+              <!-- Right Arrow (icon only, overlay) -->
+              <span *ngIf="displayedImages.length > 1"
+                    class="image-arrow-overlay right-arrow"
+                    (click)="nextImage()"
+                    [class.disabled]="currentImageIndex === displayedImages.length - 1">
+                <i class="bi bi-chevron-right"></i>
+              </span>
+            </div>
+            <div class="d-flex flex-nowrap overflow-auto gap-2 pb-1">
+              <div class="thumb-wrapper" *ngFor="let image of displayedImages; let i = index">
+                <img 
+                  [src]="image.url" 
+                  class="img-fluid thumbnail rounded-3 border" 
+                  [class.selected-thumb]="selectedImage === image.url"
+                  (click)="selectImageByIndex(i)" 
+                  alt="Thumbnail">
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Product Info -->
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <h2 class="fw-bold mb-0 display-6 text-gradient">{{ product.productName }}</h2>
+            </div>
+            <div class="mb-3 d-flex align-items-center gap-3">
+              <span class="product-price display-6 fw-bold text-success">{{ selectedVariant?.price || product.price }} MMK</span>
+              <span class="badge rounded-pill bg-light text-dark border px-3 py-2 fs-6">
+                <i class="bi bi-check-circle-fill text-success me-1" *ngIf="(selectedVariant?.stock ?? product.quantity) > 0"></i>
+                <i class="bi bi-x-circle-fill text-danger me-1" *ngIf="(selectedVariant?.stock ?? product.quantity) === 0"></i>
+                {{ (selectedVariant?.stock ?? product.quantity) > 0 ? 'In Stock' : 'Out of Stock' }}
+              </span>
+            </div>
+            <div class="mb-2" *ngIf="getBrandName() !== '-'">
+              <span class="fw-semibold">Brand:</span>
+              <span class="text-primary">{{ getBrandName() }}</span>
+            </div>
+            
+            <div class="mb-2" *ngIf="categoryNames !== '-'">
+              <span class="fw-semibold">Categories:</span>
+              <span class="text-secondary">{{ categoryNames }}</span>
+            </div>              
+
+            <!-- Attribute Selectors -->
+            <div *ngIf="product?.variants?.length > 0 && product?.variants[0]?.attributes?.length > 0" class="mb-4">
+              <div *ngFor="let attrName of attributeNames" class="mb-3">
+                <h6 class="fw-semibold mb-2">{{ attrName }}:</h6>
+                <div class="d-flex flex-wrap gap-2">
+                  <ng-container *ngIf="attrName.toLowerCase() === 'color'; else normalAttr">
+                    <div class="d-flex flex-wrap gap-2">
+                      <button
+                        *ngFor="let value of getAttributeValues(attrName)"
+                        class="color-swatch-btn shadow-sm"
+                        [ngClass]="{ 'selected': selectedAttributes[attrName] === value }"
+                        (click)="toggleAttribute(attrName, value)"
+                        [attr.aria-label]="value"
+                        [title]="value">
+                        <span class="circle-swatch" [ngStyle]="{ 'background': value.toLowerCase() }"></span>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <ng-template #normalAttr>
+                    <button
+                      *ngFor="let value of getAttributeValues(attrName)"
+                      class="btn btn-variant btn-sm rounded-pill px-3 py-1 shadow-sm"
+                      [ngClass]="{
+                        'btn-primary': selectedAttributes[attrName] === value,
+                        'btn-outline-secondary': selectedAttributes[attrName] !== value
+                      }"
+                      (click)="toggleAttribute(attrName, value)">
+                      {{ value }}
+                    </button>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quantity Selector -->
+            <div class="mb-3 d-flex align-items-center gap-2">
+              <span class="fw-semibold">Quantity:</span>
+              <div class="quantity-pill d-flex align-items-center bg-light rounded-pill px-3 py-1 gap-2 shadow-sm">
+                <button class="btn btn-outline-secondary btn-sm px-2" (click)="decreaseQty()">-</button>
+                <span class="px-2 fw-bold fs-5">{{ quantity }}</span>
+                <button class="btn btn-outline-secondary btn-sm px-2" (click)="increaseQty()">+</button>
+              </div>
+            </div>
+
+            <!-- Add to Cart and Wishlist -->
+            <div class="d-flex gap-3 mt-4">
+              <button class="btn btn-outline-danger btn-lg px-4 shadow-sm" (click)="addToWishlist()">
+                <i class="bi bi-heart"></i> Wishlist
+              </button>
+              <button class="btn btn-primary btn-lg px-5 shadow-sm" (click)="addToCart()"
+                [disabled]="product.variants.length > 0 && !selectedVariant">
+                <i class="bi bi-cart-plus"></i> Add to Cart
+              </button>
+            </div>
+        </div>
+
+        <div class="row mt-5">
+                <h5 class="card-title text-gradient">Product Description</h5>
+                <p class="card-text">{{ product.description }}</p>
+        </div>
+        
+        <!-- Review Section -->
+        <hr />
+        <div class="review-section mt-4">
+          <div class="row g-4 mb-4 w-100 mx-0">
+            <!-- Overall Rating -->
+            <div class="col-md-6 col-12">
+              <div class="bg-white rounded-4 shadow-sm p-4 h-100 d-flex flex-column align-items-center justify-content-center">
+                <div class="display-4 fw-bold text-gradient mb-2">{{ overallRating }}/5</div>
+                <div class="mb-1">
+                  <ng-container *ngFor="let star of createArray(round(overallRating))">
+                    <i class="bi bi-star-fill text-warning"></i>
+                  </ng-container>
+                  <ng-container *ngFor="let empty of createArray(5 - round(overallRating))">
+                    <i class="bi bi-star text-warning"></i>
+                  </ng-container>
+                </div>
+                <div class="text-muted small">{{ totalReviews }} reviews</div>
+              </div>
+            </div>
+            <!-- Rating Breakdown -->
+            <div class="col-md-6 col-12">
+              <div class="bg-white rounded-4 shadow-sm p-4 h-100">
+                <div class="fw-semibold mb-2">Rating Breakdown</div>
+                <div *ngFor="let star of [5,4,3,2,1]" class="d-flex align-items-center mb-1">
+                  <span class="me-1" style="width: 1.5em;">{{ star }}</span>
+                  <i class="bi bi-star-fill text-warning me-2"></i>
+                  <div class="flex-grow-1 bg-light rounded-pill me-2" style="height: 10px;">
+                    <div class="bg-warning rounded-pill" [style.width]="(ratingBreakdown[star] / (totalReviews || 1)) * 100 + '%'" style="height: 10px;"></div>
+                  </div>
+                  <span class="text-muted small" style="width: 2.5em;">{{ ratingBreakdown[star] || 0 }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- New Review Form -->
+          <div class="mb-4 p-3 bg-light rounded-4 shadow-sm" id="edit-review-form">
+            <div class="mb-2 d-flex align-items-center gap-2">
+              <label class="form-label mb-0">Rating:</label>
+              <span class="star-rating-input attractive-stars">
+                <ng-container *ngFor="let r of [1,2,3,4,5]">
+                  <i class="bi"
+                     [ngClass]="newRating >= r ? 'bi-star-fill star-animated star-filled' : 'bi-star star-animated'"
+                     (mouseenter)="newRating = r"
+                     (mouseleave)="newRating = newRating"
+                     (click)="newRating = r"></i>
+                </ng-container>
+              </span>
+            </div>
+            <textarea [(ngModel)]="newReview" (ngModelChange)="reviewCommentError=''" class="form-control mb-2" rows="2" placeholder="Write your review..."></textarea>
+            <div *ngIf="reviewCommentError" class="text-danger mb-2">{{ reviewCommentError }}</div>
+
+            <input type="file"
+                   accept="image/*,video/*"
+                   (change)="onFilesSelected($event)"
+                   class="form-control mb-2"
+                   multiple />
+            <div *ngIf="reviewFileError" class="text-danger mb-2">{{ reviewFileError }}</div>
+
+            <!-- Preview Section -->
+            <div class="d-flex flex-wrap gap-2 mb-2" *ngIf="selectedReviewFiles.length > 0">
+              <ng-container *ngFor="let file of selectedReviewFiles; let i = index">
+                <div class="position-relative">
+                  <ng-container [ngSwitch]="file.type.startsWith('image/') ? 'image' : (file.type.startsWith('video/') ? 'video' : 'other')">
+                    <img *ngSwitchCase="'image'" [src]="file.preview" class="rounded" style="width: 80px; height: 80px; object-fit: cover;" />
+                    <video *ngSwitchCase="'video'" [src]="file.preview" controls style="width: 80px; height: 80px; object-fit: cover;"></video>
+                    <span *ngSwitchDefault>Unsupported</span>
+                  </ng-container>
+                  <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                          (click)="removeSelectedFile(i)" style="z-index:2; padding:2px 6px;">&times;
+                  </button>
+                </div>
+              </ng-container>
+            </div>
+
+            <!-- Only show when editing -->
+            <div *ngIf="editingReviewId && (mediaModalCurrentReview?.imageUrls?.length || mediaModalCurrentReview?.videoUrls?.length)"
+                 class="d-flex flex-wrap gap-2 mb-2">
+              <ng-container *ngFor="let imageUrl of mediaModalCurrentReview?.imageUrls">
+                <div class="position-relative d-inline-block">
+                  <img [src]="'http://localhost:8080' + imageUrl" class="rounded" style="width: 80px; height: 80px; object-fit: cover;" />
+                  <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                          style="z-index:2; padding:2px 6px;"
+                          (click)="removeExistingMedia(imageUrl, 'image')">&times;</button>
+                </div>
+              </ng-container>
+              <ng-container *ngFor="let videoUrl of mediaModalCurrentReview?.videoUrls">
+                <div class="position-relative d-inline-block">
+                  <video [src]="'http://localhost:8080' + videoUrl" controls style="width: 80px; height: 80px; object-fit: cover;"></video>
+                  <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                          style="z-index:2; padding:2px 6px;"
+                          (click)="removeExistingMedia(videoUrl, 'video')">&times;</button>
+                </div>
+              </ng-container>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-success btn-sm px-3" (click)="submitReview()">
+                <i class="bi bi-send"></i> {{ editingReviewId ? 'Update Review' : 'Submit Review' }}
+              </button>
+              <button *ngIf="editingReviewId" class="btn btn-secondary btn-sm px-3" (click)="editingReviewId = null">Cancel</button>
+            </div>
+          </div>
+
+          <!-- Review List -->
+          <div *ngIf="!reviews.length" class="text-muted">No reviews yet. Be the first!</div>
+          <div *ngFor="let review of reviews | slice:0:3" class="review-card card border-0 shadow-sm mb-3 p-3 position-relative">
+            <!-- Header with avatar, name, stars, timestamp, and dropdown -->
+            <div class="d-flex align-items-center mb-2">
+              <img [src]="'http://localhost:8080' + review.userImage"
+                  class="avatar rounded-circle me-3 border"
+                  style="width:40px; height:40px; object-fit:cover;">
+              
+              <div>
+                <strong>{{ review.username }}</strong>
+                <div class="text-warning star-rating attractive-stars mb-1">
+                  <ng-container *ngFor="let star of createArray(review.rating)">
+                    <i class="bi bi-star-fill star-animated star-filled"></i>
+                  </ng-container>
+                  <ng-container *ngFor="let empty of createArray(5 - review.rating)">
+                    <i class="bi bi-star star-animated"></i>
+                  </ng-container>
+                </div>
+              </div>
+
+              <small class="text-muted ms-auto">{{ review.timestamp | date:'medium' }}</small>
+
+              <!-- Dropdown (only for current user) -->
+              <div *ngIf="review.username === currentUser && review.id" class="ms-2">
+                <div class="dropdown">
+                  <button class="btn btn-link btn-sm p-0 text-dark" type="button"
+                          id="dropdownMenuButton{{review.id}}"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false">
+                    <i class="bi bi-three-dots-vertical fs-5"></i>
+                  </button>
+                  <ul class="dropdown-menu dropdown-menu-end"
+                      [attr.aria-labelledby]="'dropdownMenuButton' + review.id">
+                    <li>
+                      <a class="dropdown-item" (click)="editReview(review)">
+                        <i class="bi bi-pencil me-2"></i>Edit
+                      </a>
+                    </li>
+                    <li>
+                      <a class="dropdown-item text-danger" (click)="deleteReview(review)">
+                        <i class="bi bi-trash me-2"></i>Delete
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <!-- Review Text -->
+            <p class="mb-2">{{ review.comment }}</p>
+
+            <!-- Media Preview (images + videos) -->
+            <div class="review-media-grid mt-2" *ngIf="getAllMedia(review).length">
+              <ng-container *ngFor="let media of getMediaPreview(review); let i = index">
+                <div class="media-item" (click)="openMediaModal(review, media.type, i)">
+                  <img *ngIf="media.type === 'image'" [src]="media.url"
+                       class="img-thumbnail rounded-3 shadow-sm"
+                       alt="Review Image"
+                       style="width: 100%; height: 100%; object-fit: cover;" />
+                  <video *ngIf="media.type === 'video'" [src]="media.url" controls
+                         class="rounded-3 shadow-sm"
+                         style="width: 100%; height: 100%; object-fit: cover;"></video>
+                </div>
+              </ng-container>
+              <ng-container *ngIf="getMediaRemainingCount(review) > 0">
+                <div class="media-item position-relative" style="cursor:pointer;" (click)="openMediaModal(review, getAllMedia(review)[4].type, 4)">
+                  <ng-container *ngIf="getAllMedia(review)[4].type === 'image'">
+                    <img [src]="getAllMedia(review)[4].url"
+                         class="img-thumbnail rounded-3 shadow-sm"
+                         alt="Review Image"
+                         style="width: 100%; height: 100%; object-fit: cover; opacity:0.5;" />
+                  </ng-container>
+                  <ng-container *ngIf="getAllMedia(review)[4].type === 'video'">
+                    <video [src]="getAllMedia(review)[4].url" controls
+                           class="rounded-3 shadow-sm"
+                           style="width: 100%; height: 100%; object-fit: cover; opacity:0.5;"></video>
+                  </ng-container>
+                  <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(0,0,0,0.4);">
+                    <span class="text-white fs-3 fw-bold">+{{ getMediaRemainingCount(review) }}</span>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+
+          <!-- See More button if there are more than 3 reviews -->
+          <button *ngIf="reviews.length > 3"
+                  class="see-more-btn"
+                  (click)="goToAllReviews()">
+            See More
+            <i class="bi bi-chevron-right ms-1"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Media Preview Modal -->
+<div *ngIf="mediaModalOpen" class="media-modal-backdrop">
+  <div class="media-modal-content">
+    <button class="media-modal-close" (click)="closeMediaModal()">&times;</button>
+    <button *ngIf="mediaModalCanGoLeft" class="media-modal-arrow left" (click)="mediaModalPrev()">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+    <button *ngIf="mediaModalCanGoRight" class="media-modal-arrow right" (click)="mediaModalNext()">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+    <ng-container *ngIf="mediaModalCurrentType === 'image'">
+      <img [src]="mediaModalCurrentUrl" class="media-modal-media" alt="Media Preview" />
+    </ng-container>
+    <ng-container *ngIf="mediaModalCurrentType === 'video'">
+      <video [src]="mediaModalCurrentUrl" class="media-modal-media" controls></video>
+    </ng-container>
+    <!-- <div class="media-modal-comment mt-3">
+      {{ mediaModalCurrentReview?.comment }}
+    </div> -->
+  </div>
+</div>
+
+<div id="edit-review-form"></div>

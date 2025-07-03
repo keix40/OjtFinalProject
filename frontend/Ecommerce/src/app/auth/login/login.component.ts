@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { HttpClient } from '@angular/common/http';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'app-login',
@@ -50,7 +51,8 @@ export class LoginComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private permissionService: PermissionService
   ) {}
 
   ngOnInit(): void {
@@ -83,6 +85,13 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
   this.auth.login(this.loginForm.value).subscribe({
     next: (res) => {
       this.auth.saveToken(res.accessToken);
+
+      const decoded = this.auth.getDecodedToken(); //add this for permission
+      const permissionString = decoded?.permissions || ''; //add this for permission
+      const permissionArray = permissionString.split(',').map((p: string) => p.trim()); //add this for permission
+
+      this.permissionService.setPermissions(permissionArray); //add this for permmision
+
       this.router.navigate(['/home']);
       const decoded: any = this.auth.getDecodedToken();
     if (decoded && decoded.sub) {

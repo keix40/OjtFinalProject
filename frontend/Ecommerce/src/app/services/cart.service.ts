@@ -1,16 +1,21 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
 
 export interface CartItem {
-  id: number;
+  id: number;               // Unique item ID (can be variant ID)
+  productId?: number;
+  variantId?: number;       // <-- new
   title: string;
+  image: string;
   price: number;
   quantity: number;
-  image: string;
-  size?: string;
-  color?: string;
+  color?: string;           // optional
+  size?: string;            // optional
+  variantAttributes?: string[]; // ['Size: M', 'Color: Red']
+  userId?: number;
 }
-
+  
 @Injectable({
   providedIn: 'root'
 })
@@ -18,11 +23,21 @@ export class CartService {
   private cartItems = new BehaviorSubject<CartItem[]>([]);
   private cartTotal = new BehaviorSubject<number>(0);
 
-  constructor() {
-    // Initialize cart from localStorage if available
+  constructor(private authService: AuthService) {
+    this.loadCart();
+  }
+
+  refreshCart() {
+    this.loadCart();
+  }
+
+  private loadCart() {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
-      this.cartItems.next(JSON.parse(savedCart));
+      const allItems: CartItem[] = JSON.parse(savedCart);
+      const userId = this.authService.getUserId();
+      const userItems = userId ? allItems.filter(item => item.userId === userId) : [];
+      this.cartItems.next(userItems);
       this.updateCartTotal();
     }
   }
@@ -36,16 +51,26 @@ export class CartService {
   }
 
   addToCart(item: CartItem) {
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+
+    item.userId = userId;
+
     const currentItems = this.cartItems.value;
-    const existingItem = currentItems.find(i => i.id === item.id);
-    
+    const existingItem = currentItems.find(i =>
+      i.id === item.id &&
+      i.userId === item.userId &&
+      i.size === item.size &&
+      i.color === item.color
+    );
+
     if (existingItem) {
       existingItem.quantity += item.quantity;
       this.cartItems.next([...currentItems]);
     } else {
       this.cartItems.next([...currentItems, item]);
     }
-    
+
     this.updateCartTotal();
     this.saveCartToLocalStorage();
   }
@@ -60,7 +85,7 @@ export class CartService {
   updateQuantity(itemId: number, quantity: number) {
     const currentItems = this.cartItems.value;
     const item = currentItems.find(i => i.id === itemId);
-    
+
     if (item) {
       item.quantity = quantity;
       this.cartItems.next([...currentItems]);
@@ -81,6 +106,21 @@ export class CartService {
   }
 
   private saveCartToLocalStorage() {
-    localStorage.setItem('cart', JSON.stringify(this.cartItems.value));
+    const savedCart = localStorage.getItem('cart');
+    let allItems: CartItem[] = [];
+
+    if (savedCart) {
+      allItems = JSON.parse(savedCart);
+    }
+
+    const currentUserId = this.authService.getUserId();
+    if (currentUserId) {
+      // Remove current user's previous items
+      allItems = allItems.filter(item => item.userId !== currentUserId);
+      // Add updated user's cart
+      allItems = [...allItems, ...this.cartItems.value];
+    }
+
+    localStorage.setItem('cart', JSON.stringify(allItems));
   }
 } 

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -46,27 +48,30 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name = "brand_id")
+    @JsonIgnoreProperties({"products"}) // or everything lazy inside Brand
     private Brand brand;
+
+
 
 //    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
 //    @JsonIgnore
 //    private List<ProductHasCategory> productCategories;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonIgnore
     @ToString.Exclude //add this two line to fix infinite loop error
     @EqualsAndHashCode.Exclude
     private Set<ProductHasCategory> productCategories; // Changed from List to Set
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
     private List<ProductImage> productImages; // Keep this as List
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Wishlist> wishlists;
 
-
     @OneToMany(mappedBy = "product")
+    @JsonIgnore
     private List<UserOrderHasProduct> orderProducts;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -75,6 +80,13 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PurchaseProducts> purchaseProducts;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductDiscount> productDiscounts;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Review> reviews = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

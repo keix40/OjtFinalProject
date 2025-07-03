@@ -4,27 +4,45 @@
       <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
         <h3 class="fw-bold fs-2 mb-0 text-primary"><i class="bi bi-box-seam me-2"></i> Orders</h3>
         <div class="d-flex flex-column flex-sm-row flex-wrap gap-2 w-100 w-md-auto">
-          <select class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition mb-2 mb-sm-0">
-            <option value="">Select status</option>
-            <option value="all">All Orders</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
+          <select
+            class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition mb-2 mb-sm-0"
+            [(ngModel)]="selectedStatus"
+            (change)="onStatusFilterChange($event)">
+            <option value="">All Status</option>
+            <option *ngFor="let status of statusOptions" [value]="status">
+              {{ formatStatus(status) }}
+            </option>
           </select>
-          <select class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition">
+                
+          <!-- <select class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition">
             <option value="">For all time</option>
             <option value="last30">Last 30 days</option>
             <option value="last90">Last 90 days</option>
             <option value="lastyear">Last year</option>
-          </select>
+          </select> -->
         </div>
       </div>
-      <div class="table-responsive">
+
+      <!-- Loading State -->
+      <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading your orders...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error" class="alert alert-danger d-flex align-items-center justify-content-between">
+        <div><i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}</div>
+        <button class="btn btn-danger-soft" (click)="loadUserOrders()">Try Again</button>
+      </div>
+
+      <!-- Orders Table -->
+      <div *ngIf="!isLoading && !error && userOrders.length > 0" class="table-responsive">
         <table class="table align-middle table-hover rounded-4 overflow-hidden shadow-sm bg-white">
           <thead class="table-light">
             <tr>
-              <th>Order #</th>
+              <th>Order</th>
               <th>Order date <i class="bi bi-arrow-down-up"></i></th>
               <th>Status</th>
               <th>Total <i class="bi bi-arrow-down-up"></i></th>
@@ -32,43 +50,45 @@
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let order of userOrders">
-              <tr class="transition" (click)="toggleOrderDetails(order.id)" [ngClass]="{'table-primary': expandedOrderId === order.id, 'cursor-pointer': true}">
+            <ng-container *ngFor="let order of filteredOrders()">
+              <tr class="transition" (click)="toggleOrderDetails(order.orderId)" [ngClass]="{'table-primary': isOrderExpanded(order), 'cursor-pointer': true}">
                 <td>
-                  <div class="fw-bold">{{order.orderNumber}}</div>
-                  <div class="d-flex align-items-center gap-1 mt-1">
-                    <img *ngFor="let product of order.items.slice(0, 3)" [src]="product.image" [alt]="product.title" class="rounded-circle shadow-sm border border-2" style="width: 32px; height: 32px; object-fit: cover;">
-                    <span *ngIf="order.items.length > 3" class="badge bg-secondary ms-1">+{{order.items.length - 3}}</span>
+                  <div class="fw-bold">{{order.orderCode}}</div>
+                  <div class="text-muted small">
+                    {{ getTotalItems(order) }}
+                    <span *ngIf="getTotalItems(order) > 1">items</span>
+                    <span *ngIf="getTotalItems(order) <= 1">item</span>
                   </div>
                 </td>
-                <td class="text-nowrap">{{order.orderDate | date:'MM/dd/yyyy'}}</td>
-                <td><span class="badge rounded-pill px-3 py-2 bg-info text-dark fs-6">{{order.status}}</span></td>
-                <td class="fw-semibold">{{order.total | currency}}</td>
+                <td class="text-nowrap">{{formatOrderDate(order.orderDate) | date:'dd/MM/yyyy'}}</td>
+                <td><span class="badge" [ngClass]="getStatusBadgeClass(order.status)">
+                  {{ order.status }}
+                </span></td>
+                <td class="fw-semibold">{{ order.total | number:'1.2-2' }} MMK</td>
                 <td>
-                  <i class="bi transition fs-4" [class.bi-chevron-down]="expandedOrderId !== order.id" [class.bi-chevron-up]="expandedOrderId === order.id"></i>
+                  <i class="bi transition fs-4" [class.bi-chevron-down]="!isOrderExpanded(order)" [class.bi-chevron-up]="isOrderExpanded(order)"></i>
+                  <button class="btn btn-outline-primary btn-sm ms-2" (click)="$event.stopPropagation(); goToTracking(order.orderId)">
+                    <i class="bi bi-truck"></i> Track
+                  </button>
                 </td>
               </tr>
-              <tr *ngIf="expandedOrderId === order.id">
+              <tr *ngIf="isOrderExpanded(order)">
                 <td colspan="5" class="p-0">
                   <div class="card rounded-4 shadow-lg my-3 p-4 animate__animated animate__fadeIn">
                     <h4 class="fw-bold mb-3 fs-5">Order Details</h4>
                     <div class="row g-3 mb-3">
                       <div class="col-md-6">
-                        <div class="mb-2"><span class="fw-semibold">Order Date:</span> {{order.orderDate | date:'MM/dd/yyyy'}}</div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="mb-2"><span class="fw-semibold">Payment Method:</span> {{order.paymentMethod}}</div>
+                        <div class="mb-2"><span class="fw-semibold">Order Date:</span> {{formatOrderDate(order.orderDate) | date:'dd/MM/yyyy'}}</div>
                       </div>
                     </div>
                     <div class="order-items-list mb-4">
                       <div class="d-flex flex-column gap-3">
-                        <div class="card shadow-sm rounded-3 p-3 d-flex flex-row align-items-center gap-3 flex-wrap flex-md-nowrap" *ngFor="let item of order.items">
-                          <img [src]="item.image" [alt]="item.title" class="rounded-3 border border-2 flex-shrink-0" style="width: 48px; height: 48px; object-fit: cover;">
+                        <div class="card shadow-sm rounded-3 p-3 d-flex flex-row align-items-center gap-3 flex-wrap flex-md-nowrap" *ngFor="let item of order.products">
                           <div class="flex-grow-1 min-w-0">
-                            <h5 class="mb-1 fs-6 text-truncate">{{item.title}}</h5>
-                            <p class="mb-0 text-muted small text-truncate">SKU: {{item.sku}} | Qty: {{item.quantity}}</p>
+                            <h5 class="mb-1 fs-6 text-truncate">{{item.productName}}</h5>
+                            <p class="mb-0 text-muted small text-truncate">Qty: {{item.quantity}}</p>
                           </div>
-                          <div class="fw-semibold text-end ms-auto">{{item.price * item.quantity | currency}}</div>
+                          <div class="fw-semibold text-end ms-auto">{{item.unitPrice}} MMK</div>
                         </div>
                       </div>
                     </div>
@@ -77,65 +97,59 @@
                         <div class="col-md-6">
                           <div class="d-flex justify-content-between py-1">
                             <span class="fw-semibold">Subtotal:</span>
-                            <span>{{order.subtotal | currency}}</span>
+                            <span>{{ order.subtotal | number:'1.2-2' }} MMK</span>
                           </div>
                           <div class="d-flex justify-content-between py-1">
                             <span class="fw-semibold">Shipping:</span>
-                            <span>{{order.shippingCost | currency}}</span>
+                            <span>{{order.deliveryFee | number :'1.2-2'}} MMK</span>
+                          </div>
+                          <div *ngIf="order.discountCode" class="py-1">
+                            <div class="d-flex justify-content-between">
+                              <span class="fw-semibold">Discount ({{ order.discountCode }}):</span>
+                              <span class="text-success nowrap">-{{ order.discountAmount | number:'1.2-2' }}&nbsp;MMK</span>
+                            </div>
+                            <div *ngIf="order.discountType === 'percentage' && order.discountValue" class="text-end text-muted small">
+                              ({{ order.discountValue * 100 }}% off)
+                            </div>
                           </div>
                         </div>
                         <div class="col-md-6">
-                          <div class="d-flex justify-content-between py-1">
+                          <!-- <div class="d-flex justify-content-between py-1">
                             <span class="fw-semibold">Tax:</span>
-                            <span>{{order.tax | currency}}</span>
-                          </div>
+                            <span>{{0 | currency:'MMK':'symbol':'1.2-2'}}</span>
+                          </div> -->
                           <div class="d-flex justify-content-between py-2 border-top mt-2">
                             <span class="fw-bold fs-5">Total:</span>
-                            <span class="fw-bold fs-5">{{order.total | currency}}</span>
+                            <span class="fw-bold fs-5">{{order.total | number:'1.2-2' }} MMK</span>
                           </div>
                         </div>
                       </div>
-                      <div class="d-flex justify-content-between py-1">
-                        <span class="fw-semibold">Shipping:</span>
-                        <span>{{order.shippingCost | currency}}</span>
-                      </div>
-                      <div class="d-flex justify-content-between py-1">
-                        <span class="fw-semibold">Tax:</span>
-                        <span>{{order.tax | currency}}</span>
-                      </div>
-                      <div class="d-flex justify-content-between py-2 border-top mt-2">
-                        <span class="fw-bold fs-5">Total:</span>
-                        <span class="fw-bold fs-5">{{order.total | currency}}</span>
-                      </div>
                     </div>
-                    <div class="row g-4">
+                    <div class="row g-4 mt-3">
                       <div class="col-md-6">
-                        <h6 class="fw-bold mb-2">Shipping Address</h6>
-                        <div class="mb-1">{{order.shippingAddress.street}}</div>
-                        <div class="mb-1">{{order.shippingAddress.apt}}</div>
-                        <div class="mb-1">{{order.shippingAddress.city}}, {{order.shippingAddress.state}} {{order.shippingAddress.zip}}</div>
-                        <div class="mb-1">{{order.shippingAddress.country}}</div>
-                      </div>
-                      <div class="col-md-6">
-                        <h6 class="fw-bold mb-2">Shipping Method</h6>
-                        <div>{{order.shippingMethod}}</div>
+                        <h6 class="fw-bold mb-2">Delivery Method</h6>
+                        <div>{{order.deliveryMethod}}</div>
+                        <button class="btn btn-outline-primary btn-sm mt-3" (click)="goToTracking(order.orderId)">
+                          <i class="bi bi-truck"></i> Track Order
+                        </button>
                       </div>
                     </div>
                   </div>
                 </td>
               </tr>
             </ng-container>
-            <tr *ngIf="userOrders.length === 0">
-              <td colspan="5" class="text-center py-5">
-                <p class="text-muted">No orders found.</p>
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
+
+      <div *ngIf="!isLoading && userOrders.length === 0" class="text-center py-5">
+        <i class="bi bi-box-seam display-4 text-muted"></i>
+        <h5 class="mt-3">No Orders Found</h5>
+        <p class="text-muted">You haven't placed any orders yet.</p>
+      </div>
     </div>
     <!-- Pagination Placeholder -->
-    <div class="d-flex justify-content-center mt-4">
+    <div class="d-flex justify-content-center mt-4" *ngIf="userOrders.length > 0">
       <nav aria-label="Orders pagination">
         <ul class="pagination pagination-rounded mb-0 gap-2">
           <li class="page-item active"><a class="page-link" href="#">1</a></li>

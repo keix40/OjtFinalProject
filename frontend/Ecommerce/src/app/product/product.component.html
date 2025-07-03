@@ -75,31 +75,25 @@
           <h5 class="mb-0">Categories & Brands</h5>
         </div>
         <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <label class="form-label">Categories</label>
-              <div formArrayName="categories">
-                <div *ngFor="let ctrl of categoriesArray.controls; let i = index" class="input-group mb-2">
-                  <select class="form-select" [formControlName]="i" (change)="onCategorySelectChange($event, i)">
-                    <option [ngValue]="null" disabled>Select Category</option>
-                    <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
-                    <option value="create-new">+ Create New Category</option>
-                  </select>
-                  <button type="button" class="btn btn-outline-danger" (click)="removeCategorySelect(i)" [disabled]="categoriesArray.length === 1">&times;</button>
-                </div>
+          <div formArrayName="categoryBrandArray">
+            <div *ngFor="let group of categoryBrandArray.controls; let i = index" [formGroupName]="i" class="row mb-2">
+              <div class="col-md-5">
+                <select class="form-select" formControlName="categoryId" (change)="onCategoryChange(i)">
+                  <option [ngValue]="null" disabled>Select Category</option>
+                  <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                  <option [ngValue]="'add_new_category'">+ Add New Category</option>
+                </select>
               </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Brands</label>
-              <div formArrayName="brands">
-                <div *ngFor="let ctrl of brandsArray.controls; let i = index" class="input-group mb-2">
-                  <select class="form-select" [formControlName]="i" (change)="onBrandSelectChange($event, i)">
-                    <option [ngValue]="null" disabled>Select Brand</option>
-                    <option *ngFor="let brand of brands" [ngValue]="brand.id">{{ brand.name }}</option>
-                    <option value="create-new">+ Create New Brand</option>
-                  </select>
-                  <button type="button" class="btn btn-outline-danger" (click)="removeBrandSelect(i)" [disabled]="brandsArray.length === 1">&times;</button>
-                </div>
+              <div class="col-md-5">
+                <select class="form-select" formControlName="brandId" (change)="onBrandChange(i)">
+                  <option [ngValue]="null">No Brand</option>
+                  <option *ngFor="let brand of group.value.availableBrands" [ngValue]="brand.id">{{ brand.name }}</option>
+                  <option [ngValue]="'add_new_brand'">+ Add New Brand</option>
+                </select>
+              </div>
+              <div class="col-md-2 d-flex align-items-center">
+                <button type="button" class="btn btn-outline-danger me-1" (click)="removeCategoryBrandPair(i)" [disabled]="categoryBrandArray.length === 1">&times;</button>
+                <button type="button" class="btn btn-outline-primary" (click)="addCategoryBrandPair()" *ngIf="i === categoryBrandArray.length - 1">+</button>
               </div>
             </div>
           </div>
@@ -321,6 +315,12 @@
     </div>
   </div>
 </div>
+
+<!-- <div *ngIf="productForm.invalid">
+  <pre>{{ productForm.errors | json }}</pre>
+  <pre>{{ productForm.status }}</pre>
+  <pre>{{ productForm.value | json }}</pre>
+</div> -->
 
 
 

@@ -1,4 +1,5 @@
 package com.Ojt.Ecommerce.dto;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.hibernate.sql.exec.spi.StandardEntityInstanceResolver;
 
@@ -8,6 +9,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class ProductDTO {
     private Long id;
     private String productName;
@@ -16,11 +18,12 @@ public class ProductDTO {
     private Long quantity;
     private String description;
     private Long status;
+
+    @JsonProperty("categoryBrandArray")
     private List<CategoryBrandPair> categoryBrandPairs;
+
     private List<ProductImageDTO> productImages;
     private Boolean hasVariant;
     private List<AttributeAndValueDTO> attributes;  // use your existing DTO here
     private List<VariantDTO> variants;               // create this DTO as it's missing
-
-
 }

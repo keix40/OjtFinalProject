@@ -1,0 +1,200 @@
+<app-header></app-header>
+<div class="container py-4">
+  <h2 class="mb-4">All Reviews</h2>
+  <div *ngIf="!reviews.length" class="text-muted">No reviews yet for this product.</div>
+  <div *ngFor="let review of reviews" class="review-card card border-0 shadow-sm mb-3 p-3 position-relative">
+    <!-- Header with avatar, name, stars, timestamp -->
+    <div class="d-flex align-items-center mb-2">
+      <img [src]="'http://localhost:8080' + review.userImage"
+           class="avatar rounded-circle me-3 border"
+           style="width:40px; height:40px; object-fit:cover;">
+      <div>
+        <strong>{{ review.username }}</strong>
+        <div class="text-warning star-rating attractive-stars mb-1">
+          <ng-container *ngFor="let star of createArray(review.rating)">
+            <i class="bi bi-star-fill star-animated star-filled"></i>
+          </ng-container>
+          <ng-container *ngFor="let empty of createArray(5 - review.rating)">
+            <i class="bi bi-star star-animated"></i>
+          </ng-container>
+        </div>
+      </div>
+      <small class="text-muted ms-auto">{{ review.timestamp | date:'medium' }}</small>
+
+      <!-- Dropdown (only for current user) -->
+      <div *ngIf="review.username === currentUser && review.id" class="ms-2">
+        <div class="dropdown">
+          <button class="btn btn-link btn-sm p-0 text-dark" type="button"
+                  id="dropdownMenuButton{{review.id}}"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false">
+            <i class="bi bi-three-dots-vertical fs-5"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end"
+              [attr.aria-labelledby]="'dropdownMenuButton' + review.id">
+            <li>
+              <a class="dropdown-item" (click)="editReview(review)">
+                <i class="bi bi-pencil me-2"></i>Edit
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item text-danger" (click)="deleteReview(review)">
+                <i class="bi bi-trash me-2"></i>Delete
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Text -->
+    <p class="mb-2">{{ review.comment }}</p>
+
+    <!-- Media Preview (images + videos) -->
+    <div class="review-media-grid mt-2" *ngIf="review.imageUrls?.length || review.videoUrls?.length">
+      <ng-container *ngIf="getAllMedia(review).length <= 4">
+        <!-- Show all media if 4 or less -->
+        <ng-container *ngFor="let media of getAllMedia(review); let idx = index">
+          <div class="media-item" (click)="openMediaModal(review, media.type, idx)">
+            <img *ngIf="media.type === 'image'" [src]="media.url" class="img-thumbnail rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;" />
+            <video *ngIf="media.type === 'video'" [src]="media.url" controls class="rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;"></video>
+          </div>
+        </ng-container>
+      </ng-container>
+      <ng-container *ngIf="getAllMedia(review).length > 4">
+        <!-- Show first 4 media -->
+        <ng-container *ngFor="let media of getAllMedia(review).slice(0, 4); let idx = index">
+          <div class="media-item" (click)="openMediaModal(review, media.type, idx)">
+            <img *ngIf="media.type === 'image'" [src]="media.url" class="img-thumbnail rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;" />
+            <video *ngIf="media.type === 'video'" [src]="media.url" controls class="rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;"></video>
+          </div>
+        </ng-container>
+        <!-- 5th spot: overlay with +N -->
+        <div class="media-item position-relative" style="cursor:pointer;" (click)="openMediaModal(review, getAllMedia(review)[4].type, 4)">
+          <ng-container *ngIf="getAllMedia(review)[4].type === 'image'">
+            <img [src]="getAllMedia(review)[4].url" class="img-thumbnail rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover; opacity:0.5;" />
+          </ng-container>
+          <ng-container *ngIf="getAllMedia(review)[4].type === 'video'">
+            <video [src]="getAllMedia(review)[4].url" controls class="rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover; opacity:0.5;"></video>
+          </ng-container>
+          <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background:rgba(0,0,0,0.4); color:white; font-size:2em;">
+            +{{ getAllMedia(review).length - 4 }}
+          </div>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- Media Preview Modal -->
+<div *ngIf="mediaModalOpen" class="media-modal-backdrop">
+  <div class="media-modal-content">
+    <button class="media-modal-close" (click)="closeMediaModal()">&times;</button>
+    <button *ngIf="mediaModalCanGoLeft" class="media-modal-arrow left" (click)="mediaModalPrev()">
+      <i class="bi bi-chevron-left"></i>
+    </button>
+    <button *ngIf="mediaModalCanGoRight" class="media-modal-arrow right" (click)="mediaModalNext()">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+    <ng-container *ngIf="mediaModalCurrentType === 'image'">
+      <img [src]="mediaModalCurrentUrl" class="media-modal-media" alt="Media Preview" />
+    </ng-container>
+    <ng-container *ngIf="mediaModalCurrentType === 'video'">
+      <video [src]="mediaModalCurrentUrl" class="media-modal-media" controls></video>
+    </ng-container>
+    <!-- <div class="media-modal-comment mt-3">
+      {{ mediaModalCurrentReview?.comment }}
+    </div> -->
+  </div>
+</div>
+
+<!-- Edit Review Modal -->
+<div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content p-3">
+        <div class="modal-header">
+          <h5 class="modal-title">Edit Review</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                  (click)="cancelEdit()"></button>
+        </div>
+        <div class="modal-body">
+  
+          <!-- Rating Stars -->
+          <div class="mb-2 d-flex align-items-center gap-2">
+            <label class="form-label mb-0">Rating:</label>
+            <span class="star-rating-input attractive-stars">
+              <ng-container *ngFor="let r of [1,2,3,4,5]">
+                <i class="bi"
+                   [ngClass]="newRating >= r ? 'bi-star-fill star-animated star-filled' : 'bi-star star-animated'"
+                   (mouseenter)="newRating = r"
+                   (mouseleave)="newRating = newRating"
+                   (click)="newRating = r"></i>
+              </ng-container>
+            </span>
+          </div>
+  
+          <!-- Review Text -->
+          <textarea [(ngModel)]="newReview"
+                    (ngModelChange)="reviewCommentError=''"
+                    class="form-control mb-3"
+                    rows="2"
+                    placeholder="Edit your review..."></textarea>
+          <div *ngIf="reviewCommentError" class="text-danger mb-2">{{ reviewCommentError }}</div>
+  
+          <!-- Existing Media -->
+          <div class="d-flex flex-wrap gap-2 mb-3"
+               *ngIf="mediaModalCurrentReview?.imageUrls?.length || mediaModalCurrentReview?.videoUrls?.length">
+            <!-- Existing Images -->
+            <ng-container *ngFor="let imageUrl of mediaModalCurrentReview.imageUrls">
+              <div class="position-relative">
+                <img [src]="'http://localhost:8080' + imageUrl"
+                     class="rounded"
+                     style="width: 80px; height: 80px; object-fit: cover;" />
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                        (click)="removeExistingMedia(imageUrl, 'image')"
+                        style="z-index:2; padding:2px 6px;">&times;</button>
+              </div>
+            </ng-container>
+  
+            <!-- Existing Videos -->
+            <ng-container *ngFor="let videoUrl of mediaModalCurrentReview.videoUrls">
+              <div class="position-relative">
+                <video [src]="'http://localhost:8080' + videoUrl" controls
+                       style="width: 80px; height: 80px; object-fit: cover;"></video>
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                        (click)="removeExistingMedia(videoUrl, 'video')"
+                        style="z-index:2; padding:2px 6px;">&times;</button>
+              </div>
+            </ng-container>
+          </div>
+  
+          <!-- Upload New Media -->
+          <input type="file" accept="image/*,video/*"
+                 (change)="onFilesSelected($event)"
+                 class="form-control mb-2" multiple />
+          <div *ngIf="reviewFileError" class="text-danger mb-2">{{ reviewFileError }}</div>
+  
+          <!-- Preview New Files -->
+          <div class="d-flex flex-wrap gap-2" *ngIf="selectedReviewFiles.length">
+            <ng-container *ngFor="let file of selectedReviewFiles; let i = index">
+              <div class="position-relative">
+                <img *ngIf="file.type.startsWith('image')" [src]="file.preview"
+                     class="rounded"
+                     style="width: 80px; height: 80px; object-fit: cover;" />
+                <video *ngIf="file.type.startsWith('video')" [src]="file.preview" controls
+                       style="width: 80px; height: 80px; object-fit: cover;"></video>
+                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
+                        (click)="removeSelectedFile(i)"
+                        style="z-index:2; padding:2px 6px;">&times;</button>
+              </div>
+            </ng-container>
+          </div>
+  
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal" (click)="cancelEdit()">Cancel</button>
+          <button class="btn btn-success" (click)="submitReview()">Update Review</button>
+        </div>
+      </div>
+    </div>
+  </div>  

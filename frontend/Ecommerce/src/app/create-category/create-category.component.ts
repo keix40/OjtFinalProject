@@ -98,7 +98,7 @@ export class CreateCategoryComponent {
     Promise.all(requests.map(req => req.toPromise()))
       .then((results) => {
         console.log('All categories created:', results);
-        this.activeModal.close(results);
+        this.activeModal.close("success");
         this.router.navigate(['/product']);
       })
       .catch((err) => {

@@ -75,7 +75,7 @@ export class CreateBrandComponent {
     this.brandService.createBrand(this.brand).subscribe({
       next: (data) => {
         console.log('Brand created:', data);
-        this.activeModal.close(data);
+        this.activeModal.close("success ");
         this.router.navigate(['/product']);
       },
       error: (err) => {

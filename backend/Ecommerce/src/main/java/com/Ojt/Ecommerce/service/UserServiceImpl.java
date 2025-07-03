@@ -22,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
@@ -235,4 +238,30 @@ public class UserServiceImpl implements UserService {
             throw new CustomException("Failed to upload profile image: " + e.getMessage());
         }
     }
+
+    //add method
+    @Override
+    public void assignRoleToUser(Long userId, Long roleId) {
+        Optional<User> optionalUser = userRepository.findById(userId);
+        Optional<Role> optionalRole = roleRepository.findById(roleId);
+
+        if (optionalUser.isEmpty()) {
+            throw new RuntimeException("User not found with ID: " + userId);
+        }
+
+        if (optionalRole.isEmpty()) {
+            throw new RuntimeException("Role not found with ID: " + roleId);
+        }
+
+        User user = optionalUser.get();
+        Role role = optionalRole.get();
+
+        user.setRole(role);
+        userRepository.save(user);
+    }
+
+    public List<User> findUsersByRoleId(Long roleId) {
+        return userRepository.findByRoleId(roleId);
+    }
+
 }

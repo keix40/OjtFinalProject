@@ -1,0 +1,461 @@
+<div class="activity-logs-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="container-fluid">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="header-content">
+              <h1 class="page-title">
+                <i class="fas fa-history"></i>
+                Activity Logs
+              </h1>
+              <p class="page-description">Monitor and audit all system activities for security and compliance</p>
+            </div>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <div class="header-actions">
+              <button class="btn btn-outline-secondary me-2" (click)="refreshLogs()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Refresh
+              </button>
+              <div class="dropdown d-inline">
+                <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                  <i class="fas fa-download me-1"></i>
+                  Export
+                </button>
+                <ul class="dropdown-menu">
+                  <li><a class="dropdown-item" (click)="exportLogs('csv')">
+                    <i class="fas fa-file-csv me-2"></i>Export as CSV
+                  </a></li>
+                  <li><a class="dropdown-item" (click)="exportLogs('json')">
+                    <i class="fas fa-file-code me-2"></i>Export as JSON
+                  </a></li>
+                  <li><a class="dropdown-item" (click)="exportLogs('pdf')">
+                    <i class="fas fa-file-pdf me-2"></i>Export as PDF
+                  </a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3">
+          <div class="filters-card">
+            <div class="card-header">
+              <h5><i class="fas fa-filter me-2"></i>Filters</h5>
+              <button class="btn btn-sm btn-outline-secondary" (click)="clearAllFilters()">
+                <i class="fas fa-times me-1"></i>Clear All
+              </button>
+            </div>
+            <div class="card-body">
+              <!-- Date Range Filter -->
+              <div class="filter-section">
+                <h6>Date Range</h6>
+                <div class="date-range-buttons mb-3">
+                  <button 
+                    *ngFor="let range of dateRanges" 
+                    class="btn btn-sm"
+                    [class.btn-primary]="selectedDateRange === range.value"
+                    [class.btn-outline-secondary]="selectedDateRange !== range.value"
+                    (click)="selectDateRange(range.value)"
+                  >
+                    {{ range.label }}
+                  </button>
+                </div>
+                <div class="row">
+                  <div class="col-6">
+                    <label class="form-label">From</label>
+                    <input 
+                      type="date" 
+                      class="form-control form-control-sm"
+                      [(ngModel)]="filters.dateFrom"
+                      (change)="applyFilters()"
+                    >
+                  </div>
+                  <div class="col-6">
+                    <label class="form-label">To</label>
+                    <input 
+                      type="date" 
+                      class="form-control form-control-sm"
+                      [(ngModel)]="filters.dateTo"
+                      (change)="applyFilters()"
+                    >
+                  </div>
+                </div>
+              </div>
+  
+              <!-- User Filter -->
+              <div class="filter-section">
+                <h6>User</h6>
+                <select 
+                  class="form-select form-select-sm"
+                  [(ngModel)]="filters.userId"
+                  (change)="applyFilters()"
+                >
+                  <option value="">All Users</option>
+                  <option *ngFor="let user of uniqueUsers" [value]="user.id">
+                    {{ user.name }} ({{ user.role }})
+                  </option>
+                </select>
+              </div>
+  
+              <!-- Action Type Filter -->
+              <div class="filter-section">
+                <h6>Action Type</h6>
+                <div class="action-type-filters">
+                  <div class="form-check" *ngFor="let actionType of actionTypes">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      [id]="'action-' + actionType.value"
+                      [checked]="filters.actionTypes.includes(actionType.value)"
+                      (change)="toggleActionType(actionType.value, $event)"
+                    >
+                    <label class="form-check-label" [for]="'action-' + actionType.value">
+                      <span class="action-badge" [ngClass]="'action-' + actionType.value">
+                        <i [class]="actionType.icon"></i>
+                      </span>
+                      {{ actionType.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+  
+              <!-- Severity Filter -->
+              <div class="filter-section">
+                <h6>Severity Level</h6>
+                <div class="severity-filters">
+                  <div class="form-check" *ngFor="let severity of severityLevels">
+                    <input 
+                      class="form-check-input" 
+                      type="checkbox" 
+                      [id]="'severity-' + severity.value"
+                      [checked]="filters.severityLevels.includes(severity.value)"
+                      (change)="toggleSeverity(severity.value, $event)"
+                    >
+                    <label class="form-check-label" [for]="'severity-' + severity.value">
+                      <span class="severity-badge" [ngClass]="'severity-' + severity.value">
+                        <i [class]="severity.icon"></i>
+                      </span>
+                      {{ severity.label }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+  
+              <!-- IP Address Filter -->
+              <div class="filter-section">
+                <h6>IP Address</h6>
+                <input 
+                  type="text" 
+                  class="form-control form-control-sm"
+                  placeholder="Enter IP address"
+                  [(ngModel)]="filters.ipAddress"
+                  (input)="applyFilters()"
+                >
+              </div>
+  
+              <!-- Search Filter -->
+              <div class="filter-section">
+                <h6>Search</h6>
+                <div class="search-input">
+                  <i class="fas fa-search search-icon"></i>
+                  <input 
+                    type="text" 
+                    class="form-control form-control-sm ps-4"
+                    placeholder="Search in descriptions..."
+                    [(ngModel)]="filters.searchTerm"
+                    (input)="applyFilters()"
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Statistics Card -->
+          <div class="stats-card">
+            <div class="card-header">
+              <h5><i class="fas fa-chart-bar me-2"></i>Statistics</h5>
+            </div>
+            <div class="card-body">
+              <div class="stat-item">
+                <div class="stat-value">{{ totalLogs }}</div>
+                <div class="stat-label">Total Logs</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ filteredLogs.length }}</div>
+                <div class="stat-label">Filtered Results</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ uniqueUsers.length }}</div>
+                <div class="stat-label">Active Users</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ criticalCount }}</div>
+                <div class="stat-label">Critical Events</div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Main Content -->
+        <div class="col-lg-9">
+          <!-- Search and Controls -->
+          <div class="controls-bar">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <div class="results-info">
+                  <span class="results-count">{{ filteredLogs.length }}</span> 
+                  of {{ totalLogs }} activities
+                  <span *ngIf="hasActiveFilters()" class="filtered-indicator">
+                    <i class="fas fa-filter me-1"></i>Filtered
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-6 text-md-end">
+                <div class="view-controls">
+                  <div class="btn-group me-2" role="group">
+                    <button 
+                      type="button" 
+                      class="btn btn-sm"
+                      [class.btn-primary]="viewMode === 'detailed'"
+                      [class.btn-outline-secondary]="viewMode !== 'detailed'"
+                      (click)="setViewMode('detailed')"
+                    >
+                      <i class="fas fa-list"></i>
+                    </button>
+                    <button 
+                      type="button" 
+                      class="btn btn-sm"
+                      [class.btn-primary]="viewMode === 'compact'"
+                      [class.btn-outline-secondary]="viewMode !== 'compact'"
+                      (click)="setViewMode('compact')"
+                    >
+                      <i class="fas fa-th-list"></i>
+                    </button>
+                  </div>
+                  <select 
+                    class="form-select form-select-sm d-inline-block w-auto"
+                    [(ngModel)]="itemsPerPage"
+                    (change)="updatePagination()"
+                  >
+                    <option value="25">25 per page</option>
+                    <option value="50">50 per page</option>
+                    <option value="100">100 per page</option>
+                    <option value="200">200 per page</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Activity Logs List -->
+          <div class="logs-container">
+            <div 
+              *ngFor="let log of paginatedLogs; trackBy: trackByLogId" 
+              class="log-item"
+              [ngClass]="'log-' + log.severity"
+            >
+              <div class="log-header">
+                <div class="log-meta">
+                  <span class="log-timestamp">
+                    <i class="fas fa-clock me-1"></i>
+                    {{ log.timestamp | date:'MMM dd, yyyy HH:mm:ss' }}
+                  </span>
+                  <span class="log-user">
+                    <i class="fas fa-user me-1"></i>
+                    {{ log.user.name }}
+                    <span class="user-role">({{ log.user.role }})</span>
+                  </span>
+                  <span class="log-ip">
+                    <i class="fas fa-globe me-1"></i>
+                    {{ log.ipAddress }}
+                  </span>
+                </div>
+                <div class="log-badges">
+                  <span class="action-badge" [ngClass]="'action-' + log.actionType">
+                    <i [class]="getActionIcon(log.actionType)"></i>
+                    {{ getActionLabel(log.actionType) }}
+                  </span>
+                  <span class="severity-badge" [ngClass]="'severity-' + log.severity">
+                    <i [class]="getSeverityIcon(log.severity)"></i>
+                    {{ log.severity | titlecase }}
+                  </span>
+                </div>
+              </div>
+  
+              <div class="log-content">
+                <div class="log-description">
+                  {{ log.description }}
+                </div>
+                
+                <div class="log-details" *ngIf="viewMode === 'detailed' && log.details">
+                  <div class="details-grid">
+                    <div class="detail-item" *ngFor="let detail of getLogDetails(log.details)">
+                      <strong>{{ detail.key }}:</strong>
+                      <span>{{ detail.value }}</span>
+                    </div>
+                  </div>
+                </div>
+  
+                <div class="log-actions" *ngIf="viewMode === 'detailed'">
+                  <button class="btn btn-sm btn-outline-primary me-2" (click)="viewLogDetails(log)">
+                    <i class="fas fa-eye me-1"></i>
+                    View Details
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary" (click)="copyLogInfo(log)">
+                    <i class="fas fa-copy me-1"></i>
+                    Copy
+                  </button>
+                </div>
+              </div>
+            </div>
+  
+            <!-- Empty State -->
+            <div *ngIf="filteredLogs.length === 0" class="empty-state">
+              <div class="empty-icon">
+                <i class="fas fa-search"></i>
+              </div>
+              <h4>No activity logs found</h4>
+              <p>Try adjusting your filters or search criteria</p>
+              <button class="btn btn-outline-primary" (click)="clearAllFilters()">
+                <i class="fas fa-times me-1"></i>
+                Clear All Filters
+              </button>
+            </div>
+  
+            <!-- Loading State -->
+            <div *ngIf="isLoading" class="loading-state">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p>Loading activity logs...</p>
+            </div>
+          </div>
+  
+          <!-- Pagination -->
+          <div class="pagination-container" *ngIf="paginatedLogs.length > 0">
+            <nav aria-label="Activity logs pagination">
+              <ul class="pagination justify-content-center">
+                <li class="page-item" [class.disabled]="currentPage === 1">
+                  <a class="page-link" (click)="goToPage(currentPage - 1)">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+                <li 
+                  *ngFor="let page of getPageNumbers()" 
+                  class="page-item" 
+                  [class.active]="page === currentPage"
+                >
+                  <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+                </li>
+                <li class="page-item" [class.disabled]="currentPage === totalPages">
+                  <a class="page-link" (click)="goToPage(currentPage + 1)">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+            <div class="pagination-info">
+              Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
+              {{ Math.min(currentPage * itemsPerPage, filteredLogs.length) }} 
+              of {{ filteredLogs.length }} logs
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Log Details Modal -->
+    <div class="modal fade" id="logDetailsModal" tabindex="-1" *ngIf="selectedLog">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-info-circle me-2"></i>
+              Activity Log Details
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="log-detail-content">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <strong>Timestamp:</strong><br>
+                  <span>{{ selectedLog.timestamp | date:'full' }}</span>
+                </div>
+                <div class="col-md-6">
+                  <strong>User:</strong><br>
+                  <span>{{ selectedLog.user.name }} ({{ selectedLog.user.role }})</span>
+                </div>
+              </div>
+              
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <strong>Action Type:</strong><br>
+                  <span class="action-badge" [ngClass]="'action-' + selectedLog.actionType">
+                    <i [class]="getActionIcon(selectedLog.actionType)"></i>
+                    {{ getActionLabel(selectedLog.actionType) }}
+                  </span>
+                </div>
+                <div class="col-md-6">
+                  <strong>Severity:</strong><br>
+                  <span class="severity-badge" [ngClass]="'severity-' + selectedLog.severity">
+                    <i [class]="getSeverityIcon(selectedLog.severity)"></i>
+                    {{ selectedLog.severity | titlecase }}
+                  </span>
+                </div>
+              </div>
+  
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <strong>IP Address:</strong><br>
+                  <span>{{ selectedLog.ipAddress }}</span>
+                </div>
+                <div class="col-md-6">
+                  <strong>User Agent:</strong><br>
+                  <span class="text-muted small">{{ selectedLog.userAgent }}</span>
+                </div>
+              </div>
+  
+              <div class="mb-3">
+                <strong>Description:</strong><br>
+                <span>{{ selectedLog.description }}</span>
+              </div>
+  
+              <div *ngIf="selectedLog.details" class="mb-3">
+                <strong>Additional Details:</strong>
+                <div class="details-json">
+                  <pre>{{ selectedLog.details | json }}</pre>
+                </div>
+              </div>
+  
+              <div *ngIf="selectedLog.changes" class="mb-3">
+                <strong>Changes Made:</strong>
+                <div class="changes-list">
+                  <div *ngFor="let change of selectedLog.changes" class="change-item">
+                    <strong>{{ change.field }}:</strong>
+                    <span class="old-value">{{ change.oldValue || 'N/A' }}</span>
+                    <i class="fas fa-arrow-right mx-2"></i>
+                    <span class="new-value">{{ change.newValue || 'N/A' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" (click)="copyLogInfo(selectedLog)">
+              <i class="fas fa-copy me-1"></i>
+              Copy Details
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

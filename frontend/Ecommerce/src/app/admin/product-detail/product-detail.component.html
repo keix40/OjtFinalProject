@@ -1,147 +1,108 @@
-<div class="container-fluid py-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Product Detail (Admin)</h2>
-    <button class="btn btn-primary" routerLink="/admin/products">
-      <i class="bi bi-arrow-left"></i> Back to Products
-    </button>
-  </div>
-
-  <div class="row" *ngIf="product">
-    <!-- Product Images Section -->
-    <div class="col-lg-6 mb-4">
-      <div class="card h-100">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">Product Images</h5>
-        </div>
-        <div class="card-body">
-          <!-- Main Image -->
-          <div class="main-image-container mb-3">
-            <img [src]="selectedImage" 
-                 class="img-fluid rounded main-image" 
-                 alt="Main product image"
-                 (click)="openImageModal(selectedImage!)">
-          </div>
-          <!-- Thumbnails -->
-          <div class="row g-2">
-            <div class="col-3" *ngFor="let image of product.images">
-              <div class="thumbnail-container position-relative">
-                <img [src]="image.url" 
-                     class="img-fluid rounded thumbnail" 
-                     [class.active]="selectedImage === image.url"
-                     (click)="selectedImage = image.url"
-                     alt="Product thumbnail">
-                <i class="bi position-absolute top-0 end-0 m-1" 
-                   [class]="getImageStatusIcon(image.status)"
-                   [title]="image.status"></i>
+<div class="detail-bg py-5">
+  <div class="container py-4" *ngIf="product">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="card shadow-lg border-0 p-4 product-detail-main-card bg-white rounded-5">
+          <div class="row g-4 align-items-start">
+            <!-- Left: Image Gallery -->
+            <div class="col-md-6 mb-4 mb-md-0">
+              <div class="main-image-container mb-3 position-relative">
+                <img 
+                  [src]="selectedImage" 
+                  class="img-fluid main-image rounded-4 border" 
+                  alt="Main Product Image"
+                  (click)="openImageModal(selectedImage!)">
+                <!-- Left Arrow -->
+                <button *ngIf="displayedImages.length > 1" class="image-arrow left-arrow small-arrow" (click)="showPrevImage($event)" [disabled]="currentImageIndex === 0">
+                  <i class="bi bi-chevron-left"></i>
+                </button>
+                <!-- Right Arrow -->
+                <button *ngIf="displayedImages.length > 1" class="image-arrow right-arrow small-arrow" (click)="showNextImage($event)" [disabled]="currentImageIndex === displayedImages.length - 1">
+                  <i class="bi bi-chevron-right"></i>
+                </button>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Product Info Section -->
-    <div class="col-lg-6 mb-4">
-      <div class="card h-100">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">Product Information</h5>
-        </div>
-        <div class="card-body">
-          <div class="mb-3">
-            <h3 class="mb-2">{{product.name}}</h3>
-            <span class="badge" [class]="getStatusBadgeClass(product.status)">
-              {{product.status}}
-            </span>
-          </div>
-          <div class="mb-3">
-            <strong>Product Code:</strong> {{product.code}}
-          </div>
-          <div class="mb-3">
-            <strong>Description:</strong>
-            <p class="mt-2">{{product.description}}</p>
-          </div>
-          <div class="row mb-3">
-            <div class="col-md-6">
-              <strong>Created:</strong>
-              <p class="text-muted">{{product.createdDate | date:'medium'}}</p>
-            </div>
-            <div class="col-md-6">
-              <strong>Updated:</strong>
-              <p class="text-muted">{{product.updatedDate | date:'medium'}}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Brand & Categories Section -->
-    <div class="col-12 mb-4">
-      <div class="card">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">Brand & Categories</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6 mb-3 mb-md-0">
-              <strong>Brand:</strong>
-              <p class="mb-0">{{product.brand}}</p>
-            </div>
-            <div class="col-md-6">
-              <strong>Categories:</strong>
-              <p class="mb-0">{{product.categories.join(', ')}}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Variants Section -->
-    <div class="col-12">
-      <div class="card">
-        <div class="card-header bg-light">
-          <h5 class="card-title mb-0">Product Variants</h5>
-        </div>
-        <div class="card-body">
-          <div class="row g-4">
-            <div class="col-md-6 col-lg-4" *ngFor="let variant of product.variants">
-              <div class="card h-100 variant-card">
-                <div class="card-body">
-                  <h6 class="card-subtitle mb-2 text-muted">SKU: {{variant.sku}}</h6>
-                  <div class="mb-2">
-                    <strong>Price:</strong> ${{variant.price}}
-                  </div>
-                  <div class="mb-2">
-                    <strong>Stock:</strong> {{variant.stock}}
-                  </div>
-                  <div class="mb-3">
-                    <strong>Attributes:</strong>
-                    <ul class="list-unstyled mt-2">
-                      <li *ngFor="let attr of variant.attributes">
-                        {{attr.attributeName}}: {{attr.value}}
-                      </li>
-                    </ul>
-                  </div>
-                  <!-- Variant Images -->
-                  <div class="variant-images">
-                    <strong>Images:</strong>
-                    <div class="row g-2 mt-2">
-                      <div class="col-4" *ngFor="let image of variant.images">
-                        <div class="position-relative">
-                          <img [src]="image.url" 
-                               class="img-fluid rounded variant-thumbnail" 
-                               (click)="openImageModal(image.url)"
-                               alt="Variant thumbnail">
-                          <i class="bi position-absolute top-0 end-0 m-1" 
-                             [class]="getImageStatusIcon(image.status)"
-                             [title]="image.status"></i>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+              <div class="d-flex flex-nowrap overflow-auto gap-2 pb-1">
+                <div class="thumb-wrapper" *ngFor="let image of displayedImages; let i = index">
+                  <img 
+                    [src]="image.url" 
+                    class="img-fluid thumbnail rounded-3 border" 
+                    [class.selected-thumb]="selectedImage === image.url"
+                    (click)="selectImageByIndex(i)" 
+                    alt="Thumbnail">
                 </div>
               </div>
             </div>
+
+            <!-- Right: Product Info -->
+            <div class="col-md-6">
+              <div class="d-flex align-items-center gap-2 mb-2">
+                <h2 class="fw-bold mb-0 display-6">{{ product.name }}</h2>
+              </div>
+              <div class="mb-3 d-flex align-items-center gap-3">
+                <span class="product-price display-6 fw-bold text-success">{{ selectedVariant?.price || product.price }} MMK</span>
+                <span class="badge rounded-pill bg-light text-dark border px-3 py-2 fs-6">
+                  <i class="bi bi-check-circle-fill text-success me-1" *ngIf="(selectedVariant?.stock ?? product.stock) > 0"></i>
+                  <i class="bi bi-x-circle-fill text-danger me-1" *ngIf="(selectedVariant?.stock ?? product.stock) === 0"></i>
+                  {{ (selectedVariant?.stock ?? product.stock) > 0 ? 'In Stock' : 'Out of Stock' }}
+                </span>
+              </div>
+              <div class="mb-2" *ngIf="product.brand && product.brand !== '-'">
+                <span class="fw-semibold">Brand:</span>
+                <span class="text-primary">{{ product.brand }}</span>
+              </div>              
+              <div class="mb-2">
+                <span *ngIf="product.categories.length > 0" class="fw-semibold">Categories:</span> <span class="text-secondary">{{ product.categories.join(', ') }}</span>
+              </div>
+
+              <!-- Variant Attribute Selectors -->
+              <div *ngIf="attributeValuesMap">
+                <div *ngFor="let attrName of objectKeys(attributeValuesMap)" class="mb-3">
+                  <h6 class="fw-semibold mb-2 text-capitalize">{{ attrName }}:</h6>
+                  <div class="d-flex flex-wrap gap-2">
+                    <ng-container *ngIf="attrName.toLowerCase() === 'color'; else regularOptions">
+                      <button
+                        *ngFor="let value of attributeValuesMap[attrName]"
+                        class="btn color-circle p-0 border-0"
+                        [ngClass]="{'selected': selectedAttributes[attrName] === value}"
+                        (click)="toggleAttribute(attrName, value)">
+                        <span class="circle-swatch" [ngStyle]="{'background': value.toLowerCase(), 'border': selectedAttributes[attrName] === value ? '2px solid #2563eb' : '1px solid #bbb'}"></span>
+                        <span class="visually-hidden">{{ value }}</span>
+                      </button>
+                    </ng-container>
+                    <ng-template #regularOptions>
+                      <button
+                        *ngFor="let value of attributeValuesMap[attrName]"
+                        class="btn btn-sm rounded-pill px-3 py-1"
+                        [ngClass]="{'btn-primary': selectedAttributes[attrName] === value, 'btn-outline-secondary': selectedAttributes[attrName] !== value}"
+                        (click)="toggleAttribute(attrName, value)">
+                        {{ value }}
+                      </button>
+                    </ng-template>
+                  </div>
+                </div>
+              </div>
+
+
+              <!-- Quantity Selector (admin view, optional) -->
+              <!--
+              <div class="mb-3 d-flex align-items-center gap-2">
+                <span class="fw-semibold">Quantity:</span>
+                <div class="quantity-pill d-flex align-items-center bg-light rounded-pill px-3 py-1 gap-2">
+                  <button class="btn btn-outline-secondary btn-sm px-2" (click)="decreaseQty()">-</button>
+                  <span class="px-2 fw-bold fs-5">{{ quantity }}</span>
+                  <button class="btn btn-outline-secondary btn-sm px-2" (click)="increaseQty()">+</button>
+                </div>
+              </div>
+              -->
+
+              <!-- SKU, Price, Stock -->
+              <div class="mt-4">
+                <div><strong>SKU:</strong> {{ selectedVariant?.sku || product.code }}</div>
+                <div><strong>Price:</strong> {{ selectedVariant?.price || product.price}} MMK</div>
+                <div><strong>Stock:</strong> {{ selectedVariant?.stock ?? product.stock }}</div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
@@ -149,7 +110,7 @@
   </div>
 
   <!-- Image Modal -->
-  <div class="modal fade" [class.show]="showImageModal" [style.display]="showImageModal ? 'block' : 'none'">
+  <div class="modal fade" [class.show]="showImageModal" [style.display]="showImageModal ? 'block' : 'none'" style="background: rgba(0, 0, 0, 0.5);">
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header">
@@ -157,10 +118,9 @@
           <button type="button" class="btn-close" (click)="closeImageModal()"></button>
         </div>
         <div class="modal-body text-center">
-          <img [src]="selectedImage" class="img-fluid" alt="Enlarged product image">
+          <img [src]="selectedImage" class="img-fluid" alt="Zoomed Image">
         </div>
       </div>
     </div>
   </div>
-  <div class="modal-backdrop fade" [class.show]="showImageModal" [style.display]="showImageModal ? 'block' : 'none'"></div>
-</div> 
+</div>

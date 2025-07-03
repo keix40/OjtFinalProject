@@ -134,6 +134,144 @@ th.no-sort::after {
   cursor: not-allowed;
 }
 
+/* Export Button Styling - Outline Style */
+.export-btn {
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  border-width: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.export-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.export-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.export-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.export-btn:hover::before {
+  left: 100%;
+}
+
+/* Button icon animations */
+.export-btn i {
+  transition: transform 0.3s ease;
+}
+
+.export-btn:hover i {
+  transform: scale(1.1);
+}
+
+/* Dropdown arrow animation */
+.dropdown-toggle::after {
+  transition: transform 0.3s ease;
+}
+
+.dropdown.show .dropdown-toggle::after {
+  transform: rotate(180deg);
+}
+
+/* Beautiful Dropdown Styling */
+.export-dropdown {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  padding: 8px 0;
+  min-width: 220px;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  margin-top: 5px;
+}
+
+.export-dropdown .dropdown-item {
+  padding: 12px 20px;
+  border-radius: 6px;
+  margin: 2px 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.export-dropdown .dropdown-item:hover {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  transform: translateX(3px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.export-dropdown .dropdown-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.export-dropdown .dropdown-item.disabled:hover {
+  transform: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.export-dropdown .dropdown-divider {
+  margin: 8px 0;
+  border-color: #e9ecef;
+}
+
+.export-dropdown .dropdown-item i {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.export-dropdown .dropdown-item small {
+  font-size: 11px;
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .export-btn {
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .export-dropdown {
+    min-width: 200px;
+  }
+  
+  .export-dropdown .dropdown-item {
+    padding: 10px 16px;
+  }
+}
+
+/* Success animation for export */
+@keyframes exportPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.export-btn.exporting {
+  animation: exportPulse 0.6s ease;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .table thead {
