@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import { UserPersonalInfoComponent } from './user-personal-info/user-personal-info.component';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
 interface UserDetails {

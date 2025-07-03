@@ -95,20 +95,20 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
-    BlacklistComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     ReactiveFormsModule,
-    FormsModule, // Required for ngModel/ngForm
+    FormsModule,
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent,, // Standalone component must be imported here
+    CommonModule,
+    CartSidebarComponent,
     ProductDetailComponent,
+    BlacklistComponent,
     BrowserAnimationsModule,
   ],
   providers: [

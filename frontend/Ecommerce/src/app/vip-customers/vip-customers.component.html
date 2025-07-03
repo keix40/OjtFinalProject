@@ -314,7 +314,7 @@
                           <div class="customer-avatar">
                             <img [src]="imageService.getAvatarImageUrl(customer)" [alt]="customer.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', customer.name)">
                             <div class="vip-badge" [ngClass]="'tier-' + customer.vipTier">
-                              <i [class]="getVipIcon(customer.vipTier)"></i>
+                              <i [class]="getVipIcon(customer.vipTier || '')"></i>
                             </div>
                           </div>
                           <div class="customer-details">
@@ -329,7 +329,7 @@
                       </td>
                       <td>
                         <span class="tier-badge" [ngClass]="'tier-' + customer.vipTier">
-                          <i [class]="getVipIcon(customer.vipTier)"></i>
+                          <i [class]="getVipIcon(customer.vipTier || '')"></i>
                           {{ customer.vipTier | titlecase }}
                         </span>
                       </td>
@@ -430,7 +430,7 @@
                         <div class="customer-avatar-large">
                           <img [src]="imageService.getAvatarImageUrl(customer)" [alt]="customer.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', customer.name)">
                           <div class="vip-badge-large" [ngClass]="'tier-' + customer.vipTier">
-                            <i [class]="getVipIcon(customer.vipTier)"></i>
+                            <i [class]="getVipIcon(customer.vipTier || '')"></i>
                           </div>
                         </div>
                         <div class="customer-info-card">
@@ -453,7 +453,7 @@
                       <div class="card-body">
                         <div class="tier-info-card">
                           <span class="tier-badge-large" [ngClass]="'tier-' + customer.vipTier">
-                            <i [class]="getVipIcon(customer.vipTier)"></i>
+                            <i [class]="getVipIcon(customer.vipTier || '')"></i>
                             {{ customer.vipTier | titlecase }} VIP
                           </span>
                           <span class="status-badge" [ngClass]="'status-' + customer.status">
@@ -690,7 +690,7 @@
                   <div class="profile-avatar">
                     <img [src]="imageService.getAvatarImageUrl(selectedCustomerDetails)" [alt]="selectedCustomerDetails.name" class="avatar-img" (error)="imageService.handleImageError($event, 'avatar', selectedCustomerDetails.name)">
                     <div class="vip-badge-profile" [ngClass]="'tier-' + selectedCustomerDetails.vipTier">
-                      <i [class]="getVipIcon(selectedCustomerDetails.vipTier)"></i>
+                      <i [class]="getVipIcon(selectedCustomerDetails.vipTier || '')"></i>
                     </div>
                   </div>
                   <div class="profile-info">
@@ -698,7 +698,7 @@
                     <p>{{ selectedCustomerDetails.email }}</p>
                     <div class="profile-tier">
                       <span class="tier-badge-large" [ngClass]="'tier-' + selectedCustomerDetails.vipTier">
-                        <i [class]="getVipIcon(selectedCustomerDetails.vipTier)"></i>
+                        <i [class]="getVipIcon(selectedCustomerDetails.vipTier || '')"></i>
                         {{ selectedCustomerDetails.vipTier | titlecase }} VIP
                       </span>
                     </div>
@@ -772,7 +772,7 @@
                 </div>
                 <div class="tab-pane fade" id="benefits-tab">
                   <div class="vip-benefits">
-                    <div *ngFor="let benefit of getVipBenefits(selectedCustomerDetails.vipTier)" class="benefit-item">
+                    <div *ngFor="let benefit of getVipBenefits(selectedCustomerDetails.vipTier || '')" class="benefit-item">
                       <i class="fas fa-check-circle"></i>
                       <span>{{ benefit }}</span>
                     </div>
