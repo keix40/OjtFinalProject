@@ -15,5 +15,5 @@ public interface UserService {
     public String register(RegisterRequest request, MultipartFile profileImage);
     List<User> getAllUsers();
     public RegisterRequest updateUser(Long id, RegisterRequest userDTO);
-
+    String uploadProfileImage(String token, MultipartFile image);
 }

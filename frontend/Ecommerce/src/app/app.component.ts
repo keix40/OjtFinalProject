@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NotifcationService } from './notifcation.service';
 
 @Component({
   selector: 'app-root',
@@ -8,4 +9,6 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'final_Prj';
+  constructor(private notificationService: NotifcationService) {
+  }
 }

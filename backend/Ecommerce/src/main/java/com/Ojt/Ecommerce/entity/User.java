@@ -73,6 +73,10 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserCouponUsage> couponUsages;
+
+
     @PrePersist
     protected void onCreate() {
         this.createdDate = LocalDateTime.now();

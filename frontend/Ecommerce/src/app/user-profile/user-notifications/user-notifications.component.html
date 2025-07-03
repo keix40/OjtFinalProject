@@ -1,4 +1,26 @@
 <div class="notifications-section">
   <h3>My Notifications</h3>
-  <p>Notifications content will go here.</p>
+  <div class="notifications-list">
+    <div *ngIf="notifications.length === 0" class="empty-state">
+      <i class="fas fa-bell-slash"></i>
+      <p>No notifications yet.</p>
+    </div>
+    <div *ngFor="let notif of notifications" class="notification-item" [class.unread]="!notif.read" (click)="markAsRead(notif)" [class.menu-open]="notif.showMenu">
+      <span class="notification-icon"><i class="fas fa-bell"></i></span>
+      <div class="notification-content">
+        <p>{{ notif.message }}</p>
+        <span class="timestamp">{{ notif.formattedTimestamp }}</span>
+      </div>
+      <div class="menu-container">
+        <button class="menu-btn" (click)="toggleMenu(notif, $event)" title="More options">
+          <i class="fas fa-ellipsis-v"></i>
+        </button>
+        <div class="menu-dropdown" *ngIf="notif.showMenu">
+          <button class="menu-item delete" (click)="deleteNotification(notif.id, $event)">
+            <i class="fas fa-trash-alt"></i> Delete this notification
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

@@ -5,9 +5,16 @@
     <div class="col-12 col-md-4 col-lg-3">
       <div class="card shadow-sm rounded-4 p-4 mb-4 sticky-top" style="top: 1rem;">
         <div class="d-flex flex-column align-items-center mb-4">
-          <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mb-3 shadow" style="width: 72px; height: 72px; font-size: 2rem; transition: box-shadow 0.3s;">
-            {{ userDetails.name ? userDetails.name.charAt(0).toUpperCase() : '' }}
-          </div>
+         <div class="avatar mb-3 shadow rounded-circle overflow-hidden" style="width: 72px; height: 72px; font-size: 2rem;">
+  <ng-container *ngIf="userDetails?.profileImage && userDetails.profileImage !== '/upload/defaultProfile.png'; else showInitial">
+    <img [src]="userDetails.profileImage" alt="Profile" class="w-100 h-100 object-fit-cover">
+  </ng-container>
+  <ng-template #showInitial>
+    <div class="bg-primary text-white w-100 h-100 d-flex align-items-center justify-content-center">
+      {{ userDetails.name ? userDetails.name.charAt(0).toUpperCase() : '' }}
+    </div>
+  </ng-template>
+</div>
           <div class="text-center">
             <h4 class="mb-1 fw-bold">{{userDetails.name}}</h4>
             <p class="mb-0 text-muted small">{{userDetails.roles?.join(', ')}}</p>

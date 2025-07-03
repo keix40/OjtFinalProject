@@ -117,7 +117,7 @@ resendOtp(email: string): Observable<any> {
   }
 
   sendRegisterOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/sendOtp`, { email });//need to change
+    return this.http.post(`${this.baseUrl}/send-register-otp`, { email });//need to change
   }
 
   sendResetOtp(email: string): Observable<any> {
@@ -126,5 +126,24 @@ resendOtp(email: string): Observable<any> {
 
   resetPassword(email: string, newPassword: string) {
   return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, newPassword });
+}
+
+uploadProfileImage(file: File): Observable<any> { //add for profile avatar update by pmk june 13
+  const token = this.getToken();
+  if (!token) {
+    console.error('No token found in localStorage');
+    return new Observable(subscriber => {
+      subscriber.error(new Error('No token found'));
+    });
+  }
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const headers = new HttpHeaders({
+    'Authorization': `Bearer ${token}`
+  });
+
+  return this.http.put(`${this.baseUrl}/update-avatar`, formData, { headers });
 }
 }

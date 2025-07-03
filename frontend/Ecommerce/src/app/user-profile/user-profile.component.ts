@@ -12,6 +12,7 @@ interface UserDetails {
   phoneNumber: string | null;
   password?: string | null;
   roles?: string[];
+  profileImage?: string|null;
 }
 
 @Component({
@@ -28,7 +29,8 @@ export class UserProfileComponent implements OnInit {
     gender: null, // Added gender
     dateOfBirth: null, // Added dateOfBirth (renamed from dateofbirth)
     phoneNumber: null, // Added missing property
-    roles: []
+    roles: [],
+    profileImage: null,
   };
 
   activeSection: string = 'orders';
@@ -51,6 +53,9 @@ export class UserProfileComponent implements OnInit {
 
   private loadUserDetails() {
     const decodedToken = this.authService.getDecodedToken();
+    const backendBaseUrl = 'http://localhost:8080';                     //add For profile by PMK (June 11)
+const rawImagePath = decodedToken?.profileImage || '/upload/defaultProfile.png';
+const fullImageUrl = backendBaseUrl + rawImagePath;
 
     this.userDetails = {
       id: decodedToken?.id || null, // Changed from userId to id
@@ -59,6 +64,7 @@ export class UserProfileComponent implements OnInit {
       gender: decodedToken?.gender || null, // Get gender from token
       dateOfBirth: decodedToken?.dateofbirth || null, // Get dateofbirth from token (using token key name)
       phoneNumber: decodedToken?.phoneNumber || null, // Get phoneNumber from token
+      profileImage: fullImageUrl,
       roles: this.authService.getRoles()
     };
   }
@@ -77,4 +83,4 @@ export class UserProfileComponent implements OnInit {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
-} 
+}

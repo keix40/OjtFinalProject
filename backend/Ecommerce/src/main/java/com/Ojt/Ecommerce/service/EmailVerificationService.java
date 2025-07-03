@@ -9,7 +9,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 public class EmailVerificationService {
     //Abstract Email API
-    private final String apiKey = "9875d7f07e1d42bd88418a727101ea95"; // Replace with your actual key
+    private final String apiKey = "f8d8b80b3d304f799dc6a7bde9750fd6"; // Replace with your actual key
 
     private final RestTemplate restTemplate = new RestTemplate();
 

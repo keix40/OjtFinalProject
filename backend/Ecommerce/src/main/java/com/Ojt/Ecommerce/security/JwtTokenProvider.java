@@ -52,9 +52,10 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim("roles", roles)
                 .claim("name", user.getName())
                 .claim("gender", user.getGender())
-                .claim("phNumber", user.getPhoneNumber())
+                .claim("phoneNumber", user.getPhoneNumber())
                 .claim("dateofbirth", user.getDateOfBirth().toString()) // 👈 convert LocalDate to String
                 .claim("createdate", user.getCreatedDate().toString())
+                .claim("profileImage",user.getProfileImage())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(secretKey, SignatureAlgorithm.HS512)

@@ -45,6 +45,7 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final OtpVerificationRepository otpVerificationRepository;
     private final ModelMapper modelMapper;
+    private final NotificationService notificationService;
 
     @Override
     public String register(RegisterRequest request, MultipartFile profileImage) {
@@ -139,7 +140,7 @@ public class UserServiceImpl implements UserService {
                 File dest = new File(uploadPath, imageName);
                 profileImage.transferTo(dest);
                 System.out.println("Uploading to absolute path: " + dest.getAbsolutePath());
-                user.setProfileImage("/upload/" + imageName); // serve from /upload/** mapping
+                user.setProfileImage("/uploads/" + imageName); // serve from /upload/** mapping
                 System.out.println("Attempting to register with email: " + request.getEmail());
                 System.out.println("Normalized email: " + request.getEmail().trim().toLowerCase());
                 System.out.println("User found: " + userRepository.findByEmail(request.getEmail().trim().toLowerCase()));
@@ -198,7 +199,40 @@ public class UserServiceImpl implements UserService {
 
 
         userRepository.save(user);
+        notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
 
         return modelMapper.map(user, RegisterRequest.class);
+    }
+
+    @Override
+    public String uploadProfileImage(String token, MultipartFile image) {  //add for profile avatar update by pmk june 13
+        if (image == null || image.isEmpty()) {
+            throw new CustomException("No image file provided");
+        }
+
+        String email = jwtTokenProvider.getEmailFromToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("User not found"));
+
+        try {
+            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
+            File uploadPath = new File(uploadDir);
+            if (!uploadPath.exists()) {
+                uploadPath.mkdirs();
+            }
+
+            String imageName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+            File dest = new File(uploadPath, imageName);
+            image.transferTo(dest);
+
+            String imagePath = "/uploads/" + imageName;
+            user.setProfileImage(imagePath);
+            userRepository.save(user);
+
+            return imagePath;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CustomException("Failed to upload profile image: " + e.getMessage());
+        }
     }
 }
