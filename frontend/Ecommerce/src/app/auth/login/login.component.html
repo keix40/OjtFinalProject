@@ -38,7 +38,7 @@
     </div>
   </div>
 
-  <!-- Forgot Password Modal -->
+<!-- Forgot Password Modal -->
 <div *ngIf="showForgotPasswordModal" class="modal-backdrop">
   <div class="modal-box">
     <h4>Forgot Password</h4>
@@ -48,7 +48,10 @@
       </div>
     <div class="text-danger mt-1" *ngIf="forgotError">{{ forgotError }}</div>
 
-    <button class="btn btn-primary mt-2" (click)="sendForgotPasswordOtp()">Send OTP</button>
+    <button class="btn btn-primary mt-2" (click)="sendForgotPasswordOtp()" [disabled]="isSendingOtp">
+      <span *ngIf="!isSendingOtp">Send OTP</span>
+      <span *ngIf="isSendingOtp">Sending...</span>
+    </button>
   </div>
 </div>
 
@@ -58,7 +61,10 @@
     <h4>Enter OTP</h4>
     <input type="text" [(ngModel)]="enteredOtp" (ngModelChange)="onOtpChange()" placeholder="Enter OTP" class="form-control" />
     <div class="text-danger mt-1" *ngIf="submittedOtp && otpError">{{ otpError }}</div>
-    <button class="btn btn-primary mt-2" (click)="verifyOtp()">Verify OTP</button>
+    <button class="btn btn-primary mt-2" (click)="verifyOtp()" [disabled]="isVerifyingOtp">
+      <span *ngIf="!isVerifyingOtp">Verify OTP</span>
+      <span *ngIf="isVerifyingOtp">Verifying...</span>
+    </button>
   </div>
 </div>
 
@@ -70,7 +76,11 @@
     <div class="error" *ngIf="resetPasswordError">{{ resetPasswordError }}</div>
     <input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm Password" class="form-control mb-2" />
     <div class="error" *ngIf="resetConfirmPasswordError">{{ resetConfirmPasswordError }}</div>
-    <button class="btn btn-success" (click)="resetPassword()">Reset</button>
+    <div class="error" *ngIf="resetError">{{ resetError }}</div>
+    <button class="btn btn-success" (click)="resetPassword()" [disabled]="isResettingPassword">
+      <span *ngIf="!isResettingPassword">Reset Password</span>
+      <span *ngIf="isResettingPassword">Resetting...</span>
+    </button>
   </div>
 </div>
 

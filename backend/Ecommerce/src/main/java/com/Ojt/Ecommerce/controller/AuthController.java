@@ -404,5 +404,19 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
 
+    //add for profile avatar update by pmk june 13
+    @PutMapping(value = "/update-avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateAvatar(
+            @RequestPart("image") MultipartFile image,
+            @RequestHeader("Authorization") String tokenHeader) {
 
+        String token = tokenHeader.replace("Bearer ", "");
+
+        String imagePath = userService.uploadProfileImage(token, image);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Profile image updated successfully",
+                "imagePath", imagePath
+        ));
+    }
 }

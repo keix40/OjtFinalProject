@@ -94,4 +94,7 @@ public class Product {
             status = 1;
         }
     }
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductDiscount> productDiscounts;
+    // product
 }

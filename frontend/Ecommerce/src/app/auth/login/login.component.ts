@@ -32,6 +32,11 @@ export class LoginComponent implements OnInit {
   submittedOtp = false;
   submittedReset = false;
 
+  //Loading states
+  isResettingPassword = false;
+  isSendingOtp = false;
+  isVerifyingOtp=false;
+
   // Error messages
   forgotError = '';
   otpError = '';
@@ -40,6 +45,7 @@ export class LoginComponent implements OnInit {
   forgotEmailError = '';
   resetPasswordError='';
   resetConfirmPasswordError='';
+  resetSuccessMessage = '';
 
 
   constructor(
@@ -87,6 +93,9 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       this.permissionService.setPermissions(permissionArray); //add this for permmision
 
       this.router.navigate(['/home']);
+    if (decoded && decoded.sub) {
+      localStorage.setItem('email', decoded.sub); // "sub" is the email in your token
+    }
     },
     error: (err) => {
       console.error(err);
@@ -124,10 +133,12 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     return;
   }
 
+  this.isSendingOtp = true;
   this.forgotError = '';
 
   this.auth.sendResetOtp(this.forgotEmail).subscribe({
     next: () => {
+      this.isSendingOtp = false;
       this.showForgotPasswordModal = false;
       this.showOtpModal = true;
     },
@@ -148,13 +159,16 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
   }
 
   this.otpError = ''; // clear before calling
+  this.isVerifyingOtp=true;
 
   this.auth.verifyOtp(this.forgotEmail, this.enteredOtp).subscribe({
     next: () => {
       this.showOtpModal = false;
       this.showResetModal = true;
+      this.isVerifyingOtp = true;
     },
     error: (err) => {
+      this.isVerifyingOtp = false;
       this.otpError = err.error?.message || 'Invalid code.';
     }
   });
@@ -182,12 +196,43 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     return;
   }
 
+  this.isResettingPassword = true;
+  this.resetError = '';
+  this.resetSuccessMessage = '';
+
   this.auth.resetPassword(this.forgotEmail, this.newPassword).subscribe({
     next: () => {
+      this.isResettingPassword = false;
       this.showResetModal = false;
-      this.router.navigate(['/home']);
+      this.resetSuccessMessage = 'Password reset successfully. Logging you in ...';
+
+     // Automatically log in the user with their new password
+      this.auth.login({
+        email: this.forgotEmail,
+        password: this.newPassword
+      }).subscribe({
+        next: (loginRes) => {
+          this.auth.saveToken(loginRes.accessToken);
+          this.router.navigate(['/home']);
+          const decoded: any = this.auth.getDecodedToken();
+    if (decoded && decoded.sub) {
+      localStorage.setItem('email', decoded.sub); // "sub" is the email in your token
+    }
+        },
+        error: (loginErr) => {
+          console.error('Auto-login failed after password reset:', loginErr);
+          // If auto-login fails, show a success message and redirect to login
+          this.loginError = 'Password reset successful! Please log in with your new password.';
+          // Clear the reset form
+          this.forgotEmail = '';
+          this.enteredOtp = '';
+          this.newPassword = '';
+          this.confirmPassword = '';
+        }
+      });
     },
     error: (err) => {
+      this.isResettingPassword = false;
       console.error('reset error :'+err)
       this.resetError = err.error?.message || 'Reset failed.';
     }

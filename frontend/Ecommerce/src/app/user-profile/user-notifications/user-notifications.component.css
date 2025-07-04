@@ -1,98 +1,182 @@
 .notifications-section {
-    background-color: #fff;
-    padding: 2.5rem;
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    border: 1px solid var(--border-color);
-    margin-bottom: 30px;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .notifications-section h3 {
-    font-size: 1.8rem;
     margin-top: 0;
-    margin-bottom: 2rem;
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--secondary-color);
-    display: inline-block;
-    padding-bottom: 0.5rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    font-weight: 600;
 }
 
-/* Styles for the list of notifications */
 .notifications-list {
-    display: grid;
-    gap: 1rem;
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
-/* Styles for individual notification items */
-.notification-item {
-    display: flex;
-    align-items: flex-start;
-    background-color: #f9f9f9;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 1rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    transition: background-color 0.2s ease-in-out;
-}
-
-.notification-item:hover {
-    background-color: #f0f0f0;
-}
-
-.notification-item.unread {
-    background-color: #e9f7ef;
-    border-left: 4px solid var(--secondary-color);
-    padding-left: calc(1rem - 4px);
-    border-color: var(--border-color);
-}
-
-.notification-item .notification-icon {
-    font-size: 1.5rem;
-    color: var(--secondary-color);
-    margin-right: 1rem;
-    flex-shrink: 0;
-}
-
-.notification-item .notification-content {
-    flex-grow: 1;
-}
-
-.notification-item .notification-content p {
-    margin: 0;
-    font-size: 1rem;
-    color: var(--primary-color);
-    line-height: 1.5;
-}
-
-.notification-item .notification-content .timestamp {
-    display: block;
-    font-size: 0.85rem;
-    color: var(--gray-color);
-    margin-top: 0.5rem;
-}
-
-/* Styles for empty state */
 .empty-state {
     text-align: center;
-    padding: 4rem 1rem;
-    color: var(--gray-color);
-    grid-column: 1 / -1;
-    background-color: #fff;
-    border-radius: 10px;
-    border: 1px dashed var(--border-color);
-    margin-top: 1rem;
+    padding: 50px 20px;
+    color: #888;
 }
 
 .empty-state i {
-    font-size: 4rem;
-    color: #ddd;
-    margin-bottom: 1.5rem;
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #ccc;
 }
 
-.empty-state p {
-    font-size: 1.2rem;
-    margin-bottom: 1.5rem;
-    color: #555;
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 15px 10px;
+    border-bottom: 1px solid #e9e9e9;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 5px;
+    margin-bottom: 5px;
+    position: relative;
+    background-color: #fff;
+    cursor: pointer;
+    z-index: 1;
 }
 
-/* Add styles for notifications list and individual notifications here */
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.notification-item:hover,
+.notification-item.menu-open {
+    z-index: 2;
+}
+
+.notification-item.unread {
+    background-color: #e8f0fe;
+}
+
+.notification-item.unread:hover {
+    background-color: #dce7fa;
+}
+
+.notification-icon {
+    margin-right: 15px;
+    color: #4a90e2;
+    font-size: 20px;
+    padding-top: 3px;
+}
+
+.notification-content {
+    flex-grow: 1;
+}
+
+.notification-content p {
+    margin: 0 0 5px 0;
+    color: #333;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.timestamp {
+    font-size: 12px;
+    color: #777;
+    font-weight: 500;
+}
+
+.menu-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.menu-btn {
+    background: none;
+    border: none;
+    color: #aaa;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    border-radius: 50%;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.menu-btn:hover {
+    color: #333;
+    background-color: #f1f1f1;
+}
+
+.menu-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border: 1px solid #ddd;
+    z-index: 10;
+    overflow: hidden;
+    min-width: 200px;
+    padding: 5px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.menu-item:hover {
+    background-color: #f5f5f5;
+}
+
+.menu-item.delete {
+    color: #d32f2f;
+}
+
+.menu-item.delete:hover {
+    background-color: #fbe9e7;
+}
+
+.menu-item i {
+    width: 16px;
+    text-align: center;
+    margin-right: 5px;
+}
+
+/* Custom Scrollbar */
+.notifications-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifications-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}

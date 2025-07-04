@@ -4,9 +4,9 @@ export interface Attribute {
 }
 
 export interface AttributeAndValueDTO {
-    attributeId: number;
-    attributeName: string;
-    value: string[];
+    attributeId?: number; // optional
+    attributeName?: string;
+    values: { value: string }[];
 }
 
 export interface AttributeValue {

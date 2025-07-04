@@ -8,6 +8,7 @@ import { CategoryService } from '../services/category.service';
 import { BrandService } from '../services/brand.service';
 import { AttributeService } from '../services/attribute.service';
 import { ModalService } from '../services/modal.service';
+import { AttributeAndValueDTO } from '../attribute';
 
 
 // ===== Interfaces =====
@@ -220,10 +221,18 @@ export class ProductComponent implements OnInit {
               const attribute = this.availableAttributes.find(a => a.id === attr.id);
               if (attribute) {
                 console.log('Raw values from backend for attribute', attr.id, ':', values);
-                if (Array.isArray(values) && values.length > 0 && typeof values[0] === 'object' && 'id' in values[0] && 'value' in values[0]) {
-                  attribute.values = values.map((v: any) => ({ ...v, isNew: false }));
+                if (Array.isArray(values) && values.length > 0 && typeof values[0] === 'object' && 'value' in values[0]) {
+                  attribute.values = values.map((v: any) => ({
+                    id: v.id,
+                    value: v.value,
+                    isNew: false
+                  }));
                 } else {
-                  attribute.values = values.map((v: any) => ({ id: -1, value: v ? String(v) : '', isNew: false }));
+                  attribute.values = values.map((v: any, i: number) => ({
+                    id: i,
+                    value: v ? String(v) : '',
+                    isNew: false
+                  }));
                 }
                 console.log('Mapped attribute values:', attribute.values);
               }
@@ -351,30 +360,52 @@ export class ProductComponent implements OnInit {
 
   saveNewAttribute(): void {
     if (!this.newAttributeName.trim() || this.newAttributeValues.length === 0) return;
-
-    const newAttrId = Math.max(0, ...this.availableAttributes.map(a => a.id)) + 1;
-    const values: AttributeValue[] = this.newAttributeValues.map((v, i) => ({
-      id: newAttrId * 100 + i,
-      value: v,
-      isNew: true
+  
+    // ✨ Prepare DTO with proper structure
+    const values = this.newAttributeValues.map((v) => ({
+      value: typeof v === 'string' ? v : (v as any).value  // <-- Ensure string
     }));
-
-    const newAttr: Attribute = {
-      id: newAttrId,
-      name: this.newAttributeName.trim(),
-      values
+  
+    const dto = {
+      attributeId: undefined,  // ✅ send null explicitly for new attribute
+      attributeName: this.newAttributeName.trim(),
+      values: values
     };
-
-    this.availableAttributes.push(newAttr);
-    this.productAttributes.push({
-      attributeId: newAttr.id,
-      attributeName: newAttr.name,
-      allowedValues: [...values]
+  
+    this.attributeService.create(dto as AttributeAndValueDTO).subscribe({
+      next: () => {
+        const newAttrId = Math.max(0, ...this.availableAttributes.map(a => a.id)) + 1;
+  
+        const attrValues = this.newAttributeValues.map((v, i) => ({
+          id: newAttrId * 100 + i,
+          value: typeof v === 'string' ? v : (v as any).value,  // Ensure value is string
+          isNew: true
+        }));
+  
+        const newAttr = {
+          id: newAttrId,
+          name: this.newAttributeName.trim(),
+          values: attrValues
+        };
+  
+        this.availableAttributes.push(newAttr);
+        this.productAttributes.push({
+          attributeId: newAttr.id,
+          attributeName: newAttr.name,
+          allowedValues: [...attrValues]
+        });
+  
+        this.closeNewAttributeModal();
+        this.regenerateVariants();
+      },
+      error: (err) => {
+        console.error('Failed to create attribute:', err);
+        alert(err.error || 'Unknown error');
+      }
     });
-
-    this.closeNewAttributeModal();
-    this.regenerateVariants();
   }
+  
+  
 
   // ===== Variant Management Methods =====
   private regenerateVariants(): void {
@@ -645,10 +676,36 @@ export class ProductComponent implements OnInit {
   addNewAttributeValueToAttribute(attrIndex: number, value: string, isNew: boolean = false): void {
     if (!value.trim()) return;
     const attr = this.productAttributes[attrIndex];
-    const newId = Math.max(0, ...attr.allowedValues.map(v => v.id)) + 1;
-    attr.allowedValues.push({ id: newId, value: value.trim(), selected: true, isNew });
-    this.regenerateVariants();
+
+    this.attributeService.addValue(attr.attributeId, value.trim()).subscribe({
+      next: () => {
+        // Reload attribute values from backend to get the correct IDs and state
+        this.attributeService.getValueById(attr.attributeId).subscribe({
+          next: (result: any) => {
+            const values = Array.isArray(result) && result.length > 0 && result[0].values ? result[0].values : [];
+            attr.allowedValues = values.map((v: any) => ({
+              id: v.id,
+              value: v.value,
+              selected: false,
+              isNew: false
+            }));
+            // Now, select the new value (case-insensitive match)
+            const newVal = attr.allowedValues.find(v => v.value.toLowerCase() === value.trim().toLowerCase());
+            if (newVal) {
+              newVal.selected = true;
+            }
+            console.log('Allowed values after add:', attr.allowedValues);
+            this.regenerateVariants();
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to save value:', err);
+        alert(err.error || 'Error saving value');
+      }
+    });
   }
+  
 
   toggleAttributeValue(attrIndex: number, valueIndex: number): void {
     const attr = this.productAttributes[attrIndex];

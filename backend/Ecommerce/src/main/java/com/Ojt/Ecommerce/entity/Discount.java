@@ -36,10 +36,24 @@ public class Discount {
     private LocalDate endDate;
     private Boolean autoApply;
 
-    @OneToMany(mappedBy = "discount")
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
+
+    @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserCouponUsage> usedByUsers;
 
     @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductDiscount> productDiscounts;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private DiscountEvent discountEvent;
+
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }

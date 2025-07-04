@@ -1,35 +1,63 @@
 <div class="personal-info-section">
   <div class="card rounded-4 mx-auto p-4 p-md-5 bg-white" style="max-width: 700px;">
+    <!-- Header and Avatar -->
     <div class="d-flex flex-column flex-md-row align-items-center gap-4 mb-4">
       <div class="d-flex flex-column align-items-center justify-content-center">
-        <div class="rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 84px; height: 84px;">
-          <i class="bi bi-person-circle text-secondary fs-1"></i>
+        <div class="position-relative rounded-circle overflow-hidden bg-light mb-2" style="width: 84px; height: 84px;">
+          <!-- Profile Image or Default Icon -->
+          <ng-container *ngIf="userDetails && userDetails.profileImage && userDetails.profileImage !== '/upload/defaultProfile.png'; else showDefaultIcon">
+<img [src]="previewAvatarUrl || userDetails.profileImage"
+     alt="Profile Image"
+     class="img-fluid w-100 h-100 object-fit-cover">
+
+          </ng-container>
+          <ng-template #showDefaultIcon>
+            <i class="bi bi-person-circle text-secondary fs-1 d-flex justify-content-center align-items-center w-100 h-100"></i>
+          </ng-template>
+
+          <!-- Overlay edit icon -->
+          <div *ngIf="isEditing"
+               class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+               style="background-color: rgba(0, 0, 0, 0.4); cursor: pointer;"
+               title="Change Avatar"
+               (click)="openEditAvatarModal()">
+            <i class="bi bi-pencil-fill text-white fs-4"></i>
+          </div>
         </div>
         <div class="fw-semibold text-secondary small">Profile Avatar</div>
       </div>
+
+      <!-- Title and Edit Button -->
       <div class="flex-grow-1 w-100">
         <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
           <h3 class="fw-bold fs-3 mb-0">Personal Information</h3>
-          <button class="btn btn-outline-primary rounded-pill px-4 py-2 fs-6 fw-semibold d-flex align-items-center transition" (click)="toggleEditMode()">
-            <i class="bi bi-pencil-square me-2"></i> <span class="d-none d-md-inline">{{ isEditing ? 'Editing' : 'Edit' }}</span>
+          <button class="btn btn-outline-primary rounded-pill px-4 py-2 fs-6 fw-semibold d-flex align-items-center transition"
+                  (click)="toggleEditMode()">
+            <i class="bi bi-pencil-square me-2"></i>
+            <span class="d-none d-md-inline">{{ isEditing ? 'Editing' : 'Edit' }}</span>
           </button>
         </div>
         <div class="text-muted mb-2">Manage your profile details. All fields are kept private and secure.</div>
       </div>
     </div>
+
+    <!-- Form -->
     <form [formGroup]="personalInfoForm" class="row g-4">
       <div class="col-12 col-md-6 d-none">
         <label for="userId" class="form-label">User ID</label>
         <input id="userId" type="text" class="form-control" [value]="userDetails?.id || ''" disabled>
       </div>
+
       <div class="col-12 col-md-6">
         <label for="name" class="form-label fw-semibold">Full Name</label>
         <input id="name" type="text" class="form-control rounded-3 fs-6" formControlName="name" [attr.disabled]="!isEditing ? true : null">
       </div>
+
       <div class="col-12 col-md-6">
         <label for="email" class="form-label fw-semibold">Email</label>
         <input id="email" type="email" class="form-control rounded-3 fs-6" formControlName="email" [attr.disabled]="!isEditing ? true : null">
       </div>
+
       <div class="col-12 col-md-6">
         <label for="gender" class="form-label fw-semibold">Gender</label>
         <select id="gender" class="form-select rounded-pill fs-6" formControlName="gender" [attr.disabled]="!isEditing ? true : null">
@@ -39,14 +67,41 @@
           <option value="OTHER">Other</option>
         </select>
       </div>
+
       <div class="col-12 col-md-6">
         <label for="dateOfBirth" class="form-label fw-semibold">Date of Birth</label>
         <input id="dateOfBirth" type="date" class="form-control rounded-3 fs-6" formControlName="dateOfBirth" [attr.disabled]="!isEditing ? true : null">
       </div>
-      <div class="col-12 col-md-6">
-        <label for="phoneNumber" class="form-label fw-semibold">Phone Number</label>
-        <input id="phoneNumber" type="text" class="form-control rounded-3 fs-6" formControlName="phoneNumber" [attr.disabled]="!isEditing ? true : null">
-      </div>
+
+    <div class="col-12 col-md-6">
+  <label for="phoneNumber" class="form-label fw-semibold">Phone Number</label>
+  <input
+    id="phoneNumber"
+    type="text"
+    class="form-control rounded-3 fs-6"
+    formControlName="phoneNumber"
+    [ngClass]="{
+      'is-invalid': isPhoneEmpty(),
+      'border-warning text-warning': isPhoneUnverified()
+    }"
+    [attr.disabled]="!isEditing ? true : null">
+
+  <!-- Red: Empty -->
+  <div class="invalid-feedback" *ngIf="isPhoneEmpty()">
+    Phone number is empty.
+  </div>
+
+  <!-- Yellow: Not verified -->
+  <div class="form-text text-warning" *ngIf="isPhoneUnverified()">
+    Phone number isn't verified yet.
+  </div>
+</div>
+
+
+
+
+
+      <!-- Action Buttons -->
       <div class="col-12 d-flex flex-wrap gap-2 mt-3" *ngIf="isEditing">
         <button type="button" class="btn btn-primary rounded-pill px-4 py-2 fs-6 fw-semibold transition" (click)="saveChanges()">
           <i class="bi bi-save me-2"></i> Save Changes
@@ -56,5 +111,30 @@
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Avatar Edit Options Modal -->
+<div class="modal fade" id="editAvatarModal" tabindex="-1" aria-labelledby="editAvatarModalLabel" aria-hidden="true" role="dialog">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 shadow-lg">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold" id="editAvatarModalLabel">Profile Avatar Options</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body d-flex flex-column gap-3">
+        <!-- Hidden File Input -->
+        <input type="file" #fileInput accept="image/*" hidden (change)="onFileSelected($event)">
+        <button class="btn btn-primary w-100" (click)="triggerFileInput(fileInput)" type="button">
+          Edit Profile Avatar
+        </button>
+        <button class="btn btn-outline-secondary w-100" (click)="onViewProfile()" type="button">
+          View Profile Avatar
+        </button>
+        <button class="btn btn-light text-danger w-100" data-bs-dismiss="modal" type="button">
+          Cancel
+        </button>
+      </div>
+    </div>
   </div>
 </div>
