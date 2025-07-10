@@ -51,6 +51,9 @@ import { OrderManagementComponent } from './order-management/order-management.co
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
+import { HeaderComponent } from './header/header.component';
+import { BreadcrumbComponent } from './breadcrumb.component';
+import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
 
 @NgModule({
   declarations: [
@@ -93,7 +96,6 @@ import { ReturnListComponent } from './return-list/return-list.component';
     OrderTrackingComponent,
     ReturnRequestComponent,
     ReturnListComponent,
-    
   ],
   imports: [
     BrowserModule,
@@ -107,6 +109,9 @@ import { ReturnListComponent } from './return-list/return-list.component';
     CommonModule,
     BrowserAnimationsModule,
     FooterComponent,
+    HeaderComponent,
+    BreadcrumbComponent,
+    VerifyOtpComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

@@ -92,8 +92,8 @@ export class AuthService {
     const decoded = this.getDecodedToken();
     return decoded?.roles ? decoded.roles.split(',') : [];
   }
-  verifyOtp(email: string, otp: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/verify-otp`, { email, otp });
+  verifyOtp(email: string, otp: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.baseUrl}/verify-otp`, { email, otp });
   }
 
   resendOtp(email: string): Observable<any> {
@@ -129,7 +129,7 @@ export class AuthService {
   }
 
   sendRegisterOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/send-register-otp`, { email });//need to change
+    return this.http.post(`${this.baseUrl}/sendOtp`, { email });
   }
 
   sendResetOtp(email: string): Observable<any> {
@@ -173,4 +173,8 @@ uploadProfileImage(file: File): Observable<any> { //add for profile avatar updat
 
   return this.http.put(`${this.baseUrl}/update-avatar`, formData, { headers });
 }
+
+  sendLoginOtp(email: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/send-login-otp`, { email });
+  }
 }

@@ -34,12 +34,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
 import { ReturnDetailComponent } from './return-detail/return-detail.component';
+import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Home' } },
   { path: 'login', component: LoginComponent, data: { breadcrumb: 'Login' } },
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
-  { path: 'Uproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
+  { path: 'uproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
@@ -89,6 +90,7 @@ const routes: Routes = [
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },
   { path: 'return-request', component: ReturnRequestComponent },
+  { path: 'verify-otp', component: VerifyOtpComponent },
 
 ];
 

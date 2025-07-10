@@ -81,11 +81,11 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   applyFilters() {
     let filtered = this.dataSource.data;
     if (this.statusFilter !== 'All') {
-      filtered = filtered.filter(r => r.status === this.statusFilter);
+      filtered = filtered.filter((r: any) => r.status === this.statusFilter);
     }
     if (this.searchText) {
       const search = this.searchText.toLowerCase();
-      filtered = filtered.filter(r =>
+      filtered = filtered.filter((r: any) =>
         r.userName.toLowerCase().includes(search) ||
         r.productName.toLowerCase().includes(search) ||
         r.reasonForReturn.toLowerCase().includes(search) ||
@@ -93,9 +93,9 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
       );
     }
     if (this.sortBy === 'Newest') {
-      filtered = filtered.sort((a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+      filtered = filtered.sort((a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
     } else {
-      filtered = filtered.sort((a, b) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
+      filtered = filtered.sort((a: any, b: any) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
     }
     this.dataSource.data = filtered;
   }
@@ -155,7 +155,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     ];
 
     // Add rows
-    exportData.forEach(row => {
+    exportData.forEach((row: any) => {
       worksheet.addRow({
         orderCode: row.orderCode ?? '',
         requestedAt: row.requestedAt ? new Date(row.requestedAt).toLocaleDateString() : '',
@@ -168,7 +168,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Style header
-    worksheet.getRow(1).eachCell(cell => {
+    worksheet.getRow(1).eachCell((cell: any) => {
       cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
       cell.fill = {
         type: 'pattern',
@@ -185,9 +185,9 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Style rows (alternating color)
-    worksheet.eachRow((row, rowNumber) => {
+    worksheet.eachRow((row: any, rowNumber: any) => {
       if (rowNumber === 1) return;
-      row.eachCell(cell => {
+      row.eachCell((cell: any) => {
         cell.border = {
           top: { style: 'thin' },
           left: { style: 'thin' },
@@ -205,14 +205,14 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     });
 
-    workbook.xlsx.writeBuffer().then((buffer) => {
+    workbook.xlsx.writeBuffer().then((buffer: any) => {
       const fileName = type === 'all' ? 'return-requests-all.xlsx' : 'return-requests-selected.xlsx';
       saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName);
     });
   }
 
   exportPDF(type: 'all' | 'selected') {
-    const exportData = (type === 'all' ? this.dataSource.data : this.selectedRows).map(row => [
+    const exportData = (type === 'all' ? this.dataSource.data : this.selectedRows).map((row: any) => [
       String(row.orderCode ?? ''),
       row.requestedAt ? new Date(row.requestedAt).toLocaleDateString() : '',
       String(row.userName ?? ''),
