@@ -7,12 +7,11 @@ import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TestComponent } from './test/test.component';
-import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptors/jwt.interceptors.service';
-import { HeaderComponent } from './header/header.component';
+
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UserOrdersComponent } from './user-profile/user-orders/user-orders.component';
 import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlist.component';
@@ -31,7 +30,6 @@ import { CreateCategoryComponent } from './create-category/create-category.compo
 import { LayoutComponent } from './layout/layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { NavbarComponent } from './layout/navbar/navbar.component';
-import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
 import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
@@ -42,16 +40,15 @@ import { CustomersComponent } from './customers/customers.component';
 import { CreateUserComponent } from './create-user/create-user.component';
 import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
+import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
 import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
-import { BlacklistComponent } from './blacklist/blacklist.component';
-import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
-import { VipCustomersComponent } from './vip-customers/vip-customers.component';
+import { HomeComponent } from './home/home.component';
+import { FooterComponent } from './footer/footer.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
-import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
 
@@ -62,7 +59,7 @@ import { ReturnListComponent } from './return-list/return-list.component';
     HomeComponent,
     LoginComponent,
     RegisterComponent,
-    HeaderComponent,
+
     UserProfileComponent,
     UserOrdersComponent,
     UserWishlistComponent,
@@ -88,6 +85,7 @@ import { ReturnListComponent } from './return-list/return-list.component';
     CreateUserComponent,
     ActivityLogsComponent,
     AdminUsersComponent,
+    RolesPermissionsComponent,
     LoginAttemptsComponent,
     UserProductDetailComponent,
     ReviewComponent,
@@ -101,23 +99,18 @@ import { ReturnListComponent } from './return-list/return-list.component';
     AppRoutingModule,
     HttpClientModule,
     ReactiveFormsModule,
-    FormsModule, // Required for ngModel/ngForm
+    FormsModule,
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent, // Standalone component must be imported here
-    ProductDetailComponent,
-    BlacklistComponent,
-    RolesPermissionsComponent,
-    VipCustomersComponent,
+    CommonModule,
     BrowserAnimationsModule,
+    FooterComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
     AddressService,
-    AuthService,
   ],
   bootstrap: [AppComponent]
 })

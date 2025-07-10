@@ -1,55 +1,159 @@
 <app-header></app-header>
-<div class="wishlist-hero">
-  <div class="wishlist-icon"><i class="bi bi-heart"></i></div>
-  <h1 class="wishlist-title">My Wishlist</h1>
-</div>
 
-<div class="container wishlist-table-container">
-  <div *ngIf="isLoading" class="text-center py-5">
-    <div class="spinner-border text-primary" role="status">
-      <span class="visually-hidden">Loading...</span>
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-6">
+  <div class="max-w-6xl mx-auto">
+    
+    <!-- Clean Header Section -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-10 h-10 bg-red-100 rounded-full shadow-lg border border-white/20 mb-3">
+        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-neutral-900 mb-1">My Wishlist</h1>
+      <p class="text-neutral-600 text-sm">Your favorite products in one place</p>
     </div>
-    <p class="mt-2">Loading your wishlist...</p>
-  </div>
 
-  <div *ngIf="!isLoading && wishlistItems.length === 0" class="text-center py-5">
-    <!-- <i class="bi bi-heart text-muted" style="font-size: 3rem;"></i> -->
-    <h4 class="mt-3">Your wishlist is empty</h4>
-    <p class="text-muted">Add items to your wishlist to keep track of your favorite products</p>
-    <a routerLink="/home" class="btn btn-primary mt-3">
-      <i class="bi bi-arrow-left me-2"></i>Continue Shopping
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="flex items-center justify-center py-20">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-white/20">
+        <div class="flex items-center space-x-4">
+          <div class="w-8 h-8 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+          <span class="text-neutral-700 font-medium">Loading your wishlist...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && wishlistItems.length === 0" class="text-center py-20">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-lg border border-white/20 max-w-md mx-auto">
+        <div class="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-8 h-8 text-neutral-400" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+  </div>
+        <h3 class="text-2xl font-semibold text-neutral-900 mb-3">Your wishlist is empty</h3>
+        <p class="text-neutral-600 mb-8">Add items to your wishlist to keep track of your favorite products</p>
+        <a routerLink="/home" class="inline-flex items-center px-6 py-3 bg-white text-blue-600 hover:bg-neutral-100 font-medium rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Continue Shopping
     </a>
   </div>
-
-  <div *ngIf="!isLoading && wishlistItems.length > 0" class="wishlist-table-wrapper">
-    <div class="wishlist-table-header row fw-bold">
-      <div class="col-5 col-md-4">Product name</div>
-      <div class="col-2">Unit price</div>
-      <div class="col-2">Stock status</div>
-      <div class="col-3 text-end">Added on</div>
     </div>
-    <div *ngFor="let item of wishlistItems" class="wishlist-table-row row align-items-center">
-      <div class="col-5 col-md-4 d-flex align-items-center gap-3">
-        <button class="wishlist-delete-btn" (click)="removeFromWishlist(item)">
-          <i class="bi bi-trash"></i>
-        </button>
-        <img [src]="item.image" [alt]="item.title" class="wishlist-product-img" (error)="imageService.handleImageError($event, 'product')" />
-        <span class="wishlist-product-title">{{ item.title }}</span>
+
+    <!-- Wishlist Items -->
+    <div *ngIf="!isLoading && wishlistItems.length > 0" class="space-y-6">
+      
+      <!-- Header Stats -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="w-3 h-8 bg-gradient-to-b from-blue-500 to-blue-600 rounded-full"></div>
+            <div>
+              <h2 class="text-xl font-semibold text-neutral-900">Wishlist Items</h2>
+              <p class="text-neutral-600">{{ wishlistItems.length }} products</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 px-4 py-2 bg-green-50 rounded-full">
+            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span class="text-sm font-medium text-green-700">Active</span>
+          </div>
+        </div>
       </div>
-      <div class="col-2">
-        <span *ngIf="item.oldPrice" class="wishlist-old-price">${{ item.oldPrice }}</span>
-        <span class="wishlist-new-price">{{ item.price }} MMK</span>
+
+      <!-- Wishlist Cards -->
+      <div class="grid gap-6">
+        <div *ngFor="let item of wishlistItems" class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          
+          <div class="p-6">
+            <div class="flex items-start space-x-6">
+              
+              <!-- Product Image -->
+              <div class="relative flex-shrink-0">
+                <div class="w-24 h-24 rounded-xl overflow-hidden bg-neutral-100 border border-neutral-200">
+                  <img [src]="item.image" 
+                       [alt]="item.title" 
+                       class="w-full h-full object-cover"
+                       (error)="imageService.handleImageError($event, 'product')" />
+                </div>
+                <!-- Stock Badge -->
+                <div class="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  In Stock
+                </div>
+              </div>
+
+              <!-- Product Details -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-neutral-900 mb-2 line-clamp-2">{{ item.title }}</h3>
+                    
+                    <!-- Price Section -->
+                    <div class="flex items-center space-x-3 mb-4">
+                      <span class="text-2xl font-bold text-neutral-900">{{ item.price }} MMK</span>
+                      <span *ngIf="item.oldPrice" class="text-lg text-neutral-400 line-through">${{ item.oldPrice }}</span>
+                    </div>
+
+                    <!-- Added Date -->
+                    <div class="flex items-center space-x-2 text-sm text-neutral-500">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                      <span>Added on {{ item.wishlistDate | date:'longDate' }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="flex flex-col items-end space-y-3">
+                    <!-- Delete Button -->
+                    <button class="group p-2 text-neutral-400 hover:text-red-500 transition-colors duration-200" 
+                            (click)="removeFromWishlist(item)"
+                            title="Remove from wishlist">
+                      <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+
+                    <!-- View Details Button -->
+                    <button class="inline-flex items-center px-4 py-2 bg-white text-blue-600 hover:bg-neutral-100 text-sm font-medium rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 border border-neutral-200"
+                            (click)="goToProductDetail(item.id)">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-2">
-        <span class="wishlist-stock-status">In Stock</span>
+
+      <!-- Summary Card -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-neutral-900">Wishlist Summary</h3>
+              <p class="text-neutral-600">{{ wishlistItems.length }} items in your wishlist</p>
+            </div>
+          </div>
+          <a routerLink="/Uproductlist" class="inline-flex items-center px-6 py-3 bg-white text-blue-600 font-medium rounded-xl hover:bg-neutral-100 transition-all duration-300 border border-neutral-200">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"/>
+            </svg>
+            Continue Shopping
+          </a>
       </div>
-      <div class="col-3 text-end d-flex flex-column align-items-end">
-        <span class="wishlist-added-date">
-          Added on: {{ item.wishlistDate | date:'longDate' }}
-        </span>
-        <button class="btn btn-outline-primary btn-sm rounded-4 px-3" (click)="goToProductDetail(item.id)">
-          <i class="bi bi-box-arrow-in-right me-2"></i>Detail
-        </button>
       </div>
     </div>
   </div>

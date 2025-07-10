@@ -7,6 +7,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrderConfirmComponent } from '../order-confirm/order-confirm.component';
+import { ImageService } from '../services/image.service';
 import { CardService } from '../services/card.service';
 
 interface Card {
@@ -54,7 +55,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
     private orderService: OrderService,
     private cardService: CardService,
     private fb: FormBuilder,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    public imageService: ImageService
   ) {
     this.cardForm = this.fb.group({
       cardNumber: ['', [
@@ -134,10 +136,42 @@ export class PaymentComponent implements OnInit, OnDestroy {
     }
 
     if (!this.userId || !this.addressId || !this.deliveryMethodId) {
+      console.error('Missing required data:', {
+        userId: this.userId,
+        addressId: this.addressId,
+        deliveryMethodId: this.deliveryMethodId
+      });
       alert('Missing required order information.');
       this.isSubmitting = false;
       return;
     }
+    
+    // Validate cart items
+    if (!this.cartItems || this.cartItems.length === 0) {
+      console.error('No cart items found');
+      alert('No items in cart. Please add items before proceeding.');
+      return;
+    }
+    
+    this.isSubmitting = true;
+    
+    // Log all received data for debugging
+    console.log('=== PAYMENT DEBUG DATA ===');
+    console.log('Customer:', this.customer);
+    console.log('Shipping:', this.shipping);
+    console.log('Delivery:', this.delivery);
+    console.log('Cart Items:', this.cartItems);
+    console.log('User ID:', this.userId);
+    console.log('Address ID:', this.addressId);
+    console.log('Delivery Method ID:', this.deliveryMethodId);
+    console.log('Discount ID:', this.discountId);
+    console.log('Discount:', this.discount);
+    console.log('Discount Amount:', this.discountAmount);
+    console.log('Delivery Fee:', this.deliveryFee);
+    console.log('Total Amount:', this.getTotal());
+    console.log('========================');
+    
+    // Create UserOrder object with proper data structure
 
     if (this.useNewCard) {
       const newCard = {
@@ -195,15 +229,26 @@ export class PaymentComponent implements OnInit, OnDestroy {
     this.orderService.createOrder(userOrder).subscribe({
       next: (response: any) => {
         this.isSubmitting = false;
-        const responseData = typeof response === 'object' && response !== null ? response : {};
+        // Handle text response from backend
+        let orderData;
+        if (typeof response === 'string') {
+          // Backend returns "success" as plain text
+          orderData = { 
+            orderCode: 'ORDER-' + Date.now(), // Generate a temporary order code
+            status: response 
+          };
+        } else {
+          orderData = response;
+        }
+        
         const orderDetails = {
-          ...responseData,
+          ...orderData,
           customer: this.customer,
           shipping: this.shipping,
           delivery: this.delivery,
           cartItems: this.cartItems,
           paymentMethod: this.paymentMethod,
-          orderNumber: responseData.orderCode,
+          orderNumber: orderData.orderCode || orderData.orderId || 'ORDER-' + Date.now(),
           deliveryFee: this.deliveryFee,
           discountAmount: this.discountAmount,
           cardInfo: this.useNewCard

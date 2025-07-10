@@ -55,6 +55,7 @@ public class User {
 //    @Column(name = "is_verified")
 //    private boolean isVerified = false;
 
+
     @Column(name = "reset_token")
     private String resetToken;
 
@@ -63,6 +64,9 @@ public class User {
 
     @Column(name = "otp_expiry")
     private LocalDateTime otpExpiry;
+
+    @Column(name = "total_points")
+    private Integer totalPoints;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
@@ -75,12 +79,15 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;
 
-    @Column(name = "total_points")
-    private Integer totalPoints;
+
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserCouponUsage> couponUsages;
+
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<SavedCard> savedCards;

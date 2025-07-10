@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewChecked } from '@angular/core';
 import { ImageService } from '../services/image.service';
 
 interface Customer {
@@ -28,13 +28,18 @@ interface Address {
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.css']
 })
-export class CustomersComponent implements OnInit {
+export class CustomersComponent implements OnInit, AfterViewChecked {
   // Data properties
   customers: Customer[] = [];
   filteredCustomers: Customer[] = [];
   paginatedCustomers: Customer[] = [];
   selectedCustomers: string[] = [];
   selectedCustomerDetails: Customer | null = null;
+  openDropdownId: string | null = null;
+
+  logDropdownClick(customerId: string) {
+    console.log('Dropdown for', customerId);
+  }
 
   // Filter and search properties
   searchTerm: string = '';
@@ -55,6 +60,11 @@ export class CustomersComponent implements OnInit {
 
   // Utility property for template
   Math = Math;
+  viewMode: 'table' | 'cards' = 'table';
+
+  setViewMode(mode: 'table' | 'cards') {
+    this.viewMode = mode;
+  }
 
   constructor(
     public imageService: ImageService
@@ -64,6 +74,12 @@ export class CustomersComponent implements OnInit {
   ngOnInit(): void {
     this.loadCustomers();
     this.calculateStats();
+  }
+
+  ngAfterViewChecked() {
+    if ((window as any)['lucide']) {
+      (window as any)['lucide'].createIcons();
+    }
   }
 
   loadCustomers(): void {

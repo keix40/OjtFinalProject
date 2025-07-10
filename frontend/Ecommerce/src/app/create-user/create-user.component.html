@@ -1,134 +1,128 @@
-<div class="create-user-container">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  <div class="container mx-auto px-4 py-8">
     <!-- Header Section -->
-    <div class="page-header">
-      <div class="container-fluid">
-        <div class="row align-items-center">
-          <div class="col-md-6">
-            <div class="header-content">
-              <h1 class="page-title">
-                <i class="fas fa-user-plus"></i>
-                Create New User
-              </h1>
-              <p class="page-description">Add new customers or staff members to the system</p>
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+        <i data-lucide="user-plus" class="w-8 h-8 text-blue-500"></i>
             </div>
+      <h1 class="text-3xl font-bold text-slate-800 mb-2">Create New User</h1>
+      <p class="text-slate-600">Add new customers or staff members to the system</p>
           </div>
-          <div class="col-md-6 text-md-end">
-            <div class="header-actions">
-              <button class="btn btn-outline-secondary me-2" (click)="goBack()">
-                <i class="fas fa-arrow-left me-1"></i>
-                Back to Users
+
+    <!-- Action Buttons -->
+    <div class="flex justify-center items-center space-x-4 mb-8">
+      <button class="flex items-center space-x-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg border border-slate-200 text-slate-700 hover:bg-white hover:shadow-md transition-all duration-200" (click)="goBack()">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        <span class="font-medium">Back to Users</span>
               </button>
-              <button class="btn btn-info" (click)="toggleBulkImport()">
-                <i class="fas fa-upload me-1"></i>
-                Bulk Import
+      <button class="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200" (click)="toggleBulkImport()">
+        <i data-lucide="upload" class="w-4 h-4"></i>
+        <span>Bulk Import</span>
               </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   
-    <div class="container-fluid">
-      <div class="row">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main Form Section -->
-        <div class="col-lg-8">
-          <div class="form-card">
-            <div class="form-header">
-              <h3>User Information</h3>
-              <p>Fill in the details to create a new user account</p>
+      <div class="lg:col-span-2">
+        <div class="glassmorphism rounded-2xl p-8">
+          <div class="mb-6">
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">User Information</h2>
+            <p class="text-slate-600">Fill in the details to create a new user account</p>
             </div>
   
-            <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate>
+          <form [formGroup]="userForm" (ngSubmit)="onSubmit()" novalidate class="space-y-8">
               <!-- Personal Information Section -->
-              <div class="form-section">
-                <div class="section-header">
-                  <h4><i class="fas fa-user me-2"></i>Personal Information</h4>
+            <div class="space-y-6">
+              <div class="flex items-center space-x-2 mb-4">
+                <i data-lucide="user" class="w-5 h-5 text-blue-500"></i>
+                <h3 class="text-lg font-semibold text-slate-800">Personal Information</h3>
                 </div>
                 
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="firstName" class="form-label required">First Name</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label for="firstName" class="block text-sm font-medium text-slate-700 mb-2">
+                    First Name <span class="text-red-500">*</span>
+                  </label>
                     <input
                       type="text"
                       id="firstName"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="firstName"
-                      [class.is-invalid]="isFieldInvalid('firstName')"
+                    [class.border-red-500]="isFieldInvalid('firstName')"
                       placeholder="Enter first name"
                     >
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('firstName')">
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('firstName')">
                       <span *ngIf="userForm.get('firstName')?.errors?.['required']">First name is required</span>
                       <span *ngIf="userForm.get('firstName')?.errors?.['minlength']">First name must be at least 2 characters</span>
                     </div>
                   </div>
   
-                  <div class="col-md-6 mb-3">
-                    <label for="lastName" class="form-label required">Last Name</label>
+                <div>
+                  <label for="lastName" class="block text-sm font-medium text-slate-700 mb-2">
+                    Last Name <span class="text-red-500">*</span>
+                  </label>
                     <input
                       type="text"
                       id="lastName"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="lastName"
-                      [class.is-invalid]="isFieldInvalid('lastName')"
+                    [class.border-red-500]="isFieldInvalid('lastName')"
                       placeholder="Enter last name"
                     >
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('lastName')">
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('lastName')">
                       <span *ngIf="userForm.get('lastName')?.errors?.['required']">Last name is required</span>
                       <span *ngIf="userForm.get('lastName')?.errors?.['minlength']">Last name must be at least 2 characters</span>
-                    </div>
                   </div>
                 </div>
   
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="email" class="form-label required">Email Address</label>
+                <div>
+                  <label for="email" class="block text-sm font-medium text-slate-700 mb-2">
+                    Email Address <span class="text-red-500">*</span>
+                  </label>
                     <input
                       type="email"
                       id="email"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="email"
-                      [class.is-invalid]="isFieldInvalid('email')"
+                    [class.border-red-500]="isFieldInvalid('email')"
                       placeholder="Enter email address"
                     >
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('email')">
                       <span *ngIf="userForm.get('email')?.errors?.['required']">Email is required</span>
                       <span *ngIf="userForm.get('email')?.errors?.['email']">Please enter a valid email address</span>
                     </div>
                   </div>
   
-                  <div class="col-md-6 mb-3">
-                    <label for="phone" class="form-label">Phone Number</label>
+                <div>
+                  <label for="phone" class="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
                     <input
                       type="tel"
                       id="phone"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="phone"
-                      [class.is-invalid]="isFieldInvalid('phone')"
+                    [class.border-red-500]="isFieldInvalid('phone')"
                       placeholder="Enter phone number"
                     >
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('phone')">
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('phone')">
                       <span *ngIf="userForm.get('phone')?.errors?.['pattern']">Please enter a valid phone number</span>
-                    </div>
                   </div>
                 </div>
   
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                <div>
+                  <label for="dateOfBirth" class="block text-sm font-medium text-slate-700 mb-2">Date of Birth</label>
                     <input
                       type="date"
                       id="dateOfBirth"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="dateOfBirth"
-                      [class.is-invalid]="isFieldInvalid('dateOfBirth')"
                     >
                   </div>
   
-                  <div class="col-md-6 mb-3">
-                    <label for="gender" class="form-label">Gender</label>
+                <div>
+                  <label for="gender" class="block text-sm font-medium text-slate-700 mb-2">Gender</label>
                     <select
                       id="gender"
-                      class="form-select"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="gender"
                     >
                       <option value="">Select gender</option>
@@ -142,35 +136,38 @@
               </div>
   
               <!-- Account Information Section -->
-              <div class="form-section">
-                <div class="section-header">
-                  <h4><i class="fas fa-key me-2"></i>Account Information</h4>
+            <div class="space-y-6">
+              <div class="flex items-center space-x-2 mb-4">
+                <i data-lucide="key" class="w-5 h-5 text-blue-500"></i>
+                <h3 class="text-lg font-semibold text-slate-800">Account Information</h3>
                 </div>
   
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="username" class="form-label">Username</label>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label for="username" class="block text-sm font-medium text-slate-700 mb-2">Username</label>
                     <input
                       type="text"
                       id="username"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="username"
-                      [class.is-invalid]="isFieldInvalid('username')"
+                    [class.border-red-500]="isFieldInvalid('username')"
                       placeholder="Enter username (optional)"
                     >
-                    <div class="form-text">Leave empty to use email as username</div>
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('username')">
+                  <div class="text-slate-500 text-sm mt-1">Leave empty to use email as username</div>
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('username')">
                       <span *ngIf="userForm.get('username')?.errors?.['minlength']">Username must be at least 3 characters</span>
                     </div>
                   </div>
   
-                  <div class="col-md-6 mb-3">
-                    <label for="role" class="form-label required">User Role</label>
+                <div>
+                  <label for="role" class="block text-sm font-medium text-slate-700 mb-2">
+                    User Role <span class="text-red-500">*</span>
+                  </label>
                     <select
                       id="role"
-                      class="form-select"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="role"
-                      [class.is-invalid]="isFieldInvalid('role')"
+                    [class.border-red-500]="isFieldInvalid('role')"
                     >
                       <option value="">Select user role</option>
                       <option value="customer">Customer</option>
@@ -179,50 +176,53 @@
                       <option value="admin">Administrator</option>
                       <option value="support">Support Agent</option>
                     </select>
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('role')">
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('role')">
                       <span *ngIf="userForm.get('role')?.errors?.['required']">Please select a user role</span>
-                    </div>
                   </div>
                 </div>
   
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="password" class="form-label required">Password</label>
-                    <div class="password-input-group">
+                <div>
+                  <label for="password" class="block text-sm font-medium text-slate-700 mb-2">
+                    Password <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
                       <input
                         [type]="showPassword ? 'text' : 'password'"
                         id="password"
-                        class="form-control"
+                      class="w-full px-4 py-3 pr-12 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                         formControlName="password"
-                        [class.is-invalid]="isFieldInvalid('password')"
+                      [class.border-red-500]="isFieldInvalid('password')"
                         placeholder="Enter password"
                       >
                       <button
                         type="button"
-                        class="password-toggle"
+                      class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 transition-colors duration-200"
                         (click)="togglePasswordVisibility()"
                       >
-                        <i [class]="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                      <i data-lucide="eye" class="w-5 h-5" *ngIf="!showPassword"></i>
+                      <i data-lucide="eye-off" class="w-5 h-5" *ngIf="showPassword"></i>
                       </button>
                     </div>
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('password')">
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('password')">
                       <span *ngIf="userForm.get('password')?.errors?.['required']">Password is required</span>
                       <span *ngIf="userForm.get('password')?.errors?.['minlength']">Password must be at least 8 characters</span>
                       <span *ngIf="userForm.get('password')?.errors?.['pattern']">Password must contain at least one uppercase letter, one lowercase letter, and one number</span>
                     </div>
                   </div>
   
-                  <div class="col-md-6 mb-3">
-                    <label for="confirmPassword" class="form-label required">Confirm Password</label>
+                <div>
+                  <label for="confirmPassword" class="block text-sm font-medium text-slate-700 mb-2">
+                    Confirm Password <span class="text-red-500">*</span>
+                  </label>
                     <input
                       type="password"
                       id="confirmPassword"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="confirmPassword"
-                      [class.is-invalid]="isFieldInvalid('confirmPassword')"
+                    [class.border-red-500]="isFieldInvalid('confirmPassword')"
                       placeholder="Confirm password"
                     >
-                    <div class="invalid-feedback" *ngIf="isFieldInvalid('confirmPassword')">
+                  <div class="text-red-500 text-sm mt-1" *ngIf="isFieldInvalid('confirmPassword')">
                       <span *ngIf="userForm.get('confirmPassword')?.errors?.['required']">Please confirm your password</span>
                       <span *ngIf="userForm.errors?.['passwordMismatch']">Passwords do not match</span>
                     </div>
@@ -231,66 +231,65 @@
               </div>
   
               <!-- Address Information Section -->
-              <div class="form-section">
-                <div class="section-header">
-                  <h4><i class="fas fa-map-marker-alt me-2"></i>Address Information</h4>
-                  <small class="text-muted">(Optional)</small>
+            <div class="space-y-6">
+              <div class="flex items-center space-x-2 mb-4">
+                <i data-lucide="map-pin" class="w-5 h-5 text-blue-500"></i>
+                <h3 class="text-lg font-semibold text-slate-800">Address Information</h3>
+                <span class="text-slate-500 text-sm">(Optional)</span>
                 </div>
   
-                <div class="row">
-                  <div class="col-12 mb-3">
-                    <label for="street" class="form-label">Street Address</label>
+              <div class="space-y-6">
+                <div>
+                  <label for="street" class="block text-sm font-medium text-slate-700 mb-2">Street Address</label>
                     <input
                       type="text"
                       id="street"
-                      class="form-control"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="street"
                       placeholder="Enter street address"
                     >
-                  </div>
                 </div>
   
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="city" class="form-label">City</label>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label for="city" class="block text-sm font-medium text-slate-700 mb-2">City</label>
                     <input
                       type="text"
                       id="city"
-                      class="form-control"
+                      class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="city"
                       placeholder="Enter city"
                     >
                   </div>
   
-                  <div class="col-md-3 mb-3">
-                    <label for="state" class="form-label">State/Province</label>
+                  <div>
+                    <label for="state" class="block text-sm font-medium text-slate-700 mb-2">State/Province</label>
                     <input
                       type="text"
                       id="state"
-                      class="form-control"
+                      class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="state"
                       placeholder="Enter state"
                     >
                   </div>
   
-                  <div class="col-md-3 mb-3">
-                    <label for="zipCode" class="form-label">ZIP/Postal Code</label>
+                  <div>
+                    <label for="zipCode" class="block text-sm font-medium text-slate-700 mb-2">ZIP/Postal Code</label>
                     <input
                       type="text"
                       id="zipCode"
-                      class="form-control"
+                      class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="zipCode"
                       placeholder="Enter ZIP code"
                     >
                   </div>
                 </div>
   
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="country" class="form-label">Country</label>
+                <div>
+                  <label for="country" class="block text-sm font-medium text-slate-700 mb-2">Country</label>
                     <select
                       id="country"
-                      class="form-select"
+                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                       formControlName="country"
                     >
                       <option value="">Select country</option>
@@ -308,75 +307,72 @@
               </div>
   
               <!-- Account Settings Section -->
-              <div class="form-section">
-                <div class="section-header">
-                  <h4><i class="fas fa-cog me-2"></i>Account Settings</h4>
+            <div class="space-y-6">
+              <div class="flex items-center space-x-2 mb-4">
+                <i data-lucide="settings" class="w-5 h-5 text-blue-500"></i>
+                <h3 class="text-lg font-semibold text-slate-800">Account Settings</h3>
                 </div>
   
-                <div class="row">
-                  <div class="col-12">
-                    <div class="form-check-group">
-                      <div class="form-check">
+              <div class="space-y-4">
+                <div class="flex items-start space-x-3">
                         <input
-                          class="form-check-input"
                           type="checkbox"
                           id="isActive"
                           formControlName="isActive"
-                        >
-                        <label class="form-check-label" for="isActive">
-                          <strong>Account Active</strong>
-                          <small class="d-block text-muted">User can log in and access the system</small>
+                    class="mt-1 w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+                  >
+                  <label for="isActive" class="text-sm text-slate-700">
+                    <span class="font-medium">Account Active</span>
+                    <p class="text-slate-500 mt-1">User can log in and access the system</p>
                         </label>
                       </div>
   
-                      <div class="form-check">
+                <div class="flex items-start space-x-3">
                         <input
-                          class="form-check-input"
                           type="checkbox"
                           id="emailVerified"
                           formControlName="emailVerified"
-                        >
-                        <label class="form-check-label" for="emailVerified">
-                          <strong>Email Verified</strong>
-                          <small class="d-block text-muted">Mark email as verified (skip verification process)</small>
+                    class="mt-1 w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+                  >
+                  <label for="emailVerified" class="text-sm text-slate-700">
+                    <span class="font-medium">Email Verified</span>
+                    <p class="text-slate-500 mt-1">Mark email as verified (skip verification process)</p>
                         </label>
                       </div>
   
-                      <div class="form-check">
+                <div class="flex items-start space-x-3">
                         <input
-                          class="form-check-input"
                           type="checkbox"
                           id="sendWelcomeEmail"
                           formControlName="sendWelcomeEmail"
-                        >
-                        <label class="form-check-label" for="sendWelcomeEmail">
-                          <strong>Send Welcome Email</strong>
-                          <small class="d-block text-muted">Send welcome email with login credentials</small>
+                    class="mt-1 w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 focus:ring-2"
+                  >
+                  <label for="sendWelcomeEmail" class="text-sm text-slate-700">
+                    <span class="font-medium">Send Welcome Email</span>
+                    <p class="text-slate-500 mt-1">Send welcome email with login credentials</p>
                         </label>
                       </div>
-                    </div>
-                  </div>
                 </div>
               </div>
   
               <!-- Form Actions -->
-              <div class="form-actions">
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-slate-200">
                 <button
                   type="button"
-                  class="btn btn-outline-secondary me-2"
+                class="px-6 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors duration-200 flex items-center space-x-2"
                   (click)="resetForm()"
                 >
-                  <i class="fas fa-undo me-1"></i>
-                  Reset Form
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                <span>Reset Form</span>
                 </button>
                 <button
                   type="submit"
-                  class="btn btn-primary"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   [disabled]="userForm.invalid || isSubmitting"
                 >
-                  <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
-                  <i *ngIf="!isSubmitting" class="fas fa-user-plus me-1"></i>
-                  {{ isSubmitting ? 'Creating User...' : 'Create User' }}
+                <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" *ngIf="isSubmitting"></div>
+                <i data-lucide="user-plus" class="w-4 h-4" *ngIf="!isSubmitting"></i>
+                <span>{{ isSubmitting ? 'Creating User...' : 'Create User' }}</span>
                 </button>
               </div>
             </form>
@@ -384,82 +380,84 @@
         </div>
   
         <!-- Sidebar -->
-        <div class="col-lg-4">
+      <div class="space-y-6">
           <!-- Quick Actions Card -->
-          <div class="sidebar-card">
-            <div class="card-header">
-              <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+        <div class="glassmorphism rounded-2xl p-6">
+          <div class="flex items-center space-x-2 mb-4">
+            <i data-lucide="zap" class="w-5 h-5 text-blue-500"></i>
+            <h3 class="text-lg font-semibold text-slate-800">Quick Actions</h3>
             </div>
-            <div class="card-body">
-              <div class="quick-action-item" (click)="fillSampleData()">
-                <i class="fas fa-magic"></i>
-                <div>
-                  <strong>Fill Sample Data</strong>
-                  <small>Populate form with test data</small>
-                </div>
+          <div class="space-y-3">
+            <button class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors duration-200" (click)="fillSampleData()">
+              <i data-lucide="wand-2" class="w-5 h-5 text-purple-500"></i>
+              <div class="text-left">
+                <div class="font-medium text-slate-800">Fill Sample Data</div>
+                <div class="text-sm text-slate-500">Populate form with test data</div>
               </div>
-              <div class="quick-action-item" (click)="generatePassword()">
-                <i class="fas fa-key"></i>
-                <div>
-                  <strong>Generate Password</strong>
-                  <small>Create a secure password</small>
-                </div>
+            </button>
+            <button class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors duration-200" (click)="generatePassword()">
+              <i data-lucide="key" class="w-5 h-5 text-green-500"></i>
+              <div class="text-left">
+                <div class="font-medium text-slate-800">Generate Password</div>
+                <div class="text-sm text-slate-500">Create a secure password</div>
               </div>
-              <div class="quick-action-item" (click)="validateEmail()">
-                <i class="fas fa-envelope-open"></i>
-                <div>
-                  <strong>Validate Email</strong>
-                  <small>Check if email exists</small>
-                </div>
+            </button>
+            <button class="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-50 transition-colors duration-200" (click)="validateEmail()">
+              <i data-lucide="mail" class="w-5 h-5 text-orange-500"></i>
+              <div class="text-left">
+                <div class="font-medium text-slate-800">Validate Email</div>
+                <div class="text-sm text-slate-500">Check if email exists</div>
               </div>
+            </button>
             </div>
           </div>
   
           <!-- Role Information Card -->
-          <div class="sidebar-card">
-            <div class="card-header">
-              <h5><i class="fas fa-info-circle me-2"></i>Role Information</h5>
+        <div class="glassmorphism rounded-2xl p-6">
+          <div class="flex items-center space-x-2 mb-4">
+            <i data-lucide="info" class="w-5 h-5 text-blue-500"></i>
+            <h3 class="text-lg font-semibold text-slate-800">Role Information</h3>
             </div>
-            <div class="card-body">
-              <div class="role-info" *ngIf="selectedRoleInfo">
-                <h6>{{ selectedRoleInfo.name }}</h6>
-                <p>{{ selectedRoleInfo.description }}</p>
-                <div class="permissions-list">
-                  <strong>Permissions:</strong>
-                  <ul>
-                    <li *ngFor="let permission of selectedRoleInfo.permissions">
-                      {{ permission }}
+          <div *ngIf="selectedRoleInfo" class="space-y-3">
+            <h4 class="font-semibold text-slate-800">{{ selectedRoleInfo.name }}</h4>
+            <p class="text-slate-600 text-sm">{{ selectedRoleInfo.description }}</p>
+            <div>
+              <div class="font-medium text-slate-700 mb-2">Permissions:</div>
+              <ul class="space-y-1">
+                <li *ngFor="let permission of selectedRoleInfo.permissions" class="flex items-center space-x-2 text-sm text-slate-600">
+                  <i data-lucide="check" class="w-3 h-3 text-green-500"></i>
+                  <span>{{ permission }}</span>
                     </li>
                   </ul>
                 </div>
               </div>
-              <div *ngIf="!selectedRoleInfo" class="text-muted">
+          <div *ngIf="!selectedRoleInfo" class="text-slate-500 text-sm">
                 Select a role to view permissions
               </div>
             </div>
+
+        <!-- Tips Card -->
+        <div class="glassmorphism rounded-2xl p-6">
+          <div class="flex items-center space-x-2 mb-4">
+            <i data-lucide="lightbulb" class="w-5 h-5 text-blue-500"></i>
+            <h3 class="text-lg font-semibold text-slate-800">Tips</h3>
           </div>
-  
-          <!-- Tips Card -->
-          <div class="sidebar-card">
-            <div class="card-header">
-              <h5><i class="fas fa-lightbulb me-2"></i>Tips</h5>
+          <div class="space-y-3">
+            <div class="flex items-start space-x-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5"></i>
+              <span class="text-sm text-slate-600">Use strong passwords with mixed characters</span>
             </div>
-            <div class="card-body">
-              <div class="tip-item">
-                <i class="fas fa-check-circle text-success"></i>
-                <span>Use strong passwords with mixed characters</span>
+            <div class="flex items-start space-x-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5"></i>
+              <span class="text-sm text-slate-600">Verify email addresses before activation</span>
               </div>
-              <div class="tip-item">
-                <i class="fas fa-check-circle text-success"></i>
-                <span>Verify email addresses before activation</span>
+            <div class="flex items-start space-x-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5"></i>
+              <span class="text-sm text-slate-600">Assign appropriate roles based on responsibilities</span>
               </div>
-              <div class="tip-item">
-                <i class="fas fa-check-circle text-success"></i>
-                <span>Assign appropriate roles based on responsibilities</span>
-              </div>
-              <div class="tip-item">
-                <i class="fas fa-check-circle text-success"></i>
-                <span>Enable welcome emails for better onboarding</span>
+            <div class="flex items-start space-x-2">
+              <i data-lucide="check-circle" class="w-4 h-4 text-green-500 mt-0.5"></i>
+              <span class="text-sm text-slate-600">Enable welcome emails for better onboarding</span>
               </div>
             </div>
           </div>
@@ -468,101 +466,97 @@
     </div>
   
     <!-- Bulk Import Modal -->
-    <div class="modal fade" id="bulkImportModal" tabindex="-1" *ngIf="showBulkImport">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fas fa-upload me-2"></i>
-              Bulk Import Users
-            </h5>
-            <button type="button" class="btn-close" (click)="closeBulkImport()"></button>
+  <div class="fixed inset-0 z-50 flex items-center justify-center" *ngIf="showBulkImport" (click)="closeBulkImport()">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative max-w-2xl w-full mx-4 bg-white rounded-2xl shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between p-6 border-b border-slate-200">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="upload" class="w-5 h-5 text-blue-500"></i>
+          <h3 class="text-lg font-semibold text-slate-800">Bulk Import Users</h3>
+        </div>
+        <button 
+          class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200"
+          (click)="closeBulkImport()">
+          <i data-lucide="x" class="w-4 h-4 text-slate-600"></i>
+        </button>
           </div>
-          <div class="modal-body">
-            <div class="bulk-import-content">
-              <div class="upload-area" 
-                   [class.dragover]="isDragOver"
+      <div class="p-6 space-y-6">
+        <div class="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors duration-200"
+             [class.border-blue-400]="isDragOver"
                    (dragover)="onDragOver($event)"
                    (dragleave)="onDragLeave($event)"
                    (drop)="onDrop($event)">
-                <div class="upload-icon">
-                  <i class="fas fa-cloud-upload-alt"></i>
-                </div>
-                <h4>Drop CSV file here or click to browse</h4>
-                <p>Upload a CSV file with user information</p>
+          <i data-lucide="cloud-upload" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+          <h4 class="text-lg font-semibold text-slate-800 mb-2">Drop CSV file here or click to browse</h4>
+          <p class="text-slate-600 mb-4">Upload a CSV file with user information</p>
                 <input
                   type="file"
                   #fileInput
                   accept=".csv"
                   (change)="onFileSelected($event)"
-                  style="display: none;"
+            class="hidden"
                 >
-                <button class="btn btn-outline-primary" (click)="fileInput.click()">
-                  <i class="fas fa-folder-open me-1"></i>
-                  Browse Files
+          <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 mx-auto" (click)="fileInput.click()">
+            <i data-lucide="folder-open" class="w-4 h-4"></i>
+            <span>Browse Files</span>
                 </button>
               </div>
   
-              <div class="csv-template mt-4">
-                <h6>CSV Template</h6>
-                <p>Your CSV file should include the following columns:</p>
-                <div class="template-preview">
-                  <code>firstName,lastName,email,phone,role,isActive</code>
-                </div>
-                <button class="btn btn-sm btn-outline-info mt-2" (click)="downloadTemplate()">
-                  <i class="fas fa-download me-1"></i>
-                  Download Template
+        <div class="bg-slate-50 rounded-lg p-4">
+          <h5 class="font-semibold text-slate-800 mb-2">CSV Template</h5>
+          <p class="text-slate-600 text-sm mb-3">Your CSV file should include the following columns:</p>
+          <code class="block bg-slate-200 px-3 py-2 rounded text-sm font-mono">firstName,lastName,email,phone,role,isActive</code>
+          <button class="mt-3 px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm font-medium hover:bg-blue-200 transition-colors duration-200 flex items-center space-x-1" (click)="downloadTemplate()">
+            <i data-lucide="download" class="w-3 h-3"></i>
+            <span>Download Template</span>
                 </button>
               </div>
   
-              <div class="import-preview" *ngIf="csvData.length > 0">
-                <h6>Import Preview ({{ csvData.length }} users)</h6>
-                <div class="table-responsive">
-                  <table class="table table-sm">
-                    <thead>
-                      <tr>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let user of csvData.slice(0, 5)">
-                        <td>{{ user.firstName }} {{ user.lastName }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.role }}</td>
-                        <td>
-                          <span class="badge" [class]="user.isActive ? 'bg-success' : 'bg-secondary'">
+        <div *ngIf="csvData.length > 0" class="bg-slate-50 rounded-lg p-4">
+          <h5 class="font-semibold text-slate-800 mb-3">Import Preview ({{ csvData.length }} users)</h5>
+          <div class="space-y-2">
+            <div *ngFor="let user of csvData.slice(0, 5)" class="flex items-center justify-between p-3 bg-white rounded border">
+              <div>
+                <div class="font-medium text-slate-800">{{ user.firstName }} {{ user.lastName }}</div>
+                <div class="text-sm text-slate-600">{{ user.email }}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-slate-600">{{ user.role }}</div>
+                <span class="px-2 py-1 text-xs rounded-full" [class.bg-green-100]="user.isActive" [class.text-green-700]="user.isActive" [class.bg-slate-100]="!user.isActive" [class.text-slate-700]="!user.isActive">
                             {{ user.isActive ? 'Active' : 'Inactive' }}
                           </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div *ngIf="csvData.length > 5" class="text-muted">
+              </div>
+            </div>
+            <div *ngIf="csvData.length > 5" class="text-slate-500 text-sm text-center">
                     ... and {{ csvData.length - 5 }} more users
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" (click)="closeBulkImport()">
+      <div class="flex items-center justify-end space-x-3 p-6 border-t border-slate-200">
+        <button 
+          class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors duration-200"
+          (click)="closeBulkImport()">
               Cancel
             </button>
             <button
-              type="button"
-              class="btn btn-primary"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               [disabled]="csvData.length === 0 || isImporting"
-              (click)="importUsers()"
-            >
-              <span *ngIf="isImporting" class="spinner-border spinner-border-sm me-2"></span>
-              <i *ngIf="!isImporting" class="fas fa-upload me-1"></i>
-              {{ isImporting ? 'Importing...' : 'Import Users' }}
+          (click)="importUsers()">
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" *ngIf="isImporting"></div>
+          <i data-lucide="upload" class="w-4 h-4" *ngIf="!isImporting"></i>
+          <span>{{ isImporting ? 'Importing...' : 'Import Users' }}</span>
             </button>
           </div>
         </div>
       </div>
     </div>
-  </div>
+
+<!-- Custom CSS for glassmorphism -->
+<style>
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+</style>

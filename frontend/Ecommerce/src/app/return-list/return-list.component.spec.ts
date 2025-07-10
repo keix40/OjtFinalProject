@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ReturnListComponent } from '../services/return-list.component';
+import { ReturnListComponent } from '../return-list/return-list.component';
 
 describe('ReturnListComponent', () => {
   let component: ReturnListComponent;

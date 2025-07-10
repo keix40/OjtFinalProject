@@ -1,310 +1,132 @@
-th.no-sort::after {
-    display: none !important;
-  }  
+/* Modern Product Management Styles */
 
-/* Table Container */
-.custom-table-container {
-  background: #ffffff;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+/* Animation keyframes */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+/* Animation classes */
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out forwards;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Table styles */
+.table-container {
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Table Styles */
-.table {
-  margin-bottom: 0;
+/* Checkbox styles */
+.custom-checkbox {
+  transition: all 0.2s ease;
 }
 
-.table thead {
-  background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%);
-  color: white;
+.custom-checkbox:checked {
+  background-color: #475569;
+  border-color: #475569;
 }
 
-.table thead th {
-  font-weight: 500;
-  padding: 1rem;
-  border: none;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+/* Button hover effects */
+.btn-modern {
+  transition: all 0.2s ease;
 }
 
-.table tbody tr {
-  transition: all 0.3s ease;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.table tbody tr:hover {
-  background-color: rgba(0, 123, 255, 0.05);
+.btn-modern:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.table tbody td {
-  padding: 1rem;
-  vertical-align: middle;
-  color: #2d2d3f;
-}
-
-/* Checkbox Column */
-.checkbox-column {
-  width: 50px;
-  text-align: center;
-}
-
-.form-check-input {
-  cursor: pointer;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #2d2d3f;
-}
-
-.form-check-input:checked {
-  background-color: #007bff;
-  border-color: #007bff;
-}
-
-/* Product Cell */
-.product-cell {
-  min-width: 300px;
-}
-
-.product-image-container {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.product-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.product-image:hover {
-  transform: scale(1.1);
-}
-
-.product-name {
-  font-weight: 500;
-  color: #2d2d3f;
-}
-
-/* Status Badges */
+/* Status badge animations */
 .status-badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 500;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  transition: all 0.2s ease;
 }
 
-/* Custom Select */
-.custom-select {
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  padding: 0.5rem 1rem;
-  transition: all 0.3s ease;
+.status-badge:hover {
+  transform: scale(1.05);
 }
 
-.custom-select:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
-}
-
-/* Action Buttons */
-.action-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.action-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Export Button Styling - Outline Style */
-.export-btn {
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  border-width: 2px;
+/* Product image container */
+.product-image-container {
   position: relative;
   overflow: hidden;
+  border-radius: 8px;
 }
 
-.export-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.export-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.export-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s;
-}
-
-.export-btn:hover::before {
-  left: 100%;
-}
-
-/* Button icon animations */
-.export-btn i {
+.product-image-container img {
   transition: transform 0.3s ease;
 }
 
-.export-btn:hover i {
+.product-image-container:hover img {
   transform: scale(1.1);
 }
 
-/* Dropdown arrow animation */
-.dropdown-toggle::after {
-  transition: transform 0.3s ease;
-}
-
-.dropdown.show .dropdown-toggle::after {
-  transform: rotate(180deg);
-}
-
-/* Beautiful Dropdown Styling */
-.export-dropdown {
-  border: none;
-  border-radius: 8px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  padding: 8px 0;
-  min-width: 220px;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-  margin-top: 5px;
-}
-
-.export-dropdown .dropdown-item {
-  padding: 12px 20px;
-  border-radius: 6px;
-  margin: 2px 8px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-}
-
-.export-dropdown .dropdown-item:hover {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  transform: translateX(3px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.export-dropdown .dropdown-item.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.export-dropdown .dropdown-item.disabled:hover {
-  transform: none;
-  background: transparent;
-  box-shadow: none;
-}
-
-.export-dropdown .dropdown-divider {
-  margin: 8px 0;
-  border-color: #e9ecef;
-}
-
-.export-dropdown .dropdown-item i {
-  font-size: 16px;
-  width: 20px;
-  text-align: center;
-}
-
-.export-dropdown .dropdown-item small {
-  font-size: 11px;
-  margin-top: 2px;
-  opacity: 0.7;
+/* Dropdown animations */
+.dropdown-menu {
+  animation: slide-down 0.2s ease-out;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .export-btn {
-    padding: 6px 12px;
-    font-size: 14px;
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
-  .export-dropdown {
-    min-width: 200px;
-  }
-  
-  .export-dropdown .dropdown-item {
-    padding: 10px 16px;
-  }
-}
-
-/* Success animation for export */
-@keyframes exportPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
-}
-
-.export-btn.exporting {
-  animation: exportPulse 0.6s ease;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .table thead {
-    display: none;
-  }
-
-  .table tbody tr {
-    display: block;
-    margin-bottom: 1rem;
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-  }
-
-  .table tbody td {
-    display: block;
-    text-align: right;
-    padding: 0.5rem 1rem;
-    border: none;
-  }
-
-  .table tbody td::before {
-    content: attr(data-label);
-    float: left;
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-
-  .checkbox-column {
+  .dropdown-container {
     width: 100%;
-    text-align: right;
   }
+}
 
-  .product-cell {
-    min-width: auto;
-  }
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Focus states for accessibility */
+.focus-visible:focus {
+  outline: 2px solid #475569;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }  

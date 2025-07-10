@@ -182,6 +182,38 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     }
 
 
+    @Override
+    public int calculateRecentAttemptCount(String ipAddress, LocalDateTime now) {
+        LocalDateTime fiveMinutesAgo = now.minusMinutes(5);
+        return repository.countByIpAddressAndTimestampAfter(ipAddress, fiveMinutesAgo);
+    }
+
+    @Override
+    public LoginAttemptDTO enrichAttemptWithStats(LoginAttemptDTO dto) {
+        String ip = dto.getIpAddress();
+
+        // 🕒 Get the last 10 login attempts from this IP
+        List<LoginAttempt> recentAttempts = repository
+                .findTop10ByIpAddressOrderByTimestampDesc(ip);
+
+        int count = recentAttempts.size();
+        dto.setAttemptCount(count);
+
+        if (count > 1) {
+            // 📏 Calculate the time difference between first and last attempt
+            LocalDateTime first = recentAttempts.get(count - 1).getTimestamp();
+            LocalDateTime last = recentAttempts.get(0).getTimestamp();
+            long minutes = java.time.Duration.between(first, last).toMinutes();
+
+            dto.setTimeframe(minutes + " min");
+        } else {
+            dto.setTimeframe("1 min");
+        }
+
+        return dto;
+    }
+
+
 
 
 

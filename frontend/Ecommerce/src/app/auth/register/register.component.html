@@ -128,7 +128,11 @@
           </div>
 
           <!-- Submit Button -->
-          <button type="submit" class="btn">Create Account</button>
+          <button type="submit" class="btn" [disabled]="(submitted && !otpVerified) || isRegistering">
+            <span *ngIf="!otpVerified && !isRegistering">Send OTP & Create Account</span>
+            <span *ngIf="otpVerified && !isRegistering">Complete Registration</span>
+            <span *ngIf="isRegistering">Processing Registration...</span>
+          </button>
 
           <!-- General Error -->
           <div class="error" *ngIf="errors['general']">{{ errors['general'] }}</div>
@@ -143,17 +147,22 @@
   </div>
 
   <!-- OTP Modal -->
-  <!-- OTP Modal -->
-<div *ngIf="showEmailVerifyModal" class="modal-overlay">
-  <div class="modal-content">
-    <h3>Enter OTP</h3>
-    <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
-      <input formControlName="otp" placeholder="OTP" />
-      <button type="submit" [disabled]="otpForm.invalid">Verify OTP</button>
-      <button type="button" (click)="resendOtp()">Resend OTP</button>
-      <button type="button" (click)="showEmailVerifyModal = false">Cancel</button>
-    </form>
-    <div *ngIf="errorMessage" class="error">{{errorMessage}}</div>
-    <div *ngIf="successMessage" class="success">{{successMessage}}</div>
+  <div *ngIf="showEmailVerifyModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Enter OTP</h3>
+      <form [formGroup]="otpForm" (ngSubmit)="verifyOtp()">
+        <input formControlName="otp" placeholder="OTP" />
+        <button type="submit" [disabled]="otpForm.invalid || isVerifyingOtp">
+          <span *ngIf="!isVerifyingOtp">Verify OTP</span>
+          <span *ngIf="isVerifyingOtp">Verifying...</span>
+        </button>
+        <button type="button" (click)="resendOtp()" [disabled]="isVerifyingOtp || isResendingOtp">
+          <span *ngIf="!isResendingOtp">Resend OTP</span>
+          <span *ngIf="isResendingOtp">Resending...</span>
+        </button>
+        <button type="button" (click)="showEmailVerifyModal = false" [disabled]="isVerifyingOtp">Cancel</button>
+      </form>
+      <div *ngIf="errorMessage" class="error">{{errorMessage}}</div>
+      <div *ngIf="successMessage" class="success">{{successMessage}}</div>
+    </div>
   </div>
-</div>

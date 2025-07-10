@@ -22,4 +22,5 @@ public interface UserService {
     public List<User> findUsersByRoleId(Long roleId) ;
 
 
+    String uploadProfileImage(String token, MultipartFile image);
 }

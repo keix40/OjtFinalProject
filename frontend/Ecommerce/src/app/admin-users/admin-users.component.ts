@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewChecked } from '@angular/core';
 import { ImageService } from '../services/image.service';
 
 interface AdminUser {
@@ -44,7 +44,7 @@ interface AdminActivity {
   standalone: false,
   styleUrls: ['./admin-users.component.css']
 })
-export class AdminUsersComponent implements OnInit {
+export class AdminUsersComponent implements OnInit, AfterViewChecked {
   // Data properties
   allAdmins: AdminUser[] = [];
   filteredAdmins: AdminUser[] = [];
@@ -53,6 +53,7 @@ export class AdminUsersComponent implements OnInit {
   selectedAdminForPermissions: AdminUser | null = null;
   selectedAdminForActivity: AdminUser | null = null;
   adminActivities: AdminActivity[] = [];
+  openDropdownId: string | null = null;
 
   // Filter properties
   searchTerm = '';
@@ -146,6 +147,12 @@ export class AdminUsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAdminUsers();
+  }
+
+  ngAfterViewChecked() {
+    if ((window as any)['lucide']) {
+      (window as any)['lucide'].createIcons();
+    }
   }
 
   loadAdminUsers(): void {

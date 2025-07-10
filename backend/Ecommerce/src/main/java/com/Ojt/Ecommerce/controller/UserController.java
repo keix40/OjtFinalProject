@@ -115,5 +115,12 @@ public class UserController {
         return ResponseEntity.ok(userDTOs);
     }
 
+    @PostMapping("/createUser")
+    public ResponseEntity<?> createUserByAdmin(){
+        User user = new User();
+
+        return null;
+    }
+
 
 }

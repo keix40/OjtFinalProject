@@ -62,7 +62,7 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    const token = this.getToken(); 
+    const token = this.getToken();
     if (!token) return false;
 
     try {
@@ -129,7 +129,7 @@ export class AuthService {
   }
 
   sendRegisterOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/sendOtp`, { email });//need to change
+    return this.http.post(`${this.baseUrl}/send-register-otp`, { email });//need to change
   }
 
   sendResetOtp(email: string): Observable<any> {
@@ -151,7 +151,26 @@ export class AuthService {
   getAllUsers(): Observable<any[]> {
     return this.http.get<any[]>(`${this.baseUrl}/user/all`);
   }
-  
 
 
+
+
+uploadProfileImage(file: File): Observable<any> { //add for profile avatar update by pmk june 13
+  const token = this.getToken();
+  if (!token) {
+    console.error('No token found in localStorage');
+    return new Observable(subscriber => {
+      subscriber.error(new Error('No token found'));
+    });
+  }
+
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const headers = new HttpHeaders({
+    'Authorization': `Bearer ${token}`
+  });
+
+  return this.http.put(`${this.baseUrl}/update-avatar`, formData, { headers });
+}
 }

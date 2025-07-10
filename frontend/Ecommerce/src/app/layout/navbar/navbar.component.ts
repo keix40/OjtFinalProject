@@ -9,9 +9,6 @@ import { Router } from '@angular/router';
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent implements OnInit {
-  userName: string | null = null;
-  userRoles: string[] = [];
-  isLoggedIn: boolean = false;
   sidebarVisible: boolean = true;
 
   constructor(
@@ -20,15 +17,7 @@ export class NavbarComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loadUserInfo();
-  }
-
-  private loadUserInfo() {
-    this.isLoggedIn = this.authService.isLoggedIn();
-    if (this.isLoggedIn) {
-      this.userName = this.authService.getUsername();
-      this.userRoles = this.authService.getRoles();
-    }
+    // Navbar initialization
   }
 
   toggleSidebar() {
@@ -36,18 +25,6 @@ export class NavbarComponent implements OnInit {
     const sidebar = document.querySelector('.sidebar');
     if (sidebar) {
       sidebar.classList.toggle('d-none', !this.sidebarVisible);
-    }
-  }
-
-  logout() {
-    this.authService.logout();
-    this.router.navigate(['/login']);
-  }
-
-  navigateToProfile() {
-    const userId = this.authService.getUserId();
-    if (userId) {
-      this.router.navigate(['/profile', userId], { queryParams: { section: 'personal-info' } });
     }
   }
 }

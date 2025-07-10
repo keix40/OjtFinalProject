@@ -15,7 +15,7 @@ export class ImageService {
   private config: ImageConfig = {
     baseUrl: 'http://localhost:8080',
     defaultProductImage: '/assets/project_img/fashion_store.jpg',
-    defaultAvatarImage: '/assets/project_img/default-avatar.png',
+    defaultAvatarImage: '/assets/images/test.jpg',
     defaultCategoryImage: '/assets/project_img/default-category.png',
     defaultBrandImage: '/assets/project_img/default-brand.png'
   };

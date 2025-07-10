@@ -7,4 +7,6 @@ export interface UserDetails {
   phoneNumber: string | null;
   password?: string | null;
   roles?: string[];
-} 
+  profileImage?: string | null;
+  phoneVerified?: boolean;
+}
