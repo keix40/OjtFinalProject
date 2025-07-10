@@ -97,4 +97,9 @@ public class User {
         this.createdDate = LocalDateTime.now();
     }
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
+
 }
