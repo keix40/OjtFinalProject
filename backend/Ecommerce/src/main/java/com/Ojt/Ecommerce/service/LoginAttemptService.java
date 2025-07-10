@@ -41,6 +41,8 @@ public interface LoginAttemptService {
     boolean isBlockedIP(String ip);
     int calculateThreatScore(LoginAttemptDTO dto);
     String determineThreatLevel(int score);
+    int calculateRecentAttemptCount(String ipAddress, LocalDateTime now);
+    LoginAttemptDTO enrichAttemptWithStats(LoginAttemptDTO dto);
 
 
 }

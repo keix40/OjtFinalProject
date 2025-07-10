@@ -134,6 +134,9 @@ public class AuthController {
                     .attemptCount(1)
                     .build();
 
+            // ✅ Add attemptCount + timeframe dynamically
+            loginAttemptService.enrichAttemptWithStats(successDTO);
+
             // ➕ Calculate threat score and level
             int score = loginAttemptService.calculateThreatScore(successDTO);
             successDTO.setThreatScore(score);
@@ -162,6 +165,9 @@ public class AuthController {
                     .location("Unknown")
                     .attemptCount(1)
                     .build();
+
+            // ✅ Add attemptCount + timeframe dynamically
+            loginAttemptService.enrichAttemptWithStats(failDTO);
 
             // ➕ Calculate threat score and level
             int score = loginAttemptService.calculateThreatScore(failDTO);
