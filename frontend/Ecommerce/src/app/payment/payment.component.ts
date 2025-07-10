@@ -7,6 +7,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrderConfirmComponent } from '../order-confirm/order-confirm.component';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-payment',
@@ -44,7 +45,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     private orderService: OrderService,
     private fb: FormBuilder,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    public imageService: ImageService
   ) {
     this.cardForm = this.fb.group({
       cardNumber: ['', [Validators.required, Validators.minLength(19), Validators.maxLength(19)]],
@@ -116,28 +118,60 @@ export class PaymentComponent implements OnInit, OnDestroy {
     
     // Validate required data
     if (!this.userId || !this.addressId || !this.deliveryMethodId) {
+      console.error('Missing required data:', {
+        userId: this.userId,
+        addressId: this.addressId,
+        deliveryMethodId: this.deliveryMethodId
+      });
       alert('Missing required order information. Please go back and complete the checkout process.');
+      return;
+    }
+    
+    // Validate cart items
+    if (!this.cartItems || this.cartItems.length === 0) {
+      console.error('No cart items found');
+      alert('No items in cart. Please add items before proceeding.');
       return;
     }
     
     this.isSubmitting = true;
     
-    // Create UserOrder object
+    // Log all received data for debugging
+    console.log('=== PAYMENT DEBUG DATA ===');
+    console.log('Customer:', this.customer);
+    console.log('Shipping:', this.shipping);
+    console.log('Delivery:', this.delivery);
+    console.log('Cart Items:', this.cartItems);
+    console.log('User ID:', this.userId);
+    console.log('Address ID:', this.addressId);
+    console.log('Delivery Method ID:', this.deliveryMethodId);
+    console.log('Discount ID:', this.discountId);
+    console.log('Discount:', this.discount);
+    console.log('Discount Amount:', this.discountAmount);
+    console.log('Delivery Fee:', this.deliveryFee);
+    console.log('Total Amount:', this.getTotal());
+    console.log('========================');
+    
+    // Create UserOrder object with proper data structure
     const userOrder: UserOrder = {
       userId: this.userId,
       addressId: this.addressId,
       discountId: this.discountId || null,
       deliveryId: this.deliveryMethodId,
       totalAmount: this.getTotal(),
-      cartItem: this.cartItems.map(item => ({
-        productId: item.productId ?? item.id, // fallback if productId is missing
-        quantity: item.quantity,
-        price: item.price,
-        variantId: item.variantId ?? null    // <== FIX HERE
-      }))
+      cartItem: this.cartItems.map(item => {
+        const cartItem = {
+          productId: item.productId || item.id, // Ensure productId is available
+          quantity: item.quantity,
+          price: item.price,
+          variantId: item.variantId || null
+        };
+        console.log('Cart item being sent:', cartItem);
+        return cartItem;
+      })
     };
     
-    console.log('Creating order with data:', userOrder);
+    console.log('Final UserOrder object being sent:', userOrder);
     
     // Call the order service to create the order
     this.orderService.createOrder(userOrder).subscribe({
@@ -145,15 +179,26 @@ export class PaymentComponent implements OnInit, OnDestroy {
         console.log('Order created successfully:', response);
         this.isSubmitting = false;
         
-        const responseData = typeof response === 'object' && response !== null ? response : {};
+        // Handle text response from backend
+        let orderData;
+        if (typeof response === 'string') {
+          // Backend returns "success" as plain text
+          orderData = { 
+            orderCode: 'ORDER-' + Date.now(), // Generate a temporary order code
+            status: response 
+          };
+        } else {
+          orderData = response;
+        }
+        
         const orderDetails = {
-          ...responseData,
+          ...orderData,
           customer: this.customer,
           shipping: this.shipping,
           delivery: this.delivery,
           cartItems: this.cartItems,
           paymentMethod: this.paymentMethod,
-          orderNumber: responseData.orderCode,
+          orderNumber: orderData.orderCode || orderData.orderId || 'ORDER-' + Date.now(),
           deliveryFee: this.deliveryFee,
           discountAmount: this.discountAmount,
           cardInfo: this.cardForm.value,
@@ -164,7 +209,22 @@ export class PaymentComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error creating order:', error);
+        console.error('Error details:', {
+          status: error.status,
+          message: error.message,
+          error: error.error,
+          url: error.url
+        });
         this.isSubmitting = false;
+        
+        // Show user-friendly error message
+        let errorMessage = 'Failed to create order. Please try again.';
+        if (error.status === 400) {
+          errorMessage = 'Invalid order data. Please check your information.';
+        } else if (error.status === 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+        alert(errorMessage);
       }
     });
   }

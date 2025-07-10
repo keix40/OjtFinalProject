@@ -1,120 +1,131 @@
-<div class="p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-primary">Order Management</h2>
-    <div class="d-flex gap-2">
-      <button class="btn btn-success d-flex align-items-center gap-2" (click)="exportToExcel()" title="Export to Excel">
-        <i class="bi bi-file-earmark-excel"></i>
+<div class="p-4 bg-slate-50 min-h-screen">
+  <!-- Header Section -->
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+      <i data-lucide="shopping-bag" class="w-8 h-8 text-blue-500"></i>
+    </div>
+    <h2 class="text-3xl font-bold text-gray-900 mb-2">Order Management</h2>
+    <p class="text-gray-600">Manage and track all customer orders, status, and fulfillment</p>
+  </div>
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
+    <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Order Management</h2>
+    <div class="flex gap-2 flex-wrap">
+      <button class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2 shadow-sm"
+              (click)="exportToExcel()" title="Export to Excel">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
         Export Excel
       </button>
-      <button class="btn btn-danger d-flex align-items-center gap-2" (click)="exportToPDF()" title="Export to PDF">
-        <i class="bi bi-file-earmark-pdf"></i>
+      <button class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition flex items-center gap-2 shadow-sm"
+              (click)="exportToPDF()" title="Export to PDF">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd"/></svg>
         Export PDF
       </button>
-      <button class="btn btn-outline-primary d-flex align-items-center gap-2" (click)="loadOrders()">
-        <i class="bi bi-arrow-clockwise"></i>
+      <button class="px-4 py-2 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition border border-slate-200 flex items-center gap-2 shadow-sm"
+              (click)="loadOrders()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         Refresh
       </button>
     </div>
   </div>
 
-  <div class="container mb-4">
-    <div class="row g-2 align-items-center mb-3">
-      <div class="col-md-3">
-        <div class="form-group">
-          <label class="form-label text-muted small">Status</label>
-          <select class="form-select custom-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
-            <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
-          </select>
-        </div>
+  <!-- Filters Card -->
+  <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-slate-200">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+        <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+                [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+          <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+        </select>
       </div>
-      <div class="col-md-3">
-        <div class="form-group">
-          <label class="form-label text-muted small">Date Range</label>
-          <select class="form-select custom-select" [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
-            <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
-          </select>
-        </div>
-      </div>
-    </div>
-    
-    <div class="row">
-      <div class="col">
-        <button class="btn btn-outline-danger me-2 action-btn" [disabled]="selectedOrders.length === 0">
-          <i class="bi bi-x-circle me-1"></i>Cancel Orders
-        </button>
-        <button class="btn btn-outline-success action-btn" (click)="exportSelected()" [disabled]="selectedOrders.length === 0">
-          <i class="bi bi-download me-1"></i>Export Selected
-        </button>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Date Range</label>
+        <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+                [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
+          <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
+        </select>
       </div>
     </div>
-  </div>    
-  
+    <div class="flex gap-2">
+      <button class="px-4 py-2 bg-rose-50 text-rose-700 rounded-lg border border-rose-200 hover:bg-rose-100 transition disabled:opacity-50"
+              [disabled]="selectedOrders.length === 0">
+        Cancel Orders
+      </button>
+      <button class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-100 transition disabled:opacity-50"
+              (click)="exportSelected()" [disabled]="selectedOrders.length === 0">
+        Export Selected
+      </button>
+    </div>
+  </div>
+
   <!-- Order Table -->
-  <div class="table-responsive">
-    <table id="orderTable" class="table table-hover align-middle mb-0 w-100">
-      <thead>
+  <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
         <tr>
-          <th class="checkbox-column">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
-            </div>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                   [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
           </th>
-          <th style="min-width: 120px;">Order</th>
-          <th>Date</th>
-          <th>Items</th>
-          <th>Total</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Items</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Total</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <tr *ngFor="let order of filteredOrders" class="table-row">
-          <td class="checkbox-column">
-            <div class="form-check">
-              <input type="checkbox" class="form-check-input" [(ngModel)]="order.checked" (change)="updateSelection()">
-            </div>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let order of filteredOrders" class="hover:bg-slate-50">
+          <td class="px-4 py-3 whitespace-nowrap">
+            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                   [(ngModel)]="order.checked" (change)="updateSelection()">
           </td>
-          <td class="order-cell">
-            <div class="d-flex flex-column">
-              <span class="order-code fw-bold">{{ order.orderCode }}</span>
-              <small class="text-muted">{{ order.deliveryMethod }}</small>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <i data-lucide="hash" class="w-4 h-4 text-slate-400"></i>
+              <span class="font-medium text-slate-800">{{ order.orderCode }}</span>
             </div>
+            <span class="text-xs text-slate-500">{{ order.deliveryMethod }}</span>
           </td>
-          <td class="date-cell">
-            <div class="d-flex flex-column">
-              <span class="fw-medium">{{ formatDate(order.orderDate) }}</span>
-            </div>
+          <td class="px-4 py-3 text-slate-700">
+            {{ formatDate(order.orderDate) }}
           </td>
-          <td class="items-cell">
-            <div class="d-flex flex-column">
-              <span class="fw-medium">{{ getTotalItems(order) }} items</span>
-              <small class="text-muted">{{ order.products.length }} products</small>
-            </div>
+          <td class="px-4 py-3">
+            <span class="text-slate-700">{{ getTotalItems(order) }} items</span>
+            <span class="block text-xs text-slate-500">{{ order.products.length }} products</span>
           </td>
-          <td class="total-cell">
-            <div class="d-flex flex-column">
-              <span class="fw-bold text-primary">{{ order.total }} ks</span>
-              <small class="text-muted" *ngIf="order.discountAmount > 0">
-                -{{ order.discountAmount }} ks discount
-              </small>
-            </div>
+          <td class="px-4 py-3">
+            <span class="font-semibold text-rose-600">{{ order.total }} ks</span>  
+
+            <span class="block text-xs text-rose-600" *ngIf="order.discountAmount > 0">
+              -{{ order.discountAmount }} ks discount
+            </span>
           </td>
-          <td class="status-cell">
-            <span class="badge status-badge" [ngClass]="getStatusBadgeClass(order.status)">
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                  [ngClass]="{
+                    'bg-emerald-100 text-emerald-800': order.status === 'DELIVERED',
+                    'bg-blue-100 text-blue-800': order.status === 'PAID',
+                    'bg-rose-100 text-rose-800': order.status === 'CANCELLED',
+                    'bg-indigo-100 text-indigo-800': order.status === 'SHIPPED',
+                    'bg-purple-100 text-purple-800': order.status === 'RETURNED',
+                    'bg-amber-100 text-amber-800': order.status === 'PENDING',
+                    'bg-cyan-100 text-cyan-800': order.status === 'PROCESSING',
+                    'bg-slate-100 text-slate-800': ['DELIVERED','PAID','CANCELLED','SHIPPED','RETURNED','PENDING','PROCESSING'].indexOf(order.status) === -1
+                  }">
               {{ order.status }}
             </span>
           </td>
-          <td class="actions-cell">
-            <div class="d-flex gap-1">
-              <button class="btn btn-sm btn-outline-primary" (click)="viewOrderDetails(order, orderDetailsModal)" title="View Details">
-                <i class="bi bi-eye"></i>
+          <td class="px-4 py-3">
+            <div class="flex gap-2">
+              <button class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1"
+                      (click)="viewOrderDetails(order, orderDetailsModal)">
+                <i data-lucide="eye" class="w-4 h-4"></i> View
               </button>
-              <button 
-                class="btn btn-sm btn-outline-danger" 
-                (click)="cancelOrder(order)" 
-                title="Cancel Order"
-                [disabled]="order.status === 'DELIVERED' || order.status === 'CANCELLED'">
-                <i class="bi bi-x-circle"></i>
+              <button class="px-3 py-1 bg-rose-50 text-rose-700 rounded-lg border border-rose-200 hover:bg-rose-100 transition text-xs shadow-sm flex items-center gap-1"
+                      (click)="cancelOrder(order)" [disabled]="order.status === 'DELIVERED' || order.status === 'CANCELLED'">
+                <i data-lucide="x-circle" class="w-4 h-4"></i> Cancel
               </button>
             </div>
           </td>
@@ -124,12 +135,13 @@
   </div>
 
   <!-- Empty State -->
-  <div *ngIf="filteredOrders.length === 0" class="text-center py-5">
-    <div class="empty-state">
-      <i class="bi bi-box-seam display-1 text-muted"></i>
-      <h4 class="mt-3 text-muted">No Orders Found</h4>
-      <p class="text-muted">No orders match your current filters.</p>
-      <button class="btn btn-primary" (click)="selectedStatus = 'all'; selectedDateRange = 'all'; applyFilters()">
+  <div *ngIf="filteredOrders.length === 0" class="flex flex-col items-center justify-center py-16">
+    <div class="bg-white rounded-xl p-8 flex flex-col items-center shadow-sm border border-slate-200 max-w-md w-full">
+      <div class="text-5xl text-slate-300 mb-4">📦</div>
+      <h4 class="text-lg font-semibold text-slate-800 mb-2">No Orders Found</h4>
+      <p class="text-slate-500 mb-4 text-center">No orders match your current filters.</p>
+      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm"
+              (click)="selectedStatus = 'all'; selectedDateRange = 'all'; applyFilters()">
         Clear Filters
       </button>
     </div>
@@ -138,113 +150,143 @@
 
 <!-- Order Details Modal -->
 <ng-template #orderDetailsModal let-modal>
-  <div class="invoice-container">
-    <div class="modal-header d-print-none">
-      <h4 class="modal-title">
-        <i class="bi bi-receipt-cutoff me-2"></i>
-        Invoice - {{ selectedOrder?.orderCode }}
-      </h4>
-      <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-    </div>
-    
-    <div class="modal-body" *ngIf="selectedOrder">
-      <!-- SLEEK BILL Style -->
-      <div class="receipt-container">
-        <div class="receipt-header">
-          <h2 class="receipt-title">Britium Gallery</h2>
-          <!-- <p>Britium Gallery, Panshil Square, Tapovan Road</p>
-          <p>Camp, Amravati, 444602, IN</p>
-          <p>PHONE: +911234567890</p>
-          <p>GSTIN: 27AAFCV2449G1Z7</p> -->
-        </div>
-
-        <hr class="dotted">
-        
-        <div class="customer-info">
-          <p><strong>Bill To:</strong> {{ selectedOrder.user.name }}</p>
-          <p>{{ selectedOrder.user.email }}</p>
-          <p>{{ selectedOrder.user.phNo }}</p>
-          <br>
-          <p><strong>Ship To:</strong></p>
-          <p>{{ selectedOrder.address.address }}</p>
-          <p>{{ selectedOrder.address.city }}, {{ selectedOrder.address.state }} {{ selectedOrder.address.postalCode }}</p>
-          <p>{{ selectedOrder.address.country }}</p>
-        </div>
-
-        <div class="receipt-info">
-          <span>Bill No: {{ selectedOrder.orderCode }}</span>
-          <span>Date: {{ formatDate(selectedOrder.orderDate) }}</span>
-        </div>
-
-        <hr class="dotted">
-
-        <table class="receipt-table">
-          <thead>
-            <tr>
-              <th>SN</th>
-              <th>Item</th>
-              <th class="text-end">Qty</th>
-              <th class="text-end">Price</th>
-              <th class="text-end">Amt</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let product of selectedOrder.products; let i = index">
-              <td>{{ i + 1 }}</td>
-              <td>{{ product.productName }}</td>
-              <td class="text-end">{{ product.quantity }}</td>
-              <td class="text-end">{{ product.unitPrice | number:'1.2-2' }}</td>
-              <td class="text-end">{{ (product.quantity * product.unitPrice) | number:'1.2-2' }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <hr class="dotted">
-
-        <div class="receipt-totals">
-          <div class="totals-row">
-            <span>Subtotal</span>
-            <span>{{ selectedOrder.subtotal | number:'1.2-2' }}</span>
-          </div>
-          <div class="totals-row" *ngIf="selectedOrder.deliveryFee > 0">
-            <span>Delivery Fee</span>
-            <span>{{ selectedOrder.deliveryFee | number:'1.2-2' }}</span>
-          </div>
-          <div class="totals-row" *ngIf="selectedOrder.discountAmount > 0">
-            <span>Discount</span>
-            <span class="text-danger">-{{ selectedOrder.discountAmount | number:'1.2-2' }}</span>
-          </div>
-          
-          <hr class="dotted-bold">
-          
-          <div class="totals-row total">
-            <span>TOTAL</span>
-            <span>{{ selectedOrder.total | number:'1.2-2' }} ks</span>
-          </div>
-        </div>
-
-        <div class="receipt-footer">
-          <p>Thank You</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="modal-footer d-print-none">
-       <!-- Status Management -->
-       <div class="d-flex align-items-center gap-2 me-auto">
-        <label for="status-select" class="form-label mb-0 small">Status:</label>
-        <select id="status-select" class="form-select form-select-sm" [(ngModel)]="selectedStatusInModal">
-          <option *ngFor="let status of availableStatuses" [value]="status.value">{{ status.label }}</option>
-        </select>
-        <button class="btn btn-primary btn-sm" (click)="changeOrderStatus()" [disabled]="selectedOrder?.status === selectedStatusInModal">
-          Update
+  <div class="fixed inset-0 z-40 flex items-center justify-center">
+    <!-- Modal Backdrop -->
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <!-- Modal Content -->
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50">
+      <div class="flex items-center justify-between mb-4 md:mb-6">
+        <h4 class="text-lg md:text-xl font-semibold text-slate-800 break-words">
+          Invoice - {{ selectedOrder?.orderCode }}
+        </h4>
+        <button type="button" class="text-slate-400 hover:text-slate-600 text-2xl" (click)="modal.dismiss()">
+          &times;
         </button>
       </div>
-      <!-- Action Buttons -->
-      <button type="button" class="btn btn-secondary" (click)="modal.close()">Close</button>
-      <button type="button" class="btn btn-success" (click)="printInvoice()">
-        <i class="bi bi-printer me-1"></i>Print Invoice
-      </button>
+      <div *ngIf="selectedOrder" class="space-y-4 md:space-y-6">
+        <!-- Customer Info -->
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
+            <div class="font-medium text-slate-700 mb-2">Bill To:</div>
+            <div class="text-slate-600 break-words">{{ selectedOrder.user.name }}</div>
+            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.user.email }}</div>
+            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.user.phNo }}</div>
+          </div>
+          <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
+            <div class="font-medium text-slate-700 mb-2">Ship To:</div>
+            <div class="text-slate-600 break-words">{{ selectedOrder.address.address }}</div>
+            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.address.city }}, {{ selectedOrder.address.state }} {{ selectedOrder.address.postalCode }}</div>
+            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.address.country }}</div>
+          </div>
+        </div>
+        <!-- Order Info -->
+        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <div class="text-xs text-slate-500">Bill No</div>
+              <div class="font-medium text-slate-700 break-words">{{ selectedOrder.orderCode }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Date</div>
+              <div class="font-medium text-slate-700 break-words">{{ formatDate(selectedOrder.orderDate) }}</div>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Payment</div>
+              <!-- <div class="font-medium text-slate-700">{{ selectedOrder.paymentMethod }}</div> -->
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Status</div>
+              <div class="font-medium">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                      [ngClass]="{
+                        'bg-emerald-100 text-emerald-800': selectedOrder.status === 'DELIVERED',
+                        'bg-blue-100 text-blue-800': selectedOrder.status === 'PAID',
+                        'bg-rose-100 text-rose-800': selectedOrder.status === 'CANCELLED',
+                        'bg-indigo-100 text-indigo-800': selectedOrder.status === 'SHIPPED',
+                        'bg-purple-100 text-purple-800': selectedOrder.status === 'RETURNED',
+                        'bg-amber-100 text-amber-800': selectedOrder.status === 'PENDING',
+                        'bg-cyan-100 text-cyan-800': selectedOrder.status === 'PROCESSING'
+                      }">
+                    {{ selectedOrder.status }}
+                  </span>
+                </div>
+              </div>
+            </div>
+        </div>
+        <!-- Products Table -->
+        <div class="overflow-x-auto w-full border border-slate-200 rounded-lg bg-white">
+          <table class="min-w-full divide-y divide-slate-200 text-xs md:text-sm">
+            <thead class="bg-slate-50">
+              <tr>
+                <th class="px-3 py-2 text-left font-medium text-slate-500 uppercase tracking-wider">#</th>
+                <th class="px-3 py-2 text-left font-medium text-slate-500 uppercase tracking-wider">Item</th>
+                <th class="px-3 py-2 text-right font-medium text-slate-500 uppercase tracking-wider">Qty</th>
+                <th class="px-3 py-2 text-right font-medium text-slate-500 uppercase tracking-wider">Price</th>
+                <th class="px-3 py-2 text-right font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-slate-200">
+              <tr *ngFor="let product of selectedOrder.products; let i = index" class="hover:bg-slate-50">
+                <td class="px-3 py-2 whitespace-nowrap">{{ i + 1 }}</td>
+                <td class="px-3 py-2 break-words">{{ product.productName }}</td>
+                <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
+                <td class="px-3 py-2 text-right">{{ product.unitPrice | number:'1.2-2' }}</td>
+                <td class="px-3 py-2 text-right">{{ (product.quantity * product.unitPrice) | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Totals -->
+        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
+          <div class="space-y-2">
+            <div class="flex justify-between">
+              <span class="text-slate-600">Subtotal</span>
+              <span class="text-slate-700">{{ selectedOrder.subtotal | number:'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between" *ngIf="selectedOrder.deliveryFee > 0">
+              <span class="text-slate-600">Delivery Fee</span>
+              <span class="text-slate-700">{{ selectedOrder.deliveryFee | number:'1.2-2' }}</span>
+            </div>
+            <div class="flex justify-between" *ngIf="selectedOrder.discountAmount > 0">
+              <span class="text-slate-600">Discount</span>
+              <span class="text-rose-600">-{{ selectedOrder.discountAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="border-t border-slate-200 my-2"></div>
+            <div class="flex justify-between font-semibold">
+              <span class="text-slate-700">TOTAL</span>
+              <span class="text-teal-600">{{ selectedOrder.total | number:'1.2-2' }} ks</span>
+            </div>
+          </div>
+        </div>
+        <!-- Status Update -->
+        <div class="bg-blue-50 rounded-lg p-4 border border-slate-200 w-full">
+          <div class="flex flex-col md:flex-row md:items-center gap-4">
+            <label for="status-select" class="block text-sm font-medium text-slate-700">Update Status:</label>
+            <select id="status-select" 
+                    class="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+                    [(ngModel)]="selectedStatusInModal">
+              <option *ngFor="let status of availableStatuses" [value]="status.value">{{ status.label }}</option>
+            </select>
+            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50"
+                    (click)="changeOrderStatus()" [disabled]="selectedOrder.status === selectedStatusInModal">
+              Update
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Modal Footer -->
+      <div class="flex flex-col md:flex-row justify-end gap-3 mt-6 md:mt-8 w-full">
+        <button type="button" 
+                class="px-4 py-2 bg-white text-slate-700 rounded-lg border border-slate-300 hover:bg-slate-50 transition shadow-sm w-full md:w-auto"
+                (click)="modal.close()">
+          Close
+        </button>
+        <button type="button" 
+                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-sm w-full md:w-auto"
+                (click)="printInvoice()">
+          Print Invoice
+        </button>
+      </div>
     </div>
   </div>
 </ng-template>

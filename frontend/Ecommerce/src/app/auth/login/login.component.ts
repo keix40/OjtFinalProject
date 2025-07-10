@@ -86,16 +86,16 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     next: (res) => {
       this.auth.saveToken(res.accessToken);
 
-      const decoded = this.auth.getDecodedToken(); //add this for permission
-      const permissionString = decoded?.permissions || ''; //add this for permission
-      const permissionArray = permissionString.split(',').map((p: string) => p.trim()); //add this for permission
+      const decoded = this.auth.getDecodedToken(); // Only declare once
+      const permissionString = decoded?.permissions || '';
+      const permissionArray = permissionString.split(',').map((p: string) => p.trim());
 
-      this.permissionService.setPermissions(permissionArray); //add this for permmision
+      this.permissionService.setPermissions(permissionArray);
 
       this.router.navigate(['/home']);
-    if (decoded && decoded.sub) {
-      localStorage.setItem('email', decoded.sub); // "sub" is the email in your token
-    }
+      if (decoded && decoded.sub) {
+        localStorage.setItem('email', decoded.sub); // reuse 'decoded'
+      }
     },
     error: (err) => {
       console.error(err);

@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, AfterViewChecked } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ImageService } from '../services/image.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { LucideAngularModule } from 'lucide-angular';
 
 interface VipCustomer {
   id: string;
@@ -42,6 +43,8 @@ interface VipTier {
   revenue: number;
   benefits: string[];
   minSpending: number;
+  bgClass?: string;
+  iconColor?: string;
 }
 
 interface SearchResult {
@@ -53,13 +56,21 @@ interface SearchResult {
   totalSpent: number;
 }
 
+declare var lucide: any;
+
 @Component({
   selector: 'app-vip-customers',
   templateUrl: './vip-customers.component.html',
-  standalone: false,
-  styleUrls: ['./vip-customers.component.css']
+  standalone: true,
+  styleUrls: ['./vip-customers.component.css'],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    LucideAngularModule
+  ]
 })
-export class VipCustomersComponent implements OnInit {
+export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, AfterViewChecked {
   // Data properties
   allCustomers: VipCustomer[] = [];
   filteredCustomers: VipCustomer[] = [];
@@ -86,58 +97,46 @@ export class VipCustomersComponent implements OnInit {
   // Utility property
   Math = Math;
 
+  showCustomerModal = false;
+  customerTab: 'overview' | 'orders' | 'benefits' = 'overview';
+
   // VIP Tiers configuration
   vipTiers: VipTier[] = [
     {
       level: 'silver',
-      name: 'Silver VIP',
-      description: 'Entry-level VIP with basic perks',
-      icon: 'fas fa-medal',
-      customerCount: 45,
-      revenue: 125000,
-      benefits: [
-        '5% discount on all orders',
-        'Free shipping on orders over $50',
-        'Early access to sales',
-        'Birthday discount'
-      ],
-      minSpending: 500
+      name: 'Silver',
+      description: 'Entry VIP tier with basic benefits',
+      icon: 'fas fa-star',
+      customerCount: 67,
+      revenue: 281000,
+      benefits: ['Free shipping', 'Early access'],
+      minSpending: 500,
+      bgClass: 'bg-gray-100/20',
+      iconColor: 'text-gray-700'
     },
     {
       level: 'gold',
-      name: 'Gold VIP',
-      description: 'Premium VIP with enhanced benefits',
-      icon: 'fas fa-trophy',
-      customerCount: 28,
-      revenue: 280000,
-      benefits: [
-        '10% discount on all orders',
-        'Free shipping on all orders',
-        'Exclusive product previews',
-        'Priority customer support',
-        'Quarterly gift box',
-        'VIP-only events'
-      ],
-      minSpending: 1500
+      name: 'Gold',
+      description: 'Premium tier with enhanced perks',
+      icon: 'fas fa-award',
+      customerCount: 34,
+      revenue: 298000,
+      benefits: ['Free shipping', 'Priority support', 'Exclusive deals'],
+      minSpending: 1500,
+      bgClass: 'bg-yellow-100/20',
+      iconColor: 'text-yellow-700'
     },
     {
       level: 'platinum',
-      name: 'Platinum VIP',
-      description: 'Ultimate VIP experience with maximum benefits',
+      name: 'Platinum',
+      description: 'Elite tier with premium benefits',
       icon: 'fas fa-crown',
       customerCount: 12,
-      revenue: 360000,
-      benefits: [
-        '15% discount on all orders',
-        'Free express shipping worldwide',
-        'Personal shopping assistant',
-        'Exclusive limited editions',
-        'Monthly luxury gift box',
-        'Private VIP events',
-        'Custom product requests',
-        'Dedicated account manager'
-      ],
-      minSpending: 5000
+      revenue: 185000,
+      benefits: ['Free shipping', 'Personal assistant', 'VIP events', 'Luxury gifts'],
+      minSpending: 5000,
+      bgClass: 'bg-purple-100/20',
+      iconColor: 'text-purple-700'
     }
   ];
 
@@ -158,6 +157,30 @@ export class VipCustomersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadVipCustomers();
+    this.handleResponsiveView();
+    window.addEventListener('resize', this.handleResponsiveView.bind(this));
+  }
+
+  ngOnDestroy(): void {
+    window.removeEventListener('resize', this.handleResponsiveView.bind(this));
+  }
+
+  handleResponsiveView() {
+    if (window.innerWidth < 900 && this.viewMode === 'table') {
+      this.setViewMode('cards');
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if ((window as any)['lucide']) {
+      (window as any)['lucide'].createIcons();
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    if ((window as any)['lucide']) {
+      (window as any)['lucide'].createIcons();
+    }
   }
 
   loadVipCustomers(): void {
@@ -359,7 +382,8 @@ export class VipCustomersComponent implements OnInit {
 
   viewCustomerDetails(customer: VipCustomer): void {
     this.selectedCustomerDetails = customer;
-    // Modal would be triggered via Bootstrap JS or Angular CDK
+    this.showCustomerModal = true;
+    this.customerTab = 'overview';
   }
 
   editCustomer(customer: VipCustomer): void {
@@ -425,6 +449,32 @@ export class VipCustomersComponent implements OnInit {
     }
     console.log('Update VIP tier for:', this.selectedCustomers);
     // Implement bulk tier update
+  }
+
+  bulkDelete(): void {
+    if (!this.selectedCustomers.length) return;
+    if (!confirm(`Are you sure you want to delete ${this.selectedCustomers.length} selected VIP customers? This action cannot be undone.`)) return;
+    this.allCustomers = this.allCustomers.filter(c => !this.selectedCustomers.includes(c.id));
+    this.applyFilters();
+    this.selectedCustomers = [];
+    setTimeout(() => {
+      if ((window as any)['lucide']) (window as any)['lucide'].createIcons();
+    });
+  }
+
+  bulkChangeStatus(): void {
+    if (!this.selectedCustomers.length) return;
+    if (!confirm(`Toggle status for ${this.selectedCustomers.length} selected VIP customers?`)) return;
+    this.allCustomers = this.allCustomers.map(c =>
+      this.selectedCustomers.includes(c.id)
+        ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' }
+        : c
+    );
+    this.applyFilters();
+    this.selectedCustomers = [];
+    setTimeout(() => {
+      if ((window as any)['lucide']) (window as any)['lucide'].createIcons();
+    });
   }
 
   // Utility methods
@@ -494,5 +544,40 @@ export class VipCustomersComponent implements OnInit {
 
   trackByCustomerId(index: number, customer: VipCustomer): string {
     return customer.id;
+  }
+
+  getVipIconColor(tier: string): string {
+    switch (tier) {
+      case 'platinum':
+        return 'text-purple-700';
+      case 'gold':
+        return 'text-yellow-700';
+      case 'silver':
+        return 'text-gray-700';
+      default:
+        return 'text-gray-700';
+    }
+  }
+
+  getLucideIconName(tier: string): string {
+    switch (tier) {
+      case 'platinum':
+        return 'crown';
+      case 'gold':
+        return 'award';
+      case 'silver':
+        return 'star';
+      default:
+        return 'user';
+    }
+  }
+
+  closeCustomerModal(): void {
+    this.showCustomerModal = false;
+    this.selectedCustomerDetails = null;
+  }
+
+  setCustomerTab(tab: 'overview' | 'orders' | 'benefits'): void {
+    this.customerTab = tab;
   }
 }

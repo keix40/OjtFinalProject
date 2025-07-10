@@ -1,108 +1,137 @@
-<div class="detail-bg py-5">
-  <div class="container py-4" *ngIf="product">
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="card shadow-lg border-0 p-4 product-detail-main-card bg-white rounded-5">
-          <div class="row g-4 align-items-start">
-            <!-- Left: Image Gallery -->
-            <div class="col-md-6 mb-4 mb-md-0">
-              <div class="main-image-container mb-3 position-relative">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8">
+  <div class="container mx-auto px-4" *ngIf="product">
+    <div class="max-w-6xl mx-auto">
+      <div class="glassmorphism rounded-3xl p-8 shadow-xl">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          <!-- Left: Image Gallery -->
+          <div class="space-y-4">
+            <!-- Main Image -->
+            <div class="relative">
+              <img 
+                [src]="selectedImage" 
+                class="w-full h-auto max-h-96 object-contain rounded-2xl border border-slate-200 cursor-zoom-in transition-all duration-300 hover:shadow-lg"
+                alt="Main Product Image"
+                (click)="openImageModal(selectedImage!)">
+              
+              <!-- Navigation Arrows -->
+              <button *ngIf="displayedImages.length > 1" 
+                class="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-700 hover:text-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                (click)="showPrevImage($event)" 
+                [disabled]="currentImageIndex === 0">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+              </button>
+              
+              <button *ngIf="displayedImages.length > 1" 
+                class="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-700 hover:text-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                (click)="showNextImage($event)" 
+                [disabled]="currentImageIndex === displayedImages.length - 1">
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+              </button>
+            </div>
+
+            <!-- Thumbnails -->
+            <div class="flex space-x-3 overflow-x-auto pb-2">
+              <div *ngFor="let image of displayedImages; let i = index" class="flex-shrink-0">
                 <img 
-                  [src]="selectedImage" 
-                  class="img-fluid main-image rounded-4 border" 
-                  alt="Main Product Image"
-                  (click)="openImageModal(selectedImage!)">
-                <!-- Left Arrow -->
-                <button *ngIf="displayedImages.length > 1" class="image-arrow left-arrow small-arrow" (click)="showPrevImage($event)" [disabled]="currentImageIndex === 0">
-                  <i class="bi bi-chevron-left"></i>
-                </button>
-                <!-- Right Arrow -->
-                <button *ngIf="displayedImages.length > 1" class="image-arrow right-arrow small-arrow" (click)="showNextImage($event)" [disabled]="currentImageIndex === displayedImages.length - 1">
-                  <i class="bi bi-chevron-right"></i>
-                </button>
+                  [src]="image.url" 
+                  class="w-20 h-20 object-cover rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md"
+                  [class.border-blue-500]="selectedImage === image.url"
+                  [class.border-slate-200]="selectedImage !== image.url"
+                  (click)="selectImageByIndex(i)" 
+                  alt="Thumbnail">
               </div>
-              <div class="d-flex flex-nowrap overflow-auto gap-2 pb-1">
-                <div class="thumb-wrapper" *ngFor="let image of displayedImages; let i = index">
-                  <img 
-                    [src]="image.url" 
-                    class="img-fluid thumbnail rounded-3 border" 
-                    [class.selected-thumb]="selectedImage === image.url"
-                    (click)="selectImageByIndex(i)" 
-                    alt="Thumbnail">
+            </div>
+          </div>
+
+          <!-- Right: Product Info -->
+          <div class="space-y-6">
+            <!-- Product Title -->
+            <div>
+              <h1 class="text-3xl font-bold text-slate-800 mb-2">{{ product.name }}</h1>
+            </div>
+
+            <!-- Price and Stock Status -->
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <span class="text-3xl font-bold text-blue-600">{{ selectedVariant?.price || product.price }} MMK</span>
+                <div class="flex items-center space-x-2 px-3 py-2 bg-slate-100 rounded-full">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-green-500" *ngIf="(selectedVariant?.stock ?? product.stock) > 0"></i>
+                  <i data-lucide="x-circle" class="w-4 h-4 text-red-500" *ngIf="(selectedVariant?.stock ?? product.stock) === 0"></i>
+                  <span class="text-sm font-medium text-slate-700">
+                    {{ (selectedVariant?.stock ?? product.stock) > 0 ? 'In Stock' : 'Out of Stock' }}
+                  </span>
                 </div>
               </div>
             </div>
 
-            <!-- Right: Product Info -->
-            <div class="col-md-6">
-              <div class="d-flex align-items-center gap-2 mb-2">
-                <h2 class="fw-bold mb-0 display-6">{{ product.name }}</h2>
-              </div>
-              <div class="mb-3 d-flex align-items-center gap-3">
-                <span class="product-price display-6 fw-bold text-success">{{ selectedVariant?.price || product.price }} MMK</span>
-                <span class="badge rounded-pill bg-light text-dark border px-3 py-2 fs-6">
-                  <i class="bi bi-check-circle-fill text-success me-1" *ngIf="(selectedVariant?.stock ?? product.stock) > 0"></i>
-                  <i class="bi bi-x-circle-fill text-danger me-1" *ngIf="(selectedVariant?.stock ?? product.stock) === 0"></i>
-                  {{ (selectedVariant?.stock ?? product.stock) > 0 ? 'In Stock' : 'Out of Stock' }}
+            <!-- Brand Info -->
+            <div *ngIf="product.brand && product.brand !== '-'" class="flex items-center space-x-2">
+              <span class="text-slate-600 font-medium">Brand:</span>
+              <span class="text-blue-600 font-semibold">{{ product.brand }}</span>
+            </div>
+
+            <!-- Categories -->
+            <div *ngIf="product.categories.length > 0" class="flex items-center space-x-2">
+              <span class="text-slate-600 font-medium">Categories:</span>
+              <div class="flex flex-wrap gap-2">
+                <span *ngFor="let category of product.categories" class="px-3 py-1 bg-slate-100 text-slate-700 text-sm rounded-full">
+                  {{ category }}
                 </span>
               </div>
-              <div class="mb-2" *ngIf="product.brand && product.brand !== '-'">
-                <span class="fw-semibold">Brand:</span>
-                <span class="text-primary">{{ product.brand }}</span>
-              </div>              
-              <div class="mb-2">
-                <span *ngIf="product.categories.length > 0" class="fw-semibold">Categories:</span> <span class="text-secondary">{{ product.categories.join(', ') }}</span>
-              </div>
+            </div>
 
-              <!-- Variant Attribute Selectors -->
-              <div *ngIf="attributeValuesMap">
-                <div *ngFor="let attrName of objectKeys(attributeValuesMap)" class="mb-3">
-                  <h6 class="fw-semibold mb-2 text-capitalize">{{ attrName }}:</h6>
-                  <div class="d-flex flex-wrap gap-2">
-                    <ng-container *ngIf="attrName.toLowerCase() === 'color'; else regularOptions">
-                      <button
-                        *ngFor="let value of attributeValuesMap[attrName]"
-                        class="btn color-circle p-0 border-0"
-                        [ngClass]="{'selected': selectedAttributes[attrName] === value}"
-                        (click)="toggleAttribute(attrName, value)">
-                        <span class="circle-swatch" [ngStyle]="{'background': value.toLowerCase(), 'border': selectedAttributes[attrName] === value ? '2px solid #2563eb' : '1px solid #bbb'}"></span>
-                        <span class="visually-hidden">{{ value }}</span>
-                      </button>
-                    </ng-container>
-                    <ng-template #regularOptions>
-                      <button
-                        *ngFor="let value of attributeValuesMap[attrName]"
-                        class="btn btn-sm rounded-pill px-3 py-1"
-                        [ngClass]="{'btn-primary': selectedAttributes[attrName] === value, 'btn-outline-secondary': selectedAttributes[attrName] !== value}"
-                        (click)="toggleAttribute(attrName, value)">
-                        {{ value }}
-                      </button>
-                    </ng-template>
-                  </div>
+            <!-- Variant Attribute Selectors -->
+            <div *ngIf="attributeValuesMap" class="space-y-4">
+              <div *ngFor="let attrName of objectKeys(attributeValuesMap)">
+                <h3 class="text-lg font-semibold text-slate-800 mb-3 capitalize">{{ attrName }}:</h3>
+                <div class="flex flex-wrap gap-3">
+                  <ng-container *ngIf="attrName.toLowerCase() === 'color'; else regularOptions">
+                    <button
+                      *ngFor="let value of attributeValuesMap[attrName]"
+                      class="w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                      [class.border-blue-500]="selectedAttributes[attrName] === value"
+                      [class.border-slate-300]="selectedAttributes[attrName] !== value"
+                      (click)="toggleAttribute(attrName, value)">
+                      <span class="w-8 h-8 rounded-full" [ngStyle]="{'background-color': value.toLowerCase()}"></span>
+                      <span class="sr-only">{{ value }}</span>
+                    </button>
+                  </ng-container>
+                  
+                  <ng-template #regularOptions>
+                    <button
+                      *ngFor="let value of attributeValuesMap[attrName]"
+                      class="px-4 py-2 rounded-lg font-medium transition-all duration-200"
+                      [class.bg-blue-600]="selectedAttributes[attrName] === value"
+                      [class.text-white]="selectedAttributes[attrName] === value"
+                      [class.bg-slate-100]="selectedAttributes[attrName] !== value"
+                      [class.text-slate-700]="selectedAttributes[attrName] !== value"
+                      [class.hover:bg-blue-50]="selectedAttributes[attrName] !== value"
+                      (click)="toggleAttribute(attrName, value)">
+                      {{ value }}
+                    </button>
+                  </ng-template>
                 </div>
-              </div>
-
-
-              <!-- Quantity Selector (admin view, optional) -->
-              <!--
-              <div class="mb-3 d-flex align-items-center gap-2">
-                <span class="fw-semibold">Quantity:</span>
-                <div class="quantity-pill d-flex align-items-center bg-light rounded-pill px-3 py-1 gap-2">
-                  <button class="btn btn-outline-secondary btn-sm px-2" (click)="decreaseQty()">-</button>
-                  <span class="px-2 fw-bold fs-5">{{ quantity }}</span>
-                  <button class="btn btn-outline-secondary btn-sm px-2" (click)="increaseQty()">+</button>
-                </div>
-              </div>
-              -->
-
-              <!-- SKU, Price, Stock -->
-              <div class="mt-4">
-                <div><strong>SKU:</strong> {{ selectedVariant?.sku || product.code }}</div>
-                <div><strong>Price:</strong> {{ selectedVariant?.price || product.price}} MMK</div>
-                <div><strong>Stock:</strong> {{ selectedVariant?.stock ?? product.stock }}</div>
               </div>
             </div>
 
+            <!-- Product Details -->
+            <div class="bg-slate-50 rounded-xl p-6 space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">SKU:</span>
+                <span class="text-slate-800 font-semibold">{{ selectedVariant?.sku || product.code }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Price:</span>
+                <span class="text-blue-600 font-bold">{{ selectedVariant?.price || product.price }} MMK</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-slate-600 font-medium">Stock:</span>
+                <span class="font-semibold" [class.text-green-600]="(selectedVariant?.stock ?? product.stock) > 0" [class.text-red-600]="(selectedVariant?.stock ?? product.stock) === 0">
+                  {{ selectedVariant?.stock ?? product.stock }}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -110,17 +139,29 @@
   </div>
 
   <!-- Image Modal -->
-  <div class="modal fade" [class.show]="showImageModal" [style.display]="showImageModal ? 'block' : 'none'" style="background: rgba(0, 0, 0, 0.5);">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Product Image</h5>
-          <button type="button" class="btn-close" (click)="closeImageModal()"></button>
-        </div>
-        <div class="modal-body text-center">
-          <img [src]="selectedImage" class="img-fluid" alt="Zoomed Image">
-        </div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center" *ngIf="showImageModal" (click)="closeImageModal()">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="relative max-w-4xl w-full mx-4 bg-white rounded-2xl shadow-2xl" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between p-6 border-b border-slate-200">
+        <h3 class="text-lg font-semibold text-slate-800">Product Image</h3>
+        <button 
+          class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors duration-200"
+          (click)="closeImageModal()">
+          <i data-lucide="x" class="w-4 h-4 text-slate-600"></i>
+        </button>
+      </div>
+      <div class="p-6 text-center">
+        <img [src]="selectedImage" class="max-h-[70vh] w-auto mx-auto rounded-lg" alt="Zoomed Product Image">
       </div>
     </div>
   </div>
 </div>
+
+<!-- Custom CSS for glassmorphism -->
+<style>
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+</style>

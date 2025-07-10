@@ -1,290 +1,719 @@
 <app-header></app-header>
-<!-- <body> -->
-<div class="container-fluid py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h2 class="fw-bold text-dark">Products</h2>
-      <!-- Filter Status Indicator -->
-      <div *ngIf="isAnyFilterActive()" class="small text-muted">
-        <i class="bi bi-funnel-fill me-1"></i>
-        Showing {{ products.length }} of {{ allProducts.length }} products
-        <span *ngIf="isPriceFilterActive" class="ms-2">
-          (Price: {{ filters.price[0] }} - {{ filters.price[1] }} MMK)
-        </span>
-      </div>
+<!-- Hero Carousel -->
+<section class="relative h-[80vh] overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100">
+    <div class="hero-slide active absolute inset-0 transition-all duration-1000 ease-in-out">
+        <div class="relative h-full bg-gradient-to-br from-blue-600 to-blue-800">
+            <div class="absolute inset-0 bg-black/20"></div>
+            <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=800&fit=crop" alt="Summer Collection" class="w-full h-full object-cover mix-blend-overlay">
+            <div class="absolute inset-0 flex items-center justify-center text-center text-white">
+                <div class="max-w-4xl px-4">
+                    <h1 class="text-5xl lg:text-7xl font-bold mb-6 animate-slide-up">
+                        Summer Collection 2024
+                    </h1>
+                    <p class="text-xl lg:text-2xl mb-8 animate-slide-up opacity-90" style="animation-delay: 0.2s">
+                        Discover the latest trends in fashion
+                    </p>
+                    <button class="bg-white text-blue-600 hover:bg-neutral-100 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 animate-slide-up shadow-lg" style="animation-delay: 0.4s">
+                        Shop Summer Collection →
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <!-- Toggle Filter Button -->
-    <button class="btn btn-outline-dark fw-bold" (click)="toggleFilter()">
-      <i class="fa fa-sliders me-2"></i>
-      {{ showFilter ? 'Hide Filter' : 'Show Filter' }}
-    </button>
-  </div>
-
-  <div class="row">
-    <!-- Sidebar Filters: only show if showFilter = true -->
-    <aside *ngIf="showFilter" class="col-12 col-md-4 col-lg-3 mb-4">
-      <div class="filter-sidebar">
-        <div class="filter-container">
-          <h5 class="fw-bold text-dark mb-3">
-            <i class="fa fa-filter me-2 text-primary"></i>Filters
-          </h5>
-
-          <div class="accordion" id="filterAccordion">
-            <!-- Availability Filter -->
-            <div class="accordion-item border-0 mb-2">
-              <h2 class="accordion-header" id="headingAvail">
-                <button class="accordion-button bg-white fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAvail" aria-expanded="true" aria-controls="collapseAvail">
-                  <i class="fa fa-box me-2 text-primary"></i>Availability
-                </button>
-              </h2>
-              <div id="collapseAvail" class="accordion-collapse collapse show" aria-labelledby="headingAvail" data-bs-parent="#filterAccordion">
-                <div class="accordion-body py-2">
-                  <div class="mb-3">
-                    <div class="fw-semibold text-dark mb-2">Availability</div>
-                    <div *ngFor="let opt of availabilityOptions" class="form-check mb-1">
-                      <input
-                        #availCheck
-                        class="form-check-input accent-check"
-                        type="checkbox"
-                        [id]="'avail-' + opt"
-                        [checked]="filters.availability.includes(opt)"
-                        (change)="onFilterCheckboxChange('availability', opt, availCheck.checked)">
-                      <label class="form-check-label text-dark fw-bold" [for]="'avail-' + opt">{{ opt }}</label>
-                    </div>
-                  </div>
+    <div class="hero-slide absolute inset-0 transition-all duration-1000 ease-in-out opacity-0">
+        <div class="relative h-full bg-gradient-to-br from-purple-600 to-purple-800">
+            <div class="absolute inset-0 bg-black/20"></div>
+            <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=800&fit=crop" alt="Tech Innovation" class="w-full h-full object-cover mix-blend-overlay">
+            <div class="absolute inset-0 flex items-center justify-center text-center text-white">
+                <div class="max-w-4xl px-4">
+                    <h1 class="text-5xl lg:text-7xl font-bold mb-6">Tech Innovation Hub</h1>
+                    <p class="text-xl lg:text-2xl mb-8 opacity-90">Cutting-edge electronics for modern life</p>
+                    <button class="bg-white text-purple-600 hover:bg-neutral-100 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
+                        Explore Technology →
+                    </button>
                 </div>
-              </div>
             </div>
-
-            <!-- Sale Filter -->
-            <div class="accordion-item border-0 mb-2">
-              <h2 class="accordion-header" id="headingSale">
-                <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSale" aria-expanded="false" aria-controls="collapseSale">
-                  <i class="fa fa-tags me-2 text-primary"></i>Sale
-                </button>
-              </h2>
-              <div id="collapseSale" class="accordion-collapse collapse" aria-labelledby="headingSale" data-bs-parent="#filterAccordion">
-                <div class="accordion-body py-2">
-                  <div class="mb-3">
-                    <div class="fw-semibold text-dark mb-2">Sale</div>
-                    <div *ngFor="let opt of saleOptions" class="form-check mb-1">
-                      <input
-                        #saleCheck
-                        class="form-check-input accent-check"
-                        type="checkbox"
-                        [id]="'sale-' + opt"
-                        [checked]="filters.sale.includes(opt)"
-                        (change)="onFilterCheckboxChange('sale', opt, saleCheck.checked)">
-                      <label class="form-check-label text-dark fw-bold" [for]="'sale-' + opt">{{ opt }}</label>
-                    </div>
-                  </div>
+        </div>
+    </div>
+    <div class="hero-slide absolute inset-0 transition-all duration-1000 ease-in-out opacity-0">
+        <div class="relative h-full bg-gradient-to-br from-green-600 to-green-800">
+            <div class="absolute inset-0 bg-black/20"></div>
+            <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop" alt="Home & Living" class="w-full h-full object-cover mix-blend-overlay">
+            <div class="absolute inset-0 flex items-center justify-center text-center text-white">
+                <div class="max-w-4xl px-4">
+                    <h1 class="text-5xl lg:text-7xl font-bold mb-6">Home & Living</h1>
+                    <p class="text-xl lg:text-2xl mb-8 opacity-90">Transform your space with style</p>
+                    <button class="bg-white text-green-600 hover:bg-neutral-100 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
+                        Shop Home Decor →
+                    </button>
                 </div>
-              </div>
             </div>
+        </div>
+    </div>
+    <!-- Carousel Indicators -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-3">
+        <button onclick="setSlide(0)" class="indicator active w-3 h-3 rounded-full bg-white transition-all duration-300 hover:scale-125"></button>
+        <button onclick="setSlide(1)" class="indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/75 transition-all duration-300 hover:scale-125"></button>
+        <button onclick="setSlide(2)" class="indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/75 transition-all duration-300 hover:scale-125"></button>
+    </div>
+</section>
 
-            <!-- Brand Filter (replaces Material) -->
-            <div *ngIf="hasBrandData" class="accordion-item border-0 mb-2">
-              <h2 class="accordion-header" id="headingBrand">
-                <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBrand" aria-expanded="false" aria-controls="collapseBrand">
-                  <i class="fa fa-industry me-2 text-primary"></i>Brand
-                </button>
-              </h2>
-              <div id="collapseBrand" class="accordion-collapse collapse" aria-labelledby="headingBrand" data-bs-parent="#filterAccordion">
-                <div class="accordion-body py-2">
-                  <div class="mb-3">
-                    <div class="fw-semibold text-dark mb-2">Brand</div>
-                    <div *ngFor="let opt of brandOptions" class="form-check mb-1">
-                      <input
-                        #brandCheck
-                        class="form-check-input accent-check"
-                        type="checkbox"
-                        [id]="'brand-' + opt"
-                        [checked]="filters.brand.includes(opt)"
-                        (change)="onFilterCheckboxChange('brand', opt, brandCheck.checked)"
-                      />
-                      <label class="form-check-label text-dark fw-bold" [for]="'brand-' + opt">{{ opt }}</label>
-                    </div>
-                  </div>
+<!-- Features Bar -->
+<section class="py-8 bg-gradient-to-r from-neutral-50 to-neutral-100 border-b border-neutral-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="flex items-center space-x-4 p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 animate-fade-in group">
+                <div class="flex-shrink-0 w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center group-hover:bg-primary-200 transition-colors duration-300">
+                    <svg class="h-6 w-6 text-primary-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <polygon points="16,8 20,8 23,11 23,16 16,16 16,8"></polygon>
+                        <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                        <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
                 </div>
-              </div>
+                <div>
+                    <p class="font-semibold text-neutral-900">Free Shipping</p>
+                    <p class="text-sm text-neutral-600">On orders over $50</p>
+                </div>
             </div>
+            <div class="flex items-center space-x-4 p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 animate-fade-in group" style="animation-delay: 0.1s">
+                <div class="flex-shrink-0 w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center group-hover:bg-green-200 transition-colors duration-300">
+                    <svg class="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-neutral-900">Secure Payment</p>
+                    <p class="text-sm text-neutral-600">100% protected</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 animate-fade-in group" style="animation-delay: 0.2s">
+                <div class="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center group-hover:bg-purple-200 transition-colors duration-300">
+                    <svg class="h-6 w-6 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-neutral-900">24/7 Support</p>
+                    <p class="text-sm text-neutral-600">Always here to help</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4 p-6 bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 animate-fade-in group" style="animation-delay: 0.3s">
+                <div class="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center group-hover:bg-orange-200 transition-colors duration-300">
+                    <svg class="h-6 w-6 text-orange-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="7"></circle>
+                        <polyline points="8.21,13.89 7,23 12,20 17,23 15.79,13.88"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <p class="font-semibold text-neutral-900">Quality Guarantee</p>
+                    <p class="text-sm text-neutral-600">Premium products</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
-          <!-- Category Filter -->
-          <div *ngIf="hasCategoryData" class="accordion-item border-0 mb-2">
-            <h2 class="accordion-header" id="headingCategory">
-              <button class="accordion-button bg-white fw-bold text-dark collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCategory" aria-expanded="false" aria-controls="collapseCategory">
-                <i class="fa fa-th-large me-2 text-primary"></i>Category
-              </button>
+<!-- Categories Section -->
+<section class="py-20 bg-white" id="categories">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">
+                Shop by <span class="text-primary-600">Category</span>
             </h2>
-            <div id="collapseCategory" class="accordion-collapse collapse" aria-labelledby="headingCategory" data-bs-parent="#filterAccordion">
-              <div class="accordion-body py-2">
-                <div class="mb-3">
-                  <div class="fw-semibold text-dark mb-2">Category</div>
-                    <div *ngFor="let opt of categoryOptions" class="form-check mb-1">            
-                      <input
-                      #categoryCheck
-                      class="form-check-input accent-check"
-                      type="checkbox"
-                      [id]="'cat-' + opt"
-                      [checked]="filters.category.includes(opt)"
-                      (change)="onFilterCheckboxChange('category', opt, categoryCheck.checked)"
-                      />
-                      <label class="form-check-label text-dark fw-bold" [for]="'cat-' + opt">{{ opt }}</label>
-                  </div>                  
+            <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
+                Discover our wide range of categories, each carefully curated for your lifestyle
+            </p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=400&fit=crop" alt="Electronics" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
-              </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float">
+                    ⚡
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Electronics</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">2,847 items</p>
+                </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Info message when no brand/category data -->
-        <div *ngIf="!hasBrandData || !hasCategoryData" class="mt-3 p-3 bg-light rounded-3">
-          <div class="text-muted small">
-            <i class="fa fa-info-circle me-2"></i>
-            <span *ngIf="!hasBrandData && !hasCategoryData">Brand and category filters are not available as product data is incomplete.</span>
-            <span *ngIf="!hasBrandData && hasCategoryData">Brand filter is not available as product brand data is incomplete.</span>
-            <span *ngIf="hasBrandData && !hasCategoryData">Category filter is not available as product category data is incomplete.</span>
-          </div>
-        </div>
-
-        <!-- Price Range -->
-        <div class="mt-3">
-          <label class="form-label text-dark fw-bold">Price Range</label>
-
-          <!-- Min and Max Number Inputs -->
-          <div class="row g-2 align-items-center mb-2">
-            <div class="col-6">
-              <label class="form-label mb-0 small">Min</label>
-              <input
-                type="number"
-                class="form-control form-control-sm"
-                [(ngModel)]="filters.price[0]"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="onPriceFilterChange()"
-                min="0"
-                [max]="filters.price[1]"
-              />
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.1s">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&h=400&fit=crop" alt="Fashion" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-pink-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 0.5s">
+                    👗
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Fashion</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">5,234 items</p>
+                </div>
             </div>
-            <div class="col-6">
-              <label class="form-label mb-0 small">Max</label>
-              <input
-                type="number"
-                class="form-control form-control-sm"
-                [(ngModel)]="filters.price[1]"
-                [ngModelOptions]="{ standalone: true }"
-                (ngModelChange)="onPriceFilterChange()"
-                [min]="filters.price[0]"
-                [max]="maxPriceInProducts"
-              />
+
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.2s">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop" alt="Home & Garden" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 1s">
+                    🏠
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Home & Garden</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">1,892 items</p>
+                </div>
             </div>
-          </div>
 
-          <!-- Range Slider for Max Price -->
-          <div class="d-flex align-items-center mb-2">
-            <!-- Fixed Min Price Label -->
-            <span class="me-2">{{ filters.price[0] }} MMK</span>
-          
-            <!-- Slider controls only max price -->
-            <input
-              type="range"
-              class="form-range flex-grow-1 accent-range"
-              [min]="filters.price[0]"
-              [max]="maxPriceInProducts"
-              step="10"
-              [(ngModel)]="filters.price[1]"
-              [ngModelOptions]="{ standalone: true }"
-              (ngModelChange)="onPriceFilterChange()"
-            />
-          
-            <!-- Max Price Label -->
-            <span class="ms-2">{{ filters.price[1] }} MMK</span>
-          </div>
-
-          <!-- Price Filter Status -->
-          <div class="small text-muted" *ngIf="isPriceFilterActive">
-            <i class="bi bi-funnel-fill me-1"></i>
-            Price filter active: {{ filters.price[0] }} - {{ filters.price[1] }} MMK
-          </div>
-        </div>
-
-        <!-- Clear Filters Button -->
-        <div class="d-grid my-3">
-          <button class="btn btn-outline-danger fw-bold" (click)="clearFilters()">
-              <i class="fa fa-times-circle me-2"></i> Clear Filters
-          </button>
-        </div>
-          
-        </div>
-      </div>
-    </aside>
-
-    <!-- Product Grid -->
-    <main [class.col-md-8]="showFilter" [class.col-lg-9]="showFilter" [class.col-12]="!showFilter" class="main-content">
-      <div class="row g-4" [ngClass]="{
-        'row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4': showFilter,
-        'row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5': !showFilter
-      }">
-        <div *ngFor="let product of paginatedProducts" class="col d-flex">
-          <div
-            class="card rounded-4 shadow-lg border-0 p-3 pt-3 position-relative w-100 product-card bg-white text-dark fw-bold"
-            style="transition: box-shadow 0.3s, transform 0.2s; cursor: pointer;"
-            (click)="goToProductDetail(product.id)"
-          >
-            <!-- Product Image -->
-            <div class="product-img-wrapper mb-3 position-relative" style="height: 140px; overflow: hidden;">
-              <img [src]="imageService.getProductImageUrl(product)" class="product-img" [alt]="product.productName" (error)="imageService.handleImageError($event, 'product')">
-              <button
-                class="btn btn-sm p-0 d-flex align-items-center justify-content-center position-absolute"
-                [ngClass]="wishlist.has(product.id) ? 'bg-danger text-white' : 'bg-light text-danger border border-danger'"
-                (click)="toggleWishlist(product.id); $event.stopPropagation()"
-                style="width: 32px; height: 32px; border-radius: 50%; top: 10px; right: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); z-index: 2; border: 2px solid #fff;"
-                title="Add to Wishlist"
-              >
-                <i [ngClass]="wishlist.has(product.id) ? 'fas fa-heart' : 'far fa-heart'" class="fs-5"></i>
-              </button>
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop" alt="Sports & Fitness" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 1.5s">
+                    ⚽
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Sports & Fitness</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">3,156 items</p>
+                </div>
             </div>
-            <div class="card-body p-0 d-flex flex-column">
-              <h6 class="card-title fw-bold mb-1 text-truncate" style="max-width: 100%;">{{ product.productName }}</h6>
-              <div class="mb-2">
-                <span *ngIf="product.quantity <= 5 && product.quantity > 0" class="badge bg-warning text-dark fw-bold">Low stock</span>
-                <span *ngIf="product.quantity === 0" class="badge bg-danger fw-bold">Out of stock</span>
-              </div>
-              <!-- <p class="card-text small text-truncate" style="max-height: 2.6em; overflow: hidden;">{{ product.description }}</p> -->
-              <div class="fw-semibold text-primary fs-5 mb-2">{{ product.price }} MMK</div>
+
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.4s">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop" alt="Books & Media" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 2s">
+                    📚
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Books & Media</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">987 items</p>
+                </div>
             </div>
-          </div>
+
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.5s">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop" alt="Beauty & Health" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-rose-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 2.5s">
+                    💄
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Beauty & Health</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">2,341 items</p>
+                </div>
+            </div>
+
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.6s">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop" alt="Automotive" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 3s">
+                    🚗
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Automotive</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">1,567 items</p>
+                </div>
+            </div>
+
+            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.7s">
+                <div class="aspect-square overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400&h=400&fit=crop" alt="Toys & Games" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
+                <div class="absolute top-4 left-4 w-12 h-12 bg-yellow-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 3.5s">
+                    🎮
+                </div>
+                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Toys & Games</h3>
+                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">2,890 items</p>
+                </div>
+            </div>
         </div>
-      </div>
+    </div>
+</section>
 
-      <!-- Pagination Controls -->
-      <nav *ngIf="totalPages > 1" class="mt-4 d-flex justify-content-center">
-        <ul class="pagination">
-          <li class="page-item" [class.disabled]="currentPage === 1">
-            <button class="page-link" (click)="setPage(currentPage - 1)">
-              <i class="bi bi-chevron-left"></i>
-            </button>
-          </li>
-          <li
-            class="page-item"
-            *ngFor="let page of [].constructor(totalPages); let i = index"
-            [class.active]="currentPage === i + 1"
-          >
-            <button class="page-link" (click)="setPage(i + 1)">{{ i + 1 }}</button>
-          </li>
-          <li class="page-item" [class.disabled]="currentPage === totalPages">
-            <button class="page-link" (click)="setPage(currentPage + 1)">
-              <i class="bi bi-chevron-right"></i>
-            </button>
-          </li>
-        </ul>
-      </nav>
+<!-- Trending Products -->
+<section class="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100" id="trending">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-16">
+            <div>
+                <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 flex items-center animate-slide-up">
+                    <svg class="mr-4 h-10 w-10 text-green-600 animate-bounce-gentle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+                        <polyline points="17,6 23,6 23,12"></polyline>
+                    </svg>
+                    Trending Now
+                </h2>
+                <p class="text-xl text-neutral-600 animate-slide-up" style="animation-delay: 0.1s">Products that are flying off the shelves</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop" alt="Smartphone Pro Max" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
+                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+                            <polyline points="17,6 23,6 23,12"></polyline>
+                        </svg>
+                        +15%
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-3">
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★★</span>
+                        </div>
+                        <span class="text-sm text-neutral-500 ml-2">(4.9)</span>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Smartphone Pro Max
+                    </h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-neutral-900">$1,099.99</span>
+                    </div>
+                </div>
+            </div>
 
-      <div *ngIf="products.length === 0" class="text-center text-muted py-5">
-        <i class="fa fa-search fa-2x mb-3"></i>
-        <p>No products match your filters.</p>
-      </div>
-    </main>
-  </div>
-</div>
-<!-- </body> -->
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.1s">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=300&h=300&fit=crop" alt="Laptop Gaming Beast" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
+                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+                            <polyline points="17,6 23,6 23,12"></polyline>
+                        </svg>
+                        +23%
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-3">
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
+                        </div>
+                        <span class="text-sm text-neutral-500 ml-2">(4.7)</span>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Laptop Gaming Beast
+                    </h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-neutral-900">$1,599.99</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.2s">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&h=300&fit=crop" alt="Wireless Earbuds Pro" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
+                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+                            <polyline points="17,6 23,6 23,12"></polyline>
+                        </svg>
+                        +31%
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-3">
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★★</span>
+                        </div>
+                        <span class="text-sm text-neutral-500 ml-2">(4.8)</span>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Wireless Earbuds Pro
+                    </h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-neutral-900">$249.99</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=300&fit=crop" alt="Smart Home Hub" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
+                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+                            <polyline points="17,6 23,6 23,12"></polyline>
+                        </svg>
+                        +18%
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center mb-3">
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
+                        </div>
+                        <span class="text-sm text-neutral-500 ml-2">(4.6)</span>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Smart Home Hub
+                    </h3>
+                    <div class="flex items-center justify-between">
+                        <span class="text-2xl font-bold text-neutral-900">$199.99</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Brands Section -->
+<section class="py-20 bg-white" id="brands">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">
+                Featured <span class="text-primary-600">Brands</span>
+            </h2>
+            <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
+                Shop from the world's most trusted and innovative brands
+            </p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in">
+                <img src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=120&h=80&fit=crop" alt="Apple" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
+            </div>
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in" style="animation-delay: 0.1s">
+                <img src="https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=120&h=80&fit=crop" alt="Samsung" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
+            </div>
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in" style="animation-delay: 0.2s">
+                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&h=80&fit=crop" alt="Nike" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
+            </div>
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
+                <img src="https://images.unsplash.com/photo-1556906781-9a412961c28c?w=120&h=80&fit=crop" alt="Adidas" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+            </div>
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in" style="animation-delay: 0.4s">
+                <img src="https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=120&h=80&fit=crop" alt="Sony" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
+            </div>
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.5s">
+                <img src="https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=120&h=80&fit=crop" alt="Canon" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+            </div>
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.6s">
+                <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=120&h=80&fit=crop" alt="Dell" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+            </div>
+            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.7s">
+                <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=120&h=80&fit=crop" alt="HP" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products -->
+<section class="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between mb-16">
+            <div>
+                <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">Featured Products</h2>
+                <p class="text-xl text-neutral-600 animate-slide-up" style="animation-delay: 0.1s">Handpicked products that our customers love most</p>
+            </div>
+            <div class="hidden md:flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <button id="grid-view" class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm transition-all duration-300 hover:bg-primary-700">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </button>
+                    <button id="list-view" class="px-4 py-2 border border-neutral-300 text-neutral-700 rounded-xl text-sm transition-all duration-300 hover:bg-neutral-100">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="8" y1="6" x2="21" y2="6"></line>
+                            <line x1="8" y1="12" x2="21" y2="12"></line>
+                            <line x1="8" y1="18" x2="21" y2="18"></line>
+                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop" alt="Wireless Bluetooth Headphones" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
+                        Best Seller
+                    </div>
+                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Electronics</span>
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★★</span>
+                            <span class="text-sm text-neutral-500 ml-2">(324)</span>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Wireless Bluetooth Headphones
+                    </h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl font-bold text-neutral-900">$199.99</span>
+                            <span class="text-sm text-neutral-500 line-through">$249.99</span>
+                        </div>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
+                    </div>
+                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.1s">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop" alt="Smart Fitness Watch" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
+                        New
+                    </div>
+                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Electronics</span>
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
+                            <span class="text-sm text-neutral-500 ml-2">(189)</span>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Smart Fitness Watch
+                    </h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl font-bold text-neutral-900">$299.99</span>
+                        </div>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
+                    </div>
+                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.2s">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&h=300&fit=crop" alt="Premium Coffee Maker" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
+                        Sale
+                    </div>
+                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Home</span>
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★★</span>
+                            <span class="text-sm text-neutral-500 ml-2">(567)</span>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Premium Coffee Maker
+                    </h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl font-bold text-neutral-900">$159.99</span>
+                            <span class="text-sm text-neutral-500 line-through">$199.99</span>
+                        </div>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
+                    </div>
+                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=300&fit=crop" alt="Ergonomic Office Chair" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
+                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Furniture</span>
+                        <div class="flex items-center">
+                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
+                            <span class="text-sm text-neutral-500 ml-2">(234)</span>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
+                        Ergonomic Office Chair
+                    </h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl font-bold text-neutral-900">$449.99</span>
+                        </div>
+                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
+                    </div>
+                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
+                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Customer Testimonials -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">
+                What Our <span class="text-primary-600">Customers Say</span>
+            </h2>
+            <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
+                Real reviews from real customers who love shopping with us
+            </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-2xl border-2 border-transparent hover:border-primary-200 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 shadow-lg animate-fade-in">
+                <div class="flex items-center mb-6">
+                    <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face" alt="Sarah Johnson" class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200">
+                    <div>
+                        <h4 class="font-semibold text-neutral-900 text-lg">Sarah Johnson</h4>
+                        <div class="flex items-center mt-1">
+                            <span class="text-yellow-400 text-sm">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-neutral-600 mb-6 italic leading-relaxed">"Amazing quality products and super fast delivery! Gallery has become my go-to shopping destination for everything I need."</p>
+                <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600 bg-neutral-50">Verified Purchase: Wireless Headphones</span>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl border-2 border-transparent hover:border-primary-200 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 shadow-lg animate-fade-in" style="animation-delay: 0.2s">
+                <div class="flex items-center mb-6">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face" alt="Mike Chen" class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200">
+                    <div>
+                        <h4 class="font-semibold text-neutral-900 text-lg">Mike Chen</h4>
+                        <div class="flex items-center mt-1">
+                            <span class="text-yellow-400 text-sm">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-neutral-600 mb-6 italic leading-relaxed">"The customer service is outstanding. They helped me find exactly what I was looking for and provided excellent support throughout."</p>
+                <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600 bg-neutral-50">Verified Purchase: Gaming Setup</span>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl border-2 border-transparent hover:border-primary-200 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 shadow-lg animate-fade-in" style="animation-delay: 0.4s">
+                <div class="flex items-center mb-6">
+                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face" alt="Emily Davis" class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200">
+                    <div>
+                        <h4 class="font-semibold text-neutral-900 text-lg">Emily Davis</h4>
+                        <div class="flex items-center mt-1">
+                            <span class="text-yellow-400 text-sm">★★★★★</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-neutral-600 mb-6 italic leading-relaxed">"Love the variety and quality. The website is so easy to navigate and the prices are competitive. Highly recommend!"</p>
+                <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600 bg-neutral-50">Verified Purchase: Home Decor</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="py-20 bg-gradient-to-br from-primary-600 to-primary-800">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="bg-white/10 backdrop-blur-md rounded-3xl p-12 animate-fade-in">
+            <div class="text-6xl mb-8 animate-bounce-gentle">📧</div>
+            <h2 class="text-4xl lg:text-5xl font-bold text-white mb-6">Stay in the Loop</h2>
+            <p class="text-xl text-white/90 mb-8 leading-relaxed">
+                Get exclusive deals, early access to sales, and the latest product updates delivered to your inbox
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-6">
+                <input type="email" placeholder="Enter your email address" class="flex-1 px-6 py-4 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/70 focus:bg-white/30 focus:border-white focus:ring-2 focus:ring-white/20 transition-all duration-300 outline-none backdrop-blur-sm">
+                <button class="newsletter-btn bg-white text-primary-600 hover:bg-neutral-100 px-8 py-4 rounded-xl hover:scale-105 transition-all duration-300 font-semibold shadow-lg">
+                    Subscribe →
+                </button>
+            </div>
+            <p class="text-white/70 text-sm">Join 50,000+ subscribers and get 10% off your first order!</p>
+        </div>
+    </div>
+</section>
+
+<app-footer></app-footer>

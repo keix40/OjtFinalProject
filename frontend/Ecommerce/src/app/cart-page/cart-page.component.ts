@@ -181,4 +181,22 @@ export class CartPageComponent implements OnInit, OnDestroy {
       headerComponent.wishlistCount = this.wishlist.size;
     }
   }
+
+  increaseQty(item: CartItem) {
+    this.updateQuantity(item.id, item.quantity + 1);
+  }
+
+  decreaseQty(item: CartItem) {
+    if (item.quantity > 1) {
+      this.updateQuantity(item.id, item.quantity - 1);
+    }
+  }
+
+  clearCart() {
+    this.cartService.clearCart();
+  }
+
+  proceedToCheckout() {
+    this.goToCheckout();
+  }
 }

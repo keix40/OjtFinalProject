@@ -1,200 +1,335 @@
-<app-header></app-header>
-<div class="container py-4">
-  <h2 class="mb-4">All Reviews</h2>
-  <div *ngIf="!reviews.length" class="text-muted">No reviews yet for this product.</div>
-  <div *ngFor="let review of reviews" class="review-card card border-0 shadow-sm mb-3 p-3 position-relative">
-    <!-- Header with avatar, name, stars, timestamp -->
-    <div class="d-flex align-items-center mb-2">
-      <img [src]="'http://localhost:8080' + review.userImage"
-           class="avatar rounded-circle me-3 border"
-           style="width:40px; height:40px; object-fit:cover;">
-      <div>
-        <strong>{{ review.username }}</strong>
-        <div class="text-warning star-rating attractive-stars mb-1">
-          <ng-container *ngFor="let star of createArray(review.rating)">
-            <i class="bi bi-star-fill star-animated star-filled"></i>
-          </ng-container>
-          <ng-container *ngFor="let empty of createArray(5 - review.rating)">
-            <i class="bi bi-star star-animated"></i>
-          </ng-container>
-        </div>
-      </div>
-      <small class="text-muted ms-auto">{{ review.timestamp | date:'medium' }}</small>
 
-      <!-- Dropdown (only for current user) -->
-      <div *ngIf="review.username === currentUser && review.id" class="ms-2">
-        <div class="dropdown">
-          <button class="btn btn-link btn-sm p-0 text-dark" type="button"
-                  id="dropdownMenuButton{{review.id}}"
-                  data-bs-toggle="dropdown"
-                  aria-expanded="false">
-            <i class="bi bi-three-dots-vertical fs-5"></i>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end"
-              [attr.aria-labelledby]="'dropdownMenuButton' + review.id">
-            <li>
-              <a class="dropdown-item" (click)="editReview(review)">
-                <i class="bi bi-pencil me-2"></i>Edit
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item text-danger" (click)="deleteReview(review)">
-                <i class="bi bi-trash me-2"></i>Delete
-              </a>
-            </li>
-          </ul>
-        </div>
+<app-header></app-header>
+
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 p-6">
+  <div class="max-w-4xl mx-auto">
+    
+    <!-- Header Section -->
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center justify-center w-20 h-20 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border border-white/20 mb-6">
+        <svg class="w-10 h-10 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
       </div>
+      <h1 class="text-4xl font-bold text-neutral-900 mb-3">Product Reviews</h1>
+      <p class="text-neutral-600 text-lg">See what others are saying about this product</p>
     </div>
 
-    <!-- Review Text -->
-    <p class="mb-2">{{ review.comment }}</p>
-
-    <!-- Media Preview (images + videos) -->
-    <div class="review-media-grid mt-2" *ngIf="review.imageUrls?.length || review.videoUrls?.length">
-      <ng-container *ngIf="getAllMedia(review).length <= 4">
-        <!-- Show all media if 4 or less -->
-        <ng-container *ngFor="let media of getAllMedia(review); let idx = index">
-          <div class="media-item" (click)="openMediaModal(review, media.type, idx)">
-            <img *ngIf="media.type === 'image'" [src]="media.url" class="img-thumbnail rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;" />
-            <video *ngIf="media.type === 'video'" [src]="media.url" controls class="rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;"></video>
+    <!-- Reviews Container -->
+    <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 overflow-hidden">
+      
+      <!-- Header -->
+      <div class="px-8 py-6 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-3">
+            <div class="w-2 h-8 bg-blue-600 rounded-full"></div>
+            <h2 class="text-xl font-bold text-neutral-900">Customer Reviews</h2>
+            <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+              {{ reviews.length }}
+            </span>
           </div>
-        </ng-container>
-      </ng-container>
-      <ng-container *ngIf="getAllMedia(review).length > 4">
-        <!-- Show first 4 media -->
-        <ng-container *ngFor="let media of getAllMedia(review).slice(0, 4); let idx = index">
-          <div class="media-item" (click)="openMediaModal(review, media.type, idx)">
-            <img *ngIf="media.type === 'image'" [src]="media.url" class="img-thumbnail rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;" />
-            <video *ngIf="media.type === 'video'" [src]="media.url" controls class="rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover;"></video>
-          </div>
-        </ng-container>
-        <!-- 5th spot: overlay with +N -->
-        <div class="media-item position-relative" style="cursor:pointer;" (click)="openMediaModal(review, getAllMedia(review)[4].type, 4)">
-          <ng-container *ngIf="getAllMedia(review)[4].type === 'image'">
-            <img [src]="getAllMedia(review)[4].url" class="img-thumbnail rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover; opacity:0.5;" />
-          </ng-container>
-          <ng-container *ngIf="getAllMedia(review)[4].type === 'video'">
-            <video [src]="getAllMedia(review)[4].url" controls class="rounded-3 shadow-sm" style="width: 100%; height: 100%; object-fit: cover; opacity:0.5;"></video>
-          </ng-container>
-          <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center" style="background:rgba(0,0,0,0.4); color:white; font-size:2em;">
-            +{{ getAllMedia(review).length - 4 }}
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500">
+              {{ getAverageRating() }} average rating
+            </span>
           </div>
         </div>
-      </ng-container>
+      </div>
+
+      <!-- Reviews List -->
+      <div class="max-h-96 overflow-y-auto">
+        
+        <!-- Empty State -->
+        <div *ngIf="!reviews.length" class="text-center py-20">
+          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <h3 class="text-2xl font-semibold text-neutral-900 mb-3">No reviews yet</h3>
+          <p class="text-neutral-600">Be the first to share your experience with this product!</p>
+        </div>
+
+        <!-- Reviews -->
+        <div *ngFor="let review of reviews" 
+             class="relative group hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+             (click)="markAsRead(review)">
+          
+          <div class="px-8 py-6 border-b border-gray-100 last:border-b-0">
+            <div class="flex items-start space-x-4">
+              
+              <!-- Review Icon -->
+              <div class="flex-shrink-0">
+                <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <svg class="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Review Content -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between">
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-3 mb-2">
+                      <h3 class="text-lg font-semibold text-neutral-900">{{ review.username }}</h3>
+                      <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Verified</span>
+                    </div>
+                    
+                    <!-- Rating Stars -->
+                    <div class="flex items-center space-x-1 mb-3">
+                      <ng-container *ngFor="let star of createArray(review.rating)">
+                        <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                      </ng-container>
+                      <ng-container *ngFor="let empty of createArray(5 - review.rating)">
+                        <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                        </svg>
+                      </ng-container>
+                      <span class="text-sm text-gray-500 ml-2">{{ review.rating }}/5</span>
+                    </div>
+                    
+                    <p class="text-gray-800 text-base leading-relaxed mb-3">{{ review.comment }}</p>
+                    
+                    <!-- Media Grid -->
+                    <div *ngIf="review.imageUrls?.length || review.videoUrls?.length" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <ng-container *ngFor="let media of getAllMedia(review); let idx = index">
+                        <div class="relative group cursor-pointer" (click)="openMediaModal(review, media.type, idx)">
+                          <img *ngIf="media.type === 'image'" 
+                               [src]="media.url" 
+                               class="w-full h-20 sm:h-24 object-cover rounded-lg border border-gray-200 transition group-hover:scale-105 group-hover:shadow-lg">
+                          <video *ngIf="media.type === 'video'" 
+                                 [src]="media.url" 
+                                 controls 
+                                 class="w-full h-20 sm:h-24 object-cover rounded-lg border border-gray-200 transition group-hover:scale-105 group-hover:shadow-lg"></video>
+                          <div *ngIf="idx === 3 && getAllMedia(review).length > 4" 
+                               class="absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg text-white text-base font-bold">
+                            +{{ getAllMedia(review).length - 4 }}
+                          </div>
+                        </div>
+                      </ng-container>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 mt-3">
+                      <span class="text-xs text-gray-500">{{ review.timestamp | date:'MMM dd, yyyy' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Menu Button -->
+              <div class="flex-shrink-0 relative">
+                <button 
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200 rounded-lg hover:bg-gray-100"
+                  (click)="toggleMenu(review, $event)"
+                  title="More options">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                  </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div *ngIf="review.showMenu" 
+                     class="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-10">
+                  <button 
+                    class="w-full px-4 py-3 text-left text-sm text-blue-600 hover:bg-blue-50 transition-colors duration-200 flex items-center space-x-2"
+                    (click)="editReview(review)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    <span>Edit review</span>
+                  </button>
+                  <button 
+                    class="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 flex items-center space-x-2"
+                    (click)="deleteReview(review)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    <span>Delete review</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div *ngIf="reviews.length > 0" class="px-8 py-4 border-t border-gray-100 bg-gray-50">
+        <div class="flex items-center justify-between text-sm text-gray-500">
+          <span>{{ reviews.length }} total reviews</span>
+          <span>{{ getAverageRating() }} average rating</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Media Preview Modal -->
-<div *ngIf="mediaModalOpen" class="media-modal-backdrop">
-  <div class="media-modal-content">
-    <button class="media-modal-close" (click)="closeMediaModal()">&times;</button>
-    <button *ngIf="mediaModalCanGoLeft" class="media-modal-arrow left" (click)="mediaModalPrev()">
-      <i class="bi bi-chevron-left"></i>
+<div *ngIf="mediaModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+  <div class="relative max-w-4xl w-full max-h-[90vh] bg-white/90 rounded-xl overflow-hidden shadow-2xl">
+    <button 
+      class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-white/80 rounded-full backdrop-blur-sm hover:bg-gray-100 transition-colors"
+      (click)="closeMediaModal()">
+      <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
     </button>
-    <button *ngIf="mediaModalCanGoRight" class="media-modal-arrow right" (click)="mediaModalNext()">
-      <i class="bi bi-chevron-right"></i>
+    
+    <button *ngIf="mediaModalCanGoLeft" 
+            class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/80 rounded-full backdrop-blur-sm hover:bg-gray-100 transition-colors"
+            (click)="mediaModalPrev()">
+      <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
     </button>
-    <ng-container *ngIf="mediaModalCurrentType === 'image'">
-      <img [src]="mediaModalCurrentUrl" class="media-modal-media" alt="Media Preview" />
-    </ng-container>
-    <ng-container *ngIf="mediaModalCurrentType === 'video'">
-      <video [src]="mediaModalCurrentUrl" class="media-modal-media" controls></video>
-    </ng-container>
-    <!-- <div class="media-modal-comment mt-3">
-      {{ mediaModalCurrentReview?.comment }}
-    </div> -->
+    
+    <button *ngIf="mediaModalCanGoRight" 
+            class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 flex items-center justify-center bg-white/80 rounded-full backdrop-blur-sm hover:bg-gray-100 transition-colors"
+            (click)="mediaModalNext()">
+      <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+    
+    <div class="flex items-center justify-center h-full">
+      <img *ngIf="mediaModalCurrentType === 'image'" [src]="mediaModalCurrentUrl" class="max-w-full max-h-[80vh] object-contain" alt="Media Preview" />
+      <video *ngIf="mediaModalCurrentType === 'video'" [src]="mediaModalCurrentUrl" class="max-w-full max-h-[80vh]" controls autoplay></video>
+    </div>
+    
+    <div class="absolute bottom-4 left-0 right-0 flex justify-center">
+      <div class="flex space-x-2 bg-white/80 px-4 py-2 rounded-full backdrop-blur-sm">
+        <span class="text-sm font-medium text-gray-700">
+          {{ mediaModalCurrentIndex + 1 }} of {{ mediaModalTotalItems }}
+        </span>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- Edit Review Modal -->
-<div class="modal fade" id="editReviewModal" tabindex="-1" aria-labelledby="editReviewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-      <div class="modal-content p-3">
-        <div class="modal-header">
-          <h5 class="modal-title">Edit Review</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
-                  (click)="cancelEdit()"></button>
-        </div>
-        <div class="modal-body">
-  
-          <!-- Rating Stars -->
-          <div class="mb-2 d-flex align-items-center gap-2">
-            <label class="form-label mb-0">Rating:</label>
-            <span class="star-rating-input attractive-stars">
-              <ng-container *ngFor="let r of [1,2,3,4,5]">
-                <i class="bi"
-                   [ngClass]="newRating >= r ? 'bi-star-fill star-animated star-filled' : 'bi-star star-animated'"
-                   (mouseenter)="newRating = r"
-                   (mouseleave)="newRating = newRating"
-                   (click)="newRating = r"></i>
-              </ng-container>
-            </span>
-          </div>
-  
-          <!-- Review Text -->
-          <textarea [(ngModel)]="newReview"
-                    (ngModelChange)="reviewCommentError=''"
-                    class="form-control mb-3"
-                    rows="2"
-                    placeholder="Edit your review..."></textarea>
-          <div *ngIf="reviewCommentError" class="text-danger mb-2">{{ reviewCommentError }}</div>
-  
-          <!-- Existing Media -->
-          <div class="d-flex flex-wrap gap-2 mb-3"
-               *ngIf="mediaModalCurrentReview?.imageUrls?.length || mediaModalCurrentReview?.videoUrls?.length">
-            <!-- Existing Images -->
-            <ng-container *ngFor="let imageUrl of mediaModalCurrentReview.imageUrls">
-              <div class="position-relative">
-                <img [src]="'http://localhost:8080' + imageUrl"
-                     class="rounded"
-                     style="width: 80px; height: 80px; object-fit: cover;" />
-                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
-                        (click)="removeExistingMedia(imageUrl, 'image')"
-                        style="z-index:2; padding:2px 6px;">&times;</button>
-              </div>
-            </ng-container>
-  
-            <!-- Existing Videos -->
-            <ng-container *ngFor="let videoUrl of mediaModalCurrentReview.videoUrls">
-              <div class="position-relative">
-                <video [src]="'http://localhost:8080' + videoUrl" controls
-                       style="width: 80px; height: 80px; object-fit: cover;"></video>
-                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
-                        (click)="removeExistingMedia(videoUrl, 'video')"
-                        style="z-index:2; padding:2px 6px;">&times;</button>
-              </div>
-            </ng-container>
-          </div>
-  
-          <!-- Upload New Media -->
-          <input type="file" accept="image/*,video/*"
-                 (change)="onFilesSelected($event)"
-                 class="form-control mb-2" multiple />
-          <div *ngIf="reviewFileError" class="text-danger mb-2">{{ reviewFileError }}</div>
-  
-          <!-- Preview New Files -->
-          <div class="d-flex flex-wrap gap-2" *ngIf="selectedReviewFiles.length">
-            <ng-container *ngFor="let file of selectedReviewFiles; let i = index">
-              <div class="position-relative">
-                <img *ngIf="file.type.startsWith('image')" [src]="file.preview"
-                     class="rounded"
-                     style="width: 80px; height: 80px; object-fit: cover;" />
-                <video *ngIf="file.type.startsWith('video')" [src]="file.preview" controls
-                       style="width: 80px; height: 80px; object-fit: cover;"></video>
-                <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0"
-                        (click)="removeSelectedFile(i)"
-                        style="z-index:2; padding:2px 6px;">&times;</button>
-              </div>
-            </ng-container>
-          </div>
-  
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" data-bs-dismiss="modal" (click)="cancelEdit()">Cancel</button>
-          <button class="btn btn-success" (click)="submitReview()">Update Review</button>
+<div *ngIf="editModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+  <div class="relative max-w-2xl w-full bg-white/90 rounded-xl overflow-hidden shadow-2xl">
+    <button 
+      class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-white/80 rounded-full backdrop-blur-sm hover:bg-gray-100 transition-colors"
+      (click)="cancelEdit()">
+      <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+    
+    <div class="p-8">
+      <h3 class="text-2xl font-bold text-gray-900 mb-6">Edit Your Review</h3>
+      
+      <!-- Rating -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Your Rating</label>
+        <div class="flex items-center space-x-1">
+          <button *ngFor="let r of [1,2,3,4,5]" (click)="newRating = r" class="focus:outline-none">
+            <svg class="w-8 h-8" [class.text-amber-400]="newRating >= r" [class.text-gray-300]="newRating < r" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+          </button>
         </div>
       </div>
+      
+      <!-- Review Text -->
+      <div class="mb-6">
+        <label for="review-text" class="block text-sm font-medium text-gray-700 mb-2">Your Review</label>
+        <textarea 
+          id="review-text"
+          [(ngModel)]="newReview" 
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+          rows="4"
+          placeholder="Share your thoughts about this product..."></textarea>
+        <div *ngIf="reviewCommentError" class="mt-2 text-sm text-red-600">{{ reviewCommentError }}</div>
+      </div>
+      
+      <!-- Media -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Media</label>
+        
+        <!-- Existing Media -->
+        <div *ngIf="mediaModalCurrentReview?.imageUrls?.length || mediaModalCurrentReview?.videoUrls?.length" class="flex flex-wrap gap-3 mb-4">
+          <ng-container *ngFor="let imageUrl of mediaModalCurrentReview.imageUrls">
+            <div class="relative">
+              <img [src]="imageUrl" class="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+              <button 
+                (click)="removeExistingMedia(imageUrl, 'image')"
+                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </ng-container>
+          
+          <ng-container *ngFor="let videoUrl of mediaModalCurrentReview.videoUrls">
+            <div class="relative">
+              <video [src]="videoUrl" class="w-20 h-20 object-cover rounded-lg border border-gray-200"></video>
+              <button 
+                (click)="removeExistingMedia(videoUrl, 'video')"
+                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </ng-container>
+        </div>
+        
+        <!-- Add New Media -->
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+          <input 
+            type="file" 
+            id="review-media"
+            accept="image/*,video/*" 
+            (change)="onFilesSelected($event)" 
+            multiple
+            class="hidden" />
+          <label for="review-media" class="cursor-pointer">
+            <svg class="w-10 h-10 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <p class="mt-2 text-sm text-gray-600">Click to upload photos or videos</p>
+            <p class="text-xs text-gray-500">PNG, JPG, MP4 up to 10MB</p>
+          </label>
+        </div>
+        <div *ngIf="reviewFileError" class="mt-2 text-sm text-red-600">{{ reviewFileError }}</div>
+        
+        <!-- Preview Selected Files -->
+        <div *ngIf="selectedReviewFiles.length" class="flex flex-wrap gap-3 mt-4">
+          <ng-container *ngFor="let file of selectedReviewFiles; let i = index">
+            <div class="relative">
+              <img *ngIf="file.type.startsWith('image')" [src]="file.preview" class="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+              <video *ngIf="file.type.startsWith('video')" [src]="file.preview" class="w-20 h-20 object-cover rounded-lg border border-gray-200"></video>
+              <button 
+                (click)="removeSelectedFile(i)"
+                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+      
+      <!-- Actions -->
+      <div class="flex justify-end space-x-3">
+        <button 
+          (click)="cancelEdit()"
+          class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+          Cancel
+        </button>
+        <button 
+          (click)="submitReview()"
+          class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+          Update Review
+        </button>
+      </div>
     </div>
-  </div>  
+  </div>
+</div> 

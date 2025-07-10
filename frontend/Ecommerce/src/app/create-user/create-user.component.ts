@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
+
+declare var lucide: any;
 
 interface RoleInfo {
   name: string;
@@ -23,7 +25,7 @@ interface CSVUser {
   templateUrl: './create-user.component.html',
   styleUrls: ['./create-user.component.css']
 })
-export class CreateUserComponent implements OnInit {
+export class CreateUserComponent implements OnInit, AfterViewInit {
   userForm: FormGroup;
   isSubmitting = false;
   showPassword = false;
@@ -69,6 +71,14 @@ export class CreateUserComponent implements OnInit {
 
   ngOnInit(): void {
     this.setupFormSubscriptions();
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined' && (window as any).lucide) {
+      (window as any).lucide.createIcons();
+    } else if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   }
 
   createForm(): FormGroup {

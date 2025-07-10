@@ -1,182 +1,59 @@
-.notifications-section {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* Custom styles for user-notifications component */
+/* Most styling is now handled by Tailwind CSS */
+
+/* Custom scrollbar for notifications list */
+.max-h-96::-webkit-scrollbar {
+  width: 6px;
 }
 
-.notifications-section h3 {
-    margin-top: 0;
-    color: #333;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-    font-weight: 600;
+.max-h-96::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
 }
 
-.notifications-list {
-    max-height: 450px;
-    overflow-y: auto;
-    padding-right: 10px;
+.max-h-96::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 50px 20px;
-    color: #888;
+.max-h-96::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
-.empty-state i {
-    font-size: 48px;
-    margin-bottom: 15px;
-    color: #ccc;
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.3s ease;
 }
 
-.notification-item {
-    display: flex;
-    align-items: flex-start;
-    padding: 15px 10px;
-    border-bottom: 1px solid #e9e9e9;
-    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    border-radius: 5px;
-    margin-bottom: 5px;
-    position: relative;
-    background-color: #fff;
-    cursor: pointer;
-    z-index: 1;
+/* Loading states */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
-.notification-item:last-child {
-    border-bottom: none;
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
+.notification-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Focus states for accessibility */
+button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Custom dropdown positioning */
+.dropdown-menu {
+  z-index: 1000;
+}
+
+/* Hover effects for better UX */
 .notification-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-}
-
-.notification-item:hover,
-.notification-item.menu-open {
-    z-index: 2;
-}
-
-.notification-item.unread {
-    background-color: #e8f0fe;
-}
-
-.notification-item.unread:hover {
-    background-color: #dce7fa;
-}
-
-.notification-icon {
-    margin-right: 15px;
-    color: #4a90e2;
-    font-size: 20px;
-    padding-top: 3px;
-}
-
-.notification-content {
-    flex-grow: 1;
-}
-
-.notification-content p {
-    margin: 0 0 5px 0;
-    color: #333;
-    line-height: 1.5;
-    font-size: 14px;
-}
-
-.timestamp {
-    font-size: 12px;
-    color: #777;
-    font-weight: 500;
-}
-
-.menu-container {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-}
-
-.menu-btn {
-    background: none;
-    border: none;
-    color: #aaa;
-    font-size: 16px;
-    cursor: pointer;
-    padding: 5px;
-    line-height: 1;
-    border-radius: 50%;
-    transition: color 0.2s ease, background-color 0.2s ease;
-}
-
-.menu-btn:hover {
-    color: #333;
-    background-color: #f1f1f1;
-}
-
-.menu-dropdown {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background-color: #fff;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    border: 1px solid #ddd;
-    z-index: 10;
-    overflow: hidden;
-    min-width: 200px;
-    padding: 5px 0;
-}
-
-.menu-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: none;
-    border: none;
-    width: 100%;
-    text-align: left;
-    padding: 10px 15px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.menu-item:hover {
-    background-color: #f5f5f5;
-}
-
-.menu-item.delete {
-    color: #d32f2f;
-}
-
-.menu-item.delete:hover {
-    background-color: #fbe9e7;
-}
-
-.menu-item i {
-    width: 16px;
-    text-align: center;
-    margin-right: 5px;
-}
-
-/* Custom Scrollbar */
-.notifications-list::-webkit-scrollbar {
-    width: 6px;
-}
-
-.notifications-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.notifications-list::-webkit-scrollbar-thumb {
-    background: #ccc;
-    border-radius: 10px;
-}
-
-.notifications-list::-webkit-scrollbar-thumb:hover {
-    background: #aaa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }

@@ -36,6 +36,11 @@ export class UserProfileComponent implements OnInit {
 
   activeSection: string = 'orders';
 
+  breadcrumbItems = [
+    { label: 'Home', link: '/home' },
+    { label: 'Profile' }
+  ];
+
   constructor(
     private authService: AuthService,
     private router: Router,

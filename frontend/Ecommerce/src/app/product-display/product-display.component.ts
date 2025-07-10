@@ -95,6 +95,12 @@ export class ProductDisplayComponent implements OnInit {
 
   userId: number | null = null;
 
+  breadcrumbItems = [
+    { label: 'Home', link: '/home' },
+    { label: 'Products', link: '/products' },
+    { label: 'Product Display' }
+  ];
+
   constructor(
     
     private cartService: CartService,

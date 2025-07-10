@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { OrderService } from '../services/order.service';
 import { UserOrderListDTO } from '../user-order';
 import { AuthService } from '../auth/auth.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 declare var $: any;
+declare var lucide: any;
 
 // Extended interface to include checked property for selection
 interface OrderWithSelection extends UserOrderListDTO {
@@ -17,7 +18,7 @@ interface OrderWithSelection extends UserOrderListDTO {
   templateUrl: './order-management.component.html',
   styleUrl: './order-management.component.css'
 })
-export class OrderManagementComponent implements OnInit {
+export class OrderManagementComponent implements OnInit, AfterViewInit {
   orders: OrderWithSelection[] = [];
   filteredOrders: OrderWithSelection[] = [];
   selectedOrder: UserOrderListDTO | null = null;
@@ -72,6 +73,14 @@ export class OrderManagementComponent implements OnInit {
     this.loadOrders();
   }
 
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined' && (window as any).lucide) {
+      (window as any).lucide.createIcons();
+    } else if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+
   loadOrders() {
     this.orderService.getAllOrder().subscribe({
       next: (data) => {
@@ -86,6 +95,11 @@ export class OrderManagementComponent implements OnInit {
             ],
             order: [[2, 'desc']] // Sort by order date descending
           });
+          if (typeof window !== 'undefined' && (window as any).lucide) {
+            (window as any).lucide.createIcons();
+          } else if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
         }, 100);
       },
       error: (err) => {

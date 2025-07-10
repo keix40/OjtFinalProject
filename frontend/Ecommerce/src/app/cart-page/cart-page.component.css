@@ -1,63 +1,337 @@
-body, .container, .container-fluid {
-  background: #F1F5F9 !important;
-  font-family: 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-}
-.cart-product-card {
-  background: #fff !important;
-  color: #222 !important;
-  border: none;
-  box-shadow: 0 4px 24px rgba(44,62,80,0.10);
-  border-radius: 12px !important;
-  min-height: 120px;
-}
-.cart-item-img {
-  width: 80px;
-  height: 80px;
-  object-fit: cover;
-  border-radius: 1rem;
-  border: 2px solid #e0e0e0;
-}
-.cart-summary-box {
-  background: #F9FAFB !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 24px rgba(44,62,80,0.10);
-}
-.bg-white {
-  background: #fff !important;
-}
-.text-dark {
-  color: #222 !important;
-}
-.btn-outline-light, .btn-outline-secondary {
-  border-radius: 8px;
-  font-weight: bold;
-}
-.btn-outline-light {
-  border-color: #222;
-  color: #222;
-}
-.btn-outline-light:hover {
-  background: #222;
-  color: #fff;
-}
-.rounded-4, .rounded-3 {
-  border-radius: 12px !important;
-}
-.quantity-stepper {
-  background: #F1F5F9;
-  border-radius: 999px;
-  padding: 4px 16px;
-  font-size: 15px;
-}
-.card {
-  border-radius: 12px !important;
-}
-@media (max-width: 991.98px) {
-  .cart-product-card {
-    padding: 1.2rem !important;
+/* Cool Animations for Cart Page */
+
+/* Slide up animation for main content */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
-  .cart-item-img {
-    width: 60px;
-    height: 60px;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-} 
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Bounce animation for buttons */
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -8px, 0);
+  }
+  70% {
+    transform: translate3d(0, -4px, 0);
+  }
+  90% {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+/* Pulse animation for loading states */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Shake animation for error states */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+/* Rotate animation for icons */
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Scale animation for hover effects */
+@keyframes scale {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
+}
+
+/* Apply animations to elements */
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.animate-bounce {
+  animation: bounce 0.6s ease-out;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+.animate-rotate {
+  animation: rotate 1s linear infinite;
+}
+
+.animate-scale {
+  animation: scale 0.2s ease-out;
+}
+
+/* Hover effects */
+.hover-lift {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Button hover animations */
+.btn-hover-effect {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-hover-effect::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-hover-effect:hover::before {
+  left: 100%;
+}
+
+/* Cart item animations */
+.cart-item-enter {
+  animation: slideUp 0.4s ease-out;
+}
+
+.cart-item-exit {
+  animation: fadeIn 0.3s ease-out reverse;
+}
+
+/* Quantity button animations - Improved for mobile */
+.qty-btn {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 44px; /* Minimum touch target size */
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.qty-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.qty-btn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  .qty-btn {
+    min-width: 48px;
+    min-height: 48px;
+  }
+  
+  .qty-btn:hover {
+    transform: none; /* Disable hover effects on mobile */
+  }
+  
+  .qty-btn:active {
+    transform: scale(0.95);
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Remove button animation */
+.remove-btn {
+  transition: all 0.2s ease;
+  min-width: 44px;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.remove-btn:hover {
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Image hover effects */
+.product-image {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.product-image:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Checkout button special effect */
+.checkout-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.checkout-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.checkout-btn:hover::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Loading skeleton animation */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Stagger animation for cart items */
+.cart-item:nth-child(1) { animation-delay: 0.1s; }
+.cart-item:nth-child(2) { animation-delay: 0.2s; }
+.cart-item:nth-child(3) { animation-delay: 0.3s; }
+.cart-item:nth-child(4) { animation-delay: 0.4s; }
+.cart-item:nth-child(5) { animation-delay: 0.5s; }
+
+/* Floating animation for icons */
+.floating {
+  animation: floating 3s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Glow effect for important elements */
+.glow {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  transition: box-shadow 0.3s ease;
+}
+
+.glow:hover {
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+}
+
+/* Success animation */
+.success-animation {
+  animation: successPulse 0.6s ease-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Touch manipulation improvements */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Prevent text selection on quantity numbers */
+.select-none {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Responsive text wrapping */
+.break-words {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Ensure proper spacing on mobile */
+@media (max-width: 640px) {
+  .cart-item {
+    padding: 1rem;
+  }
+  
+  .product-image {
+    width: 80px;
+    height: 80px;
+  }
+}

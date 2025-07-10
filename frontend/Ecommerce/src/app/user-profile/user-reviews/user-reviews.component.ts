@@ -50,4 +50,10 @@ export class UserReviewsComponent implements OnInit {
     this.userReviews = this.userReviews.filter(r => r.id !== review.id);
   }
 
+  getAverageRating(): string {
+    if (!this.userReviews.length) return '0.0';
+    const sum = this.userReviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+    return (sum / this.userReviews.length).toFixed(1);
+  }
+
 }

@@ -7,7 +7,6 @@ import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TestComponent } from './test/test.component';
-import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
@@ -43,7 +42,6 @@ import { CreateUserComponent } from './create-user/create-user.component';
 import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
 import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
-import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
 import { RoleService } from './services/role.service';
 import { PermissionService } from './services/permission.service';
@@ -54,12 +52,20 @@ import { UserProductDetailComponent } from './user-product-detail/user-product-d
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
+import { BreadcrumbComponent } from './breadcrumb.component';
+import { OverlayModule } from '@angular/cdk/overlay';
+import { HomeComponent } from './home/home.component';
+import { UserProductListComponent } from './user-product-list/user-product-list';
+import { FooterComponent } from './footer/footer.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { LucideAngularModule, Router } from 'lucide-angular';
 
 @NgModule({
   declarations: [
     AppComponent,
     TestComponent,
     HomeComponent,
+    UserProductListComponent,
     LoginComponent,
     RegisterComponent,
     HeaderComponent,
@@ -89,7 +95,6 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     ActivityLogsComponent,
     AdminUsersComponent,
     RolesPermissionsComponent,
-    VipCustomersComponent,
     LoginAttemptsComponent,
     UserProductDetailComponent,
     ReviewComponent,
@@ -110,6 +115,15 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     ProductDetailComponent,
     BlacklistComponent,
     BrowserAnimationsModule,
+    BreadcrumbComponent,
+    OverlayModule,
+    FooterComponent,
+    DashboardComponent,
+    LucideAngularModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    RouterModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
