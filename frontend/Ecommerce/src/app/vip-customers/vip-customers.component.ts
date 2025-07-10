@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ImageService } from '../services/image.service';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 interface VipCustomer {
   id: string;
@@ -54,8 +56,9 @@ interface SearchResult {
 @Component({
   selector: 'app-vip-customers',
   templateUrl: './vip-customers.component.html',
-  standalone: false,
-  styleUrls: ['./vip-customers.component.css']
+  standalone: true,
+  styleUrls: ['./vip-customers.component.css'],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule]
 })
 export class VipCustomersComponent implements OnInit {
   // Data properties

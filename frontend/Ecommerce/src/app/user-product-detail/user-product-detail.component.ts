@@ -93,6 +93,8 @@ export class UserProductDetailComponent implements OnInit {
 
   wishlist: Set<number> = new Set<number>();
 
+  productId?: number;
+
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
@@ -106,50 +108,53 @@ export class UserProductDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.currentUser = this.authService.getUsername() || '';
-    const productId = this.route.snapshot.paramMap.get('id');
-    if (productId) {
-      this.productService.getProductDetailById(productId).subscribe(data => {
-        this.product = {
-          ...data,
-          categoryBrandPairs: data.categoryBrandArray || [],
-          images: (data.productImages || []).map((img: any) => ({
-            id: img.id,
-            url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
-            isMain: false,
-            status: img.status === 1 ? 'active' : 'inactive',
-            variantId: img.variantId || null
-          })),
-          variants: (data.variants || []).map((variant: any) => ({
-            id: variant.id,
-            sku: variant.sku,
-            price: variant.price,
-            stock: variant.stock,
-            images: (data.productImages || []).filter((img: any) => img.variantId === variant.id).map((img: any) => ({
+    this.route.paramMap.subscribe(params => {
+      const idParam = params.get('id');
+      this.productId = idParam ? +idParam : undefined;
+      if (this.productId) {
+        this.productService.getProductDetailById(this.productId.toString()).subscribe(data => {
+          this.product = {
+            ...data,
+            categoryBrandPairs: data.categoryBrandArray || [],
+            images: (data.productImages || []).map((img: any) => ({
               id: img.id,
               url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
               isMain: false,
               status: img.status === 1 ? 'active' : 'inactive',
               variantId: img.variantId || null
             })),
-            attributes: (variant.attributes || []).map((attr: any) => ({
-              attributeId: attr.attributeId,
-              attributeName: attr.attributeName,
-              valueId: attr.valueId,
-              value: attr.value
+            variants: (data.variants || []).map((variant: any) => ({
+              id: variant.id,
+              sku: variant.sku,
+              price: variant.price,
+              stock: variant.stock,
+              images: (data.productImages || []).filter((img: any) => img.variantId === variant.id).map((img: any) => ({
+                id: img.id,
+                url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
+                isMain: false,
+                status: img.status === 1 ? 'active' : 'inactive',
+                variantId: img.variantId || null
+              })),
+              attributes: (variant.attributes || []).map((attr: any) => ({
+                attributeId: attr.attributeId,
+                attributeName: attr.attributeName,
+                valueId: attr.valueId,
+                value: attr.value
+              }))
             }))
-          }))
-        };
+          };
 
-        this.selectedVariant = null;
-        this.displayedImages = this.product.images;
-        if (this.displayedImages.length > 0) {
-          this.selectedImage = this.displayedImages[0].url;
-        }
-      });
-    }
+          this.selectedVariant = null;
+          this.displayedImages = this.product.images;
+          if (this.displayedImages.length > 0) {
+            this.selectedImage = this.displayedImages[0].url;
+          }
+        });
+      }
+    });
 
-    if (productId) {
-      this.reviewService.connect(+productId, this.currentUser); // ADD THIS LINE
+    if (this.productId) {
+      this.reviewService.connect(this.productId, this.currentUser);
     }
     this.loadReviews();
   }

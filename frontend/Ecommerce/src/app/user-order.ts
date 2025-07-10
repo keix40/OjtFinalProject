@@ -11,9 +11,11 @@ export interface UserOrder {
         price : number,
         variantId?: number | null; 
     }[]
+    cardId?: number;
 }
 
 export interface OrderProductDTO {
+  productId: number;
   productName: string;
   quantity: number;
   unitPrice: number;
@@ -66,4 +68,48 @@ export interface UserOrderListDTO {
   products: OrderProductDTO[];
   user: UserDTO;
   address: AddressDTO;
+  statusHistory: {
+    status: string;
+    statusDate: string;
+  }[];
+  returnRequests: ReturnRequestDTO[];
+  cardInfo?: CardInfoDTO;
+}
+
+export interface ReturnRequestDTO {
+  id: number;
+
+  userId: number;
+  userName: string;
+
+  orderId: number;
+  orderCode: string;
+  orderDate: string;
+
+  orderProductId: number;
+  productName: string;
+  variantName?: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+
+  reasonForReturn: string;
+  returnDetail?: string;
+  status: string;
+  adminRemark?: string;
+
+  requestedAt: string;
+  cancelledAt?: string;
+  decisionAt?: string;
+
+  imageUrls: string[];
+
+  orderStatusAtCancelRequest?: string;
+}
+
+export interface CardInfoDTO {
+  cardBrand: string;
+  maskedCardNumber: string;
+  cardholderName: string;
+  expiryDate: string;
 }

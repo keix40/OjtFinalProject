@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RoleService } from '../services/role.service';
 import { PermissionService } from '../services/permission.service';
 import { AuthService } from '../auth/auth.service';
@@ -8,6 +8,7 @@ import { forkJoin } from 'rxjs';
 import { ImageService } from '../services/image.service';
 import { HttpClient } from '@angular/common/http';
 import { PermissionCategoryService } from '../services/permission-category.service';
+import { CommonModule } from '@angular/common';
 
 interface Role {
   id: number;
@@ -57,8 +58,9 @@ interface User {
 @Component({
   selector: 'app-roles-permissions',
   templateUrl: './roles-permissions.component.html',
-  standalone: false,
-  styleUrls: ['./roles-permissions.component.css']
+  standalone: true,
+  styleUrls: ['./roles-permissions.component.css'],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule]
 })
 export class RolesPermissionsComponent implements OnInit {
   // Data properties

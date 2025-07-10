@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../services/order.service';
+import { ModalService } from '../services/modal.service';
+import { ReturnService } from '../services/return.service';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-order-tracking',
@@ -13,16 +16,31 @@ export class OrderTrackingComponent {
   isLoading = true;
   error: string | null = null;
   statusSteps = ['Order Placed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
-  orderCode: string = '';
+  showAllStatus: boolean = false;
+  stopStatuses = ['CANCELLED', 'RETURNED'];
+  orderStatusAtCancelRequest: string | null = null;
 
-  constructor(private route: ActivatedRoute, private orderService: OrderService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private orderService: OrderService,
+    private modalService: ModalService,
+    private returnService: ReturnService
+  ) {}
 
   ngOnInit(): void {
+    this.loadOrderTracking();
+  }
+
+  loadOrderTracking() {
     const orderId = this.route.snapshot.paramMap.get('orderId');
     if (orderId) {
       this.orderService.getOrderById(+orderId).subscribe({
         next: (order) => {
-          this.order = order;  // order now has the typed DTO structure
+          // Sort statusHistory ascending (oldest first)
+          order.statusHistory = order.statusHistory?.sort(
+            (a: any, b: any) => new Date(a.statusDate).getTime() - new Date(b.statusDate).getTime()
+          );
+          this.order = order;
           this.isLoading = false;
         },
         error: () => {
@@ -32,9 +50,8 @@ export class OrderTrackingComponent {
       });
     }
   }
-
+  
   getCurrentStep(): number {
-    // Map your order.status to the step index
     const statusMap: any = {
       'PENDING': 0,
       'PROCESSING': 1,
@@ -42,12 +59,109 @@ export class OrderTrackingComponent {
       'OUT_FOR_DELIVERY': 3,
       'DELIVERED': 4
     };
-    return statusMap[this.order?.status?.toUpperCase()] ?? 0;
+
+    if (!this.order?.statusHistory?.length) return 0;
+    const latest = [...this.order.statusHistory]
+      .sort((a, b) => new Date(b.statusDate).getTime() - new Date(a.statusDate).getTime())[0];
+    return statusMap[latest.status?.toUpperCase()] ?? 0;
   }
 
-  trackOrder() {
-    // Stub: You can implement order tracking logic here
-    console.log('Track order for code:', this.orderCode);
+  toggleShowAllStatus() {
+    this.showAllStatus = !this.showAllStatus;
   }
+  
+
+  getDeliveredDate(): Date | null {
+    const delivered = this.order?.statusHistory?.find(
+      (s: any) => s.status.toUpperCase() === 'DELIVERED'
+    );
+    return delivered ? new Date(delivered.statusDate) : null;
+  }
+
+  getLastNonCancelledStatus(): string {
+    if (!this.order?.statusHistory?.length) return 'UNKNOWN';
+  
+    const stopStatuses = ['CANCELLED', 'RETURNED'];
+  
+    const nonStopStatus = [...this.order.statusHistory]
+      .filter(s => !stopStatuses.includes(s.status?.toUpperCase()))
+      .sort((a, b) => new Date(b.statusDate).getTime() - new Date(a.statusDate).getTime());
+  
+    return nonStopStatus.length > 0
+      ? String(nonStopStatus[0].status)
+      : 'UNKNOWN';
+  }  
+
+  goToReturnRequest() {
+    const lastStatus = this.getLastNonCancelledStatus();
+    this.orderStatusAtCancelRequest = lastStatus;
+
+    const orderId = Number(this.route.snapshot.paramMap.get('orderId'));
+    if (orderId) {
+      this.modalService.openReturnRequestModal(orderId, lastStatus).then((result) => {
+        if (result === 'success') {
+          this.loadOrderTracking();
+        }
+      });
+    }
+  }
+
+  cancelReturnRequest(returnRequestId: number) {
+    if (!this.order || !this.order.orderId) {
+      console.error('Order not loaded or missing ID.');
+      return;
+    }
+  
+    this.modalService.showConfirmation(
+      'Cancel Return Request',
+      'Are you sure you want to cancel this return request?'
+    ).then((confirmed: boolean) => {
+      if (confirmed) {
+        this.returnService.cancelReturnRequest(returnRequestId).subscribe({
+          next: () => {
+            this.loadOrderTracking();
+            this.orderService.updateOrderStatus(this.order.orderId, this.getLastNonCancelledStatus()).subscribe({
+              next: () => {
+                this.loadOrderTracking();
+              },
+              error: (err: any) => {
+                console.error('Failed to update order status:', err);
+              }
+            });
+  
+            const request = this.order.returnRequests.find((r: any) => r.id === returnRequestId);
+            if (request) {
+              request.status = 'CANCELLED';
+              request.cancelledAt = new Date().toISOString();
+            }
+          },
+          error: (err: any) => {
+            console.error('Failed to cancel return request:', err);
+          }
+        });
+      }
+    });
+  }
+
+  isReturned(): boolean {
+    return this.order?.status === 'RETURNED' ||
+           this.order?.statusHistory?.some((s: any) => s.status.toUpperCase() === 'RETURNED');
+  }
+
+  formatReason(reason: string): string {
+    return reason ? reason.replace(/_/g, ' ') : '';
+  }
+
+  isStopStatus(status: string): boolean {
+    return this.stopStatuses.includes(status?.toUpperCase());
+  }
+
+  isSameStatusDate(statusDate: string, requestedAt: string): boolean {
+    if (!statusDate || !requestedAt) return false;
+    const d1 = new Date(statusDate);
+    const d2 = new Date(requestedAt);
+    return Math.abs(d1.getTime() - d2.getTime()) < 10 * 60 * 1000; // 10 minutes
+  }
+  
 }
   

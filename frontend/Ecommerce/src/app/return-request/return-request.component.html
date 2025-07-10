@@ -1,0 +1,61 @@
+<div class="return-request-modal">
+  <button class="close-btn" type="button" (click)="closeModal()">&times;</button>
+  <h2 class="modal-title">Return Request</h2>
+
+  <form (ngSubmit)="onSubmit()" #returnForm="ngForm">
+    <div class="form-group">
+      <label for="orderCode">Order Code</label>
+      <input id="orderCode" name="orderCode" type="text" class="form-control" [value]="orderCode" readonly />
+    </div>
+
+    <div class="form-group">
+      <label for="product">Product</label>
+      <select id="product" name="product" class="form-control" [(ngModel)]="selectedProduct" required>
+        <option [ngValue]="null" disabled selected>Select a product</option>
+        <option *ngFor="let product of products" [ngValue]="product">
+          {{ product.productName }}
+        </option>
+      </select>
+    </div>
+
+    <div *ngIf="selectedProduct" class="product-preview">
+      Selected: {{ selectedProduct.productName }}
+    </div>
+
+    <div class="form-group">
+      <label for="reason">Reason for Return</label>
+      <select id="reason" name="reason" class="form-control" [(ngModel)]="reason" required>
+        <option value="" disabled selected>Select a reason</option>
+        <option value="WRONG_ITEM_DELIVERED">Wrong Item Delivered</option>
+        <option value="DAMAGED_ON_ARRIVAL">Damaged on Arrival</option>
+        <option value="CHANGED_MIND">Changed Mind</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="details">Return Details</label>
+      <textarea id="details" name="details" class="form-control" rows="3" [(ngModel)]="details"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Upload Image(s)</label>
+      <div class="file-upload-box">
+        <input id="file" name="file" type="file" class="file-input" (change)="onFileChange($event)" multiple />
+        <label for="file" class="file-label">
+          <span class="upload-icon">&#8682;</span>
+          <span>Choose file to upload</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Image Previews -->
+    <div class="image-preview" *ngIf="files.length > 0">
+      <div *ngFor="let url of previewUrls; let i = index" class="preview-item">
+        <img [src]="url" alt="Preview" class="preview-img" />
+        <button type="button" class="remove-img-btn" (click)="removeFile(i)">&times;</button>
+      </div>      
+    </div>
+
+    <button type="submit" class="submit-btn" [disabled]="!returnForm.form.valid">SUBMIT REQUEST</button>
+  </form>
+</div>

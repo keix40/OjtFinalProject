@@ -27,6 +27,11 @@ import { RolesPermissionsComponent } from './roles-permissions/roles-permissions
 import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReturnRequestComponent } from './return-request/return-request.component';
+import { ReturnListComponent } from './return-list/return-list.component';
+import { ReturnDetailComponent } from './return-detail/return-detail.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
@@ -68,18 +73,27 @@ const routes: Routes = [
       { path: 'users/vip', component: VipCustomersComponent},
       { path: 'users/blacklist', component: BlacklistComponent},
       { path: 'users/login-attempts', component: LoginAttemptsComponent},
+      { path: 'return', component: ReturnListComponent },
+      { path: 'return/:id', component: ReturnDetailComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
-  { path: '**', redirectTo: 'home', pathMatch: 'full' },
-  { path: 'ordertracking/:orderId', component: OrderTrackingComponent },
-  { path: 'user-product-detail/:id', component: UserProductDetailComponent },
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: 'ordertracking/:orderId', component: OrderTrackingComponent,  canActivate: [AuthGuard] },
+  { path: 'user-product-detail/:id', component: UserProductDetailComponent, canActivate: [AuthGuard] },
   { path: 'product/:id', component: UserProductDetailComponent },
   { path: 'review', component: ReviewComponent },
+  { path: 'return-request', component: ReturnRequestComponent },
+
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [
+    RouterModule.forRoot(routes),
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+  ],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }

@@ -42,18 +42,18 @@ import { CustomersComponent } from './customers/customers.component';
 import { CreateUserComponent } from './create-user/create-user.component';
 import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
-import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
-import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
-import { RoleService } from './services/role.service';
-import { PermissionService } from './services/permission.service';
-import { OrderManagementComponent } from './order-management/order-management.component';
-import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
-import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
 import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
+import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
+import { VipCustomersComponent } from './vip-customers/vip-customers.component';
+import { OrderManagementComponent } from './order-management/order-management.component';
+import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
+import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+import { ReturnRequestComponent } from './return-request/return-request.component';
+import { ReturnListComponent } from './return-list/return-list.component';
 
 @NgModule({
   declarations: [
@@ -88,14 +88,13 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     CreateUserComponent,
     ActivityLogsComponent,
     AdminUsersComponent,
-    RolesPermissionsComponent,
-    VipCustomersComponent,
     LoginAttemptsComponent,
     UserProductDetailComponent,
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
-    BlacklistComponent,
+    ReturnRequestComponent,
+    ReturnListComponent,
   ],
   imports: [
     BrowserModule,
@@ -107,16 +106,17 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     GoogleMapsModule,
     RouterModule,
     CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent,, // Standalone component must be imported here
+    CartSidebarComponent, // Standalone component must be imported here
     ProductDetailComponent,
+    BlacklistComponent,
+    RolesPermissionsComponent,
+    VipCustomersComponent,
     BrowserAnimationsModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
     AddressService,
-    RoleService,
-    PermissionService,
     AuthService,
   ],
   bootstrap: [AppComponent]
