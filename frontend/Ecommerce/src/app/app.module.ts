@@ -56,11 +56,6 @@ import { ReviewComponent } from './review/review.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
 import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
-import { MatInputModule } from '@angular/material/input';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
 import { DiscountPriceComponent } from './discount-price/discount-price.component';
 
@@ -123,11 +118,11 @@ import { DiscountPriceComponent } from './discount-price/discount-price.componen
    ProductDetailComponent,
     BrowserAnimationsModule,
     BlacklistComponent,
-    MatInputModule,
-    MatAutocompleteModule,
-    MatFormFieldModule,
-    MatIconModule,
-    MatButtonModule,
+    //MatInputModule,
+    //MatAutocompleteModule,
+    //MatFormFieldModule,
+    // MatIconModule,
+    //MatButtonModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
