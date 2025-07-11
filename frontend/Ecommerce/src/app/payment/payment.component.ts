@@ -7,6 +7,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrderConfirmComponent } from '../order-confirm/order-confirm.component';
+import { DiscountService } from '../services/discount.service';
+import { ProductService } from '../services/product.service';
+import { ProductDTO } from '../product';
 
 @Component({
   selector: 'app-payment',
@@ -31,11 +34,19 @@ export class PaymentComponent implements OnInit, OnDestroy {
   discountAmount: number = 0;
   deliveryFee: number = 0;
   
+  orderPreview: any = null;
+  isFirstTimeBuyerDiscount = false;
+  
   // Loading state
   isSubmitting: boolean = false;
   
   // Card form
   cardForm: FormGroup;
+  
+  activeDiscounts: any[] = [];
+  productDiscounts: Map<number, any> = new Map();
+  productDetails: Map<number, ProductDTO> = new Map();
+  productDiscountAmount: number = 0;
   
   private subscriptions: Subscription[] = [];
 
@@ -44,7 +55,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     private orderService: OrderService,
     private fb: FormBuilder,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private discountService: DiscountService,
+    private productService: ProductService
   ) {
     this.cardForm = this.fb.group({
       cardNumber: ['', [Validators.required, Validators.minLength(19), Validators.maxLength(19)]],
@@ -67,8 +80,14 @@ export class PaymentComponent implements OnInit, OnDestroy {
     this.discount = nav.discount;
     this.discountAmount = nav.discountAmount || 0;
     this.deliveryFee = nav.deliveryFee || 0;
-    
     this.paymentMethod = 'card';
+    this.orderPreview = nav.orderPreview || null;
+    if (this.orderPreview && this.orderPreview.discountAmount) {
+      this.discountAmount = this.orderPreview.discountAmount;
+    } else {
+      this.discountAmount = nav.discountAmount || 0;
+    }
+    this.productDiscountAmount = nav.productDiscountAmount || 0;
     
     // Debug logging
     console.log('Payment Component - Received data from checkout:', {
@@ -84,16 +103,146 @@ export class PaymentComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.cartService.getCartItems().subscribe(items => {
         this.cartItems = items;
+        this.loadProductDetails();
       })
     );
+    this,this.loadActiveDiscounts();
+  }
+
+  loadActiveDiscounts() {
+    this.discountService.getActiveDiscount().subscribe({
+      next: (discounts) => {
+        this.activeDiscounts = discounts;
+        this.calculateProductDiscounts();
+      }
+    });
+  }
+
+  loadProductDetails() {
+    const productIds = this.cartItems.map(item => item.productId || item.id);
+    if (productIds.length === 0) return;
+    this.productService.getProductsByIds(productIds).subscribe(products => {
+      products.forEach(product => {
+        this.productDetails.set(product.id, product);
+      });
+      this.calculateProductDiscounts();
+    });
+  }
+
+  calculateProductDiscounts() {
+    this.productDiscounts.clear();
+    this.cartItems.forEach(item => {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        const discount = this.findApplicableDiscount(product);
+        if (discount) {
+          this.productDiscounts.set(product.id, discount);
+        }
+      }
+    });
+  }
+
+  findApplicableDiscount(product: ProductDTO): any {
+    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+      return null;
+    }
+    for (const discount of this.activeDiscounts) {
+      const rules = discount.rules || [];
+      for (const rule of rules) {
+        if (this.isProductAffectedByRule(product, rule)) {
+          return {
+            id: discount.id,
+            name: discount.name,
+            discount_percent: discount.discount_percent,
+            discount_amount: discount.discount_amount,
+            discountType: discount.discountType,
+            targetType: rule.targetType,
+            eventName: discount.name
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  isProductAffectedByRule(product: ProductDTO, rule: any): boolean {
+    switch (rule.targetType) {
+      case 'PRODUCT':
+        return rule.productId === product.id;
+      case 'BRAND':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.brandId === rule.brandId);
+      case 'CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.categoryId === rule.categoryId);
+      case 'BRAND_CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.brandId === rule.brandId && pair.categoryId === rule.categoryId);
+      default:
+        return false;
+    }
+  }
+
+  getProductDiscount(productId: number): any {
+    if (this.isFirstTimeBuyerDiscount) return null;
+    return this.productDiscounts.get(productId);
+  }
+
+  getDiscountedPrice(product: ProductDTO): number {
+    if (this.isFirstTimeBuyerDiscount) return product.price;
+    const discount = this.getProductDiscount(product.id);
+    if (!discount) return product.price;
+    if (discount.discountType === 'PERCENTAGE') {
+      return product.price - (product.price * discount.discount_percent / 100);
+    } else {
+      return Math.max(0, product.price - discount.discount_amount);
+    }
+  }
+
+  getDiscountDisplayText(discount: any): string {
+    if (!discount) return '';
+    if (discount.discountType === 'PERCENTAGE') {
+      return `${discount.discount_percent}% OFF`;
+    } else {
+      return `Save ${discount.discount_amount} MMK`;
+    }
+  }
+
+  getTotalDiscount() {
+    // If first time buyer discount is active, only use that
+    if (this.isFirstTimeBuyerDiscount && this.orderPreview?.discountAmount > 0) {
+      return this.orderPreview.discountAmount;
+    }
+    if (this.productDiscountAmount) return this.productDiscountAmount;
+    let discount = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        const discounted = this.getDiscountedPrice(product);
+        if (discounted < product.price) {
+          discount += (product.price - discounted) * item.quantity;
+        }
+      }
+    }
+    return discount;
   }
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-  getSubtotal() {
-    return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+   getSubtotal() {
+    // Always return the sum of original prices
+    let subtotal = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        subtotal += product.price * item.quantity;
+      } else {
+        subtotal += item.price * item.quantity;
+      }
+    }
+    return subtotal;
   }
   
   getDeliveryCost() {
@@ -101,7 +250,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
   
   getTotal() {
-    return this.getSubtotal() + this.getDeliveryCost() - this.discountAmount;
+    // Always use subtotal - discount + shipping
+    return this.getSubtotal() - this.getTotalDiscount() + this.deliveryFee;
   }
 
   submitOrder() {
@@ -154,8 +304,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
           cartItems: this.cartItems,
           paymentMethod: this.paymentMethod,
           orderNumber: responseData.orderCode,
+          subtotal: this.getSubtotal(),
           deliveryFee: this.deliveryFee,
-          discountAmount: this.discountAmount,
+          discountAmount: this.getTotalDiscount(),
           cardInfo: this.cardForm.value,
           discount: this.discount
         };

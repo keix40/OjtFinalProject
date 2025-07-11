@@ -129,32 +129,27 @@
             <span class="text-muted">Subtotal</span>
             <span>{{ getSubtotal() | number:'1.0-0' }} MMK</span>
           </div>
+          <!-- Product-based discount (only if not first time buyer) -->
+          <div class="d-flex justify-content-between mb-2" *ngIf="!isFirstTimeBuyerDiscount && getTotalDiscount() > 0">
+            <span class="text-muted">Discount</span>
+            <span class="text-success">-{{ getTotalDiscount() | number:'1.0-0' }} MMK</span>
+          </div>
+          <!-- First time buyer discount (only if active) -->
+          <div class="d-flex justify-content-between mb-2" *ngIf="isFirstTimeBuyerDiscount && orderPreview?.discountAmount > 0">
+            <span class="text-muted">Discount</span>
+            <span class="text-success">
+              (First time buyer 10%) -{{ orderPreview.discountAmount | number:'1.0-0' }} MMK
+            </span>
+          </div>
           <div class="d-flex justify-content-between mb-2">
             <span class="text-muted">Shipping cost</span>
             <span>{{ getDeliveryCost() | number:'1.0-0' }} MMK</span>
           </div>
-          <div class="d-flex justify-content-between mb-2" *ngIf="discountAmount > 0">
-            <span class="text-muted">Discount</span>
-            <span class="text-success">-{{ discountAmount | number:'1.0-0' }} MMK</span>
+          <hr>
+          <div class="d-flex justify-content-between fw-bold fs-4 mt-3">
+            <span>Total</span>
+            <span class="text-primary">{{(getSubtotal() - getTotalDiscount() + deliveryFee) | number:'1.0-0' }} MMK</span>
           </div>
-           <div class="text-success mt-2 small" *ngIf="discountAmount > 0 && discount">
-              Yay! You saved
-              <span *ngIf="discount.discountType === 'PERCENTAGE'">
-                {{ (discount.discountValue * 100) | number:'1.0-0' }}%
-              </span>
-              <span *ngIf="discount.discountType === 'FIXED'">
-                {{ discountAmount | number:'1.0-0' }} MMK
-              </span>
-              in total
-            </div>
-        </div>
-        
-        <hr>
-
-        <!-- Total -->
-        <div class="d-flex justify-content-between fw-bold fs-4 mt-3">
-          <span>Total</span>
-          <span class="text-primary">{{ getTotal() | number:'1.0-0' }} MMK</span>
         </div>
       </div>
     </div>

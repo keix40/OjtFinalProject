@@ -1,0 +1,9 @@
+<div class="discount-price-wrapper">
+
+  <span *ngIf="discountAmount && discountAmount > 0" class="text-muted text-decoration-line-through">
+    {{ originalPrice * quantity | number:'1.0-0' }}
+  </span>
+  <span class="fw-bold text-primary ms-1">
+    {{ discountedPrice * quantity | number:'1.0-0' }} MMK
+  </span>
+</div>

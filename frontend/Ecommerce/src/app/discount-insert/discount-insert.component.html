@@ -1,0 +1,541 @@
+<form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="discount-insert-form">
+  <div class="form-group">
+    <label for="name">Discount Name</label>
+    <input id="name" type="text" class="form-control" formControlName="name" required 
+           [class.is-invalid]="discountForm.get('name')?.invalid && (discountForm.get('name')?.touched || discountForm.get('name')?.dirty)" />
+    <div *ngIf="discountForm.get('name')?.invalid && (discountForm.get('name')?.touched || discountForm.get('name')?.dirty)" class="text-danger">
+      Discount name is required.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="discountType">Discount Type</label>
+    <select id="discountType" class="form-control" formControlName="discountType">
+      <option value="PERCENTAGE">Percentage (%)</option>
+      <option value="FIXED">Fixed Amount</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="discountValue">
+      {{ discountType === 'PERCENTAGE' ? 'Discount Percentage (%)' : 'Discount Amount (MMK)' }}
+    </label>
+    <input 
+  id="discountValue" 
+  type="number" 
+  class="form-control" 
+  formControlName="discountValue" 
+  [min]="discountType === 'PERCENTAGE' ? 0.01 : 0.01"
+  [max]="discountType === 'PERCENTAGE' ? 100 : null"
+  [step]="discountType === 'PERCENTAGE' ? '0.01' : 'any'"
+  [attr.inputmode]="discountType === 'PERCENTAGE' ? 'decimal' : 'numeric'"
+  [pattern]="discountType === 'PERCENTAGE' ? '[0-9]+(\\.[0-9]{1,2})?' : '[0-9]*'"
+  required 
+  [placeholder]="discountType === 'PERCENTAGE' ? 'Enter percentage (e.g., 15.5)' : 'Enter amount (e.g., 5000)'"
+  (keydown)="onDiscountValueKeydown($event)"
+  (wheel)="$event.preventDefault()"
+  [class.is-invalid]="discountForm.get('discountValue')?.invalid && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)"
+/>
+    <div *ngIf="discountForm.get('discountValue')?.errors?.['required'] && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)" class="text-danger">
+      Discount value is required.
+    </div>
+    <div *ngIf="discountForm.get('discountValue')?.errors?.['type'] === 'positive' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)" class="text-danger">
+      {{ discountType === 'PERCENTAGE' ? 'Percentage must be greater than 0.' : 'Amount must be greater than 0.' }}
+    </div>
+    <div *ngIf="discountForm.get('discountValue')?.errors?.['type'] === 'integer' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)" class="text-danger">
+      For fixed amount, only whole numbers are allowed.
+    </div>
+    <div *ngIf="discountForm.get('discountValue')?.errors?.['type'] === 'maxPercentage' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)" class="text-danger">
+      Percentage cannot exceed 100%.
+    </div>
+
+  </div>
+
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea id="description" class="form-control" formControlName="description" rows="2"
+      [class.is-invalid]="discountForm.get('description')?.invalid && (discountForm.get('description')?.touched || discountForm.get('description')?.dirty)"></textarea>
+    <div *ngIf="discountForm.get('description')?.invalid && (discountForm.get('description')?.touched || discountForm.get('description')?.dirty)" class="text-danger">
+      Description is required.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Target Type</label>
+    <div class="radio-group">
+      <label><input type="radio" formControlName="targetType" value="BRAND" /> Brand</label>
+      <label><input type="radio" formControlName="targetType" value="CATEGORY" /> Category</label>
+      <label><input type="radio" formControlName="targetType" value="BRAND_CATEGORY" /> Brand Category</label>
+      <label><input type="radio" formControlName="targetType" value="PRODUCT" /> Products</label>
+    </div>
+  </div>
+
+  <!-- Brand Selection -->
+  <div class="form-group" *ngIf="targetType === 'BRAND'">
+    <label for="brandId">Select Brands</label>
+    <div class="custom-autocomplete">
+      <input type="text" class="form-control" placeholder="Search brands..."
+             [formControl]="brandSearchControl"
+             [ngClass]="{'is-invalid': discountForm.get('brandIds')?.invalid && discountForm.get('brandIds')?.touched}"
+             (focus)="showBrandDropdown = true"
+             (blur)="onBrandInputBlur()"
+             (input)="onBrandInputEvent($event)">
+      <ul class="custom-dropdown" *ngIf="showBrandDropdown && filteredBrands.length > 0">
+        <li *ngFor="let brand of filteredBrands"
+            (mousedown)="toggleBrandSelection(brand)"
+            [class.selected]="isBrandSelected(brand.id)">
+          <input type="checkbox" 
+                 [checked]="isBrandSelected(brand.id)"
+                 (click)="$event.stopPropagation()"
+                 (change)="onBrandCheckboxChange($event, brand.id)">
+          {{ brand.name }}
+        </li>
+      </ul>
+    </div>
+    <!-- Selected Brands Display -->
+    <div class="selected-items-display" *ngIf="getSelectedBrandsCount() > 0">
+      <div class="selected-items-header">
+        <i class="fas fa-check-circle"></i>
+        {{ getSelectedBrandsCount() }} brand(s) selected
+      </div>
+      <div class="selected-items-list">
+        <span *ngFor="let brandId of getSelectedBrandIds()" class="selected-item">
+          {{ getBrandNameById(brandId) }}
+          <button type="button" class="remove-item-btn" (click)="removeBrandSelection(brandId)">
+            <i class="fas fa-times"></i>
+          </button>
+        </span>
+      </div>
+    </div>
+    <div *ngIf="discountForm.get('brandIds')?.invalid && discountForm.get('brandIds')?.touched" class="text-danger">
+      Please select at least one brand.
+    </div>
+  </div>
+
+  <!-- Category Selection -->
+  <div class="form-group" *ngIf="targetType === 'CATEGORY'">
+    <label for="categoryId">Select Categories</label>
+    <div class="custom-autocomplete">
+      <input type="text" class="form-control" placeholder="Search categories..."
+             [formControl]="categorySearchControl"
+             [ngClass]="{'is-invalid': discountForm.get('categoryIds')?.invalid && discountForm.get('categoryIds')?.touched}"
+             (focus)="showCategoryDropdown = true"
+             (blur)="onCategoryInputBlur()"
+             (input)="onCategoryInputEvent($event)">
+      <ul class="custom-dropdown" *ngIf="showCategoryDropdown && filteredCategories.length > 0">
+        <li class="dropdown-close-btn" (mousedown)="closeCategoryDropdown()">×</li>
+        <li *ngFor="let category of filteredCategories"
+            (mousedown)="toggleCategorySelection(category)"
+            [class.selected]="isCategorySelected(category.id)">
+          <input type="checkbox" 
+                 [checked]="isCategorySelected(category.id)"
+                 (click)="$event.stopPropagation()"
+                 (change)="onCategoryCheckboxChange($event, category.id)">
+          {{ category.name }}
+        </li>
+      </ul>
+    </div>
+    <!-- Selected Categories Display -->
+    <div class="selected-items-display" *ngIf="getSelectedCategoriesCount() > 0">
+      <div class="selected-items-header">
+        <i class="fas fa-check-circle"></i>
+        {{ getSelectedCategoriesCount() }} category(ies) selected
+      </div>
+      <div class="selected-items-list">
+        <span *ngFor="let categoryId of getSelectedCategoryIds()" class="selected-item">
+          {{ getCategoryNameById(categoryId) }}
+          <button type="button" class="remove-item-btn" (click)="removeCategorySelection(categoryId)">
+            <i class="fas fa-times"></i>
+          </button>
+        </span>
+      </div>
+    </div>
+    <div *ngIf="discountForm.get('categoryIds')?.invalid && discountForm.get('categoryIds')?.touched" class="text-danger">
+      Please select at least one category.
+    </div>
+  </div>
+
+  <!-- Brand Category Selection -->
+  <div class="form-group" *ngIf="targetType === 'BRAND_CATEGORY'">
+    <label for="brandCategoryId">Select Brand Categories</label>
+    <div class="custom-autocomplete">
+      <input type="text" class="form-control" placeholder="Search brand or category..."
+             [formControl]="brandCategorySearchControl"
+             [ngClass]="{'is-invalid': discountForm.get('brandCategoryIds')?.invalid && discountForm.get('brandCategoryIds')?.touched}"
+             (focus)="showBrandCategoryDropdown = true"
+             (blur)="onBrandCategoryInputBlur()"
+             (input)="onBrandCategoryInputEvent($event)">
+      <ul class="custom-dropdown" *ngIf="showBrandCategoryDropdown && filteredBrandCategories.length > 0">
+        <li class="dropdown-close-btn" (mousedown)="closeBrandCategoryDropdown()">×</li>
+        <li *ngFor="let bc of filteredBrandCategories"
+            (mousedown)="toggleBrandCategorySelection(bc)"
+            [class.selected]="isBrandCategorySelected(bc.brand.id + '-' + bc.category.id)">
+          <input type="checkbox" 
+                 [checked]="isBrandCategorySelected(bc.brand.id + '-' + bc.category.id)"
+                 (click)="$event.stopPropagation()"
+                 (change)="onBrandCategoryCheckboxChange($event, bc)">
+          {{ bc.brand.name }} - {{ bc.category.name }}
+        </li>
+      </ul>
+    </div>
+    <!-- Selected Brand Categories Display -->
+    <div class="selected-items-display" *ngIf="getSelectedBrandCategoriesCount() > 0">
+      <div class="selected-items-header">
+        <i class="fas fa-check-circle"></i>
+        {{ getSelectedBrandCategoriesCount() }} brand-category pair(s) selected
+      </div>
+      <div class="selected-items-list">
+        <span *ngFor="let brandCategoryId of getSelectedBrandCategoryIds()" class="selected-item">
+          {{ getBrandCategoryNameById(brandCategoryId) }}
+          <button type="button" class="remove-item-btn" (click)="removeBrandCategorySelection(brandCategoryId)">
+            <i class="fas fa-times"></i>
+          </button>
+        </span>
+      </div>
+    </div>
+    <div *ngIf="discountForm.get('brandCategoryIds')?.invalid && discountForm.get('brandCategoryIds')?.touched" class="text-danger">
+      Please select at least one brand-category pair.
+    </div>
+  </div>
+
+  <!-- Product Selection Button -->
+  <div class="product-selection" *ngIf="targetType === 'PRODUCT'">
+    <button type="button" class="btn-select-products"
+      data-bs-toggle="modal" data-bs-target="#productSelectionModal"
+      [ngClass]="{'invalid-input': discountForm.get('productIds')?.invalid && (discountForm.get('productIds')?.touched || discountForm.get('productIds')?.dirty)}">
+      <i class="fas fa-list"></i>
+      Select Products
+      <span class="product-count">{{ getSelectedProductsCount() }}</span>
+    </button>
+    <div class="selection-status" *ngIf="getSelectedProductsCount() > 0">
+      <i class="fas fa-check-circle"></i>
+      {{ getSelectedProductsCount() }} product(s) selected
+    </div>
+    <div *ngIf="discountForm.get('productIds')?.invalid && (discountForm.get('productIds')?.touched || discountForm.get('productIds')?.dirty)" class="validation-message">
+      <i class="fas fa-exclamation-circle"></i> Please select at least one product.
+    </div>
+  </div>
+
+  <!-- Product Selection Modal -->
+  <div class="modal fade" id="productSelectionModal" tabindex="-1" aria-labelledby="productSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title-section">
+            <h5 class="modal-title" id="productSelectionModalLabel">
+              <i class="fas fa-tags me-2"></i>
+              Select Products for Discount
+            </h5>
+            <p class="modal-subtitle">Choose products to apply the discount event</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Search and Filter Section -->
+          <div class="search-filter-section">
+            <div class="search-container">
+              <div class="search-input-wrapper">
+                <i class="fas fa-search search-icon"></i>
+               <input 
+               type="text" 
+              class="search-input" 
+              placeholder="Search products by name, code, brand, or category..." 
+              [formControl]="searchControl">
+              </div>
+              <div class="search-stats">
+                <span class="products-count">{{ getSelectableProductsCount() }} products available for selection</span>
+                <span class="discounted-count" *ngIf="filteredProducts.length - getSelectableProductsCount() > 0">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  {{ filteredProducts.length - getSelectableProductsCount() }} already discounted
+                </span>
+                <span class="selected-count" *ngIf="getSelectedProductsCount() > 0">
+                  <i class="fas fa-check-circle"></i>
+                  {{ getSelectedProductsCount() }} selected
+                </span>
+              </div>
+            </div>
+          </div>
+          <!-- Products Table -->
+          <div class="products-container">
+            <div class="table-wrapper">
+              <table class="products-table">
+                <thead>
+                  <tr>
+                    <th class="select-all-column">
+                      <div class="select-all-wrapper">
+                        <input class="select-all-checkbox" type="checkbox" 
+                               [checked]="areAllProductsSelected()"
+                               [disabled]="getSelectableProductsCount() === 0"
+                               (change)="toggleAllProducts()">
+                        <span class="select-all-text">Select All</span>
+                      </div>
+                    </th>
+                    <th class="image-column">Product</th>
+                    <th class="details-column">Details</th>
+                    <th class="brand-column">Brand</th>
+                    <th class="category-column">Categories</th>
+                    <th class="price-column">Price</th>
+                    <th class="status-column">Discount Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- No results found message -->
+                  <tr *ngIf="filteredProducts.length === 0 && searchTerm.trim() !== ''" class="no-results-row">
+                    <td colspan="7" class="no-results-cell">
+                      <div class="no-results-message">
+                        <i class="fas fa-search"></i>
+                        <span>No products found for "<strong>{{ searchTerm }}</strong>"</span>
+                        <p>Try adjusting your search terms or check the spelling.</p>
+                      </div>
+                    </td>
+                  </tr>
+                  <!-- Products list -->
+                  <tr *ngFor="let product of filteredProducts" 
+                      class="product-row"
+                      [class.selected]="isProductSelected(product.id)"
+                      [class.disabled]="isProductAlreadyDiscounted(product.id)"
+                      (click)="!isProductAlreadyDiscounted(product.id) && toggleProductSelection(product.id)">
+                    <td class="select-cell">
+                      <div class="checkbox-wrapper">
+                        <input class="product-checkbox" type="checkbox" 
+                               [checked]="isProductSelected(product.id)"
+                               [disabled]="isProductAlreadyDiscounted(product.id)"
+                               (click)="$event.stopPropagation()"
+                               (change)="onModalProductCheckboxChange($event, product.id)">
+                      </div>
+                    </td>
+                    <td class="image-cell">
+                      <div class="product-image-container">
+                        <img [src]="getProductImageUrl(product)" 
+                             [alt]="product.productName"
+                             class="product-image">
+                      </div>
+                    </td>
+                    <td class="details-cell">
+                      <div class="product-details">
+                        <div class="product-name">{{ product.productName }}</div>
+                        <div class="product-code">{{ product.productCode }}</div>
+                        <!-- Show existing discount info if product already has discount -->
+                        <div *ngIf="isProductAlreadyDiscounted(product.id)" class="existing-discount-info">
+                          <span class="existing-discount-badge">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Already has {{ getExistingDiscountInfo(product.id).discount_percent }}% discount in "{{ getExistingDiscountInfo(product.id).event_name }}"
+                          </span>
+                        </div>
+                        <!-- Show available status if product doesn't have discount -->
+                        <div *ngIf="!isProductAlreadyDiscounted(product.id)" class="available-status">
+                          <span class="available-badge">
+                            <i class="fas fa-check-circle"></i>
+                            Available for discount
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+
+                   <!-- Brand Cell -->
+                  <td class="brand-cell">
+               <ng-container *ngIf="product.categoryBrandArray && product.categoryBrandArray.length > 0 && product.categoryBrandArray[0]?.brandName; else noBrand">
+              <span class="brand-badge">
+            {{ product.categoryBrandArray[0].brandName }}
+          </span>
+        </ng-container>
+        <ng-template #noBrand>
+          <span class="brand-badge none">None</span>
+      </ng-template>
+        </td>
+
+                   <!-- Category Cell -->
+              <td class="category-cell">
+             <ng-container *ngIf="product.categoryBrandArray && product.categoryBrandArray.length > 0; else noCategory">
+          <div class="category-badges">
+         <span *ngFor="let pair of product.categoryBrandArray" class="category-badge">
+           {{ pair.cateName || 'None' }}
+          </span>
+        </div>
+     </ng-container>
+         <ng-template #noCategory>
+       <span class="category-badge none">None</span>
+       </ng-template>
+      </td>
+      
+                    <td class="price-cell">
+                      <div class="price-display">
+                        <span class="price-amount">{{ product.price }}</span>
+                        <span class="price-currency">MMK</span>
+                      </div>
+                    </td>
+                    <td class="status-cell">
+                      <!-- Show discount status instead of stock status -->
+                      <span *ngIf="isProductAlreadyDiscounted(product.id)" class="status-badge already-discounted">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Already Discounted
+                      </span>
+                      <span *ngIf="!isProductAlreadyDiscounted(product.id)" class="status-badge available-for-discount">
+                        <i class="fas fa-check-circle"></i>
+                        Available
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="footer-left">
+            <span class="selection-summary" *ngIf="getSelectedProductsCount() > 0">
+              <i class="fas fa-check-circle"></i>
+              {{ getSelectedProductsCount() }} product{{ getSelectedProductsCount() !== 1 ? 's' : '' }} selected
+            </span>
+          </div>
+          <div class="footer-right">
+            <button type="button" class="btn btn-cancel-modal" data-bs-dismiss="modal">
+              Cancel
+            </button>
+            <button type="button" class="btn btn-confirm-selection" (click)="confirmProductSelection()" data-bs-dismiss="modal">
+              <i class="fas fa-check"></i>
+              Confirm Selection
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="startDate">Start Date</label>
+    <input id="startDate" type="datetime-local" class="form-control" formControlName="startDate" required
+           [class.is-invalid]="(discountForm.get('startDate')?.invalid && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)) || (discountForm.errors?.['startInPast'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)) || (discountForm.errors?.['sameDateTime'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty))" />
+    <div *ngIf="discountForm.get('startDate')?.invalid && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
+      Start date is required.
+    </div>
+    <div *ngIf="discountForm.errors?.['startInPast'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
+      Start date cannot be in the past.
+    </div>
+    <div *ngIf="discountForm.errors?.['sameDateTime'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
+      Start and end date cannot be the same time.
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="endDate">End Date</label>
+    <input id="endDate" type="datetime-local" class="form-control" formControlName="endDate" required
+           [class.is-invalid]="(discountForm.get('endDate')?.invalid && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)) || (discountForm.errors?.['endInPast'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)) || (discountForm.errors?.['sameDateTime'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty))" />
+    <div *ngIf="discountForm.get('endDate')?.invalid && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
+      End date is required.
+    </div>
+    <div *ngIf="discountForm.errors?.['endInPast'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
+      End date cannot be in the past.
+    </div>
+    <div *ngIf="discountForm.errors?.['sameDateTime'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
+      Start and end date cannot be the same time.
+    </div>
+  </div>
+
+  <!-- Activate Discount Now Switch -->
+  <div class="form-group">
+    <label>Activate Discount Now?</label>
+    <label class="switch">
+      <input type="checkbox" formControlName="status">
+      <span class="slider round"></span>
+    </label>
+  </div>
+
+
+  <div class="form-group mt-3">
+    <button type="submit" class="btn btn-primary" [disabled]="discountForm.invalid || isSubmitting">Submit</button>
+    <button type="button" class="btn btn-secondary ml-2" (click)="onCancel()">Cancel</button>
+  </div>
+</form>
+
+<!-- Duplicate Discount Warning Modal -->
+<div class="modal fade" id="duplicateWarningModal" tabindex="-1" aria-labelledby="duplicateWarningModalLabel" aria-hidden="true" [class.show]="showDuplicateWarning" [style.display]="showDuplicateWarning ? 'block' : 'none'">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="duplicateWarningModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Discount Conflicts Found
+        </h5>
+        <button type="button" class="btn-close" (click)="closeDuplicateWarning()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning mb-3">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>The following conflicts were found with existing discounts:</strong>
+        </div>
+        
+        <div class="conflicts-list">
+          <div *ngFor="let conflict of duplicateConflicts" class="conflict-item">
+            <div class="conflict-header">
+              <span class="target-type-badge" [class]="'badge-' + conflict.targetType.toLowerCase()">
+                {{ conflict.targetType }}
+              </span>
+              <span class="target-name">{{ conflict.targetName }}</span>
+            </div>
+            <div class="existing-discount-info">
+              <i class="fas fa-tag me-1"></i>
+              Current discount: <strong>"{{ conflict.existingDiscountName }}"</strong>
+            </div>
+            <div *ngIf="conflict.conflictType" class="conflict-type-info">
+              <i class="fas fa-info-circle me-1"></i>
+              <span class="conflict-type-badge" [class]="'conflict-' + conflict.conflictType.toLowerCase()">
+                {{ conflict.conflictType }}
+              </span>
+              <span class="conflict-description">{{ conflict.conflictDescription }}</span>
+            </div>
+            
+            <!-- Resolution Options -->
+            <div *ngIf="conflict.resolutionOptions" class="resolution-options mt-3">
+              <div class="resolution-header">
+                <i class="fas fa-cog me-2"></i>
+                <strong>Choose how to handle this conflict:</strong>
+              </div>
+              <div class="resolution-buttons">
+                <button type="button" 
+                        class="btn btn-outline-secondary resolution-btn"
+                        [class.active]="getConflictResolution(conflict) === 'SKIP'"
+                        (click)="setConflictResolution(conflict, 'SKIP')">
+                  <i class="fas fa-skip-forward me-1"></i>
+                  Skip - Keep existing discount
+                </button>
+                <button type="button" 
+                        class="btn btn-outline-warning resolution-btn"
+                        [class.active]="getConflictResolution(conflict) === 'OVERWRITE'"
+                        (click)="setConflictResolution(conflict, 'OVERWRITE')">
+                  <i class="fas fa-edit me-1"></i>
+                  Overwrite - Replace with new discount
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="alert alert-info mt-3">
+          <i class="fas fa-lightbulb me-2"></i>
+          <strong>Resolution Summary:</strong>
+          <div class="resolution-summary mt-2">
+            <div *ngFor="let conflict of duplicateConflicts" class="summary-item">
+              <span class="target-name">{{ conflict.targetName }}</span>:
+              <span class="resolution-choice" [class]="'choice-' + getConflictResolution(conflict).toLowerCase()">
+                {{ getConflictResolution(conflict) === 'SKIP' ? 'Keep existing' : 'Replace with new' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDuplicateWarning()">
+          <i class="fas fa-times me-1"></i>
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="proceedWithResolution()" [disabled]="!canProceedWithResolution()">
+          <i class="fas fa-check me-1"></i>
+          Proceed with Resolution
+        </button>
+      </div> 
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop for modal -->
+<div class="modal-backdrop fade show" *ngIf="showDuplicateWarning"></div>

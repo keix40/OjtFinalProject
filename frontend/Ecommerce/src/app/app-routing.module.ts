@@ -27,6 +27,9 @@ import { RolesPermissionsComponent } from './roles-permissions/roles-permissions
 import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
+import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
+import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
@@ -42,6 +45,10 @@ const routes: Routes = [
       { path: 'productlist', component: ProductMangementComponent },
       { path: 'admin/products/:id', component: ProductDetailComponent },
       { path: 'orders', component: OrderManagementComponent },
+      {path: 'discount-add', component: DiscountInsertComponent},
+      {path: 'discount-list', component:DiscountEventManagementComponent},
+      {path: 'discount-coupon', component:DiscountCouponComponent},
+      { path: 'product/:id', component: UserProductDetailComponent },
       // add more routes here
     ],},
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -73,9 +80,10 @@ const routes: Routes = [
   },
   { path: '**', redirectTo: 'home', pathMatch: 'full' },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent },
-  { path: 'user-product-detail/:id', component: UserProductDetailComponent },
-  { path: 'product/:id', component: UserProductDetailComponent },
+  //{ path: 'user-product-detail/:id', component: UserProductDetailComponent },
+  //{ path: 'product/:id', component: UserProductDetailComponent },
   { path: 'review', component: ReviewComponent },
+  
 ];
 
 @NgModule({

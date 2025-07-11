@@ -84,6 +84,10 @@
                 <!-- Cart -->
                 <button class="header-action-btn position-relative d-flex align-items-center gap-2" type="button" (click)="openSidebar()">
                     <i class="bi bi-cart3"></i>
+                    <span *ngIf="isFirstTimeBuyerDiscount" class="badge first-time-buyer-badge ms-1">
+                      <i class="bi bi-patch-check-fill" style="font-size:1.2em"></i>
+                      First time buyer 10% off
+                    </span>
                     <span class="action-text d-none d-md-inline-block">Cart</span>
                     <span class="badge bg-danger position-absolute top-0 start-100 translate-middle rounded-pill">{{cartItems.length}}</span>
                 </button>

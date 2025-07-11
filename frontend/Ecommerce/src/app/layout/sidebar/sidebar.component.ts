@@ -15,6 +15,7 @@ export class SidebarComponent implements OnInit {
   isOrdersOpen: boolean = false;
   isContentOpen: boolean = false;
   isSettingsOpen: boolean = false;
+   isDiscountsOpen:boolean = false; // add for discount adding and showing list by pmk june 28
   // Add to your component
   totalCustomers: number = 0;
   vipCount: number = 0;

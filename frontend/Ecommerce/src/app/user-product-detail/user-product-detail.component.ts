@@ -154,6 +154,8 @@ export class UserProductDetailComponent implements OnInit {
     this.loadReviews();
   }
 
+  
+
   get attributeNames(): string[] {
     if (!this.product?.variants?.length) return [];
     const names = new Set<string>();

@@ -3,6 +3,12 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Brand, BrandDTO } from '../brand';
 
+export interface BrandHasCategory {
+  id: number;
+  brand: Brand;
+  category: any;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -21,5 +27,10 @@ export class BrandService {
 
   createBrand(brandDto : BrandDTO): Observable<any> {
     return this.http.post(`${this.baseUrl}/addbrand`, brandDto, { responseType: 'text' });
+  }
+
+  //add for link brand with category by pmk july 7
+  getAllBrandCategories(): Observable<BrandHasCategory[]> {
+    return this.http.get<BrandHasCategory[]>(`${this.baseUrl}/brandcategories`);
   }
 }

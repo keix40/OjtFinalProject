@@ -129,7 +129,8 @@ export class WishlistComponent implements OnInit {
     });
   }
 
-  goToProductDetail(productId: number) {
-    this.router.navigate(['/product', productId]);
-  }
+ goToProductDetail(productId: number): void {
+  console.log('Navigating to product:', productId);
+  this.router.navigate(['/product', productId]);
+}
 } 

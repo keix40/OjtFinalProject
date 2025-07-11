@@ -54,6 +54,15 @@ import { UserProductDetailComponent } from './user-product-detail/user-product-d
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
+import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
+import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
+import { DiscountPriceComponent } from './discount-price/discount-price.component';
 
 @NgModule({
   declarations: [
@@ -95,7 +104,10 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
-    BlacklistComponent,
+    DiscountInsertComponent,
+    DiscountEventManagementComponent,
+    DiscountCouponComponent,
+    DiscountPriceComponent
   ],
   imports: [
     BrowserModule,
@@ -107,9 +119,15 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     GoogleMapsModule,
     RouterModule,
     CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent,, // Standalone component must be imported here
-    ProductDetailComponent,
+    CartSidebarComponent, // Standalone component must be imported here
+   ProductDetailComponent,
     BrowserAnimationsModule,
+    BlacklistComponent,
+    MatInputModule,
+    MatAutocompleteModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatButtonModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

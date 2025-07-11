@@ -146,30 +146,70 @@
               </div>
             </div>
             <div class="small text-muted">Quantity: {{item.quantity}}</div>
+            <!-- Discount display -->
+            <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">
+              <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="badge bg-danger me-2">
+                {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+              </span>
+              <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="text-muted text-decoration-line-through me-2">
+                {{ product.price }} MMK
+              </span>
+              <span class="fw-bold text-success">
+                {{ getDiscountedPrice(product) }} MMK
+              </span>
+            </ng-container>
+            <ng-template #noProduct>
+              <span class="fw-bold text-success">{{ item.price }} MMK</span>
+            </ng-template>
           </div>
-          <div class="fw-bold ms-2">{{ (item.price * item.quantity) | number:'1.0-0' }} MMK</div>
+          <div class="fw-bold ms-2">
+            <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProductTotal">
+              {{ getDiscountedPrice(product) * item.quantity | number:'1.0-0' }} MMK
+            </ng-container>
+            <ng-template #noProductTotal>
+              {{ item.price * item.quantity | number:'1.0-0' }} MMK
+            </ng-template>
+          </div>
         </div>
         <hr>
-        <input type="text" class="form-control bg-light border-0 mb-2" placeholder="Enter a coupon or a reward code" [(ngModel)]="couponCode">
-        <button class="btn btn-outline-primary w-100 mb-2 rounded-pill" (click)="applyCoupon()">Apply</button>
+        <input type="text" class="form-control bg-light border-0 mb-2" placeholder="Enter a coupon or a reward code" [(ngModel)]="couponCode" [disabled]="hasDiscountedProduct() || isFirstTimeBuyerDiscount">
+        <button class="btn btn-outline-primary w-100 mb-2 rounded-pill" (click)="applyCoupon()" [disabled]="hasDiscountedProduct() || isFirstTimeBuyerDiscount">
+          Apply
+        </button>
+        <div *ngIf="hasDiscountedProduct() || isFirstTimeBuyerDiscount" class="text-danger small mt-1">
+          <ng-container *ngIf="isFirstTimeBuyerDiscount">
+            Coupons can be only used for non-discounted items.
+          </ng-container>
+          <ng-container *ngIf="!isFirstTimeBuyerDiscount && hasDiscountedProduct()">
+            Coupons can be only used for non-discounted items.
+          </ng-container>
+        </div>
         <p [ngClass]="{'text-success': isCouponValid, 'text-danger': !isCouponValid}">
           {{ discountMessage }}
         </p>
         <h6 class="fw-bold mt-3 mb-2">Summary</h6>
         <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>{{ getSubtotal() | number:'1.0-0' }} MMK</span></div>
-        <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>{{ deliveryFee | number:'1.0-0' }} MMK</span></div>
-        <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-{{ discountAmount | number:'1.0-0' }} MMK</span></div>
-        <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">{{ getTotal() | number:'1.0-0' }} MMK</span></div>
-        <div class="text-success mt-2" *ngIf="discountAmount > 0 && discount">
-          Yay! You saved
-          <span *ngIf="discount.discountType === 'PERCENTAGE'">
-            {{ (discount.discountValue * 100) | number:'1.0-0' }}%
-          </span>
-          <span *ngIf="discount.discountType === 'FIXED'">
-            {{ discountAmount | number:'1.0-0' }} MMK
-          </span>
-          in total
+        <!-- Product-based discount (only if not first time buyer) -->
+        <div class="d-flex justify-content-between mb-2" *ngIf="!isFirstTimeBuyerDiscount && getTotalDiscount() > 0">
+          <span class="text-muted">Discount</span>
+          <span class="text-success">-{{ getTotalDiscount() | number:'1.0-0' }} MMK</span>
         </div>
+        <!-- First time buyer discount (only if active) -->
+        <div class="d-flex justify-content-between mb-2" *ngIf="isFirstTimeBuyerDiscount && orderPreview?.discountAmount > 0">
+          <span class="text-muted">Discount</span>
+          <span class="text-success">
+            (First time buyer 10%) -{{ orderPreview.discountAmount | number:'1.0-0' }} MMK
+          </span>
+        </div>
+        <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>{{ deliveryFee | number:'1.0-0' }} MMK</span></div>
+        <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">{{ (getSubtotal() - getTotalDiscount() + deliveryFee) | number:'1.0-0' }} MMK</span></div>
+        <div class="text-success mt-2" *ngIf="discountAmount > 0 && discount">
+  Yay! You saved
+  <span>
+    {{ (discountAmount / getSubtotal() * 100) | number:'1.0-0' }}%
+  </span>
+  in total
+</div>
       </div>
     </div>
   </div>

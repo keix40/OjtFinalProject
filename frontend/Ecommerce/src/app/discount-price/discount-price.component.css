@@ -1,0 +1,12 @@
+.discount-price-wrapper {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.badge {
+  font-size: 0.9em;
+  font-weight: 600;
+}
+.text-decoration-line-through {
+  margin-right: 0.5em;
+}

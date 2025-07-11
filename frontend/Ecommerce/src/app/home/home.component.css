@@ -258,3 +258,84 @@
     min-height: 1.5rem;
   }
 }
+
+/* Discount Display Styles */
+.discount-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+  max-width: 80%;
+  text-align: center;
+}
+
+.discount-text {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.discount-event {
+  display: block;
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.price-section {
+  margin-top: auto;
+}
+
+.original-price {
+  margin-bottom: 0.25rem;
+}
+
+.original-price span {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.current-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.current-price .fw-semibold {
+  margin-bottom: 0;
+}
+
+.discount-save {
+  font-size: 0.75rem;
+  color: #28a745;
+  font-weight: 600;
+  background-color: #d4edda;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+}
+
+/* Responsive adjustments for discount badge */
+@media (max-width: 576px) {
+  .discount-badge {
+    font-size: 0.7rem;
+    padding: 0.375rem 0.5rem;
+    max-width: 85%;
+  }
+  
+  .discount-text {
+    font-size: 0.8rem;
+  }
+  
+  .discount-event {
+    font-size: 0.7rem;
+  }
+}

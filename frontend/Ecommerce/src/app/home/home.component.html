@@ -234,6 +234,13 @@
             <!-- Product Image -->
             <div class="product-img-wrapper mb-3 position-relative" style="height: 140px; overflow: hidden;">
               <img [src]="imageService.getProductImageUrl(product)" class="product-img" [alt]="product.productName" (error)="imageService.handleImageError($event, 'product')">
+              
+              <!-- Discount Badge -->
+              <div *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="discount-badge">
+                <span class="discount-text">{{ getDiscountDisplayText(getProductDiscount(product.id)) }}</span>
+                <div class="discount-event">{{ getProductDiscount(product.id).eventName }}</div>
+              </div>
+              
               <button
                 class="btn btn-sm p-0 d-flex align-items-center justify-content-center position-absolute"
                 [ngClass]="wishlist.has(product.id) ? 'bg-danger text-white' : 'bg-light text-danger border border-danger'"
@@ -251,7 +258,29 @@
                 <span *ngIf="product.quantity === 0" class="badge bg-danger fw-bold">Out of stock</span>
               </div>
               <!-- <p class="card-text small text-truncate" style="max-height: 2.6em; overflow: hidden;">{{ product.description }}</p> -->
-              <div class="fw-semibold text-primary fs-5 mb-2">{{ product.price }} MMK</div>
+              
+              <app-discount-price
+      *ngIf="!isFirstTimeBuyerDiscount"
+      [originalPrice]="product.price"
+      [discountedPrice]="getDiscountedPrice(product)"
+      [discountAmount]="product.price - getDiscountedPrice(product)"
+      [discountName]="getDiscountDisplayText(getProductDiscount(product.id))"
+      [showBadge]="true">
+    </app-discount-price>
+
+              <!-- Price Display with Discount -->
+               <!--
+              <div class="price-section">
+                <div *ngIf="getProductDiscount(product.id)" class="original-price">
+                  <span class="text-muted text-decoration-line-through">{{ product.price }} MMK</span>
+                </div>
+                <div class="current-price">
+                  <span class="fw-semibold text-primary fs-5">{{ getDiscountedPrice(product) }} MMK</span>
+                  <span *ngIf="getProductDiscount(product.id)" class="discount-save">
+                    Save {{ product.price - getDiscountedPrice(product) }} MMK
+                  </span>
+                </div>
+              </div> -->
             </div>
           </div>
         </div>
