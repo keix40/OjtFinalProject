@@ -6,6 +6,7 @@ import com.Ojt.Ecommerce.dto.RegisterRequest;
 import com.Ojt.Ecommerce.dto.UserDTO;
 import com.Ojt.Ecommerce.dto.AdminCreateUserRequest;
 import com.Ojt.Ecommerce.dto.AddressDTO;
+import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
 import com.Ojt.Ecommerce.entity.AddressType;
 import com.Ojt.Ecommerce.entity.Role;
 import com.Ojt.Ecommerce.entity.User;
@@ -75,6 +76,10 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
 
+    @GetMapping("/customers")
+    public List<CustomerSummaryDTO> getAllCustomers() {
+        return userService.getAllCustomerSummaries();
+    }
 
 
     //to show userProfile userinfo (kei_1)
@@ -188,6 +193,33 @@ public class UserController {
         boolean allSuccess = results.stream().allMatch(r -> (boolean) r.get("success"));
         return ResponseEntity.status(allSuccess ? HttpStatus.CREATED : HttpStatus.MULTI_STATUS).body(results);
     }
+
+    // --- Added for customer management actions ---
+    // Delete user endpoint (for customer management table delete action)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        // Why: JPA cascade only works if you load the entity first. This ensures related entities are deleted as well.
+        User user = userRepository.findById(id).orElseThrow();
+        userRepository.delete(user);
+        return ResponseEntity.ok().build();
+    }
+
+    // Update user status endpoint (for activate/deactivate action)
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        User user = userRepository.findById(id).orElseThrow();
+        user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.valueOf(body.get("status")));
+        userRepository.save(user);
+        return ResponseEntity.ok().build();
+    }
+
+    // Get user details endpoint (for view details modal)
+    @GetMapping("/{id}")
+    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
+        User user = userRepository.findById(id).orElseThrow();
+        return ResponseEntity.ok(new UserDTO(user));
+    }
+    // --- End customer management actions ---
 
 
 }

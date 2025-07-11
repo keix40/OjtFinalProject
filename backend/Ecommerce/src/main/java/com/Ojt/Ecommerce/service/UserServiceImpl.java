@@ -5,6 +5,7 @@ import com.Ojt.Ecommerce.dto.LoginResponse;
 import com.Ojt.Ecommerce.dto.RegisterRequest;
 import com.Ojt.Ecommerce.dto.AdminCreateUserRequest;
 import com.Ojt.Ecommerce.dto.AddressDTO;
+import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
 import com.Ojt.Ecommerce.entity.OtpVerification;
 import com.Ojt.Ecommerce.entity.RefreshToken;
 import com.Ojt.Ecommerce.entity.Role;
@@ -308,6 +309,47 @@ public class UserServiceImpl implements UserService {
 
     public List<User> findUsersByRoleId(Long roleId) {
         return userRepository.findByRoleId(roleId);
+    }
+
+    @Override
+    public List<CustomerSummaryDTO> getAllCustomerSummaries() {
+        List<User> customers = userRepository.findByRole_Name("CUSTOMER");
+        List<CustomerSummaryDTO> result = new java.util.ArrayList<>();
+        for (User user : customers) {
+            int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
+            double totalSpent = 0.0;
+            if (user.getOrders() != null) {
+                for (var order : user.getOrders()) {
+                    if (order.getOrderProducts() != null) {
+                        for (var op : order.getOrderProducts()) {
+                            if (op.getProduct() != null && op.getProduct().getPrice() != null && op.getQuantity() != null) {
+                                totalSpent += op.getProduct().getPrice() * op.getQuantity();
+                            }
+                        }
+                    }
+                }
+            }
+            result.add(new CustomerSummaryDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getStatus() != null ? user.getStatus().name() : null,
+                user.getRole() != null ? user.getRole().getName() : null,
+                user.getCreatedDate(),
+                totalOrders,
+                totalSpent,
+                user.getProfileImage()
+            ));
+        }
+        return result;
+    }
+
+    @Override
+    public List<CustomerSummaryDTO> getCustomersForReport() {
+        // This method returns the same data as getAllCustomerSummaries
+        // but is specifically named for report generation to maintain clear separation of concerns
+        return getAllCustomerSummaries();
     }
 
 }
