@@ -192,7 +192,7 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
           this.emailCheckMessage = 'Email already exists.';
           this.emailCheckSuccess = false;
           this.userForm.get('email')?.setErrors({ exists: true });
-        } else {
+    } else {
           this.errorMessages['email'] = '';
           this.emailCheckMessage = 'Email is available!';
           this.emailCheckSuccess = true;

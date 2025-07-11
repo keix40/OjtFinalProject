@@ -40,7 +40,7 @@ const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Home' } },
   { path: 'login', component: LoginComponent, data: { breadcrumb: 'Login' } },
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
-  { path: 'uproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
+  { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
@@ -53,7 +53,6 @@ const routes: Routes = [
       { path: 'orders', component: OrderManagementComponent, data: { breadcrumb: 'Orders' } },
       // add more routes here
     ],},
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: 'cart', component: CartPageComponent, data: { breadcrumb: 'Shopping Cart' } },
   { path: 'checkout', component: CheckoutComponent, data: { breadcrumb: 'Checkout' } },
   { path: 'checkout/payment', component: PaymentComponent, data: { breadcrumb: 'Payment' } },
@@ -83,7 +82,6 @@ const routes: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent,canActivate: [AuthGuard] , data: { breadcrumb: 'Order Tracking' } },
   { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
   { path: 'product/:id', component: UserProductDetailComponent, data: { breadcrumb: 'Product Detail' } },
@@ -91,7 +89,6 @@ const routes: Routes = [
   { path: 'review', component: ReviewComponent },
   { path: 'return-request', component: ReturnRequestComponent },
   { path: 'verify-otp', component: VerifyOtpComponent },
-
 ];
 
 @NgModule({
