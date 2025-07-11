@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { BreadcrumbService } from '../breadcrumb.service';
 
 @Component({
   selector: 'app-layout',
@@ -7,5 +8,5 @@ import { Component } from '@angular/core';
   styleUrl: './layout.component.css'
 })
 export class LayoutComponent {
-
+  constructor(public breadcrumbService: BreadcrumbService) {}
 }

@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,5 +32,15 @@ public class UserPointHistory {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private UserOrder order;
+
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }
 

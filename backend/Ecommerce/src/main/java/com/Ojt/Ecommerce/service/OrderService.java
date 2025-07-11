@@ -11,12 +11,11 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
-
-import static com.Ojt.Ecommerce.entity.OrderStatus.PENDING;
 
 @Service
 public class OrderService {
@@ -73,6 +72,18 @@ public class OrderService {
         }
     }
 
+    @Autowired
+    private StatusRepository statusRepository;
+
+    @Autowired
+    private OrderStatusRepository orderStatusRepository;
+
+    @Autowired
+    private ReturnRequestRepository returnRequestRepo;
+
+    @Autowired
+    private SavedCardRepository savedCardRepo;
+
     //for discount
     public DiscountDTO getDiscountByCode(String code) {
         Discount discount = discountRepo.findByCode(code)
@@ -103,19 +114,30 @@ public class OrderService {
     public UserOrder createOrder(UserOrderDTO dto) {
         // Ensure the first-time buyer discount exists
         ensureFirstTimeBuyerDiscountExists(); //add for discount preview by pmk july 9
-        
+
         UserOrder order = mapper.map(dto, UserOrder.class);
         order.setStatus(PENDING);
+        try {
+            UserOrder order = mapper.map(dto, UserOrder.class);
 
-        User user = userRepo.findById(dto.getUserId()).orElseThrow();
-        order.setUser(user);
-        order.setAddress(addRepo.findById(dto.getAddressId()).orElseThrow());
-        order.setDeliveryMethod(dmRepo.findById(dto.getDeliveryId()).orElseThrow());
+            User user = userRepo.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + dto.getUserId()));
+            order.setUser(user);
+            order.setAddress(addRepo.findById(dto.getAddressId())
+                    .orElseThrow(() -> new RuntimeException("Address not found with ID: " + dto.getAddressId())));
+            order.setDeliveryMethod(dmRepo.findById(dto.getDeliveryId())
+                    .orElseThrow(() -> new RuntimeException("Delivery method not found with ID: " + dto.getDeliveryId())));
+
+            if (dto.getCardId() != null) {
+                SavedCard savedCard = savedCardRepo.findById(dto.getCardId())
+                        .orElseThrow(() -> new RuntimeException("Saved card not found with ID: " + dto.getCardId()));
+                order.setSavedCard(savedCard);
+            }
 
         // ===== FIRST-TIME BUYER DISCOUNT LOGIC ===== (by pmk july 9)
         // Check if user is a first-time buyer (order count = 0 or null)
         boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
-        
+
         if (isFirstOrder) {
             // Only allow first time buyer discount if user registered within last 7 days
             if (user.getCreatedDate() != null && user.getCreatedDate().isBefore(LocalDateTime.now().minusDays(7))) {
@@ -135,7 +157,7 @@ public class OrderService {
                 System.out.println("FirstTimeBuyer Discount: start=" + firstTimeDiscount.getStartDate() +
                         ", end=" + firstTimeDiscount.getEndDate() +
                         ", today=" + LocalDate.now());
-                
+
                 if (hasActiveDiscount) {
                     // Apply the first-time buyer discount automatically (10% off)
                     order.setDiscount(firstTimeDiscount);
@@ -150,46 +172,72 @@ public class OrderService {
         if (order.getDiscount() == null && dto.getDiscountId() != null) {
             order.setDiscount(discountRepo.findById(dto.getDiscountId()).orElse(null));
         }
-
-        order.setOrderCode(generateUniqueOrderCode());
-        order.setOrderDate(LocalDateTime.now());
-        order.setUpdatedDate(LocalDateTime.now());
-
-        UserOrder savedOrder = repo.save(order);
-
-        for (CartDTO item : dto.getCartItem()) {
-            UserOrderHasProduct orderProduct = new UserOrderHasProduct();
-            orderProduct.setUserOrder(savedOrder);
-            orderProduct.setProduct(proRepo.findById(item.getProductId()).orElseThrow());
-
-            // ✅ If variantId is present, reduce variant stock
-            if (item.getVariantId() != null) {
-                variantRepo.findById(item.getVariantId()).ifPresent(variant -> {
-                    orderProduct.setProductVariant(variant);
-
-                    if (variant.getStock() != null && variant.getStock() >= item.getQuantity()) {
-                        variant.setStock(variant.getStock() - item.getQuantity());
-                        variantRepo.save(variant);
-                    } else {
-                        throw new RuntimeException("Insufficient stock for variant ID: " + item.getVariantId());
-                    }
-                });
-            } else {
-                // ✅ If no variant, reduce base product stock
-                Product product = proRepo.findById(item.getProductId()).orElseThrow();
-                if (product.getQuantity() != null && product.getQuantity() >= item.getQuantity()) {
-                    product.setQuantity(product.getQuantity() - item.getQuantity());
-                    proRepo.save(product);
-                } else {
-                    throw new RuntimeException("Insufficient stock for product ID: " + item.getProductId());
-                }
+            if (dto.getDiscountId() != null) {
+                order.setDiscount(discountRepo.findById(dto.getDiscountId()).orElse(null));
             }
 
-            orderProduct.setQuantity(item.getQuantity());
-            orderProduct.setUnitPrice(item.getPrice());
-            opRepo.save(orderProduct);
-        }
+            order.setOrderCode(generateUniqueOrderCode());
+            order.setOrderDate(LocalDateTime.now());
+            order.setUpdatedDate(LocalDateTime.now());
 
+            UserOrder savedOrder = repo.save(order);
+
+            // Ensure PENDING status exists; create if missing
+            Status pendingStatus = statusRepository.findByName(StatusType.PENDING)
+                    .orElseGet(() -> {
+                        Status newStatus = new Status();
+                        newStatus.setName(StatusType.PENDING);
+                        return statusRepository.save(newStatus);
+                    });
+
+            OrderStatus initialStatus = OrderStatus.builder()
+                    .userOrder(savedOrder)
+                    .status(pendingStatus)
+                    .statusDate(LocalDateTime.now())
+                    .build();
+            orderStatusRepository.save(initialStatus);
+
+            for (CartDTO item : dto.getCartItem()) {
+                Product product = proRepo.findById(item.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
+
+                UserOrderHasProduct orderProduct = new UserOrderHasProduct();
+                orderProduct.setUserOrder(savedOrder);
+                orderProduct.setProduct(product);
+                orderProduct.setQuantity(item.getQuantity());
+                orderProduct.setUnitPrice(item.getPrice());
+
+                if (item.getVariantId() != null) {
+                    ProductVariant variant = variantRepo.findById(item.getVariantId())
+                            .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
+
+                    if (variant.getStock() == null || variant.getStock() < item.getQuantity()) {
+                        throw new RuntimeException("Insufficient stock for variant ID: " + item.getVariantId());
+                    }
+
+                    variant.setStock(variant.getStock() - item.getQuantity());
+                    variantRepo.save(variant);
+                    orderProduct.setProductVariant(variant);
+                } else {
+                    if (product.getQuantity() == null || product.getQuantity() < item.getQuantity()) {
+                        throw new RuntimeException("Insufficient stock for product ID: " + item.getProductId());
+                    }
+
+                    product.setQuantity(product.getQuantity() - item.getQuantity());
+                    proRepo.save(product);
+                }
+
+                opRepo.save(orderProduct);
+            }
+
+            // Handle discount usage
+            if (dto.getDiscountId() != null && order.getDiscount() != null) {
+                UserCouponUsage usage = new UserCouponUsage();
+                usage.setUser(user);
+                usage.setDiscount(order.getDiscount());
+                usage.setUsedAt(LocalDateTime.now());
+                couponRepo.save(usage);
+            }
         // Save coupon usage if discount applied
         if (order.getDiscount() != null) { // update for discount by pmk july 9
             UserCouponUsage usage = new UserCouponUsage();
@@ -199,10 +247,10 @@ public class OrderService {
             couponRepo.save(usage);
         }
 
-        // Earn points
-        double totalAmount = dto.getCartItem().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+            // Points calculation
+            double totalAmount = dto.getCartItem().stream()
+                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                    .sum();
 
         // Calculate discount amount by pmk july 9
         double discountAmount = 0.0;
@@ -218,7 +266,10 @@ public class OrderService {
         }
 
         int earnedPoints = calculatePoints(totalAmount - discountAmount);
+            int earnedPoints = calculatePoints(totalAmount);
 
+            user.setTotalPoints(user.getTotalPoints() == null ? earnedPoints : user.getTotalPoints() + earnedPoints);
+            userRepo.save(user);
         if (user.getTotalPoints() == null) {
             user.setTotalPoints(0);
         }
@@ -232,19 +283,24 @@ public class OrderService {
         }
         userRepo.save(user);
 
-        UserPointHistory history = UserPointHistory.builder()
-                .user(user)
-                .order(savedOrder)
-                .points(earnedPoints)
-                .createdAt(LocalDateTime.now())
-                .build();
-        pointRepo.save(history);
+            UserPointHistory history = UserPointHistory.builder()
+                    .user(user)
+                    .order(savedOrder)
+                    .points(earnedPoints)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            pointRepo.save(history);
 
-        return savedOrder;
+            return savedOrder;
+
+        } catch (Exception e) {
+            e.printStackTrace(); // or use a logger
+            throw new RuntimeException("Failed to create order: " + e.getMessage(), e);
+        }
     }
 
     //add discount preivew by pmk july 9
-     
+
     public OrderPreviewDTO previewOrder(UserOrderDTO dto) {
         OrderPreviewDTO preview = new OrderPreviewDTO();
         preview.setCartItems(dto.getCartItem());
@@ -356,15 +412,23 @@ public class OrderService {
             dto.setOrderId(order.getId());
             dto.setOrderCode(order.getOrderCode());
             dto.setOrderDate(order.getOrderDate());
-            dto.setStatus(order.getStatus().toString());
+            dto.setUpdatedDate(order.getUpdatedDate());
 
-            // Delivery Info
+            // Set latest status
+            List<OrderStatus> statusHistory = order.getOrderStatusHistory();
+            if (!statusHistory.isEmpty()) {
+                statusHistory.sort((s1, s2) -> s2.getStatusDate().compareTo(s1.getStatusDate()));
+                dto.setStatus(statusHistory.get(0).getStatus().getName().toString());
+                dto.setStatusHistory(statusHistory.stream()
+                        .map(s -> new StatusHistoryDTO(s.getStatus().getName().toString(), s.getStatusDate()))
+                        .collect(Collectors.toList()));
+            }
+
             if (order.getDeliveryMethod() != null) {
                 dto.setDeliveryMethod(order.getDeliveryMethod().getName());
                 dto.setDeliveryFee(order.getDeliveryMethod().getFee());
             }
 
-            // Discount Info
             Discount discount = order.getDiscount();
             double discountAmount = 0.0;
 
@@ -372,34 +436,25 @@ public class OrderService {
                 if (discount.getDiscountType() != null) {
                     dto.setDiscountType(discount.getDiscountType().toString());
                 }
-
                 if (discount.getCode() != null) {
                     dto.setDiscountCode(discount.getCode());
                 }
-
                 if (discount.getDiscountValue() != null) {
                     dto.setDiscountValue(discount.getDiscountValue());
-
-                    // Calculate discount amount
                     double subtotal = order.getOrderProducts().stream()
                             .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
                             .sum();
-
                     if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
                         discountAmount = subtotal * discount.getDiscountValue();
                     } else {
                         discountAmount = discount.getDiscountValue();
                     }
-
                     dto.setDiscountAmount(Math.round(discountAmount));
-                } else {
-                    dto.setDiscountAmount(0L);
                 }
             } else {
                 dto.setDiscountAmount(0L);
             }
 
-            // Products
             List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(product -> {
                 OrderProductDTO productDTO = new OrderProductDTO();
                 productDTO.setProductName(product.getProduct().getProductName());
@@ -408,11 +463,7 @@ public class OrderService {
 
                 if (product.getProductVariant() != null) {
                     String variantInfo = product.getProductVariant().getVariantAttributeValues().stream()
-                            .map(vav -> {
-                                String attributeName = vav.getAttributeValue().getAttribute().getName(); // ✅ attribute name
-                                String value = vav.getAttributeValue().getValue();                       // ✅ value
-                                return attributeName + ": " + value;
-                            })
+                            .map(vav -> vav.getAttributeValue().getAttribute().getName() + ": " + vav.getAttributeValue().getValue())
                             .collect(Collectors.joining(", "));
                     productDTO.setVariantDetails(variantInfo);
                 } else {
@@ -424,19 +475,15 @@ public class OrderService {
 
             dto.setProducts(productDTOs);
 
-            // Subtotal
             double subtotal = order.getOrderProducts().stream()
                     .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
                     .sum();
             dto.setSubtotal(Math.round(subtotal));
 
-            // Total
             double total = subtotal - discountAmount;
-
             if (order.getDeliveryMethod() != null && order.getDeliveryMethod().getFee() != null) {
                 total += order.getDeliveryMethod().getFee();
             }
-
             dto.setTotal(Math.round(total));
 
             return dto;
@@ -444,22 +491,30 @@ public class OrderService {
     }
 
     public List<UserOrderListDTO> getAllOrders() {
-        List<UserOrder> orders = repo.findAll(); // fetch all orders
+        List<UserOrder> orders = repo.findAll();
 
         return orders.stream().map(order -> {
             UserOrderListDTO dto = new UserOrderListDTO();
             dto.setOrderId(order.getId());
             dto.setOrderCode(order.getOrderCode());
             dto.setOrderDate(order.getOrderDate());
-            dto.setStatus(order.getStatus().toString());
+            dto.setUpdatedDate(order.getUpdatedDate());
 
-            // Delivery Info
+            // Set latest status
+            List<OrderStatus> statusHistory = order.getOrderStatusHistory();
+            if (!statusHistory.isEmpty()) {
+                statusHistory.sort((s1, s2) -> s2.getStatusDate().compareTo(s1.getStatusDate()));
+                dto.setStatus(statusHistory.get(0).getStatus().getName().toString());
+                dto.setStatusHistory(statusHistory.stream()
+                        .map(s -> new StatusHistoryDTO(s.getStatus().getName().toString(), s.getStatusDate()))
+                        .collect(Collectors.toList()));
+            }
+
             if (order.getDeliveryMethod() != null) {
                 dto.setDeliveryMethod(order.getDeliveryMethod().getName());
                 dto.setDeliveryFee(order.getDeliveryMethod().getFee());
             }
 
-            // Products
             List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(p -> {
                 OrderProductDTO pdto = new OrderProductDTO();
                 pdto.setProductName(p.getProduct().getProductName());
@@ -470,13 +525,11 @@ public class OrderService {
 
             dto.setProducts(productDTOs);
 
-            // Subtotal
             double subtotal = order.getOrderProducts().stream()
                     .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
                     .sum();
             dto.setSubtotal(Math.round(subtotal));
 
-            // Discount Info
             Discount discount = order.getDiscount();
             double discountAmount = 0.0;
 
@@ -484,34 +537,27 @@ public class OrderService {
                 if (discount.getDiscountType() != null) {
                     dto.setDiscountType(discount.getDiscountType().toString());
                 }
-
                 if (discount.getCode() != null) {
                     dto.setDiscountCode(discount.getCode());
                 }
-
                 dto.setDiscountValue(discount.getDiscountValue());
 
-                double discountValue = discount.getDiscountValue();
-
                 if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
-                    discountAmount = subtotal * discountValue;
+                    discountAmount = subtotal * discount.getDiscountValue();
                 } else {
-                    discountAmount = discountValue;
+                    discountAmount = discount.getDiscountValue();
                 }
-
                 dto.setDiscountAmount(Math.round(discountAmount));
             } else {
                 dto.setDiscountAmount(0L);
             }
 
-            // Total
             double total = subtotal - discountAmount;
-            if (order.getDeliveryMethod() != null) {
+            if (order.getDeliveryMethod() != null && order.getDeliveryMethod().getFee() != null) {
                 total += order.getDeliveryMethod().getFee();
             }
             dto.setTotal(Math.round(total));
 
-            // User Info
             User user = order.getUser();
             if (user != null) {
                 UserDTO userDTO = new UserDTO();
@@ -526,7 +572,6 @@ public class OrderService {
                 dto.setUser(userDTO);
             }
 
-            // Address Info
             Address address = order.getAddress();
             if (address != null) {
                 AddressDTO addressDTO = new AddressDTO();
@@ -550,25 +595,160 @@ public class OrderService {
 
     public boolean updateOrderStatus(Long orderId, String statusStr) {
         Optional<UserOrder> optionalOrder = repo.findById(orderId);
-        if (optionalOrder.isPresent()) {
-            OrderStatus status = OrderStatus.valueOf(statusStr.toUpperCase());
-            UserOrder order = optionalOrder.get();
-            order.setUpdatedDate(LocalDateTime.now());
-            order.setStatus(status);
-            repo.save(order);
-            return true;
-        }
-        return false;
+        if (optionalOrder.isEmpty()) return false;
+
+        UserOrder order = optionalOrder.get();
+
+        StatusType type = StatusType.valueOf(statusStr.toUpperCase());
+        Status status = statusRepository.findByName(type)
+                .orElseThrow(() -> new RuntimeException("Status not found"));
+
+        OrderStatus orderStatus = OrderStatus.builder()
+                .userOrder(order)
+                .status(status)
+                .statusDate(LocalDateTime.now())
+                .build();
+
+        orderStatusRepository.save(orderStatus);
+
+        order.setUpdatedDate(LocalDateTime.now());
+        repo.save(order);
+
+        return true;
     }
+
     private UserOrderListDTO convertToDTO(UserOrder order) {
         UserOrderListDTO dto = new UserOrderListDTO();
-
         dto.setOrderId(order.getId());
         dto.setOrderCode(order.getOrderCode());
         dto.setOrderDate(order.getOrderDate());
         dto.setUpdatedDate(order.getUpdatedDate());
-        dto.setStatus(String.valueOf(order.getStatus()));
 
+        // Latest status
+        OrderStatus latest = order.getOrderStatusHistory().stream()
+                .max(Comparator.comparing(OrderStatus::getStatusDate))
+                .orElse(null);
+        if (latest != null) {
+            dto.setStatus(latest.getStatus().getName().name());
+        }
+
+        // Status history
+        List<StatusHistoryDTO> history = order.getOrderStatusHistory().stream()
+                .map(s -> new StatusHistoryDTO(s.getStatus().getName().name(), s.getStatusDate()))
+                .toList();
+        dto.setStatusHistory(history);
+
+        // Delivery
+        if (order.getDeliveryMethod() != null) {
+            dto.setDeliveryMethod(order.getDeliveryMethod().getName());
+            dto.setDeliveryFee(order.getDeliveryMethod().getFee());
+        }
+
+        // Discount
+        Discount discount = order.getDiscount();
+        double discountAmount = 0.0;
+        if (discount != null) {
+            dto.setDiscountType(discount.getDiscountType().name());
+            dto.setDiscountCode(discount.getCode());
+            dto.setDiscountValue(discount.getDiscountValue());
+
+            double subtotal = order.getOrderProducts().stream()
+                    .mapToDouble(p -> p.getUnitPrice() * p.getQuantity())
+                    .sum();
+
+            discountAmount = switch (discount.getDiscountType()) {
+                case PERCENTAGE -> subtotal * discount.getDiscountValue();
+                case FIXED -> discount.getDiscountValue();
+            };
+            dto.setDiscountAmount(Math.round(discountAmount));
+        } else {
+            dto.setDiscountAmount(0L);
+        }
+
+        // Products
+        List<OrderProductDTO> products = order.getOrderProducts().stream().map(p -> {
+            OrderProductDTO pdto = new OrderProductDTO();
+            pdto.setProductId(p.getId());
+            pdto.setProductName(p.getProduct().getProductName());
+            pdto.setQuantity(p.getQuantity());
+            pdto.setUnitPrice(p.getUnitPrice());
+
+            if (p.getProductVariant() != null) {
+                String variantInfo = p.getProductVariant().getVariantAttributeValues().stream()
+                        .map(v -> v.getAttributeValue().getAttribute().getName() + ": " + v.getAttributeValue().getValue())
+                        .collect(Collectors.joining(", "));
+                pdto.setVariantDetails(variantInfo);
+            } else {
+                pdto.setVariantDetails("Base Product");
+            }
+
+            return pdto;
+        }).toList();
+        dto.setProducts(products);
+
+        // Subtotal & Total
+        double subtotal = products.stream().mapToDouble(p -> p.getUnitPrice() * p.getQuantity()).sum();
+        dto.setSubtotal(Math.round(subtotal));
+
+        double total = subtotal - discountAmount;
+        if (order.getDeliveryMethod() != null) {
+            total += order.getDeliveryMethod().getFee();
+        }
+        dto.setTotal(Math.round(total));
+
+        // Address
+        Address addr = order.getAddress();
+        if (addr != null) {
+            AddressDTO a = new AddressDTO();
+            a.setId(addr.getId());
+            a.setAddress(addr.getAddress());
+            a.setCity(addr.getCity());
+            a.setState(addr.getState());
+            a.setPostalCode(addr.getPostalCode());
+            a.setCountry(addr.getCountry());
+            a.setLatitude(addr.getLatitude());
+            a.setLongitude(addr.getLongitude());
+            a.setType(AddressType.valueOf(addr.getType().name()));
+            a.setCreateUpdate(addr.getCreateUpdate());
+            a.setUpdateDate(addr.getUpdateDate());
+            dto.setAddress(a);
+        }
+
+        // User
+        User user = order.getUser();
+        if (user != null) {
+            UserDTO u = new UserDTO();
+            u.setId(user.getId());
+            u.setName(user.getName());
+            u.setEmail(user.getEmail());
+            u.setGender(user.getGender());
+            u.setDateOfBirth(user.getDateOfBirth());
+            u.setPhoneNumber(user.getPhoneNumber());
+            u.setCreatedDate(user.getCreatedDate());
+            u.setTotalPoints(user.getTotalPoints());
+            dto.setUser(u);
+        }
+
+        // After setting other fields in dto
+        List<ReturnRequest> returnEntities = returnRequestRepo.findByOrderId(order.getId());
+
+        List<ReturnRequestDTO> returnDTOs = returnEntities.stream().map(r -> {
+            ReturnRequestDTO rdto = new ReturnRequestDTO();
+            rdto.setId(r.getId());
+            rdto.setOrderId(order.getId());
+            rdto.setOrderProductId(r.getOrderProduct().getId());
+            rdto.setReasonForReturn(r.getReasonForReturn());
+            rdto.setReturnDetail(r.getReturnDetail());
+            rdto.setStatus(r.getStatus().name());
+            rdto.setRequestedAt(r.getRequestedAt());
+            rdto.setCancelledAt(r.getCancelledAt());
+            rdto.setDecisionAt(r.getDecisionAt());
+            rdto.setAdminRemark(r.getAdminRemark());
+            rdto.setImageUrls(r.getImages().stream().map(ReturnRequestImage::getImageUrl).toList());
+            return rdto;
+        }).toList();
+
+        dto.setReturnRequests(returnDTOs);
         return dto;
     }
 
@@ -589,7 +769,7 @@ public class OrderService {
     public String getUserDiscountStatus(Long userId) {
         User user = userRepo.findById(userId).orElse(null);
         if (user == null) return "User not found";
-        
+
         boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
         if (isFirstOrder) {
             List<DiscountRule> userDiscountRules = discountRuleRepository.findActiveUserDiscounts(userId);

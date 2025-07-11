@@ -37,7 +37,7 @@
               {
                 "glob": "**/*",
                 "input": "node_modules/@fortawesome/fontawesome-free/webfonts",
-                "output": "assets/webfonts"
+                "output": "webfonts"
               }
             ],
             "styles": [
@@ -109,7 +109,7 @@
               {
                 "glob": "**/*",
                 "input": "node_modules/@fortawesome/fontawesome-free/webfonts",
-                "output": "assets/webfonts"
+                "output": "webfonts"
               }
             ],
             "styles": [

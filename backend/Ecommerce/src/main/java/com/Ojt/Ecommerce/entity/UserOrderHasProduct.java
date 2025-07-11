@@ -1,14 +1,16 @@
 package com.Ojt.Ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "user_order_has_product")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Setter
+@Getter
 public class UserOrderHasProduct {
 
     @Id

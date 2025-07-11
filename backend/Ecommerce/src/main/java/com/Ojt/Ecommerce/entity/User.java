@@ -1,6 +1,8 @@
 package com.Ojt.Ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -53,6 +55,7 @@ public class User {
 //    @Column(name = "is_verified")
 //    private boolean isVerified = false;
 
+
     @Column(name = "reset_token")
     private String resetToken;
 
@@ -62,18 +65,21 @@ public class User {
     @Column(name = "otp_expiry")
     private LocalDateTime otpExpiry;
 
+    @Column(name = "total_points")
+    private Integer totalPoints;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonBackReference
     private List<UserOrder> orders;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;
 
-    @Column(name = "total_points")
-    private Integer totalPoints;
+
 
     //add for first time buyer discount buy pmk july 7
     @Column(name = "order_count")
@@ -83,9 +89,21 @@ public class User {
     @JsonIgnore
     private List<Review> reviews = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserCouponUsage> couponUsages;
+
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private List<SavedCard> savedCards;
+
     @PrePersist
     protected void onCreate() {
         this.createdDate = LocalDateTime.now();
     }
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20, nullable = false)
+    @Builder.Default
+    private UserStatus status = UserStatus.ACTIVE;
 
 }

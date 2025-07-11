@@ -25,4 +25,6 @@ public class UserOrderListDTO {
     private List<OrderProductDTO> products;
     private AddressDTO address;
     private UserDTO user;
+    private List<StatusHistoryDTO> statusHistory;
+    private List<ReturnRequestDTO> returnRequests;
 }

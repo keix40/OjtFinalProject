@@ -26,4 +26,9 @@ export class AttributeService {
   create(attributeDTO : AttributeAndValueDTO): Observable<any> {
     return this.http.post(`${this.baseUrl}/create`, attributeDTO, { responseType: 'text' });
   }
+
+  addValue(attributeId: number, value: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/addvalue?attributeId=${attributeId}`, { value }, { responseType: 'text' });
+  }
+  
 }

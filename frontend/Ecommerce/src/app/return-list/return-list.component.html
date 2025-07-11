@@ -1,0 +1,205 @@
+  <h2>Return & Refund Panel</h2>
+  <div class="toolbar">
+    <div class="toolbar-item">
+      <label for="statusFilter">Status</label>
+      <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+        <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+      </select>
+    </div>
+    <div class="toolbar-item">
+      <label for="sortBy">Sort by</label>
+      <select id="sortBy" [(ngModel)]="sortBy" (change)="onSortChange()">
+        <option *ngFor="let sort of sortOptions" [value]="sort.value">{{ sort.label }}</option>
+      </select>
+    </div>
+    <!-- <div class="toolbar-item search-field">
+      <input type="text" [(ngModel)]="searchText" (input)="onSearchChange()" placeholder="Search by customer, product, reason, or Order ID">
+      <button *ngIf="searchText" class="clear-btn" (click)="searchText=''; onSearchChange()">&times;</button>
+    </div> -->
+    <span class="toolbar-spacer"></span>
+    <div class="toolbar-item">
+      <label for="exportDropdown">Export</label>
+      <select id="exportDropdown" (change)="onExportOption($event)" [ngClass]="'export-dropdown'">
+        <option value="" selected disabled>Choose export option</option>
+        <option value="excel-all">Export All as Excel</option>
+        <option value="excel-selected" [disabled]="selectedRows.length === 0">Export Selected as Excel</option>
+        <option value="pdf-all">Export All as PDF</option>
+        <option value="pdf-selected" [disabled]="selectedRows.length === 0">Export Selected as PDF</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="table-container" *ngIf="!isLoading; else loadingTpl">
+    <table id="returnsTable" class="table table-striped" style="width:100%">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Product</th>
+          <th>Reason</th>
+          <th>Return Detail</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of dataSource.data">
+          <td>{{ row.orderCode }}</td>
+          <td>{{ row.requestedAt | date:'dd, MMM, yyyy' }}</td>
+          <td>{{ row.userName }}</td>
+          <td>{{ row.productName }}</td>
+          <td>{{ row.reasonForReturn }}</td>
+          <td>{{ row.returnDetail || '-' }}</td>
+          <td>
+            <span class="status-badge" [ngClass]="row.status.toLowerCase()">{{ row.status }}</span>
+          </td>
+          <td>
+            <ng-container [ngSwitch]="row.status.toLowerCase()">
+              <button
+                class="action-btn view"
+                [routerLink]="['/return', row.id]"
+              >
+                View Detail
+              </button>
+              <!-- <span *ngSwitchDefault>-</span> -->
+            </ng-container>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="dataSource.data.length === 0" class="empty-state">No return requests found.</div>
+  </div>
+  <ng-template #loadingTpl>
+    <div class="loading-state">Loading...</div>
+  </ng-template>
+
+  <!-- Detail Modal -->
+<div class="modal" id="detailModal" [class.show]="showDetailModal">
+  <div class="modal-content attractive-modal">
+    <h3>Return Request Detail</h3>
+    <div *ngIf="selectedRequest">
+      <div class="images" *ngIf="selectedRequest.imageUrls && selectedRequest.imageUrls.length">
+        <div class="image-gallery">
+          <img *ngFor="let img of selectedRequest.imageUrls" [src]="getImageUrl(img)" alt="Return Image" class="return-image"/>
+        </div>
+      </div>
+      <div class="details">
+        <ng-container *ngIf="selectedRequest.orderCode">
+          <p><b>Order ID:</b> {{ selectedRequest.orderCode }}</p>
+        </ng-container>
+        <ng-container *ngIf="selectedRequest.productName">
+          <p><b>Product:</b> {{ selectedRequest.productName }}</p>
+        </ng-container>
+        <ng-container *ngIf="selectedRequest.reasonForReturn">
+          <p><b>Reason:</b> {{ selectedRequest.reasonForReturn }}</p>
+        </ng-container>
+        <ng-container *ngIf="selectedRequest.returnDetail">
+          <p><b>Return Detail:</b> {{ selectedRequest.returnDetail }}</p>
+        </ng-container>
+        <ng-container *ngIf="selectedRequest.status">
+          <p><b>Status:</b> {{ selectedRequest.status }}</p>
+        </ng-container>
+        <ng-container *ngIf="!selectedRequest.orderCode && !selectedRequest.productName && !selectedRequest.reasonForReturn && !selectedRequest.returnDetail && !selectedRequest.status">
+          <p class="no-details">No details available for this request.</p>
+        </ng-container>
+      </div>
+      <form #adminDecisionForm="ngForm">
+        <div class="form-group">
+          <label *ngIf="adminDecision !== undefined">Admin Remark</label>
+          <textarea [(ngModel)]="adminDecision" name="adminDecision" required placeholder="Enter your decision or remark..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" (click)="closeDetailModal()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+.attractive-modal {
+  max-width: 480px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 32px 28px 24px 28px;
+  position: relative;
+}
+.attractive-modal h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: #1976d2;
+}
+.image-gallery {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.return-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fafbfc;
+}
+.details p {
+  margin: 0 0 8px 0;
+  font-size: 1.05rem;
+  color: #333;
+}
+.no-details {
+  color: #b71c1c;
+  font-style: italic;
+  margin: 12px 0;
+}
+.form-group {
+  margin: 18px 0 10px 0;
+  display: flex;
+  flex-direction: column;
+}
+.form-group label {
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #1976d2;
+}
+.form-group textarea {
+  min-height: 60px;
+  border-radius: 6px;
+  border: 1px solid #d0d0d0;
+  padding: 8px 12px;
+  font-size: 1rem;
+  resize: vertical;
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+.modal-actions button {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal-actions button:nth-child(2) {
+  background: #d32f2f;
+}
+.modal-actions button:nth-child(3) {
+  background: #888;
+}
+.modal-actions button:hover {
+  opacity: 0.92;
+}
+</style>
+  

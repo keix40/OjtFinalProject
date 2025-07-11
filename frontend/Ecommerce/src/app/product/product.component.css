@@ -2,6 +2,18 @@
 
 /* Color Scheme */
 
+@keyframes fade-in-down {
+  0% { opacity: 0; transform: translateY(-20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-out-up {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-20px); }
+}
+
+.animate-fade-in-down { animation: fade-in-down 0.3s ease-out; }
+.animate-fade-out-up { animation: fade-out-up 0.3s ease-in; }
 
 body, .product-form-container {
   background: var(--bg-light);

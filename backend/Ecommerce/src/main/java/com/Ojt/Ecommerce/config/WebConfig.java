@@ -49,10 +49,12 @@ public class WebConfig implements WebMvcConfigurer {
         String productImagePath = Paths.get("product_image").toAbsolutePath().toString();
         String uploadsPath = Paths.get("uploads").toAbsolutePath().toString();
         String reviewPath = Paths.get("review").toAbsolutePath().toString();
+        String returnImagePath = Paths.get("return_images").toAbsolutePath().toString(); // ✅ Add this line
 
         System.out.println("Product image path: " + productImagePath);
         System.out.println("Uploads path: " + uploadsPath);
         System.out.println("Review path: " + reviewPath);
+        System.out.println("Return image path: " + returnImagePath); // ✅ Optional debug print
 
         registry.addResourceHandler("/product_image/**")
                 .addResourceLocations("file:" + productImagePath + "/");
@@ -62,6 +64,9 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/review/**")
                 .addResourceLocations("file:" + reviewPath + "/");
+
+        registry.addResourceHandler("/return_images/**") // ✅ Register URL path
+                .addResourceLocations("file:" + returnImagePath + "/");
     }
 
 

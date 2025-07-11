@@ -1,5 +1,7 @@
 package com.Ojt.Ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -26,8 +28,8 @@ public class UserOrder {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
-    @Enumerated(EnumType.STRING)
-    private OrderStatus status;
+//    @Enumerated(EnumType.STRING)
+//    private OrderStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -48,4 +50,10 @@ public class UserOrder {
     @JoinColumn(name = "delivery_method_id")
     private DeliveryMethod deliveryMethod;
 
+    @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderStatus> orderStatusHistory;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "saved_card_id")
+    private SavedCard savedCard;
 }

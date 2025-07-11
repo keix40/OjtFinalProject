@@ -3,10 +3,14 @@ package com.Ojt.Ecommerce.service;
 import com.Ojt.Ecommerce.dto.LoginRequest;
 import com.Ojt.Ecommerce.dto.LoginResponse;
 import com.Ojt.Ecommerce.dto.RegisterRequest;
+import com.Ojt.Ecommerce.dto.AdminCreateUserRequest;
+import com.Ojt.Ecommerce.dto.AddressDTO;
+import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
 import com.Ojt.Ecommerce.entity.OtpVerification;
 import com.Ojt.Ecommerce.entity.RefreshToken;
 import com.Ojt.Ecommerce.entity.Role;
 import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.entity.AddressType;
 import com.Ojt.Ecommerce.exception.CustomException;
 import com.Ojt.Ecommerce.repository.OtpVerificationRepository;
 import com.Ojt.Ecommerce.repository.RoleRepository;
@@ -54,6 +58,8 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final OtpVerificationRepository otpVerificationRepository;
     private final ModelMapper modelMapper;
+    private final NotificationService notificationService;
+    private final AddressService addressService;
     private final DiscountRepository discountRepository;
     private final DiscountRuleRepository discountRuleRepository;
 
@@ -212,6 +218,48 @@ public class UserServiceImpl implements UserService {
         return "Registration successful. Please check your email for OTP verification.";
     }
 
+    @Override
+    public User createUserByAdmin(AdminCreateUserRequest request) {
+        // 1. Find role by name
+        Role role = roleRepository.findByName(request.getRole())
+                .orElseThrow(() -> new RuntimeException("Role not found: " + request.getRole()));
+
+        // 2. Create User entity
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setGender(request.getGender());
+        user.setDateOfBirth(request.getDateOfBirth());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setRole(role);
+        user.setVerified(true); // Admin-created users are verified by default
+        user.setCreatedDate(java.time.LocalDateTime.now());
+        userRepository.save(user);
+
+        // 3. Create Address if provided
+        if (request.getAddress() != null && !request.getAddress().isEmpty()) {
+            AddressDTO addressDTO = new AddressDTO();
+            addressDTO.setAddress(request.getAddress());
+            addressDTO.setCity(request.getCity());
+            addressDTO.setState(request.getState());
+            addressDTO.setPostalCode(request.getPostalCode());
+            addressDTO.setCountry(request.getCountry());
+            addressDTO.setUserId(user.getId());
+            if (request.getAddressType() != null) {
+                try {
+                    addressDTO.setType(AddressType.valueOf(request.getAddressType().toUpperCase()));
+                } catch (Exception e) {
+                    addressDTO.setType(AddressType.HOME); // default
+                }
+            } else {
+                addressDTO.setType(AddressType.HOME);
+            }
+            addressService.addNewAddress(addressDTO);
+        }
+        return user;
+    }
+
 
     @Override
     public List<User> getAllUsers() {
@@ -247,8 +295,41 @@ public class UserServiceImpl implements UserService {
 
 
         userRepository.save(user);
+        notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
 
         return modelMapper.map(user, RegisterRequest.class);
+    }
+
+    @Override
+    public String uploadProfileImage(String token, MultipartFile image) {  //add for profile avatar update by pmk june 13
+        if (image == null || image.isEmpty()) {
+            throw new CustomException("No image file provided");
+        }
+
+        String email = jwtTokenProvider.getEmailFromToken(token);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("User not found"));
+
+        try {
+            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
+            File uploadPath = new File(uploadDir);
+            if (!uploadPath.exists()) {
+                uploadPath.mkdirs();
+            }
+
+            String imageName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
+            File dest = new File(uploadPath, imageName);
+            image.transferTo(dest);
+
+            String imagePath = "/uploads/" + imageName;
+            user.setProfileImage(imagePath);
+            userRepository.save(user);
+
+            return imagePath;
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CustomException("Failed to upload profile image: " + e.getMessage());
+        }
     }
 
     //add method
@@ -274,6 +355,47 @@ public class UserServiceImpl implements UserService {
 
     public List<User> findUsersByRoleId(Long roleId) {
         return userRepository.findByRoleId(roleId);
+    }
+
+    @Override
+    public List<CustomerSummaryDTO> getAllCustomerSummaries() {
+        List<User> customers = userRepository.findByRole_Name("CUSTOMER");
+        List<CustomerSummaryDTO> result = new java.util.ArrayList<>();
+        for (User user : customers) {
+            int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
+            double totalSpent = 0.0;
+            if (user.getOrders() != null) {
+                for (var order : user.getOrders()) {
+                    if (order.getOrderProducts() != null) {
+                        for (var op : order.getOrderProducts()) {
+                            if (op.getProduct() != null && op.getProduct().getPrice() != null && op.getQuantity() != null) {
+                                totalSpent += op.getProduct().getPrice() * op.getQuantity();
+                            }
+                        }
+                    }
+                }
+            }
+            result.add(new CustomerSummaryDTO(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getPhoneNumber(),
+                user.getStatus() != null ? user.getStatus().name() : null,
+                user.getRole() != null ? user.getRole().getName() : null,
+                user.getCreatedDate(),
+                totalOrders,
+                totalSpent,
+                user.getProfileImage()
+            ));
+        }
+        return result;
+    }
+
+    @Override
+    public List<CustomerSummaryDTO> getCustomersForReport() {
+        // This method returns the same data as getAllCustomerSummaries
+        // but is specifically named for report generation to maintain clear separation of concerns
+        return getAllCustomerSummaries();
     }
 
 }

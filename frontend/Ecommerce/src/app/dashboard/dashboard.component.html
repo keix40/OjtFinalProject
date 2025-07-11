@@ -1,0 +1,398 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+    <!-- Header -->
+    <div class="border-b border-slate-200/60 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <div class="container mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <div class="animate-slide-in">
+            <h1 class="text-3xl font-bold gradient-text">Analytics Dashboard</h1>
+            <p class="text-sm text-slate-500 mt-1">Universal Data Visualization • Real-time Updates</p>
+          </div>
+          <div class="flex items-center space-x-3 animate-slide-in animate-delay-200">
+            <div class="flex items-center space-x-2">
+              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
+              <span class="text-xs text-slate-500">Live</span>
+            </div>
+            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-white/60 backdrop-blur-sm border border-slate-200 glow-effect">
+            <i lucide="bar-chart-3" class="w-3 h-3 mr-1"></i>
+            <span>{{ timeFrameLabels[currentTimeFrame] }} View</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="container mx-auto p-6 space-y-8">
+      <!-- Top Metrics Row -->
+      <div class="grid gap-4 grid-cols-2 md:grid-cols-6 animate-fade-in">
+      @for (metric of topMetricsData; track metric.id) {
+        <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50">
+          <div class="p-5">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-slate-700 text-sm">{{ metric.title }}</h3>
+                <div class="w-16 h-8 chart-container">
+                  <canvas [id]="'chart-' + metric.id" width="64" height="32"></canvas>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <div class="font-bold text-slate-900 text-2xl">{{ metric.value }}</div>
+                <div class="flex items-center space-x-2">
+                  <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
+                    @if (metric.isPositive) {
+                      <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
+                    } @else {
+                      <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
+                    }
+                    <span class="text-xs font-semibold text-emerald-600">
+                      {{ metric.isPositive ? '+' : '' }}{{ metric.change.toFixed(1) }}%
+                    </span>
+                  </div>
+                  <span class="text-xs text-slate-500">vs last period</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+      </div>
+  
+      <!-- Time Frame Selection -->
+      <div class="metric-card shadow-lg rounded-xl animate-fade-in animate-delay-100">
+        <div class="p-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <div class="p-2 bg-blue-100 rounded-lg">
+              <i lucide="calendar-days" class="h-5 w-5 text-blue-600"></i>
+              </div>
+              <div>
+                <span class="text-lg font-semibold text-slate-800">Time Period</span>
+                <p class="text-sm text-slate-500">Select data range for analysis</p>
+              </div>
+            </div>
+            <div class="flex space-x-2">
+            @for (frame of timeFrames; track frame) {
+              <button (click)="changeTimeFrame(frame)"
+                      class="time-frame-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
+                      [ngClass]="{
+                        'bg-blue-600 text-white shadow-lg glow-effect': currentTimeFrame === frame,
+                        'bg-blue-100 text-blue-800': currentTimeFrame === frame,
+                        'text-slate-600 hover:bg-slate-100 hover:text-slate-800': currentTimeFrame !== frame
+                      }">
+                {{ frame.charAt(0).toUpperCase() + frame.slice(1) }}
+              </button>
+            }
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Sales Performance Section -->
+      <div class="space-y-6 animate-fade-in animate-delay-200">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Sales Performance</h2>
+            <p class="text-slate-500 mt-1">Track revenue trends and growth metrics</p>
+          </div>
+        <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{{ timeFrameLabels[currentTimeFrame] }} view</div>
+        </div>
+  
+        <!-- Sales Metric Cards -->
+        <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+        @for (metric of salesMetricsData; track metric.id) {
+          <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50">
+            <div class="p-4">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-semibold text-slate-700 text-xs">{{ metric.title }}</h3>
+                  <div class="w-16 h-6 chart-container">
+                    <canvas [id]="'chart-sm-' + metric.id" width="64" height="24"></canvas>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="font-bold text-slate-900 text-lg">
+                    {{ metric.value }}
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
+                      @if (metric.isPositive) {
+                        <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
+                      } @else {
+                        <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
+                      }
+                      <span class="text-xs font-semibold text-emerald-600">
+                        {{ metric.isPositive ? '+' : '' }}{{ metric.change.toFixed(1) }}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="h-8 -mx-1 chart-container">
+                  <canvas [id]="'chart-sm-line-' + metric.id" width="100" height="32"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+        </div>
+  
+        <!-- Sales Charts -->
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Sales Trend Analysis</h3>
+              <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <i lucide="more-horizontal" class="h-4 w-4 text-slate-400"></i>
+              </button>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 280px">
+                <canvas id="salesTrendChart"></canvas>
+              </div>
+            </div>
+          </div>
+  
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+            <div class="flex items-center">
+              <h3 class="text-lg font-bold text-slate-800">Revenue vs Target</h3>
+            </div>
+            <div class="relative">
+              <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                      (click)="showRevenueDropdown = !showRevenueDropdown">
+                <span class="text-2xl text-slate-700">&#8942;</span>
+              </button>
+              <div *ngIf="showRevenueDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
+                <label class="flex items-center text-sm mb-2">
+                  <input type="checkbox" [(ngModel)]="showRevenue" (change)="updateRevenueTargetChart()" class="mr-1" />
+                  Revenue
+                </label>
+                <label class="flex items-center text-sm">
+                  <input type="checkbox" [(ngModel)]="showTarget" (change)="updateRevenueTargetChart()" class="mr-1" />
+                  Target
+                </label>
+              </div>
+            </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 280px">
+                <canvas id="revenueTargetChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- User Engagement Section -->
+      <div class="space-y-6 animate-fade-in animate-delay-300">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">User Engagement</h2>
+            <p class="text-slate-500 mt-1">Monitor user activity and behavior patterns</p>
+          </div>
+          <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Engagement rate: {{ engagementRate.toFixed(1) }}%</div>
+        </div>
+  
+        <!-- User Metric Cards -->
+        <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+        @for (metric of userMetricsData; track metric.id) {
+          <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50">
+            <div class="p-4">
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-semibold text-slate-700 text-xs">{{ metric.title }}</h3>
+                  <div class="w-16 h-6 chart-container">
+                    <canvas [id]="'chart-user-' + metric.id" width="64" height="24"></canvas>
+                  </div>
+                </div>
+                <div class="space-y-2">
+                  <div class="font-bold text-slate-900 text-lg">
+                    {{ metric.value }}
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
+                      @if (metric.isPositive) {
+                        <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
+                      } @else {
+                        <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
+                      }
+                      <span class="text-xs font-semibold text-emerald-600">
+                        {{ metric.isPositive ? '+' : '' }}{{ metric.change.toFixed(1) }}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="h-8 -mx-1 chart-container">
+                  <canvas [id]="'chart-user-line-' + metric.id" width="100" height="32"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+        </div>
+  
+        <!-- User Charts -->
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">User Growth Trends</h3>
+            <div class="relative">
+              <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                      (click)="showUserGrowthDropdown = !showUserGrowthDropdown">
+                <span class="text-2xl text-slate-700">&#8942;</span>
+              </button>
+              <div *ngIf="showUserGrowthDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
+                <label class="flex items-center text-sm mb-2">
+                  <input type="checkbox" [(ngModel)]="showActiveUsers" (change)="updateUserGrowthChart()" class="mr-1" />
+                  Active Users
+                </label>
+                <label class="flex items-center text-sm">
+                  <input type="checkbox" [(ngModel)]="showNewUsers" (change)="updateUserGrowthChart()" class="mr-1" />
+                  New Users
+                </label>
+              </div>
+            </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 280px">
+                <canvas id="userGrowthChart"></canvas>
+              </div>
+            </div>
+          </div>
+  
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Engagement Analytics</h3>
+            <div class="relative">
+              <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                      (click)="showEngagementDropdown = !showEngagementDropdown">
+                <span class="text-2xl text-slate-700">&#8942;</span>
+              </button>
+              <div *ngIf="showEngagementDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
+                <label class="flex items-center text-sm mb-2">
+                  <input type="checkbox" [(ngModel)]="showViews" (change)="updateEngagementChart()" class="mr-1" />
+                  Views
+                </label>
+                <label class="flex items-center text-sm">
+                  <input type="checkbox" [(ngModel)]="showEngagement" (change)="updateEngagementChart()" class="mr-1" />
+                  Engagement
+                </label>
+              </div>
+            </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 280px">
+                <canvas id="profileViewsChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Customer Segmentation Section -->
+      <div class="space-y-6 animate-fade-in animate-delay-400">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Customer Segmentation</h2>
+            <p class="text-slate-500 mt-1">Analyze customer distribution and loyalty tiers</p>
+          </div>
+          <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Total: {{ formatNumber(totalCustomers) }} customers</div>
+        </div>
+  
+        <!-- Customer Tier Cards -->
+        <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+        @for (tier of segmentationData; track tier.name) {
+          <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-white to-slate-50">
+            <div class="p-5">
+              <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center space-x-3">
+                  <div class="p-2 rounded-lg" [style.backgroundColor]="tier.color"></div>
+                  <span class="text-sm font-semibold text-slate-700">{{ tier.name }}</span>
+                </div>
+                <div class="w-12 h-6">
+                  <svg width="100%" height="100%" viewBox="0 0 48 24">
+                    <path d="M 0 12 L 12 8 L 24 14 L 36 6 L 48 10" [attr.stroke]="tier.color" stroke-width="2" fill="none"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="space-y-2">
+                <div class="text-2xl font-bold text-slate-900">{{ formatNumber(tier.value) }}</div>
+                <div class="flex items-center justify-between">
+                  <div class="text-xs text-slate-500">{{ (tier.value / totalCustomers * 100).toFixed(1) }}% of total</div>
+                  <div class="px-2 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
+                    {{ tier.value > 3000 ? 'High' : tier.value > 2000 ? 'Medium' : 'Low' }} Volume
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+        </div>
+  
+        <!-- Customer Charts -->
+        <div class="grid gap-6 md:grid-cols-2">
+        <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Customer Distribution</h3>
+              <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <i lucide="more-horizontal" class="h-4 w-4 text-slate-400"></i>
+              </button>
+            </div>
+            <div class="p-5 pt-2">
+              <div class="space-y-4">
+              @for (tier of segmentationData; track tier.name; let i = $index) {
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center space-x-2">
+                      <div class="w-3 h-3 rounded-full" [style.backgroundColor]="tier.color"></div>
+                      <span class="font-medium text-slate-700">{{ tier.name }}</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ (tier.value / totalCustomers * 100).toFixed(1) }}%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div class="h-3 rounded-full progress-bar shadow-sm" [style.width.%]="tier.value / totalCustomers * 100" [style.background]="'linear-gradient(90deg, ' + tier.color + ', ' + tier.color + 'dd)'" [style.animationDelay.ms]="i * 200">
+                    </div>
+                  </div>
+                </div>
+              }
+              </div>
+            </div>
+          </div>
+  
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Customer Acquisition & Retention</h3>
+            <div class="relative">
+              <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                      (click)="showCustomerAcqDropdown = !showCustomerAcqDropdown">
+                <span class="text-2xl text-slate-700">&#8942;</span>
+              </button>
+              <div *ngIf="showCustomerAcqDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
+                <label class="flex items-center text-sm mb-2">
+                  <input type="checkbox" [(ngModel)]="showAcquired" (change)="updateCustomerAcqChart()" class="mr-1" />
+                  Acquired
+                </label>
+                <label class="flex items-center text-sm mb-2">
+                  <input type="checkbox" [(ngModel)]="showChurned" (change)="updateCustomerAcqChart()" class="mr-1" />
+                  Churned
+                </label>
+                <label class="flex items-center text-sm">
+                  <input type="checkbox" [(ngModel)]="showRetained" (change)="updateCustomerAcqChart()" class="mr-1" />
+                  Retained
+                </label>
+              </div>
+            </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 280px">
+                <canvas id="customerAcquisitionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Footer -->
+      <div class="text-center py-8 animate-fade-in animate-delay-500">
+        <p class="text-slate-400 text-sm">Dashboard v2.1 • Built with Chart.js & Tailwind CSS</p>
+      </div>
+    </div>
+  </div>

@@ -26,6 +26,9 @@ export class RegisterComponent  {
   fileTypeInvalid: boolean = false;
   otpVerified: boolean = false;
   otpError: string | null = null;
+  isRegistering: boolean = false;
+  isVerifyingOtp: boolean = false;
+  isResendingOtp: boolean = false;
 
   user = {
     name: '',
@@ -129,7 +132,7 @@ export class RegisterComponent  {
     });
   }*/
 
-    onSubmit() {                          //Change onSubmit method
+  onSubmit() {                          //Change onSubmit method
     this.submitted = true;
     this.validate();
 
@@ -142,48 +145,8 @@ export class RegisterComponent  {
       return;
     }
 
-    const formData = new FormData();
-    const requestPayload = {
-      name: this.user.name,
-      email: this.user.email,
-      password: this.user.password,
-      role: this.user.role,
-      dateOfBirth: this.user.dob,
-      gender: this.user.gender
-    };
-
-    formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
-
-    if (this.selectedFile) {
-      formData.append('profileImage', this.selectedFile);
-    }
-
-    this.authService.register(formData).subscribe({
-      next: (response) => {
-        this.successMessage = response?.message || 'Registration successful.';
-        this.errorMessage = '';
-        setTimeout(() => {
-          this.router.navigate(['/login']);
-        }, 2000);
-      },
-      error: (error) => {
-        const msg = error.error?.message || error.message || 'Registration failed';
-        this.errorMessage = msg;
-        console.error("error :"+error)
-
-        if (msg.toLowerCase().includes('email')) {
-          this.errors['email'] = msg;
-        } else if (msg.toLowerCase().includes('date')) {
-          this.errors['dob'] = msg;
-        } else if (msg.toLowerCase().includes('role')) {
-          this.errors['role'] = msg;
-        } else if (msg.toLowerCase().includes('image')) {
-          this.errors['profileImage'] = msg;
-        } else {
-          this.errors['general'] = msg;
-        }
-      }
-    });
+    // If OTP is already verified, proceed with registration
+    this.proceedWithRegistration();
   }
 
 //add Sent OTP
@@ -218,33 +181,45 @@ export class RegisterComponent  {
   verifyOtp(): void {
     if (this.otpForm.invalid) return;
 
+    this.isVerifyingOtp = true;
+    this.errorMessage = '';
+
     this.authService.verifyOtp(this.emailForOtp, this.otpForm.value.otp).subscribe({
       next: () => {
+        this.isVerifyingOtp = false;
         this.otpVerified = true;  // ✅ Mark OTP as verified
-        this.showEmailVerifyModal = false;  // ✅ Optional: close modal
-        this.successMessage = 'Email verified successfully. You can now continue.';
+        this.showEmailVerifyModal = false;  // ✅ Close modal
+        this.successMessage = 'Email verified successfully. Proceeding with registration...';
         this.errorMessage = '';
-      },
-    error: (err) => {
-    console.error('OTP verification error:', err);
-    if (err?.error?.message?.includes('No OTP request')) {
-    this.errorMessage = 'No OTP found. Please request a new OTP.';
-   } else {
-    this.errorMessage = err?.error?.message || err?.message || 'OTP verification failed.';
-  }
-}
 
+        // Automatically proceed with registration after successful OTP verification
+        this.proceedWithRegistration();
+      },
+      error: (err) => {
+        this.isVerifyingOtp = false;
+        console.error('OTP verification error:', err);
+        if (err?.error?.message?.includes('No OTP request')) {
+          this.errorMessage = 'No OTP found. Please request a new OTP.';
+        } else {
+          this.errorMessage = err?.error?.message || err?.message || 'OTP verification failed.';
+        }
+      }
     });
   }
 
 
   resendOtp(): void {
+    this.isResendingOtp = true;
+    this.errorMessage = '';
+
     this.authService.resendOtp(this.emailForOtp).subscribe({
       next: () => {
+        this.isResendingOtp = false;
         this.successMessage = 'OTP resent successfully.';
         this.errorMessage = '';
       },
       error: (err) => {
+        this.isResendingOtp = false;
         console.error('Resend OTP error:', err);
         this.errorMessage = err?.error?.message ||  err?.message || 'Failed to resend OTP.';
         this.successMessage = '';
@@ -252,7 +227,12 @@ export class RegisterComponent  {
     });
   }
 
-  doFinalRegistration() {
+  // New method to handle the actual registration process
+  private proceedWithRegistration(): void {
+    this.isRegistering = true;
+    this.successMessage = 'Processing registration...';
+    this.errorMessage = '';
+
     const formData = new FormData();
     const requestPayload = {
       name: this.user.name,
@@ -264,39 +244,41 @@ export class RegisterComponent  {
     };
 
     formData.append('user', new Blob([JSON.stringify(requestPayload)], { type: 'application/json' }));
+
     if (this.selectedFile) {
       formData.append('profileImage', this.selectedFile);
     }
 
-//     this.authService.register(formData).subscribe({
-//   next: (response) => {
-//     console.log('Access Token:', response.accessToken); // ✅ correct property
-//     console.log('Refresh Token:', response.refreshToken);
+    this.authService.register(formData).subscribe({
+      next: (response) => {
+        this.isRegistering = false;
+        console.log('Access Token:', response.accessToken);
+        this.authService.saveToken(response.accessToken!);
+        this.successMessage = 'Registration successful! Redirecting to home...';
+        this.errorMessage = '';
+        setTimeout(() => this.router.navigate(['/home']), 1500);
+      },
+      error: (error) => {
+        this.isRegistering = false;
+        const msg = error.error?.message || error.message || 'Registration failed';
+        this.errorMessage = msg;
+        console.error("Registration error: " + error);
 
-//     this.authService.saveToken(response.accessToken); // ✅ Save to localStorage
-
-//     this.successMessage = 'Registered successfully. Redirecting to home...';
-//     setTimeout(() => {
-//       this.router.navigate(['/home']);
-//     }, 1500);
-//   },
-//   error: (error) => {
-//     this.errorMessage = error.error.message || 'Registration failed';
-//   }
-// });
-
-this.authService.register(formData).subscribe({
-  next: (response) => {
-    console.log('Access Token:', response.accessToken);
-    this.authService.saveToken(response.accessToken!);
-    this.successMessage = 'Registered successfully. Redirecting to home...';
-    setTimeout(() => this.router.navigate(['/home']), 1500);
-  },
-  error: (error) => {
-    this.errorMessage = error.error.message || 'Registration failed';
+        if (msg.toLowerCase().includes('email')) {
+          this.errors['email'] = msg;
+        } else if (msg.toLowerCase().includes('date')) {
+          this.errors['dob'] = msg;
+        } else if (msg.toLowerCase().includes('role')) {
+          this.errors['role'] = msg;
+        } else if (msg.toLowerCase().includes('image')) {
+          this.errors['profileImage'] = msg;
+        } else {
+          this.errors['general'] = msg;
+        }
+      }
+    });
   }
-});
-  }
+
 validate() {
     this.errors = {};
 
@@ -349,7 +331,9 @@ validate() {
     }
   }
 
+  // 判断用户邮箱格式是否有效
   isEmailFormatValid(): boolean {
+    // 使用正则表达式判断用户邮箱是否为gmail邮箱
     return /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(this.user.email);
   }
 

@@ -25,7 +25,7 @@ export class UserOrdersComponent implements OnInit {
 
   // Filter
   selectedStatus: string = '';
-  
+
   statusOptions: string[] = [
     'PENDING',
     'PAID',
@@ -33,11 +33,14 @@ export class UserOrdersComponent implements OnInit {
     'SHIPPED',
     'DELIVERED',
     'CANCELLED',
-    'RETURNED'
+    'RETURNED',
   ];
-  
-  
-  constructor(private orderService: OrderService, private authService: AuthService, private router: Router) {}
+
+  constructor(
+    private orderService: OrderService,
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadUserOrders();
@@ -56,6 +59,7 @@ export class UserOrdersComponent implements OnInit {
 
     this.orderService.getOrderByUserId(userId).subscribe({
       next: (orders) => {
+        console.log('Orders:', orders);
         this.userOrders = orders;
         this.updatePagination();
         this.isLoading = false;
@@ -64,7 +68,7 @@ export class UserOrdersComponent implements OnInit {
         console.error('Error fetching orders:', err);
         this.error = 'Failed to load orders. Please try again later.';
         this.isLoading = false;
-      }
+      },
     });
   }
 
@@ -76,10 +80,13 @@ export class UserOrdersComponent implements OnInit {
 
   filteredOrders(): UserOrderListDTO[] {
     return this.selectedStatus
-      ? this.userOrders.filter(order => order.status.toUpperCase() === this.selectedStatus.toUpperCase())
+      ? this.userOrders.filter(
+          (order) =>
+            this.getLatestStatus(order)?.toUpperCase() ===
+            this.selectedStatus.toUpperCase()
+        )
       : this.userOrders;
   }
-  
 
   paginatedOrders(): UserOrderListDTO[] {
     const start = (this.currentPage - 1) * this.itemsPerPage;
@@ -126,13 +133,49 @@ export class UserOrdersComponent implements OnInit {
     return order.products.reduce((total, p) => total + p.quantity, 0);
   }
 
-  getStatusBadgeClass(status: string): string {
+  /**
+   * Get the latest status from statusHistory or fallback to order.status
+   */
+  getLatestStatus(order: UserOrderListDTO): string {
+    if (order.statusHistory && order.statusHistory.length > 0) {
+      const latest = [...order.statusHistory].sort(
+        (a, b) => new Date(b.statusDate).getTime() - new Date(a.statusDate).getTime()
+      )[0];
+      return latest.status;
+    }
+    return order.status ?? 'UNKNOWN';
+  }  
+  
+  getLatestStatusDate(order: UserOrderListDTO): Date | null {
+    if (order.statusHistory && order.statusHistory.length > 0) {
+      const latest = [...order.statusHistory].sort(
+        (a, b) => new Date(b.statusDate).getTime() - new Date(a.statusDate).getTime()
+      )[0];
+      return new Date(latest.statusDate);
+    }
+    return null;
+  }
+  
+  getStatusBadgeClass(status: string | null | undefined): string {
+    if (!status) {
+      return 'bg-secondary';
+    }
     switch (status.toLowerCase()) {
-      case 'pending': return 'bg-warning text-dark';
-      case 'processing': return 'bg-info text-dark';
-      case 'delivered': return 'bg-success';
-      case 'cancelled': return 'bg-danger';
-      default: return 'bg-secondary';
+      case 'pending':
+        return 'bg-warning text-dark';
+      case 'paid':
+        return 'bg-primary text-white';
+      case 'processing':
+        return 'bg-info text-dark';
+      case 'shipped':
+        return 'bg-secondary text-white';
+      case 'delivered':
+        return 'bg-success';
+      case 'cancelled':
+      case 'returned':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
     }
   }
 
@@ -141,10 +184,11 @@ export class UserOrdersComponent implements OnInit {
   }
 
   formatStatus(status: string): string {
+    if (!status) return '';
     return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   }
 
   goToTracking(orderId: number): void {
-    this.router.navigate(['/ordertracking', orderId ]);
+    this.router.navigate(['/ordertracking', orderId]);
   }
 }

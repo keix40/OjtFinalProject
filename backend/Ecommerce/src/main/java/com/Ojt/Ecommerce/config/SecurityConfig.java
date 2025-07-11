@@ -49,21 +49,32 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
 
                         .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
+                        .requestMatchers("/product/**").permitAll()
                         .requestMatchers("/ws-review/**", "/ws-review/info/**").permitAll()
                         .requestMatchers("product/**").permitAll()
                         .requestMatchers("/product_image/**").permitAll()
                         .requestMatchers("/review/**").permitAll()
+                        .requestMatchers("/returns/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/category/**").permitAll()
                         .requestMatchers("/brand/**").permitAll()
                         .requestMatchers("/attribute/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll() // for profile image by pmk june 11
+                        .requestMatchers("/upload/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/wishlist/**").permitAll()
                         .requestMatchers("/order/**").permitAll()
                         .requestMatchers("/review/**").permitAll()
+                        .requestMatchers("/card/**").permitAll()
+                        .requestMatchers("/return_images/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
                         .requestMatchers("/api/discounts/**").permitAll()
+                        .requestMatchers("/api/admin/discounts/**").permitAll()
+                        .requestMatchers("/api/coupons/validate").permitAll()
+
                         .anyRequest().authenticated()
+
                 );
 
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

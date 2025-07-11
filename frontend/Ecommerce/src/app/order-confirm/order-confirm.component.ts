@@ -2,6 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CartService } from '../services/cart.service';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-order-confirm',
@@ -15,7 +16,8 @@ export class OrderConfirmComponent implements OnInit {
   constructor(
     public activeModal: NgbActiveModal,
     private router: Router,
-    private cartService: CartService
+    private cartService: CartService,
+    public imageService: ImageService
   ) {}
 
   ngOnInit() {

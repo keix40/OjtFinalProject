@@ -1,199 +1,187 @@
 <app-header></app-header>
-<div class="container-fluid py-5 bg-light min-vh-100">
-  <div class="checkout-margin"></div>
-  <div class="row justify-content-center checkout-row">
-    <!-- Main Checkout Steps (Left) -->
-    <div class="col-lg-7 col-xl-8 col-md-10 mb-4">
-      <div class="mx-auto animate-fadein" style="max-width: 820px;">
-        <div class="accordion checkout-accordion animate-slidein" id="checkoutAccordion">
+
+<!-- Main Content -->
+<div class="bg-white min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-10">
+      <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Checkout</h1>
+      <p class="text-gray-600 text-lg">Complete your order in just a few steps</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <!-- Checkout Steps -->
+      <div class="lg:col-span-2">
+        <div class="space-y-8">
           <!-- Step 1: Customer Information -->
-          <div class="accordion-item mb-3">
-            <h2 class="accordion-header" id="headingCustomer">
-              <button class="accordion-button d-flex align-items-center" type="button" [attr.aria-expanded]="activeStep === 1" [class.collapsed]="activeStep !== 1" (click)="setActiveStep(1)">
-                <span class="badge rounded-circle bg-primary me-2">1</span>
-                <span class="fw-bold">Customer information</span>
-                <span *ngIf="stepCompleted[1]" class="ms-2 text-success"><i class="bi bi-check-circle-fill"></i></span>
-                <span *ngIf="stepCompleted[1]" class="ms-auto"><button class="btn btn-link btn-sm p-0" (click)="editStep($event, 1)">Edit</button></span>
-              </button>
-            </h2>
-            <div [id]="'collapseCustomer'" class="accordion-collapse collapse" [class.show]="activeStep === 1" [attr.aria-labelledby]="'headingCustomer'" data-bs-parent="#checkoutAccordion">
-              <div class="accordion-body">
-                <form #customerForm="ngForm" (ngSubmit)="nextStep(customerForm)">
-                  <div class="mb-3">
-                    <label class="form-label">Email address<span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" [(ngModel)]="customer.email" name="email" required [disabled]="true">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" [(ngModel)]="customer.name" name="name" required [disabled]="true">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Phone number <span class="text-danger">*</span></label>
-                    <input type="tel" class="form-control" [(ngModel)]="customer.phone" name="phone" required>
-                  </div>
-                  <button class="btn btn-primary w-100" [disabled]="customer.phone === ''">Continue</button>
-                </form>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                <h2 class="text-xl font-semibold text-gray-900">Customer Information</h2>
+                <span *ngIf="stepCompleted[1]" class="ml-3 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>
               </div>
+              <button *ngIf="stepCompleted[1] && activeStep !== 1" class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200" (click)="editStep($event, 1)">Edit</button>
             </div>
-            <div *ngIf="stepCompleted[1] && activeStep !== 1" class="accordion-summary bg-light p-3 border-top">
-              <div><strong>Email:</strong> {{customer.email}}</div>
-              <div><strong>Name:</strong> {{customer.name}}</div>
-              <div><strong>Phone:</strong> {{customer.phone}}</div>
+            <div *ngIf="activeStep === 1" class="p-6">
+              <form #customerForm="ngForm" (ngSubmit)="nextStep(customerForm)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Email Address</label>
+                    <input type="email" [(ngModel)]="customer.email" name="email" required [disabled]="true" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Full Name</label>
+                    <input type="text" [(ngModel)]="customer.name" name="name" required [disabled]="true" class="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-600">
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Phone Number <span class="text-red-500">*</span></label>
+                    <input type="tel" [(ngModel)]="customer.phone" name="phone" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none">
+                  </div>
+                </div>
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-lg mt-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm" [disabled]="customer.phone === ''">Continue</button>
+              </form>
+            </div>
+            <div *ngIf="stepCompleted[1] && activeStep !== 1" class="bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div class="text-sm text-gray-700"><strong>Email:</strong> {{customer.email}}</div>
+              <div class="text-sm text-gray-700"><strong>Name:</strong> {{customer.name}}</div>
+              <div class="text-sm text-gray-700"><strong>Phone:</strong> {{customer.phone}}</div>
             </div>
           </div>
-
           <!-- Step 2: Shipping Address -->
-          <div class="accordion-item mb-3">
-            <h2 class="accordion-header" id="headingShipping">
-              <button class="accordion-button d-flex align-items-center" type="button" [attr.aria-expanded]="activeStep === 2" [class.collapsed]="activeStep !== 2" (click)="setActiveStep(2)" [disabled]="!stepCompleted[1]">
-                <span class="badge rounded-circle bg-primary me-2">2</span>
-                <span class="fw-bold">Shipping address</span>
-                <span *ngIf="stepCompleted[2]" class="ms-2 text-success"><i class="bi bi-check-circle-fill"></i></span>
-                <span *ngIf="stepCompleted[2]" class="ms-auto"><button class="btn btn-link btn-sm p-0" (click)="editStep($event, 2)">Edit</button></span>
-              </button>
-            </h2>
-            <div [id]="'collapseShipping'" class="accordion-collapse collapse" [class.show]="activeStep === 2" [attr.aria-labelledby]="'headingShipping'" data-bs-parent="#checkoutAccordion">
-              <div class="accordion-body">
-                <!-- Address List -->
-                <div *ngIf="addresses.length > 0" class="mb-3">
-                  <div class="row g-3">
-                    <div *ngFor="let addr of addresses; let i = index" class="col-12">
-                      <div class="card address-card shadow-sm border-2 mb-2"
-                           [ngClass]="{'border-primary': selectedAddressIndex === i, 'border-light': selectedAddressIndex !== i}"
-                           (click)="onSelectAddress(i)"
-                           style="cursor: pointer;">
-                        <div class="card-body d-flex align-items-center">
-                          <input class="form-check-input me-3" type="radio" [checked]="selectedAddressIndex === i" [id]="'address'+i" style="transform: scale(1.3);" (click)="$event.stopPropagation()">
-                          <div class="flex-grow-1">
-                            <div class="fw-semibold">{{addr.address}}</div>
-                            <div class="small text-muted">{{addr.city}}, {{addr.state}}, {{addr.postalCode}}, {{addr.country}}</div>
-                            <!-- <div class="small text-muted">Phone: {{addr.phone}}</div> -->
-                          </div>
-                          <span *ngIf="selectedAddressIndex === i" class="badge bg-primary ms-2">Selected</span>
-                        </div>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                <h2 class="text-xl font-semibold text-gray-900">Shipping Address</h2>
+                <span *ngIf="stepCompleted[2]" class="ml-3 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>
+              </div>
+              <button *ngIf="stepCompleted[2] && activeStep !== 2" class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200" (click)="editStep($event, 2)">Edit</button>
+            </div>
+            <div *ngIf="activeStep === 2" class="p-6">
+              <!-- Address List -->
+              <div *ngIf="addresses.length > 0" class="space-y-4 mb-6">
+                <div *ngFor="let addr of addresses; let i = index" (click)="onSelectAddress(i)" class="border-2 rounded-xl p-4 cursor-pointer transition-colors duration-200" [ngClass]="{'border-blue-500 bg-blue-50': selectedAddressIndex === i, 'border-gray-200 hover:border-gray-300': selectedAddressIndex !== i}">
+                  <div class="flex items-start justify-between">
+                    <div class="flex items-start space-x-3">
+                      <input type="radio" name="address" [checked]="selectedAddressIndex === i" class="mt-1 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()">
+                      <div>
+                        <div class="font-semibold text-gray-900">{{addr.address}}</div>
+                        <div class="text-gray-600 text-sm">{{addr.city}}, {{addr.state}}, {{addr.postalCode}}, {{addr.country}}</div>
                       </div>
                     </div>
+                    <span *ngIf="selectedAddressIndex === i" class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">Selected</span>
                   </div>
                 </div>
-                <!-- Add New Address Button -->
-                <div class="mb-3">
-                  <button class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center py-2" (click)="openAddAddressModal()" style="font-size: 1.1rem;">
-                    <i class="bi bi-plus-circle me-2"></i>
-                    Add New Address
-                  </button>
-                </div>
-                <!-- Continue Button -->
-                <div class="mt-4">
-                  <button class="btn btn-primary w-100" (click)="continueToDelivery()" [disabled]="selectedAddressIndex === null">
-                    Continue
-                      </button>
-                </div>
               </div>
+              <!-- Add New Address Button -->
+              <button type="button" (click)="openAddAddressModal()" class="w-full border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded-xl p-4 text-gray-600 hover:text-blue-600 transition-all duration-200 flex items-center justify-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                <span class="font-medium">Add New Address</span>
+              </button>
+              <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold mt-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm" (click)="continueToDelivery()" [disabled]="selectedAddressIndex === null">
+                Continue to Delivery
+              </button>
             </div>
-            <div *ngIf="stepCompleted[2] && activeStep !== 2" class="accordion-summary bg-light p-3 border-top">
-              <div><strong>Address:</strong> {{shipping.address}}, {{shipping.city}}, {{shipping.state}}, {{shipping.postal}}, {{shipping.country}}</div>
-              <!-- <div><strong>Phone:</strong> {{shipping.phone}}</div> -->
+            <div *ngIf="stepCompleted[2] && activeStep !== 2" class="bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div class="text-sm text-gray-700"><strong>Address:</strong> {{shipping.address}}, {{shipping.city}}, {{shipping.state}}, {{shipping.postal}}, {{shipping.country}}</div>
             </div>
           </div>
-
           <!-- Step 3: Delivery Options -->
-          <div class="accordion-item mb-3">
-            <h2 class="accordion-header" id="headingDelivery">
-              <button class="accordion-button d-flex align-items-center" type="button" [attr.aria-expanded]="activeStep === 3" [class.collapsed]="activeStep !== 3" (click)="setActiveStep(3)" [disabled]="!stepCompleted[2]">
-                <span class="badge rounded-circle bg-primary me-2">3</span>
-                <span class="fw-bold">Delivery options</span>
-                <span *ngIf="stepCompleted[3]" class="ms-2 text-success"><i class="bi bi-check-circle-fill"></i></span>
-                <span *ngIf="stepCompleted[3]" class="ms-auto"><button class="btn btn-link btn-sm p-0" (click)="editStep($event, 3)">Edit</button></span>
-              </button>
-            </h2>
-            <div [id]="'collapseDelivery'" class="accordion-collapse collapse" [class.show]="activeStep === 3" [attr.aria-labelledby]="'headingDelivery'" data-bs-parent="#checkoutAccordion">
-              <div class="accordion-body">
-                <form #deliveryForm="ngForm" (ngSubmit)="goToPayment(deliveryForm)">
-                  <div class="mb-3">
-                    <label class="form-label">Select a delivery method*</label>
-                    <select class="form-select" [(ngModel)]="selectedDelivery" name="deliveryMethod" required (ngModelChange)="onDeliveryChange($event)">
-                      <option value="">Choose...</option>
-                      <option *ngFor="let option of deliveryOptions" [ngValue]="option">
-                        {{option.name}} - {{option.fee}} MMK ({{option.description}})
-                      </option>
-                    </select>
-                  </div>
-                  <button class="btn btn-primary w-100" [disabled]="!deliveryForm.valid">Place order and continue to payment</button>
-                </form>
-              </div>
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center space-x-3">
+              <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+              <h2 class="text-xl font-semibold text-gray-900">Delivery Options</h2>
+              <span *ngIf="stepCompleted[3]" class="ml-3 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>
+              <button *ngIf="stepCompleted[3] && activeStep !== 3" class="ml-auto text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200" (click)="editStep($event, 3)">Edit</button>
             </div>
-            <div *ngIf="stepCompleted[3] && activeStep !== 3" class="accordion-summary bg-light p-3 border-top">
-              <div><strong>Method:</strong> {{delivery.method}}</div>
+            <div *ngIf="activeStep === 3" class="p-6 bg-gray-50">
+              <form #deliveryForm="ngForm" (ngSubmit)="goToPayment(deliveryForm)">
+                <div class="mb-6">
+                  <label class="block text-sm font-semibold text-gray-700 mb-3">Select a delivery method*</label>
+                  <select class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [(ngModel)]="selectedDelivery" name="deliveryMethod" required (ngModelChange)="onDeliveryChange($event)">
+                    <option value="">Choose...</option>
+                    <option *ngFor="let option of deliveryOptions" [ngValue]="option">
+                      {{option.name}} - {{option.fee}} MMK ({{option.description}})
+                    </option>
+                  </select>
+                </div>
+                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-lg mt-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm" [disabled]="!deliveryForm.valid">Place order and continue to payment</button>
+              </form>
+            </div>
+            <div *ngIf="stepCompleted[3] && activeStep !== 3" class="bg-gray-50 px-6 py-4 border-t border-gray-100">
+              <div class="text-sm text-gray-700"><strong>Method:</strong> {{delivery.method}}</div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <!-- Cart Summary (Right) -->
-    <div class="col-lg-5 col-xl-4 d-none d-lg-block">
-      <div class="bg-white rounded-5 shadow-lg p-5 animate-fadein" style="top: 100px; min-width: 360px; max-width: 520px;">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="fw-bold mb-0">Summary</h5>
-          <a routerLink="/cart" class="btn btn-link">Edit cart</a>
-        </div>
-        <div *ngFor="let item of cartItems" class="d-flex align-items-center mb-3 cart-summary-item">
-          <img [src]="item.image" alt="{{item.title}}" class="rounded-3 me-3" style="width:56px;height:56px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-          <div class="flex-grow-1">
-            <div class="fw-semibold">{{item.title}}</div>
-            <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-muted small mb-2">
-              <div *ngFor="let attr of item.variantAttributes; let last = last">
-                {{ attr }}
+      <!-- Order Summary -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sticky top-24">
+          <div class="flex items-center justify-between mb-8">
+            <h2 class="text-xl font-bold text-gray-900">Order Summary</h2>
+            <a routerLink="/cart" class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200">Edit cart</a>
+          </div>
+          <!-- Cart Items -->
+          <div class="space-y-4 mb-8">
+            <div *ngFor="let item of cartItems" class="flex items-center space-x-3 group transition-transform duration-200 hover:scale-[1.02]">
+              <img [src]="item.image" alt="{{item.title}}" class="w-14 h-14 object-cover rounded-xl border border-gray-200 group-hover:shadow-sm transition-shadow duration-200">
+              <div class="flex-1">
+                <div class="font-semibold text-gray-900 text-sm">{{item.title}}</div>
+                <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-gray-500 text-xs">
+                  <div *ngFor="let attr of item.variantAttributes">{{ attr }}</div>
+                </div>
+                <div class="text-gray-500 text-xs">Quantity: {{item.quantity}}</div>
+              </div>
+              <div class="font-bold text-gray-900">{{ (item.price * item.quantity) | number:'1.0-0' }} MMK</div>
+            </div>
+          </div>
+          <!-- Coupon Code -->
+          <div class="mb-8">
+            <div class="flex space-x-2">
+              <input type="text" placeholder="Enter coupon code" class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-sm" [(ngModel)]="couponCode">
+              <button class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors duration-200 text-sm" (click)="applyCoupon()">Apply</button>
+            </div>
+            <p [ngClass]="{'text-green-600': isCouponValid, 'text-red-600': !isCouponValid}" class="mt-2 text-sm transition-colors duration-200">{{ discountMessage }}</p>
+          </div>
+          <!-- Summary Details -->
+          <div class="space-y-4 mb-8">
+            <div class="flex justify-between text-gray-600">
+              <span>Subtotal ({{ cartItems.length }} items)</span>
+              <span>{{ getSubtotal() | number:'1.0-0' }} MMK</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>Shipping</span>
+              <span class="text-green-600 font-medium">{{ deliveryFee | number:'1.0-0' }} MMK</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>Discount</span>
+              <span class="text-green-600">-{{ discountAmount | number:'1.0-0' }} MMK</span>
+            </div>
+            <div class="border-t border-gray-100 pt-4">
+              <div class="flex justify-between text-xl font-bold text-gray-900">
+                <span>Total</span>
+                <span class="text-blue-600">{{ getTotal() | number:'1.0-0' }} MMK</span>
               </div>
             </div>
-            <div class="small text-muted">Quantity: {{item.quantity}}</div>
-            <!-- Discount display -->
-            <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">
-              <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="badge bg-danger me-2">
-                {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
-              </span>
-              <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="text-muted text-decoration-line-through me-2">
-                {{ product.price }} MMK
-              </span>
-              <span class="fw-bold text-success">
-                {{ getDiscountedPrice(product) }} MMK
-              </span>
-            </ng-container>
-            <ng-template #noProduct>
-              <span class="fw-bold text-success">{{ item.price }} MMK</span>
-            </ng-template>
           </div>
-          <div class="fw-bold ms-2">
-            <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProductTotal">
-              {{ getDiscountedPrice(product) * item.quantity | number:'1.0-0' }} MMK
-            </ng-container>
-            <ng-template #noProductTotal>
-              {{ item.price * item.quantity | number:'1.0-0' }} MMK
-            </ng-template>
+          <!-- Security Badge -->
+          <div class="p-6 bg-green-50 rounded-xl border border-green-100">
+            <div class="flex items-center space-x-4">
+              <div class="flex-shrink-0">
+                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                </svg>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-green-900">Secure Checkout</p>
+                <p class="text-xs text-green-700">Your information is protected</p>
+              </div>
+            </div>
           </div>
         </div>
-        <hr>
-        <input type="text" class="form-control bg-light border-0 mb-2" placeholder="Enter a coupon or a reward code" [(ngModel)]="couponCode" [disabled]="hasDiscountedProduct() || isFirstTimeBuyerDiscount">
-        <button class="btn btn-outline-primary w-100 mb-2 rounded-pill" (click)="applyCoupon()" [disabled]="hasDiscountedProduct() || isFirstTimeBuyerDiscount">
-          Apply
-        </button>
-        <div *ngIf="hasDiscountedProduct() || isFirstTimeBuyerDiscount" class="text-danger small mt-1">
-          <ng-container *ngIf="isFirstTimeBuyerDiscount">
-            Coupons can be only used for non-discounted items.
-          </ng-container>
-          <ng-container *ngIf="!isFirstTimeBuyerDiscount && hasDiscountedProduct()">
-            Coupons can be only used for non-discounted items.
-          </ng-container>
-        </div>
-        <p [ngClass]="{'text-success': isCouponValid, 'text-danger': !isCouponValid}">
-          {{ discountMessage }}
-        </p>
-        <h6 class="fw-bold mt-3 mb-2">Summary</h6>
-        <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>{{ getSubtotal() | number:'1.0-0' }} MMK</span></div>
-        <!-- Product-based discount (only if not first time buyer) -->
-        <div class="d-flex justify-content-between mb-2" *ngIf="!isFirstTimeBuyerDiscount && getTotalDiscount() > 0">
-          <span class="text-muted">Discount</span>
-          <span class="text-success">-{{ getTotalDiscount() | number:'1.0-0' }} MMK</span>
-        </div>
+
+
         <!-- First time buyer discount (only if active) -->
         <div class="d-flex justify-content-between mb-2" *ngIf="isFirstTimeBuyerDiscount && orderPreview?.discountAmount > 0">
           <span class="text-muted">Discount</span>
@@ -215,87 +203,76 @@
   </div>
 </div>
 
+
 <!-- Add Address Modal -->
-<div *ngIf="showAddAddressModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5); z-index: 1050;">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content rounded-4 shadow-lg">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">Add New Address</h5>
-        <button type="button" class="btn-close" aria-label="Close" (click)="closeAddAddressModal()"></button>
-      </div>
-      <div class="modal-body pt-0">
-        <form [formGroup]="addressForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="addressInput" class="form-label">Address <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="addressInput" placeholder="Enter address" formControlName="address" [class.is-invalid]="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
-              <div class="invalid-feedback" *ngIf="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
-                Address is required.
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label for="cityInput" class="form-label">City <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="cityInput" placeholder="Enter city" formControlName="city" [class.is-invalid]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
-              <div class="invalid-feedback" *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
-                City is required.
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label for="stateInput" class="form-label">State <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="stateInput" placeholder="Enter state" formControlName="state" [class.is-invalid]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
-              <div class="invalid-feedback" *ngIf="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
-                State is required.
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label for="postalCodeInput" class="form-label">Postal Code <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="postalCodeInput" placeholder="Enter postal code" formControlName="postalCode" [class.is-invalid]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
-              <div class="invalid-feedback" *ngIf="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
-                Postal code is required.
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label for="countryInput" class="form-label">Country <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="countryInput" placeholder="Enter country" formControlName="country" [class.is-invalid]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
-              <div class="invalid-feedback" *ngIf="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
-                Country is required.
-              </div>
-            </div>
-            <div class="col-md-3">
-              <label for="latitudeInput" class="form-label">Latitude</label>
-              <input type="number" class="form-control rounded-3" id="latitudeInput" formControlName="latitude" placeholder="Latitude">
-            </div>
-            <div class="col-md-3">
-              <label for="longitudeInput" class="form-label">Longitude</label>
-              <input type="number" class="form-control rounded-3" id="longitudeInput" formControlName="longitude" placeholder="Longitude">
-            </div>
+<div *ngIf="showAddAddressModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="text-2xl font-bold text-gray-900">Add New Address</h3>
+      <button type="button" class="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200" (click)="closeAddAddressModal()">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <form [formGroup]="addressForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Address <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter address" formControlName="address" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">Address is required.</div>
           </div>
-          <div class="mb-3 mt-3">
-            <label for="typeInput" class="form-label">Address Type <span class="text-danger">*</span></label>
-            <select class="form-select rounded-pill" id="typeInput" formControlName="addressType">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">City <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter city" formControlName="city" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">City is required.</div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">State <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter state" formControlName="state" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">State is required.</div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Postal Code <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter postal code" formControlName="postalCode" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">Postal code is required.</div>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Country <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter country" formControlName="country" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">Country is required.</div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Address Type</label>
+            <select formControlName="addressType" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none">
               <option value="SHIPPING">Shipping</option>
               <option value="WORK">Work</option>
               <option value="OTHER">Other</option>
             </select>
           </div>
-          <div class="d-flex align-items-center gap-2 mt-3">
-            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" (click)="getCurrentLocation()">
-              <i class="bi bi-geo-alt-fill"></i> Use My Location
-            </button>
-          </div>
-          <div class="my-3">
-            <div id="map" class="rounded-4 border shadow-sm" style="min-height: 180px;"></div>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="closeAddAddressModal()">
-          Cancel
-        </button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" (click)="submitAddressForm()" [disabled]="!addressForm.valid">
-          Save Address
-        </button>
-      </div>
+        </div>
+        <div class="flex items-center space-x-3 pt-4">
+          <button type="button" class="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors duration-200" (click)="getCurrentLocation()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span>Use My Location</span>
+          </button>
+        </div>
+        <div class="my-6">
+          <div id="map" class="rounded-xl border-2 border-blue-100 shadow-sm w-full min-h-[180px] h-[200px] bg-gray-100"></div>
+        </div>
+      </form>
+    </div>
+    <div class="p-6 border-t border-gray-100 flex space-x-3">
+      <button type="button" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200" (click)="closeAddAddressModal()">
+        Cancel
+      </button>
+      <button type="button" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200" (click)="submitAddressForm()" [disabled]="!addressForm.valid">
+        Save Address
+      </button>
     </div>
   </div>
 </div>

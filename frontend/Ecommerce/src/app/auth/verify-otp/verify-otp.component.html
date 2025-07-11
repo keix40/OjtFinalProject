@@ -1,0 +1,63 @@
+<div class="min-h-screen bg-gray-100 flex items-center justify-center p-4 relative">
+  <div class="absolute -top-20 -left-20 w-40 h-40 bg-blue-400 bg-opacity-20 rounded-full filter blur-xl"></div>
+  <div class="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-400 bg-opacity-20 rounded-full filter blur-xl"></div>
+  <div class="relative max-w-md w-full">
+    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden p-8">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-gray-800">Verify Your Account</h1>
+        <p class="text-gray-600 mt-2">We've sent a 6-digit code to your email</p>
+        <p class="font-medium text-gray-700">{{ email }}</p>
+      </div>
+
+      <!-- Error/Message -->
+      <div *ngIf="error" class="flex items-center gap-2 text-red-500 bg-red-50 border border-red-200 rounded p-2 mb-3 animate-shake">
+        <i data-lucide="alert-circle" class="w-5 h-5"></i>
+        <span>{{ error }}</span>
+      </div>
+      <div *ngIf="message" class="flex items-center gap-2 text-green-600 bg-green-50 border border-green-200 rounded p-2 mb-3">
+        <i data-lucide="check-circle" class="w-5 h-5"></i>
+        <span>{{ message }}</span>
+      </div>
+
+      <!-- OTP Boxes -->
+      <div class="flex justify-center space-x-3 mb-8">
+        <input *ngFor="let box of [0,1,2,3,4,5]; let i = index" maxlength="1" type="text"
+          class="w-14 h-14 bg-white bg-opacity-70 border border-gray-200 rounded-lg flex items-center justify-center text-2xl font-semibold text-gray-800 shadow-sm text-center focus:ring-2 focus:ring-blue-500 outline-none transition-all
+            [successAnimation[i]]
+            [errorAnimation ? 'border-red-500' : '']"
+          [(ngModel)]="otpBoxes[i]"
+          (input)="onOtpInput(i, $event)"
+          (keydown)="onOtpKeydown(i, $event)"
+          autocomplete="one-time-code"
+          [disabled]="isVerifying"
+        />
+      </div>
+
+      <!-- Resend Code Link -->
+      <div class="text-center mt-6">
+        <p class="text-gray-600">Didn't receive a code?
+          <a href="#" (click)="sendOtp(); $event.preventDefault();" class="text-blue-600 font-medium hover:text-blue-700" [class.opacity-50]="isSending" [class.pointer-events-none]="isSending">
+            Resend
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .animate-shake {
+    animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+  }
+  @keyframes shake {
+    10%, 90% { transform: translateX(-1px); }
+    20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); }
+    40%, 60% { transform: translateX(4px); }
+  }
+  .border-success {
+    border-color: #22c55e !important;
+    box-shadow: 0 0 0 2px #22c55e33;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+</style>

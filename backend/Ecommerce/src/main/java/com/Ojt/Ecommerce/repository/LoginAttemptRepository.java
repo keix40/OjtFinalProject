@@ -25,5 +25,10 @@ public interface LoginAttemptRepository extends JpaRepository<LoginAttempt, Long
     // 🔍 Filter by threatLevel
     List<LoginAttempt> findByThreatLevel(String threatLevel);
 
-    // 🔍 All combined filter logic will be done in service layer later
+
+    int countByIpAddressAndTimestampAfter(String ipAddress, LocalDateTime after);
+
+    List<LoginAttempt> findTop10ByIpAddressOrderByTimestampDesc(String ipAddress);
+
+
 }

@@ -1,158 +1,389 @@
 <app-header></app-header>
-<div class="container-fluid py-5 bg-light min-vh-100">
-  <div class="row justify-content-center checkout-row">
-    <!-- Main Content (Left) - Payment Form -->
-    <div class="col-lg-8 col-xl-5 col-md-11 mb-4">
-      <div class="mx-auto animate-fadein" style="max-width: 950px;">
-        
-        <!-- Card Information Form (Direct) -->
-        <div class="card-form-section mb-4 animate-slidein">
-          <div class="bg-white rounded-5 shadow-lg p-5">
-            <h4 class="fw-bold mb-4">Payment Information</h4>
-            <form [formGroup]="cardForm">
-              <div class="row g-3">
-                <!-- Card Number -->
-                <div class="col-12">
-                  <label for="cardNumber" class="form-label">Card Number <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="cardNumber" 
-                    placeholder="1234 5678 9012 3456"
-                    formControlName="cardNumber"
-                    (input)="formatCardNumber($event)"
-                    [class.is-invalid]="cardForm.get('cardNumber')?.invalid && cardForm.get('cardNumber')?.touched"
-                    maxlength="19">
-                  <div class="invalid-feedback" *ngIf="cardForm.get('cardNumber')?.invalid && cardForm.get('cardNumber')?.touched">
-                    Please enter a valid 16-digit card number.
+<!-- Breadcrumb -->
+<div class="bg-white border-b border-gray-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <nav class="flex items-center space-x-2 text-sm" aria-label="Breadcrumb">
+      <a routerLink="/home" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Home</a>
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+      <a routerLink="/cart" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Cart</a>
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+      <a routerLink="/checkout" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Checkout</a>
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+      <span class="text-gray-900 font-medium" aria-current="page">Payment</span>
+    </nav>
+  </div>
+</div>
+<!-- Main Content -->
+<div class="bg-white min-h-screen">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="mb-10">
+      <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Payment</h1>
+      <p class="text-gray-600 text-lg">Complete your secure payment to finish your order</p>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+      <!-- Payment Form -->
+      <div class="lg:col-span-2">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+          <h2 class="text-2xl font-bold text-gray-900 mb-8">Payment Information</h2>
+
+          <!-- Payment Method Toggle -->
+          <div class="mb-6">
+            <label class="inline-flex items-center mr-6 cursor-pointer">
+              <input
+                type="radio"
+                name="cardOption"
+                [checked]="!useNewCard"
+                (change)="toggleUseNewCard(false)"
+                class="form-radio"
+              />
+              <span class="ml-2 text-gray-700">Use Saved Card</span>
+            </label>
+            <label class="inline-flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="cardOption"
+                [checked]="useNewCard"
+                (change)="toggleUseNewCard(true)"
+                class="form-radio"
+              />
+              <span class="ml-2 text-gray-700">Use New Card</span>
+            </label>
+          </div>
+
+          <!-- Saved Cards List -->
+          <div *ngIf="!useNewCard && savedCards.length > 0" class="mb-8">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Select a saved card</label>
+            <div *ngFor="let card of savedCards" class="mb-3">
+              <label class="flex items-center cursor-pointer w-full">
+                <input
+                  type="radio"
+                  name="savedCard"
+                  [value]="card.id"
+                  [(ngModel)]="selectedSavedCardId"
+                  [checked]="selectedSavedCardId === card.id.toString()"
+                  class="form-radio h-4 w-4 text-blue-600"
+                  [disabled]="isSubmitting"
+                  style="margin-right: 0.75rem;"
+                />
+                <div class="flex items-center bg-gray-50 border rounded-lg px-4 py-2 shadow-sm w-full max-w-xs transition-all duration-150"
+                     [class.ring-2]="selectedSavedCardId === card.id.toString()"
+                     [class.ring-blue-500]="selectedSavedCardId === card.id.toString()">
+                  <div *ngIf="card.cardBrand === 'VISA'" class="w-10 h-6 bg-blue-600 rounded text-white flex items-center justify-center font-bold mr-3">VISA</div>
+                  <div *ngIf="card.cardBrand === 'MASTERCARD'" class="w-10 h-6 bg-red-600 rounded text-white flex items-center justify-center font-bold mr-3">MC</div>
+                  <div class="flex-1">
+                    <span class="block font-mono text-lg tracking-widest">{{ maskCardNumber(card.cardNumber) }}</span>
+                    <span class="block text-xs text-gray-500">Expires {{ card.expiryDate }}</span>
                   </div>
                 </div>
+              </label>
+            </div>
+          </div>
 
-                <!-- Cardholder Name -->
-                <div class="col-12">
-                  <label for="cardholderName" class="form-label">Cardholder Name <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="cardholderName" 
-                    placeholder="John Doe"
-                    formControlName="cardholderName"
-                    [class.is-invalid]="cardForm.get('cardholderName')?.invalid && cardForm.get('cardholderName')?.touched">
-                  <div class="invalid-feedback" *ngIf="cardForm.get('cardholderName')?.invalid && cardForm.get('cardholderName')?.touched">
-                    Please enter the cardholder's name.
+          <!-- New Card Form -->
+          <form [formGroup]="cardForm" class="space-y-6" *ngIf="useNewCard" novalidate>
+            <!-- Card Brand Selection -->
+            <div class="mb-6">
+              <label class="block text-sm font-semibold text-gray-700 mb-3">Select Card Brand <span class="text-red-500">*</span></label>
+              <div class="flex space-x-4">
+                <label class="flex items-center cursor-pointer border rounded-lg px-4 py-2 transition-all duration-200"
+                  [class.border-blue-600]="cardForm.get('cardBrand')?.value === 'VISA'">
+                  <input type="radio" formControlName="cardBrand" value="VISA" class="form-radio text-blue-600" />
+                  <span class="ml-2 font-semibold text-blue-700">VISA</span>
+                </label>
+                <label class="flex items-center cursor-pointer border rounded-lg px-4 py-2 transition-all duration-200"
+                  [class.border-red-600]="cardForm.get('cardBrand')?.value === 'MASTERCARD'">
+                  <input type="radio" formControlName="cardBrand" value="MASTERCARD" class="form-radio text-red-600" />
+                  <span class="ml-2 font-semibold text-red-700">MASTERCARD</span>
+                </label>
+              </div>
+              <div class="text-red-500 text-xs mt-2" *ngIf="cardForm.get('cardBrand')?.invalid && cardForm.get('cardBrand')?.touched">
+                Please select a card brand.
+              </div>
+            </div>
+            <!-- Card Number -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">
+                Card Number <span class="text-red-500">*</span>
+              </label>
+              <div class="relative">
+                <input
+                type="text"
+                placeholder="1234 5678 9012 3456"
+                maxlength="19"
+                formControlName="cardNumber"
+                (input)="onCardNumberInput($event)" 
+                [class.border-red-300]="
+                  cardForm.get('cardNumber')?.invalid && cardForm.get('cardNumber')?.touched
+                "
+                class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg font-mono bg-white"
+                [disabled]="isSubmitting"
+                id="cardNumber"
+                aria-describedby="cardNumberError"
+              />              
+                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 flex space-x-2">
+                  <div
+                    class="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold"
+                    *ngIf="detectCardBrand(cardForm.get('cardNumber')?.value) === 'VISA'"
+                  >
+                    VISA
                   </div>
-                </div>
-
-                <!-- Expiry Date & CVV -->
-                <div class="col-md-6">
-                  <label for="expiryDate" class="form-label">Expiration Date <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="expiryDate" 
-                    placeholder="MM / YY"
-                    formControlName="expiryDate"
-                    (input)="formatExpiryDate($event)"
-                    [class.is-invalid]="cardForm.get('expiryDate')?.invalid && cardForm.get('expiryDate')?.touched">
-                  <div class="invalid-feedback" *ngIf="cardForm.get('expiryDate')?.invalid && cardForm.get('expiryDate')?.touched">
-                    Please use MM / YY format.
+                  <div
+                    class="w-8 h-5 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold"
+                    *ngIf="detectCardBrand(cardForm.get('cardNumber')?.value) === 'MASTERCARD'"
+                  >
+                    MC
                   </div>
-                </div>
-
-                <div class="col-md-6">
-                  <label for="cvv" class="form-label">CVV <span class="text-danger">*</span></label>
-                  <input 
-                    type="text" 
-                    class="form-control form-control-lg" 
-                    id="cvv" 
-                    placeholder="123"
-                    formControlName="cvv"
-                    (input)="formatCVV($event)"
-                    [class.is-invalid]="cardForm.get('cvv')?.invalid && cardForm.get('cvv')?.touched"
-                    maxlength="4">
-                  <div class="invalid-feedback" *ngIf="cardForm.get('cvv')?.invalid && cardForm.get('cvv')?.touched">
-                    Invalid CVV.
+                  <div
+                    class="w-8 h-5 bg-green-600 rounded text-white text-xs flex items-center justify-center font-bold"
+                    *ngIf="detectCardBrand(cardForm.get('cardNumber')?.value) === 'AMEX'"
+                  >
+                    AMEX
                   </div>
                 </div>
               </div>
+              <div
+                id="cardNumberError"
+                class="text-red-500 text-xs mt-2"
+                *ngIf="
+                  cardForm.get('cardNumber')?.invalid && cardForm.get('cardNumber')?.touched
+                "
+              >
+                Please enter a valid 16-digit card number.
+              </div>
+            </div>
 
-              <!-- Submit Button -->
-              <button class="btn btn-primary w-100 mt-4 rounded-pill py-3 fs-5" 
-                      [disabled]="!cardForm.valid || isSubmitting" 
-                      (click)="submitOrder()">
-                <span *ngIf="!isSubmitting">Submit order</span>
-                <span *ngIf="isSubmitting">
-                  <i class="bi bi-arrow-clockwise spin me-2"></i>
-                  Processing...
-                </span>
-              </button>
-            </form>
+            <!-- Cardholder Name -->
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-3">
+                Cardholder Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="John Doe"
+                formControlName="cardholderName"
+                [class.border-red-300]="
+                  cardForm.get('cardholderName')?.invalid && cardForm.get('cardholderName')?.touched
+                "
+                class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg bg-white"
+                [disabled]="isSubmitting"
+                id="cardholderName"
+                aria-describedby="cardholderNameError"
+              />
+              <div
+                id="cardholderNameError"
+                class="text-red-500 text-xs mt-2"
+                *ngIf="
+                  cardForm.get('cardholderName')?.invalid && cardForm.get('cardholderName')?.touched
+                "
+              >
+                Please enter the cardholder's name.
+              </div>
+            </div>
+
+            <!-- Expiry Date & CVV -->
+            <div class="grid grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">
+                  Expiration Date <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="MM / YY"
+                  maxlength="7"
+                  formControlName="expiryDate"
+                  (input)="formatExpiryDate($event)"
+                  [class.border-red-300]="
+                    cardForm.get('expiryDate')?.invalid && cardForm.get('expiryDate')?.touched
+                  "
+                  class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg font-mono bg-white"
+                  [disabled]="isSubmitting"
+                  id="expiryDate"
+                  aria-describedby="expiryDateError"
+                />
+                <div
+                  id="expiryDateError"
+                  class="text-red-500 text-xs mt-2"
+                  *ngIf="
+                    cardForm.get('expiryDate')?.invalid && cardForm.get('expiryDate')?.touched
+                  "
+                >
+                  Please use MM / YY format.
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">
+                  CVV <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="123"
+                  maxlength="4"
+                  formControlName="cvv"
+                  (input)="formatCVV($event)"
+                  [class.border-red-300]="
+                    cardForm.get('cvv')?.invalid && cardForm.get('cvv')?.touched
+                  "
+                  class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg font-mono bg-white"
+                  [disabled]="isSubmitting"
+                  id="cvv"
+                  aria-describedby="cvvError"
+                />
+                <div
+                  id="cvvError"
+                  class="text-red-500 text-xs mt-2"
+                  *ngIf="cardForm.get('cvv')?.invalid && cardForm.get('cvv')?.touched"
+                >
+                  Invalid CVV.
+                </div>
+              </div>
+            </div>
+            <!-- Billing Address -->
+            <div class="pt-8 border-t border-gray-100">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Billing Address</h3>
+              <div class="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="same-as-shipping"
+                  checked
+                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  [disabled]="isSubmitting"
+                />
+                <label for="same-as-shipping" class="text-gray-700">Same as shipping address</label>
+              </div>
+            </div>
+          </form>
+
+          <!-- Security Notice -->
+          <div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100">
+            <div class="flex items-center space-x-4">
+              <svg
+                class="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                ></path>
+              </svg>
+              <div>
+                <p class="text-sm font-semibold text-blue-900">Your payment is secure</p>
+                <p class="text-xs text-blue-700">
+                  We use industry-standard encryption to protect your information
+                </p>
+              </div>
+            </div>
           </div>
+
+          <!-- Submit Button: Always visible -->
+          <button
+            type="button"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm flex items-center justify-center space-x-2"
+            [disabled]="isSubmitting || (useNewCard ? cardForm.invalid : !selectedSavedCardId)"
+            (click)="submitOrder()"
+          >
+            <span *ngIf="!isSubmitting">Submit order</span>
+            <span *ngIf="isSubmitting">
+              <svg
+                class="w-5 h-5 animate-spin mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                ></path>
+              </svg>
+              Processing...
+            </span>
+          </button>
         </div>
       </div>
-    </div>
-    
-    <!-- Combined Order Summary & Cart Items (Right) -->
-    <div class="col-lg-5 col-xl-4 mb-4">
-      <div class="bg-white rounded-5 shadow-lg p-5 animate-fadein payment-summary-card">
-        
-        <!-- Order Summary Section -->
-        <h5 class="fw-bold mb-4">Order Summary</h5>
-        <div class="order-summary-section mb-4">
-          <!-- <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Order ID</span>
-            <span class="fw-semibold">#{{orderNumber}}</span>
-          </div> -->
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Customer</span>
-            <span class="fw-semibold">{{customer?.name}}</span>
-          </div>
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Email</span>
-            <span class="fw-semibold">{{customer?.email}}</span>
-          </div>
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Shipping Address</span>
-            <span class="fw-semibold text-end">{{shipping?.address}}, {{shipping?.city}}</span>
-          </div>
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Delivery</span>
-            <span class="fw-semibold">{{delivery?.method}}</span>
-          </div>
-        </div>
 
-        <hr>
-        
-        <!-- Payment Summary -->
-        <div class="payment-details-summary">
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Subtotal</span>
-            <span>{{ getSubtotal() | number:'1.0-0' }} MMK</span>
+      <!-- Order Summary -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sticky top-24">
+          <h2 class="text-xl font-bold text-gray-900 mb-8">Order Summary</h2>
+          <!-- Customer Info -->
+          <div class="space-y-4 mb-6 pb-6 border-b border-gray-100">
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Customer</span>
+              <span class="font-medium text-gray-900">{{ customer?.name }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Email</span>
+              <span class="font-medium text-gray-900">{{ customer?.email }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Shipping</span>
+              <span class="font-medium text-gray-900 text-right">
+                {{ shipping?.address }}, {{ shipping?.city }}
+              </span>
+            </div>
+            <div class="flex justify-between text-sm">
+              <span class="text-gray-500">Delivery</span>
+              <span class="font-medium text-gray-900">{{ delivery?.method }}</span>
+            </div>
           </div>
-          <!-- Product-based discount (only if not first time buyer) -->
-          <div class="d-flex justify-content-between mb-2" *ngIf="!isFirstTimeBuyerDiscount && getTotalDiscount() > 0">
-            <span class="text-muted">Discount</span>
-            <span class="text-success">-{{ getTotalDiscount() | number:'1.0-0' }} MMK</span>
+
+          <!-- Order Items -->
+          <div class="mb-6 pb-6 border-b border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-900 mb-4">Order Items</h3>
+            <div class="space-y-3">
+              <div *ngFor="let item of cartItems" class="flex items-center space-x-3">
+                <img
+                  [src]="item.image"
+                  class="w-12 h-12 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                  [alt]="item.title"
+                />
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-gray-900 truncate">{{ item.title || 'Product' }}</p>
+                  <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-sm font-medium text-gray-900">
+                    {{ (item.price * item.quantity) | number : '1.0-0' }} MMK
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-          <!-- First time buyer discount (only if active) -->
-          <div class="d-flex justify-content-between mb-2" *ngIf="isFirstTimeBuyerDiscount && orderPreview?.discountAmount > 0">
-            <span class="text-muted">Discount</span>
-            <span class="text-success">
-              (First time buyer 10%) -{{ orderPreview.discountAmount | number:'1.0-0' }} MMK
-            </span>
-          </div>
-          <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Shipping cost</span>
-            <span>{{ getDeliveryCost() | number:'1.0-0' }} MMK</span>
-          </div>
-          <hr>
-          <div class="d-flex justify-content-between fw-bold fs-4 mt-3">
-            <span>Total</span>
-            <span class="text-primary">{{(getSubtotal() - getTotalDiscount() + deliveryFee) | number:'1.0-0' }} MMK</span>
+
+          <!-- Price Summary -->
+          <div class="space-y-4 mb-8">
+            <div class="flex justify-between text-gray-600">
+              <span>Subtotal</span>
+              <span>{{ getSubtotal() | number : '1.0-0' }} MMK</span>
+            </div>
+            <div class="flex justify-between text-gray-600">
+              <span>Shipping cost</span>
+              <span class="text-green-600 font-medium">{{ getDeliveryCost() | number : '1.0-0' }} MMK</span>
+            </div>
+            <div class="flex justify-between text-red-600 font-semibold text-lg">
+              <span>Discount</span>
+              <span>-{{ discountAmount | number : '1.0-0' }} MMK</span>
+            </div>
+            <div class="flex justify-between border-t border-gray-100 pt-4 text-xl font-semibold text-gray-900">
+              <span>Total</span>
+              <span>{{ getTotal() | number : '1.0-0' }} MMK</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-

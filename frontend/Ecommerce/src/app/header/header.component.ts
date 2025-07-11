@@ -1,14 +1,18 @@
 import { Component, OnInit, HostListener, ElementRef, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { CartService, CartItem } from '../services/cart.service';
 import { Subscription } from 'rxjs';
 import { WishlistService } from '../services/wishlist.service';
+import { BreadcrumbService } from '../breadcrumb.service';
+import { CartSidebarComponent } from '../cart-sidebar/cart-sidebar.component';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-header',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, CartSidebarComponent],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -25,6 +29,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   public wishlistCount = 0;
   private subscriptions: Subscription[] = [];
   isFirstTimeBuyerDiscount = false;
+  userProfileImage: string | null = null;
 
   constructor(
     private router: Router,
@@ -32,13 +37,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private elementRef: ElementRef,
     private cartService: CartService,
     private wishlistService: WishlistService,
-    private http: HttpClient // Add HttpClient for preview API
+    private http: HttpClient, // Add HttpClient for preview API
+    public breadcrumbService: BreadcrumbService
   ) {}
 
   ngOnInit() {
     this.checkAuthStatus();
     this.name = this.authService.getUsername();
     this.userId = this.authService.getUserId();
+
+    // Get user profile image from JWT
+    const decoded = this.authService.getDecodedToken();
+    if (decoded && decoded.profileImage && decoded.profileImage !== '/upload/defaultProfile.png') {
+      this.userProfileImage = decoded.profileImage;
+    } else {
+      this.userProfileImage = null;
+    }
 
     this.subscriptions.push(
       this.cartService.getCartItems().subscribe(items => {
@@ -60,6 +74,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.checkFirstTimeBuyerDiscount(); // Check on init
     }
   }
+
+  isMobileMenuOpen = false;
+
+toggleMobileMenu(): void {
+  this.isMobileMenuOpen = !this.isMobileMenuOpen;
+}
 
   private loadWishlistCount() {
     this.wishlistService.getWishlist(this.userId!).subscribe({
@@ -83,7 +103,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
   toggleDropdown(event: Event, dropdownName: string) {
     event.stopPropagation();
     this.openDropdown = this.openDropdown === dropdownName ? null : dropdownName;
-    console.log('toggleDropdown called:', dropdownName, 'openDropdown:', this.openDropdown);
   }
 
   toggleMobileSearch() {
@@ -111,7 +130,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   onAccountClick(event: Event) {
     console.log('Account button clicked');
-    this.toggleDropdown(event, 'account-dropdown');
+    this.toggleDropdown(event, 'account');
     console.log('openDropdown value:', this.openDropdown);
   }
 
@@ -132,7 +151,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   handleDocumentClick(event: MouseEvent) {
-    // Only close dropdown if click is outside any .dropdown in this component
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.openDropdown = null;
     }

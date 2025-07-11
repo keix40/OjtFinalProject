@@ -47,12 +47,13 @@ public class OrderController {
 
     @PostMapping("/create")
     public ResponseEntity<?> createOrder(@RequestBody UserOrderDTO dto){
-        UserOrder order = service.createOrder(dto);
-        if (order == null) {
-            return ResponseEntity.badRequest().body("fail");
-        }
-        else {
-            return ResponseEntity.ok("success");
+        System.out.println("Received order DTO: " + dto);
+        try {
+            UserOrder order = service.createOrder(dto);
+            return ResponseEntity.ok(order);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Order creation failed: " + e.getMessage());
         }
     }
 
