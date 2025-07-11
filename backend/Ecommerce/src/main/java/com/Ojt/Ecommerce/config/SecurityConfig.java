@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/review/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
+                        .requestMatchers("/api/discounts/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

@@ -53,6 +53,26 @@ public class OrderService {
     @Autowired
     private ProductVariantRepository variantRepo;
 
+    @Autowired
+    private DiscountRuleRepository discountRuleRepository;
+
+    // Method to ensure "First Time Buyer" discount exists
+    private void ensureFirstTimeBuyerDiscountExists() {
+        Discount firstTimeDiscount = discountRepo.findByName("First Time Buyer").orElse(null);
+        if (firstTimeDiscount == null) {
+            // Create the "First Time Buyer" discount if it doesn't exist
+            firstTimeDiscount = new Discount();
+            firstTimeDiscount.setName("First Time Buyer");
+            firstTimeDiscount.setDescription("10% discount for first-time buyers");
+            firstTimeDiscount.setDiscountType(DiscountType.PERCENTAGE);
+            firstTimeDiscount.setDiscountValue(0.10); // 10% discount
+            firstTimeDiscount.setStartDate(LocalDate.now());
+            firstTimeDiscount.setEndDate(LocalDate.now().plusYears(10)); // Valid for 10 years
+            firstTimeDiscount.setStatus(true);
+            discountRepo.save(firstTimeDiscount);
+        }
+    }
+
     //for discount
     public DiscountDTO getDiscountByCode(String code) {
         Discount discount = discountRepo.findByCode(code)
@@ -81,6 +101,9 @@ public class OrderService {
     //for order
     @Transactional
     public UserOrder createOrder(UserOrderDTO dto) {
+        // Ensure the first-time buyer discount exists
+        ensureFirstTimeBuyerDiscountExists(); //add for discount preview by pmk july 9
+        
         UserOrder order = mapper.map(dto, UserOrder.class);
         order.setStatus(PENDING);
 
@@ -89,7 +112,42 @@ public class OrderService {
         order.setAddress(addRepo.findById(dto.getAddressId()).orElseThrow());
         order.setDeliveryMethod(dmRepo.findById(dto.getDeliveryId()).orElseThrow());
 
-        if (dto.getDiscountId() != null) {
+        // ===== FIRST-TIME BUYER DISCOUNT LOGIC ===== (by pmk july 9)
+        // Check if user is a first-time buyer (order count = 0 or null)
+        boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
+        
+        if (isFirstOrder) {
+            // Only allow first time buyer discount if user registered within last 7 days
+            if (user.getCreatedDate() != null && user.getCreatedDate().isBefore(LocalDateTime.now().minusDays(7))) {
+                System.out.println("User registered more than 7 days ago, not eligible for first time buyer discount");
+            } else {
+            // Look for "First Time Buyer" discount in the database
+            Discount firstTimeDiscount = discountRepo.findByName("First Time Buyer").orElse(null);
+            if (firstTimeDiscount != null && firstTimeDiscount.isStatus()
+                && LocalDate.now().isAfter(firstTimeDiscount.getStartDate().minusDays(1))
+                && LocalDate.now().isBefore(firstTimeDiscount.getEndDate().plusDays(1))) {
+                // Check if user has an active discount rule for this discount
+                // This ensures the discount was properly assigned during registration
+                List<DiscountRule> userDiscountRules = discountRuleRepository.findActiveUserDiscounts(user.getId());
+                final Discount finalFirstTimeDiscount = firstTimeDiscount; // Make it final for lambda
+                boolean hasActiveDiscount = userDiscountRules.stream()
+                    .anyMatch(rule -> rule.getDiscount().getId().equals(finalFirstTimeDiscount.getId()));
+                System.out.println("FirstTimeBuyer Discount: start=" + firstTimeDiscount.getStartDate() +
+                        ", end=" + firstTimeDiscount.getEndDate() +
+                        ", today=" + LocalDate.now());
+                
+                if (hasActiveDiscount) {
+                    // Apply the first-time buyer discount automatically (10% off)
+                    order.setDiscount(firstTimeDiscount);
+                    System.out.println("Applied First Time Buyer discount for user: " + user.getEmail());
+                }
+            }
+            }
+        }
+        // ===== END FIRST-TIME BUYER DISCOUNT LOGIC =====
+
+        // If no first-time discount applied, use the manually selected discount
+        if (order.getDiscount() == null && dto.getDiscountId() != null) {
             order.setDiscount(discountRepo.findById(dto.getDiscountId()).orElse(null));
         }
 
@@ -133,7 +191,7 @@ public class OrderService {
         }
 
         // Save coupon usage if discount applied
-        if (dto.getDiscountId() != null) {
+        if (order.getDiscount() != null) { // update for discount by pmk july 9
             UserCouponUsage usage = new UserCouponUsage();
             usage.setUser(order.getUser());
             usage.setDiscount(order.getDiscount());
@@ -146,13 +204,32 @@ public class OrderService {
                 .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
 
-        int earnedPoints = calculatePoints(totalAmount);
+        // Calculate discount amount by pmk july 9
+        double discountAmount = 0.0;
+        if (order.getDiscount() != null) {
+            Discount discount = order.getDiscount();
+            if (discount.getDiscountValue() != null) {
+                if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
+                    discountAmount = totalAmount * discount.getDiscountValue();
+                } else {
+                    discountAmount = discount.getDiscountValue();
+                }
+            }
+        }
+
+        int earnedPoints = calculatePoints(totalAmount - discountAmount);
 
         if (user.getTotalPoints() == null) {
             user.setTotalPoints(0);
         }
 
         user.setTotalPoints(user.getTotalPoints() + earnedPoints);
+        // Add order count for First time buyer discount by pmk july 7
+        if (user.getOrderCount() == null) {
+            user.setOrderCount(1);
+        } else {
+            user.setOrderCount(user.getOrderCount() + 1);
+        }
         userRepo.save(user);
 
         UserPointHistory history = UserPointHistory.builder()
@@ -164,6 +241,92 @@ public class OrderService {
         pointRepo.save(history);
 
         return savedOrder;
+    }
+
+    //add discount preivew by pmk july 9
+     
+    public OrderPreviewDTO previewOrder(UserOrderDTO dto) {
+        OrderPreviewDTO preview = new OrderPreviewDTO();
+        preview.setCartItems(dto.getCartItem());
+
+        // Calculate subtotal
+        double subtotal = dto.getCartItem().stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .sum();
+        preview.setSubtotal(subtotal);
+
+        // Default: no discount
+        String discountName = null;
+        double discountAmount = 0.0;
+        String discountReason = null;
+
+        // Fetch user
+        User user = userRepo.findById(dto.getUserId()).orElse(null);
+        if (user != null) {
+            // Check if user is a first-time buyer (order count = 0 or null)
+            boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
+            if (isFirstOrder) {
+                // Only allow first time buyer discount if user registered within last 7 days
+                if (user.getCreatedDate() != null && user.getCreatedDate().isBefore(LocalDateTime.now().minusDays(7))) {
+                    System.out.println("User registered more than 7 days ago, not eligible for first time buyer discount");
+                } else {
+                // Look for "First Time Buyer" discount in the database
+                Discount firstTimeDiscount = discountRepo.findByName("First Time Buyer").orElse(null);
+                if (firstTimeDiscount != null && firstTimeDiscount.isStatus()
+                    && LocalDate.now().isAfter(firstTimeDiscount.getStartDate().minusDays(1))
+                    && LocalDate.now().isBefore(firstTimeDiscount.getEndDate().plusDays(1))) {
+                    // Check if user has an active discount rule for this discount
+                    List<DiscountRule> userDiscountRules = discountRuleRepository.findActiveUserDiscounts(user.getId());
+                    final Discount finalFirstTimeDiscount = firstTimeDiscount;
+                    boolean hasActiveDiscount = userDiscountRules.stream()
+                        .anyMatch(rule -> rule.getDiscount().getId().equals(finalFirstTimeDiscount.getId()));
+                    if (hasActiveDiscount) {
+                        // Apply the first-time buyer discount automatically (10% off)
+                        discountName = firstTimeDiscount.getName();
+                        discountReason = "First time buyer discount (auto-applied)";
+                        if (firstTimeDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
+                            discountAmount = subtotal * firstTimeDiscount.getDiscountValue();
+                        } else {
+                            discountAmount = firstTimeDiscount.getDiscountValue();
+                        }
+                    }
+                }
+                }
+            }
+        }
+        // If not first time buyer, check for manually selected discount
+        if (discountAmount == 0.0 && dto.getDiscountId() != null) {
+            Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
+            if (manualDiscount != null && manualDiscount.isStatus()) {
+                discountName = manualDiscount.getName();
+                discountReason = "Manual discount applied";
+                if (manualDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
+                    discountAmount = subtotal * manualDiscount.getDiscountValue();
+                } else {
+                    discountAmount = manualDiscount.getDiscountValue();
+                }
+            }
+        }
+        // Only round for display, not for calculation
+        preview.setDiscountName(discountName);
+        preview.setDiscountAmount(Math.round(discountAmount));
+        preview.setDiscountReason(discountReason);
+
+        // Delivery fee (if any)
+        double deliveryFee = 0.0;
+        if (dto.getDeliveryId() != null) {
+            DeliveryMethod delivery = dmRepo.findById(dto.getDeliveryId()).orElse(null);
+            if (delivery != null && delivery.getFee() != null) {
+                deliveryFee = delivery.getFee();
+            }
+        }
+        preview.setDeliveryFee(deliveryFee);
+
+        // Final total: subtotal - discount + deliveryFee
+        double total = subtotal - discountAmount + deliveryFee;
+        preview.setTotal(Math.round(total));
+
+        return preview;
     }
 
     public String generateUniqueOrderCode() {
@@ -413,5 +576,30 @@ public class OrderService {
         UserOrder order = repo.findById(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
         return convertToDTO(order);
+    }
+
+    // Method to test first-time buyer discount functionality by pmk july 9
+    public boolean isUserFirstTimeBuyer(Long userId) {
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) return false;
+        return (user.getOrderCount() == null || user.getOrderCount() == 0);
+    }
+
+    // Method to get user's discount eligibility
+    public String getUserDiscountStatus(Long userId) {
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) return "User not found";
+        
+        boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
+        if (isFirstOrder) {
+            List<DiscountRule> userDiscountRules = discountRuleRepository.findActiveUserDiscounts(userId);
+            if (!userDiscountRules.isEmpty()) {
+                return "Eligible for First Time Buyer discount (10% off)";
+            } else {
+                return "First-time buyer but no discount rule assigned";
+            }
+        } else {
+            return "Not eligible (order count: " + user.getOrderCount() + ")";
+        }
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class BrandService {
@@ -31,5 +32,11 @@ public class BrandService {
 
     public Brand saveBrand(Brand brand){
         return repo.save(brand);
+    }
+
+    //add for link brand with category by pmk july 7
+    public Brand getBrandById(Long id) {
+        Optional<Brand> brand = repo.findById(id);
+        return brand.orElse(null);
     }
 }

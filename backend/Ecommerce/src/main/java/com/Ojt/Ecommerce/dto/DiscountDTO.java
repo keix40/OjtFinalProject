@@ -8,17 +8,22 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@Data
 public class DiscountDTO {
+
     private Long id;
-    private String code;
     private String name;
+    private String code;
+    private String description;
     private DiscountType discountType;
     private Double discountValue;
     private LocalDate startDate;
     private LocalDate endDate;
+    private boolean status;
     private boolean canUse;
+    private Boolean autoApply; // true = discount event, false = coupon
+
 }

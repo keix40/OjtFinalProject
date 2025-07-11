@@ -33,6 +33,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import com.Ojt.Ecommerce.entity.Discount;
+import com.Ojt.Ecommerce.entity.DiscountEventEnum;
+import com.Ojt.Ecommerce.entity.DiscountRule;
+import com.Ojt.Ecommerce.repository.DiscountRepository;
+import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
+import com.Ojt.Ecommerce.entity.DiscountType;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +54,25 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final OtpVerificationRepository otpVerificationRepository;
     private final ModelMapper modelMapper;
+    private final DiscountRepository discountRepository;
+    private final DiscountRuleRepository discountRuleRepository;
+
+    // Method to ensure "First Time Buyer" discount exists
+    private void ensureFirstTimeBuyerDiscountExists() {
+        Discount firstTimeDiscount = discountRepository.findByName("First Time Buyer").orElse(null);
+        if (firstTimeDiscount == null) {
+            // Create the "First Time Buyer" discount if it doesn't exist
+            firstTimeDiscount = new Discount();
+            firstTimeDiscount.setName("First Time Buyer");
+            firstTimeDiscount.setDescription("10% discount for first-time buyers");
+            firstTimeDiscount.setDiscountType(DiscountType.PERCENTAGE);
+            firstTimeDiscount.setDiscountValue(0.10); // 10% discount
+            firstTimeDiscount.setStartDate(LocalDate.now());
+            firstTimeDiscount.setEndDate(LocalDate.now().plusYears(10)); // Valid for 10 years
+            firstTimeDiscount.setStatus(true);
+            discountRepository.save(firstTimeDiscount);
+        }
+    }
 
     @Override
     public String register(RegisterRequest request, MultipartFile profileImage) {
@@ -159,6 +184,27 @@ public class UserServiceImpl implements UserService {
 
         // Save user to database
         userRepository.save(user);
+
+        // Ensure the first-time buyer discount exists and assign it to new user
+        try {
+            ensureFirstTimeBuyerDiscountExists();
+            Discount firstTimeDiscount = discountRepository.findByName("First Time Buyer").orElse(null);
+            if (firstTimeDiscount != null) {
+                DiscountRule rule = new DiscountRule();
+                rule.setTargetType(DiscountEventEnum.USER);
+                rule.setDiscount(firstTimeDiscount);
+                rule.setUser(user);
+                rule.setStartDate(LocalDate.now());
+                rule.setEndDate(LocalDate.now().plusDays(7));
+                System.out.println("Saving DiscountRule for user: " + user.getEmail());
+                discountRuleRepository.save(rule);
+                System.out.println("Saved DiscountRule for user: " + user.getEmail());
+
+            }
+        } catch (Exception e) {
+            // Log or handle error if discount assignment fails
+            System.err.println("Failed to assign first-time buyer discount: " + e.getMessage());
+        }
 
         String message  = "Your OTP code is: " + otp;
         emailService.sendEmail(user.getEmail(), "Email Verification Code", message);

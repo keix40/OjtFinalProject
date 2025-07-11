@@ -60,7 +60,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim("gender", user.getGender())
                 .claim("phNumber", user.getPhoneNumber())
                 .claim("dateofbirth", user.getDateOfBirth().toString()) // 👈 convert LocalDate to String
-                .claim("createdate", user.getCreatedDate().toString())
+                .claim("createda.te", user.getCreatedDate().toString())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(secretKey, SignatureAlgorithm.HS512)

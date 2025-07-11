@@ -25,6 +25,8 @@ public class Discount {
 
     private String name;
 
+    private String description;
+
     @Column(unique = true)
     private String code; // Nullable: if null, it's auto apply
 
@@ -36,10 +38,16 @@ public class Discount {
     private LocalDate endDate;
     private Boolean autoApply;
 
-    @OneToMany(mappedBy = "discount")
-    private List<UserCouponUsage> usedByUsers;
+    @ManyToOne
+    @JoinColumn(name = "event_id" , nullable = true) // link to DiscountEvent
+    private DiscountEvent discountEvent;
+
+    @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL)
+    private List<DiscountRule> discountRules;
 
     @OneToMany(mappedBy = "discount", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductDiscount> productDiscounts;
+    private List<UserCouponUsage> usedByUsers;
+
+    private boolean status;
 
 }
