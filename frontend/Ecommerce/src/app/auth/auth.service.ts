@@ -1,21 +1,48 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, from } from 'rxjs';
 import { LoginRequest } from '../login-request';
 import { LoginResponse } from '../login-response';
 import { RegisterResponse } from './auth.types';
 import { RegisterRequest } from '../register-request';
 import { jwtDecode } from 'jwt-decode';
+import { LoginAttemptsService } from '../services/login-attempts.service';
+import { switchMap, mergeMap } from 'rxjs/operators';
 
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private baseUrl = 'http://localhost:8080/api/auth';
+  private publicIp: string | null = null;
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private loginAttemptsService: LoginAttemptsService) {
+    // Fetch public IP on service init
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => { this.publicIp = data.ip; });
+  }
 
   login(data: LoginRequest): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/login`, data);
+    return from(
+      fetch('https://ipinfo.io/json')
+        .then(res => res.json())
+        .catch(() => ({ city: '', region: '', country: '', countryCode: '' }))
+    ).pipe(
+      mergeMap(loc => {
+        const locationData = {
+          city: loc.city || '',
+          region: loc.region || '',
+          country: loc.country || '',
+          countryCode: loc.country || ''
+        };
+        const payload = { ...data, ...locationData };
+        let headers = new HttpHeaders();
+        if (this.publicIp) {
+          headers = headers.set('X-Client-IP', this.publicIp);
+        }
+        return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload, { headers });
+      })
+    );
   }
 
 
