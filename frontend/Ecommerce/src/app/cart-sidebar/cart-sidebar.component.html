@@ -54,8 +54,27 @@
             </button>
           </div>
           <div class="flex items-center justify-between mt-3">
-            <span class="font-bold text-lg text-neutral-900">${{ item.price | number:'1.2-2' }}</span>
-            <span class="text-blue-600 font-semibold text-sm">Total: ${{ (item.price * item.quantity) | number:'1.2-2' }}</span>
+            <div class="flex flex-col">
+              <!-- Discount display -->
+              <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">
+                <div class="d-flex align-items-center mb-2">
+                  <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="badge bg-danger me-2">
+                    {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+                  </span>
+                  <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="text-muted text-decoration-line-through me-2">
+                    {{ product.price }} MMK
+                  </span>
+                  <span class="fw-bold fs-5 me-2">
+                    {{ getDiscountedPrice(product) }} MMK
+                  </span>
+                </div>
+                <div class="fw-bold text-primary fs-6 mt-2">Total: {{ getDiscountedPrice(product) * item.quantity }} MMK</div>
+              </ng-container>
+              <ng-template #noProduct>
+                <div class="fw-bold text-lg text-neutral-900">{{ item.price }} MMK</div>
+                <div class="fw-bold text-primary fs-6 mt-2">Total: {{ item.price * item.quantity }} MMK</div>
+              </ng-template>
+            </div>
           </div>
         </div>
       </div>
@@ -79,7 +98,7 @@
       <div class="space-y-2 mb-4">
         <div class="flex items-center justify-between text-neutral-700">
           <span>Subtotal</span>
-          <span>${{ getSubtotal() | number:'1.2-2' }}</span>
+          <span>{{ getSubtotal() }} MMK</span>
         </div>
         <div class="flex items-center justify-between text-neutral-700">
           <span>Shipping</span>
@@ -87,13 +106,22 @@
         </div>
         <div class="flex items-center justify-between text-neutral-700">
           <span>Tax</span>
-          <span>${{ getTax() | number:'1.2-2' }}</span>
+          <span>{{ getTax() }} MMK</span>
+        </div>
+        <!-- Discount Savings -->
+        <div *ngIf="getTotalSavings() > 0"  class="flex items-center justify-between text-green-600">
+          <span>
+            <span *ngIf="isFirstTimeBuyerDiscount">Discount Savings</span>
+            <span *ngIf="!isFirstTimeBuyerDiscount">Discount Savings</span>
+          </span>
+          <span *ngIf="isFirstTimeBuyerDiscount" class="font-semibold"><small>(First time buyer 10%)</small>-{{ getTotalSavings() }} MMK</span>
+          <span *ngIf="!isFirstTimeBuyerDiscount" class="font-semibold">-{{ getTotalSavings() }} MMK</span>
         </div>
       </div>
       <div class="border-t border-neutral-200 pt-4 mb-4">
         <div class="flex items-center justify-between">
           <span class="font-bold text-lg text-neutral-900">Total</span>
-          <span class="font-bold text-xl text-blue-600">${{ getTotal() | number:'1.2-2' }}</span>
+          <span class="font-bold text-xl text-blue-600">{{ getTotal() }} MMK</span>
         </div>
       </div>
       <div class="flex flex-col gap-3">

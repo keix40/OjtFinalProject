@@ -27,15 +27,24 @@ export class OrderConfirmComponent implements OnInit {
   }
 
   getSubtotal() {
-    return this.orderDetails.cartItems.reduce((sum: any, item: any) => sum + item.price * item.quantity, 0);
+    if (typeof this.orderDetails.subtotal === 'number') {
+      return this.orderDetails.subtotal;
+    }
+    if (this.orderDetails.cartItems) {
+      return this.orderDetails.cartItems.reduce((sum: any, item: any) => sum + item.price * item.quantity, 0);
+    }
+    return 0;
   }
 
   getDeliveryCost() {
-    return this.orderDetails.deliveryFee || 0;
+    if (typeof this.orderDetails.deliveryFee === 'number') {
+      return this.orderDetails.deliveryFee;
+    }
+    return 0;
   }
   
   getTotal() {
-    const discount = this.orderDetails.discountAmount || 0;
+    const discount = typeof this.orderDetails.discountAmount === 'number' ? this.orderDetails.discountAmount : 0;
     return this.getSubtotal() + this.getDeliveryCost() - discount;
   }
 

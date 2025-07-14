@@ -48,6 +48,38 @@
         </ul>
       </li>
       
+      <!-- Discounts (expandable) -->
+      <li class="animate-fade-in" style="animation-delay: 0.25s;">
+        <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isDiscountsOpen = !isDiscountsOpen">
+          <span class="flex items-center gap-3">
+            <i data-lucide="percent" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+            <span>Discounts</span>
+          </span>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform duration-300" [ngClass]="isDiscountsOpen ? 'rotate-180' : ''"></i>
+        </button>
+        <ul *ngIf="isDiscountsOpen" class="pl-8 mt-1 space-y-1 animate-slide-down" style="animation-duration: 0.3s;">
+          <li class="animate-fade-in" style="animation-delay: 0.1s;">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/discount-list'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
+              <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Discount List</span>
+            </a>
+          </li>
+          <li class="animate-fade-in" style="animation-delay: 0.2s;">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'discount-add'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
+              <i data-lucide="plus" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Add Discount</span>
+            </a>
+          </li>
+          <li class="animate-fade-in" style="animation-delay: 0.3s;">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/discount-coupon'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
+              <i data-lucide="ticket" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Coupon List</span>
+            </a>
+          </li>
+        </ul>
+      </li>
+
+
       <!-- Orders -->
       <li class="animate-fade-in" style="animation-delay: 0.3s;">
         <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" [routerLink]="'/orders'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400">

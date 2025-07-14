@@ -35,16 +35,13 @@ public class OrderController {
     @GetMapping("/getdiscount/{userId}/{code}")
     public ResponseEntity<?> getDiscountByCode(@PathVariable Long userId, @PathVariable String code) {
         DiscountDTO disDto = service.getDiscountByCode(code);
-
         if (disDto == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Discount not found");
         }
-
         boolean checkUsed = service.checkDiscountUsed(disDto.getId(), userId);
         if (checkUsed) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("used");
         }
-
         return ResponseEntity.ok(disDto);
     }
 
@@ -58,6 +55,12 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Order creation failed: " + e.getMessage());
         }
+    }
+
+    //add for discount  preview by pmk july 9
+    @PostMapping("/preview")
+    public ResponseEntity<?> previewOrder(@RequestBody UserOrderDTO dto) {
+        return ResponseEntity.ok(service.previewOrder(dto));
     }
 
     @GetMapping("/getorderbyuserid/{userId}")
@@ -90,5 +93,25 @@ public class OrderController {
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
             UserOrderListDTO order = service.getOrderById(orderId);
             return ResponseEntity.ok(order);
+    }
+
+    // Test endpoint to check if user is first-time buyer
+    @GetMapping("/test/firsttimebuyer/{userId}")
+    public ResponseEntity<?> testFirstTimeBuyer(@PathVariable Long userId) {
+        boolean isFirstTime = service.isUserFirstTimeBuyer(userId);
+        return ResponseEntity.ok(Map.of(
+            "userId", userId,
+            "isFirstTimeBuyer", isFirstTime
+        ));
+    }
+
+    // Test endpoint to get user's discount status
+    @GetMapping("/test/discountstatus/{userId}")
+    public ResponseEntity<?> testDiscountStatus(@PathVariable Long userId) {
+        String status = service.getUserDiscountStatus(userId);
+        return ResponseEntity.ok(Map.of(
+            "userId", userId,
+            "discountStatus", status
+        ));
     }
 }

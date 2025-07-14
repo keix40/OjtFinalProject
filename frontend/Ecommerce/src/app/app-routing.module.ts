@@ -26,6 +26,9 @@ import { RolesPermissionsComponent } from './roles-permissions/roles-permissions
 import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
+import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
+import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
 import { HomeComponent } from './home/home.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { UserProductListComponent } from './user-product-list/user-product-list';
@@ -42,11 +45,19 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
   { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
+
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
     component: LayoutComponent,
     canActivate: [AuthGuard],
     children: [
+      { path: 'product', component: ProductComponent },
+      { path: 'productlist', component: ProductMangementComponent },
+      { path: 'admin/products/:id', component: ProductDetailComponent },
+      { path: 'orders', component: OrderManagementComponent },
+      {path: 'discount-add', component: DiscountInsertComponent},
+      {path: 'discount-list', component:DiscountEventManagementComponent},
+      {path: 'discount-coupon', component:DiscountCouponComponent},
       { path: 'product', component: ProductComponent, data: { breadcrumb: 'Products' } },
       { path: 'productlist', component: ProductMangementComponent, data: { breadcrumb: 'Product List' } },
       { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
@@ -83,7 +94,7 @@ const routes: Routes = [
     ]
   },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent,canActivate: [AuthGuard] , data: { breadcrumb: 'Order Tracking' } },
-  { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
+  // { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
   { path: 'product/:id', component: UserProductDetailComponent, data: { breadcrumb: 'Product Detail' } },
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },

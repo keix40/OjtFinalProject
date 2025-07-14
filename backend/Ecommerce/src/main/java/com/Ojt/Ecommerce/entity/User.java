@@ -81,6 +81,10 @@ public class User {
 
 
 
+    //add for first time buyer discount buy pmk july 7
+    @Column(name = "order_count")
+    private Integer orderCount = 0;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Review> reviews = new ArrayList<>();

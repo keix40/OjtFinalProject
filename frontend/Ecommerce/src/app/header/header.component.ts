@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { WishlistService } from '../services/wishlist.service';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { CartSidebarComponent } from '../cart-sidebar/cart-sidebar.component';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-header',
@@ -27,6 +28,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   showCartSidebar = false;
   public wishlistCount = 0;
   private subscriptions: Subscription[] = [];
+  isFirstTimeBuyerDiscount = false;
   userProfileImage: string | null = null;
 
   constructor(
@@ -35,6 +37,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private elementRef: ElementRef,
     private cartService: CartService,
     private wishlistService: WishlistService,
+    private http: HttpClient, // Add HttpClient for preview API
     public breadcrumbService: BreadcrumbService
   ) {}
 
@@ -54,6 +57,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.cartService.getCartItems().subscribe(items => {
         this.cartItems = items;
+        this.checkFirstTimeBuyerDiscount(); // Check discount when cart changes
       }),
       this.cartService.getCartTotal().subscribe(total => {
         this.cartTotal = total;
@@ -67,6 +71,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     if (this.isAuthenticated && this.userId) {
       this.loadWishlistCount();
+      this.checkFirstTimeBuyerDiscount(); // Check on init
     }
   }
 
@@ -161,5 +166,29 @@ toggleMobileMenu(): void {
 
   navigateToCart() {
     this.router.navigate(['/cart']);
+  }
+
+  //for first time buyer discount by pmk july 9
+  checkFirstTimeBuyerDiscount() {
+    if (!this.isAuthenticated || !this.userId || this.cartItems.length === 0) {
+      this.isFirstTimeBuyerDiscount = false;
+      return;
+    }
+    const userOrderDto = {
+      userId: this.userId,
+      cartItem: this.cartItems.map(item => ({
+        productId: item.productId || item.id,
+        quantity: item.quantity,
+        price: item.price
+      }))
+    };
+    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+      next: (preview) => {
+        this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
+      },
+      error: () => {
+        this.isFirstTimeBuyerDiscount = false;
+      }
+    });
   }
 }

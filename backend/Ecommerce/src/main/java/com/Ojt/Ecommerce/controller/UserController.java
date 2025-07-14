@@ -10,6 +10,7 @@ import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
 import com.Ojt.Ecommerce.entity.AddressType;
 import com.Ojt.Ecommerce.entity.Role;
 import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.entity.UserStatus;
 import com.Ojt.Ecommerce.repository.RoleRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
@@ -147,6 +148,7 @@ public class UserController {
         user.setRole(role);
         user.setVerified(request.getEmailVerified() != null ? request.getEmailVerified() : false); // Set from request
         user.setCreatedDate(java.time.LocalDateTime.now());
+        user.setStatus(UserStatus.ACTIVE); // Explicitly set status to ACTIVE
         userRepository.save(user);
 
         // 3. Create Address if provided
@@ -211,6 +213,24 @@ public class UserController {
         user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.valueOf(body.get("status")));
         userRepository.save(user);
         return ResponseEntity.ok().build();
+    }
+
+    // Fix existing users with null status
+    @PostMapping("/fix-null-status")
+    public ResponseEntity<?> fixNullStatusUsers() {
+        List<User> usersWithNullStatus = userRepository.findAll().stream()
+                .filter(user -> user.getStatus() == null)
+                .collect(Collectors.toList());
+        
+        for (User user : usersWithNullStatus) {
+            user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.ACTIVE);
+            userRepository.save(user);
+        }
+        
+        return ResponseEntity.ok(Map.of(
+            "message", "Fixed " + usersWithNullStatus.size() + " users with null status",
+            "fixedCount", usersWithNullStatus.size()
+        ));
     }
 
     // Get user details endpoint (for view details modal)

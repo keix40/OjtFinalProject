@@ -81,5 +81,36 @@ public class BrandController {
         return ResponseEntity.ok("Success");
     }
 
+    //add for link brand with category by pmk july 7
+    @PostMapping("/linkwithcategory")
+    public ResponseEntity<?> linkBrandWithCategory(@RequestParam Long brandId, @RequestParam Long categoryId) {
+        try {
+            BrandHasCategory bc = new BrandHasCategory();
+            Brand brand = service.getBrandById(brandId);
+            Category category = cateService.getCategoryById(categoryId);
+            
+            if (brand == null || category == null) {
+                return ResponseEntity.badRequest().body("Brand or Category not found");
+            }
+            
+            bc.setBrand(brand);
+            bc.setCategory(category);
+            
+            BrandHasCategory savedBc = bcService.saveBrandAndCat(bc);
+            return ResponseEntity.ok(savedBc);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to link brand with category: " + e.getMessage());
+        }
+    }
 
+    //add for fetch data for discount by pmk july 7
+    @GetMapping("/brandcategories")
+    public ResponseEntity<List<BrandHasCategory>> getAllBrandCategories() {
+        try {
+            List<BrandHasCategory> brandCategories = bcService.getAllBrandCategories();
+            return ResponseEntity.ok(brandCategories);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
 }

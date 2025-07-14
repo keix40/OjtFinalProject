@@ -396,6 +396,12 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProductDTO> getProductDTOsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return new ArrayList<>();
+        List<Product> products = proRepo.findByIdIn(ids);
+        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = mapper.map(product, ProductDTO.class);
 

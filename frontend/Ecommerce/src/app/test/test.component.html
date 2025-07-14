@@ -1,0 +1,55 @@
+<div class="container mt-4">
+  <h2>Notification System Test</h2>
+  <p>Click the buttons below to test different types of notifications:</p>
+  
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Test Notifications</h5>
+        </div>
+        <div class="card-body">
+          <button class="btn btn-success mb-2 me-2" (click)="testSuccessNotification()">
+            Test Success Notification
+          </button>
+          <br>
+          <button class="btn btn-danger mb-2 me-2" (click)="testErrorNotification()">
+            Test Error Notification
+          </button>
+          <br>
+          <button class="btn btn-info mb-2 me-2" (click)="testInfoNotification()">
+            Test Info Notification
+          </button>
+          <br>
+          <button class="btn btn-warning mb-2 me-2" (click)="testWarningNotification()">
+            Test Warning Notification
+          </button>
+          <br>
+          <button class="btn btn-primary mb-2 me-2" (click)="testCustomNotification()">
+            Test Custom Notification
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Notification Features</h5>
+        </div>
+        <div class="card-body">
+          <ul>
+            <li><strong>Success:</strong> Green notification with optional link</li>
+            <li><strong>Error:</strong> Red notification for errors</li>
+            <li><strong>Info:</strong> Blue notification for information</li>
+            <li><strong>Warning:</strong> Orange notification for warnings</li>
+            <li><strong>Auto-hide:</strong> Notifications disappear after 4 seconds</li>
+            <li><strong>Manual close:</strong> Click the × button to close</li>
+            <li><strong>Links:</strong> Clickable links open in new tab</li>
+            <li><strong>Responsive:</strong> Works on mobile devices</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

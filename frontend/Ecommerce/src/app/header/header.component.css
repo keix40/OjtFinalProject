@@ -398,6 +398,52 @@
     display: block;
 }
 
+.first-time-buyer-badge {
+  background: linear-gradient(90deg, #ff3b3b 0%, #c81d25 100%);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.97rem;
+  padding: 3px 12px 3px 10px;
+  margin-left: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(200, 29, 37, 0.10);
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: none;
+}
+
+.first-time-buyer-badge i {
+  font-size: 1em;
+  margin-right: 2px;
+}
+
+.first-time-buyer-badge:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(56, 249, 215, 0.18);
+}
+
+.first-time-buyer-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 40%; height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.22) 100%);
+  transform: skewX(-20deg);
+  animation: shimmer 2.2s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { left: -60%; }
+  100% { left: 120%; }
+}
+
 /* Responsive Styles */
 @media (max-width: 1199.98px) {
     .search-form {
