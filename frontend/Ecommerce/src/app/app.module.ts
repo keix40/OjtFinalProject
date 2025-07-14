@@ -7,12 +7,11 @@ import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TestComponent } from './test/test.component';
-import { HomeComponent } from './home/home.component';
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptors/jwt.interceptors.service';
-import { HeaderComponent } from './header/header.component';
+
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UserOrdersComponent } from './user-profile/user-orders/user-orders.component';
 import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlist.component';
@@ -31,7 +30,6 @@ import { CreateCategoryComponent } from './create-category/create-category.compo
 import { LayoutComponent } from './layout/layout.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { NavbarComponent } from './layout/navbar/navbar.component';
-import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
 import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
@@ -43,20 +41,35 @@ import { CreateUserComponent } from './create-user/create-user.component';
 import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
 import { AdminUsersComponent } from './admin-users/admin-users.component';
 import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
-import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
-import { RoleService } from './services/role.service';
-import { PermissionService } from './services/permission.service';
-import { OrderManagementComponent } from './order-management/order-management.component';
-import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
-import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
 import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
-import { BlacklistComponent } from './blacklist/blacklist.component';
-import { DiscountService } from './services/discount.service';
+import { HomeComponent } from './home/home.component';
+import { FooterComponent } from './footer/footer.component';
+import { OrderManagementComponent } from './order-management/order-management.component';
+import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
+import { ReturnRequestComponent } from './return-request/return-request.component';
+import { ReturnListComponent } from './return-list/return-list.component';
+import { HeaderComponent } from './header/header.component';
+import { BreadcrumbComponent } from './breadcrumb.component';
+import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
 import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
-
+import { VipCustomersComponent } from './vip-customers/vip-customers.component';
+import { ReturnDetailComponent } from './return-detail/return-detail.component';
+import { CreateAttributeValueComponent } from './create-attribute-value/create-attribute-value.component';
+import { BlacklistComponent } from './blacklist/blacklist.component';
+import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
+import { ConfirmModelComponent } from './confirm-model/confirm-model.component';
+import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
+import { MatTableModule } from '@angular/material/table';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { QuillModule } from 'ngx-quill';
 
 @NgModule({
   declarations: [
@@ -65,7 +78,7 @@ import { DiscountAdminComponent } from './discount-admin/discount-admin.componen
     HomeComponent,
     LoginComponent,
     RegisterComponent,
-    HeaderComponent,
+
     UserProfileComponent,
     UserOrdersComponent,
     UserWishlistComponent,
@@ -92,37 +105,51 @@ import { DiscountAdminComponent } from './discount-admin/discount-admin.componen
     ActivityLogsComponent,
     AdminUsersComponent,
     RolesPermissionsComponent,
-    VipCustomersComponent,
     LoginAttemptsComponent,
     UserProductDetailComponent,
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
+    ReturnRequestComponent,
+    ReturnListComponent,
+    DashboardComponent,
     DiscountAdminComponent,
+    CreateAttributeValueComponent,
+    ConfirmModelComponent,
+    AdminPolicyComponent,
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
     ReactiveFormsModule,
-    FormsModule, // Required for ngModel/ngForm
+    FormsModule,
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent,// Standalone component must be imported here
-    ProductDetailComponent,
+    CommonModule,
     BrowserAnimationsModule,
+    FooterComponent,
+    HeaderComponent,
+    BreadcrumbComponent,
+    VerifyOtpComponent,
+    VipCustomersComponent,
+    ReturnDetailComponent,
     BlacklistComponent,
+    CartSidebarComponent,
+    MatTableModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    QuillModule.forRoot()
   ],
+
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
     AddressService,
-    RoleService,
-    PermissionService,
-    AuthService,
-    DiscountService
   ],
   bootstrap: [AppComponent]
 })

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
 import { ProductList } from '../product';
 import { ProductService } from '../services/product.service';
 import { Brand } from '../brand';
@@ -14,6 +14,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { ImageService } from '../services/image.service';
 declare var $: any;
+declare var lucide: any;
 
 @Component({
   selector: 'app-product-mangement',
@@ -21,17 +22,19 @@ declare var $: any;
   templateUrl: './product-mangement.component.html',
   styleUrl: './product-mangement.component.css'
 })
-export class ProductMangementComponent {
+export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewInit {
   products: ProductList[] = [];
   brands: Brand[] = [];
   categories: Category[] = [];
   filteredProducts: any[] = [];
 
-
   selectedCategory: number = 0;
   selectedBrand: number = 0;
-
   selectAll: boolean = false;
+  
+  // Dropdown states
+  excelDropdownOpen: boolean = false;
+  pdfDropdownOpen: boolean = false;
 
   constructor(
     private productService: ProductService,
@@ -45,6 +48,80 @@ export class ProductMangementComponent {
     this.loadProduct();
     this.loadCategory();
     this.loadBrand();
+    
+    // Add click outside listener for dropdowns
+    document.addEventListener('click', this.handleDocumentClick.bind(this));
+  }
+
+  ngOnDestroy(): void {
+    // Remove event listener
+    document.removeEventListener('click', this.handleDocumentClick.bind(this));
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined' && (window as any).lucide) {
+      (window as any).lucide.createIcons();
+    } else if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+  }
+
+  private handleDocumentClick(event: MouseEvent): void {
+    // Close dropdowns when clicking outside
+    const target = event.target as HTMLElement;
+    
+    if (!target.closest('.relative.inline-block')) {
+      this.excelDropdownOpen = false;
+      this.pdfDropdownOpen = false;
+    }
+  }
+
+  // Dropdown toggle methods
+  toggleExcelDropdown(): void {
+    this.excelDropdownOpen = !this.excelDropdownOpen;
+    this.pdfDropdownOpen = false; // Close other dropdown
+  }
+
+  togglePdfDropdown(): void {
+    this.pdfDropdownOpen = !this.pdfDropdownOpen;
+    this.excelDropdownOpen = false; // Close other dropdown
+  }
+
+  // Edit functionality
+  editSelectedProduct(): void {
+    const selectedProducts = this.selectedProducts;
+    
+    if (selectedProducts.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Product Selected',
+        text: 'Please select a product to edit.',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+    
+    if (selectedProducts.length > 1) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Multiple Products Selected',
+        text: 'Please select only one product to edit.',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+    
+    // Navigate to edit page with the selected product ID
+    const productId = selectedProducts[0].id;
+    // You can implement navigation to edit page here
+    // this.router.navigate(['/product/edit', productId]);
+    
+    Swal.fire({
+      icon: 'info',
+      title: 'Edit Product',
+      text: `Edit functionality for product ID: ${productId}`,
+      confirmButtonColor: '#3085d6'
+    });
   }
 
   loadProduct() {
@@ -59,6 +136,11 @@ export class ProductMangementComponent {
               { orderable: false, targets: 0 }
             ]
           });
+          if (typeof window !== 'undefined' && (window as any).lucide) {
+            (window as any).lucide.createIcons();
+          } else if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
         }, 100);
       },
       error: (err) => {

@@ -1,196 +1,118 @@
-/* Review Card Dropdown */
-.review-card .dropdown-toggle::after {
-    display: none;
-  }
-  .review-card .dropdown-menu {
-    min-width: 120px;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-    font-size: 1rem;
-    padding: 0.3rem 0;
-  }
-  .review-card .dropdown-item {
-    padding: 0.5rem 1.2rem;
-    transition: background 0.15s, color 0.15s;
-    border-radius: 0.5rem;
-  }
-  .review-card .dropdown-item:active {
-    background: #f1f3f4;
-    color: #0d6efd;
-  }
-  .review-card .dropdown-item.text-danger:active {
-    background: #ffeaea;
-    color: #dc3545;
-  }
-  
-  /* Review Card Hover */
-  .review-card {
-    transition: box-shadow 0.2s, transform 0.15s;
-  }
-  .review-card:hover {
-    box-shadow: 0 6px 24px rgba(32,201,151,0.10);
-    transform: translateY(-2px) scale(1.01);
-  }
-  
-  /* Avatar Polish */
-  .avatar {
-    border: 2.5px solid #fff;
-    box-shadow: 0 2px 8px rgba(32,201,151,0.10);
-    font-size: 1.3rem;
-    font-weight: 700;
-    background: linear-gradient(135deg, #0d6efd 60%, #20c997 100%);
-    color: #fff;
-  }
-  .review-media img,
-  .review-media video {
-    border: 1px solid #ddd;
-    border-radius: 0.3rem;
-    box-shadow: 0 0 4px rgba(0,0,0,0.1);
-    transition: transform 0.15s ease-in-out;
-  }
-  
-  .review-media img:hover,
-  .review-media video:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 8px rgba(0,0,0,0.2);
-  }
-  .review-media-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 10px;
-    margin-top: 0.5rem;
-  }
-  
-  .media-item {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    border-radius: 10px;
-    position: relative;
-    background-color: #f8f9fa;
-  }
-  
-  /* Lightbox style: only image/video, no box */
-  .media-modal-backdrop {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0,0,0,0.7);
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: auto;
-  }
-  .media-modal-content {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border-radius: 0;
-    padding: 0;
-    max-width: none;
-    max-height: none;
-    box-shadow: none;
-    z-index: 2100;
-  }
-  .media-modal-media {
-    max-width: 90vw;
-    max-height: 90vh;
-    width: auto;
-    height: auto;
-    border-radius: 0.7rem;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.18);
-    background: #000;
-    margin: 0 auto;
-    display: block;
-  }
-  .media-modal-close {
-    position: absolute;
-    top: 2.5vh;
-    right: 3vw;
-    background: rgba(0,0,0,0.5);
-    border: none;
-    font-size: 2.5rem;
-    color: #fff;
-    cursor: pointer;
-    z-index: 2200;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.2s, color 0.2s;
-  }
-  .media-modal-close:hover {
-    background: #007bff;
-    color: #fff;
-  }
-  .media-modal-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(0,0,0,0.5);
-    border: none;
-    color: #fff;
-    font-size: 2.5rem;
-    border-radius: 50%;
-    width: 56px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    z-index: 2200;
-    transition: background 0.2s, color 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
-  }
-  .media-modal-arrow.left { left: 2vw; }
-  .media-modal-arrow.right { right: 2vw; }
-  .media-modal-arrow:hover {
-    background: #007bff;
-    color: #fff;
-  }
-  .media-modal-comment {
-    display: none;
-  }
-  @media (max-width: 600px) {
-    .media-modal-close {
-      top: 1vh;
-      right: 1vw;
-      font-size: 1.7rem;
-      width: 36px;
-      height: 36px;
-    }
-    .media-modal-arrow.left { left: 1vw; }
-    .media-modal-arrow.right { right: 1vw; }
-    .media-modal-media {
-      max-width: 98vw;
-      max-height: 70vh;
-    }
-  }
-  body.modal-open {
-    overflow: hidden !important;
-  }
+/* Modal Styles */
+.media-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
 
-.attractive-stars .bi-star,
-.attractive-stars .bi-star-fill {
-  color: #ffc107 !important;
-  font-size: 1.1rem;
-  margin-right: 0.1em;
-  transition: color 0.2s, transform 0.2s;
+.media-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.media-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 30px;
   cursor: pointer;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
+  z-index: 10000;
 }
-.attractive-stars .star-filled {
-  color: #ffc107 !important;
-  text-shadow: 0 2px 8px #ffe082;
-  animation: popStar 0.3s;
+
+.media-modal-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 50%;
+  z-index: 10000;
 }
-.attractive-stars .bi-star:hover,
-.attractive-stars .bi-star-fill:hover {
-  color: #ff9800 !important;
-  transform: scale(1.15) rotate(-8deg);
+
+.media-modal-arrow.left {
+  left: -60px;
+}
+
+.media-modal-arrow.right {
+  right: -60px;
+}
+
+.media-modal-media {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Star Rating Styles */
+.star-rating-input {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star-rating-input i {
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+}
+
+.star-rating-input i:hover {
+  transform: scale(1.1);
+}
+
+.star-animated {
+  transition: all 0.3s ease;
+}
+
+.star-filled {
+  color: #fbbf24;
+  animation: starPop 0.3s ease-out;
+}
+
+@keyframes starPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* Attractive Stars */
+.attractive-stars i {
+  color: #d1d5db;
+  transition: all 0.2s ease;
+}
+
+.attractive-stars i:hover {
+  color: #fbbf24;
+  transform: scale(1.1);
+}
+
+.attractive-stars i.star-filled {
+  color: #fbbf24;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .media-modal-arrow.left {
+    left: -40px;
+  }
+  
+  .media-modal-arrow.right {
+    right: -40px;
+  }
 }

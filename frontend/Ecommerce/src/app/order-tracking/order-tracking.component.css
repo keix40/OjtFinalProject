@@ -57,7 +57,6 @@ body, .tracking-bg {
 }
 
 .track-btn {
-  background: linear-gradient(90deg, #0d6efd 0%, #66b2ff 100%);
   color: #fff;
   font-weight: 700;
   border: none;
@@ -74,9 +73,9 @@ body, .tracking-bg {
 }
 
 .tracking-info {
-  background: #e7f1ff;
+  background: #fff;
   border-radius: 16px;
-  box-shadow: 0 2px 12px 0 rgba(0, 123, 255, 0.07);
+  box-shadow: 0 2px 12px 0 rgba(76, 125, 217, 0.07);
   padding: 1.5rem 1rem 1.2rem 1rem;
   margin-top: 1.2rem;
 }
@@ -119,10 +118,10 @@ body, .tracking-bg {
   left: 30px;
   right: 30px;
   height: 4px;
-  background: linear-gradient(90deg, #007bff, #0d6efd, #007bff);
   border-radius: 3px;
   transform: translateY(-50%);
   z-index: 1;
+  background: #e7f1ff; /* very light blue / neutral */
 }
 
 /* Each step */
@@ -137,9 +136,9 @@ body, .tracking-bg {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: #d0e7ff;
-  border: 3px solid #007bff;
-  box-shadow: 0 0 12px 2px rgba(0, 123, 255, 0.4);
+  background: #e7f1ff; /* very light blue / neutral */
+  border: 3px solid #0d6efd;
+  box-shadow: 0 0 12px 2px rgba(13, 110, 253, 0.4);
   transition: all 0.3s ease;
   position: absolute;
   top: 50%;
@@ -150,9 +149,8 @@ body, .tracking-bg {
 
 /* Active dot */
 .step.active .dot {
-  background: #0d6efd;
   border-color: #66b2ff;
-  box-shadow: 0 0 20px 4px rgba(0, 123, 255, 0.7);
+  box-shadow: 0 0 20px 4px rgba(13, 110, 253, 0.7);
 }
 
 /* Label */
@@ -163,7 +161,7 @@ body, .tracking-bg {
   font-weight: 600;
 }
 .step.active .label {
-  color: #007bff;
+  color: #0d6efd;
   font-weight: 700;
 }
 
@@ -195,7 +193,7 @@ body, .tracking-bg {
     left: 18px;
     width: 4px;
     height: 100%;
-    background: linear-gradient(to bottom, #007bff, #0d6efd, #007bff);
+    background: #e7f1ff;
     transform: none;
   }
 
@@ -214,4 +212,223 @@ body, .tracking-bg {
   .label {
     margin-top: 0;
   }
+}
+
+/* --- Blue Progress Bar and Checkmarks --- */
+.tracking-steps-green {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 2rem 1rem;
+  margin: 0 1rem;
+}
+.tracking-steps-green::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 30px;
+  right: 30px;
+  height: 4px;
+  background: linear-gradient(90deg, #0d6efd, #66b2ff);
+  border-radius: 3px;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.step-green {
+  position: relative;
+  flex: 1;
+  text-align: center;
+}
+.dot-green {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e7f1ff; /* very light blue */
+  border: 3px solid #0d6efd; /* bootstrap primary blue */
+  box-shadow: 0 0 12px 2px rgba(13, 110, 253, 0.3);
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step-green.active-green .dot-green {
+  background: #0d6efd; /* bootstrap primary blue */
+  border-color: #66b2ff;
+  color: #fff;
+}
+.checkmark {
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+.label-green {
+  margin-top: 60px;
+  font-size: 1rem;
+  color: #0d6efd;
+  font-weight: 600;
+}
+.step-green.active-green .label-green {
+  color: #003d99; /* darker blue */
+  font-weight: 700;
+}
+
+/* --- Order Info Section --- */
+.order-id-label {
+  font-size: 1rem;
+  color: #888;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 0.2rem;
+}
+.order-id {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.5rem;
+}
+.tracking-code-status {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+.tracking-code {
+  font-weight: 600;
+  color: #222;
+  margin-right: 1.2rem;
+}
+.tracking-status {
+  font-weight: 600;
+  color: #0d6efd; /* blue */
+}
+.tracking-status.delivered {
+  color: #0a58ca; /* darker blue for delivered */
+  font-weight: 700;
+}
+.order-success {
+  color: #0d6efd;
+  font-size: 1.1rem;
+  margin-top: 0.3rem;
+  font-weight: 600;
+}
+
+/* --- Status Timeline --- */
+.status-history {
+  margin-top: 2rem;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 10px;
+}
+.status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.status-list li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.1rem;
+  font-size: 1rem;
+}
+.status-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #0d6efd; /* blue border */
+  background: transparent; /* no fill */
+  margin-right: 0.7rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-checkmark {
+  color: #0d6efd;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1;
+}
+.status-label {
+  font-weight: 600;
+  color: #222;
+  margin-right: 0.7rem;
+}
+.status-date {
+  color: #888;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+.show-more {
+  color: #0d6efd;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  margin-left: 1.7rem;
+  font-size: 1rem;
+  user-select: none;
+}
+.show-more:hover {
+  text-decoration: underline;
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  .tracking-steps-green {
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 1rem;
+    padding-left: 2rem;
+  }
+  .tracking-steps-green::before {
+    top: 0;
+    left: 18px;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #0d6efd, #66b2ff);
+    transform: none;
+  }
+  .label-green {
+    margin-top: 0.5rem;
+    margin-left: 2.5rem;
+  }
+}
+
+/* Tracking Order Title */
+.tracking-title {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  color: #222;
+  letter-spacing: 1px;
+}
+
+/* Tracking Actions (Cancel Order Button) */
+.tracking-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 2.5rem;
+  margin-bottom: 2rem;
+  margin-left: 2rem;
+}
+.cancel-order-btn {
+  background: #0d6efd;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 2.2rem;
+  box-shadow: 0 2px 8px 0 rgba(76, 217, 100, 0.15);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.cancel-order-btn:hover {
+  background: #0d6efd;
+  box-shadow: 0 4px 16px 0 rgba(76, 217, 100, 0.25);
 }

@@ -14,4 +14,6 @@ public class UserOrderDTO {
     private Long deliveryId;
     private Double totalAmount;
     private List<CartDTO> cartItem;
+    private Long cardId;
+
 }

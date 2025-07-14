@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import com.Ojt.Ecommerce.dto.EmailRequest;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -134,6 +135,9 @@ public class AuthController {
                     .attemptCount(1)
                     .build();
 
+            // ✅ Add attemptCount + timeframe dynamically
+            loginAttemptService.enrichAttemptWithStats(successDTO);
+
             // ➕ Calculate threat score and level
             int score = loginAttemptService.calculateThreatScore(successDTO);
             successDTO.setThreatScore(score);
@@ -162,6 +166,9 @@ public class AuthController {
                     .location("Unknown")
                     .attemptCount(1)
                     .build();
+
+            // ✅ Add attemptCount + timeframe dynamically
+            loginAttemptService.enrichAttemptWithStats(failDTO);
 
             // ➕ Calculate threat score and level
             int score = loginAttemptService.calculateThreatScore(failDTO);
@@ -241,7 +248,17 @@ public class AuthController {
         otpVerification.setVerified(true);
         otpVerificationRepository.save(otpVerification);
 
-        return ResponseEntity.ok(Map.of("message", "OTP verified successfully."));
+        // Set user as verified
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("User not found"));
+        user.setVerified(true);
+        userRepository.save(user);
+
+        // Generate JWT and refresh token for seamless login
+        String accessToken = jwtTokenProvider.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
     }
 
     @PostMapping("/resend-otp")
@@ -418,5 +435,43 @@ public class AuthController {
                 "message", "Profile image updated successfully",
                 "imagePath", imagePath
         ));
+    }
+
+    @PostMapping("/validate-real-email")
+    public ResponseEntity<?> validateRealEmail(@RequestBody EmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        boolean isReal = emailVerificationService.isEmailReal(email);
+        if (isReal) {
+            return ResponseEntity.ok(Map.of("real", true, "message", "Email is real/active."));
+        } else {
+            return ResponseEntity.ok(Map.of("real", false, "message", "Email does not exist or is not active."));
+        }
+    }
+
+    @PostMapping("/send-login-otp")
+    public ResponseEntity<?> sendLoginOtp(@RequestBody EmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new CustomException("Invalid email format.");
+        }
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new CustomException("No account found with this email.");
+        }
+        if (userOpt.get().isVerified()) {
+            throw new CustomException("Email is already verified.");
+        }
+        // Generate OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        // Save to DB
+        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
+                .orElse(new OtpVerification());
+        otpVerification.setEmail(email);
+        otpVerification.setOtpCode(otp);
+        otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
+        otpVerification.setVerified(false);
+        otpVerificationRepository.save(otpVerification);
+        emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
+        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
     }
 }

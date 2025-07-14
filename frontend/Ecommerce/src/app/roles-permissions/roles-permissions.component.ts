@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, TemplateRef } from '@angular/core';
+import { Component, OnInit, ViewChild, TemplateRef, AfterViewInit, AfterViewChecked } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { RoleService } from '../services/role.service';
 import { PermissionService } from '../services/permission.service';
@@ -8,6 +8,7 @@ import { forkJoin } from 'rxjs';
 import { ImageService } from '../services/image.service';
 import { HttpClient } from '@angular/common/http';
 import { PermissionCategoryService } from '../services/permission-category.service';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 interface Role {
   id: number;
@@ -58,9 +59,16 @@ interface User {
   selector: 'app-roles-permissions',
   templateUrl: './roles-permissions.component.html',
   standalone: false,
-  styleUrls: ['./roles-permissions.component.css']
+  styleUrls: ['./roles-permissions.component.css'],
+  animations: [
+    trigger('accordionAnimation', [
+      state('void', style({ height: '0', opacity: 0, padding: '0 1rem' })),
+      state('*', style({ height: '*', opacity: 1, padding: '*' })),
+      transition('void <=> *', animate('300ms cubic-bezier(0.4,0,0.2,1)')),
+    ]),
+  ]
 })
-export class RolesPermissionsComponent implements OnInit {
+export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterViewChecked {
   // Data properties
   allRoles: Role[] = [];
   filteredRoles: Role[] = [];
@@ -72,6 +80,8 @@ export class RolesPermissionsComponent implements OnInit {
   selectedUsersForAssignment: { [key: number]: boolean } = {};
   userAssignmentSearchTerm = '';
   filteredAllUsers: User[] = [];
+  openDropdownId: number | null = null;
+  expandedCategory: number | null = 0;
 
   // NEW: A temporary, separate checklist for the permission checkboxes.
   // This will fix the "select all" bug.
@@ -162,6 +172,18 @@ export class RolesPermissionsComponent implements OnInit {
     const duplicates = allKeys.filter((key, index) => allKeys.indexOf(key) !== index);
     if (duplicates.length > 0) {
       console.warn('Duplicate permission keys found:', duplicates);
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if ((window as any)['lucide']) {
+      (window as any)['lucide'].createIcons();
+    }
+  }
+
+  ngAfterViewChecked(): void {
+    if ((window as any)['lucide']) {
+      (window as any)['lucide'].createIcons();
     }
   }
 
@@ -934,5 +956,75 @@ export class RolesPermissionsComponent implements OnInit {
       if (permissionKeys.includes(key.toLowerCase().trim())) count++;
     }
     return count;
+  }
+
+  getLucideCategoryIcon(icon: string): string {
+    // Map common FontAwesome/legacy icons to Lucide equivalents
+    const map: { [key: string]: string } = {
+      'fa-users': 'users',
+      'fa-user': 'user',
+      'fa-user-cog': 'user-cog',
+      'fa-user-tag': 'user-tag',
+      'fa-user-shield': 'shield',
+      'fa-key': 'key',
+      'fa-cogs': 'settings',
+      'fa-list': 'list',
+      'fa-lock': 'lock',
+      'fa-eye': 'eye',
+      'fa-chart-bar': 'bar-chart',
+      'fa-database': 'database',
+      'fa-box': 'box',
+      'fa-shopping-cart': 'shopping-cart',
+      'fa-credit-card': 'credit-card',
+      'fa-envelope': 'mail',
+      'fa-bell': 'bell',
+      'fa-file-alt': 'file-text',
+      'fa-clipboard': 'clipboard',
+      'fa-calendar': 'calendar',
+      'fa-globe': 'globe',
+      'fa-star': 'star',
+      'fa-shield-alt': 'shield',
+      'fa-cube': 'cube',
+      'fa-users-cog': 'users',
+      'fa-user-edit': 'user',
+      'fa-user-plus': 'user-plus',
+      'fa-user-times': 'user-x',
+      'fa-user-lock': 'lock',
+      'fa-user-check': 'user-check',
+      'fa-user-friends': 'users',
+      'fa-user-circle': 'user',
+      'fa-user-secret': 'user',
+      'fa-user-md': 'user',
+      'fa-user-nurse': 'user',
+      'fa-user-graduate': 'user',
+      'fa-user-tie': 'user',
+      'fa-user-alt': 'user',
+      'fa-user-alt-slash': 'user-x',
+      'fa-user-clock': 'clock',
+      'fa-user-crown': 'crown',
+      'fa-user-gear': 'settings',
+      'fa-user-group': 'users',
+      'fa-user-slash': 'user-x',
+      'fa-user-xmark': 'user-x',
+      'fa-users-gear': 'users',
+      'fa-users-slash': 'users',
+      'fa-users-viewfinder': 'users',
+      'fa-cog': 'settings',
+      'fa-wrench': 'wrench',
+      'fa-tools': 'wrench',
+      'fa-unlock': 'unlock',
+      'fa-unlock-alt': 'unlock',
+      'fa-tasks': 'list-check',
+      'fa-clipboard-list': 'clipboard-list',
+      'fa-clipboard-check': 'clipboard-check',
+      'fa-file': 'file',
+      'fa-chart-line': 'line-chart',
+      'fa-chart-pie': 'pie-chart',
+      'fa-chart-area': 'area-chart',
+    };
+    if (icon && icon.startsWith('fa-') && map[icon]) return map[icon];
+    if (icon && icon in map) return map[icon];
+    if (icon && icon in (window as any)['lucide']?.icons) return icon;
+    return 'folder'; // fallback
   }
 }

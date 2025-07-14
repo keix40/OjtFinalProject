@@ -1,0 +1,51 @@
+<div class="admin-policy-container">
+  <h2>Policy Management</h2>
+
+  <form [formGroup]="policyForm" (ngSubmit)="submitForm()" class="policy-form">
+    <mat-form-field appearance="fill">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" required placeholder="Enter policy title" />
+    </mat-form-field>
+    <div class="quill-field">
+      <label class="quill-label">Content</label>
+      <quill-editor formControlName="content" [modules]="quillModules" placeholder="Enter policy content"></quill-editor>
+    </div>
+    <button mat-raised-button color="primary" type="submit">
+      {{ editingPolicy ? 'Update Policy' : 'Add Policy' }}
+    </button>
+    <button *ngIf="editingPolicy" mat-button type="button" (click)="cancelEdit()">Cancel</button>
+  </form>
+
+  <mat-table [dataSource]="policies" class="mat-elevation-z8">
+    <ng-container matColumnDef="id">
+      <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
+      <mat-cell *matCellDef="let policy"> {{policy.id}} </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="title">
+      <mat-header-cell *matHeaderCellDef> Title </mat-header-cell>
+      <mat-cell *matCellDef="let policy"> {{policy.title}} </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="content">
+      <mat-header-cell *matHeaderCellDef> Content </mat-header-cell>
+      <mat-cell *matCellDef="let policy">
+        <div [innerHTML]="policy.content"></div>
+      </mat-cell>
+    </ng-container>
+    <ng-container matColumnDef="actions">
+      <mat-header-cell *matHeaderCellDef> Actions </mat-header-cell>
+      <mat-cell *matCellDef="let policy">
+        <button mat-icon-button color="primary" (click)="editPolicy(policy)">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deletePolicy(policy.id)">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </mat-cell>
+    </ng-container>
+
+    <mat-header-row *matHeaderRowDef="['id', 'title', 'content', 'actions']"></mat-header-row>
+    <mat-row *matRowDef="let row; columns: ['id', 'title', 'content', 'actions'];"></mat-row>
+  </mat-table>
+
+  <mat-spinner *ngIf="loading"></mat-spinner>
+</div>

@@ -6,6 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { ImageService } from '../services/image.service';
+import { BreadcrumbComponent } from '../breadcrumb.component';
 
 interface Product {
   id: number;
@@ -94,6 +95,12 @@ export class ProductDisplayComponent implements OnInit {
   categoryOptions = ['Chair', 'Divan', 'Sofa', 'Sectional'];
 
   userId: number | null = null;
+
+  breadcrumbItems = [
+    { label: 'Home', link: '/home' },
+    { label: 'Products', link: '/products' },
+    { label: 'Product Display' }
+  ];
 
   constructor(
     

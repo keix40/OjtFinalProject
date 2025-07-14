@@ -1,5 +1,5 @@
 // user-product-detail.component.ts
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../services/product.service';
 import { CartService } from '../services/cart.service';
@@ -11,6 +11,7 @@ import { ReviewMessage } from '../review-message';
 import { AuthService } from '../auth/auth.service';
 import { Subscription } from 'rxjs';
 import { WishlistService } from '../services/wishlist.service';
+import { BreadcrumbComponent } from '../breadcrumb.component';
 
 interface ProductImage {
   id: number;
@@ -93,6 +94,30 @@ export class UserProductDetailComponent implements OnInit {
 
   wishlist: Set<number> = new Set<number>();
 
+  breadcrumbItems: { label: string, link?: string }[] = [];
+  
+  activeDropdown: number | null = null;
+
+  // Magnifier properties
+  showMagnifier = false;
+  magnifierSize = 180;
+  magnifierX = 0;
+  magnifierY = 0;
+  mainImageWidth = 0;
+  mainImageHeight = 0;
+  zoomLevel = 2;
+  zoomX = 0;
+  zoomY = 0;
+
+  @ViewChild('mainImage', { static: false }) mainImageRef!: ElementRef<HTMLImageElement>;
+
+  wishlistPulse = false;
+  wishlistFeedback = '';
+  showRipple = false;
+  rippleX = 0;
+  rippleY = 0;
+  rippleSize = 0;
+
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
@@ -145,7 +170,20 @@ export class UserProductDetailComponent implements OnInit {
         if (this.displayedImages.length > 0) {
           this.selectedImage = this.displayedImages[0].url;
         }
+        // Set breadcrumbs dynamically
+        this.breadcrumbItems = [
+          { label: 'Home', link: '/home' },
+          { label: 'Products', link: '/products' },
+          { label: this.product.name || 'Product Detail' }
+        ];
       });
+    } else {
+      // Fallback if no productId
+      this.breadcrumbItems = [
+        { label: 'Home', link: '/home' },
+        { label: 'Products', link: '/products' },
+        { label: 'Product Detail' }
+      ];
     }
 
     if (productId) {
@@ -182,27 +220,29 @@ export class UserProductDetailComponent implements OnInit {
     if (this.selectedAttributes[attrName] === value) {
       delete this.selectedAttributes[attrName];
       this.selectedVariant = null;
-      this.displayedImages = this.product.images;
-      if (this.displayedImages.length > 0) {
-        this.selectedImage = this.displayedImages[0].url;
-        this.currentImageIndex = 0;
-      }
+      this.selectedImage = this.product.images[0]?.url;
+      this.currentImageIndex = 0;
       return;
     }
     this.selectedAttributes[attrName] = value;
-
-    const matchingVariant = this.product.variants.find((variant: Variant) => {
-      return this.attributeNames.every(name => {
-        const selectedValue = this.selectedAttributes[name];
-        if (!selectedValue) return false;
-        const attr = (variant.attributes || []).find(a => a.attributeName === name);
-        return attr && attr.value === selectedValue;
+    const matchingVariant = this.product.variants.find((variant: any) => {
+      return (variant.attributes || []).every((attr: any) => {
+        return this.selectedAttributes[attr.attributeName] === attr.value;
       });
     });
-    this.selectedVariant = matchingVariant || null;
-    this.displayedImages = this.selectedVariant?.images?.length ? this.selectedVariant.images : (this.product?.images || []);
-    if (this.displayedImages?.length > 0) {
-      this.selectedImage = this.displayedImages[0]?.url;
+    if (matchingVariant) {
+      this.selectedVariant = matchingVariant;
+      const variantImage = this.product.images.find((img: any) => img.variantId === matchingVariant.id);
+      if (variantImage) {
+        this.selectedImage = variantImage.url;
+        this.currentImageIndex = this.product.images.findIndex((img: any) => img.url === variantImage.url);
+      } else {
+        this.selectedImage = this.product.images[0]?.url;
+        this.currentImageIndex = 0;
+      }
+    } else {
+      this.selectedVariant = null;
+      this.selectedImage = this.product.images[0]?.url;
       this.currentImageIndex = 0;
     }
   }
@@ -651,5 +691,72 @@ export class UserProductDetailComponent implements OnInit {
   getMediaRemainingCount(review: any): number {
     const all = this.getAllMedia(review);
     return all.length > 4 ? all.length - 4 : 0;
+  }
+
+  toggleDropdown(reviewId: number) {
+    this.activeDropdown = this.activeDropdown === reviewId ? null : reviewId;
+  }
+
+  onImageMouseMove(event: MouseEvent) {
+    if (!this.mainImageRef) return;
+    const rect = this.mainImageRef.nativeElement.getBoundingClientRect();
+    this.mainImageWidth = this.mainImageRef.nativeElement.width;
+    this.mainImageHeight = this.mainImageRef.nativeElement.height;
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    this.zoomX = Math.max(0, Math.min(x, this.mainImageWidth));
+    this.zoomY = Math.max(0, Math.min(y, this.mainImageHeight));
+    this.magnifierX = this.zoomX - this.magnifierSize / 2;
+    this.magnifierY = this.zoomY - this.magnifierSize / 2;
+    // Clamp the magnifier within the image
+    this.magnifierX = Math.max(0, Math.min(this.magnifierX, this.mainImageWidth - this.magnifierSize));
+    this.magnifierY = Math.max(0, Math.min(this.magnifierY, this.mainImageHeight - this.magnifierSize));
+    this.showMagnifier = true;
+  }
+
+  onImageMouseLeave() {
+    this.showMagnifier = false;
+  }
+
+  // Add this method for improved image/variant sync
+  onThumbnailClick(image: any, i: number) {
+    this.selectedImage = image.url;
+    this.currentImageIndex = i;
+    // If the image is associated with a variant, auto-select that variant
+    if (image.variantId) {
+      const variant = this.product.variants.find((v: any) => v.id === image.variantId);
+      if (variant) {
+        this.selectedVariant = variant;
+        // Auto-select all attributes for this variant
+        this.selectedAttributes = {};
+        (variant.attributes || []).forEach((attr: any) => {
+          this.selectedAttributes[attr.attributeName] = attr.value;
+        });
+      }
+    }
+  }
+
+  toggleWishlistWithPulse() {
+    this.addToWishlist();
+    this.wishlistPulse = true;
+    this.wishlistFeedback = this.wishlist.has(this.product.id) ? 'Added to wishlist' : 'Removed from wishlist';
+    setTimeout(() => {
+      this.wishlistPulse = false;
+      this.wishlistFeedback = '';
+    }, 400);
+  }
+
+  addToCartWithRipple(event: MouseEvent) {
+    const button = (event.currentTarget as HTMLElement);
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    this.rippleSize = size;
+    this.rippleX = event.clientX - rect.left - size / 2;
+    this.rippleY = event.clientY - rect.top - size / 2;
+    this.showRipple = true;
+    setTimeout(() => {
+      this.showRipple = false;
+    }, 500);
+    this.addToCart();
   }
 }

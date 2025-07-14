@@ -1,0 +1,33 @@
+.admin-policy-container {
+  max-width: 800px;
+  margin: 32px auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+.policy-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+mat-form-field {
+  width: 100%;
+}
+.quill-field {
+  margin-bottom: 16px;
+}
+.quill-label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  color: #333;
+}
+mat-table {
+  width: 100%;
+  margin-top: 16px;
+}
+mat-header-cell, mat-cell {
+  padding: 8px 16px;
+}

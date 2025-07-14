@@ -43,9 +43,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        if (!user.isVerified()) {
-            throw new RuntimeException("Email not verified. Please verify your email.");
-        }
+        // Removed isVerified check to allow unverified users for public endpoints
 
         // 👉 Step 1: Get Role
         String roleName = user.getRole().getName(); // Example: "ADMIN"

@@ -3,6 +3,7 @@ import { FormBuilder, type FormGroup, Validators } from "@angular/forms"
 import { CommonModule } from "@angular/common"
 import { FormsModule } from "@angular/forms"
 import { ReactiveFormsModule } from "@angular/forms"
+declare var lucide: any;
 
 interface BlacklistEntry {
   id: string
@@ -92,10 +93,18 @@ export class BlacklistComponent implements OnInit {
     this.loadBlacklistEntries()
   }
 
+  ngAfterViewInit() {
+    lucide.createIcons();
+  }
+  ngAfterViewChecked() {
+    lucide.createIcons();
+  }
+
   loadBlacklistEntries(): void {
     // Mock data - replace with actual API call
     this.allEntries = this.generateMockEntries()
     this.applyFilters()
+    lucide.createIcons();
   }
 
   generateMockEntries(): BlacklistEntry[] {
@@ -223,6 +232,7 @@ export class BlacklistComponent implements OnInit {
 
     this.currentPage = 1
     this.updatePagination()
+    lucide.createIcons();
   }
 
   clearFilters(): void {
@@ -287,6 +297,7 @@ export class BlacklistComponent implements OnInit {
   // View methods
   setViewMode(mode: "table" | "cards"): void {
     this.viewMode = mode
+    lucide.createIcons();
   }
 
   // Entry management methods
@@ -341,6 +352,7 @@ export class BlacklistComponent implements OnInit {
 
   viewEntryDetails(entry: BlacklistEntry): void {
     this.selectedEntryDetails = entry
+    lucide.createIcons();
   }
 
   editEntry(entry: BlacklistEntry): void {
@@ -449,15 +461,15 @@ export class BlacklistComponent implements OnInit {
   }
 
   // Utility methods
-  getTargetIcon(targetType: string): string {
-    const icons = {
-      email: "fas fa-envelope",
-      ip: "fas fa-globe",
-      device: "fas fa-mobile-alt",
-      phone: "fas fa-phone",
-      user_id: "fas fa-user",
+  getTargetIconName(targetType: string): string {
+    switch (targetType) {
+      case 'email': return 'mail';
+      case 'ip': return 'globe';
+      case 'device': return 'smartphone';
+      case 'phone': return 'phone';
+      case 'user_id': return 'user';
+      default: return 'user';
     }
-    return icons[targetType as keyof typeof icons] || "fas fa-question"
   }
 
   getTargetTypeLabel(targetType: string): string {
@@ -471,16 +483,16 @@ export class BlacklistComponent implements OnInit {
     return labels[targetType as keyof typeof labels] || targetType
   }
 
-  getCategoryIcon(category: string): string {
-    const icons = {
-      fraud: "fas fa-exclamation-triangle",
-      spam: "fas fa-comment-slash",
-      abuse: "fas fa-user-slash",
-      chargeback: "fas fa-credit-card",
-      fake_account: "fas fa-user-times",
-      policy_violation: "fas fa-gavel",
+  getCategoryIconName(category: string): string {
+    switch (category) {
+      case 'fraud': return 'alert-triangle';
+      case 'spam': return 'message-circle';
+      case 'abuse': return 'slash';
+      case 'chargeback': return 'credit-card';
+      case 'fake_account': return 'user-x';
+      case 'policy_violation': return 'file-warning';
+      default: return 'alert-circle';
     }
-    return icons[category as keyof typeof icons] || "fas fa-ban"
   }
 
   getCategoryLabel(category: string): string {
@@ -495,24 +507,24 @@ export class BlacklistComponent implements OnInit {
     return labels[category as keyof typeof labels] || category
   }
 
-  getRiskIcon(riskLevel: string): string {
-    const icons = {
-      low: "fas fa-shield-alt",
-      medium: "fas fa-exclamation",
-      high: "fas fa-exclamation-triangle",
-      critical: "fas fa-skull-crossbones",
+  getRiskIconName(riskLevel: string): string {
+    switch (riskLevel) {
+      case 'critical': return 'flame';
+      case 'high': return 'trending-up';
+      case 'medium': return 'activity';
+      case 'low': return 'shield';
+      default: return 'help-circle';
     }
-    return icons[riskLevel as keyof typeof icons] || "fas fa-question"
   }
 
-  getStatusIcon(status: string): string {
-    const icons = {
-      active: "fas fa-ban",
-      appealed: "fas fa-gavel",
-      expired: "fas fa-clock",
-      lifted: "fas fa-unlock",
+  getStatusIconName(status: string): string {
+    switch (status) {
+      case 'active': return 'lock';
+      case 'appealed': return 'clock';
+      case 'expired': return 'calendar-x';
+      case 'lifted': return 'unlock';
+      default: return 'help-circle';
     }
-    return icons[status as keyof typeof icons] || "fas fa-question"
   }
 
   getStatusLabel(status: string): string {
@@ -607,5 +619,9 @@ export class BlacklistComponent implements OnInit {
 
   trackByEntryId(index: number, entry: BlacklistEntry): string {
     return entry.id
+  }
+
+  getAutomaticIconName(isAutomatic: boolean): string {
+    return isAutomatic ? 'bot' : 'user';
   }
 }

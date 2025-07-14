@@ -1,50 +1,127 @@
-<div class="modal-header border-0">
-  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
-</div>
-<div class="modal-body text-center p-4">
-  <div class="mb-3">
-    <i class="bi bi-bag-check-fill text-success" style="font-size: 3rem;"></i>
+<div class="bg-white rounded-t-2xl">
+  <!-- Header -->
+  <div class="flex items-center justify-between p-6 border-b border-gray-100">
+    <h2 class="text-2xl font-bold text-gray-900">Order Confirmed</h2>
+    <button 
+      type="button" 
+      class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+      (click)="activeModal.dismiss()">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
   </div>
-  <h3 class="fw-bold mb-2">Order Confirmed!</h3>
-  <p class="text-muted mb-3">Thank you for your purchase.</p>
 
-  <div class="text-start bg-light rounded-3 p-3">
-    <div class="d-flex justify-content-between mb-2">
-      <span class="text-muted">Customer</span>
-      <span class="fw-semibold">{{orderDetails?.customer?.name}}</span>
+  <!-- Content -->
+  <div class="p-8">
+    <!-- Success Icon -->
+    <div class="flex justify-center mb-8">
+      <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+        <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+      </div>
     </div>
-    <div class="d-flex justify-content-between mb-2">
-      <span class="text-muted">Shipping</span>
-      <span class="fw-semibold text-end">{{orderDetails?.shipping?.address}}, {{orderDetails?.shipping?.city}}</span>
+
+    <!-- Success Message -->
+    <div class="text-center mb-8">
+      <h3 class="text-3xl font-bold text-gray-900 mb-3">Thank You!</h3>
+      <p class="text-gray-600 text-lg">Your order has been successfully placed</p>
     </div>
-    <div class="d-flex justify-content-between mb-2">
-      <span class="text-muted">Payment</span>
-      <span class="fw-semibold">
-        Card ending in {{ orderDetails?.cardInfo?.cardNumber | slice:-4 }}
-      </span>
-    </div>
-    <hr>
-    <div class="d-flex justify-content-between mb-1">
-      <span class="text-muted">Subtotal</span>
-      <span>{{ getSubtotal() | number:'1.0-0' }} MMK</span>
-    </div>
-    <div class="d-flex justify-content-between mb-1">
-      <span class="text-muted">Shipping</span>
-      <span>{{ getDeliveryCost() | number:'1.0-0' }} MMK</span>
-    </div>
-    <div *ngIf="orderDetails?.discountAmount > 0" class="d-flex justify-content-between mb-1">
-      <span class="text-muted">Discount</span>
-      <span class="text-success">-{{ orderDetails.discountAmount | number:'1.0-0' }} MMK</span>
-    </div>
-    <hr>
-    <div class="d-flex justify-content-between fw-bold fs-5">
-      <span>Total</span>
-      <span>{{ getTotal() | number:'1.0-0' }} MMK</span>
+
+          <!-- Order Details Card -->
+      <div class="bg-gray-50 rounded-2xl p-6 mb-8">
+        <h4 class="text-lg font-semibold text-gray-900 mb-4">Order Details</h4>
+        
+        <!-- Customer Info -->
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 text-sm">Customer</span>
+            <span class="font-medium text-gray-900">{{orderDetails?.customer?.name}}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 text-sm">Email</span>
+            <span class="font-medium text-gray-900">{{orderDetails?.customer?.email}}</span>
+          </div>
+          <div class="flex justify-between items-start">
+            <span class="text-gray-600 text-sm">Shipping Address</span>
+            <span class="font-medium text-gray-900 text-right max-w-xs">
+              {{orderDetails?.shipping?.address}}, {{orderDetails?.shipping?.city}}
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 text-sm">Payment Method</span>
+            <span class="font-medium text-gray-900">
+              Card ending in {{ orderDetails?.cardInfo?.cardNumber | slice:-4 }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="border-t border-gray-200 pt-4 mb-6">
+          <h5 class="text-sm font-semibold text-gray-900 mb-3">Order Items</h5>
+          <div class="space-y-3">
+            <div *ngFor="let item of orderDetails?.cartItems" class="flex items-center space-x-3">
+              <img [src]="item.image" class="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0" [alt]="item.title" (error)="imageService.handleImageError($event, 'product')">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{item.title || 'Product'}}</p>
+                <p class="text-xs text-gray-500">Qty: {{item.quantity}} × {{item.price | number:'1.0-0'}} MMK</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-medium text-gray-900">{{(item.price * item.quantity) | number:'1.0-0'}} MMK</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div class="border-t border-gray-200 pt-4">
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Subtotal</span>
+              <span class="font-medium text-gray-900">{{ getSubtotal() | number:'1.0-0' }} MMK</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Shipping</span>
+              <span class="font-medium text-gray-900">{{ getDeliveryCost() | number:'1.0-0' }} MMK</span>
+            </div>
+            <div *ngIf="orderDetails?.discountAmount > 0" class="flex justify-between items-center">
+              <span class="text-gray-600">Discount</span>
+              <span class="font-medium text-green-600">-{{ orderDetails.discountAmount | number:'1.0-0' }} MMK</span>
+            </div>
+          </div>
+          
+          <!-- Total -->
+          <div class="border-t border-gray-200 pt-3 mt-3">
+            <div class="flex justify-between items-center">
+              <span class="text-lg font-bold text-gray-900">Total</span>
+              <span class="text-xl font-bold text-blue-600">{{ getTotal() | number:'1.0-0' }} MMK</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Next Steps -->
+    <div class="bg-blue-50 rounded-2xl p-6 mb-6">
+      <div class="flex items-start space-x-3">
+        <svg class="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <h5 class="font-semibold text-gray-900 mb-1">What's Next?</h5>
+          <p class="text-sm text-gray-600">You'll receive an email confirmation shortly. We'll notify you when your order ships.</p>
+        </div>
+      </div>
     </div>
   </div>
-</div>
-<div class="modal-footer border-0">
-  <button type="button" class="btn btn-primary w-100 rounded-pill" (click)="closeAndNavigate()">
-    Continue Shopping
-  </button>
+
+  <!-- Footer -->
+  <div class="p-6 border-t border-gray-100">
+    <button 
+      type="button" 
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+      (click)="closeAndNavigate()">
+      Continue Shopping
+    </button>
+  </div>
 </div>

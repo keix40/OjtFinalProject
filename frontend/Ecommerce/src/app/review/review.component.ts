@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReviewService } from '../services/review.service';
 import { AuthService } from '../auth/auth.service';
@@ -12,7 +12,7 @@ import { ReviewMessage } from '../review-message';
   templateUrl: './review.component.html',
   styleUrl: './review.component.css'
 })
-export class ReviewComponent implements OnInit {
+export class ReviewComponent implements OnInit, OnDestroy {
   productId: string = '';
   reviews: any[] = [];
   reviewSubscription: any;
@@ -25,6 +25,7 @@ export class ReviewComponent implements OnInit {
   mediaModalCurrentUrl: string = '';
 
   // For edit/delete
+  editModalOpen: boolean = false;
   currentUser: string = '';
   editingReviewId: number | null = null;
   newReview: string = '';
@@ -50,6 +51,23 @@ export class ReviewComponent implements OnInit {
         this.fetchReviewsForProduct(this.productId);
       }
     });
+
+    // Add click outside handler to close dropdown menus
+    document.addEventListener('click', (event) => {
+      this.reviews.forEach(review => {
+        if (review.showMenu) {
+          review.showMenu = false;
+        }
+      });
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.reviewSubscription) {
+      this.reviewSubscription.unsubscribe();
+    }
+    // Remove the click outside handler
+    document.removeEventListener('click', () => {});
   }
 
   fetchReviewsForProduct(productId: string) {
@@ -100,6 +118,11 @@ export class ReviewComponent implements OnInit {
     if (!this.mediaModalCurrentReview) return false;
     const arr = this.getMediaModalArray();
     return this.mediaModalCurrentIndex < arr.length - 1 && arr.length > 1;
+  }
+
+  get mediaModalTotalItems(): number {
+    if (!this.mediaModalCurrentReview) return 0;
+    return this.getMediaModalArray().length;
   }
 
   mediaModalPrev() {
@@ -177,6 +200,7 @@ export class ReviewComponent implements OnInit {
         this.selectedReviewFiles = [];
         this.removedMedia = [];
         this.mediaModalCurrentReview = null;
+        this.editModalOpen = false;
   
         Swal.fire({
           toast: true,
@@ -188,15 +212,6 @@ export class ReviewComponent implements OnInit {
           timerProgressBar: true,
           customClass: { popup: 'swal2-toast' }
         });
-
-        // Close the edit modal
-        const modalEl = document.getElementById('editReviewModal');
-        if (modalEl && (window as any).bootstrap) {
-          const modalInstance = (window as any).bootstrap.Modal.getInstance(modalEl);
-          if (modalInstance) {
-            modalInstance.hide();
-          }
-        }
       },
       error: () => {
         Swal.fire('Error', 'Failed to submit review.', 'error');
@@ -211,18 +226,7 @@ export class ReviewComponent implements OnInit {
     this.mediaModalCurrentReview = review;
     this.selectedReviewFiles = [];
     this.removedMedia = [];
-  
-    setTimeout(() => {
-      // Open the Bootstrap modal programmatically
-      const modalEl = document.getElementById('editReviewModal');
-      if (modalEl && (window as any).bootstrap) {
-        let modalInstance = (window as any).bootstrap.Modal.getInstance(modalEl);
-        if (!modalInstance) {
-          modalInstance = new (window as any).bootstrap.Modal(modalEl);
-        }
-        modalInstance.show();
-      }
-    }, 100);
+    this.editModalOpen = true;
   }
   
   removeSelectedFile(index: number): void {
@@ -301,6 +305,8 @@ export class ReviewComponent implements OnInit {
     this.newRating = 5;
     this.mediaModalCurrentReview = null;
     this.selectedReviewFiles = [];
+    this.removedMedia = [];
+    this.editModalOpen = false;
   }
 
   removeExistingMedia(url: string, type: 'image' | 'video') {
@@ -319,5 +325,26 @@ export class ReviewComponent implements OnInit {
     const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
     const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
     return [...images, ...videos];
+  }
+
+  // Calculate the average rating from reviews
+  getAverageRating(): string {
+    if (!this.reviews.length) return '0.0';
+    const sum = this.reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+    return (sum / this.reviews.length).toFixed(1);
+  }
+
+  // Placeholder for marking a review as read (no-op for now)
+  markAsRead(review: any): void {
+    // No-op: Implement if you want to track read/unread reviews
+  }
+
+  // Toggle the dropdown menu for a review
+  toggleMenu(review: any, event: MouseEvent): void {
+    event.stopPropagation();
+    this.reviews.forEach(r => {
+      if (r !== review) r.showMenu = false;
+    });
+    review.showMenu = !review.showMenu;
   }
 }

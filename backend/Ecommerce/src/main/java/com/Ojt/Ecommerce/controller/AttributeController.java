@@ -106,4 +106,24 @@ public class AttributeController {
             return ResponseEntity.badRequest().body("Some values failed: " + errors);
         }
     }
+
+    @PostMapping("/addvalue")
+    public ResponseEntity<?> addValueToAttribute(@RequestParam Long attributeId, @RequestBody AttributeValueDTO dto) {
+        Attribute attribute = attService.getAttributeById(attributeId);
+        if (attribute == null) {
+            return ResponseEntity.badRequest().body("Attribute not found");
+        }
+
+        if (avService.checkExists(dto.getValue(), attributeId)) {
+            return ResponseEntity.badRequest().body("Value already exists");
+        }
+
+        AttributeValue value = new AttributeValue();
+        value.setValue(dto.getValue());
+        value.setAttribute(attribute);
+
+        avService.saveAttributeValue(value);
+        return ResponseEntity.ok("Value added");
+    }
+
 }

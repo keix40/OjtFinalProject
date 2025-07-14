@@ -86,21 +86,33 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     next: (res) => {
       this.auth.saveToken(res.accessToken);
 
-      const decoded = this.auth.getDecodedToken(); //add this for permission
-      const permissionString = decoded?.permissions || ''; //add this for permission
-      const permissionArray = permissionString.split(',').map((p: string) => p.trim()); //add this for permission
+      const decoded = this.auth.getDecodedToken(); // Only declare once
+      const permissionString = decoded?.permissions || '';
+      const permissionArray = permissionString.split(',').map((p: string) => p.trim());
 
-      this.permissionService.setPermissions(permissionArray); //add this for permmision
+      this.permissionService.setPermissions(permissionArray);
 
-      this.router.navigate(['/home']);
+      // Role-based redirect
+      const roles = decoded?.roles ? decoded.roles.split(',') : [];
+      if (roles.includes('CUSTOMER')) {
+        this.router.navigate(['/home']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
 
-    if (decoded && decoded.sub) {
-      localStorage.setItem('email', decoded.sub); // "sub" is the email in your token
-    }
+      if (decoded && decoded.sub) {
+        localStorage.setItem('email', decoded.sub); // reuse 'decoded'
+      }
     },
     error: (err) => {
       console.error(err);
-       this.loginError = 'Invalid email or password.';
+      if (err?.error?.message && err.error.message.toLowerCase().includes('verify your email')) {
+        // Redirect to OTP verification page with email
+        const email = this.loginForm.get('email')?.value;
+        this.router.navigate(['/verify-otp'], { queryParams: { email } });
+      } else {
+        this.loginError = 'Invalid email or password.';
+      }
     }
   });
   }

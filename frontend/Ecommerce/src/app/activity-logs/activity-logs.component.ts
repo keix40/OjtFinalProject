@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
+
+declare var lucide: any;
 
 interface ActivityLog {
   id: string;
@@ -37,7 +39,7 @@ interface LogFilters {
   standalone: false,
   styleUrls: ['./activity-logs.component.css']
 })
-export class ActivityLogsComponent implements OnInit {
+export class ActivityLogsComponent implements OnInit, AfterViewInit {
   // Data properties
   allLogs: ActivityLog[] = [];
   filteredLogs: ActivityLog[] = [];
@@ -59,6 +61,7 @@ export class ActivityLogsComponent implements OnInit {
   isLoading = false;
   viewMode: 'detailed' | 'compact' = 'detailed';
   selectedDateRange = '';
+  showExportDropdown = false;
 
   // Pagination
   currentPage = 1;
@@ -77,28 +80,49 @@ export class ActivityLogsComponent implements OnInit {
   ];
 
   actionTypes = [
-    { value: 'login', label: 'Login', icon: 'fas fa-sign-in-alt' },
-    { value: 'logout', label: 'Logout', icon: 'fas fa-sign-out-alt' },
-    { value: 'create', label: 'Create', icon: 'fas fa-plus' },
-    { value: 'update', label: 'Update', icon: 'fas fa-edit' },
-    { value: 'delete', label: 'Delete', icon: 'fas fa-trash' },
-    { value: 'view', label: 'View', icon: 'fas fa-eye' },
-    { value: 'export', label: 'Export', icon: 'fas fa-download' },
-    { value: 'import', label: 'Import', icon: 'fas fa-upload' },
-    { value: 'security', label: 'Security', icon: 'fas fa-shield-alt' },
-    { value: 'system', label: 'System', icon: 'fas fa-cog' }
+    { value: 'login', label: 'Login', icon: 'log-in' },
+    { value: 'logout', label: 'Logout', icon: 'log-out' },
+    { value: 'create', label: 'Create', icon: 'plus' },
+    { value: 'update', label: 'Update', icon: 'edit-3' },
+    { value: 'delete', label: 'Delete', icon: 'trash-2' },
+    { value: 'view', label: 'View', icon: 'eye' },
+    { value: 'export', label: 'Export', icon: 'download' },
+    { value: 'import', label: 'Import', icon: 'upload' },
+    { value: 'security', label: 'Security', icon: 'shield' },
+    { value: 'system', label: 'System', icon: 'settings' }
   ];
 
   severityLevels = [
-    { value: 'low', label: 'Low', icon: 'fas fa-info-circle' },
-    { value: 'medium', label: 'Medium', icon: 'fas fa-exclamation-triangle' },
-    { value: 'high', label: 'High', icon: 'fas fa-exclamation-circle' },
-    { value: 'critical', label: 'Critical', icon: 'fas fa-times-circle' }
+    { value: 'low', label: 'Low', icon: 'info' },
+    { value: 'medium', label: 'Medium', icon: 'alert-triangle' },
+    { value: 'high', label: 'High', icon: 'alert-circle' },
+    { value: 'critical', label: 'Critical', icon: 'x-circle' }
   ];
 
   ngOnInit(): void {
     this.loadActivityLogs();
     this.setDefaultDateRange();
+  }
+
+  ngAfterViewInit(): void {
+    this.initializeIcons();
+  }
+
+  private initializeIcons(): void {
+    if (typeof window !== 'undefined' && (window as any).lucide) {
+      (window as any).lucide.createIcons();
+    } else if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
+    
+    // Re-initialize icons after a short delay to ensure DOM is ready
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).lucide) {
+        (window as any).lucide.createIcons();
+      } else if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 100);
   }
 
   loadActivityLogs(): void {
@@ -109,6 +133,11 @@ export class ActivityLogsComponent implements OnInit {
       this.allLogs = this.generateMockLogs();
       this.applyFilters();
       this.isLoading = false;
+      
+      // Re-initialize icons after data loads
+      setTimeout(() => {
+        this.initializeIcons();
+      }, 100);
     }, 1000);
   }
 
@@ -209,16 +238,12 @@ export class ActivityLogsComponent implements OnInit {
 
   applyFilters(): void {
     this.filteredLogs = this.allLogs.filter(log => {
-      // Date filter
-      if (this.filters.dateFrom) {
-        const fromDate = new Date(this.filters.dateFrom);
-        if (log.timestamp < fromDate) return false;
+      // Date range filter
+      if (this.filters.dateFrom && log.timestamp < new Date(this.filters.dateFrom)) {
+        return false;
       }
-      
-      if (this.filters.dateTo) {
-        const toDate = new Date(this.filters.dateTo);
-        toDate.setHours(23, 59, 59, 999);
-        if (log.timestamp > toDate) return false;
+      if (this.filters.dateTo && log.timestamp > new Date(this.filters.dateTo + 'T23:59:59')) {
+        return false;
       }
 
       // User filter
@@ -241,12 +266,9 @@ export class ActivityLogsComponent implements OnInit {
         return false;
       }
 
-      // Search term filter
-      if (this.filters.searchTerm) {
-        const searchTerm = this.filters.searchTerm.toLowerCase();
-        return log.description.toLowerCase().includes(searchTerm) ||
-               log.user.name.toLowerCase().includes(searchTerm) ||
-               log.actionType.toLowerCase().includes(searchTerm);
+      // Search filter
+      if (this.filters.searchTerm && !log.description.toLowerCase().includes(this.filters.searchTerm.toLowerCase())) {
+        return false;
       }
 
       return true;
@@ -254,6 +276,11 @@ export class ActivityLogsComponent implements OnInit {
 
     this.currentPage = 1;
     this.updatePagination();
+    
+    // Re-initialize icons after filtering
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 50);
   }
 
   toggleActionType(actionType: string, event: any): void {
@@ -300,11 +327,16 @@ export class ActivityLogsComponent implements OnInit {
   // Pagination methods
   updatePagination(): void {
     this.totalPages = Math.ceil(this.filteredLogs.length / this.itemsPerPage);
-    this.currentPage = Math.min(this.currentPage, this.totalPages || 1);
+    this.currentPage = Math.min(this.currentPage, this.totalPages);
+    this.paginatedLogs = this.filteredLogs.slice(
+      (this.currentPage - 1) * this.itemsPerPage,
+      this.currentPage * this.itemsPerPage
+    );
     
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    this.paginatedLogs = this.filteredLogs.slice(startIndex, endIndex);
+    // Re-initialize icons after pagination
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 50);
   }
 
   goToPage(page: number): void {
@@ -334,11 +366,26 @@ export class ActivityLogsComponent implements OnInit {
   // View methods
   setViewMode(mode: 'detailed' | 'compact'): void {
     this.viewMode = mode;
+    // Re-initialize icons when view mode changes
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 50);
   }
 
   viewLogDetails(log: ActivityLog): void {
     this.selectedLog = log;
-    // Modal would be triggered via Bootstrap JS or Angular CDK
+    // Re-initialize icons when modal opens
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 100);
+  }
+
+  toggleExportDropdown(): void {
+    this.showExportDropdown = !this.showExportDropdown;
+  }
+
+  closeLogDetails(): void {
+    this.selectedLog = null;
   }
 
   // Utility methods
@@ -359,7 +406,7 @@ export class ActivityLogsComponent implements OnInit {
 
   getActionIcon(actionType: string): string {
     const action = this.actionTypes.find(a => a.value === actionType);
-    return action ? action.icon : 'fas fa-question';
+    return action ? action.icon : 'activity';
   }
 
   getActionLabel(actionType: string): string {
@@ -369,7 +416,7 @@ export class ActivityLogsComponent implements OnInit {
 
   getSeverityIcon(severity: string): string {
     const sev = this.severityLevels.find(s => s.value === severity);
-    return sev ? sev.icon : 'fas fa-info';
+    return sev ? sev.icon : 'alert-circle';
   }
 
   getLogDetails(details: any): Array<{key: string, value: string}> {
@@ -397,7 +444,14 @@ IP Address: ${log.ipAddress}
   }
 
   refreshLogs(): void {
-    this.loadActivityLogs();
+    this.isLoading = true;
+    setTimeout(() => {
+      this.loadActivityLogs();
+      // Re-initialize icons after refresh
+      setTimeout(() => {
+        this.initializeIcons();
+      }, 100);
+    }, 500);
   }
 
   // Export methods

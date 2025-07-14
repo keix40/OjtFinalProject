@@ -10,6 +10,8 @@ interface WishlistItem {
   title: string;
   price: number;
   image: string;
+  oldPrice?: number;
+  wishlistDate?: Date;
 }
 
 @Component({
@@ -22,6 +24,7 @@ export class UserWishlistComponent implements OnInit {
   wishlistItems: WishlistItem[] = [];
   userId: number | null = null;
   allProducts: ProductDTO[] = [];
+  isLoading: boolean = false;
 
   constructor(
     private wishlistService: WishlistService,
@@ -38,6 +41,7 @@ export class UserWishlistComponent implements OnInit {
   }
 
   private loadAllProducts() {
+    this.isLoading = true;
     this.productService.getAllAcProduct().subscribe({
       next: (products) => {
         this.allProducts = products;
@@ -45,12 +49,16 @@ export class UserWishlistComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading products:', error);
+        this.isLoading = false;
       }
     });
   }
 
   private loadWishlistItems() {
-    if (!this.userId) return;
+    if (!this.userId) {
+      this.isLoading = false;
+      return;
+    }
 
     this.wishlistService.getWishlist(this.userId).subscribe({
       next: (productIds: number[]) => {
@@ -62,14 +70,18 @@ export class UserWishlistComponent implements OnInit {
               id: product.id,
               title: product.productName,
               price: product.price,
-              image: this.imageService.getProductImageUrl(product)
+              image: this.imageService.getProductImageUrl(product),
+              oldPrice: undefined, // Not available in current ProductDTO
+              wishlistDate: new Date() // You might want to get this from the wishlist service
             };
             this.wishlistItems.push(wishlistItem);
           }
         });
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading wishlist:', error);
+        this.isLoading = false;
       }
     });
   }

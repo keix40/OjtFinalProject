@@ -76,4 +76,14 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
   goToProductDetail(productId: number): void {
     this.router.navigate(['/product', productId]);
   }
+
+  getSubtotal(): number {
+    return this.cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }
+
+  getTax(): number {
+    // Example: 5% tax
+    // return Math.round(this.getSubtotal() * 0.05);
+    return 0; // Or implement your tax logic here
+  }
 } 

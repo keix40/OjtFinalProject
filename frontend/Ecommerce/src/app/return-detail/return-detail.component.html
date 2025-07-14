@@ -1,0 +1,162 @@
+<div class="min-h-screen bg-gray-50 py-8">
+  <div class="bg-white rounded-xl shadow-lg p-8 mx-4">
+    <h1 class="text-3xl font-bold text-gray-800 mb-8 text-center border-b pb-4">Return Request Details</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div><span class="font-semibold text-gray-600">Order Code:</span> <span class="text-gray-800">{{ returnDetail?.orderCode }}</span></div>
+      <div><span class="font-semibold text-gray-600">Product:</span> <span class="text-gray-800">{{ returnDetail?.productName }}</span></div>
+      <div><span class="font-semibold text-gray-600">Quantity:</span> <span class="text-gray-800">{{ returnDetail?.quantity }}</span></div>
+      <div><span class="font-semibold text-gray-600">Unit Price:</span> <span class="text-gray-800">{{ returnDetail?.unitPrice }} MMK</span></div>
+      <div><span class="font-semibold text-gray-600">Total:</span> <span class="text-gray-800">{{ returnDetail?.totalAmount }} MMK</span></div>
+      <div class="md:col-span-2"><span class="font-semibold text-gray-600">Return Reason:</span> <span class="text-gray-800">{{ returnDetail?.reasonForReturn }}</span></div>
+      <div class="md:col-span-2"><span class="font-semibold text-gray-600">Return Details:</span> <span class="text-gray-800">{{ returnDetail?.returnDetail }}</span></div>
+    </div>
+
+    <div class="mb-6" *ngIf="hasImages">
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">Attached Media</h3>
+      <div class="flex flex-wrap gap-4">
+        <ng-container *ngIf="previewImages.length <= 4">
+          <img
+            *ngFor="let img of previewImages; let idx = index"
+            [src]="'http://localhost:8080' + img"
+            class="w-32 h-32 object-cover rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:scale-105 transition"
+            (click)="openImageModal(idx)"
+            alt="return-image"
+          />
+        </ng-container>
+        <ng-container *ngIf="previewImages.length > 4">
+          <ng-container *ngFor="let img of previewImages.slice(0, 4); let idx = index">
+            <img
+              [src]="'http://localhost:8080' + img"
+              class="w-32 h-32 object-cover rounded-lg border border-gray-200 shadow-sm cursor-pointer hover:scale-105 transition"
+              (click)="openImageModal(idx)"
+              alt="return-image"
+            />
+          </ng-container>
+          <!-- 5th spot: overlay with +N -->
+          <div
+            class="w-32 h-32 relative rounded-lg border border-gray-200 shadow-sm cursor-pointer overflow-hidden"
+            (click)="openImageModal(4)"
+          >
+            <img
+              [src]="'http://localhost:8080' + previewImages[4]"
+              class="w-full h-full object-cover opacity-50"
+              alt="return-image"
+            />
+            <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white text-2xl font-bold">
+              +{{ previewImages.length - 4 }}
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div
+      *ngIf="selectedImageIndex !== null"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-transparent bg-opacity-40 backdrop-blur"
+      (click)="closeImageModal()"
+    >
+      <div class="relative">
+        <button
+          *ngIf="imageModalCanGoLeft()"
+          class="absolute left-0 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
+          (click)="imageModalPrev(); $event.stopPropagation()"
+          aria-label="Previous"
+        >&lt;</button>
+        <img
+          [src]="'http://localhost:8080' + previewImages[selectedImageIndex!]"
+          alt="Enlarged"
+          class="max-w-full max-h-[80vh] rounded-lg shadow-2xl border-4 border-white"
+          (click)="$event.stopPropagation()"
+        />
+        <button
+          *ngIf="imageModalCanGoRight()"
+          class="absolute right-0 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
+          (click)="imageModalNext(); $event.stopPropagation()"
+          aria-label="Next"
+        >&gt;</button>
+        <button
+          class="absolute top-2 right-2 text-white text-3xl font-bold"
+          (click)="closeImageModal(); $event.stopPropagation()"
+          aria-label="Close"
+        >&times;</button>
+      </div>
+    </div>
+
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold text-gray-700 mb-2">Admin Remark</h3>
+      <textarea [(ngModel)]="adminRemark" placeholder="Add remark..." class="w-full min-h-[80px] p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 resize-none"></textarea>
+    </div>
+
+    <div class="flex justify-center gap-6 mt-6">
+      <!-- If status is APPROVED and refund exists, show refund info -->
+      <ng-container *ngIf="returnDetail?.status === 'APPROVED' && hasRefund">
+        <div class="w-full bg-green-50 border border-green-200 rounded-lg p-4 text-green-800">
+          <div class="font-semibold mb-2">Refund Information</div>
+          <!-- <div>Refund ID: <span class="font-mono">{{ returnDetail?.refundId }}</span></div> -->
+          <div>Amount: <span class="font-mono">{{ returnDetail?.refundAmount }} MMK</span></div>
+          <!-- <div>Card: <span class="font-mono">****{{ returnDetail?.cardNumber?.slice(-4) }}</span></div> -->
+          <div>Date: <span class="font-mono">{{ returnDetail?.refundDate | date:'medium' }}</span></div>
+          <div>Admin Remark: <span class="font-mono">{{ returnDetail?.refundAdminRemark }}</span></div>
+        </div>
+      </ng-container>
+
+      <!-- If status is APPROVED and no refund, show Refund button -->
+      <button
+        *ngIf="returnDetail?.status === 'APPROVED' && !hasRefund"
+        (click)="showModal = true"
+        class="px-8 py-2 rounded-lg bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition"
+      >
+        Refund
+      </button>
+
+      <!-- Otherwise, show Approve/Reject buttons -->
+      <ng-container *ngIf="returnDetail?.status !== 'APPROVED'">
+        <button (click)="onApprove()" class="px-8 py-2 rounded-lg bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition">Approve</button>
+        <button (click)="onReject()" class="px-8 py-2 rounded-lg bg-red-500 text-white font-semibold shadow hover:bg-red-600 transition">Reject</button>
+      </ng-container>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" *ngIf="showModal">
+    <div class="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md relative animate-fade-in">
+      <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl" (click)="showModal = false">&times;</button>
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Choose Action</h2>
+      <div class="flex gap-6 justify-center mb-6">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" [(ngModel)]="refundOrReplacement" value="refund" class="accent-blue-500" />
+          <span class="font-medium text-gray-700">Refund</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" [(ngModel)]="refundOrReplacement" value="replacement" class="accent-blue-500" />
+          <span class="font-medium text-gray-700">Replacement</span>
+        </label>
+      </div>
+      <div *ngIf="refundOrReplacement === 'refund'">
+        <div class="mb-4">
+          <label class="block text-gray-600 font-medium mb-1">Refund Amount</label>
+          <input type="number" [(ngModel)]="refundAmount" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50" />
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-600 font-medium mb-1">Refund To Card</label>
+          <select [(ngModel)]="selectedCard" class="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50">
+            <option [value]="returnDetail?.cardNumber">
+              **** {{ returnDetail?.cardNumber?.slice(-4) }}
+            </option>
+          </select>
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-600 font-medium mb-1">Admin Remark</label>
+          <textarea [(ngModel)]="adminRemark" placeholder="Add remark..." class="w-full min-h-[80px] p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 resize-none"></textarea>
+        </div>
+        <button class="w-full py-2 rounded-lg bg-blue-500 text-white font-semibold shadow hover:bg-blue-600 transition" (click)="onSendRefund()">Send Refund</button>
+      </div>
+      <div *ngIf="refundOrReplacement === 'replacement'">
+        <p class="mb-6 text-gray-700">Product will be resent. Order tracking will restart.</p>
+        <button class="w-full py-2 rounded-lg bg-green-500 text-white font-semibold shadow hover:bg-green-600 transition" (click)="onSendReplacement()">Send Replacement</button>
+      </div>
+    </div>
+  </div>
+</div>
+  

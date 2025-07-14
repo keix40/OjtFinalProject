@@ -1,119 +1,313 @@
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
-  <h3 class="fw-bold fs-3 mb-0"><i class="bi bi-geo-alt-fill text-primary me-2"></i> My Addresses</h3>
-  <button class="btn btn-primary rounded-pill shadow-sm d-flex align-items-center gap-2 px-4 py-2 transition" type="button" (click)="openAddModal()">
-    <i class="bi bi-plus-lg"></i> Add new address
-  </button>
-</div>
-
-<!-- Add Address Modal (Angular controlled) -->
-<div *ngIf="showAddModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.3);">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content rounded-4 shadow-lg">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title fw-bold">{{ isEditMode ? 'Edit Address' : 'Add New Address' }}</h5>
-        <button type="button" class="btn-close" aria-label="Close" (click)="closeAddModal()"></button>
+<div class="min-h-screen bg-white p-6">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Header Section -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border border-white/20 mb-3">
+        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
       </div>
-      <div class="modal-body pt-0">
-        <form [formGroup]="addressForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label for="addressInput" class="form-label">Address <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="addressInput" placeholder="Enter address" formControlName="address" (keydown.enter)="onAddressEnter()">
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">My Addresses</h1>
+      <p class="text-gray-600 text-sm">Manage your shipping and delivery locations</p>
+    </div>
+
+    <!-- Header with Add Button -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-2 h-8 bg-blue-500 rounded-full"></div>
+        <h2 class="text-2xl font-bold text-gray-900">Address Book</h2>
+      </div>
+      <div class="flex items-center space-x-4 w-full md:w-auto">
+        <div class="flex items-center space-x-2 bg-white bg-opacity-80 backdrop-blur-lg px-4 py-2 rounded-xl border border-white border-opacity-30 shadow-sm">
+          <label class="text-sm font-medium text-gray-700">Map View:</label>
+          <select 
+            class="bg-transparent text-sm border-none focus:ring-0 focus:outline-none"
+            [(ngModel)]="globalMapType"
+            (change)="setGlobalMapType(globalMapType)">
+            <option value="default">Default</option>
+            <option value="satellite">Satellite</option>
+            <option value="terrain">Terrain</option>
+          </select>
+        </div>
+        <button 
+          class="flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"
+          (click)="openAddModal()">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          <span>Add New Address</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Address List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div *ngFor="let address of addresses" class="bg-white bg-opacity-80 backdrop-blur-lg rounded-2xl shadow-md border border-white border-opacity-30 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+        
+        <!-- Map Section -->
+        <div *ngIf="address.id != null" class="relative">
+          <div [id]="'map-' + address.id" class="w-full h-48"></div>
+          <div class="absolute top-3 right-3">
+            <span class="px-3 py-1 bg-white bg-opacity-90 backdrop-blur-md text-blue-500 text-xs font-medium rounded-full border border-white border-opacity-30">
+              {{ address.type }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Address Details -->
+        <div class="p-6">
+          <div class="space-y-3">
+            <div class="flex items-start space-x-3">
+              <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ address.address }}</h3>
+                <div class="space-y-1 text-sm text-gray-600">
+                  <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    <span>{{ address.city }}, {{ address.state }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span>{{ address.postalCode }}</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <span>{{ address.country }}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="col-md-6">
-              <label for="cityInput" class="form-label">City <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="cityInput" placeholder="Enter city" formControlName="city">
-            </div>
-            <div class="col-md-6">
-              <label for="stateInput" class="form-label">State <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="stateInput" placeholder="Enter state" formControlName="state">
-            </div>
-            <div class="col-md-6">
-              <label for="postalCodeInput" class="form-label">Postal Code <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="postalCodeInput" placeholder="Enter postal code" formControlName="postalCode">
-            </div>
-            <div class="col-md-6">
-              <label for="countryInput" class="form-label">Country <span class="text-danger">*</span></label>
-              <input type="text" class="form-control rounded-3" id="countryInput" placeholder="Enter country" formControlName="country">
-            </div>
-            <div class="col-md-3">
-              <label for="latitudeInput" class="form-label">Latitude</label>
-              <input type="number" class="form-control rounded-3" id="latitudeInput" formControlName="latitude" placeholder="Latitude">
-            </div>
-            <div class="col-md-3">
-              <label for="longitudeInput" class="form-label">Longitude</label>
-              <input type="number" class="form-control rounded-3" id="longitudeInput" formControlName="longitude" placeholder="Longitude">
+
+            <!-- Coordinates (if available) -->
+            <div *ngIf="address.latitude && address.longitude" class="pt-3 border-t border-gray-100 border-opacity-30">
+              <div class="flex items-center space-x-4 text-xs text-gray-500">
+                <span>Lat: {{ address.latitude | number:'1.4-4' }}</span>
+                <span>Lng: {{ address.longitude | number:'1.4-4' }}</span>
+              </div>
             </div>
           </div>
-          <div class="d-flex align-items-center gap-2 mt-3">
-            <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill" (click)="getCurrentLocation()">
-              <i class="bi bi-geo-alt-fill"></i> Use My Location
+
+          <!-- Actions -->
+          <div class="flex items-center justify-end space-x-2 mt-6 pt-4 border-t border-gray-100 border-opacity-30">
+            <button 
+              class="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-blue-500 transition-colors duration-200 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg"
+              (click)="editAddress(address)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+              <span class="text-sm font-medium">Edit</span>
             </button>
           </div>
-          <div class="my-3">
-            <div id="map" class="rounded-4 border shadow-sm" style="min-height: 180px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!addresses.length" class="text-center py-20">
+      <div class="bg-white bg-opacity-80 backdrop-blur-lg rounded-2xl p-12 shadow-lg border border-white border-opacity-30 max-w-md mx-auto">
+        <div class="w-16 h-16 bg-gray-100 bg-opacity-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-semibold text-gray-900 mb-3">No addresses yet</h3>
+        <p class="text-gray-600 mb-6">Add your first address to get started with deliveries</p>
+        <button 
+          class="flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg mx-auto"
+          (click)="openAddModal()">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          <span>Add First Address</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Address Modal -->
+<div *ngIf="showAddModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-white bg-opacity-90 backdrop-blur-lg rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-white border-opacity-30">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-100 border-opacity-30">
+      <div>
+        <h3 class="text-xl font-bold text-gray-900">{{ isEditMode ? 'Edit Address' : 'Add New Address' }}</h3>
+        <p class="text-sm text-gray-600 mt-1">Enter your address details below</p>
+      </div>
+      <button 
+        class="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200 bg-white bg-opacity-70 backdrop-blur-sm rounded-lg"
+        (click)="closeAddModal()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6">
+      <form [formGroup]="addressForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Address -->
+          <div class="md:col-span-2 space-y-2">
+            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span>Address <span class="text-red-500">*</span></span>
+            </label>
+            <input 
+              type="text" 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+              placeholder="Enter your full address"
+              formControlName="address"
+              (keydown.enter)="onAddressEnter()">
           </div>
-          <div class="mb-3">
-            <label for="typeInput" class="form-label">Address Type <span class="text-danger">*</span></label>
-            <select class="form-select rounded-pill" id="typeInput" formControlName="addressType">
+
+          <!-- City -->
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <span>City <span class="text-red-500">*</span></span>
+            </label>
+            <input 
+              type="text" 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
+              placeholder="Enter city"
+              formControlName="city">
+          </div>
+
+          <!-- State -->
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+              </svg>
+              <span>State <span class="text-red-500">*</span></span>
+            </label>
+            <input 
+              type="text" 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+              placeholder="Enter state"
+              formControlName="state">
+          </div>
+
+          <!-- Postal Code -->
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <span>Postal Code <span class="text-red-500">*</span></span>
+            </label>
+            <input 
+              type="text" 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
+              placeholder="Enter postal code"
+              formControlName="postalCode">
+          </div>
+
+          <!-- Country -->
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              <span>Country <span class="text-red-500">*</span></span>
+            </label>
+            <input 
+              type="text" 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300"
+              placeholder="Enter country"
+              formControlName="country">
+          </div>
+
+          <!-- Latitude -->
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700">Latitude</label>
+            <input 
+              type="number" 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+              placeholder="Latitude"
+              formControlName="latitude">
+          </div>
+
+          <!-- Longitude -->
+          <div class="space-y-2">
+            <label class="text-sm font-semibold text-gray-700">Longitude</label>
+            <input 
+              type="number" 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+              placeholder="Longitude"
+              formControlName="longitude">
+          </div>
+
+          <!-- Address Type -->
+          <div class="md:col-span-2 space-y-2">
+            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
+              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+              </svg>
+              <span>Address Type <span class="text-red-500">*</span></span>
+            </label>
+            <select 
+              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+              formControlName="addressType">
               <option value="">Select type</option>
               <option value="SHIPPING">Shipping</option>
               <option value="WORK">Work</option>
               <option value="OTHER">Other</option>
             </select>
           </div>
-        </form>
-      </div>
-      <div class="modal-footer border-0 pt-0">
-        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" (click)="closeAddModal()">Cancel</button>
-        <button type="button" class="btn btn-primary rounded-pill px-4" (click)="submitAddress()">{{ isEditMode ? 'Save Changes' : 'Save Address' }}</button>
-      </div>
+        </div>
+
+        <!-- Location Button -->
+        <div class="flex items-center space-x-3">
+          <button 
+            type="button" 
+            class="flex items-center space-x-2 px-4 py-2 text-sm bg-white bg-opacity-80 backdrop-blur-md hover:bg-opacity-100 text-gray-700 rounded-lg transition-all duration-300 border border-gray-200 border-opacity-30"
+            (click)="getCurrentLocation()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span>Use My Location</span>
+          </button>
+        </div>
+
+        <!-- Map Preview -->
+        <div class="space-y-3">
+          <label class="text-sm font-semibold text-gray-700">Map Preview</label>
+          <div id="map" class="w-full h-48 rounded-xl border border-gray-200 border-opacity-30"></div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex items-center justify-end space-x-3 p-6 border-t border-gray-100 border-opacity-30">
+      <button 
+        type="button" 
+        class="px-6 py-3 text-gray-700 bg-white bg-opacity-80 backdrop-blur-md hover:bg-opacity-100 font-semibold rounded-xl transition-all duration-300 border border-gray-200 border-opacity-30"
+        (click)="closeAddModal()">
+        Cancel
+      </button>
+      <button 
+        type="button" 
+        class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg"
+        (click)="submitAddress()">
+        {{ isEditMode ? 'Save Changes' : 'Save Address' }}
+      </button>
     </div>
   </div>
 </div>
-
-<!-- Global map view toggle -->
-<div class="global-map-toggle mb-4 d-flex align-items-center gap-2">
-  <label for="mapViewSelect" class="mb-0 fw-semibold">Map view:</label>
-  <select id="mapViewSelect" class="form-select form-select-sm w-auto"
-          [(ngModel)]="globalMapType"
-          (change)="setGlobalMapType(globalMapType)">
-    <option value="default">Default</option>
-    <option value="satellite">Satellite</option>
-    <option value="terrain">Terrain</option>
-  </select>
-</div>
-
-<!-- Address List -->
-<div class="address-list">
-  <div *ngFor="let address of addresses" class="address-item card mb-3 p-3 position-relative">
-    <ng-container *ngIf="address.id != null">
-      <!-- Map view -->
-      <div [id]="'map-' + address.id" class="address-map mb-2" style="height: 180px; width: 100%; border-radius: 8px;"></div>
-    </ng-container>
-    <!-- Address details -->
-    <h5 class="card-title mb-2">{{address.address}}</h5>
-    <div class="mb-1"><strong>City:</strong> {{address.city}}</div>
-    <div class="mb-1"><strong>State:</strong> {{address.state}}</div>
-    <div class="mb-1"><strong>Postal Code:</strong> {{address.postalCode}}</div>
-    <div class="mb-1"><strong>Country:</strong> {{address.country}}</div>
-    <div class="mb-1"><strong>Type:</strong> {{address.type}}</div>
-    <div class="mb-1" *ngIf="address.latitude"><strong>Latitude:</strong> {{address.latitude}}</div>
-    <div class="mb-1" *ngIf="address.longitude"><strong>Longitude:</strong> {{address.longitude}}</div>
-    <div class="d-flex justify-content-end gap-2 mt-3">
-      <button class="btn btn-outline-dark btn-sm d-flex align-items-center gap-1" (click)="editAddress(address)">
-        <i class="bi bi-pencil"></i> Edit
-      </button>
-      <!--
-      <button class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1" (click)="deleteAddress(address)">
-        <i class="bi bi-trash"></i> Delete
-      </button>
-      -->
-    </div>
-  </div>
-</div>
-
-<!-- Add Address Button -->
-<!-- <button class="btn btn-primary" (click)="openAddModal()">
-  <i class="bi bi-plus-circle me-2"></i>Add New Address
-</button> -->

@@ -44,6 +44,10 @@ export class UserNotificationsComponent implements OnInit {
     });
   }
 
+  getUnreadCount(): number {
+    return this.notifications.filter(n => !n.read).length;
+  }
+
   deleteNotification(id: number, event: MouseEvent): void {
     event.stopPropagation();
 
@@ -58,7 +62,7 @@ export class UserNotificationsComponent implements OnInit {
   }
 
   markAsRead(notification: any): void {
-    if (notification.read  (event?.target as HTMLElement).closest('.menu-container')) {
+    if (notification.read || (event?.target as HTMLElement)?.closest('.menu-container')) {
       return;
     }
 
