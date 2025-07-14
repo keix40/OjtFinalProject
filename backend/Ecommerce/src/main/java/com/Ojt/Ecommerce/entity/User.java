@@ -45,7 +45,6 @@ public class User {
     @Column(name="phone_number",length = 45)
     private String phoneNumber;
 
-
     @Column(name = "profile_image", columnDefinition = "TEXT")
     private String profileImage;
 
@@ -54,7 +53,6 @@ public class User {
 
 //    @Column(name = "is_verified")
 //    private boolean isVerified = false;
-
 
     @Column(name = "reset_token")
     private String resetToken;
@@ -78,8 +76,6 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Purchase> purchases;
-
-
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

@@ -20,13 +20,6 @@ public class Category {
 
     private String name;
 
-//    @ManyToMany(mappedBy = "categories")
-//    private List<Brand> brands;
-
-//    @OneToMany(mappedBy = "category")
-//    @JsonIgnore
-//    private List<Product> products;
-
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     @ToString.Exclude
@@ -44,4 +37,17 @@ public class Category {
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Category> children;
+
+    @Column(name = "image", columnDefinition = "TEXT")
+    private String image;
+
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }

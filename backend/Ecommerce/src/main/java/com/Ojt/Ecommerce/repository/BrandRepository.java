@@ -13,4 +13,6 @@ public interface BrandRepository extends JpaRepository<Brand, Long> {
     @Query("select bc.brand from BrandHasCategory bc where bc.category.id = :id")
     public List<Brand> findAllBrandByCateId(@Param("id") Long id);
 
+    @Query("select b from Brand b where b.status = 1")
+    public List<Brand> findAllBrand();
 }

@@ -162,7 +162,9 @@ public class ReturnRequestService {
         refundOpt.ifPresent(refund -> {
             dto.setRefundId(refund.getId());
             dto.setRefundAmount(refund.getRefundAmount());
-            dto.setRefundDate(refund.getCompletedAt());
+            dto.setInitiatedAt(refund.getInitiatedAt());
+            dto.setCompletedAt(refund.getCompletedAt());
+            dto.setRefundStatus(String.valueOf(refund.getRefundType()));
             dto.setRefundAdminRemark(refund.getAdminRemark());
         });
 
@@ -255,7 +257,8 @@ public class ReturnRequestService {
                 .refundAmount(refundDTO.getRefundAmount() != null ? refundDTO.getRefundAmount() : BigDecimal.ZERO)
                 .status(refundDTO.getStatus() != null ? refundDTO.getStatus() : RefundStatus.COMPLETED)
                 .adminRemark(refundDTO.getAdminRemark())
-                .initiatedAt(LocalDateTime.now())
+                .completedAt(LocalDateTime.now())
+                .initiatedAt(LocalDateTime.now())  // ✅ add this line
                 .receiveCard(card)
                 .build();
 
@@ -284,27 +287,38 @@ public class ReturnRequestService {
 
     @Transactional
     public void processReplacement(Long returnRequestId, String adminRemark) {
+        // Step 1: Find ReturnRequest
         ReturnRequest request = returnRequestRepo.findById(returnRequestId)
-                .orElseThrow(() -> new EntityNotFoundException("Return request not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Return request not found with ID: " + returnRequestId));
 
+        // Step 2: Ensure status is APPROVED
         if (request.getStatus() != ReturnStatus.APPROVED) {
             throw new IllegalStateException("Replacement can only be processed for approved return requests.");
         }
 
+        // Step 3: Safety check: associated order must not be null
+        if (request.getOrder() == null) {
+            throw new IllegalStateException("Associated order not found in return request.");
+        }
+
+        // Step 4: Create Refund entity with REPLACEMENT type
         Refund refund = Refund.builder()
                 .returnRequest(request)
                 .refundType(RefundType.REPLACEMENT)
                 .refundAmount(BigDecimal.ZERO)
-                .status(RefundStatus.COMPLETED)
-                .adminRemark(adminRemark)
-                .completedAt(LocalDateTime.now())
+                .status(RefundStatus.APPROVED)
+                .adminRemark(adminRemark != null ? adminRemark : "") // avoid null
+//                .completedAt(LocalDateTime.now())
+                .initiatedAt(LocalDateTime.now())
                 .build();
 
         refundRepo.save(refund);
 
+        // Step 5: Fetch UserOrder from database
         UserOrder userOrder = orderRepo.findById(request.getOrder().getId())
-                .orElseThrow(() -> new EntityNotFoundException("User Order entity not found."));
+                .orElseThrow(() -> new EntityNotFoundException("User order not found for return request."));
 
+        // Step 6: Get or create 'PENDING' status
         Status pendingStatus = statusRepo.findByName(StatusType.PENDING)
                 .orElseGet(() -> {
                     Status newStatus = new Status();
@@ -312,13 +326,15 @@ public class ReturnRequestService {
                     return statusRepo.save(newStatus);
                 });
 
+        // Step 7: Create OrderStatus with refund link
         OrderStatus status = OrderStatus.builder()
                 .status(pendingStatus)
                 .userOrder(userOrder)
-                .Refund(refund)
+                .Refund(refund) // ⚠️ must match entity field name (not Refund)
                 .statusDate(LocalDateTime.now())
                 .build();
 
         orderStatusRepo.save(status);
+
     }
 }

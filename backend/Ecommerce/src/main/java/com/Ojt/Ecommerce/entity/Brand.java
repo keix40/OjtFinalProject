@@ -21,15 +21,6 @@ public class Brand {
 
     private String name;
 
-//    @ManyToMany
-//    @JoinTable(
-//            name = "brand_category",
-//            joinColumns = @JoinColumn(name = "brand_id"),
-//            inverseJoinColumns = @JoinColumn(name = "category_id")
-//    )
-//    private List<Category> categories;
-
-
     @OneToMany(mappedBy = "brand")
     @JsonIgnore
     @ToString.Exclude  // ✅ Add this
@@ -41,4 +32,17 @@ public class Brand {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<BrandHasCategory> brandCategories;
+
+    @Column(name = "image", columnDefinition = "TEXT")
+    private String image;
+
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }
