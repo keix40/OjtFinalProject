@@ -38,14 +38,42 @@ import { ReturnRequestComponent } from './return-request/return-request.componen
 import { ReturnListComponent } from './return-list/return-list.component';
 import { ReturnDetailComponent } from './return-detail/return-detail.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
+import { BannedPageComponent } from './banned-page.component';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { IpService } from './services/ip.service';
+import { LoginAttemptsService } from './services/login-attempts.service';
+
+@Injectable({ providedIn: 'root' })
+export class BlockedGuard implements CanActivate {
+  constructor(private ipService: IpService, private loginAttemptsService: LoginAttemptsService, private router: Router) {}
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    return new Promise(resolve => {
+      this.ipService.getPublicIp().subscribe(ip => {
+        if (ip) {
+          this.loginAttemptsService.isIPBlocked(ip).subscribe(res => {
+            if (res.blocked) {
+              resolve(this.router.createUrlTree(['/banned'], { queryParams: { until: res.blockedUntil } }));
+            } else {
+              resolve(true);
+            }
+          });
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }
+}
 
 const routes: Routes = [
-  { path: 'home', component: HomeComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Home' } },
-  { path: 'login', component: LoginComponent, data: { breadcrumb: 'Login' } },
+  { path: 'banned', component: BannedPageComponent },
+  { path: 'home', component: HomeComponent, canActivate: [BlockedGuard] },
+  { path: 'login', component: LoginComponent, canActivate: [BlockedGuard] },
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
   { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
-
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
     component: LayoutComponent,

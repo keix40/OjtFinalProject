@@ -62,6 +62,7 @@ import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
 import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
 import { MatTableModule } from '@angular/material/table';
 import { NotificationComponent } from './notification/notification.component';
+import { BannedPageComponent } from './banned-page.component';
 
 @NgModule({
   declarations: [
@@ -106,7 +107,7 @@ import { NotificationComponent } from './notification/notification.component';
     DiscountCouponComponent,
     ReturnRequestComponent,
     ReturnListComponent,
-    
+   
   ],
   imports: [
     BrowserModule,
@@ -134,6 +135,7 @@ import { NotificationComponent } from './notification/notification.component';
     VerifyOtpComponent,
     MatTableModule,
     NotificationComponent,
+    BannedPageComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

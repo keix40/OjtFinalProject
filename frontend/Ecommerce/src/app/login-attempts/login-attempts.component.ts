@@ -350,17 +350,26 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   }
 
   blockIP(attempt: LoginAttempt): void {
-    attempt.isBlocked = true
-    attempt.status = "blocked"
+    console.log('Blocking IP:', attempt.ipAddress);
+    this.loginAttemptsService.blockIP(attempt.ipAddress).subscribe({
+      next: (res) => {
+        console.log('Block IP response:', res);
+        attempt.isBlocked = true
+        attempt.status = "blocked"
 
-    this.realtimeActivities.unshift({
-      id: this.generateId(),
-      timestamp: new Date().toISOString(),
-      type: "warning",
-      message: `IP ${attempt.ipAddress} has been blocked`,
-    })
+        this.realtimeActivities.unshift({
+          id: this.generateId(),
+          timestamp: new Date().toISOString(),
+          type: "warning",
+          message: `IP ${attempt.ipAddress} has been blocked`,
+        })
 
-    console.log("Blocked IP:", attempt.ipAddress)
+        console.log("Blocked IP:", attempt.ipAddress)
+      },
+      error: (err) => {
+        console.error('Block IP error:', err);
+      }
+    });
   }
 
   whitelistIP(attempt: LoginAttempt): void {
