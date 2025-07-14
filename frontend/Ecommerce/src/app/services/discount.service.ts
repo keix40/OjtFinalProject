@@ -6,6 +6,7 @@ import { environment } from '../../environments/environment';
 export interface DiscountEventDTO {
   name: string;
   description?: string;
+  code?: string;
   discountType: string; // "PERCENTAGE" | "FIXED" | "BOGO" | "BOGO_PERCENTAGE" | "QUANTITY_DISCOUNT" | "BULK_DISCOUNT"
   discount_percent: number;
   discount_amount: number;
@@ -22,13 +23,6 @@ export interface DiscountEventDTO {
   brandIds?: string; // comma-separated brand IDs for multi-selection
   categoryIds?: string; // comma-separated category IDs for multi-selection
   brandCategoryIds?: string; // comma-separated brand-category IDs for multi-selection
-  // New fields for promotional discounts
-  bogoPercentage?: number; // For BOGO_PERCENTAGE type
-  buyQuantity?: number; // For QUANTITY_DISCOUNT type
-  getQuantity?: number; // For QUANTITY_DISCOUNT type
-  discountPercentage?: number; // For QUANTITY_DISCOUNT type
-  minQuantity?: number; // For BULK_DISCOUNT type
-  bulkDiscountPercentage?: number; // For BULK_DISCOUNT type
 }
 
 export interface DiscountEventResponseDTO {
@@ -47,6 +41,7 @@ export interface DiscountDTO {
   id: number;
   name: string;
   description?: string;
+  code?: string;
   discountType: string;
   discountValue: number;
   startDate: string;
@@ -106,6 +101,10 @@ export class DiscountService {
       ...dto,
       conflictResolutions: Array.from(conflictResolutions.entries())
     });
+  }
+
+  getDiscountsByProduct(productId: number): Observable<any[]> {
+    return this.http.get<any[]>(`${API_URL}/product/${productId}`);
   }
 
   // Optionally, add methods for brands, categories, products if needed

@@ -12,6 +12,8 @@ import { AuthService } from '../auth/auth.service';
 import { Subscription } from 'rxjs';
 import { WishlistService } from '../services/wishlist.service';
 import { BreadcrumbComponent } from '../breadcrumb.component';
+import { DiscountService } from '../services/discount.service';
+import { HttpClient } from '@angular/common/http';
 
 interface ProductImage {
   id: number;
@@ -109,6 +111,11 @@ export class UserProductDetailComponent implements OnInit {
   zoomX = 0;
   zoomY = 0;
 
+  // Discount properties
+  activeDiscounts: any[] = [];
+  productDiscounts: Map<number, any> = new Map(); // productId -> discount info
+  isFirstTimeBuyerDiscount: boolean = false;
+
   @ViewChild('mainImage', { static: false }) mainImageRef!: ElementRef<HTMLImageElement>;
 
   wishlistPulse = false;
@@ -126,7 +133,9 @@ export class UserProductDetailComponent implements OnInit {
     private sanitizer: DomSanitizer,
     private authService: AuthService,
     private router: Router,
-    private wishlistService: WishlistService
+    private wishlistService: WishlistService,
+    private discountService: DiscountService,
+    private http:HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -176,6 +185,9 @@ export class UserProductDetailComponent implements OnInit {
           { label: 'Products', link: '/products' },
           { label: this.product.name || 'Product Detail' }
         ];
+
+        // Load discounts after product is set
+        this.loadProductDiscounts();
       });
     } else {
       // Fallback if no productId
@@ -190,9 +202,102 @@ export class UserProductDetailComponent implements OnInit {
       this.reviewService.connect(+productId, this.currentUser); // ADD THIS LINE
     }
     this.loadReviews();
+    this.checkFirstTimeBuyerDiscount();
+    // Removed: this.loadProductDiscounts();
   }
 
+  loadProductDiscounts() {
+    if (!this.product?.id) return;
+    
+    this.discountService.getDiscountsByProduct(this.product.id).subscribe({
+      next: (discounts) => {
+        this.activeDiscounts = discounts;
+        this.calculateProductDiscounts();
+        
+        console.log('Product discounts loaded:', discounts);
+      },
+      error: (error) => {
+        console.error('Failed to load product discounts:', error);
+      }
+    });
+  }
+
+   getDiscountDisplayText(discount?: any): string {
+  // If no argument, use the current product's discount
+  if (!discount) discount = this.getProductDiscount();
+  if (!discount) return '';
   
+  if (discount.discountType === 'PERCENTAGE') {
+    return `${discount.discount_percent}% OFF`;
+  } else {
+    return `Save ${discount.discount_amount} MMK`;
+  }
+}
+
+  calculateProductDiscounts() {
+    this.productDiscounts.clear();
+    
+    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+      return;
+    }
+
+    // For product detail page, we only have one product
+    const discount = this.activeDiscounts[0]; // Get the first applicable discount
+    if (discount) {
+      this.productDiscounts.set(this.product.id, discount);
+    }
+  }
+
+  getProductDiscount(): any {
+    return this.productDiscounts.get(this.product?.id);
+  }
+
+  getDiscountedPrice(): number {
+  const discount = this.getProductDiscount();
+  if (!discount) return this.selectedVariant?.price || this.product?.price || 0;
+
+  const originalPrice = this.selectedVariant?.price || this.product?.price || 0;
+
+ if (discount.discountType === 'PERCENTAGE') {
+    // Convert to decimal if value is > 1
+    const percent = discount.discount_percent > 1 ? discount.discount_percent / 100 : discount.discount_percent;
+    return Math.round(originalPrice * (1 - percent));
+  } else if (discount.discountType === 'FIXED') {
+    return Math.max(0, Math.round(originalPrice - discount.discount_amount));
+  }
+
+  return Math.round(originalPrice);
+}
+
+checkFirstTimeBuyerDiscount(): void {
+    const token = localStorage.getItem('token');
+    let userId: number | null = null;
+    if (token) {
+      try {
+        userId = JSON.parse(atob(token.split('.')[1])).id;
+      } catch (e) {
+        userId = null;
+      }
+    }
+    if (!userId) {
+      this.isFirstTimeBuyerDiscount = false;
+      return;
+    }
+    // For preview, we need a cart. On home page, just check with empty cart to get discount eligibility
+    const userOrderDto = {
+      userId: userId,
+      cartItem: []
+    };
+    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+      next: (preview: any) => {
+        this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
+      },
+      error: () => {
+        this.isFirstTimeBuyerDiscount = false;
+      }
+    });
+  }
+
 
   get attributeNames(): string[] {
     if (!this.product?.variants?.length) return [];
@@ -262,11 +367,13 @@ export class UserProductDetailComponent implements OnInit {
       variantId: variant?.id,
       title: product.productName,
       image,
-      price: variant?.price || product.price,
+      price: this.getDiscountedPrice(), // Use discounted price
+      originalPrice: variant?.price || product.price, // Keep original price for reference
       quantity,
       variantAttributes: attributes.map(attr => `${attr.attributeName}: ${attr.value}`),
       color: this.selectedAttributes['Color'],
-      size: this.selectedAttributes['Size']
+      size: this.selectedAttributes['Size'],
+      discount: this.getProductDiscount() // Include discount info
     };
 
     this.cartService.addToCart(cartItem);

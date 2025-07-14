@@ -141,16 +141,21 @@ export class CartPageComponent implements OnInit, OnDestroy {
     return this.productDiscounts.get(productId);
   }
 
-  getDiscountedPrice(product: ProductDTO): number {
-    if (this.isFirstTimeBuyerDiscount) return product.price;
-    const discount = this.getProductDiscount(product.id);
-    if (!discount) return product.price;
-    if (discount.discountType === 'PERCENTAGE') {
-      return product.price - (product.price * discount.discount_percent / 100);
-    } else {
-      return Math.max(0, product.price - discount.discount_amount);
-    }
-  }
+    getDiscountedPrice(product: ProductDTO): number {
+        if (this.isFirstTimeBuyerDiscount) return product.price;
+        const discount = this.getProductDiscount(product.id);
+        if (!discount) return product.price;
+        
+        let discountedPrice: number;
+        if (discount.discountType === 'PERCENTAGE') {
+          discountedPrice = product.price - (product.price * discount.discount_percent / 100);
+        } else {
+          discountedPrice = Math.max(0, product.price - discount.discount_amount);
+        }
+        
+        // Round to whole number (no decimals)
+        return Math.round(discountedPrice);
+      }
 
   getDiscountDisplayText(discount: any): string {
     if (!discount) return '';
@@ -172,6 +177,53 @@ export class CartPageComponent implements OnInit, OnDestroy {
       }
     }
     return total;
+  }
+
+  // Returns the sum of original prices (before discount)
+  getSubtotal(): number {
+    let subtotal = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        subtotal += product.price * item.quantity;
+      } else {
+        subtotal += item.price * item.quantity;
+      }
+    }
+    return subtotal;
+  }
+
+  // Returns the total discount amount saved
+  getTotalDiscount(): number {
+    let discount = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product && this.getProductDiscount(product.id)) {
+        const original = product.price * item.quantity;
+        const discounted = Math.round(this.getDiscountedPrice(product) * item.quantity);
+        discount += (original - discounted);
+      }
+    }
+    return discount;
+  }
+
+  // Returns the final order total: subtotal - discount + shipping + tax
+  getOrderTotal(): number {
+    const subtotal = this.getSubtotal();
+    const shipping = 0; // Free shipping
+    const tax = 76.80; // Fixed tax as in template
+    if (this.isFirstTimeBuyerDiscount) {
+      const firstTimeDiscount = this.getFirstTimeBuyerDiscountAmount();
+      return Math.round(subtotal - firstTimeDiscount + shipping + tax);
+    } else {
+      const discount = this.getTotalDiscount();
+      return Math.round(subtotal - discount + shipping + tax);
+    }
+  }
+
+  // Returns the amount saved by first time buyer discount (10% of subtotal)
+  getFirstTimeBuyerDiscountAmount(): number {
+    return Math.round(this.getSubtotal() * 0.10);
   }
 
   ngOnDestroy() {

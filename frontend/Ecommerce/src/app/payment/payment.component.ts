@@ -101,6 +101,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
   this.deliveryFee = nav.deliveryFee || 0;
   this.paymentMethod = 'card';
   this.orderPreview = nav.orderPreview || null;
+  this.isFirstTimeBuyerDiscount = !!(this.orderPreview && this.orderPreview.discountReason && this.orderPreview.discountReason.toLowerCase().includes('first time buyer'));
   if (this.orderPreview && this.orderPreview.discountAmount) {
     this.discountAmount = this.orderPreview.discountAmount;
   } else {
@@ -224,15 +225,15 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
 
   getDiscountedPrice(product: ProductDTO): number {
-    if (this.isFirstTimeBuyerDiscount) return product.price;
-    const discount = this.getProductDiscount(product.id);
-    if (!discount) return product.price;
-    if (discount.discountType === 'PERCENTAGE') {
-      return product.price - (product.price * discount.discount_percent / 100);
-    } else {
-      return Math.max(0, product.price - discount.discount_amount);
-    }
+  if (this.isFirstTimeBuyerDiscount) return product.price;
+  const discount = this.getProductDiscount(product.id);
+  if (!discount) return product.price;
+  if (discount.discountType === 'PERCENTAGE') {
+    return product.price - (product.price * discount.discount_percent / 100);
+  } else {
+    return Math.max(0, product.price - discount.discount_amount);
   }
+}
 
   getDiscountDisplayText(discount: any): string {
     if (!discount) return '';
@@ -243,7 +244,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     }
   }
 
-  getTotalDiscount() {
+   getTotalDiscount() {
     // If first time buyer discount is active, only use that
     if (this.isFirstTimeBuyerDiscount && this.orderPreview?.discountAmount > 0) {
       return this.orderPreview.discountAmount;
@@ -262,11 +263,12 @@ export class PaymentComponent implements OnInit, OnDestroy {
     return discount;
   }
 
+
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
-   getSubtotal() {
+    getSubtotal() {
     // Always return the sum of original prices
     let subtotal = 0;
     for (const item of this.cartItems) {
@@ -288,6 +290,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     // Always use subtotal - discount + shipping
     return this.getSubtotal() - this.getTotalDiscount() + this.deliveryFee;
   }
+
 
   submitOrder() {
     if (this.isSubmitting) return;

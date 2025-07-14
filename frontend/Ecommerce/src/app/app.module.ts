@@ -45,13 +45,10 @@ import { LoginAttemptsComponent } from './login-attempts/login-attempts.componen
 import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
-<<<<<<< HEAD
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
 import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
 import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
-import { DiscountPriceComponent } from './discount-price/discount-price.component';
-=======
 import { HomeComponent } from './home/home.component';
 import { FooterComponent } from './footer/footer.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
@@ -61,12 +58,14 @@ import { ReturnListComponent } from './return-list/return-list.component';
 import { HeaderComponent } from './header/header.component';
 import { BreadcrumbComponent } from './breadcrumb.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
->>>>>>> 7365f89252582d98a1c3cee910484d047963abb2
+import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
+import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+import { MatTableModule } from '@angular/material/table';
+import { NotificationComponent } from './notification/notification.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    TestComponent,
     HomeComponent,
     LoginComponent,
     RegisterComponent,
@@ -102,15 +101,12 @@ import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
-<<<<<<< HEAD
     DiscountInsertComponent,
     DiscountEventManagementComponent,
     DiscountCouponComponent,
-    DiscountPriceComponent
-=======
     ReturnRequestComponent,
     ReturnListComponent,
->>>>>>> 7365f89252582d98a1c3cee910484d047963abb2
+    
   ],
   imports: [
     BrowserModule,
@@ -121,25 +117,23 @@ import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-<<<<<<< HEAD
     CommonModule, // Required for pipes like date, currency, number
     CartSidebarComponent, // Standalone component must be imported here
    ProductDetailComponent,
     BrowserAnimationsModule,
     BlacklistComponent,
+    TestComponent,
     //MatInputModule,
     //MatAutocompleteModule,
     //MatFormFieldModule,
     // MatIconModule,
     //MatButtonModule,
-=======
-    CommonModule,
-    BrowserAnimationsModule,
     FooterComponent,
     HeaderComponent,
     BreadcrumbComponent,
-    VerifyOtpComponent
->>>>>>> 7365f89252582d98a1c3cee910484d047963abb2
+    VerifyOtpComponent,
+    MatTableModule,
+    NotificationComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

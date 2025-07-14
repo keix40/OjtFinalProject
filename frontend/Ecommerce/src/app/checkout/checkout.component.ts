@@ -95,6 +95,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   activeDiscounts: any[] = [];
   productDiscounts: Map<number, any> = new Map();
   productDetails: Map<number, ProductDTO> = new Map();
+  Math = Math; // Make Math available in template
 
   constructor(
     
@@ -236,17 +237,31 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return this.productDiscounts.get(productId);
   }
 
-  getDiscountedPrice(product: ProductDTO): number {
+    getDiscountedPrice(product: ProductDTO): number {
     if (this.isFirstTimeBuyerDiscount) return product.price;
     const discount = this.getProductDiscount(product.id);
     if (!discount) return product.price;
+    
+    let discountedPrice: number;
     if (discount.discountType === 'PERCENTAGE') {
-      return product.price - (product.price * discount.discount_percent / 100);
+      discountedPrice = product.price - (product.price * discount.discount_percent / 100);
     } else {
-      return Math.max(0, product.price - discount.discount_amount);
+      discountedPrice = Math.max(0, product.price - discount.discount_amount);
     }
+    
+    // Round to whole number (no decimals)
+    return Math.round(discountedPrice);
   }
 
+  getItemDiscountedPrice(item: CartItem): number {
+    const product = this.productDetails.get(item.productId || item.id);
+    if (product) {
+      return this.getDiscountedPrice(product);
+    }
+    // Fallback to original price if product details not loaded
+    return item.price;
+  }
+  
   getDiscountDisplayText(discount: any): string {
     if (!discount) return '';
     if (discount.discountType === 'PERCENTAGE') {
@@ -372,7 +387,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return subtotal;
   }
 
-  getTotalDiscount() {
+getTotalDiscount() {
     if (this.discount && this.discountId) {
       return this.orderPreview?.discountAmount || 0;
     }
@@ -411,6 +426,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
   return this.getSubtotal() - this.getTotalDiscount() + this.deliveryFee;
 }
+
   // Quantity controls for cart review (if needed)
   decrementQty(item: any) {
     if (item.quantity > 1) item.quantity--;

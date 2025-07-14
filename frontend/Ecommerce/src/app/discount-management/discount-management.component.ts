@@ -1,6 +1,10 @@
 import { Component, OnInit, ElementRef, Renderer2 } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
 import { DiscountDTO, DiscountService, DiscountEventDTO } from '../services/discount.service';
+import { debounceTime, first, map, Observable, of } from 'rxjs';
+import { DiscountCouponService } from '../services/discount-coupon.service';
+import { NotificationService } from '../services/notification.service';
+import { NotifcationService } from '../notifcation.service';
 
 function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return { required: true };
@@ -15,12 +19,12 @@ function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErr
   return null;
 }
 
-function todayOrFutureDateTimeValidator(control: AbstractControl): ValidationErrors | null {
-  if (!control.value) return { required: true };
-  const inputDateTime = new Date(control.value);
-  const now = new Date();
-  if (inputDateTime < now) {
-    return { notTodayOrFuture: true };
+function notSameDateTimeValidator(group: AbstractControl): ValidationErrors | null {
+  const start = group.get('startDate')?.value;
+  const end = group.get('endDate')?.value;
+  if (!start || !end) return null;
+  if (start === end) {
+    return { sameDateTime: true };
   }
   return null;
 }
@@ -50,15 +54,32 @@ function endAfterStartValidator(group: AbstractControl): ValidationErrors | null
 })
 export class DiscountEventManagementComponent implements OnInit {
   discounts: DiscountDTO[] = [];
+  filteredDiscounts: DiscountDTO[] = [];
   isLoading = false;
   showEditModal = false;
   editForm: FormGroup;
   editingDiscount: DiscountDTO | null = null;
   submitted = false;
+  selectedDiscounts: number[] = [];
+  filterType: string = '';
+  filterStatus: string = '';
+  filterName: string = '';
+  showDetailsModal: boolean = false;
+  detailsDiscount: DiscountDTO | null = null;
+  viewMode: boolean = true;
+  isDetailsEditMode = false;
+  detailsEdit: any = {};
+  detailsForm: FormGroup;
+  showDeleteConfirmModal: boolean = false;
+  discountToDelete: DiscountDTO | null = null;
+   editDiscountId: number | null = null;
 
   constructor(
     private discountService: DiscountService,
     private fb: FormBuilder,
+    private discountCouponService:DiscountCouponService,
+    private notificationService: NotificationService,
+    private notifcationService: NotifcationService,
     
   ) {
     this.editForm = this.fb.group({
@@ -68,13 +89,29 @@ export class DiscountEventManagementComponent implements OnInit {
       discount_percent: [0, [Validators.required, Validators.min(0.01), Validators.max(100)]],
       discount_amount: [0, [Validators.required, Validators.min(1)]],
       startDate: ['', [Validators.required, todayOrFutureDateOnlyValidator]],
-      endDate: ['', [Validators.required, todayOrFutureDateTimeValidator]],
+      endDate: ['', [Validators.required, todayOrFutureDateOnlyValidator]],
       status: [true] // No Validators.requiredTrue
     }, { validators: endAfterStartValidator });
+
+    this.detailsForm = this.fb.group({
+      name: ['', [Validators.required, Validators.minLength(1)]],
+      code: ['', {
+        validators: [Validators.required, Validators.minLength(1)],
+        asyncValidators: [this.codeUniqueValidator()],
+        updateOn: 'blur'
+      }],
+      description: ['', [Validators.required, Validators.minLength(1)]],
+      discountType: ['PERCENTAGE', [Validators.required]],
+      discountValue: [0, [Validators.required, Validators.min(0.01)]],
+      startDate: ['', [Validators.required]],
+      endDate: ['', [Validators.required]],
+      status: [true, [Validators.required]]
+    }, { validators: notSameDateTimeValidator });
   }
 
   ngOnInit(): void {
     this.loadDiscounts();
+    this.showActiveDiscountNotification();
   }
 
   loadDiscounts() {
@@ -82,12 +119,31 @@ export class DiscountEventManagementComponent implements OnInit {
     this.discountService.getAllDiscount().subscribe({
       next: (data) => {
         this.discounts = data;
+        this.applyFilters();
         this.isLoading = false;
       },
       error: () => {
         this.isLoading = false;
-        alert('Failed to load discounts');
+        this.notificationService.showError('Failed to load discounts');
       }
+    });
+  }
+
+  applyFilters() {
+    this.filteredDiscounts = this.discounts.filter(d => {
+      let matchesType = true;
+      let matchesStatus = true;
+      let matchesName = true;
+      if (this.filterType) {
+        matchesType = this.filterType === 'COUPON' ? !!!d.autoApply : !!d.autoApply;
+      }
+      if (this.filterStatus) {
+        matchesStatus = this.filterStatus === 'active' ? d.status : !d.status;
+      }
+      if (this.filterName) {
+        matchesName = d.name.toLowerCase().includes(this.filterName.toLowerCase());
+      }
+      return matchesType && matchesStatus && matchesName;
     });
   }
 
@@ -196,12 +252,12 @@ onDiscountTypeChange() {
         next: () => {
           this.closeEditModal();
           this.loadDiscounts();
-          alert('Discount updated successfully');
+          this.notificationService.showSuccess('Discount updated successfully');
           console.log('Edit discount payload: ' + JSON.stringify(updateData));
         },
         error: (error) => {
           console.error('Error updating discount:', error);
-          alert('Failed to update discount');
+          this.notificationService.showError('Failed to update discount');
         }
       });
     }
@@ -212,11 +268,295 @@ onDiscountTypeChange() {
       this.discountService.deleteDiscount(id).subscribe({
         next: () => {
           this.loadDiscounts();
+          this.notificationService.showSuccess('Discount deleted successfully');
         },
         error: () => {
-          alert('Failed to delete discount');
+          this.notificationService.showError('Failed to delete discount');
         }
       });
     }
   }
+
+  isSelected(id: number): boolean {
+    return this.selectedDiscounts.includes(id);
+  }
+
+  isAllSelected(): boolean {
+    return this.discounts.length > 0 && this.selectedDiscounts.length === this.discounts.length;
+  }
+
+  toggleSelectDiscount(id: number, event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      if (!this.selectedDiscounts.includes(id)) {
+        this.selectedDiscounts.push(id);
+      }
+    } else {
+      this.selectedDiscounts = this.selectedDiscounts.filter(did => did !== id);
+    }
+  }
+
+  toggleSelectAll(event: Event): void {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
+      this.selectedDiscounts = this.discounts.map(d => d.id);
+    } else {
+      this.selectedDiscounts = [];
+    }
+  }
+
+  deleteSelectedDiscounts(): void {
+    if (this.selectedDiscounts.length === 0) return;
+    if (!confirm('Are you sure you want to delete the selected discounts?')) return;
+    const idsToDelete = [...this.selectedDiscounts];
+    let completed = 0;
+    let failed = false;
+    idsToDelete.forEach(id => {
+      this.discountService.deleteDiscount(id).subscribe({
+        next: () => {
+          completed++;
+          if (completed === idsToDelete.length && !failed) {
+            this.selectedDiscounts = [];
+            this.loadDiscounts();
+          }
+        },
+        error: () => {
+          failed = true;
+          this.notificationService.showError('Failed to delete one or more discounts.');
+        }
+      });
+    });
+  }
+
+  openDetailsModal(discount: DiscountDTO): void {
+    this.editDiscountId = discount.id;
+    this.detailsDiscount = discount;
+    this.detailsEdit = { ...discount };
+    this.viewMode = true;
+    this.showDetailsModal = true;
+    this.isDetailsEditMode = false;
+    // Populate the details form
+    const startDate = new Date(discount.startDate);
+    const endDate = new Date(discount.endDate);
+    this.detailsForm.patchValue({
+      name: discount.name,
+      code: discount.code || '',
+      description: discount.description || '',
+      discountType: discount.discountType,
+      discountValue: discount.discountValue,
+      startDate: this.formatDateTimeForInput(startDate),
+      endDate: this.formatDateTimeForInput(endDate),
+      status: discount.status
+    });
+    this.updateCodeFieldValidators();
+  }
+
+  closeDetailsModal(): void {
+    this.showDetailsModal = false;
+    this.detailsDiscount = null;
+    this.detailsEdit = {};
+    this.isDetailsEditMode = false;
+    this.editDiscountId = null;
+    this.detailsForm.reset();
+  }
+
+  startDetailsEdit(): void {
+    if (this.isDetailsEditMode) {
+      // If already editing, revert to view mode and reset form
+      this.isDetailsEditMode = false;
+      if (this.detailsDiscount) {
+        const startDate = new Date(this.detailsDiscount.startDate);
+        const endDate = new Date(this.detailsDiscount.endDate);
+        this.detailsForm.patchValue({
+          name: this.detailsDiscount.name,
+          code: this.detailsDiscount.code || '',
+          description: this.detailsDiscount.description || '',
+          discountType: this.detailsDiscount.discountType,
+          discountValue: this.detailsDiscount.discountValue,
+          startDate: this.formatDateTimeForInput(startDate),
+          endDate: this.formatDateTimeForInput(endDate),
+          status: this.detailsDiscount.status
+        });
+      }
+    } else {
+      // Enter edit mode
+      this.isDetailsEditMode = true;
+    }
+  }
+
+  cancelDetailsEdit(): void {
+    this.isDetailsEditMode = false;
+    if (this.detailsDiscount) {
+      // Reset form to original values
+      const startDate = new Date(this.detailsDiscount.startDate);
+      const endDate = new Date(this.detailsDiscount.endDate);
+      
+      this.detailsForm.patchValue({
+        name: this.detailsDiscount.name,
+        code: this.detailsDiscount.code || '',
+        description: this.detailsDiscount.description || '',
+        discountType: this.detailsDiscount.discountType,
+        discountValue: this.detailsDiscount.discountValue,
+        startDate: this.formatDateTimeForInput(startDate),
+        endDate: this.formatDateTimeForInput(endDate),
+        status: this.detailsDiscount.status
+      });
+    }
+  }
+
+  submitDetailsEdit(): void {
+    if (!this.detailsDiscount || this.detailsForm.invalid) {
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.detailsForm.controls).forEach(key => {
+        const control = this.detailsForm.get(key);
+        control?.markAsTouched();
+      });
+      return;
+    }
+    
+    // Additional validation to ensure no empty fields
+    const formValue = this.detailsForm.getRawValue();
+    const requiredFields = ['name', 'description', 'discountType', 'discountValue', 'startDate', 'endDate'];
+    if (this.detailsDiscount && this.detailsDiscount.autoApply === false) {
+      requiredFields.push('code');
+    }
+    const emptyFields = requiredFields.filter(field => !formValue[field] || formValue[field].toString().trim() === '');
+    
+    if (emptyFields.length > 0) {
+      this.notificationService.showWarning('Please fill in all required fields: ' + emptyFields.join(', '));
+      return;
+    }
+    
+    const updateData: DiscountEventDTO = {
+      name: formValue.name,
+      code: formValue.code,
+      description: formValue.description,
+      discountType: formValue.discountType,
+      discount_percent: formValue.discountType === 'PERCENTAGE' ? formValue.discountValue : 0,
+      discount_amount: formValue.discountType === 'FIXED' ? formValue.discountValue : 0,
+      startDate: new Date(formValue.startDate).toISOString(),
+      endDate: new Date(formValue.endDate).toISOString(),
+      status: formValue.status,
+      isEvent: false,
+      targetType: 'PRODUCT'
+    };
+
+    this.discountService.updateDiscount(this.detailsDiscount.id, updateData).subscribe({
+      next: (res) => {
+        // Update the detailsDiscount with the new values
+        this.detailsDiscount = { ...this.detailsDiscount, ...formValue };
+        this.isDetailsEditMode = false;
+        this.loadDiscounts();
+        this.notificationService.showSuccess('Discount updated successfully');
+        
+      },
+      error: (error) => {
+        console.error('Error updating discount:', error);
+        this.notificationService.showError('Failed to update discount');
+      }
+    });
+  }
+
+  deleteDetailsDiscount(): void {
+    if (!this.detailsDiscount) return;
+    
+    this.discountToDelete = this.detailsDiscount;
+    this.showDeleteConfirmModal = true;
+  }
+
+  openDeleteConfirmModal(discount: DiscountDTO): void {
+    this.discountToDelete = discount;
+    this.showDeleteConfirmModal = true;
+  }
+
+  closeDeleteConfirmModal(): void {
+    this.showDeleteConfirmModal = false;
+    this.discountToDelete = null;
+  }
+
+  confirmDelete(): void {
+    if (!this.discountToDelete) return;
+    
+    this.discountService.deleteDiscount(this.discountToDelete.id).subscribe({
+      next: () => {
+        this.closeDeleteConfirmModal();
+        if (this.showDetailsModal) {
+          this.closeDetailsModal();
+        }
+        this.loadDiscounts();
+        this.notificationService.showSuccess('Discount deleted successfully');
+      },
+      error: () => {
+        this.notificationService.showError('Failed to delete discount');
+      }
+    });
+  }
+
+    codeUniqueValidator(): AsyncValidatorFn {
+      return (control: AbstractControl): Observable<ValidationErrors | null> => {
+        if (!control.value) return of(null);
+        // If editing and code is unchanged, skip validation
+        if (this.isDetailsEditMode && this.discounts.find(d => d.id === this.editDiscountId && d.code === control.value)) {
+          return of(null);
+        }
+        return this.discountCouponService.checkCodeExists(control.value).pipe(
+          debounceTime(300),
+          map(exists => (exists ? { codeExists: true } : null)),
+          first()
+        );
+      };
+    }
+
+  updateCodeFieldValidators() {
+    const codeControl = this.detailsForm.get('code');
+    // Coupon: code required, Discount: code not required
+    if (this.detailsDiscount && this.detailsDiscount.autoApply === false) {
+      codeControl?.setValidators([Validators.required, Validators.minLength(1)]);
+      codeControl?.enable();
+    } else {
+      codeControl?.clearValidators();
+      codeControl?.disable();
+    }
+    codeControl?.updateValueAndValidity();
+  }
+
+  showActiveDiscountNotification() {
+    this.discountService.getAllDiscount().subscribe(discounts => {
+      const now = new Date();
+      const activeDiscount = discounts.find(d =>
+        d.status &&
+        new Date(d.startDate) <= now &&
+        new Date(d.endDate) >= now
+      );
+      if (activeDiscount) {
+        let discountValueText = '';
+        if (activeDiscount.discountType === 'PERCENTAGE') {
+          const percent = (activeDiscount.discountValue <= 1 && activeDiscount.discountValue !== 0)
+            ? activeDiscount.discountValue * 100
+            : activeDiscount.discountValue;
+          discountValueText = `${percent}% off`;
+        } else {
+          discountValueText = `${activeDiscount.discountValue} MMK off`;
+        }
+        
+        const notificationMessage = `🔥 "${activeDiscount.name}" is live: ${discountValueText}! Click here to view products.`;
+        
+        // 1. Show pop-up notification
+        this.notificationService.showInfo(
+          notificationMessage,
+          '/userproductlist'
+        );
+        
+        // 2. Add to user's notification list
+        const notificationData = {
+          message: notificationMessage,
+          timestamp: new Date().toISOString(),
+          type: 'discount',
+          link: '/userproductlist'
+        };
+        this.notifcationService.sendNotification(notificationData);
+      }
+    });
+  }
+    
 }

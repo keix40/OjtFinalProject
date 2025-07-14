@@ -150,7 +150,6 @@ export class DiscountInsertComponent implements OnInit {
     
      this.discountForm.get('discountType')?.valueChanges.subscribe(() => {
   this.discountForm.get('discountValue')?.updateValueAndValidity();
-  this.updatePromotionalValidation();
 });
 
     // Filter brands on search
@@ -177,48 +176,7 @@ export class DiscountInsertComponent implements OnInit {
     });
   }
 
-  updatePromotionalValidation() {
-    const discountType = this.discountForm.get('discountType')?.value;
-    
-    // Clear all promotional field validations
-    const bogoPercentageControl = this.discountForm.get('bogoPercentage');
-    const buyQuantityControl = this.discountForm.get('buyQuantity');
-    const getQuantityControl = this.discountForm.get('getQuantity');
-    const discountPercentageControl = this.discountForm.get('discountPercentage');
-    const minQuantityControl = this.discountForm.get('minQuantity');
-    const bulkDiscountPercentageControl = this.discountForm.get('bulkDiscountPercentage');
-
-    bogoPercentageControl?.clearValidators();
-    buyQuantityControl?.clearValidators();
-    getQuantityControl?.clearValidators();
-    discountPercentageControl?.clearValidators();
-    minQuantityControl?.clearValidators();
-    bulkDiscountPercentageControl?.clearValidators();
-
-    // Set validation based on discount type
-    switch (discountType) {
-      case 'BOGO_PERCENTAGE':
-        bogoPercentageControl?.setValidators([Validators.required, Validators.min(0.01), Validators.max(100)]);
-        break;
-      case 'QUANTITY_DISCOUNT':
-        buyQuantityControl?.setValidators([Validators.required, Validators.min(1)]);
-        getQuantityControl?.setValidators([Validators.required, Validators.min(1)]);
-        discountPercentageControl?.setValidators([Validators.required, Validators.min(0.01), Validators.max(100)]);
-        break;
-      case 'BULK_DISCOUNT':
-        minQuantityControl?.setValidators([Validators.required, Validators.min(2)]);
-        bulkDiscountPercentageControl?.setValidators([Validators.required, Validators.min(0.01), Validators.max(100)]);
-        break;
-    }
-
-    // Update validation
-    bogoPercentageControl?.updateValueAndValidity();
-    buyQuantityControl?.updateValueAndValidity();
-    getQuantityControl?.updateValueAndValidity();
-    discountPercentageControl?.updateValueAndValidity();
-    minQuantityControl?.updateValueAndValidity();
-    bulkDiscountPercentageControl?.updateValueAndValidity();
-  }
+ 
 
   // Validator: start and end date must not be the same exact time
   startEndDateNotSameTimeValidator(): ValidatorFn {

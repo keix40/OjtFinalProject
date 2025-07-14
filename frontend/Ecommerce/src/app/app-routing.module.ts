@@ -45,6 +45,7 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
   { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
+
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
     component: LayoutComponent,
@@ -57,7 +58,6 @@ const routes: Routes = [
       {path: 'discount-add', component: DiscountInsertComponent},
       {path: 'discount-list', component:DiscountEventManagementComponent},
       {path: 'discount-coupon', component:DiscountCouponComponent},
-      { path: 'product/:id', component: UserProductDetailComponent },
       { path: 'product', component: ProductComponent, data: { breadcrumb: 'Products' } },
       { path: 'productlist', component: ProductMangementComponent, data: { breadcrumb: 'Product List' } },
       { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
@@ -94,7 +94,7 @@ const routes: Routes = [
     ]
   },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent,canActivate: [AuthGuard] , data: { breadcrumb: 'Order Tracking' } },
-  { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
+  // { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
   { path: 'product/:id', component: UserProductDetailComponent, data: { breadcrumb: 'Product Detail' } },
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },

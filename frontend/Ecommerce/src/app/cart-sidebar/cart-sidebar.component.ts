@@ -24,6 +24,7 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
   cartTotal: number = 0;
   private subscriptions: Subscription[] = [];
   isFirstTimeBuyerDiscount = false;
+  firstTimeBuyerDiscountAmount: number = 0;
   activeDiscounts: any[] = [];
   productDiscounts: Map<number, any> = new Map();
   productDetails: Map<number, ProductDTO> = new Map();
@@ -135,11 +136,16 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
     if (this.isFirstTimeBuyerDiscount) return product.price;
     const discount = this.getProductDiscount(product.id);
     if (!discount) return product.price;
+    
+    let discountedPrice: number;
     if (discount.discountType === 'PERCENTAGE') {
-      return product.price - (product.price * discount.discount_percent / 100);
+      discountedPrice = product.price - (product.price * discount.discount_percent / 100);
     } else {
-      return Math.max(0, product.price - discount.discount_amount);
+      discountedPrice = Math.max(0, product.price - discount.discount_amount);
     }
+    
+    // Round to whole number (no decimals)
+    return Math.round(discountedPrice);
   }
 
   getDiscountDisplayText(discount: any): string {
@@ -177,9 +183,11 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
     this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
       next: (preview) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
+        this.firstTimeBuyerDiscountAmount = preview.discountAmount || 0;
       },
       error: () => {
         this.isFirstTimeBuyerDiscount = false;
+        this.firstTimeBuyerDiscountAmount = 0;
       }
     });
   }
@@ -212,7 +220,13 @@ getTotal(): number {
       total += item.price * item.quantity;
     }
   }
-  return total;
+  
+  // Apply first time buyer discount from backend
+  if (this.isFirstTimeBuyerDiscount && this.firstTimeBuyerDiscountAmount > 0) {
+    total = Math.max(0, total - this.firstTimeBuyerDiscountAmount);
+  }
+  
+  return Math.round(total);
 }
 
   goToCart() {
@@ -241,5 +255,39 @@ getTotal(): number {
     // Example: 5% tax
     // return Math.round(this.getSubtotal() * 0.05);
     return 0; // Or implement your tax logic here
+  }
+
+  getTotalSavings(): number {
+    let totalSavings = 0;
+    
+    // Product-specific discounts
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product && this.getProductDiscount(product.id)) {
+        const originalPrice = product.price * item.quantity;
+        const discountedPrice = this.getDiscountedPrice(product) * item.quantity;
+        totalSavings += originalPrice - discountedPrice;
+      }
+    }
+    
+    // First time buyer discount from backend
+    if (this.isFirstTimeBuyerDiscount && this.firstTimeBuyerDiscountAmount > 0) {
+      totalSavings += this.firstTimeBuyerDiscountAmount;
+      
+      console.log('First Time Buyer Discount Debug:', {
+        isFirstTimeBuyerDiscount: this.isFirstTimeBuyerDiscount,
+        firstTimeBuyerDiscountAmount: this.firstTimeBuyerDiscountAmount,
+        totalSavings: totalSavings
+      });
+    }
+    
+    const roundedSavings = Math.round(totalSavings);
+    console.log('Total Savings Calculation:', {
+      totalSavings: totalSavings,
+      roundedSavings: roundedSavings,
+      isFirstTimeBuyerDiscount: this.isFirstTimeBuyerDiscount
+    });
+    
+    return roundedSavings;
   }
 } 

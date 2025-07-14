@@ -2,6 +2,34 @@
   <div class="header">
     <h2>Discount Management</h2>
     <p>Manage your store discounts and promotions</p>
+    <!-- Bulk actions placeholder -->
+    <div class="bulk-actions" *ngIf="selectedDiscounts.length > 0">
+      <button class="btn btn-danger" (click)="deleteSelectedDiscounts()" [disabled]="selectedDiscounts.length === 0">Delete Selected</button>
+    </div>
+  </div>
+
+  <!-- Filter/Search Row -->
+  <div class="filter-row" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+    <label style="display: flex; align-items: center;">Type:
+      <select [(ngModel)]="filterType" (ngModelChange)="applyFilters()" style="margin-left: 0.5rem;">
+        <option value="">All</option>
+        <option value="COUPON">Coupon</option>
+        <option value="DISCOUNT">Discount</option>
+      </select>
+    </label>
+    <label style="display: flex; align-items: center;">Status:
+      <select [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()" style="margin-left: 0.5rem;">
+        <option value="">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </label>
+    <input type="text" [(ngModel)]="filterName" (ngModelChange)="applyFilters()" placeholder="Search by name..." style="padding: 0.25rem 0.5rem; border: 1px solid #ccc; border-radius: 4px;" />
+  </div>
+
+  <!-- Action Row -->
+  <div class="bulk-actions" style="margin-bottom: 1rem;">
+    <button class="btn btn-danger" (click)="deleteSelectedDiscounts()" [disabled]="selectedDiscounts.length === 0">Delete</button>
   </div>
 
   <div class="table-container" [ngClass]="{'isLoading': isLoading}">
@@ -13,6 +41,7 @@
     <table class="discount-table">
       <thead>
         <tr>
+          <th><input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll($event)"></th>
           <th>#</th>
           <th>Type</th>
           <th>Name</th>
@@ -24,7 +53,8 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let discount of discounts; let i = index">
+        <tr *ngFor="let discount of filteredDiscounts; let i = index">
+          <td><input type="checkbox" [checked]="isSelected(discount.id)" (change)="toggleSelectDiscount(discount.id, $event)"></td>
           <td>{{ i + 1 }}</td>
           <td class="type-column">
             <div class="type-indicator">
@@ -38,11 +68,11 @@
           <td>{{ discount.name }}</td>
           <td>
            <ng-container *ngIf="discount.discountType === 'PERCENTAGE'; else fixed">
-  {{ discount.discountValue % 1 === 0 ? (discount.discountValue | number:'1.0-0') : discount.discountValue }}%
-</ng-container>
-<ng-template #fixed>
-  {{ discount.discountValue % 1 === 0 ? (discount.discountValue | number:'1.0-0') : discount.discountValue }} MMK
-</ng-template>
+          {{ (discount.discountValue <= 1 && discount.discountValue !== 0) ? (discount.discountValue * 100) : discount.discountValue }}%
+        </ng-container>
+        <ng-template #fixed>
+          {{ discount.discountValue }} MMK
+        </ng-template>
           </td>
           <td>{{ discount.startDate | date: 'yyyy-MM-dd' }}</td>
           <td>{{ discount.endDate | date: 'yyyy-MM-dd' }}</td>
@@ -52,184 +82,192 @@
             </span>
           </td>
           <td class="actions">
-            <button (click)="openEditModal(discount)" class="btn btn-edit">
-              <i class="fas fa-edit"></i> Edit
-            </button>
-            <button (click)="deleteDiscount(discount.id)" class="btn btn-delete">
-              <i class="fas fa-trash"></i> Delete
+            <button (click)="openDetailsModal(discount)" class="btn btn-view" title="View Details">
+              <i class="fas fa-eye"></i>
             </button>
           </td>
         </tr>
       </tbody>
     </table>
     
-    <div *ngIf="!isLoading && discounts.length === 0" class="empty-state">
+    <div *ngIf="!isLoading && filteredDiscounts.length === 0" class="empty-state">
       <h3>No Discounts Found</h3>
       <p>There are no discounts or coupons available at the moment.</p>
     </div>
   </div>
 
-  <!-- Edit Modal -->
-  <div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <!-- Details Modal -->
+  <div *ngIf="showDetailsModal" class="modal-overlay" (click)="closeDetailsModal()">
+    <div class="glass-modal" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
       <div class="modal-header">
-        <h3>Edit Discount</h3>
-        <button class="close-btn" (click)="closeEditModal()">&times;</button>
+        <div class="header-content">
+          <div class="title-section">
+            <div class="icon-wrapper">
+              <i *ngIf="!detailsDiscount?.autoApply" class="fas fa-ticket-alt"></i>
+              <i *ngIf="detailsDiscount?.autoApply" class="fas fa-tag"></i>
+            </div>
+            <div class="title-info">
+              <h3>{{ detailsDiscount?.name }}</h3>
+              <span class="status-badge" [ngClass]="{'active': detailsDiscount?.status, 'inactive': !detailsDiscount?.status}">
+                {{ detailsDiscount?.status ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+          <div class="header-actions header-actions-icons">
+            <button class="icon-btn" (click)="startDetailsEdit()" [disabled]="isDetailsEditMode" title="Edit">
+              <i class="fas fa-edit"></i>
+            </button>
+             <button class="icon-btn" (click)="detailsDiscount && openDeleteConfirmModal(detailsDiscount)" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
       </div>
-      
-      <form [formGroup]="editForm" (ngSubmit)="updateDiscount()" class="edit-form">
-        <div class="form-group">
-          <label for="name">Name *</label>
-          <div class="input-wrapper">
-            <input type="text" id="name" formControlName="name" placeholder="Enter discount name"
-              [ngClass]="{'invalid': isFieldInvalid('name')}" aria-required="true" [attr.aria-invalid]="isFieldInvalid('name')">
-            <span *ngIf="isFieldInvalid('name')" class="warning-circle"></span>
-          </div>
-          <div class="error" *ngIf="isFieldInvalid('name')">
-            Name is required
-          </div>
-        </div>
 
-        <div class="form-group">
-          <label for="description">Description *</label>
-          <div class="input-wrapper">
-            <textarea id="description" formControlName="description" placeholder="Enter discount description"
-              [ngClass]="{'invalid': isFieldInvalid('description')}" aria-required="true" [attr.aria-invalid]="isFieldInvalid('description')"></textarea>
-            <span *ngIf="isFieldInvalid('description')" class="warning-circle"></span>
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <form [formGroup]="detailsForm" *ngIf="detailsDiscount">
+          <!-- Row 1: Name and Code -->
+          <div class="form-row two-col">
+            <div class="form-group">
+              <label><i class="fas fa-tag"></i> Name</label>
+              <input type="text" formControlName="name" [readonly]="!isDetailsEditMode" 
+                     [class.invalid]="detailsForm.get('name')?.invalid && detailsForm.get('name')?.touched">
+              <div *ngIf="detailsForm.get('name')?.invalid && detailsForm.get('name')?.touched" class="error">
+                Name is required
+              </div>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-code"></i> Code</label>
+              <input type="text" formControlName="code" [readonly]="!isDetailsEditMode || detailsDiscount.autoApply"
+              [disabled]="!!detailsDiscount.autoApply"
+              [readonly]="!isDetailsEditMode || !!detailsDiscount.autoApply"
+                     [placeholder]="!isDetailsEditMode ? 'N/A' : 'Enter code'"
+                     [class.invalid]="detailsForm.get('code')?.invalid && detailsForm.get('code')?.touched">
+              <div *ngIf="detailsDiscount.autoApply === false && detailsForm.get('code')?.errors?.['required'] && detailsForm.get('code')?.touched" class="error">
+                Code is required
+              </div>
+              <div *ngIf="detailsDiscount.autoApply === false && detailsForm.get('code')?.errors?.['codeExists'] && !detailsForm.get('code')?.errors?.['required'] && detailsForm.get('code')?.touched" class="error">
+                This code already exists. Please choose another.
+              </div>
+            </div>
           </div>
-          <div class="error" *ngIf="isFieldInvalid('description')">
-            Description is required
-          </div>
-        </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label for="discountType">Discount Type *</label>
-            <div class="input-wrapper">
-              <select id="discountType" formControlName="discountType" (change)="onDiscountTypeChange()"
-                [ngClass]="{'invalid': isFieldInvalid('discountType')}" aria-required="true" [attr.aria-invalid]="isFieldInvalid('discountType')">
+          <!-- Row 2: Discount Type and Value -->
+          <div class="form-row two-col">
+            <div class="form-group">
+              <label><i class="fas fa-percentage"></i> Discount Type</label>
+              <select formControlName="discountType" [disabled]="!isDetailsEditMode"
+                      [class.invalid]="detailsForm.get('discountType')?.invalid && detailsForm.get('discountType')?.touched"
+                      (change)="updateCodeFieldValidators()">
                 <option value="PERCENTAGE">Percentage</option>
                 <option value="FIXED">Fixed Amount</option>
               </select>
-              <span *ngIf="isFieldInvalid('discountType')" class="warning-circle"></span>
+              <div *ngIf="detailsForm.get('discountType')?.invalid && detailsForm.get('discountType')?.touched" class="error">
+                Discount type is required
+              </div>
             </div>
-            <div class="error" *ngIf="isFieldInvalid('discountType')">
-              Discount type is required
+            <div class="form-group">
+              <label><i class="fas fa-dollar-sign"></i> Discount Value</label>
+              <input type="number" formControlName="discountValue" [readonly]="!isDetailsEditMode"
+                     [class.invalid]="detailsForm.get('discountValue')?.invalid && detailsForm.get('discountValue')?.touched">
+              <div *ngIf="detailsForm.get('discountValue')?.invalid && detailsForm.get('discountValue')?.touched" class="error">
+                Discount value is required and must be greater than 0
+              </div>
             </div>
           </div>
 
-<div class="form-group">
-  <label for="discountValue">Discount Value *</label>
-  <div class="input-with-unit input-wrapper">
-    
-    <!-- PERCENTAGE input -->
-    <input
-      *ngIf="editForm.get('discountType')?.value === 'PERCENTAGE'"
-      type="number"
-      id="discountValuePercentage"
-      formControlName="discount_percent"
-      placeholder="Enter percentage"
-      min="0.01"
-      max="100"
-      (wheel)="preventWheel($event)"
-      [ngClass]="{'invalid': isFieldInvalid('discount_percent')}"
-      aria-required="true"
-      [attr.aria-invalid]="isFieldInvalid('discount_percent')"
-    />
-    <!-- FIXED input -->
-    <input
-      *ngIf="editForm.get('discountType')?.value === 'FIXED'"
-      type="number"
-      id="discountValueFixed"
-      formControlName="discount_amount"
-      placeholder="Enter amount"
-      min="1"
-      (wheel)="preventWheel($event)"
-      [ngClass]="{'invalid': isFieldInvalid('discount_amount')}"
-      aria-required="true"
-      [attr.aria-invalid]="isFieldInvalid('discount_amount')"
-    />
+          <!-- Row 3: Start Date and End Date -->
+          <div class="form-row two-col">
+            <div class="form-group">
+              <label><i class="fas fa-calendar-alt"></i> Start Date</label>
+              <input type="datetime-local" formControlName="startDate" [readonly]="!isDetailsEditMode"
+                     [class.invalid]="detailsForm.get('startDate')?.invalid && detailsForm.get('startDate')?.touched">
+              <div *ngIf="detailsForm.get('startDate')?.invalid && detailsForm.get('startDate')?.touched" class="error">
+                Start date is required
+              </div>
+            </div>
+            <div class="form-group">
+              <label><i class="fas fa-calendar-check"></i> End Date</label>
+              <input type="datetime-local" formControlName="endDate" [readonly]="!isDetailsEditMode"
+                     [class.invalid]="detailsForm.get('endDate')?.invalid && detailsForm.get('endDate')?.touched">
+              <div *ngIf="detailsForm.get('endDate')?.invalid && detailsForm.get('endDate')?.touched" class="error">
+                End date is required
+              </div>
+            </div>
+          </div>
+          <div *ngIf="detailsForm.errors?.['sameDateTime'] && (detailsForm.get('startDate')?.touched || detailsForm.get('endDate')?.touched)" class="error">
+            Start and End date/time cannot be the same.
+          </div>
 
-    <!-- Dynamic Unit -->
-    <span class="unit">
-      {{ editForm.get('discountType')?.value === 'PERCENTAGE' ? '%' : 'MMK' }}
-    </span>
+          <!-- Row 4: Description -->
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label><i class="fas fa-align-left"></i> Description</label>
+              <textarea formControlName="description" [readonly]="!isDetailsEditMode" rows="3"
+                        [class.invalid]="detailsForm.get('description')?.invalid && detailsForm.get('description')?.touched"></textarea>
+              <div *ngIf="detailsForm.get('description')?.invalid && detailsForm.get('description')?.touched" class="error">
+                Description is required
+              </div>
+            </div>
+          </div>
 
-    <!-- Warning icon -->
-    <span *ngIf="isFieldInvalid(editForm.get('discountType')?.value === 'PERCENTAGE' ? 'discount_percent' : 'discount_amount')" class="warning-circle"></span>
+          <!-- Row 5: Status -->
+          <div class="form-row">
+            <div class="form-group full-width">
+              <label><i class="fas fa-toggle-on"></i> Status</label>
+              <div class="switch-container">
+                <div class="switch-wrapper" [class.disabled-switch]="!isDetailsEditMode">
+                  <label class="switch">
+                    <input type="checkbox" formControlName="status" [disabled]="!isDetailsEditMode">
+                    <span class="slider round"></span>
+                  </label>
+                  <span class="switch-text">{{ detailsForm.get('status')?.value ? 'Active' : 'Inactive' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <div class="footer-actions">
+          <button class="btn btn-cancel" (click)="closeDetailsModal()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button class="btn btn-primary" (click)="submitDetailsEdit()" [disabled]="!isDetailsEditMode || detailsForm.invalid">
+            <i class="fas fa-save"></i> Update
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- Percentage Errors -->
-  <div class="error" *ngIf="isFieldInvalid('discount_percent') && editForm.get('discountType')?.value === 'PERCENTAGE'">
-    <ng-container *ngIf="editForm.get('discount_percent')?.errors?.['required']">Discount percentage required</ng-container>
-    <ng-container *ngIf="editForm.get('discount_percent')?.errors?.['min']">Must be greater than 0</ng-container>
-    <ng-container *ngIf="editForm.get('discount_percent')?.errors?.['max']">Must be 100 or less</ng-container>
-  </div>
-
-  <!-- Fixed Errors -->
-  <div class="error" *ngIf="isFieldInvalid('discount_amount') && editForm.get('discountType')?.value === 'FIXED'">
-    <ng-container *ngIf="editForm.get('discount_amount')?.errors?.['required']">Fixed amount required</ng-container>
-    <ng-container *ngIf="editForm.get('discount_amount')?.errors?.['min']">Must be at least 1 MMK</ng-container>
-  </div>
-</div>
-
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteConfirmModal" class="modal-overlay" (click)="closeDeleteConfirmModal()">
+    <div class="delete-confirm-modal" (click)="$event.stopPropagation()">
+      <div class="delete-modal-header">
+        <div class="delete-icon">
+          <i class="fas fa-exclamation-triangle"></i>
         </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="startDate">Start Date & Time *</label>
-            <div class="input-wrapper">
-              <input type="datetime-local" id="startDate" formControlName="startDate"
-                [ngClass]="{'invalid': isFieldInvalid('startDate')}"
-                aria-required="true" [attr.aria-invalid]="isFieldInvalid('startDate')">
-              <span *ngIf="isFieldInvalid('startDate')" class="warning-circle"></span>
-            </div>
-            <div class="error" *ngIf="isFieldInvalid('startDate') && editForm.get('startDate')?.errors?.['notTodayOrFuture']">
-              Date & time cannot be in the past
-            </div>
-            <div class="error" *ngIf="isFieldInvalid('startDate') && editForm.get('startDate')?.errors?.['required']">
-              Start date & time is required
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="endDate">End Date & Time *</label>
-            <div class="input-wrapper">
-              <input type="datetime-local" id="endDate" formControlName="endDate"
-                [ngClass]="{'invalid': isFieldInvalid('endDate')}"
-                aria-required="true" [attr.aria-invalid]="isFieldInvalid('endDate')">
-              <span *ngIf="isFieldInvalid('endDate')" class="warning-circle"></span>
-            </div>
-            <div class="error" *ngIf="isFieldInvalid('endDate') && editForm.get('endDate')?.errors?.['notTodayOrFuture']">
-              Date & time cannot be in the past
-            </div>
-            <div class="error" *ngIf="editForm.errors?.['endBeforeOrEqualStart']">
-              End date & time must be earlier than start date 
-            </div>
-            <div class="error" *ngIf="isFieldInvalid('endDate') && editForm.get('endDate')?.errors?.['required']">
-              End date & time is required
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="switch-label">Status</label>
-          <div class="switch-wrapper">
-            <label class="switch">
-              <input type="checkbox" formControlName="status"
-                [ngClass]="{'invalid': isFieldInvalid('status')}"
-                aria-required="false" [attr.aria-invalid]="isFieldInvalid('status')">
-              <span class="slider round"></span>
-            </label>
-            <span class="switch-text">{{ editForm.get('status')?.value ? 'Active' : 'Inactive' }}</span>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
-          <button type="submit" class="btn btn-primary" [disabled]="editForm.invalid">Update Discount</button>
-        </div>
-      </form>
+        <h3>Delete Discount</h3>
+      </div>
+      
+      <div class="delete-modal-body">
+        <p>Are you sure you want to delete <strong>"{{ discountToDelete?.name }}"</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+      
+      <div class="delete-modal-footer">
+        <button class="btn btn-cancel" (click)="closeDeleteConfirmModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button class="btn btn-delete-confirm" (click)="confirmDelete()">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </div>
     </div>
   </div>
 </div>
