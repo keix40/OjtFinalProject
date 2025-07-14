@@ -87,8 +87,6 @@ public class BrandService {
         return brand.orElse(null);
     }
 
-    public Brand getBrandById(Long id) {
-        return repo.findById(id).orElse(null);
-    }
+
 
 }
