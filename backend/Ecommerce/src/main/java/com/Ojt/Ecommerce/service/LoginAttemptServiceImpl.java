@@ -4,8 +4,11 @@ package com.Ojt.Ecommerce.service;
 import com.Ojt.Ecommerce.dto.LoginAttemptDTO;
 import com.Ojt.Ecommerce.dto.PagedResponse;
 import com.Ojt.Ecommerce.entity.LoginAttempt;
+import com.Ojt.Ecommerce.entity.BlockedIP;
 import com.Ojt.Ecommerce.repository.LoginAttemptRepository;
+import com.Ojt.Ecommerce.repository.BlockedIPRepository;
 import com.Ojt.Ecommerce.service.LoginAttemptService;
+import com.Ojt.Ecommerce.service.EmailService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,9 +16,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +29,15 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     private LoginAttemptRepository repository;
 
     @Autowired
+    private BlockedIPRepository blockedIPRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
     private ModelMapper modelMapper;
+
+    private static final int BLOCK_MINUTES = 15;
 
     private LoginAttemptDTO convertToDTO(LoginAttempt entity) {
         return modelMapper.map(entity, LoginAttemptDTO.class);
@@ -143,7 +155,10 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     }
 
     @Override
+    @Transactional
     public void blockIP(String ip) {
+        System.out.println("Blocking IP in service: " + ip);
+        // Block in login attempts (legacy, for UI)
         List<LoginAttempt> attempts = repository.findAll();
         attempts.stream()
                 .filter(a -> a.getIpAddress().equals(ip))
@@ -151,6 +166,41 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     a.setBlocked(true);
                     repository.save(a);
                 });
+        // Block in BlockedIP table
+        LocalDateTime blockedUntil = LocalDateTime.now().plusMinutes(BLOCK_MINUTES);
+        Optional<BlockedIP> existing = blockedIPRepository.findByIpAddress(ip);
+        String userEmail = attempts.stream().filter(a -> a.getIpAddress().equals(ip) && a.getUsername() != null).map(LoginAttempt::getUsername).findFirst().orElse(null);
+        if (existing.isPresent()) {
+            BlockedIP block = existing.get();
+            block.setBlockedUntil(blockedUntil);
+            blockedIPRepository.save(block);
+            System.out.println("Updated existing BlockedIP for: " + ip);
+        } else {
+            BlockedIP block = BlockedIP.builder()
+                    .ipAddress(ip)
+                    .blockedUntil(blockedUntil)
+                    .userEmail(userEmail)
+                    .reason("Manual block or threat detected")
+                    .build();
+            blockedIPRepository.save(block);
+            System.out.println("Created new BlockedIP for: " + ip);
+        }
+        // Send alert email if userEmail is available
+        if (userEmail != null && !userEmail.isEmpty()) {
+            emailService.sendEmail(userEmail, "Security Alert: IP Blocked", "Your IP (" + ip + ") has been blocked for 15 minutes due to suspicious activity or manual action. If this was not you, please contact support.");
+        }
+    }
+
+    public boolean isIPBlocked(String ip) {
+        // Remove expired blocks
+        blockedIPRepository.findByBlockedUntilBefore(LocalDateTime.now()).forEach(blockedIPRepository::delete);
+        Optional<BlockedIP> block = blockedIPRepository.findByIpAddress(ip);
+        return block.isPresent() && block.get().getBlockedUntil().isAfter(LocalDateTime.now());
+    }
+
+    public LocalDateTime getBlockedUntil(String ip) {
+        Optional<BlockedIP> block = blockedIPRepository.findByIpAddress(ip);
+        return block.map(BlockedIP::getBlockedUntil).orElse(null);
     }
 
     @Override

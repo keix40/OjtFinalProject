@@ -47,4 +47,6 @@ public interface LoginAttemptService {
     void blockSession(String sessionId);
     void whitelistSession(String sessionId);
 
+    boolean isIPBlocked(String ip);
+    java.time.LocalDateTime getBlockedUntil(String ip);
 }
