@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ProductDiscountRepository extends JpaRepository<ProductDiscount, Long> {
-    void deleteAllByDiscountId(Long discountId);
+        void deleteAllByDiscountId(Long discountId);
 }
