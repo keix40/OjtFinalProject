@@ -54,6 +54,9 @@ import { UserProductDetailComponent } from './user-product-detail/user-product-d
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
+import { DiscountService } from './services/discount.service';
+import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
+
 
 @NgModule({
   declarations: [
@@ -95,7 +98,7 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
-    BlacklistComponent,
+    DiscountAdminComponent,
   ],
   imports: [
     BrowserModule,
@@ -107,9 +110,10 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     GoogleMapsModule,
     RouterModule,
     CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent,, // Standalone component must be imported here
+    CartSidebarComponent,// Standalone component must be imported here
     ProductDetailComponent,
     BrowserAnimationsModule,
+    BlacklistComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
@@ -118,6 +122,7 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
     RoleService,
     PermissionService,
     AuthService,
+    DiscountService
   ],
   bootstrap: [AppComponent]
 })

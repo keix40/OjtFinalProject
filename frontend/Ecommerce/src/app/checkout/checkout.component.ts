@@ -8,6 +8,7 @@ import { AddressService, Address } from '../services/address.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import * as L from 'leaflet';
 import { OrderService } from '../services/order.service';
+import { DiscountService } from '../services/discount.service';
 
 @Component({
   selector: 'app-checkout',
@@ -71,7 +72,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   showAddAddressModal = false;
   addressForm: FormGroup;
   isEditMode = false;
-  
+
   // Map properties
   map: L.Map | undefined;
   marker: L.Marker | undefined;
@@ -85,16 +86,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   // userId: number | undefined;
 
   constructor(
-    
     private router: Router,
-   
     private cartService: CartService,
-    public imageService: ImageService
-  ,
+    public imageService: ImageService,
     private authService: AuthService,
     private addressService: AddressService,
     private fb: FormBuilder,
-    private orderService: OrderService
+    private orderService: OrderService,
+    private discountService: DiscountService
   ) {
     this.addressForm = this.fb.group({
       address: ['', Validators.required],
@@ -152,7 +151,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   nextStep(form?: any) {
     if (form && !form.valid) return;
-    
+
     // Check if phone number is null/empty and update user details if needed
     if (this.activeStep === 1) {
       const user = this.authService.getDecodedToken();
@@ -168,7 +167,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           gender: user.gender || null,
           roles: user.roles ? user.roles.split(',') : []
         };
-        
+
         this.authService.updateUserDetails(updateData).subscribe({
           next: (response) => {
             console.log('Phone number updated successfully:', response);
@@ -241,24 +240,24 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       alert('Please apply a valid coupon code first.');
       return;
     }
-    
+
     this.stepCompleted[3] = true;
-    
+
     // Get user ID from auth service
     const user = this.authService.getDecodedToken();
     const userId = user ? user.id : null;
-    
+
     // Get selected address ID
-    const selectedAddressId = this.selectedAddressIndex !== null && this.addresses[this.selectedAddressIndex] 
-      ? this.addresses[this.selectedAddressIndex].id 
+    const selectedAddressId = this.selectedAddressIndex !== null && this.addresses[this.selectedAddressIndex]
+      ? this.addresses[this.selectedAddressIndex].id
       : null;
-    
+
     // Get delivery method ID
     const deliveryMethodId = this.deliveryId;
-    
+
     // Get discount ID if coupon is applied
     const discountId = this.discount && this.isCouponValid ? this.discount.id : null;
-    
+
     this.router.navigate(['/checkout/payment'], {
       state: {
         customer: this.customer,
@@ -490,50 +489,34 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.couponCode === this.appliedCouponCode) {
+    if (this.couponCode === this.appliedCouponCode && this.isCouponValid) {
       this.discountMessage = 'This coupon has already been applied.';
-      this.isCouponValid = false;
       return;
     }
 
     const user = this.authService.getDecodedToken();
     const userId = user ? user.id : null;
+    const productIds = this.cartItems
+      .map(item => item.productId)
+      .filter((id): id is number => typeof id === 'number');
 
-    this.orderService.getDiscount(userId,this.couponCode).subscribe({
-      next: (discount) => {
-        this.discount = discount;
-        const today = new Date();
-        const start = new Date(discount.startDate);
-        const end = new Date(discount.endDate);
-        const subtotal = this.getSubtotal();
-
-        if (today >= start && today <= end && discount.canUse) {
-          if (discount.discountType === 'PERCENTAGE') {
-            this.discountAmount = subtotal * (discount.discountValue || 0);
-          } else {
-            this.discountAmount = discount.discountValue || 0;
-          }
-
-          this.appliedCouponCode = this.couponCode;
+    this.discountService.validateCoupon(this.couponCode, userId, productIds).subscribe({
+      next: (response) => {
+        if (response.valid) {
+          this.discountAmount = response.discountAmount;
           this.isCouponValid = true;
           this.discountMessage = `✅ Coupon applied! You saved ${Math.round(this.discountAmount).toLocaleString()} MMK.`;
+          this.appliedCouponCode = this.couponCode;
         } else {
           this.discountAmount = 0;
           this.isCouponValid = false;
-          this.discountMessage = '❌ This coupon is not valid or has expired.';
+          this.discountMessage = `❌ ${response.message}`;
         }
       },
       error: (err) => {
         this.discountAmount = 0;
         this.isCouponValid = false;
-      
-        if (err.error === 'used') {
-          this.discountMessage = '❌ This coupon has already been used.';
-        } else if (err.status === 404) {
-          this.discountMessage = '❌ Discount code not found.';
-        } else {
-          this.discountMessage = '❌ Invalid coupon code.';
-        }
+        this.discountMessage = '❌ Failed to validate coupon. Please try again.';
       }
     });
   }

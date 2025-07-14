@@ -93,7 +93,7 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       this.permissionService.setPermissions(permissionArray); //add this for permmision
 
       this.router.navigate(['/home']);
-      const decoded: any = this.auth.getDecodedToken();
+
     if (decoded && decoded.sub) {
       localStorage.setItem('email', decoded.sub); // "sub" is the email in your token
     }

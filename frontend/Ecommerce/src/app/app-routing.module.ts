@@ -27,6 +27,8 @@ import { RolesPermissionsComponent } from './roles-permissions/roles-permissions
 import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
+
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
@@ -68,6 +70,7 @@ const routes: Routes = [
       { path: 'users/vip', component: VipCustomersComponent},
       { path: 'users/blacklist', component: BlacklistComponent},
       { path: 'users/login-attempts', component: LoginAttemptsComponent},
+      { path: 'admin/discounts', component: DiscountAdminComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
@@ -83,4 +86,3 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
-

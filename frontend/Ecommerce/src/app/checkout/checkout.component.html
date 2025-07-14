@@ -150,25 +150,25 @@
           <div class="fw-bold ms-2">{{ (item.price * item.quantity) | number:'1.0-0' }} MMK</div>
         </div>
         <hr>
-        <input type="text" class="form-control bg-light border-0 mb-2" placeholder="Enter a coupon or a reward code" [(ngModel)]="couponCode">
-        <button class="btn btn-outline-primary w-100 mb-2 rounded-pill" (click)="applyCoupon()">Apply</button>
-        <p [ngClass]="{'text-success': isCouponValid, 'text-danger': !isCouponValid}">
-          {{ discountMessage }}
-        </p>
+        <!-- Coupon Input UI -->
+        <div class="mb-3">
+          <label for="couponInput" class="form-label">Coupon Code</label>
+          <div class="input-group">
+            <input id="couponInput" type="text" class="form-control" placeholder="Enter coupon code" [(ngModel)]="couponCode" name="couponCode">
+            <button class="btn btn-outline-primary" type="button" (click)="applyCoupon()">Apply</button>
+          </div>
+          <div *ngIf="discountMessage" class="mt-2">
+            <span [ngClass]="{'text-success': isCouponValid, 'text-danger': !isCouponValid}">{{ discountMessage }}</span>
+          </div>
+        </div>
+        <!-- End Coupon Input UI -->
         <h6 class="fw-bold mt-3 mb-2">Summary</h6>
         <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>{{ getSubtotal() | number:'1.0-0' }} MMK</span></div>
         <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>{{ deliveryFee | number:'1.0-0' }} MMK</span></div>
         <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-{{ discountAmount | number:'1.0-0' }} MMK</span></div>
         <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">{{ getTotal() | number:'1.0-0' }} MMK</span></div>
-        <div class="text-success mt-2" *ngIf="discountAmount > 0 && discount">
-          Yay! You saved
-          <span *ngIf="discount.discountType === 'PERCENTAGE'">
-            {{ (discount.discountValue * 100) | number:'1.0-0' }}%
-          </span>
-          <span *ngIf="discount.discountType === 'FIXED'">
-            {{ discountAmount | number:'1.0-0' }} MMK
-          </span>
-          in total
+        <div class="text-success mt-2" *ngIf="discountAmount > 0 && isCouponValid">
+          <span>Yay! You saved {{ discountAmount | number:'1.0-0' }} MMK in total</span>
         </div>
       </div>
     </div>
