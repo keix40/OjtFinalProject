@@ -22,4 +22,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("SELECT COUNT(c) > 0 FROM Category c WHERE LOWER(TRIM(c.name)) = LOWER(TRIM(:name)) AND c.parent.id = :parentId")
     boolean existsByNameAndParent(@Param("name") String name, @Param("parentId") Long parentId);
 
+    @Query("select bc.category from BrandHasCategory bc where bc.brand.id = :id")
+    public List<Category> findAllCategoryByBrandId(@Param("id") Long id);
+
 }

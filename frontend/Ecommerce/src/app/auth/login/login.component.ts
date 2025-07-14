@@ -92,14 +92,27 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
 
       this.permissionService.setPermissions(permissionArray);
 
-      this.router.navigate(['/home']);
+      // Role-based redirect
+      const roles = decoded?.roles ? decoded.roles.split(',') : [];
+      if (roles.includes('CUSTOMER')) {
+        this.router.navigate(['/home']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+
       if (decoded && decoded.sub) {
         localStorage.setItem('email', decoded.sub); // reuse 'decoded'
       }
     },
     error: (err) => {
       console.error(err);
-       this.loginError = 'Invalid email or password.';
+      if (err?.error?.message && err.error.message.toLowerCase().includes('verify your email')) {
+        // Redirect to OTP verification page with email
+        const email = this.loginForm.get('email')?.value;
+        this.router.navigate(['/verify-otp'], { queryParams: { email } });
+      } else {
+        this.loginError = 'Invalid email or password.';
+      }
     }
   });
   }

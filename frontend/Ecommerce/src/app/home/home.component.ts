@@ -1,4 +1,7 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { DiscountService } from '../services/discount.service';
+import { NotificationService } from '../services/notification.service';
+import { NotifcationService } from '../notifcation.service';
 import { CategoryService } from '../services/category.service';
 import { Category } from '../category'; // Use the flat Category interface
 import { BrandService } from '../services/brand.service';
@@ -127,20 +130,20 @@ export class HomeComponent implements OnInit {
     return `http://localhost:8080${path}`;
   }
 
-  getAllCategoriesUrl(): string {
+  getAllCategoriesUrl() {
     return '/usercategorylist';
   }
 
-  getAllBrandsUrl(): string {
-    return '/user-brand-list';
+  getAllBrandsUrl() {
+    return '/userbrandlist';
   }
 
   goToCategory(cat: Category) {
-    this.router.navigate(['/uProductlist'], { queryParams: { category: cat.name } });
+    this.router.navigate(['/userproductlist'], { queryParams: { category: cat.name } });
   }
 
   goToBrand(brand: BrandListDTO) {
     // You can add query param or route as needed
-    this.router.navigate(['/uProductlist'], { queryParams: { brand: brand.name } });
+    this.router.navigate(['/userproductlist'], { queryParams: { brand: brand.name } });
   }
 }

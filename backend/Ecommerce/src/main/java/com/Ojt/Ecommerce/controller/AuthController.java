@@ -26,6 +26,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import com.Ojt.Ecommerce.dto.EmailRequest;
+import java.security.SecureRandom;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -48,9 +50,9 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
 
-
-
-
+    // Configurable thresholds
+    private static final int THREAT_SCORE_BLOCK_THRESHOLD = 60; // 60 = high, 80 = critical
+    private static final int ATTEMPT_WINDOW_MINUTES = 5;
 
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -93,34 +95,114 @@ public class AuthController {
 //    }
 
     @PostMapping("/login") // test login attempt
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest, HttpServletRequest request) {
-        String email = loginRequest.getEmail().trim().toLowerCase();
-        String ip = request.getRemoteAddr();
+    public ResponseEntity<LoginResponse> login(@RequestBody Map<String, Object> loginRequest, HttpServletRequest request) {
+        String email = ((String)loginRequest.get("email")).trim().toLowerCase();
+        String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
+        String ip = extractClientIp(request);
+        boolean isLocal = !isPublicIp(ip);
 
-        // ✅ Blocked IP check (MUST be before authentication)
-        if (loginAttemptService.isBlockedIP(ip)) {
-            throw new CustomException("This IP address has been blocked due to suspicious activity.");
+        String city = loginRequest.getOrDefault("city", "").toString();
+        String region = loginRequest.getOrDefault("region", "").toString();
+        String country = loginRequest.getOrDefault("country", "").toString();
+        String countryCode = loginRequest.getOrDefault("countryCode", "").toString();
+        String location = "";
+        if (!city.isEmpty() || !region.isEmpty() || !country.isEmpty()) {
+            location = String.join(", ", java.util.stream.Stream.of(city, region, country).filter(str -> str != null && !str.isEmpty()).toArray(String[]::new));
         }
-
+        boolean isVPN = false;
+        boolean isProxy = false;
+        if (location.isEmpty()) {
+            location = isLocal ? "Localhost" : "Unknown";
+            countryCode = isLocal ? "LOCAL" : "";
+            // ... backend GeoIP logic as before ...
+            try {
+                if (!isLocal) {
+                    // 1. Try ip-api.com
+                    try {
+                        java.net.URL url = new java.net.URL("http://ip-api.com/json/" + ip);
+                        java.util.Scanner s = new java.util.Scanner(url.openStream()).useDelimiter("\\A");
+                        String geoJson = s.hasNext() ? s.next() : "";
+                        s.close();
+                        System.out.println("ip-api.com response: " + geoJson);
+                        com.fasterxml.jackson.databind.JsonNode geoNode = new com.fasterxml.jackson.databind.ObjectMapper().readTree(geoJson);
+                        if (geoNode.has("status") && geoNode.get("status").asText().equals("success")) {
+                            city = geoNode.has("city") ? geoNode.get("city").asText("") : "";
+                            region = geoNode.has("regionName") ? geoNode.get("regionName").asText("") : "";
+                            country = geoNode.has("country") ? geoNode.get("country").asText("") : "";
+                            location = String.join(", ", java.util.stream.Stream.of(city, region, country).filter(str -> str != null && !str.isEmpty()).toArray(String[]::new));
+                            countryCode = geoNode.has("countryCode") ? geoNode.get("countryCode").asText("") : "";
+                        }
+                    } catch (Exception e) {
+                        System.out.println("ip-api.com failed: " + e.getMessage());
+                    }
+                    // 2. If still empty, try ipinfo.io
+                    if (location == null || location.isEmpty() || location.equals(", , ")) {
+                        try {
+                            java.net.URL url = new java.net.URL("https://ipinfo.io/" + ip + "/json");
+                            java.util.Scanner s = new java.util.Scanner(url.openStream()).useDelimiter("\\A");
+                            String infoJson = s.hasNext() ? s.next() : "";
+                            s.close();
+                            System.out.println("ipinfo.io response: " + infoJson);
+                            com.fasterxml.jackson.databind.JsonNode infoNode = new com.fasterxml.jackson.databind.ObjectMapper().readTree(infoJson);
+                            city = infoNode.has("city") ? infoNode.get("city").asText("") : "";
+                            country = infoNode.has("country") ? infoNode.get("country").asText("") : "";
+                            location = String.join(", ", java.util.stream.Stream.of(city, country).filter(str -> str != null && !str.isEmpty()).toArray(String[]::new));
+                            countryCode = country;
+                        } catch (Exception e) {
+                            System.out.println("ipinfo.io failed: " + e.getMessage());
+                        }
+                    }
+                    // 3. If still empty, try ipgeolocation.io (no API key, limited info)
+                    if (location == null || location.isEmpty() || location.equals(", , ")) {
+                        try {
+                            java.net.URL url = new java.net.URL("https://api.ipgeolocation.io/ipgeo?ip=" + ip);
+                            java.util.Scanner s = new java.util.Scanner(url.openStream()).useDelimiter("\\A");
+                            String geoJson = s.hasNext() ? s.next() : "";
+                            s.close();
+                            System.out.println("ipgeolocation.io response: " + geoJson);
+                            com.fasterxml.jackson.databind.JsonNode geoNode = new com.fasterxml.jackson.databind.ObjectMapper().readTree(geoJson);
+                            city = geoNode.has("city") ? geoNode.get("city").asText("") : "";
+                            country = geoNode.has("country_name") ? geoNode.get("country_name").asText("") : "";
+                            location = String.join(", ", java.util.stream.Stream.of(city, country).filter(str -> str != null && !str.isEmpty()).toArray(String[]::new));
+                            countryCode = geoNode.has("country_code2") ? geoNode.get("country_code2").asText("") : "";
+                        } catch (Exception e) {
+                            System.out.println("ipgeolocation.io failed: " + e.getMessage());
+                        }
+                    }
+                    // 4. If still empty, set to 'Unknown'
+                    if (location == null || location.isEmpty() || location.equals(", , ")) {
+                        location = "Unknown";
+                    }
+                }
+            } catch (Exception e) {
+                // fallback to defaults
+                System.out.println("GeoIP lookup failed: " + e.getMessage());
+            }
+        }
+        // ... rest of login logic unchanged, use location and countryCode for LoginAttemptDTO ...
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, loginRequest.getPassword())
+                    new UsernamePasswordAuthenticationToken(email, password)
             );
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
-
             org.springframework.security.core.userdetails.User springUser =
                     (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
             if (!user.isVerified()) {
                 throw new CustomException("Please verify your email before logging in.");
             }
-
-            // ✅ Save successful attempt
-            // ➕ Prepare DTO for successful attempt
+            // Save successful attempt
+            String sessionId = null;
+            var session = request.getSession();
+            if (session != null) {
+                Object shortSessionId = session.getAttribute("shortSessionId");
+                if (shortSessionId == null) {
+                    shortSessionId = generateShortSessionId();
+                    session.setAttribute("shortSessionId", shortSessionId);
+                }
+                sessionId = shortSessionId.toString();
+            }
             LoginAttemptDTO successDTO = LoginAttemptDTO.builder()
                     .username(email)
                     .ipAddress(ip)
@@ -128,31 +210,26 @@ public class AuthController {
                     .timestamp(LocalDateTime.now())
                     .status("successful")
                     .isBlocked(false)
-                    .isVPN(false)  // you can set real detection here
-                    .isProxy(false)
-                    .location("Unknown") // or real geo location
-                    .attemptCount(1)
+                    .isVPN(isVPN)
+                    .isProxy(isProxy)
+                    .location(location)
+                    .countryCode(countryCode)
+                    .attemptCount(loginAttemptService.calculateRecentAttemptCount(ip, LocalDateTime.now()))
+                    .sessionId(sessionId)
                     .build();
-
-            // ✅ Add attemptCount + timeframe dynamically
             loginAttemptService.enrichAttemptWithStats(successDTO);
-
-            // ➕ Calculate threat score and level
             int score = loginAttemptService.calculateThreatScore(successDTO);
             successDTO.setThreatScore(score);
             successDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
-
-            // 💾 Save
             loginAttemptService.saveAttempt(successDTO);
-
+            if (score >= THREAT_SCORE_BLOCK_THRESHOLD) {
+                loginAttemptService.blockIP(ip);
+            }
             String accessToken = jwtTokenProvider.generateToken(user);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-
             return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
-
         } catch (Exception ex) {
-            // ❌ Save failed attempt
-            // ➕ Prepare DTO for failed attempt
+            // Save failed attempt
             LoginAttemptDTO failDTO = LoginAttemptDTO.builder()
                     .username(email)
                     .ipAddress(ip)
@@ -160,29 +237,56 @@ public class AuthController {
                     .timestamp(LocalDateTime.now())
                     .status("failed")
                     .isBlocked(false)
-                    .isVPN(false)
-                    .isProxy(false)
-                    .location("Unknown")
-                    .attemptCount(1)
+                    .isVPN(isVPN)
+                    .isProxy(isProxy)
+                    .location(location)
+                    .countryCode(countryCode)
+                    .attemptCount(loginAttemptService.calculateRecentAttemptCount(ip, LocalDateTime.now()))
+                    .sessionId(null)
                     .build();
-
-            // ✅ Add attemptCount + timeframe dynamically
             loginAttemptService.enrichAttemptWithStats(failDTO);
-
-            // ➕ Calculate threat score and level
             int score = loginAttemptService.calculateThreatScore(failDTO);
             failDTO.setThreatScore(score);
             failDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
-
-            // 💾 Save
             loginAttemptService.saveAttempt(failDTO);
-
+            if (score >= THREAT_SCORE_BLOCK_THRESHOLD) {
+                loginAttemptService.blockIP(ip);
+            }
             throw ex;
         }
     }
 
+    // Utility to extract real client IP (prefers X-Client-IP, then X-Debug-IP, then X-Forwarded-For, then remoteAddr)
+    private String extractClientIp(HttpServletRequest request) {
+        String clientIp = request.getHeader("X-Client-IP");
+        if (clientIp != null && !clientIp.isEmpty() && isPublicIp(clientIp.trim())) {
+            return clientIp.trim();
+        }
+        String debugIp = request.getHeader("X-Debug-IP");
+        if (debugIp != null && !debugIp.isEmpty()) {
+            return debugIp.trim();
+        }
+        String xfHeader = request.getHeader("X-Forwarded-For");
+        if (xfHeader != null && !xfHeader.isEmpty()) {
+            return xfHeader.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+    // Helper to check if IP is public
+    private boolean isPublicIp(String ip) {
+        return !(ip.startsWith("10.") || ip.startsWith("192.168.") || ip.startsWith("172.16.") || ip.equals("127.0.0.1") || ip.equals("::1"));
+    }
 
-
+    // Utility to generate a short, user-friendly session ID
+    private static String generateShortSessionId() {
+        String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder("sess_");
+        for (int i = 0; i < 10; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
 
 
     @PostMapping("/refresh-token")
@@ -247,7 +351,17 @@ public class AuthController {
         otpVerification.setVerified(true);
         otpVerificationRepository.save(otpVerification);
 
-        return ResponseEntity.ok(Map.of("message", "OTP verified successfully."));
+        // Set user as verified
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("User not found"));
+        user.setVerified(true);
+        userRepository.save(user);
+
+        // Generate JWT and refresh token for seamless login
+        String accessToken = jwtTokenProvider.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
     }
 
     @PostMapping("/resend-otp")
@@ -424,5 +538,43 @@ public class AuthController {
                 "message", "Profile image updated successfully",
                 "imagePath", imagePath
         ));
+    }
+
+    @PostMapping("/validate-real-email")
+    public ResponseEntity<?> validateRealEmail(@RequestBody EmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        boolean isReal = emailVerificationService.isEmailReal(email);
+        if (isReal) {
+            return ResponseEntity.ok(Map.of("real", true, "message", "Email is real/active."));
+        } else {
+            return ResponseEntity.ok(Map.of("real", false, "message", "Email does not exist or is not active."));
+        }
+    }
+
+    @PostMapping("/send-login-otp")
+    public ResponseEntity<?> sendLoginOtp(@RequestBody EmailRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new CustomException("Invalid email format.");
+        }
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            throw new CustomException("No account found with this email.");
+        }
+        if (userOpt.get().isVerified()) {
+            throw new CustomException("Email is already verified.");
+        }
+        // Generate OTP
+        String otp = String.format("%06d", new Random().nextInt(999999));
+        // Save to DB
+        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
+                .orElse(new OtpVerification());
+        otpVerification.setEmail(email);
+        otpVerification.setOtpCode(otp);
+        otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
+        otpVerification.setVerified(false);
+        otpVerificationRepository.save(otpVerification);
+        emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
+        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
     }
 }

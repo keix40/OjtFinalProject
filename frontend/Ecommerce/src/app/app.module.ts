@@ -45,11 +45,20 @@ import { LoginAttemptsComponent } from './login-attempts/login-attempts.componen
 import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
+import { BlacklistComponent } from './blacklist/blacklist.component';
+import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
+import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
+import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
 import { FooterComponent } from './footer/footer.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
+import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
+import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
+import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+import { MatTableModule } from '@angular/material/table';
+import { NotificationComponent } from './notification/notification.component';
 import { HeaderComponent } from './header/header.component';
 import { BreadcrumbComponent } from './breadcrumb.component';import { CategoryListComponent } from './category-list/category-list.component';
 import { BrandListComponent } from './brand-list/brand-list.component';
@@ -58,7 +67,6 @@ import { UserBrandListComponent } from './user-brand-list/user-brand-list.compon
 @NgModule({
   declarations: [
     AppComponent,
-    TestComponent,
     LoginComponent,
     RegisterComponent,
 
@@ -93,6 +101,9 @@ import { UserBrandListComponent } from './user-brand-list/user-brand-list.compon
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
+    DiscountInsertComponent,
+    DiscountEventManagementComponent,
+    DiscountCouponComponent,
     ReturnRequestComponent,
     ReturnListComponent,
     BrandListComponent,
@@ -107,9 +118,23 @@ import { UserBrandListComponent } from './user-brand-list/user-brand-list.compon
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CommonModule,
+    CommonModule, // Required for pipes like date, currency, number
+    CartSidebarComponent, // Standalone component must be imported here
+   ProductDetailComponent,
     BrowserAnimationsModule,
+    BlacklistComponent,
+    TestComponent,
+    //MatInputModule,
+    //MatAutocompleteModule,
+    //MatFormFieldModule,
+    // MatIconModule,
+    //MatButtonModule,
     FooterComponent,
+    HeaderComponent,
+    BreadcrumbComponent,
+    VerifyOtpComponent,
+    MatTableModule,
+    NotificationComponent,
     HeaderComponent,
     BreadcrumbComponent,
   ],

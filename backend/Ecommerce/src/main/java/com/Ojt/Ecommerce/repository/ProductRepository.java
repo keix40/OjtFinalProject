@@ -87,5 +87,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             "productVariants.variantAttributeValues.attributeValue.attribute"
     })
     Optional<Product> findById(Long id);
+
+    // Methods for finding products by brand, category, and brand-category
+    @Query("SELECT p FROM Product p WHERE p.brand.id = :brandId")
+    List<Product> findByBrandId(@Param("brandId") Long brandId);
+
+    @Query("SELECT p FROM Product p JOIN p.productCategories pc WHERE pc.category.id = :categoryId")
+    List<Product> findByCategoryId(@Param("categoryId") Long categoryId);
+
+    @Query("SELECT p FROM Product p JOIN p.productCategories pc WHERE pc.brand.id = :brandId AND pc.category.id = :categoryId")
+    List<Product> findByBrandIdAndCategoryId(@Param("brandId") Long brandId, @Param("categoryId") Long categoryId);
+
+    List<Product> findByIdIn(List<Long> ids);
 }
 

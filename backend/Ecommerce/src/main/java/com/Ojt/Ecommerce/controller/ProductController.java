@@ -47,6 +47,12 @@ public class ProductController {
         return ResponseEntity.ok(Map.of("message", "Product created successfully"));
     }
 
+    @PostMapping("/by-ids")
+    public List<ProductDTO> getProductsByIds(@RequestBody Map<String, List<Long>> body) {
+        List<Long> ids = body.get("ids");
+        return service.getProductDTOsByIds(ids);
+    }
+
 
 //    @GetMapping("/getallproduct")
 //    public List<Product> getAllProduct(){

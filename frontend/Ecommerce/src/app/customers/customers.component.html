@@ -83,10 +83,57 @@
         <i data-lucide="x" class="w-4 h-4 mr-1 inline"></i>
         Clear
       </button>
-      <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-blue-700 hover:bg-blue-50 transition-all" (click)="exportCustomers()">
-        <i data-lucide="download" class="w-4 h-4"></i>
-        Export Data
-      </button>
+      <!-- Export Dropdown Button (Stable, click-based two-level menu) -->
+      <div class="relative inline-block text-left" (document:click)="onDocumentClick($event)">
+        <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-blue-700 hover:bg-blue-50 transition-all" (click)="toggleExportDropdown(); $event.stopPropagation()">
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Export Data
+          <i class="w-4 h-4 ml-1" data-lucide="chevron-down"></i>
+        </button>
+        <div *ngIf="exportDropdownOpen" class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+          <div class="py-1">
+            <!-- Excel Export Parent -->
+            <div class="relative group">
+              <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 group" (click)="toggleExcelDropdown(); $event.stopPropagation()">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export as Excel
+                <i class="w-4 h-4 ml-auto" data-lucide="chevron-right"></i>
+              </button>
+              <div *ngIf="excelDropdownOpen" class="absolute left-full top-0 mt-0 ml-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="exportCustomersExcel(false); closeAllDropdowns()">
+                  <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export All as Excel
+                </button>
+                <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                        (click)="exportCustomersExcel(true); closeAllDropdowns()"
+                        [disabled]="selectedCustomers.length === 0"
+                        [title]="selectedCustomers.length === 0 ? 'Select customers to enable' : ''"
+                        [ngClass]="selectedCustomers.length === 0 ? 'cursor-not-allowed font-normal text-gray-400' : 'font-medium'">
+                  <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Export Selected as Excel
+                </button>
+              </div>
+            </div>
+            <!-- PDF Export Parent -->
+            <div class="relative group">
+              <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 group" (click)="togglePdfDropdown(); $event.stopPropagation()">
+                <i data-lucide="file-text" class="w-4 h-4"></i> Export as PDF
+                <i class="w-4 h-4 ml-auto" data-lucide="chevron-right"></i>
+              </button>
+              <div *ngIf="pdfDropdownOpen" class="absolute left-full top-0 mt-0 ml-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="exportCustomersPDF(false); closeAllDropdowns()">
+                  <i data-lucide="file-text" class="w-4 h-4"></i> Export All as PDF
+                </button>
+                <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                        (click)="exportCustomersPDF(true); closeAllDropdowns()"
+                        [disabled]="selectedCustomers.length === 0"
+                        [title]="selectedCustomers.length === 0 ? 'Select customers to enable' : ''"
+                        [ngClass]="selectedCustomers.length === 0 ? 'cursor-not-allowed font-normal text-gray-400' : 'font-medium'">
+                  <i data-lucide="file-text" class="w-4 h-4"></i> Export Selected as PDF
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- End Export Dropdown Button (Stable, click-based two-level menu) -->
       <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-gray-700 hover:bg-gray-50 transition-all" (click)="refreshData()">
         <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
         Refresh
@@ -313,6 +360,57 @@
       <i data-lucide="users" class="w-12 h-12 text-muted mb-3"></i>
       <h4>No customers found</h4>
       <p class="text-muted">Try adjusting your search criteria or filters</p>
+    </div>
+  </div>
+  
+  <!-- Tailwind Modal for Customer Details -->
+  <div *ngIf="showCustomerModal && selectedCustomerDetails" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 glassmorphism animate-fade-in">
+      <button (click)="closeCustomerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl font-bold focus:outline-none">
+        &times;
+      </button>
+      <div class="flex flex-col items-center mb-4">
+        <img [src]="imageService.getAvatarImageUrl(selectedCustomerDetails)" [alt]="selectedCustomerDetails.name" class="w-20 h-20 rounded-full object-cover mb-2 border-4 border-blue-100 shadow">
+        <h2 class="text-2xl font-bold text-gray-900 mb-1">{{ selectedCustomerDetails.name }}</h2>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-2"
+          [ngClass]="selectedCustomerDetails.status === 'active' ? 'bg-green-100 text-green-700 border border-green-200' : selectedCustomerDetails.status === 'inactive' ? 'bg-gray-100 text-gray-700 border border-gray-200' : 'bg-red-100 text-red-700 border border-red-200'">
+          {{ selectedCustomerDetails.status | titlecase }}
+        </span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="rounded-xl border border-blue-100 glassmorphism-light p-4 flex flex-col items-start">
+          <div class="text-sm text-gray-500 font-semibold mb-1 flex items-center"><i data-lucide="envelope" class="w-4 h-4 mr-1"></i>Email</div>
+          <div class="text-gray-800 break-all">{{ selectedCustomerDetails.email }}</div>
+        </div>
+        <div class="rounded-xl border border-blue-100 glassmorphism-light p-4 flex flex-col items-start">
+          <div class="text-sm text-gray-500 font-semibold mb-1 flex items-center"><i data-lucide="phone" class="w-4 h-4 mr-1"></i>Phone</div>
+          <div class="text-gray-800 break-all">{{ selectedCustomerDetails.phone }}</div>
+        </div>
+        <div class="rounded-xl border border-blue-100 glassmorphism-light p-4 flex flex-col items-start">
+          <div class="text-sm text-gray-500 font-semibold mb-1 flex items-center"><i data-lucide="calendar" class="w-4 h-4 mr-1"></i>Join Date</div>
+          <div class="text-gray-800">{{ selectedCustomerDetails.joinDate | date:'MMM dd, yyyy' }}</div>
+        </div>
+        <div class="rounded-xl border border-blue-100 glassmorphism-light p-4 flex flex-col items-start">
+          <div class="text-sm text-gray-500 font-semibold mb-1 flex items-center"><i data-lucide="shopping-cart" class="w-4 h-4 mr-1"></i>Total Orders</div>
+          <div class="text-gray-800">{{ selectedCustomerDetails.totalOrders }}</div>
+        </div>
+        <div class="rounded-xl border border-green-200 glassmorphism-light p-4 flex flex-col items-start md:col-span-2">
+          <div class="text-sm text-gray-500 font-semibold mb-1 flex items-center"><i data-lucide="dollar-sign" class="w-4 h-4 mr-1"></i>Total Spent</div>
+          <div class="text-green-700 font-bold text-lg">${{ selectedCustomerDetails.totalSpent | number:'1.2-2' }}</div>
+        </div>
+      </div>
+      <div *ngIf="selectedCustomerDetails.addresses && selectedCustomerDetails.addresses.length > 0" class="mb-2">
+        <div class="text-sm text-gray-500 font-semibold mb-1 flex items-center"><i data-lucide="map-pin" class="w-4 h-4 mr-1"></i>Addresses</div>
+        <ul class="list-disc list-inside text-gray-700 text-sm">
+          <li *ngFor="let address of selectedCustomerDetails.addresses">
+            <span class="font-semibold">{{ address.type | titlecase }}:</span>
+            {{ address.street }}, {{ address.city }}, {{ address.state }} {{ address.zip }}
+          </li>
+        </ul>
+      </div>
+      <div class="flex justify-end mt-6">
+        <button (click)="closeCustomerModal()" class="px-5 py-2 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-all">Close</button>
+      </div>
     </div>
   </div>
   

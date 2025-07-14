@@ -44,6 +44,6 @@ export class UserBrandListComponent implements OnInit {
   }
 
   goToBrand(brand: BrandListDTO) {
-    this.router.navigate(['/uProductlist'], { queryParams: { brand: brand.name } });
+    this.router.navigate(['/userproductlist'], { queryParams: { brand: brand.name } });
   }
 }

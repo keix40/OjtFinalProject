@@ -60,6 +60,11 @@ private client!: Client;
     this.client.activate();
   }
 
+  // Public method to send notifications
+  sendNotification(notificationData: any): void {
+    this.notificationSubject.next(notificationData);
+  }
+
    //🔁 Load stored notifications from backend
 
   getStoredNotifications(): Observable<any[]> {

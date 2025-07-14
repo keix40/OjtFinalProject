@@ -172,12 +172,20 @@ export class ImageService {
       return this.config.defaultAvatarImage;
     }
 
-    const initials = name
-      .split(' ')
-      .map(part => part[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
+    // Use up to 2 initials from the name or email
+    let initials = '';
+    if (name.includes('@')) {
+      // If it's an email, use the first letter before @
+      initials = name[0].toUpperCase();
+    } else {
+      initials = name
+        .split(' ')
+        .filter(Boolean)
+        .map(part => part[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+    }
 
     const colors = [
       '#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', 
@@ -185,7 +193,6 @@ export class ImageService {
       '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', 
       '#ff5722', '#795548', '#9e9e9e', '#607d8b'
     ];
-    
     const charCodeSum = name.charCodeAt(0) + name.charCodeAt(name.length - 1);
     const color = colors[charCodeSum % colors.length];
 

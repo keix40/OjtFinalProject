@@ -1,0 +1,174 @@
+.notification {
+  position: fixed;
+  top: 36px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 320px;
+  max-width: 420px;
+  background: #fff;
+  color: #181818;
+  padding: 0;
+  border-radius: 14px;
+  z-index: 9999;
+  box-shadow: 0 4px 24px 0 rgba(0,0,0,0.08), 0 1.5px 6px rgba(0,0,0,0.03);
+  font-size: 0.97em;
+  border: 1.2px solid #e0e0e0;
+  animation: bounceIn 0.5s cubic-bezier(.4,1.7,.6,.97), fadeSlideOut 0.4s cubic-bezier(.4,1.7,.6,.97) 3.6s forwards;
+  overflow: hidden;
+  transition: box-shadow 0.2s, border 0.2s;
+  font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 14px 22px 14px 14px;
+  gap: 12px;
+}
+
+.notification-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f7f7f7;
+  color: #222;
+  font-size: 1em;
+  box-shadow: none;
+  flex-shrink: 0;
+  border: 1px solid #e0e0e0;
+  font-weight: 400;
+  margin-right: 2px;
+}
+
+.notification a {
+  color: #181818;
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: color 0.2s;
+  text-shadow: none;
+  font-size: 0.98em;
+  position: relative;
+  padding-bottom: 1.5px;
+}
+
+.notification a::after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px;
+  background: #181818;
+  border-radius: 1px;
+  transition: width 0.25s cubic-bezier(.4,1.7,.6,.97);
+}
+
+.notification a:hover {
+  color: #000;
+}
+
+.notification a:hover::after {
+  width: 100%;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 8px;
+  margin-left: 12px;
+  border-radius: 50%;
+  line-height: 1;
+  opacity: 0.7;
+  transition: background 0.2s, opacity 0.2s, color 0.2s;
+  box-shadow: none;
+}
+
+.close-btn:hover {
+  background: #f5f5f5;
+  color: #000;
+  opacity: 1;
+}
+
+/* Notification types (monochrome accent) */
+.notification.success {
+  border-left: 4px solid #222;
+}
+
+.notification.error {
+  border-left: 4px solid #888;
+}
+
+.notification.info {
+  border-left: 4px solid #bbb;
+}
+
+.notification.warning {
+  border-left: 4px solid #444;
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-40px) scale(0.95);
+    filter: blur(2px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(8px) scale(1.04);
+    filter: blur(0);
+  }
+  80% {
+    transform: translateX(-50%) translateY(-4px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes fadeSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+    filter: blur(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-32px) scale(0.98);
+    filter: blur(1.5px);
+  }
+}
+
+@media (max-width: 600px) {
+  .notification {
+    min-width: 92vw;
+    max-width: 98vw;
+    left: 50%;
+    top: 12px;
+    padding: 0;
+    border-radius: 8px;
+  }
+  .notification-content {
+    padding: 10px 4px 10px 6px;
+    gap: 7px;
+  }
+  .notification-icon {
+    width: 16px;
+    height: 16px;
+    font-size: 0.85em;
+  }
+  .close-btn {
+    margin-left: 6px;
+    font-size: 16px;
+  }
+} 

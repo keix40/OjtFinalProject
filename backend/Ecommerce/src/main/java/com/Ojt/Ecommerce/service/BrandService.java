@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -78,6 +79,12 @@ public class BrandService {
 
     public Brand saveBrand(Brand brand){
         return repo.save(brand);
+    }
+
+    //add for link brand with category by pmk july 7
+    public Brand getBrandById(Long id) {
+        Optional<Brand> brand = repo.findById(id);
+        return brand.orElse(null);
     }
 
     public Brand getBrandById(Long id) {

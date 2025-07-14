@@ -11,6 +11,8 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class BrandHasCategoryService {
 
@@ -22,6 +24,11 @@ public class BrandHasCategoryService {
 
     public BrandHasCategory saveBrandAndCat(BrandHasCategory bcObj){
         return repo.save(bcObj);
+    }
+
+    //add for fetch data for discount y pmk july 7
+    public List<BrandHasCategory> getAllBrandCategories() {
+        return repo.findAll();
     }
 
     @Transactional

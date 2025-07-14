@@ -2,6 +2,7 @@ package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.dto.CouponApplyRequest;
 import com.Ojt.Ecommerce.dto.CouponApplyResponse;
+import com.Ojt.Ecommerce.service.DiscountCouponService;
 import com.Ojt.Ecommerce.service.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,10 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CouponController {
 
-    private final DiscountService discountService;
+    private final DiscountCouponService discountCouponService;
 
     @PostMapping("/validate")
     public CouponApplyResponse validateCoupon(@RequestBody CouponApplyRequest request) {
-        return discountService.validateCoupon(request);
+        return discountCouponService.validateCoupon(request);
     }
 }

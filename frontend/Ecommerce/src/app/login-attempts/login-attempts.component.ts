@@ -37,6 +37,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   realtimeActivities: ActivityFeedItem[] = []
   criticalAlerts: string[] = []
 
+  // Dual view state
+  viewMode: 'summary' | 'detailed' = 'summary';
+  summaryAttempts: any[] = [];
+
   // Statistics
   statistics: Statistics = {
     successfulLogins: 0,
@@ -65,6 +69,11 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   isRealTimeActive = true;
   intervalId: any;
   isLoading = false
+
+  // Add state for session activity modal
+  sessionActivityAttempts: LoginAttempt[] = [];
+  showSessionActivityModal: boolean = false;
+  sessionActivitySessionId: string | null = null;
 
   // Subscriptions
   private realTimeSubscription?: Subscription
@@ -103,6 +112,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
         this.loginAttempts = data;
         this.calculateStatistics();
         this.applyFilters();
+        this.buildSummaryView();
         this.isLoading = false;
       },
       error: (err) => {
@@ -110,6 +120,32 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
         this.isLoading = false;
       }
     });
+  }
+
+  buildSummaryView(): void {
+    // Aggregate by username, IP, location
+    const map = new Map<string, { count: number, last: LoginAttempt }>();
+    for (const attempt of this.loginAttempts) {
+      const key = `${attempt.username}|${attempt.ipAddress}|${attempt.location}`;
+      if (!map.has(key)) {
+        map.set(key, { count: 1, last: attempt });
+      } else {
+        const entry = map.get(key)!;
+        entry.count += 1;
+        // Update last if this attempt is newer
+        if (new Date(attempt.timestamp) > new Date(entry.last.timestamp)) {
+          entry.last = attempt;
+        }
+      }
+    }
+    this.summaryAttempts = Array.from(map.values()).map(({ count, last }) => ({
+      ...last,
+      attemptCount: count
+    }));
+  }
+
+  setViewMode(mode: 'summary' | 'detailed') {
+    this.viewMode = mode;
   }
 
   ngOnDestroy(): void {
@@ -175,15 +211,16 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Search filter
+    // Search filter (add sessionId)
     if (this.searchTerm) {
-      const term = this.searchTerm.toLowerCase()
+      const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (attempt) =>
-          attempt.username.toLowerCase().includes(term) ||
-          attempt.ipAddress.includes(term) ||
-          attempt.location.toLowerCase().includes(term),
-      )
+        (a) =>
+          a.username.toLowerCase().includes(term) ||
+          a.ipAddress.toLowerCase().includes(term) ||
+          (a.location && a.location.toLowerCase().includes(term)) ||
+          (a.sessionId && a.sessionId.toLowerCase().includes(term))
+      );
     }
 
     this.filteredAttempts = filtered
@@ -302,9 +339,14 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
   // Actions
   viewDetails(attempt: LoginAttempt): void {
-    this.selectedAttemptDetails = attempt
-    // In a real app, you would open a modal here
-    console.log("View details for:", attempt)
+    this.selectedAttemptDetails = attempt;
+    setTimeout(() => {
+      const modalEl = document.getElementById('detailsModal');
+      if (modalEl && (window as any).bootstrap) {
+        const modal = new (window as any).bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    }, 0);
   }
 
   blockIP(attempt: LoginAttempt): void {
@@ -408,6 +450,27 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
   clearActivityFeed(): void {
     this.realtimeActivities = []
+  }
+
+  copyToClipboard(value: string): void {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(value);
+    } else {
+      // fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+  }
+
+  /**
+   * Expose encodeURIComponent for use in the template
+   */
+  encodeURIComponent(value: string): string {
+    return encodeURIComponent(value);
   }
 
   // Utility methods
@@ -602,5 +665,38 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
   private generateSessionId(): string {
     return "sess_" + Math.random().toString(36).substr(2, 16)
+  }
+
+  // Session activity log modal logic
+  openSessionActivity(sessionId: string) {
+    this.sessionActivitySessionId = sessionId;
+    this.loginAttemptsService.getBySessionId(sessionId).subscribe((attempts) => {
+      this.sessionActivityAttempts = attempts;
+      this.showSessionActivityModal = true;
+      setTimeout(() => {
+        const modalEl = document.getElementById('sessionActivityModal');
+        if (modalEl && (window as any).bootstrap) {
+          const modal = new (window as any).bootstrap.Modal(modalEl);
+          modal.show();
+        }
+      }, 0);
+    });
+  }
+  closeSessionActivity() {
+    this.showSessionActivityModal = false;
+    this.sessionActivitySessionId = null;
+    this.sessionActivityAttempts = [];
+  }
+  blockSession(sessionId: string) {
+    this.loginAttemptsService.blockSession(sessionId).subscribe(() => {
+      this.loadLoginAttempts();
+      if (this.showSessionActivityModal) this.openSessionActivity(sessionId);
+    });
+  }
+  whitelistSession(sessionId: string) {
+    this.loginAttemptsService.whitelistSession(sessionId).subscribe(() => {
+      this.loadLoginAttempts();
+      if (this.showSessionActivityModal) this.openSessionActivity(sessionId);
+    });
   }
 }
