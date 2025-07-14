@@ -181,6 +181,35 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                 .anyMatch(a -> a.getIpAddress().equals(ip) && a.isBlocked());
     }
 
+    @Override
+    public List<LoginAttemptDTO> getBySessionId(String sessionId) {
+        return repository.findAll().stream()
+                .filter(a -> sessionId != null && sessionId.equals(a.getSessionId()))
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void blockSession(String sessionId) {
+        List<LoginAttempt> attempts = repository.findAll();
+        attempts.stream()
+                .filter(a -> sessionId != null && sessionId.equals(a.getSessionId()))
+                .forEach(a -> {
+                    a.setBlocked(true);
+                    repository.save(a);
+                });
+    }
+
+    @Override
+    public void whitelistSession(String sessionId) {
+        List<LoginAttempt> attempts = repository.findAll();
+        attempts.stream()
+                .filter(a -> sessionId != null && sessionId.equals(a.getSessionId()))
+                .forEach(a -> {
+                    a.setBlocked(false);
+                    repository.save(a);
+                });
+    }
 
     @Override
     public int calculateRecentAttemptCount(String ipAddress, LocalDateTime now) {

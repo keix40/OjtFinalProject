@@ -43,6 +43,8 @@ public interface LoginAttemptService {
     String determineThreatLevel(int score);
     int calculateRecentAttemptCount(String ipAddress, LocalDateTime now);
     LoginAttemptDTO enrichAttemptWithStats(LoginAttemptDTO dto);
-
+    List<LoginAttemptDTO> getBySessionId(String sessionId);
+    void blockSession(String sessionId);
+    void whitelistSession(String sessionId);
 
 }
