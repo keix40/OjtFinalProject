@@ -1,61 +1,61 @@
-<div class="return-request-modal">
-  <button class="close-btn" type="button" (click)="closeModal()">&times;</button>
-  <h2 class="modal-title">Return Request</h2>
+<div class="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 overflow-auto">
+  <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative my-8 overflow-auto max-h-[90vh]">
+    <button type="button" (click)="closeModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
+    <h2 class="text-2xl font-semibold text-center mb-6">Return Request</h2>
 
-  <form (ngSubmit)="onSubmit()" #returnForm="ngForm">
-    <div class="form-group">
-      <label for="orderCode">Order Code</label>
-      <input id="orderCode" name="orderCode" type="text" class="form-control" [value]="orderCode" readonly />
-    </div>
-
-    <div class="form-group">
-      <label for="product">Product</label>
-      <select id="product" name="product" class="form-control" [(ngModel)]="selectedProduct" required>
-        <option [ngValue]="null" disabled selected>Select a product</option>
-        <option *ngFor="let product of products" [ngValue]="product">
-          {{ product.productName }}
-        </option>
-      </select>
-    </div>
-
-    <div *ngIf="selectedProduct" class="product-preview">
-      Selected: {{ selectedProduct.productName }}
-    </div>
-
-    <div class="form-group">
-      <label for="reason">Reason for Return</label>
-      <select id="reason" name="reason" class="form-control" [(ngModel)]="reason" required>
-        <option value="" disabled selected>Select a reason</option>
-        <option value="WRONG_ITEM_DELIVERED">Wrong Item Delivered</option>
-        <option value="DAMAGED_ON_ARRIVAL">Damaged on Arrival</option>
-        <option value="CHANGED_MIND">Changed Mind</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="details">Return Details</label>
-      <textarea id="details" name="details" class="form-control" rows="3" [(ngModel)]="details"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label>Upload Image(s)</label>
-      <div class="file-upload-box">
-        <input id="file" name="file" type="file" class="file-input" (change)="onFileChange($event)" multiple />
-        <label for="file" class="file-label">
-          <span class="upload-icon">&#8682;</span>
-          <span>Choose file to upload</span>
-        </label>
+    <form (ngSubmit)="onSubmit()" #returnForm="ngForm" class="space-y-4">
+      <div>
+        <label for="orderCode" class="block text-sm font-medium text-gray-700 mb-1">Order Code</label>
+        <input id="orderCode" name="orderCode" type="text" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100" [value]="orderCode" readonly />
       </div>
-    </div>
 
-    <!-- Image Previews -->
-    <div class="image-preview" *ngIf="files.length > 0">
-      <div *ngFor="let url of previewUrls; let i = index" class="preview-item">
-        <img [src]="url" alt="Preview" class="preview-img" />
-        <button type="button" class="remove-img-btn" (click)="removeFile(i)">&times;</button>
-      </div>      
-    </div>
+      <div>
+        <label for="product" class="block text-sm font-medium text-gray-700 mb-1">Product</label>
+        <select id="product" name="product" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="selectedProduct" required>
+          <option [ngValue]="null" disabled selected>Select a product</option>
+          <option *ngFor="let product of products" [ngValue]="product">
+            {{ product.productName }}
+          </option>
+        </select>
+      </div>
 
-    <button type="submit" class="submit-btn" [disabled]="!returnForm.form.valid">SUBMIT REQUEST</button>
-  </form>
+      <div *ngIf="selectedProduct" class="text-sm text-blue-600 font-medium">Selected: {{ selectedProduct.productName }}</div>
+
+      <div>
+        <label for="reason" class="block text-sm font-medium text-gray-700 mb-1">Reason for Return</label>
+        <select id="reason" name="reason" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" [(ngModel)]="reason" required>
+          <option value="" disabled selected>Select a reason</option>
+          <option value="WRONG_ITEM_DELIVERED">Wrong Item Delivered</option>
+          <option value="DAMAGED_ON_ARRIVAL">Damaged on Arrival</option>
+          <option value="CHANGED_MIND">Changed Mind</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="details" class="block text-sm font-medium text-gray-700 mb-1">Return Details</label>
+        <textarea id="details" name="details" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" rows="3" [(ngModel)]="details"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Image(s)</label>
+        <div class="flex items-center gap-2">
+          <input id="file" name="file" type="file" class="hidden" (change)="onFileChange($event)" multiple />
+          <label for="file" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700 transition">
+            <span class="mr-2 text-lg">&#8682;</span>
+            <span>Choose file to upload</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Image Previews -->
+      <div *ngIf="files.length > 0" class="flex flex-wrap gap-3 mt-2">
+        <div *ngFor="let url of previewUrls; let i = index" class="relative w-20 h-20">
+          <img [src]="url" alt="Preview" class="w-full h-full object-cover rounded border border-gray-300" />
+          <button type="button" (click)="removeFile(i)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-600">&times;</button>
+        </div>
+      </div>
+
+      <button type="submit" class="w-full py-2 mt-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50" [disabled]="!returnForm.form.valid">SUBMIT REQUEST</button>
+    </form>
+  </div>
 </div>

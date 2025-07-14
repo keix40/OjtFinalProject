@@ -34,12 +34,17 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
 import { ReturnDetailComponent } from './return-detail/return-detail.component';
+import { CategoryListComponent } from './category-list/category-list.component';
+import { BrandListComponent } from './brand-list/brand-list.component';
+import { CategoryAddSubcategoryComponent } from './category-add-subcategory/category-add-subcategory.component';
+import { UserCategoryListComponent } from './user-category-list/user-category-list.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Home' } },
   { path: 'login', component: LoginComponent, data: { breadcrumb: 'Login' } },
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
-  { path: 'Uproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
+  { path: 'uProductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
@@ -79,6 +84,10 @@ const routes: Routes = [
       { path: 'users/login-attempts', component: LoginAttemptsComponent, data: { breadcrumb: 'Login Attempts' }},
       { path: 'return', component: ReturnListComponent },
       { path: 'return/:id', component: ReturnDetailComponent },
+      { path: 'categorylist', component: CategoryListComponent},
+      { path: 'brandlist', component: BrandListComponent},
+      { path: 'categorylist', component: CategoryListComponent},
+      { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
@@ -89,12 +98,13 @@ const routes: Routes = [
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },
   { path: 'return-request', component: ReturnRequestComponent },
-
+  { path: 'usercategorylist', component: UserCategoryListComponent },
+  { path: 'userbrandlist', component: UserBrandListComponent },
 ];
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes),
+    RouterModule.forRoot(routes, { scrollPositionRestoration: 'enabled' }),
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

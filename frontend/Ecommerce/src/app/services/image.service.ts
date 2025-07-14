@@ -17,7 +17,7 @@ export class ImageService {
     defaultProductImage: '/assets/project_img/fashion_store.jpg',
     defaultAvatarImage: '/assets/images/test.jpg',
     defaultCategoryImage: '/assets/project_img/default-category.png',
-    defaultBrandImage: '/assets/project_img/default-brand.png'
+    defaultBrandImage: '/assets/images/default-brand.svg'
   };
 
   constructor() { }

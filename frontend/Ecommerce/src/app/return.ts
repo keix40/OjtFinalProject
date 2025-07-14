@@ -23,7 +23,9 @@ export interface ReturnRequestById {
     imageUrls: string[];
     refundId?: number;
     refundAmount?: number;
-    refundDate?: string;
+    initiatedAt: string;
+    completedAt?: string;
     refundAdminRemark?: string;
+    refundStatus: String;
   }
   

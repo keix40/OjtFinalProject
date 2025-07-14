@@ -45,6 +45,10 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   selectedRequest: ReturnRequestDTO | null = null;
   adminDecision: string = '';
 
+  // Dropdown toggles for export buttons
+  showExcelDropdown: boolean = false;
+  showPdfDropdown: boolean = false;
+
   constructor(private returnService: ReturnService) {}
 
   ngOnInit() {

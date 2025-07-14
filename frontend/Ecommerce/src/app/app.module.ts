@@ -45,18 +45,20 @@ import { LoginAttemptsComponent } from './login-attempts/login-attempts.componen
 import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
-import { HomeComponent } from './home/home.component';
 import { FooterComponent } from './footer/footer.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
+import { HeaderComponent } from './header/header.component';
+import { BreadcrumbComponent } from './breadcrumb.component';import { CategoryListComponent } from './category-list/category-list.component';
+import { BrandListComponent } from './brand-list/brand-list.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     TestComponent,
-    HomeComponent,
     LoginComponent,
     RegisterComponent,
 
@@ -93,7 +95,8 @@ import { ReturnListComponent } from './return-list/return-list.component';
     OrderTrackingComponent,
     ReturnRequestComponent,
     ReturnListComponent,
-    
+    BrandListComponent,
+    UserBrandListComponent,
   ],
   imports: [
     BrowserModule,
@@ -107,6 +110,8 @@ import { ReturnListComponent } from './return-list/return-list.component';
     CommonModule,
     BrowserAnimationsModule,
     FooterComponent,
+    HeaderComponent,
+    BreadcrumbComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

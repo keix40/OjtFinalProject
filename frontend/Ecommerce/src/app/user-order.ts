@@ -105,6 +105,14 @@ export interface ReturnRequestDTO {
   imageUrls: string[];
 
   orderStatusAtCancelRequest?: string;
+
+  refundId?: number;
+  refundAmount?: number;
+  refundAdminRemark?: string;
+  initiatedAt?: string;
+  completedAt?: string;
+  refundStatus?: string;
+  refundType?: string;
 }
 
 export interface CardInfoDTO {

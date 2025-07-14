@@ -126,119 +126,33 @@
                 Discover our wide range of categories, each carefully curated for your lifestyle
             </p>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in">
+    <div *ngIf="loading" class="text-center text-lg">Loading categories...</div>
+    <div *ngIf="error" class="text-center text-red-500">{{ error }}</div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" *ngIf="!loading && !error">
+    <div *ngFor="let cat of categories | slice:0:4" class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer" (click)="goToCategory(cat)">
                 <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&h=400&fit=crop" alt="Electronics" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+        <img [src]="getCategoryImageUrl(cat)" [alt]="cat.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
                 <div class="absolute top-4 left-4 w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float">
-                    ⚡
+        {{ cat.name ? cat.name[0] : '?' }}
                 </div>
                 <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Electronics</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">2,847 items</p>
-                </div>
-            </div>
-
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.1s">
-                <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&h=400&fit=crop" alt="Fashion" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-                <div class="absolute top-4 left-4 w-12 h-12 bg-pink-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 0.5s">
-                    👗
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Fashion</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">5,234 items</p>
-                </div>
-            </div>
-
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.2s">
-                <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop" alt="Home & Garden" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-                <div class="absolute top-4 left-4 w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 1s">
-                    🏠
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Home & Garden</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">1,892 items</p>
-                </div>
-            </div>
-
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
-                <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop" alt="Sports & Fitness" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-                <div class="absolute top-4 left-4 w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 1.5s">
-                    ⚽
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Sports & Fitness</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">3,156 items</p>
-                </div>
-            </div>
-
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.4s">
-                <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=400&fit=crop" alt="Books & Media" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-                <div class="absolute top-4 left-4 w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 2s">
-                    📚
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Books & Media</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">987 items</p>
-                </div>
-            </div>
-
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.5s">
-                <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&h=400&fit=crop" alt="Beauty & Health" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-                <div class="absolute top-4 left-4 w-12 h-12 bg-rose-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 2.5s">
-                    💄
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Beauty & Health</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">2,341 items</p>
-                </div>
-            </div>
-
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.6s">
-                <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop" alt="Automotive" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-                <div class="absolute top-4 left-4 w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 3s">
-                    🚗
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Automotive</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">1,567 items</p>
-                </div>
-            </div>
-
-            <div class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.7s">
-                <div class="aspect-square overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400&h=400&fit=crop" alt="Toys & Games" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent group-hover:from-black/80 transition-all duration-300"></div>
-                <div class="absolute top-4 left-4 w-12 h-12 bg-yellow-600 rounded-xl flex items-center justify-center text-white text-xl group-hover:scale-110 transition-transform duration-300 animate-float" style="animation-delay: 3.5s">
-                    🎮
-                </div>
-                <div class="absolute bottom-0 left-0 right-0 p-6 text-white">
-                    <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">Toys & Games</h3>
-                    <p class="text-white/80 text-sm group-hover:-translate-y-1 transition-transform duration-300 delay-75">2,890 items</p>
+        <h3 class="text-xl font-bold mb-1 group-hover:-translate-y-1 transition-transform duration-300">
+          {{ cat.name }}
+        </h3>
+        <span *ngIf="cat.parentId" class="inline-block bg-white/30 text-xs px-2 py-1 rounded-full mt-1">
+          Subcategory
+        </span>
                 </div>
             </div>
         </div>
+    </div>
+<!-- View All Button -->
+<div class="flex justify-center mt-8" *ngIf="categories.length > 4">
+  <a [routerLink]="getAllCategoriesUrl()" class="bg-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary-700 transition-all duration-300 shadow-lg">
+    View All Categories
+  </a>
     </div>
 </section>
 
@@ -380,36 +294,21 @@
                 Shop from the world's most trusted and innovative brands
             </p>
         </div>
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-6">
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in">
-                <img src="https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=120&h=80&fit=crop" alt="Apple" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
-            </div>
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in" style="animation-delay: 0.1s">
-                <img src="https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=120&h=80&fit=crop" alt="Samsung" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
-            </div>
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in" style="animation-delay: 0.2s">
-                <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=120&h=80&fit=crop" alt="Nike" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
-            </div>
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
-                <img src="https://images.unsplash.com/photo-1556906781-9a412961c28c?w=120&h=80&fit=crop" alt="Adidas" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-            </div>
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in" style="animation-delay: 0.4s">
-                <img src="https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=120&h=80&fit=crop" alt="Sony" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-                <div class="mt-3 bg-primary-600 text-white text-xs px-3 py-1 rounded-full text-center font-medium">Featured</div>
-            </div>
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.5s">
-                <img src="https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=120&h=80&fit=crop" alt="Canon" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-            </div>
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.6s">
-                <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=120&h=80&fit=crop" alt="Dell" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-            </div>
-            <div class="group bg-white rounded-2xl p-6 hover:shadow-lg transition-all duration-500 hover:scale-105 border border-neutral-200 animate-fade-in" style="animation-delay: 0.7s">
-                <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=120&h=80&fit=crop" alt="HP" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
-            </div>
+    <div class="relative">
+      <button *ngIf="brands.length > 8" (click)="scrollBrands('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-primary-200 rounded-full shadow-lg w-10 h-10 flex items-center justify-center hover:bg-primary-50 transition-all duration-200">
+        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div #brandRow class="flex overflow-x-auto gap-6 scrollbar-hide px-2" style="scroll-behavior: smooth;">
+        <div *ngFor="let brand of brands" class="group bg-white rounded-2xl p-6 min-w-[160px] max-w-[160px] hover:shadow-lg transition-all duration-500 hover:scale-105 border-2 border-primary-200 animate-fade-in cursor-pointer" (click)="goToBrand(brand)">
+          <img [src]="getBrandImageUrl(brand)" [alt]="brand.name" class="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110">
+          <div class="mt-3 text-center font-semibold text-neutral-800 text-base truncate">{{ brand.name }}</div>
         </div>
+      </div>
+      <button *ngIf="brands.length > 8" (click)="scrollBrands('right')" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-primary-200 rounded-full shadow-lg w-10 h-10 flex items-center justify-center hover:bg-primary-50 transition-all duration-200">
+        <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+
     </div>
 </section>
 
@@ -650,47 +549,28 @@
                 Real reviews from real customers who love shopping with us
             </p>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div class="bg-white p-8 rounded-2xl border-2 border-transparent hover:border-primary-200 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 shadow-lg animate-fade-in">
+    <div *ngIf="reviewsLoading" class="text-center text-lg">Loading reviews...</div>
+    <div *ngIf="reviewsError" class="text-center text-red-500">{{ reviewsError }}</div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" *ngIf="!reviewsLoading && !reviewsError">
+      <div *ngFor="let review of reviews" class="bg-white p-8 rounded-2xl border-2 border-transparent hover:border-primary-200 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 shadow-lg animate-fade-in">
                 <div class="flex items-center mb-6">
-                    <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=60&h=60&fit=crop&crop=face" alt="Sarah Johnson" class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200">
-                    <div>
-                        <h4 class="font-semibold text-neutral-900 text-lg">Sarah Johnson</h4>
-                        <div class="flex items-center mt-1">
-                            <span class="text-yellow-400 text-sm">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-                <p class="text-neutral-600 mb-6 italic leading-relaxed">"Amazing quality products and super fast delivery! Gallery has become my go-to shopping destination for everything I need."</p>
-                <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600 bg-neutral-50">Verified Purchase: Wireless Headphones</span>
+          <ng-container *ngIf="review.userImage; else initialsAvatar">
+            <img [src]="getReviewUserImage(review)" alt="{{ review.userName }}" class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200 object-cover">
+          </ng-container>
+          <ng-template #initialsAvatar>
+            <div class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200 bg-primary-600 flex items-center justify-center text-white text-xl font-bold">
+              {{ getInitials(review.userName) }}
             </div>
-
-            <div class="bg-white p-8 rounded-2xl border-2 border-transparent hover:border-primary-200 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 shadow-lg animate-fade-in" style="animation-delay: 0.2s">
-                <div class="flex items-center mb-6">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&h=60&fit=crop&crop=face" alt="Mike Chen" class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200">
+          </ng-template>
                     <div>
-                        <h4 class="font-semibold text-neutral-900 text-lg">Mike Chen</h4>
+            <h4 class="font-semibold text-neutral-900 text-lg">{{ review.userName }}</h4>
                         <div class="flex items-center mt-1">
-                            <span class="text-yellow-400 text-sm">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-                <p class="text-neutral-600 mb-6 italic leading-relaxed">"The customer service is outstanding. They helped me find exactly what I was looking for and provided excellent support throughout."</p>
-                <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600 bg-neutral-50">Verified Purchase: Gaming Setup</span>
+              <span class="text-yellow-400 text-sm">{{ '★★★★★'.slice(0, review.rating) }}</span><span class="text-neutral-300 text-sm">{{ '★★★★★'.slice(review.rating) }}</span>
             </div>
-
-            <div class="bg-white p-8 rounded-2xl border-2 border-transparent hover:border-primary-200 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 shadow-lg animate-fade-in" style="animation-delay: 0.4s">
-                <div class="flex items-center mb-6">
-                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=60&h=60&fit=crop&crop=face" alt="Emily Davis" class="w-16 h-16 rounded-full mr-4 border-2 border-primary-200">
-                    <div>
-                        <h4 class="font-semibold text-neutral-900 text-lg">Emily Davis</h4>
-                        <div class="flex items-center mt-1">
-                            <span class="text-yellow-400 text-sm">★★★★★</span>
-                        </div>
-                    </div>
-                </div>
-                <p class="text-neutral-600 mb-6 italic leading-relaxed">"Love the variety and quality. The website is so easy to navigate and the prices are competitive. Highly recommend!"</p>
-                <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600 bg-neutral-50">Verified Purchase: Home Decor</span>
+          </div>
+        </div>
+        <p class="text-neutral-600 mb-6 italic leading-relaxed">"{{ review.comment }}"</p>
+        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600 bg-neutral-50">Verified Purchase: {{ review.productName }}</span>
             </div>
         </div>
     </div>
