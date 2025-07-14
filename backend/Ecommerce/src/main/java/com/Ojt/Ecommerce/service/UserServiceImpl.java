@@ -40,6 +40,7 @@ import java.util.Random;
 import com.Ojt.Ecommerce.entity.Discount;
 import com.Ojt.Ecommerce.entity.DiscountEventEnum;
 import com.Ojt.Ecommerce.entity.DiscountRule;
+import com.Ojt.Ecommerce.entity.UserStatus;
 import com.Ojt.Ecommerce.repository.DiscountRepository;
 import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
 import com.Ojt.Ecommerce.entity.DiscountType;
@@ -145,6 +146,7 @@ public class UserServiceImpl implements UserService {
         user.setOtpCode(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
         user.setVerified(true); // Set as verified if OTP is verified before
+        user.setStatus(UserStatus.ACTIVE); // Explicitly set status to ACTIVE
 //        User user = User.builder()
 //                .name(request.getName())
 //                .email(request.getEmail())
@@ -235,6 +237,7 @@ public class UserServiceImpl implements UserService {
         user.setRole(role);
         user.setVerified(true); // Admin-created users are verified by default
         user.setCreatedDate(java.time.LocalDateTime.now());
+        user.setStatus(UserStatus.ACTIVE); // Explicitly set status to ACTIVE
         userRepository.save(user);
 
         // 3. Create Address if provided

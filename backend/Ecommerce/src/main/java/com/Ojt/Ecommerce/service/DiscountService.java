@@ -16,5 +16,5 @@ public interface DiscountService {
     ResponseEntity<?> getActiveDiscounts();
     List<DiscountDTO> getAllDiscounts();
     ResponseEntity<?> updateDiscount(Long id, DiscountRequestDTO dto);
-
+    ResponseEntity<?> getDiscountsByProduct(Long productId);
 }

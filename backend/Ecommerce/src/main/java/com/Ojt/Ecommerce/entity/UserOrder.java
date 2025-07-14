@@ -28,8 +28,8 @@ public class UserOrder {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
-//    @Enumerated(EnumType.STRING)
-//    private OrderStatus status;
+    //@Enumerated(EnumType.STRING)
+   // private OrderStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

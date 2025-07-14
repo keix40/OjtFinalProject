@@ -2,6 +2,7 @@ package com.Ojt.Ecommerce.service;
 
 import com.Ojt.Ecommerce.dto.*;
 import com.Ojt.Ecommerce.entity.*;
+import com.Ojt.Ecommerce.entity.UserStatus;
 import com.Ojt.Ecommerce.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -54,6 +55,9 @@ public class OrderService {
 
     @Autowired
     private DiscountRuleRepository discountRuleRepository;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // Method to ensure "First Time Buyer" discount exists
     private void ensureFirstTimeBuyerDiscountExists() {
@@ -115,13 +119,14 @@ public class OrderService {
         // Ensure the first-time buyer discount exists
         ensureFirstTimeBuyerDiscountExists(); //add for discount preview by pmk july 9
 
-        UserOrder order = mapper.map(dto, UserOrder.class);
-        order.setStatus(PENDING);
+       // UserOrder order = mapper.map(dto, UserOrder.class);
         try {
             UserOrder order = mapper.map(dto, UserOrder.class);
 
             User user = userRepo.findById(dto.getUserId())
                     .orElseThrow(() -> new RuntimeException("User not found with ID: " + dto.getUserId()));
+            
+            
             order.setUser(user);
             order.setAddress(addRepo.findById(dto.getAddressId())
                     .orElseThrow(() -> new RuntimeException("Address not found with ID: " + dto.getAddressId())));
@@ -265,7 +270,6 @@ public class OrderService {
             }
         }
 
-        int earnedPoints = calculatePoints(totalAmount - discountAmount);
             int earnedPoints = calculatePoints(totalAmount);
 
             user.setTotalPoints(user.getTotalPoints() == null ? earnedPoints : user.getTotalPoints() + earnedPoints);
@@ -291,6 +295,7 @@ public class OrderService {
                     .build();
             pointRepo.save(history);
 
+            notificationService.sendNotification(user.getEmail(), "Your order was successful");
             return savedOrder;
 
         } catch (Exception e) {

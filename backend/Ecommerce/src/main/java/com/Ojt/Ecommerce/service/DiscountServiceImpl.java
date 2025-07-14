@@ -657,7 +657,7 @@ public class DiscountServiceImpl implements DiscountService {
         discount.setDiscountValue(dto.getDiscountType().equals("PERCENTAGE") ? dto.getDiscount_percent() : dto.getDiscount_amount());
         discount.setStartDate(dto.getStartDate().toLocalDate());
         discount.setEndDate(dto.getEndDate().toLocalDate());
-        discount.setStatus(dto.isStatus());
+        // Don't set status here - it will be calculated dynamically based on dates
         discount.setAutoApply(true);
         return discountRepository.save(discount);
     }
@@ -772,6 +772,8 @@ public class DiscountServiceImpl implements DiscountService {
     public List<DiscountDTO> getAllDiscounts() {
         List<Discount> Discounts = discountRepository.findAll();
         List<DiscountDTO> dtos = new ArrayList<>();
+        LocalDate currentDate = LocalDate.now();
+        
         for(Discount d : Discounts){
             // Update autoApply field if it's null
             if (d.getAutoApply() == null) {
@@ -781,15 +783,21 @@ public class DiscountServiceImpl implements DiscountService {
                 discountRepository.save(d);
             }
             
+            // Dynamically calculate status based on current date vs start/end dates
+            boolean isActive = currentDate.isAfter(d.getStartDate().minusDays(1)) 
+                             && currentDate.isBefore(d.getEndDate().plusDays(1));
+            
             DiscountDTO dto = new DiscountDTO();
             dto.setId(d.getId());
             dto.setName(d.getName());
+            dto.setCode(d.getCode());
+            dto.setDescription(d.getDescription());
             dto.setDiscountType(d.getDiscountType());
             dto.setDiscountValue(d.getDiscountValue());
             dto.setStartDate(d.getStartDate());
             dto.setEndDate(d.getEndDate());
-            dto.setStatus(d.isStatus());
-            dto.setAutoApply(d.getAutoApply()); // Add autoApply field
+            dto.setStatus(isActive); // Use dynamically calculated status
+            dto.setAutoApply(d.getAutoApply());
             dtos.add(dto);
         }
         return dtos;
@@ -799,17 +807,21 @@ public class DiscountServiceImpl implements DiscountService {
     public ResponseEntity<?> getActiveDiscounts() {
         try {
             List<Map<String, Object>> activeDiscounts = new ArrayList<>();
+            LocalDate currentDate = LocalDate.now();
             
-            // Get all active discounts
-            List<Discount> discounts = discountRepository.findByStatusTrue();
+            // Get all discounts and filter by dynamic status
+            List<Discount> allDiscounts = discountRepository.findAll();
             
-            for (Discount discount : discounts) {
-                LocalDate today = LocalDate.now();
-                if (!(discount.isStatus()
-                    && today.isAfter(discount.getStartDate().minusDays(1))
-                    && today.isBefore(discount.getEndDate().plusDays(1)))) {
-                    continue; // Skip expired or not-yet-active discounts
+            for (Discount discount : allDiscounts) {
+                // Dynamically calculate if discount should be active
+                boolean isActive = currentDate.isAfter(discount.getStartDate().minusDays(1)) 
+                                 && currentDate.isBefore(discount.getEndDate().plusDays(1));
+                
+                // Only include discounts that are currently active
+                if (!isActive) {
+                    continue; // Skip inactive discounts
                 }
+                
                 Map<String, Object> discountInfo = new HashMap<>();
                 discountInfo.put("id", discount.getId());
                 discountInfo.put("name", discount.getName());
@@ -819,7 +831,7 @@ public class DiscountServiceImpl implements DiscountService {
                 discountInfo.put("discountType", discount.getDiscountType().toString());
                 discountInfo.put("startDate", discount.getStartDate());
                 discountInfo.put("endDate", discount.getEndDate());
-                discountInfo.put("status", discount.isStatus());
+                discountInfo.put("status", isActive); // Use dynamically calculated status
                 
                 // Get discount rules
                 List<Map<String, Object>> rules = new ArrayList<>();
@@ -915,20 +927,113 @@ public class DiscountServiceImpl implements DiscountService {
             
             // Update discount properties
             existingDiscount.setName(dto.getName());
+            existingDiscount.setCode(dto.getCode());
             existingDiscount.setDescription(dto.getDescription());
             existingDiscount.setDiscountType(DiscountType.valueOf(dto.getDiscountType()));
             existingDiscount.setDiscountValue(dto.getDiscountType().equals("PERCENTAGE") ? dto.getDiscount_percent() : dto.getDiscount_amount());
             existingDiscount.setStartDate(dto.getStartDate().toLocalDate());
             existingDiscount.setEndDate(dto.getEndDate().toLocalDate());
-            existingDiscount.setStatus(dto.isStatus());
+            // Don't update status - it will be calculated dynamically based on dates
             
             // Save the updated discount
             discountRepository.save(existingDiscount);
-            System.out.println("description :"+ dto.getDescription());
+            System.out.println("Code :"+ dto.getCode());
             return ResponseEntity.ok(Map.of("message", "Discount updated successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
 
+    }
+
+    @Override
+    public ResponseEntity<?> getDiscountsByProduct(Long productId) {
+        try {
+            List<Map<String, Object>> productDiscounts = new ArrayList<>();
+            LocalDate currentDate = LocalDate.now();
+            
+            // Get all active discounts
+            List<Discount> allDiscounts = discountRepository.findAll();
+            
+            for (Discount discount : allDiscounts) {
+                // Dynamically calculate if discount should be active
+                boolean isActive = currentDate.isAfter(discount.getStartDate().minusDays(1)) 
+                                 && currentDate.isBefore(discount.getEndDate().plusDays(1));
+                
+                // Only include discounts that are currently active
+                if (!isActive) {
+                    continue; // Skip inactive discounts
+                }
+                
+                // Get discount rules for this discount
+                List<DiscountRule> discountRules = discountRuleRepository.findByDiscount_Id(discount.getId());
+                
+                // Check if this product is affected by any rule of this discount
+                boolean isProductAffected = false;
+                for (DiscountRule rule : discountRules) {
+                    if (isProductAffectedByRule(productId, rule)) {
+                        isProductAffected = true;
+                        break;
+                    }
+                }
+                
+                if (isProductAffected) {
+                    Map<String, Object> discountInfo = new HashMap<>();
+                    discountInfo.put("id", discount.getId());
+                    discountInfo.put("name", discount.getName());
+                    discountInfo.put("description", discount.getDescription());
+                    discountInfo.put("discount_percent", discount.getDiscountType() == DiscountType.PERCENTAGE ? discount.getDiscountValue() : 0);
+                    discountInfo.put("discount_amount", discount.getDiscountType() == DiscountType.FIXED ? discount.getDiscountValue() : 0);
+                    discountInfo.put("discountType", discount.getDiscountType().toString());
+                    discountInfo.put("startDate", discount.getStartDate());
+                    discountInfo.put("endDate", discount.getEndDate());
+                    discountInfo.put("status", isActive);
+                    discountInfo.put("autoApply", discount.getAutoApply());
+                    discountInfo.put("code", discount.getCode());
+                    
+                    productDiscounts.add(discountInfo);
+                }
+            }
+            
+            return ResponseEntity.ok(productDiscounts);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+    
+    private boolean isProductAffectedByRule(Long productId, DiscountRule rule) {
+        switch (rule.getTargetType()) {
+            case PRODUCT:
+                return rule.getProduct() != null && rule.getProduct().getId().equals(productId);
+            case BRAND:
+                if (rule.getBrand() != null) {
+                    // Check if the product belongs to this brand
+                    Product product = productRepository.findById(productId).orElse(null);
+                    return product != null && product.getBrand() != null && 
+                           product.getBrand().getId().equals(rule.getBrand().getId());
+                }
+                break;
+            case CATEGORY:
+                if (rule.getCategory() != null) {
+                    // Check if the product belongs to this category
+                    Product product = productRepository.findById(productId).orElse(null);
+                    if (product != null) {
+                        return product.getProductCategories().stream()
+                                .anyMatch(pc -> pc.getCategory().getId().equals(rule.getCategory().getId()));
+                    }
+                }
+                break;
+            case BRAND_CATEGORY:
+                if (rule.getBrand() != null && rule.getCategory() != null) {
+                    // Check if the product belongs to this brand-category combination
+                    Product product = productRepository.findById(productId).orElse(null);
+                    if (product != null && product.getBrand() != null) {
+                        return product.getBrand().getId().equals(rule.getBrand().getId()) &&
+                               product.getProductCategories().stream()
+                                       .anyMatch(pc -> pc.getCategory().getId().equals(rule.getCategory().getId()));
+                    }
+                }
+                break;
+        }
+        return false;
     }
 } 
