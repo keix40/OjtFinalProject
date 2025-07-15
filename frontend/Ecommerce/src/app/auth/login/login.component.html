@@ -84,6 +84,20 @@
   </div>
 </div>
 
+<!-- CAPTCHA Modal -->
+<div *ngIf="showCaptchaModal" class="modal-backdrop">
+  <div class="modal-box">
+    <h4>Security Check</h4>
+    <div class="mb-2">{{ captchaQuestion }}</div>
+    <input type="text" [(ngModel)]="captchaInput" placeholder="Answer" class="form-control" />
+    <div class="text-danger mt-1" *ngIf="captchaError">{{ captchaError }}</div>
+    <button class="btn btn-primary mt-2" (click)="verifyCaptcha()" [disabled]="isVerifyingCaptcha">
+      <span *ngIf="!isVerifyingCaptcha">Verify</span>
+      <span *ngIf="isVerifyingCaptcha">Verifying...</span>
+    </button>
+  </div>
+</div>
+
   <!-- Password Toggle JS -->
   <script>
     document.querySelectorAll('.password-toggle').forEach(icon => {

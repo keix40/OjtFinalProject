@@ -101,7 +101,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadLoginAttempts();
-    this.startRealTimeMonitoring();
+    this.startPolling();
     this.checkForCriticalAlerts();
   }
 
@@ -149,8 +149,11 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
     if (this.realTimeSubscription) {
-      this.realTimeSubscription.unsubscribe()
+      this.realTimeSubscription.unsubscribe();
     }
   }
 
