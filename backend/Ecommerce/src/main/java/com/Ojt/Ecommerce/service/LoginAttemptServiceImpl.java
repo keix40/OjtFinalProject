@@ -9,6 +9,9 @@ import com.Ojt.Ecommerce.repository.LoginAttemptRepository;
 import com.Ojt.Ecommerce.repository.BlockedIPRepository;
 import com.Ojt.Ecommerce.service.LoginAttemptService;
 import com.Ojt.Ecommerce.service.EmailService;
+import com.Ojt.Ecommerce.service.SecurityPolicyService;
+import com.Ojt.Ecommerce.entity.SecurityPolicyRule;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -37,9 +40,14 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     private EmailService emailService;
 
     @Autowired
+    private SecurityPolicyService securityPolicyService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     private static final int BLOCK_MINUTES = 15;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private LoginAttemptDTO convertToDTO(LoginAttempt entity) {
         return modelMapper.map(entity, LoginAttemptDTO.class);
@@ -316,8 +324,27 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
             score += 20;
         }
 
+        // If there are 5 or more attempts in the last 5 minutes, increase score
         if (dto.getAttemptCount() != null && dto.getAttemptCount() >= 5) {
             score += 15;
+        }
+
+        // NEW LOGIC: If this is a successful login, but there were multiple recent failed attempts from this IP, increase threat score
+        if ("successful".equalsIgnoreCase(dto.getStatus())) {
+            // Count failed attempts from this IP in the last 15 minutes
+            int recentFailed = (int) repository.findAll().stream()
+                .filter(a -> a.getIpAddress().equals(dto.getIpAddress()))
+                .filter(a -> a.getStatus().equalsIgnoreCase("failed"))
+                .filter(a -> a.getTimestamp().isAfter(LocalDateTime.now().minusMinutes(15)))
+                .count();
+            if (recentFailed >= 3) {
+                // If 3 or more failed attempts in last 15 min, treat as high risk
+                score += 40; // This will push the score to high/critical
+            } else if (recentFailed == 2) {
+                score += 20; // Medium risk
+            } else if (recentFailed == 1) {
+                score += 10; // Slightly elevated
+            }
         }
 
         return Math.min(score, 100); // Max cap at 100
@@ -380,22 +407,39 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
 
     // Call this on each failed login attempt
     public void handleFailedLogin(String username, String ip, String location) {
-        int fails = getRecentFailedAttempts(ip, 15);
-        if (fails == 2) {
-            String lastSuccessIp = getLastSuccessIp(username);
-            if (lastSuccessIp == null || !lastSuccessIp.equals(ip)) {
-                // Send suspicious login email
-                emailService.sendEmail(username, "Suspicious Login Attempt", "A suspicious login attempt was detected from " + location + ". If this wasn't you, please secure your account.");
+        List<SecurityPolicyRule> rules = securityPolicyService.getAllRules();
+        for (SecurityPolicyRule rule : rules) {
+            int fails = getRecentFailedAttempts(ip, rule.getWindowMinutes());
+            switch (rule.getAction()) {
+                case "email_alert":
+                    if (fails == rule.getAttempts()) {
+                        String lastSuccessIp = getLastSuccessIp(username);
+                        if (lastSuccessIp == null || !lastSuccessIp.equals(ip)) {
+                            emailService.sendEmail(username, "Suspicious Login Attempt", "A suspicious login attempt was detected from " + location + ". If this wasn't you, please secure your account.");
+                        }
+                    }
+                    break;
+                case "require_otp":
+                    if (fails == rule.getAttempts()) {
+                        otpCaptchaRequired.put(ip, LocalDateTime.now().plusMinutes(rule.getWindowMinutes()));
+                        emailService.sendEmail(username, "Security Alert: Extra Verification Required", "Multiple failed login attempts detected. OTP and CAPTCHA will be required for your next login from this device.");
+                        // TODO: Notify admin (implement as needed)
+                    }
+                    break;
+                case "ban_ip":
+                    if (fails >= rule.getAttempts()) {
+                        int banMinutes = 24 * 60; // default 24h
+                        try {
+                            if (rule.getExtraData() != null) {
+                                banMinutes = objectMapper.readTree(rule.getExtraData()).path("banMinutes").asInt(banMinutes);
+                            }
+                        } catch (Exception ignored) {}
+                        blockIPCustom(ip, username, banMinutes, "Too many failed login attempts");
+                        emailService.sendEmail(username, "IP Banned", "Your IP (" + ip + ") has been banned for " + (banMinutes/60) + " hours due to repeated failed login attempts.");
+                    }
+                    break;
+                // Add more dynamic actions as needed
             }
-        } else if (fails == 3) {
-            // Require OTP+CAPTCHA for this IP for next login (15 min)
-            otpCaptchaRequired.put(ip, LocalDateTime.now().plusMinutes(15));
-            emailService.sendEmail(username, "Security Alert: Extra Verification Required", "Multiple failed login attempts detected. OTP and CAPTCHA will be required for your next login from this device.");
-            // TODO: Notify admin (implement as needed)
-        } else if (fails >= 5) {
-            // Ban IP for 24 hours
-            blockIPCustom(ip, username, 24 * 60, "Too many failed login attempts");
-            emailService.sendEmail(username, "IP Banned", "Your IP (" + ip + ") has been banned for 24 hours due to repeated failed login attempts.");
         }
     }
 

@@ -3,6 +3,8 @@ package com.Ojt.Ecommerce.controller;
 import com.Ojt.Ecommerce.dto.LoginAttemptDTO;
 import com.Ojt.Ecommerce.dto.PagedResponse;
 import com.Ojt.Ecommerce.service.LoginAttemptService;
+import com.Ojt.Ecommerce.service.SecurityPolicyService;
+import com.Ojt.Ecommerce.entity.SecurityPolicyRule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +22,8 @@ public class LoginAttemptController {
 
     @Autowired
     private LoginAttemptService loginAttemptService;
+    @Autowired
+    private SecurityPolicyService securityPolicyService;
 
     // ✅ Get all login attempts
     @GetMapping
@@ -149,6 +153,27 @@ public class LoginAttemptController {
                 "message", "Something went wrong: " + e.getMessage()
             ));
         }
+    }
+
+    // Endpoint to get current security policy
+    @GetMapping("/security-policy")
+    public ResponseEntity<List<SecurityPolicyRule>> getSecurityPolicy() {
+        securityPolicyService.seedDefaultsIfEmpty();
+        return ResponseEntity.ok(securityPolicyService.getAllRules());
+    }
+
+    // Update a security policy rule
+    @PutMapping("/security-policy/{id}")
+    public ResponseEntity<SecurityPolicyRule> updateSecurityPolicyRule(@PathVariable Long id, @RequestBody SecurityPolicyRule updatedRule) {
+        SecurityPolicyRule rule = securityPolicyService.updateRule(id, updatedRule);
+        return ResponseEntity.ok(rule);
+    }
+
+    // Delete a security policy rule
+    @DeleteMapping("/security-policy/{id}")
+    public ResponseEntity<?> deleteSecurityPolicyRule(@PathVariable Long id) {
+        securityPolicyService.deleteRule(id);
+        return ResponseEntity.ok().build();
     }
 
 
