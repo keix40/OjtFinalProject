@@ -49,4 +49,9 @@ public interface LoginAttemptService {
 
     boolean isIPBlocked(String ip);
     java.time.LocalDateTime getBlockedUntil(String ip);
+    void blockIPForDuration(String ip, int minutes);
+    void resetFailedAttempts(String ip);
+    boolean isOtpCaptchaRequired(String ip);
+    void handleSuccessfulLogin(String ip);
+    void handleFailedLogin(String username, String ip, String location);
 }

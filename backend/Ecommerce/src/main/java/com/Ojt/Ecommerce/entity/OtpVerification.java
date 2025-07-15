@@ -25,4 +25,5 @@ public class OtpVerification {
     private LocalDateTime expiryTime;
 
     private boolean verified = false;
+    private String type; // 'login' or 'email_verification'
 }
