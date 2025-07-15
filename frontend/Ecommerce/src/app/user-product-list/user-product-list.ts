@@ -15,6 +15,7 @@ import { BreadcrumbComponent } from '../breadcrumb.component';
 import { HeaderComponent } from '../header/header.component';
 import { DiscountService } from '../services/discount.service';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-user-product-list',
@@ -35,6 +36,9 @@ export class UserProductListComponent {
   categoryOptions: string[] = [];
   hasBrandData: boolean = false;
   hasCategoryData: boolean = false;
+
+  selectedCategory: string | null = null;
+  selectedBrand: string | null = null;
 
   filters = {
     availability: [] as string[],
@@ -76,6 +80,7 @@ export class UserProductListComponent {
     public imageService: ImageService,
     private discountService: DiscountService,
     private http: HttpClient,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
@@ -85,7 +90,23 @@ export class UserProductListComponent {
       this.router.navigate(['/login']);
       return;
     }
-    this.loadProducts();
+    this.route.queryParams.subscribe(params => {
+      const category = params['category'];
+      const brand = params['brand'];
+      this.selectedCategory = category || null;
+      this.selectedBrand = brand || null;
+      this.loadProducts(() => {
+        if (this.selectedCategory) {
+          this.filters.category = [this.selectedCategory];
+        }
+        if (this.selectedBrand) {
+          this.filters.brand = [this.selectedBrand];
+        }
+        if (this.selectedCategory || this.selectedBrand) {
+          this.applyFilters();
+        }
+      });
+    });
     this.loadCategories();
     this.loadBrands();
     this.loadWishlist();
@@ -94,7 +115,7 @@ export class UserProductListComponent {
 
   }
 
-  loadProducts(): void {
+  loadProducts(callback?: () => void): void {
     this.productService.getAllAcProduct().subscribe({
       next: data => {
         this.allProducts = data;
@@ -147,6 +168,7 @@ export class UserProductListComponent {
         this.applyFilters(); // apply after loading
         this.calculateProductDiscounts(); // recalculate discounts after products are loaded
       
+        if (callback) callback();
       },
       error: err => console.error('Failed to load products', err)
     });

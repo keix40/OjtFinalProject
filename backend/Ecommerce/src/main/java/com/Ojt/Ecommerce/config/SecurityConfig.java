@@ -73,6 +73,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/discounts/**").permitAll()
                         .requestMatchers("/api/coupons/validate").permitAll()
                         .requestMatchers("/api/login-attempts/is-blocked").permitAll()
+                        .requestMatchers("/brand_and_category_image/**").permitAll()
+                        .requestMatchers("/review/**").permitAll()
 
                         .anyRequest().authenticated()
 

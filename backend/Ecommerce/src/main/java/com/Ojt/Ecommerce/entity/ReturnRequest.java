@@ -54,4 +54,6 @@ public class ReturnRequest {
     @OneToMany(mappedBy = "returnRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ReturnRequestImage> images = new ArrayList<>();
 
+    @OneToOne(mappedBy = "returnRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private Refund refund;
 }

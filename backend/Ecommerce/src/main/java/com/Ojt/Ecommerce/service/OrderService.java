@@ -12,10 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -497,105 +494,9 @@ public class OrderService {
 
     public List<UserOrderListDTO> getAllOrders() {
         List<UserOrder> orders = repo.findAll();
-
-        return orders.stream().map(order -> {
-            UserOrderListDTO dto = new UserOrderListDTO();
-            dto.setOrderId(order.getId());
-            dto.setOrderCode(order.getOrderCode());
-            dto.setOrderDate(order.getOrderDate());
-            dto.setUpdatedDate(order.getUpdatedDate());
-
-            // Set latest status
-            List<OrderStatus> statusHistory = order.getOrderStatusHistory();
-            if (!statusHistory.isEmpty()) {
-                statusHistory.sort((s1, s2) -> s2.getStatusDate().compareTo(s1.getStatusDate()));
-                dto.setStatus(statusHistory.get(0).getStatus().getName().toString());
-                dto.setStatusHistory(statusHistory.stream()
-                        .map(s -> new StatusHistoryDTO(s.getStatus().getName().toString(), s.getStatusDate()))
-                        .collect(Collectors.toList()));
-            }
-
-            if (order.getDeliveryMethod() != null) {
-                dto.setDeliveryMethod(order.getDeliveryMethod().getName());
-                dto.setDeliveryFee(order.getDeliveryMethod().getFee());
-            }
-
-            List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(p -> {
-                OrderProductDTO pdto = new OrderProductDTO();
-                pdto.setProductName(p.getProduct().getProductName());
-                pdto.setQuantity(p.getQuantity());
-                pdto.setUnitPrice(p.getUnitPrice());
-                return pdto;
-            }).collect(Collectors.toList());
-
-            dto.setProducts(productDTOs);
-
-            double subtotal = order.getOrderProducts().stream()
-                    .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
-                    .sum();
-            dto.setSubtotal(Math.round(subtotal));
-
-            Discount discount = order.getDiscount();
-            double discountAmount = 0.0;
-
-            if (discount != null) {
-                if (discount.getDiscountType() != null) {
-                    dto.setDiscountType(discount.getDiscountType().toString());
-                }
-                if (discount.getCode() != null) {
-                    dto.setDiscountCode(discount.getCode());
-                }
-                dto.setDiscountValue(discount.getDiscountValue());
-
-                if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
-                    discountAmount = subtotal * discount.getDiscountValue();
-                } else {
-                    discountAmount = discount.getDiscountValue();
-                }
-                dto.setDiscountAmount(Math.round(discountAmount));
-            } else {
-                dto.setDiscountAmount(0L);
-            }
-
-            double total = subtotal - discountAmount;
-            if (order.getDeliveryMethod() != null && order.getDeliveryMethod().getFee() != null) {
-                total += order.getDeliveryMethod().getFee();
-            }
-            dto.setTotal(Math.round(total));
-
-            User user = order.getUser();
-            if (user != null) {
-                UserDTO userDTO = new UserDTO();
-                userDTO.setId(user.getId());
-                userDTO.setName(user.getName());
-                userDTO.setEmail(user.getEmail());
-                userDTO.setDateOfBirth(user.getDateOfBirth());
-                userDTO.setGender(user.getGender());
-                userDTO.setPhoneNumber(user.getPhoneNumber());
-                userDTO.setCreatedDate(user.getCreatedDate());
-                userDTO.setTotalPoints(user.getTotalPoints());
-                dto.setUser(userDTO);
-            }
-
-            Address address = order.getAddress();
-            if (address != null) {
-                AddressDTO addressDTO = new AddressDTO();
-                addressDTO.setId(address.getId());
-                addressDTO.setAddress(address.getAddress());
-                addressDTO.setCity(address.getCity());
-                addressDTO.setState(address.getState());
-                addressDTO.setPostalCode(address.getPostalCode());
-                addressDTO.setCountry(address.getCountry());
-                addressDTO.setLatitude(address.getLatitude());
-                addressDTO.setLongitude(address.getLongitude());
-                addressDTO.setType(AddressType.valueOf(address.getType().toString()));
-                addressDTO.setCreateUpdate(address.getCreateUpdate());
-                addressDTO.setUpdateDate(address.getUpdateDate());
-                dto.setAddress(addressDTO);
-            }
-
-            return dto;
-        }).collect(Collectors.toList());
+        return orders.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     public boolean updateOrderStatus(Long orderId, String statusStr) {
@@ -624,24 +525,21 @@ public class OrderService {
 
     private UserOrderListDTO convertToDTO(UserOrder order) {
         UserOrderListDTO dto = new UserOrderListDTO();
+
         dto.setOrderId(order.getId());
         dto.setOrderCode(order.getOrderCode());
         dto.setOrderDate(order.getOrderDate());
         dto.setUpdatedDate(order.getUpdatedDate());
 
-        // Latest status
-        OrderStatus latest = order.getOrderStatusHistory().stream()
-                .max(Comparator.comparing(OrderStatus::getStatusDate))
-                .orElse(null);
-        if (latest != null) {
-            dto.setStatus(latest.getStatus().getName().name());
+        // Latest status and history
+        List<OrderStatus> statusHistory = order.getOrderStatusHistory();
+        if (!statusHistory.isEmpty()) {
+            statusHistory.sort((s1, s2) -> s2.getStatusDate().compareTo(s1.getStatusDate()));
+            dto.setStatus(statusHistory.get(0).getStatus().getName().toString());
+            dto.setStatusHistory(statusHistory.stream()
+                    .map(s -> new StatusHistoryDTO(s.getStatus().getName().toString(), s.getStatusDate()))
+                    .collect(Collectors.toList()));
         }
-
-        // Status history
-        List<StatusHistoryDTO> history = order.getOrderStatusHistory().stream()
-                .map(s -> new StatusHistoryDTO(s.getStatus().getName().name(), s.getStatusDate()))
-                .toList();
-        dto.setStatusHistory(history);
 
         // Delivery
         if (order.getDeliveryMethod() != null) {
@@ -649,111 +547,137 @@ public class OrderService {
             dto.setDeliveryFee(order.getDeliveryMethod().getFee());
         }
 
-        // Discount
+        // Order products
+        List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(p -> {
+            OrderProductDTO pdto = new OrderProductDTO();
+            pdto.setProductName(p.getProduct().getProductName());
+            pdto.setQuantity(p.getQuantity());
+            pdto.setUnitPrice(p.getUnitPrice());
+            return pdto;
+        }).collect(Collectors.toList());
+        dto.setProducts(productDTOs);
+
+        // Subtotal & Discount
+        double subtotal = order.getOrderProducts().stream()
+                .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
+                .sum();
+        dto.setSubtotal(Math.round(subtotal));
+
         Discount discount = order.getDiscount();
         double discountAmount = 0.0;
         if (discount != null) {
-            dto.setDiscountType(discount.getDiscountType().name());
-            dto.setDiscountCode(discount.getCode());
+            if (discount.getDiscountType() != null) {
+                dto.setDiscountType(discount.getDiscountType().toString());
+            }
+            if (discount.getCode() != null) {
+                dto.setDiscountCode(discount.getCode());
+            }
             dto.setDiscountValue(discount.getDiscountValue());
 
-            double subtotal = order.getOrderProducts().stream()
-                    .mapToDouble(p -> p.getUnitPrice() * p.getQuantity())
-                    .sum();
+            discountAmount = discount.getDiscountType() == DiscountType.PERCENTAGE
+                    ? subtotal * discount.getDiscountValue()
+                    : discount.getDiscountValue();
 
-            discountAmount = switch (discount.getDiscountType()) {
-                case PERCENTAGE -> subtotal * discount.getDiscountValue();
-                case FIXED -> discount.getDiscountValue();
-            };
             dto.setDiscountAmount(Math.round(discountAmount));
         } else {
             dto.setDiscountAmount(0L);
         }
 
-        // Products
-        List<OrderProductDTO> products = order.getOrderProducts().stream().map(p -> {
-            OrderProductDTO pdto = new OrderProductDTO();
-            pdto.setProductId(p.getId());
-            pdto.setProductName(p.getProduct().getProductName());
-            pdto.setQuantity(p.getQuantity());
-            pdto.setUnitPrice(p.getUnitPrice());
-
-            if (p.getProductVariant() != null) {
-                String variantInfo = p.getProductVariant().getVariantAttributeValues().stream()
-                        .map(v -> v.getAttributeValue().getAttribute().getName() + ": " + v.getAttributeValue().getValue())
-                        .collect(Collectors.joining(", "));
-                pdto.setVariantDetails(variantInfo);
-            } else {
-                pdto.setVariantDetails("Base Product");
-            }
-
-            return pdto;
-        }).toList();
-        dto.setProducts(products);
-
-        // Subtotal & Total
-        double subtotal = products.stream().mapToDouble(p -> p.getUnitPrice() * p.getQuantity()).sum();
-        dto.setSubtotal(Math.round(subtotal));
-
         double total = subtotal - discountAmount;
-        if (order.getDeliveryMethod() != null) {
+        if (order.getDeliveryMethod() != null && order.getDeliveryMethod().getFee() != null) {
             total += order.getDeliveryMethod().getFee();
         }
         dto.setTotal(Math.round(total));
 
-        // Address
-        Address addr = order.getAddress();
-        if (addr != null) {
-            AddressDTO a = new AddressDTO();
-            a.setId(addr.getId());
-            a.setAddress(addr.getAddress());
-            a.setCity(addr.getCity());
-            a.setState(addr.getState());
-            a.setPostalCode(addr.getPostalCode());
-            a.setCountry(addr.getCountry());
-            a.setLatitude(addr.getLatitude());
-            a.setLongitude(addr.getLongitude());
-            a.setType(AddressType.valueOf(addr.getType().name()));
-            a.setCreateUpdate(addr.getCreateUpdate());
-            a.setUpdateDate(addr.getUpdateDate());
-            dto.setAddress(a);
-        }
+        // Return requests with refund mapping
+        List<ReturnRequestDTO> returnRequestDTOs = order.getReturnRequests().stream().map(rr -> {
+            ReturnRequestDTO rrdto = new ReturnRequestDTO();
+            rrdto.setId(rr.getId());
+            rrdto.setOrderId(order.getId());
+            rrdto.setOrderCode(order.getOrderCode());
+            rrdto.setOrderDate(order.getOrderDate());
+
+            if (rr.getOrderProduct() != null) {
+                rrdto.setOrderProductId(rr.getOrderProduct().getId());
+                rrdto.setProductName(rr.getOrderProduct().getProduct().getProductName());
+                rrdto.setQuantity(rr.getOrderProduct().getQuantity());
+                rrdto.setUnitPrice(rr.getOrderProduct().getUnitPrice());
+                rrdto.setTotalAmount(rr.getOrderProduct().getQuantity() * rr.getOrderProduct().getUnitPrice());
+            }
+
+            if (rr.getUser() != null) {
+                rrdto.setUserId(rr.getUser().getId());
+                rrdto.setUserName(rr.getUser().getName());
+            }
+
+            if (order.getSavedCard() != null) {
+                rrdto.setCardId(order.getSavedCard().getId());
+                rrdto.setCardNumber(order.getSavedCard().getCardNumber());
+            }
+
+            rrdto.setReasonForReturn(rr.getReasonForReturn());
+            rrdto.setReturnDetail(rr.getReturnDetail());
+            rrdto.setStatus(rr.getStatus().toString());
+            rrdto.setAdminRemark(rr.getAdminRemark());
+            rrdto.setRequestedAt(rr.getRequestedAt());
+            rrdto.setDecisionAt(rr.getDecisionAt());
+            rrdto.setCancelledAt(rr.getCancelledAt());
+
+            if (rr.getImages() != null && !rr.getImages().isEmpty()) {
+                rrdto.setImageUrls(rr.getImages().stream()
+                        .map(ReturnRequestImage::getImageUrl)
+                        .collect(Collectors.toList()));
+            }
+
+            // Refund mapping
+            if (rr.getRefund() != null) {
+                Refund refund = rr.getRefund();
+                rrdto.setRefundId(refund.getId());
+                rrdto.setRefundAmount(refund.getRefundAmount());
+                rrdto.setRefundAdminRemark(refund.getAdminRemark());
+                rrdto.setInitiatedAt(refund.getInitiatedAt());
+                rrdto.setCompletedAt(refund.getCompletedAt());
+                rrdto.setRefundStatus(refund.getStatus() != null ? refund.getStatus().toString() : null);
+                rrdto.setRefundType(refund.getRefundType() != null ? refund.getRefundType().toString() : null);
+            }
+
+            return rrdto;
+        }).collect(Collectors.toList());
+        dto.setReturnRequests(returnRequestDTOs);
 
         // User
-        User user = order.getUser();
-        if (user != null) {
-            UserDTO u = new UserDTO();
-            u.setId(user.getId());
-            u.setName(user.getName());
-            u.setEmail(user.getEmail());
-            u.setGender(user.getGender());
-            u.setDateOfBirth(user.getDateOfBirth());
-            u.setPhoneNumber(user.getPhoneNumber());
-            u.setCreatedDate(user.getCreatedDate());
-            u.setTotalPoints(user.getTotalPoints());
-            dto.setUser(u);
+        if (order.getUser() != null) {
+            User user = order.getUser();
+            UserDTO userDTO = new UserDTO();
+            userDTO.setId(user.getId());
+            userDTO.setName(user.getName());
+            userDTO.setEmail(user.getEmail());
+            userDTO.setDateOfBirth(user.getDateOfBirth());
+            userDTO.setGender(user.getGender());
+            userDTO.setPhoneNumber(user.getPhoneNumber());
+            userDTO.setCreatedDate(user.getCreatedDate());
+            userDTO.setTotalPoints(user.getTotalPoints());
+            dto.setUser(userDTO);
         }
 
-        // After setting other fields in dto
-        List<ReturnRequest> returnEntities = returnRequestRepo.findByOrderId(order.getId());
+        // Address
+        if (order.getAddress() != null) {
+            Address address = order.getAddress();
+            AddressDTO addressDTO = new AddressDTO();
+            addressDTO.setId(address.getId());
+            addressDTO.setAddress(address.getAddress());
+            addressDTO.setCity(address.getCity());
+            addressDTO.setState(address.getState());
+            addressDTO.setPostalCode(address.getPostalCode());
+            addressDTO.setCountry(address.getCountry());
+            addressDTO.setLatitude(address.getLatitude());
+            addressDTO.setLongitude(address.getLongitude());
+            addressDTO.setType(AddressType.valueOf(address.getType().toString()));
+            addressDTO.setCreateUpdate(address.getCreateUpdate());
+            addressDTO.setUpdateDate(address.getUpdateDate());
+            dto.setAddress(addressDTO);
+        }
 
-        List<ReturnRequestDTO> returnDTOs = returnEntities.stream().map(r -> {
-            ReturnRequestDTO rdto = new ReturnRequestDTO();
-            rdto.setId(r.getId());
-            rdto.setOrderId(order.getId());
-            rdto.setOrderProductId(r.getOrderProduct().getId());
-            rdto.setReasonForReturn(r.getReasonForReturn());
-            rdto.setReturnDetail(r.getReturnDetail());
-            rdto.setStatus(r.getStatus().name());
-            rdto.setRequestedAt(r.getRequestedAt());
-            rdto.setCancelledAt(r.getCancelledAt());
-            rdto.setDecisionAt(r.getDecisionAt());
-            rdto.setAdminRemark(r.getAdminRemark());
-            rdto.setImageUrls(r.getImages().stream().map(ReturnRequestImage::getImageUrl).toList());
-            return rdto;
-        }).toList();
-
-        dto.setReturnRequests(returnDTOs);
         return dto;
     }
 

@@ -1,6 +1,7 @@
 import { Component, type OnInit, type OnDestroy } from "@angular/core"
 import { interval, type Subscription } from "rxjs"
 import { LoginAttemptsService, LoginAttempt } from '../services/login-attempts.service';
+import { HttpClient } from '@angular/common/http';
 
 interface ActivityFeedItem {
   id: string
@@ -36,6 +37,8 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   selectedAttemptDetails: LoginAttempt | null = null
   realtimeActivities: ActivityFeedItem[] = []
   criticalAlerts: string[] = []
+  securityPolicy: any[] = [];
+  showPolicyExpanded: boolean = false;
 
   // Dual view state
   viewMode: 'summary' | 'detailed' = 'summary';
@@ -75,6 +78,11 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   showSessionActivityModal: boolean = false;
   sessionActivitySessionId: string | null = null;
 
+  // Modal state for per-row detailed log
+  showDetailedLogModal: boolean = false;
+  detailedLogContext: LoginAttempt | null = null;
+  filteredDetailedLog: LoginAttempt[] = [];
+
   // Subscriptions
   private realTimeSubscription?: Subscription
 
@@ -97,12 +105,54 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     NL: "🇳🇱",
   }
 
-  constructor(private loginAttemptsService: LoginAttemptsService) {}
+  editingRuleId: number | null = null;
+  editedRule: any = {};
+  isSavingRule: boolean = false;
+  isDeletingRule: boolean = false;
+  saveRule(rule: any) {
+    this.isSavingRule = true;
+    this.http.put<any>(`http://localhost:8080/api/login-attempts/security-policy/${rule.id}`, rule).subscribe({
+      next: (data) => {
+        this.isSavingRule = false;
+        this.editingRuleId = null;
+        this.fetchSecurityPolicy();
+      },
+      error: (err) => {
+        this.isSavingRule = false;
+        alert('Failed to save rule.');
+      }
+    });
+  }
+  editRule(rule: any) {
+    this.editingRuleId = rule.id;
+    this.editedRule = { ...rule };
+  }
+  cancelEdit() {
+    this.editingRuleId = null;
+    this.editedRule = {};
+  }
+  deleteRule(rule: any) {
+    if (!confirm('Are you sure you want to delete this rule?')) return;
+    this.isDeletingRule = true;
+    this.http.delete<any>(`http://localhost:8080/api/login-attempts/security-policy/${rule.id}`).subscribe({
+      next: () => {
+        this.isDeletingRule = false;
+        this.fetchSecurityPolicy();
+      },
+      error: (err) => {
+        this.isDeletingRule = false;
+        alert('Failed to delete rule.');
+      }
+    });
+  }
+
+  constructor(private loginAttemptsService: LoginAttemptsService, private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadLoginAttempts();
     this.startPolling();
     this.checkForCriticalAlerts();
+    this.fetchSecurityPolicy();
   }
 
   loadLoginAttempts(): void {
@@ -710,5 +760,42 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       this.loadLoginAttempts();
       if (this.showSessionActivityModal) this.openSessionActivity(sessionId);
     });
+  }
+
+  fetchSecurityPolicy() {
+    this.http.get<any[]>('http://localhost:8080/api/login-attempts/security-policy').subscribe({
+      next: (data) => {
+        this.securityPolicy = data;
+      },
+      error: (err) => {
+        console.error('Failed to fetch security policy:', err);
+      }
+    });
+  }
+
+  /**
+   * Opens the detailed log modal for a specific attempt (by username & IP)
+   */
+  openDetailedLogModal(attempt: LoginAttempt): void {
+    this.detailedLogContext = attempt;
+    // Case-insensitive, trimmed filter for username and IP
+    this.filteredDetailedLog = this.loginAttempts.filter(a =>
+      a.username && attempt.username &&
+      a.username.trim().toLowerCase() === attempt.username.trim().toLowerCase() &&
+      a.ipAddress && attempt.ipAddress &&
+      a.ipAddress.trim() === attempt.ipAddress.trim()
+    ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    console.log('loginAttempts:', this.loginAttempts);
+    console.log('filteredDetailedLog:', this.filteredDetailedLog);
+    this.showDetailedLogModal = true;
+  }
+
+  /**
+   * Closes the detailed log modal
+   */
+  closeDetailedLogModal(): void {
+    this.showDetailedLogModal = false;
+    this.detailedLogContext = null;
+    this.filteredDetailedLog = [];
   }
 }

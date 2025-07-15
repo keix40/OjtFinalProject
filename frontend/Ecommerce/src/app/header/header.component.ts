@@ -1,6 +1,6 @@
 import { Component, OnInit, HostListener, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { CartService, CartItem } from '../services/cart.service';
 import { Subscription } from 'rxjs';
@@ -8,11 +8,15 @@ import { WishlistService } from '../services/wishlist.service';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { CartSidebarComponent } from '../cart-sidebar/cart-sidebar.component';
 import { HttpClient } from '@angular/common/http';
+import { CategoryService } from '../services/category.service';
+import { BrandService } from '../services/brand.service';
+import { Category } from '../category';
+import { BrandListDTO } from '../brand';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, CartSidebarComponent],
+  imports: [CommonModule, CartSidebarComponent, RouterModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -30,6 +34,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
   isFirstTimeBuyerDiscount = false;
   userProfileImage: string | null = null;
+  categories: Category[] = [];
+  brands: BrandListDTO[] = [];
 
   constructor(
     private router: Router,
@@ -38,7 +44,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     private wishlistService: WishlistService,
     private http: HttpClient, // Add HttpClient for preview API
-    public breadcrumbService: BreadcrumbService
+    public breadcrumbService: BreadcrumbService,
+    private categoryService: CategoryService,
+    private brandService: BrandService
   ) {}
 
   ngOnInit() {
@@ -72,7 +80,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (this.isAuthenticated && this.userId) {
       this.loadWishlistCount();
       this.checkFirstTimeBuyerDiscount(); // Check on init
+
     }
+
+    this.categoryService.getAllCategory().subscribe({
+      next: (data) => this.categories = data,
+      error: () => this.categories = []
+    });
+    this.brandService.getAllBrand().subscribe({
+      next: (data) => this.brands = data,
+      error: () => this.brands = []
+    });
   }
 
   isMobileMenuOpen = false;
@@ -190,5 +208,23 @@ toggleMobileMenu(): void {
         this.isFirstTimeBuyerDiscount = false;
       }
     });
+  }
+
+  goToCategory(category: Category) {
+    this.openDropdown = null;
+    this.router.navigate(['/userproductlist'], { queryParams: { category: category.name } });
+  }
+
+  goToBrand(brand: BrandListDTO) {
+    this.openDropdown = null;
+    this.router.navigate(['/userproductlist'], { queryParams: { brand: brand.name } });
+  }
+
+  getAllCategoriesUrl() {
+    return '/usercategorylist';
+  }
+
+  getAllBrandsUrl() {
+    return '/userbrandlist';
   }
 }

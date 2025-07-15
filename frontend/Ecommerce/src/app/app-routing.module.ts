@@ -38,6 +38,11 @@ import { ReturnRequestComponent } from './return-request/return-request.componen
 import { ReturnListComponent } from './return-list/return-list.component';
 import { ReturnDetailComponent } from './return-detail/return-detail.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
+import { CategoryListComponent } from './category-list/category-list.component';
+import { BrandListComponent } from './brand-list/brand-list.component';
+import { CategoryAddSubcategoryComponent } from './category-add-subcategory/category-add-subcategory.component';
+import { UserCategoryListComponent } from './user-category-list/user-category-list.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
 import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Injectable } from '@angular/core';
@@ -118,6 +123,10 @@ const routes: Routes = [
       { path: 'users/login-attempts', component: LoginAttemptsComponent, data: { breadcrumb: 'Login Attempts' }},
       { path: 'return', component: ReturnListComponent },
       { path: 'return/:id', component: ReturnDetailComponent },
+      { path: 'categorylist', component: CategoryListComponent},
+      { path: 'brandlist', component: BrandListComponent},
+      { path: 'categorylist', component: CategoryListComponent},
+      { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
@@ -127,12 +136,13 @@ const routes: Routes = [
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },
   { path: 'return-request', component: ReturnRequestComponent },
-  { path: 'verify-otp', component: VerifyOtpComponent },
+  { path: 'verify-otp', component: VerifyOtpComponent },  { path: 'usercategorylist', component: UserCategoryListComponent },
+  { path: 'userbrandlist', component: UserBrandListComponent },
 ];
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes),
+    RouterModule.forRoot(routes, { scrollPositionRestoration: 'enabled' }),
     CommonModule,
     FormsModule,
     ReactiveFormsModule,

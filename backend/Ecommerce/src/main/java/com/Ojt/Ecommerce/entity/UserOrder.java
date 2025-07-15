@@ -28,9 +28,6 @@ public class UserOrder {
     @Column(name = "updated_date")
     private LocalDateTime updatedDate;
 
-    //@Enumerated(EnumType.STRING)
-   // private OrderStatus status;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
@@ -56,4 +53,8 @@ public class UserOrder {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "saved_card_id")
     private SavedCard savedCard;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ReturnRequest> returnRequests;
 }

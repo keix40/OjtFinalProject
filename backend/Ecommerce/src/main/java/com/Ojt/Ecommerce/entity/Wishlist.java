@@ -23,12 +23,10 @@ public class Wishlist {
     @JsonIgnore
     private User user;
 
-
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "product_id")
     @JsonIgnoreProperties({"productCategories", "orderProducts", "productVariants", "wishlists", "purchaseProducts"})//add this line to fix json error
     private Product product;
-
 
     @Column(name = "status", columnDefinition = "INT DEFAULT 1")
     private Integer status;

@@ -49,25 +49,25 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
 import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
 import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
 import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
-import { HomeComponent } from './home/home.component';
 import { FooterComponent } from './footer/footer.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
-import { HeaderComponent } from './header/header.component';
-import { BreadcrumbComponent } from './breadcrumb.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
 import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
 import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
 import { MatTableModule } from '@angular/material/table';
 import { NotificationComponent } from './notification/notification.component';
+import { HeaderComponent } from './header/header.component';
+import { BreadcrumbComponent } from './breadcrumb.component';import { CategoryListComponent } from './category-list/category-list.component';
+import { BrandListComponent } from './brand-list/brand-list.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    HomeComponent,
     LoginComponent,
     RegisterComponent,
 
@@ -107,7 +107,8 @@ import { BannedPageComponent } from './banned-page.component';
     DiscountCouponComponent,
     ReturnRequestComponent,
     ReturnListComponent,
-   
+    BrandListComponent,
+    UserBrandListComponent,
   ],
   imports: [
     BrowserModule,
@@ -135,6 +136,8 @@ import { BannedPageComponent } from './banned-page.component';
     VerifyOtpComponent,
     MatTableModule,
     NotificationComponent,
+    HeaderComponent,
+    BreadcrumbComponent,
     BannedPageComponent,
   ],
   providers: [

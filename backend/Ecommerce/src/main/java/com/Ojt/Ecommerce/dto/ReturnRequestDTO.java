@@ -36,6 +36,9 @@ public class ReturnRequestDTO {
     private Long refundId;
     private BigDecimal refundAmount;
     private String refundAdminRemark;
-    private LocalDateTime refundDate;
+    private LocalDateTime initiatedAt;
+    private LocalDateTime completedAt;
+    private String refundStatus;
+    private String refundType;
 }
 

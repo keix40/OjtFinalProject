@@ -4,6 +4,7 @@ import SockJS from 'sockjs-client';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ReviewMessage } from '../review-message';
 import { HttpClient } from '@angular/common/http';
+import { Review, ReviewDTO } from '../review';
 
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
@@ -63,5 +64,9 @@ export class ReviewService {
   
   sendReview(formData: FormData): Observable<any> {
     return this.http.post('http://localhost:8080/review', formData); // Adjust URL as needed
+  }
+
+  getTop5StarReviews(): Observable<ReviewDTO[]> {
+    return this.http.get<ReviewDTO[]>(`http://localhost:8080/review/top5star`);
   }
 }

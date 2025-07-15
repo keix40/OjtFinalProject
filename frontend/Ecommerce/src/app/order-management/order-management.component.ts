@@ -23,6 +23,7 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
   filteredOrders: OrderWithSelection[] = [];
   selectedOrder: UserOrderListDTO | null = null;
   selectedStatusInModal: string = '';
+  currentAvailableStatuses: any[] = [];
   
   // Filter properties
   selectedStatus: string = 'all';
@@ -62,6 +63,49 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
     { value: 'CANCELLED', label: 'Cancelled', color: 'danger' },
     { value: 'RETURNED', label: 'Returned', color: 'secondary' }
   ];
+
+  // Get filtered available statuses based on order's return requests
+  getAvailableStatusesForOrder(order: UserOrderListDTO): any[] {
+    // Check if order has return requests with refundType "REPLACEMENT"
+    const hasReplacementRequest = order.returnRequests && order.returnRequests.some(
+      returnRequest => returnRequest.refundType === 'REPLACEMENT'
+    );
+
+    if (hasReplacementRequest) {
+      // For replacement orders, exclude DELIVERED status
+      return this.availableStatuses.filter(status => status.value !== 'DELIVERED');
+    }
+
+    // Return all available statuses for normal orders
+    return this.availableStatuses;
+  }
+
+  // Helper method to check if order has replacement request
+  hasReplacementRequest(order: UserOrderListDTO): boolean {
+    return order.returnRequests && order.returnRequests.some(
+      returnRequest => returnRequest.refundType === 'REPLACEMENT'
+    );
+  }
+
+  // Helper method to check if order is cancelled with approved return requests
+  isCancelledWithApprovedReturn(order: UserOrderListDTO): boolean {
+    return order.status === 'CANCELLED' && order.returnRequests && order.returnRequests.some(
+      returnRequest => returnRequest.status === 'APPROVED'
+    );
+  }
+
+  // Get approved return request for cancelled order
+  getApprovedReturnRequest(order: UserOrderListDTO): any {
+    if (!this.isCancelledWithApprovedReturn(order)) return null;
+    return order.returnRequests.find(
+      returnRequest => returnRequest.status === 'APPROVED'
+    );
+  }
+
+  // Check if status update section should be shown
+  shouldShowStatusUpdate(order: UserOrderListDTO): boolean {
+    return !this.isCancelledWithApprovedReturn(order);
+  }
 
   constructor(
     private orderService: OrderService,
@@ -222,6 +266,14 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
   viewOrderDetails(order: UserOrderListDTO, content: any) {
     this.selectedOrder = { ...order }; // Create a copy to avoid unintended changes
     this.selectedStatusInModal = this.selectedOrder.status;
+    
+    // Only set available statuses if status update should be shown
+    if (this.shouldShowStatusUpdate(order)) {
+      this.currentAvailableStatuses = this.getAvailableStatusesForOrder(order);
+    } else {
+      this.currentAvailableStatuses = [];
+    }
+    
     this.modalService.open(content, {
       size: 'lg',
       backdrop: 'static',
