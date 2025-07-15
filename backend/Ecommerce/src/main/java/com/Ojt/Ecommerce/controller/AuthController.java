@@ -30,6 +30,12 @@ import com.Ojt.Ecommerce.dto.EmailRequest;
 import java.security.SecureRandom;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import org.json.JSONObject;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -39,6 +45,9 @@ public class AuthController {
 
     @Autowired
     private LoginAttemptService loginAttemptService;
+
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
@@ -100,10 +109,30 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, Object> loginRequest, HttpServletRequest request) {
         String email = ((String)loginRequest.get("email")).trim().toLowerCase();
         String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
-        String ip = extractClientIp(request);
+        String ip = request.getRemoteAddr();
+        System.out.println("[LoginAttempt] Detected client IP: " + ip);
         String location = loginRequest.getOrDefault("location", "").toString();
         boolean isVPN = false;
         boolean isProxy = false;
+        try {
+            String ipqsApiKey = "RL4UtL8bX86mxJKRY3nqYNGdlPrViZX";
+            String ipqsUrl = "https://ipqualityscore.com/api/json/ip/" + ipqsApiKey + "/" + ip;
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(ipqsUrl))
+                .build();
+            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+            org.json.JSONObject obj = new org.json.JSONObject(resp.body());
+            if (obj.has("vpn")) {
+                isVPN = obj.getBoolean("vpn");
+            }
+            if (obj.has("proxy")) {
+                isProxy = obj.getBoolean("proxy");
+            }
+        } catch (Exception e) {
+            // Log or handle error, but do not block login
+            System.err.println("[VPN/Proxy Detection] Error: " + e.getMessage());
+        }
         boolean banned = loginAttemptService.isIPBlocked(ip);
         if (banned) {
             return ResponseEntity.status(403).body(Map.of(
@@ -173,6 +202,13 @@ public class AuthController {
             successDTO.setThreatScore(score);
             successDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
             loginAttemptService.saveAttempt(successDTO);
+            // --- Broadcast real-time activity feed event ---
+            String activityMsg = "Successful login for " + email + " from IP " + ip + (isVPN ? " [VPN detected]" : "") + (isProxy ? " [Proxy detected]" : "");
+            messagingTemplate.convertAndSend("/topic/activity-feed", Map.of(
+                "timestamp", LocalDateTime.now().toString(),
+                "type", isVPN || isProxy ? "warning" : "success",
+                "message", activityMsg
+            ));
             // Reset OTP/CAPTCHA for this IP
             loginAttemptService.handleSuccessfulLogin(ip);
             String accessToken = jwtTokenProvider.generateToken(user);
@@ -202,6 +238,13 @@ public class AuthController {
             failDTO.setThreatScore(score);
             failDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
             loginAttemptService.saveAttempt(failDTO);
+            // --- Broadcast real-time activity feed event ---
+            String activityMsg = "Failed login for " + email + " from IP " + ip + (isVPN ? " [VPN detected]" : "") + (isProxy ? " [Proxy detected]" : "");
+            messagingTemplate.convertAndSend("/topic/activity-feed", Map.of(
+                "timestamp", LocalDateTime.now().toString(),
+                "type", isVPN || isProxy ? "danger" : "warning",
+                "message", activityMsg
+            ));
             // Progressive security logic
             loginAttemptService.handleFailedLogin(email, ip, location);
             throw ex;
