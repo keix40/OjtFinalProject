@@ -64,6 +64,7 @@ import { BreadcrumbComponent } from './breadcrumb.component';import { CategoryLi
 import { BrandListComponent } from './brand-list/brand-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
+import { NotifcationService } from './notifcation.service';
 
 @NgModule({
   declarations: [
@@ -144,6 +145,7 @@ import { BannedPageComponent } from './banned-page.component';
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
     AddressService,
+    NotifcationService,
   ],
   bootstrap: [AppComponent]
 })

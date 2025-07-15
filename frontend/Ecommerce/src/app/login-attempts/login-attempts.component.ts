@@ -2,6 +2,7 @@ import { Component, type OnInit, type OnDestroy } from "@angular/core"
 import { interval, type Subscription } from "rxjs"
 import { LoginAttemptsService, LoginAttempt } from '../services/login-attempts.service';
 import { HttpClient } from '@angular/common/http';
+import { NotifcationService } from '../notifcation.service';
 
 interface ActivityFeedItem {
   id: string
@@ -146,13 +147,27 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     });
   }
 
-  constructor(private loginAttemptsService: LoginAttemptsService, private http: HttpClient) {}
+  constructor(private loginAttemptsService: LoginAttemptsService, private http: HttpClient, private notificationService: NotifcationService) {}
 
   ngOnInit(): void {
     this.loadLoginAttempts();
     this.startPolling();
     this.checkForCriticalAlerts();
     this.fetchSecurityPolicy();
+    // Subscribe to real-time activity feed events
+    this.notificationService.notifications$.subscribe((event: any) => {
+      if (event && event.type && event.message && event.timestamp) {
+        this.realtimeActivities.unshift({
+          id: this.generateId(),
+          timestamp: event.timestamp,
+          type: event.type,
+          message: event.message,
+        });
+        if (this.realtimeActivities.length > 20) {
+          this.realtimeActivities = this.realtimeActivities.slice(0, 20);
+        }
+      }
+    });
   }
 
   loadLoginAttempts(): void {
@@ -613,65 +628,9 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
     this.realTimeSubscription = interval(5000).subscribe(() => {
       if (this.isRealTimeActive) {
-        this.simulateRealTimeActivity()
+        // This method is no longer needed as notifications are handled by the service
       }
     })
-  }
-
-  private simulateRealTimeActivity(): void {
-    if (Math.random() > 0.7) {
-      const activities = [
-        { type: "success", message: "User successfully logged in from New York, US" },
-        { type: "warning", message: "5 failed login attempts detected from suspicious IP" },
-        { type: "danger", message: "Critical: 25 failed attempts from Moscow, RU - IP blocked" },
-        { type: "warning", message: "VPN connection detected from Germany" },
-        { type: "success", message: "Admin user authenticated successfully" },
-      ]
-
-      const activity = activities[Math.floor(Math.random() * activities.length)]
-
-      this.realtimeActivities.unshift({
-        id: this.generateId(),
-        timestamp: new Date().toISOString(),
-        type: activity.type as "success" | "warning" | "danger",
-        message: activity.message,
-      })
-
-      // Keep only last 20 activities
-      if (this.realtimeActivities.length > 20) {
-        this.realtimeActivities = this.realtimeActivities.slice(0, 20)
-      }
-
-      // Add new login attempt occasionally
-      if (Math.random() > 0.8) {
-        this.addNewLoginAttempt()
-      }
-    }
-  }
-
-  private addNewLoginAttempt(): void {
-    const newAttempt: LoginAttempt = {
-      id: Math.floor(Math.random() * 10000),
-      timestamp: new Date().toISOString(),
-      username: ["admin", "user123", "hacker"][Math.floor(Math.random() * 3)],
-      ipAddress: this.generateRandomIP(),
-      location: "Moscow, RU",
-      countryCode: "RU",
-      status: Math.random() > 0.7 ? "failed" : "successful",
-      threatLevel: Math.random() > 0.5 ? "high" : "medium",
-      attemptCount: Math.floor(Math.random() * 20) + 5,
-      timeframe: "5 min",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      isVPN: Math.random() > 0.8,
-      isProxy: Math.random() > 0.9,
-      sessionId: this.generateSessionId(),
-      threatScore: Math.floor(Math.random() * 100),
-      isBlocked: Math.random() > 0.8,
-    }
-
-    this.loginAttempts.unshift(newAttempt)
-    this.applyFilters()
-    this.calculateStatistics()
   }
 
   private checkForCriticalAlerts(): void {
