@@ -65,6 +65,7 @@ import { BrandListComponent } from './brand-list/brand-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
 import { NotifcationService } from './notifcation.service';
+import { ProductEditComponent } from './product-edit/product-edit.component';
 
 @NgModule({
   declarations: [
@@ -140,6 +141,7 @@ import { NotifcationService } from './notifcation.service';
     HeaderComponent,
     BreadcrumbComponent,
     BannedPageComponent,
+    ProductEditComponent
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
@@ -150,3 +152,4 @@ import { NotifcationService } from './notifcation.service';
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+

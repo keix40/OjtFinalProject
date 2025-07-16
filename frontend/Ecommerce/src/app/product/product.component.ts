@@ -10,6 +10,7 @@ import { AttributeService } from '../services/attribute.service';
 import { ModalService } from '../services/modal.service';
 import { AttributeAndValueDTO } from '../attribute';
 import Swal from 'sweetalert2';
+import { ActivatedRoute } from '@angular/router';
 
 
 // ===== Interfaces =====
@@ -66,6 +67,8 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
   submitted = false;
   hasVariant = false;
   sku: string = 'XXXXXXXXXXX';
+  editMode = false;
+  editingProductId: string | null = null;
 
   // ===== Data Properties =====
   categories: Category[] = [];
@@ -105,6 +108,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     private router: Router,
     private modalService: ModalService,
     private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {
     this.initForm();
   }
@@ -142,6 +146,16 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     });
     // Also run once on init
     updateHasVariantState();
+
+    // Check for edit mode
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.editMode = true;
+        this.editingProductId = id;
+        this.loadProductForEdit(id);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -323,6 +337,66 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
               }
             }
           });
+        });
+      }
+    });
+  }
+
+  loadProductForEdit(id: string): void {
+    this.proService.getProductDetailById(id).subscribe(product => {
+      // Patch basic fields
+      this.productForm.patchValue({
+        productName: product.productName,
+        description: product.description,
+        price: product.price,
+        quantity: product.quantity,
+        status: product.status,
+      });
+
+      // Patch categories & brands
+      if (product.categoryBrandPairs && product.categoryBrandPairs.length > 0) {
+        this.categoryBrandArray.clear();
+        product.categoryBrandPairs.forEach((pair: any) => {
+          this.categoryBrandArray.push(this.fb.group({
+            categoryId: [pair.categoryId, Validators.required],
+            brandId: [pair.brandId],
+            availableBrands: [this.brands]
+          }));
+        });
+      }
+
+      // Patch images (for preview only, not files)
+      this.selectedImages = [];
+      this.selectedImagesPreview = (product.productImages || []).map((img: any) =>
+        img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`
+      );
+
+      // Patch attributes
+      if (product.attributes && Array.isArray(product.attributes)) {
+        this.productAttributes = product.attributes.map((attr: any) => ({
+          attributeId: attr.attributeId,
+          attributeName: attr.attributeName,
+          allowedValues: (attr.values || []).map((val: any) => ({
+            id: val.id,
+            value: val.value,
+            selected: val.selected,
+            isNew: false
+          }))
+        }));
+      }
+
+      // Patch variants
+      if (product.variants && Array.isArray(product.variants)) {
+        const variantsFormArray = this.productForm.get('variants') as FormArray;
+        variantsFormArray.clear();
+        product.variants.forEach((variant: any) => {
+          variantsFormArray.push(this.fb.group({
+            attributes: this.fb.array(variant.attributes || []),
+            sku: [variant.sku, Validators.required],
+            price: [variant.price, [Validators.required, Validators.min(0.01)]],
+            stock: [variant.stock, [Validators.required, Validators.min(1)]],
+            images: [variant.images || []]
+          }));
         });
       }
     });
@@ -938,24 +1012,18 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
 
     if (this.productForm.valid) {
       const formData = this.productForm.value;
-
       const fd = new FormData();
-
       // Map category-brand pairs from the FormArray
       const categoryBrandPairs = this.categoryBrandArray.controls.map((group: any) => ({
         categoryId: group.get('categoryId')?.value,
         brandId: group.get('brandId')?.value || null
       }));
-
       formData.categoryBrandPairs = categoryBrandPairs;
-
       const productBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
       fd.append('product', productBlob);
-
       for (const file of this.selectedImages) {
         fd.append('images', file);
       }
-
       if (formData.variants && formData.variants.length > 0) {
         formData.variants.forEach((variant: any, variantIndex: number) => {
           if (variant.images && variant.images.length > 0) {
@@ -967,16 +1035,29 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
           }
         });
       }
-
-      this.proService.createProduct(fd).subscribe({
-        next: (data) => {
-          console.log('Product created:', data);
-          this.router.navigate(['/productlist']);
-        },
-        error: (err) => {
-          console.error('Error creating product:', err);
-        }
-      });
+      if (this.editMode && this.editingProductId) {
+        // Call update product
+        this.proService.updateProduct(this.editingProductId, fd).subscribe({
+          next: (data) => {
+            console.log('Product updated:', data);
+            this.router.navigate(['/productlist']);
+          },
+          error: (err) => {
+            console.error('Error updating product:', err);
+          }
+        });
+      } else {
+        // Create new product
+        this.proService.createProduct(fd).subscribe({
+          next: (data) => {
+            console.log('Product created:', data);
+            this.router.navigate(['/productlist']);
+          },
+          error: (err) => {
+            console.error('Error creating product:', err);
+          }
+        });
+      }
     } else {
       this.markFormGroupTouched(this.productForm);
     }

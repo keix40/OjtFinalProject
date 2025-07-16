@@ -13,6 +13,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { ImageService } from '../services/image.service';
+import { Router } from '@angular/router';
 declare var $: any;
 declare var lucide: any;
 
@@ -41,7 +42,8 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     private cateService: CategoryService,
     private brandService: BrandService,
     private ngbModel: NgbModal,
-    public imageService: ImageService
+    public imageService: ImageService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -113,15 +115,7 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     
     // Navigate to edit page with the selected product ID
     const productId = selectedProducts[0].id;
-    // You can implement navigation to edit page here
-    // this.router.navigate(['/product/edit', productId]);
-    
-    Swal.fire({
-      icon: 'info',
-      title: 'Edit Product',
-      text: `Edit functionality for product ID: ${productId}`,
-      confirmButtonColor: '#3085d6'
-    });
+    this.router.navigate(['/product-edit', productId]);
   }
 
   loadProduct() {

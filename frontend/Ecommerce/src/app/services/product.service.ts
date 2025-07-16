@@ -67,4 +67,8 @@ export class ProductService {
     // Assuming backend supports this endpoint, otherwise you need to implement it
     return this.http.post<ProductDTO[]>(`${this.baseUrl}/by-ids`, { ids });
   }
+
+  updateProduct(id: string, formData: FormData): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update/${id}`, formData);
+  }
 }
