@@ -1,0 +1,560 @@
+<div class="roles-permissions-container">
+    <!-- Header Section -->
+    <div class="page-header">
+      <div class="container-fluid">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <div class="header-content">
+              <h1 class="page-title">
+                <i class="fas fa-user-cog"></i>
+                Roles & Permissions
+              </h1>
+              <p class="page-description">Define roles and customize permissions for granular access control</p>
+            </div>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <div class="header-actions">
+              <button class="btn btn-outline-secondary me-2" (click)="refreshData()">
+                <i class="fas fa-sync-alt me-1"></i>
+                Refresh
+              </button>
+              <button class="btn btn-outline-info me-2" (click)="exportRoles()">
+                <i class="fas fa-download me-1"></i>
+                Export
+              </button>
+              <button class="btn btn-primary" (click)="openCreateRoleModal()">
+                <i class="fas fa-plus me-1"></i>
+                Create Role
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <div class="container-fluid">
+      <div class="row">
+        <!-- Statistics Cards -->
+        <div class="col-12 mb-4">
+          <div class="row">
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-primary">
+                  <i class="fas fa-user-tag"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>{{ totalRoles }}</h3>
+                  <p>Total Roles</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-success">
+                  <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>{{ activeRoles }}</h3>
+                  <p>Active Roles</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-info">
+                  <i class="fas fa-key"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>{{ totalPermissions }}</h3>
+                  <p>Total Permissions</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-3">
+              <div class="stats-card">
+                <div class="stats-icon bg-warning">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-content">
+                  <h3>{{ assignedUsers }}</h3>
+                  <p>Users Assigned</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Main Content -->
+        <div class="col-lg-4 mb-4">
+          <!-- Roles List -->
+          <div class="roles-card">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5><i class="fas fa-list me-2"></i>Roles</h5>
+                <div class="search-box-small">
+                  <i class="fas fa-search search-icon"></i>
+                  <input 
+                    type="text" 
+                    class="form-control form-control-sm ps-4" 
+                    placeholder="Search roles..."
+                    [(ngModel)]="roleSearchTerm"
+                    (input)="filterRoles()"
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="card-body p-0">
+              <div class="roles-list">
+                <div 
+                  *ngFor="let role of filteredRoles; trackBy: trackByRoleId" 
+                  class="role-item"
+                  [class.active]="selectedRole?.id === role.id"
+                  (click)="selectRole(role)"
+                >
+                  <div class="role-info">
+                    <div class="role-header">
+                      <div class="role-name">{{ role.name }}</div>
+                      <div class="role-actions">
+                        <span class="status-badge" [ngClass]="'status-' + role.status">
+                          {{ role.status | titlecase }}
+                        </span>
+                        <div class="dropdown">
+                          <button 
+                            class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                            type="button" 
+                            [id]="'roleDropdown-' + role.id"
+                            data-bs-toggle="dropdown"
+                            (click)="$event.stopPropagation()"
+                          >
+                            <i class="fas fa-ellipsis-v"></i>
+                          </button>
+                          <ul class="dropdown-menu" [attr.aria-labelledby]="'roleDropdown-' + role.id">
+                            <li>
+                              <a class="dropdown-item" (click)="editRole(role); $event.stopPropagation()">
+                                <i class="fas fa-edit me-2"></i>Edit Role
+                              </a>
+                            </li>
+                            <li>
+                              <a class="dropdown-item" (click)="duplicateRole(role); $event.stopPropagation()">
+                                <i class="fas fa-copy me-2"></i>Duplicate
+                              </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                              <a class="dropdown-item" (click)="toggleRoleStatus(role); $event.stopPropagation()">
+                                <i class="fas fa-power-off me-2"></i>
+                                {{ role.status === 'active' ? 'Deactivate' : 'Activate' }}
+                              </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                              <a class="dropdown-item text-danger" (click)="deleteRole(role); $event.stopPropagation()">
+                                <i class="fas fa-trash me-2"></i>Delete
+                              </a>
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="role-description">{{ role.description }}</div>
+                    <div class="role-meta">
+                      <span class="meta-item">
+                        <i class="fas fa-users me-1"></i>
+                        {{ role.userCount }} users
+                      </span>
+                      <span class="meta-item">
+                        <i class="fas fa-key me-1"></i>
+                        {{ role.permissions.length }} permissions
+                      </span>
+                    </div>
+                  </div>
+                </div>
+  
+                <!-- Empty State -->
+                <div *ngIf="filteredRoles.length === 0" class="empty-state-small">
+                  <i class="fas fa-search"></i>
+                  <p>No roles found</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <div class="col-lg-8">
+          <!-- Role Details -->
+          <div *ngIf="selectedRole" class="role-details-card">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="role-title-section">
+                  <h5>
+                    <i class="fas fa-user-tag me-2"></i>
+                    {{ selectedRole.name }}
+                  </h5>
+                  <p class="role-subtitle">{{ selectedRole.description }}</p>
+                </div>
+                <div class="role-header-actions">
+                  <span class="status-badge" [ngClass]="'status-' + selectedRole.status">
+                    <i [class]="getStatusIcon(selectedRole.status)"></i>
+                    {{ selectedRole.status | titlecase }}
+                  </span>
+                  <button class="btn btn-outline-primary btn-sm ms-2" (click)="editRole(selectedRole)">
+                    <i class="fas fa-edit me-1"></i>
+                    Edit Role
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="card-body">
+              <!-- Role Information -->
+              <div class="role-info-section mb-4">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <label>Created Date</label>
+                      <span>{{ selectedRole.createdAt | date:'MMM dd, yyyy' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <label>Last Modified</label>
+                      <span>{{ selectedRole.updatedAt | date:'MMM dd, yyyy' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <label>Users Assigned</label>
+                      <span>{{ selectedRole.userCount }} users</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="info-item">
+                      <label>Permission Level</label>
+                      <span class="permission-level" [ngClass]="'level-' + getPermissionLevel(selectedRole)">
+                        {{ getPermissionLevel(selectedRole) | titlecase }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+  
+              <!-- Permissions Section -->
+              <div class="permissions-section">
+                <div class="section-header">
+                  <h6><i class="fas fa-key me-2"></i>Permissions</h6>
+                  <div class="permission-summary">
+                    {{ selectedRole.permissions.length }} of {{ totalAvailablePermissions }} permissions assigned
+                  </div>
+                </div>
+  
+                <!-- Permission Categories -->
+                <div class="permissions-accordion" id="permissionsAccordion">
+                  <div *ngFor="let category of permissionCategories; let i = index" class="permission-category">
+                    <div class="category-header" [id]="'heading-' + i">
+                      <button 
+                        class="btn btn-link category-toggle"
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        [attr.data-bs-target]="'#collapse-' + i"
+                        [attr.aria-expanded]="i === 0 ? 'true' : 'false'"
+                        [attr.aria-controls]="'collapse-' + i"
+                      >
+                        <div class="category-info">
+                          <div class="category-title">
+                            <i [class]="category.icon"></i>
+                            {{ category.name }}
+                          </div>
+                          <div class="category-stats">
+                            {{ getCategoryPermissionCount(category) }} / {{ category.permissions.length }} permissions
+                          </div>
+                        </div>
+                        <i class="fas fa-chevron-down toggle-icon"></i>
+                      </button>
+                    </div>
+                    <div 
+                      [id]="'collapse-' + i" 
+                      class="collapse"
+                      [class.show]="i === 0"
+                      [attr.aria-labelledby]="'heading-' + i"
+                      data-bs-parent="#permissionsAccordion"
+                    >
+                      <div class="category-content">
+                        <div class="permissions-grid">
+                          <div *ngFor="let permission of category.permissions" class="permission-card">
+                            <div class="permission-header">
+                              <div class="form-check">
+                                <input 
+                                  class="form-check-input" 
+                                  type="checkbox" 
+                                  [id]="'perm-' + permission.key"
+                                  [checked]="hasPermission(selectedRole, permission.key)"
+                                  [disabled]="!canEditRole(selectedRole)"
+                                  (change)="togglePermission(permission.key, $event)"
+                                >
+                                <label class="form-check-label" [for]="'perm-' + permission.key">
+                                  <strong>{{ permission.name }}</strong>
+                                </label>
+                              </div>
+                              <span class="permission-level-badge" [ngClass]="'level-' + permission.level">
+                                {{ permission.level }}
+                              </span>
+                            </div>
+                            <div class="permission-description">
+                              {{ permission.description }}
+                            </div>
+                            <div class="permission-meta" *ngIf="permission.dependencies?.length">
+                              <small class="text-muted">
+                                <i class="fas fa-link me-1"></i>
+                                Requires: {{ permission.dependencies ? getDependencyNames(permission.dependencies).join(', ') : 'None' }}
+                            </small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+  
+                <!-- Permission Actions -->
+                <div class="permission-actions mt-3" *ngIf="canEditRole(selectedRole)">
+                  <button class="btn btn-outline-success me-2" (click)="selectAllPermissions()">
+                    <i class="fas fa-check-double me-1"></i>
+                    Select All
+                  </button>
+                  <button class="btn btn-outline-warning me-2" (click)="clearAllPermissions()">
+                    <i class="fas fa-times me-1"></i>
+                    Clear All
+                  </button>
+                  <button class="btn btn-outline-info me-2" (click)="applyTemplate()">
+                    <i class="fas fa-magic me-1"></i>
+                    Apply Template
+                  </button>
+                  <button class="btn btn-primary" (click)="savePermissions()">
+                    <i class="fas fa-save me-1"></i>
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+  
+              <!-- Assigned Users Section -->
+              <div class="assigned-users-section mt-4" *ngIf="selectedRole.userCount > 0">
+                <div class="section-header">
+                  <h6><i class="fas fa-users me-2"></i>Assigned Users</h6>
+                  <button class="btn btn-outline-primary btn-sm" (click)="viewAssignedUsers()">
+                    <i class="fas fa-eye me-1"></i>
+                    View All ({{ selectedRole.userCount }})
+                  </button>
+                </div>
+                <div class="users-preview">
+                  <div *ngFor="let user of getPreviewUsers(selectedRole)" class="user-preview">
+                    <img [src]="user.avatar" [alt]="user.name" class="user-avatar">
+                    <div class="user-info">
+                      <div class="user-name">{{ user.name }}</div>
+                      <div class="user-email">{{ user.email }}</div>
+                    </div>
+                  </div>
+                  <div *ngIf="selectedRole.userCount > 3" class="more-users">
+                    +{{ selectedRole.userCount - 3 }} more
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+  
+          <!-- No Role Selected -->
+          <div *ngIf="!selectedRole" class="no-selection-card">
+            <div class="no-selection-content">
+              <div class="no-selection-icon">
+                <i class="fas fa-user-tag"></i>
+              </div>
+              <h4>Select a Role</h4>
+              <p>Choose a role from the list to view and manage its permissions</p>
+              <button class="btn btn-primary" (click)="openCreateRoleModal()">
+                <i class="fas fa-plus me-1"></i>
+                Create New Role
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Create/Edit Role Modal -->
+    <div class="modal fade" id="roleModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-user-tag me-2"></i>
+              {{ editingRole ? 'Edit Role' : 'Create New Role' }}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <form [formGroup]="roleForm" (ngSubmit)="saveRole()">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="roleName" class="form-label">Role Name *</label>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="roleName"
+                    formControlName="name"
+                    placeholder="e.g., Support Agent"
+                  >
+                  <div class="invalid-feedback" *ngIf="roleForm.get('name')?.invalid && roleForm.get('name')?.touched">
+                    Role name is required
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="roleStatus" class="form-label">Status</label>
+                  <select class="form-select" id="roleStatus" formControlName="status">
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="roleDescription" class="form-label">Description</label>
+                <textarea 
+                  class="form-control" 
+                  id="roleDescription"
+                  formControlName="description"
+                  rows="3"
+                  placeholder="Describe the role's purpose and responsibilities"
+                ></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Permission Template (Optional)</label>
+                <select class="form-select" [(ngModel)]="selectedTemplate" [ngModelOptions]="{standalone: true}">
+                  <option value="">Select a template...</option>
+                  <option value="admin">Administrator Template</option>
+                  <option value="manager">Manager Template</option>
+                  <option value="support">Support Agent Template</option>
+                  <option value="readonly">Read-Only Template</option>
+                </select>
+                <small class="form-text text-muted">
+                  Templates provide pre-configured permission sets for common roles
+                </small>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" (click)="saveRole()" [disabled]="roleForm.invalid">
+              <i class="fas fa-save me-1"></i>
+              {{ editingRole ? 'Update Role' : 'Create Role' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Permission Templates Modal -->
+    <div class="modal fade" id="templatesModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-magic me-2"></i>
+              Permission Templates
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="templates-grid">
+              <div *ngFor="let template of permissionTemplates" class="template-card">
+                <div class="template-header">
+                  <h6>{{ template.name }}</h6>
+                  <span class="template-level" [ngClass]="'level-' + template.level">
+                    {{ template.level }}
+                  </span>
+                </div>
+                <div class="template-description">
+                  {{ template.description }}
+                </div>
+                <div class="template-permissions">
+                  <strong>{{ template.permissions.length }}</strong> permissions included
+                </div>
+                <div class="template-actions">
+                  <button class="btn btn-outline-primary btn-sm" (click)="previewTemplate(template)">
+                    <i class="fas fa-eye me-1"></i>Preview
+                  </button>
+                  <button class="btn btn-primary btn-sm" (click)="applyPermissionTemplate(template)">
+                    <i class="fas fa-check me-1"></i>Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Assigned Users Modal -->
+    <div class="modal fade" id="assignedUsersModal" tabindex="-1" *ngIf="selectedRole">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="fas fa-users me-2"></i>
+              Users with {{ selectedRole.name }} Role
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="assigned-users-list">
+              <div *ngFor="let user of assignedUsers" class="assigned-user-item">
+                <div class="user-avatar-large">
+                  <img [src]="user.avatar" [alt]="user.name">
+                </div>
+                <div class="user-details">
+                  <div class="user-name">{{ user.name }}</div>
+                  <div class="user-email">{{ user.email }}</div>
+                  <div class="user-department">{{ user.department | titlecase }}</div>
+                </div>
+                <div class="user-status">
+                  <span class="status-badge" [ngClass]="'status-' + user.status">
+                    {{ user.status | titlecase }}
+                  </span>
+                </div>
+                <div class="user-actions">
+                  <button class="btn btn-outline-secondary btn-sm" (click)="removeUserFromRole(user)">
+                    <i class="fas fa-times me-1"></i>Remove
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-outline-primary" (click)="openAssignUsersModal()">
+              <i class="fas fa-user-plus me-1"></i>Assign More Users
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- Assign Users Modal -->
+    <div class="modal fade" id="assignUsersModal" tabindex="-1" aria-labelledby="assignUsersModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="assignUsersModalLabel">Assign More Users</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Add your user assignment form or list here -->
+            <p>Select users to assign to this role.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary">Assign</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
