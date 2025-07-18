@@ -1,4 +1,4 @@
-<div class="fixed sm:static top-0 left-0 h-full z-40">
+<div class="fixed sm:static top-0 left-0 h-full z-40" [class.hidden]="!sidebarVisible && isMobile()">
   <aside class="sticky top-0 bg-white w-72 max-w-full min-h-screen flex flex-col shadow-lg border-r border-slate-200 transition-all duration-300 ease-in-out overflow-y-auto animate-fade-in font-sans hover:shadow-xl">
     <!-- Close button for mobile -->
     <button class="absolute top-4 right-4 sm:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 shadow transition-all duration-200 z-50 transform hover:scale-110" (click)="toggleSidebar()">
@@ -214,6 +214,13 @@
             </a>
           </li>
         </ul>
+      </li>
+      <!-- Revenue Target Admin -->
+      <li class="animate-fade-in" style="animation-delay: 0.45s;">
+        <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105 font-sans" [routerLink]="'/revenue-target-admin'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md">
+          <i data-lucide="target" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+          <span>Revenue Target Admin</span>
+        </a>
       </li>
     </ul>
     

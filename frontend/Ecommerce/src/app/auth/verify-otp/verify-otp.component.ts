@@ -22,6 +22,12 @@ export class VerifyOtpComponent implements OnInit {
   otpBoxes: string[] = ['', '', '', '', '', ''];
   successAnimation: string[] = ['', '', '', '', '', ''];
   errorAnimation = false;
+  captchaInput: string = '';
+  captchaQuestion: string = '';
+  captchaAnswer: string = '';
+  showCaptchaModal: boolean = false;
+  isVerifyingCaptcha: boolean = false;
+  captchaError: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -92,11 +98,10 @@ export class VerifyOtpComponent implements OnInit {
     this.authService.verifyOtp(this.email, otp).subscribe({
       next: (res) => {
         this.isVerifying = false;
+        // If this is a login OTP, show CAPTCHA before redirecting
         if (res && res.accessToken && res.refreshToken) {
-          localStorage.setItem('accessToken', res.accessToken);
-          localStorage.setItem('refreshToken', res.refreshToken);
-          this.message = 'Email verified and logged in! Redirecting...';
-          this.animateSuccessAndRedirect();
+          this.showCaptchaModal = true;
+          this.generateCaptcha();
         } else {
           this.message = 'Email verified successfully! You can now log in.';
           setTimeout(() => this.router.navigate(['/login']), 1500);
@@ -108,6 +113,30 @@ export class VerifyOtpComponent implements OnInit {
         this.animateError();
       }
     });
+  }
+
+  generateCaptcha() {
+    const a = Math.floor(Math.random() * 10) + 1;
+    const b = Math.floor(Math.random() * 10) + 1;
+    this.captchaQuestion = `What is ${a} + ${b}?`;
+    this.captchaAnswer = (a + b).toString();
+    this.captchaInput = '';
+    this.captchaError = '';
+  }
+
+  verifyCaptcha() {
+    this.captchaError = '';
+    this.isVerifyingCaptcha = true;
+    if (this.captchaInput.trim() === this.captchaAnswer) {
+      this.isVerifyingCaptcha = false;
+      this.showCaptchaModal = false;
+      this.message = 'Login successful! Redirecting...';
+      this.animateSuccessAndRedirect();
+    } else {
+      this.isVerifyingCaptcha = false;
+      this.captchaError = 'Incorrect answer. Please try again.';
+      this.generateCaptcha();
+    }
   }
 
   animateSuccessAndRedirect() {

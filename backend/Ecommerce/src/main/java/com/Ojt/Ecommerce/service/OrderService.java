@@ -9,6 +9,12 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.Ojt.Ecommerce.dto.*;
+import com.Ojt.Ecommerce.entity.*;
+import com.Ojt.Ecommerce.entity.UserStatus;
+import com.Ojt.Ecommerce.repository.*;
+import com.Ojt.Ecommerce.service.UserActivityService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -98,6 +104,12 @@ public class OrderService {
 
     @Autowired
     private DistanceCalculatorService distanceCalculator; // You must create this
+
+    @Autowired
+    private UserActivityService userActivityService;
+
+    @Autowired
+    private DashboardBroadcastService dashboardBroadcastService;
 
     // Method to ensure "First Time Buyer" discount exists
     private void ensureFirstTimeBuyerDiscountExists() {
@@ -316,6 +328,10 @@ public class OrderService {
             pointRepo.save(history);
 
             notificationService.sendNotification(user.getEmail(), "Your order was successful");
+            // Log user activity for dashboard active users metric (order)
+            userActivityService.logActivity(user.getId(), "order");
+            // Broadcast dashboard metrics after order creation
+            dashboardBroadcastService.broadcastDashboardMetrics("day");
             return savedOrder;
 
         } catch (Exception e) {

@@ -5,4 +5,6 @@ export interface LoginResponse {
   username: string;
   userId: number;
   role: string;
+  otpRequired?: boolean;
+  captchaRequired?: boolean;
 }

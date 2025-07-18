@@ -12,6 +12,8 @@ import { CategoryService } from '../services/category.service';
 import { BrandService } from '../services/brand.service';
 import { Category } from '../category';
 import { BrandListDTO } from '../brand';
+import { UserActivityService } from '../services/user-activity.service';
+import { NavigationEnd } from '@angular/router';
 import { ProductDTO } from '../product';
 import { ProductService } from '../services/product.service';
 import { FormsModule } from '@angular/forms';
@@ -52,6 +54,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     public breadcrumbService: BreadcrumbService,
     private categoryService: CategoryService,
     private brandService: BrandService,
+    private userActivityService: UserActivityService,
     private productServce: ProductService
   ) {}
 
@@ -96,6 +99,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.brandService.getAllBrand().subscribe({
       next: (data) => this.brands = data,
       error: () => this.brands = []
+    });
+
+    // Log page view on every navigation
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        this.isAuthenticated = this.authService.isLoggedIn();
+        this.userId = this.authService.getUserId();
+        if (this.isAuthenticated && this.userId) {
+          this.userActivityService.logPageView(this.userId);
+        }
+      }
     });
   }
 

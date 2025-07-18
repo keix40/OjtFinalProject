@@ -114,15 +114,7 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     
     // Navigate to edit page with the selected product ID
     const productId = selectedProducts[0].id;
-    // You can implement navigation to edit page here
-    // this.router.navigate(['/product/edit', productId]);
-    
-    Swal.fire({
-      icon: 'info',
-      title: 'Edit Product',
-      text: `Edit functionality for product ID: ${productId}`,
-      confirmButtonColor: '#3085d6'
-    });
+    this.router.navigate(['/product-edit', productId]);
   }
 
   loadProduct() {

@@ -68,6 +68,10 @@ export class ProductService {
     return this.http.post<ProductDTO[]>(`${this.baseUrl}/by-ids`, { ids });
   }
 
+  updateProduct(id: string, formData: FormData): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update/${id}`, formData);
+  }
+
   getProductQuantity(productId: number): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/productquantity/${productId}`);
   }
