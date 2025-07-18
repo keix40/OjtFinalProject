@@ -7,6 +7,8 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -27,6 +29,10 @@ public class UserDTO {
     private Integer totalPoints;
     private long roleId;  // Role id for reference
     private String roleName;  // Role name for convenience
+    private String password;
+    private String status;
+    private LocalDateTime lastLogin;
+    private List<String> permissions;
 
     // Constructor to map from entity to DTO
     public UserDTO(User user) {
@@ -42,7 +48,15 @@ public class UserDTO {
         if (user.getRole() != null) {
             this.roleId = user.getRole().getId();
             this.roleName = user.getRole().getName();
+            this.permissions = user.getRole().getRolePermissions() != null ?
+                user.getRole().getRolePermissions().stream()
+                    .map(rp -> rp.getPermission().getKey())
+                    .collect(Collectors.toList()) : null;
+        } else {
+            this.permissions = null;
         }
+        this.status = user.getStatus() != null ? user.getStatus().name().toLowerCase() : null;
+        this.lastLogin = user.getLastLogin();
     }
 
 

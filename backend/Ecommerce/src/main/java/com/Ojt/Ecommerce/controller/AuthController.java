@@ -36,6 +36,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.json.JSONObject;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import com.Ojt.Ecommerce.service.UserActivityService;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -48,6 +49,9 @@ public class AuthController {
 
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
+
+    @Autowired
+    private UserActivityService userActivityService;
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
@@ -172,6 +176,11 @@ public class AuthController {
             if (!user.isVerified()) {
                 throw new CustomException("Please verify your email before logging in.");
             }
+            // Log user activity for dashboard active users metric
+            userActivityService.logActivity(user.getId(), "login");
+            // Update lastLogin timestamp
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
             // Save successful attempt
             String sessionId = null;
             var session = request.getSession();
