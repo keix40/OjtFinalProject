@@ -130,6 +130,7 @@ const routes: Routes = [
       { path: 'brandlist', component: BrandListComponent},
       { path: 'categorylist', component: CategoryListComponent},
       { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent },
+      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
@@ -142,7 +143,7 @@ const routes: Routes = [
   { path: 'return-request', component: ReturnRequestComponent }, 
   { path: 'verify-otp', component: VerifyOtpComponent },  { path: 'usercategorylist', component: UserCategoryListComponent },
   { path: 'userbrandlist', component: UserBrandListComponent },
-  { path: 'admin/revenue-target', component: RevenueTargetAdminComponent },
+  
 ];
 
 @NgModule({
