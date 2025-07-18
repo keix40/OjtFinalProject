@@ -6,6 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 declare var $: any;
 declare var lucide: any;
+import { OrderInvoiceComponent } from '../order-invoice/order-invoice.component';
 
 // Extended interface to include checked property for selection
 interface OrderWithSelection extends UserOrderListDTO {
@@ -104,9 +105,26 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
 
   // Check if status update section should be shown
   shouldShowStatusUpdate(order: UserOrderListDTO): boolean {
-    return !this.isCancelledWithApprovedReturn(order);
+    // If order is RETURNED, never allow update
+    if (order.status === 'RETURNED') return false;
+    // If order is DELIVERED, only allow update if replacement request exists
+    if (order.status === 'DELIVERED') {
+      return this.hasReplacementRequest(order);
+    }
+    // If cancelled with approved return, don't allow
+    if (this.isCancelledWithApprovedReturn(order)) return false;
+    // Otherwise, allow
+    return true;
   }
 
+  searchTerm: string = '';
+  currentPage: number = 1;
+  pageSize: number = 10;
+  paginatedOrders: OrderWithSelection[] = [];
+  
+  excelDropdownOpen: boolean = false;
+  pdfDropdownOpen: boolean = false;
+  
   constructor(
     private orderService: OrderService,
     private authService: AuthService,
@@ -115,6 +133,29 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.loadOrders();
+    document.addEventListener('click', this.handleDocumentClick.bind(this));
+  }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('click', this.handleDocumentClick.bind(this));
+  }
+
+  private handleDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      this.excelDropdownOpen = false;
+      this.pdfDropdownOpen = false;
+    }
+  }
+
+  toggleExcelDropdown(): void {
+    this.excelDropdownOpen = !this.excelDropdownOpen;
+    if (this.excelDropdownOpen) this.pdfDropdownOpen = false;
+  }
+
+  togglePdfDropdown(): void {
+    this.pdfDropdownOpen = !this.pdfDropdownOpen;
+    if (this.pdfDropdownOpen) this.excelDropdownOpen = false;
   }
 
   ngAfterViewInit(): void {
@@ -130,6 +171,8 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
       next: (data) => {
         this.orders = data.map(order => ({ ...order, checked: false }));
         this.filteredOrders = [...this.orders];
+        this.currentPage = 1;
+        this.updatePaginatedOrders();
         
         setTimeout(() => {
           $('#orderTable').DataTable({
@@ -200,7 +243,21 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
     }
 
     this.filteredOrders = filtered;
+    this.currentPage = 1;
+    this.updatePaginatedOrders();
     this.updateSelection();
+  }
+
+  onSearch(): void {
+    const term = this.searchTerm.trim().toLowerCase();
+    this.filteredOrders = this.orders.filter(order => {
+      const matchesCustomer = (order.user?.name ?? '').toLowerCase().includes(term);
+      const matchesOrderCode = (order.orderCode ?? '').toLowerCase().includes(term);
+      const matchesStatus = (order.status ?? '').toLowerCase().includes(term);
+      return !term || matchesCustomer || matchesOrderCode || matchesStatus;
+    });
+    this.currentPage = 1;
+    this.updatePaginatedOrders();
   }
 
   private isSameDay(date1: Date, date2: Date): boolean {
@@ -230,17 +287,53 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
     return date.getFullYear() === now.getFullYear();
   }
 
+  updatePaginatedOrders(): void {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    this.paginatedOrders = this.filteredOrders.slice(start, end);
+  }
+
+  changePage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.updatePaginatedOrders();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredOrders.length / this.pageSize);
+  }
+
+  get showPagination(): boolean {
+    return this.filteredOrders.length > this.pageSize;
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    for (let i = 1; i <= this.totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  get showingFrom(): number {
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get showingTo(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
   get selectedOrders(): OrderWithSelection[] {
-    return this.filteredOrders.filter(order => order.checked);
+    return this.paginatedOrders.filter(order => order.checked);
   }
   
   toggleAllCheckboxes(): void {
-    this.filteredOrders.forEach(order => order.checked = this.selectAll);
+    this.paginatedOrders.forEach(order => order.checked = this.selectAll);
   }
   
   updateSelection(): void {
-    const total = this.filteredOrders.length;
-    const selected = this.filteredOrders.filter(order => order.checked).length;
+    const total = this.paginatedOrders.length;
+    const selected = this.paginatedOrders.filter(order => order.checked).length;
     this.selectAll = total === selected && total > 0;
   }
 
@@ -528,5 +621,18 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
         this.exportToExcel();
       }
     });
+  }
+
+  get totalItems(): number {
+    return this.filteredOrders.length;
+  }
+
+  openInvoiceModal(order: any) {
+    const modalRef = this.modalService.open(OrderInvoiceComponent, {
+      backdrop: 'static',
+      keyboard: false,
+      windowClass: 'invoice-modal'
+    });
+    modalRef.componentInstance.order = order;
   }
 }

@@ -12,11 +12,14 @@ import { CategoryService } from '../services/category.service';
 import { BrandService } from '../services/brand.service';
 import { Category } from '../category';
 import { BrandListDTO } from '../brand';
+import { ProductDTO } from '../product';
+import { ProductService } from '../services/product.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, CartSidebarComponent, RouterModule],
+  imports: [CommonModule, CartSidebarComponent, RouterModule, FormsModule],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -36,6 +39,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   userProfileImage: string | null = null;
   categories: Category[] = [];
   brands: BrandListDTO[] = [];
+  searchQuery: string = '';
+  products: ProductDTO[] = [];
 
   constructor(
     private router: Router,
@@ -46,7 +51,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private http: HttpClient, // Add HttpClient for preview API
     public breadcrumbService: BreadcrumbService,
     private categoryService: CategoryService,
-    private brandService: BrandService
+    private brandService: BrandService,
+    private productServce: ProductService
   ) {}
 
   ngOnInit() {
@@ -227,4 +233,12 @@ toggleMobileMenu(): void {
   getAllBrandsUrl() {
     return '/userbrandlist';
   }
+
+  onSearch() {
+    const value = this.searchQuery?.trim();
+    if (value) {
+      this.router.navigate(['/userproductlist'], { queryParams: { search: value } });
+    }
+  }
+
 }

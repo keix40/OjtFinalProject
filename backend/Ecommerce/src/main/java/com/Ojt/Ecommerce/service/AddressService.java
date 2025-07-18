@@ -1,12 +1,14 @@
 package com.Ojt.Ecommerce.service;
 
-import com.Ojt.Ecommerce.dto.AddressDTO;
-
 import java.util.List;
 
+import com.Ojt.Ecommerce.dto.AddressDTO;
+
 public interface AddressService {
-    String addNewAddress(AddressDTO dto);
+    Long addNewAddress(AddressDTO dto);
     List<AddressDTO> getAddressByUserId(Long userId);
+    Long updateAddress(Long id, AddressDTO dto);
+    void deleteAddress(Long id);
 
 
 }

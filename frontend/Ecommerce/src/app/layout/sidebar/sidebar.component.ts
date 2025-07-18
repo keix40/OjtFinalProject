@@ -17,6 +17,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   isContentOpen: boolean = false;
   isSettingsOpen: boolean = false;
    isDiscountsOpen:boolean = false; // add for discount adding and showing list by pmk june 28
+  isDeliveryOpen: boolean = false; // independent delivery dropdown
   // Add to your component
   totalCustomers: number = 0;
   vipCount: number = 0;

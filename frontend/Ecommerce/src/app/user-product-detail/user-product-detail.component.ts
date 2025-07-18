@@ -580,11 +580,13 @@ checkFirstTimeBuyerDiscount(): void {
     if (this.editingReviewId) {
       formData.append('id', this.editingReviewId.toString());
     }
-    // Add removed media info
+    // Add removed media info (send each as a separate field)
     if (isEdit && this.removedMedia.length > 0) {
-      formData.append('removedMedia', JSON.stringify(this.removedMedia));
+      this.removedMedia.forEach(url => {
+        formData.append('removedMedia', url);
+      });
     }
-    this.selectedReviewFiles.forEach((item, idx) => {
+    this.selectedReviewFiles.forEach((item) => {
       formData.append('media', item.file);
     });
   

@@ -11,6 +11,9 @@ import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { RouterModule, Router } from '@angular/router';
 import { ReviewService } from '../services/review.service';
+import { ProductService } from '../services/product.service';
+import { ProductDTO } from '../product';
+import { ProductList } from '../product';
 
 @Component({
   selector: 'app-home',
@@ -28,12 +31,15 @@ export class HomeComponent implements OnInit {
   reviewsError = '';
   loading = false;
   error = '';
+  featuredProducts: ProductDTO[] = [];
+  trendingProducts: ProductList[] = [];
 
   constructor(
     private categoryService: CategoryService,
     private brandService: BrandService,
     private reviewService: ReviewService,
-    private router: Router
+    private router: Router,
+    private productService: ProductService
   ) {}
 
   ngOnInit(): void {
@@ -41,6 +47,8 @@ export class HomeComponent implements OnInit {
     this.loadCategory();
     this.loadBrands();
     this.loadReviews();
+    this.loadFeaturedProducts();
+    this.loadTrendingProducts();
   }
 
   loadCategory(){
@@ -78,6 +86,28 @@ export class HomeComponent implements OnInit {
       error: () => {
         this.reviewsError = 'Failed to load reviews.';
         this.reviewsLoading = false;
+      }
+    });
+  }
+
+  loadFeaturedProducts() {
+    this.productService.getLatestProducts().subscribe({
+      next: (products) => {
+        this.featuredProducts = products;
+      },
+      error: () => {
+        // Optionally handle error
+      }
+    });
+  }
+
+  loadTrendingProducts() {
+    this.productService.getTopOrderedProducts().subscribe({
+      next: (products) => {
+        this.trendingProducts = products;
+      },
+      error: () => {
+        // Optionally handle error
       }
     });
   }
@@ -145,5 +175,17 @@ export class HomeComponent implements OnInit {
   goToBrand(brand: BrandListDTO) {
     // You can add query param or route as needed
     this.router.navigate(['/userproductlist'], { queryParams: { brand: brand.name } });
+  }
+
+  goToProductDetail(product: ProductDTO) {
+    this.router.navigate(['/product', product.id]);
+  }
+
+  goToTrendingProductDetail(product: ProductList) {
+    this.router.navigate(['/product', product.id]);
+  }
+
+  goToAllProducts() {
+    this.router.navigate(['/userproductlist']);
   }
 }

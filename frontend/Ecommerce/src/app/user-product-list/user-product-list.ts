@@ -16,15 +16,16 @@ import { HeaderComponent } from '../header/header.component';
 import { DiscountService } from '../services/discount.service';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
+import { OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-user-product-list',
   standalone: true,
   templateUrl: './user-product-list.html',
   styleUrls: ['./user-product-list.css'],
-  imports: [CommonModule, FormsModule, BreadcrumbComponent, HeaderComponent]
+  imports: [CommonModule, FormsModule, HeaderComponent]
 })
-export class UserProductListComponent {
+export class UserProductListComponent implements OnInit {
   @Output() wishlistChanged = new EventEmitter<void>();
   allProducts: ProductDTO[] = [];
   products: ProductDTO[] = [];
@@ -69,6 +70,8 @@ export class UserProductListComponent {
     { label: 'Home' }
   ];
 
+  searchQuery: string = '';
+
   constructor(
     private productService: ProductService,
     private cartService: CartService,
@@ -91,28 +94,37 @@ export class UserProductListComponent {
       return;
     }
     this.route.queryParams.subscribe(params => {
-      const category = params['category'];
-      const brand = params['brand'];
-      this.selectedCategory = category || null;
-      this.selectedBrand = brand || null;
-      this.loadProducts(() => {
-        if (this.selectedCategory) {
-          this.filters.category = [this.selectedCategory];
-        }
-        if (this.selectedBrand) {
-          this.filters.brand = [this.selectedBrand];
-        }
-        if (this.selectedCategory || this.selectedBrand) {
-          this.applyFilters();
-        }
-      });
+      const search = params['search'];
+      if (search) {
+        this.searchQuery = search;
+        this.productService.searchProducts(search).subscribe(products => {
+          this.products = products;
+        });
+      } else {
+        this.searchQuery = '';
+        // Load all products as usual
+        this.loadProducts(() => {
+          const category = params['category'];
+          const brand = params['brand'];
+          this.selectedCategory = category || null;
+          this.selectedBrand = brand || null;
+          if (this.selectedCategory) {
+            this.filters.category = [this.selectedCategory];
+          }
+          if (this.selectedBrand) {
+            this.filters.brand = [this.selectedBrand];
+          }
+          if (this.selectedCategory || this.selectedBrand) {
+            this.applyFilters();
+          }
+        });
+      }
     });
     this.loadCategories();
     this.loadBrands();
     this.loadWishlist();
     this.loadActiveDiscounts();
     this.checkFirstTimeBuyerDiscount();
-
   }
 
   loadProducts(callback?: () => void): void {

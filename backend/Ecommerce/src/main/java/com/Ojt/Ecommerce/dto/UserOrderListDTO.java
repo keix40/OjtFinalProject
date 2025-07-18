@@ -1,10 +1,10 @@
 package com.Ojt.Ecommerce.dto;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.time.LocalDateTime;
 import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Setter
 @Getter
@@ -15,6 +15,7 @@ public class UserOrderListDTO {
     private LocalDateTime updatedDate;
     private String status;
     private String deliveryMethod;
+    private String deliveryService;
     private Double deliveryFee;
     private String discountType;
     private String discountCode;

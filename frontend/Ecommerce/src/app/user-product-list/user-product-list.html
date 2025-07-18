@@ -1,5 +1,5 @@
 <app-header></app-header>
-<app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
+<!-- <app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb> -->
 <div class="bg-white min-h-screen py-8 font-sans">
   <div class="max-w-7xl mx-auto px-4">
     <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
@@ -21,6 +21,9 @@
         <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
         {{ showFilter ? 'Hide Filter' : 'Show Filter' }}
       </button>
+    </div>
+    <div *ngIf="searchQuery" class="text-lg text-blue-600 font-semibold mb-4">
+      Search result for: <span class="font-bold">{{ searchQuery }}</span>
     </div>
     <div class="flex flex-col md:flex-row gap-8">
       <!-- Sidebar Filters -->

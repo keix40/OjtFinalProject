@@ -43,6 +43,8 @@ import { BrandListComponent } from './brand-list/brand-list.component';
 import { CategoryAddSubcategoryComponent } from './category-add-subcategory/category-add-subcategory.component';
 import { UserCategoryListComponent } from './user-category-list/user-category-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
+import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
+import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Home' } },
@@ -99,6 +101,8 @@ const routes: Routes = [
       { path: 'brandlist', component: BrandListComponent},
       { path: 'categorylist', component: CategoryListComponent},
       { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent },
+      { path: 'createdeliveryservice', component: CreateDeliveryServiceComponent },
+      { path: 'deliveryservicelist', component: DeliveryServiceListComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },

@@ -59,7 +59,9 @@
                         </button>
                         <span class="font-semibold text-neutral-900 min-w-[4rem] sm:min-w-[3rem] text-center text-xl sm:text-lg animate-bounce select-none">{{ item.quantity }}</span>
                         <button (click)="increaseQty(item)"
-                          class="w-12 h-12 sm:w-10 sm:h-10 rounded-xl border border-neutral-300 hover:border-neutral-400 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition-all duration-200 hover:scale-105 qty-btn touch-manipulation">
+                          class="w-12 h-12 sm:w-10 sm:h-10 rounded-xl border border-neutral-300 hover:border-neutral-400 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition-all duration-200 hover:scale-105 qty-btn touch-manipulation"
+                          [disabled]="item.quantity >= getMaxQuantity(item)"
+                          [attr.title]="'Max: ' + getMaxQuantity(item)">
                           <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -167,15 +169,7 @@
         <div class="space-y-4 mb-6">
           <div class="flex justify-between text-neutral-600">
             <span>Subtotal ({{ cartItems.length }} items)</span>
-            <span class="animate-pulse">{{ getSubtotal() | currency }}</span>
-          </div>
-          <div class="flex justify-between text-neutral-600">
-            <span>Shipping</span>
-            <span class="text-green-600 font-medium floating">Free</span>
-          </div>
-          <div class="flex justify-between text-neutral-600">
-            <span>Tax</span>
-            <span>$76.80</span>
+            <span class="animate-pulse">{{ getSubtotal()}} MMK</span>
           </div>
           <!-- Discount Savings Row -->
           <div class="flex items-center justify-between text-green-600" *ngIf="isFirstTimeBuyerDiscount">
@@ -187,12 +181,12 @@
           </div>
           <div class="flex justify-between text-green-600" *ngIf="getTotalDiscount() > 0 && !isFirstTimeBuyerDiscount">
             <span>Discount</span>
-            <span>-{{ getTotalDiscount() | currency }}</span>
+            <span>-{{ getTotalDiscount()}}MMK</span>
           </div>
           <div class="border-t border-neutral-200 pt-4">
             <div class="flex justify-between text-xl font-bold ">
               <span>Total</span>
-              <span class="text-neutral-900">{{ getOrderTotal() | currency }}</span>
+              <span class="text-neutral-900">{{ getOrderTotal()}} MMK</span>
             </div>
           </div>
         </div>

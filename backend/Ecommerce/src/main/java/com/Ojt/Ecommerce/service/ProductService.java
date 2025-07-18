@@ -528,5 +528,26 @@ public class ProductService {
 
         return dto;
     }
-}
 
+    public Long getProductQuantity(Long productId) {
+        return proRepo.findProductQuantity(productId);
+    }
+
+    public Integer getProductVariantStock(Long variantId) {
+        return variantRepo.findProductVariant(variantId);
+    }
+
+    public List<Product> getLatest4Products() {
+        return proRepo.findTop4ByOrderByCreateDateDesc().stream().limit(4).toList();
+    }
+
+    public List<Product> getTop4OrderedProducts() {
+        return proRepo.findTop4OrderedProductsNative();
+    }
+
+    public List<ProductDTO> searchProducts(String keyword) {
+        List<Product> products = proRepo.searchProducts(keyword);
+        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+}

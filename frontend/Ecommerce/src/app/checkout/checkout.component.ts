@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { DiscountService } from '../services/discount.service';
 import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
+import { DeliveryServiceService, DeliveryService } from '../services/delivery-service-service.service';
 
 @Component({
   selector: 'app-checkout',
@@ -56,13 +57,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   // Delivery options
   delivery = {
-    method: ''
+    service: ''
   };
-  deliveryOptions: any[] = [];
+  deliveryOptions: DeliveryService[] = [];
 
   // Payment info
   payment = {
-    method: '',
     cardNumber: '',
     expiry: '',
     cvv: '',
@@ -86,7 +86,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   selectedDelivery: any = null;
   deliveryFee: number = 0;
-  deliveryId: number | null = null;
+  deliveryServiceId: number | null = null;
   // userId: number | undefined;
 
   orderPreview: any = null;
@@ -110,7 +110,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     private orderService: OrderService,
     private http: HttpClient, // Add HttpClient for preview API
     private discountService: DiscountService,
-    private productService: ProductService
+    private productService: ProductService,
+    private deliveryServiceService: DeliveryServiceService
   ) {
     this.addressForm = this.fb.group({
       address: ['', Validators.required],
@@ -133,9 +134,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       })
     );
 
-    // Fetch delivery options dynamically
-    this.orderService.getAllDeliveryMethod().subscribe(options => {
-      this.deliveryOptions = options || [];
+    // Fetch delivery services dynamically
+    this.deliveryServiceService.getAll().subscribe(services => {
+      this.deliveryOptions = services || [];
     });
 
     // Fetch addresses
@@ -374,8 +375,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.stepCompleted = {};
     this.customer = { name: '', email: '', phone: '' };
     this.shipping = { address: '', city: '', state: '', postal: '', country: ''};
-    this.delivery = { method: '' };
-    this.payment = { method: '', cardNumber: '', expiry: '', cvv: '', paypalEmail: '' };
+    this.delivery = { service: '' };
+    this.payment = { cardNumber: '', expiry: '', cvv: '', paypalEmail: '' };
   }
 
   // Cart summary helpers
@@ -420,6 +421,7 @@ getTotalDiscount() {
     }
     return subtotal;
   }
+  
   getTotal() {
   if (this.orderPreview && typeof this.orderPreview.total === 'number') {
     return this.orderPreview.total;
@@ -457,9 +459,13 @@ getTotalDiscount() {
       ? this.addresses[this.selectedAddressIndex].id 
       : null;
     
-    // Get delivery method ID
-    const deliveryMethodId = this.deliveryId;
+    // Get delivery service ID
+    const deliveryServiceId = this.deliveryServiceId;
     
+    if (!selectedAddressId || !deliveryServiceId) {
+      alert('Please select both a shipping address and a delivery service.');
+      return;
+    }
     // Get discount ID if coupon is applied
     const discountId = this.discount && this.isCouponValid ? this.discount.id : null;
     
@@ -472,7 +478,7 @@ getTotalDiscount() {
         cartItems: this.cartItems,
         userId: userId,
         addressId: selectedAddressId,
-        deliveryMethodId: deliveryMethodId,
+        deliveryServiceId: deliveryServiceId,
         discountId: discountId,
         discount: this.discount,
         discountAmount: this.discountAmount,
@@ -677,16 +683,30 @@ getTotalDiscount() {
     }
   }
 
-  onDeliveryChange(option: any) {
-    if (option) {
-      this.delivery.method = option.name;
-      this.deliveryFee = option.fee;
-      this.deliveryId = option.id;
-    } else {
-      this.delivery.method = '';
+  onDeliveryChange(option: DeliveryService) {
+    if (!option || this.selectedAddressIndex === null) {
       this.deliveryFee = 0;
-      this.deliveryId = null;
+      this.delivery.service = '';
+      this.deliveryServiceId = null;
+      return;
     }
+    const address = this.addresses[this.selectedAddressIndex];
+    if (!address || !address.id || !option.id) {
+      this.deliveryFee = 0;
+      this.delivery.service = '';
+      this.deliveryServiceId = null;
+      return;
+    }
+    this.delivery.service = option.name;
+    this.deliveryServiceId = option.id;
+    this.orderService.calculateFeeByDistance(option.id, address.id).subscribe({
+      next: (fee: any) => {
+        this.deliveryFee = typeof fee === 'object' && fee.fee ? fee.fee : fee;
+      },
+      error: () => {
+        this.deliveryFee = 0;
+      }
+    });
   }
 
   applyCoupon(): void {

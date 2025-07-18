@@ -1,19 +1,27 @@
 package com.Ojt.Ecommerce.controller;
 
-import com.Ojt.Ecommerce.dto.DiscountDTO;
-import com.Ojt.Ecommerce.dto.UserOrderDTO;
-import com.Ojt.Ecommerce.dto.UserOrderListDTO;
-import com.Ojt.Ecommerce.entity.DeliveryMethod;
-import com.Ojt.Ecommerce.entity.UserOrder;
-import com.Ojt.Ecommerce.service.DeliveryService;
-import com.Ojt.Ecommerce.service.OrderService;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
+import com.Ojt.Ecommerce.dto.DiscountDTO;
+import com.Ojt.Ecommerce.dto.UserOrderDTO;
+import com.Ojt.Ecommerce.dto.UserOrderListDTO;
+import com.Ojt.Ecommerce.entity.UserOrder;
+import com.Ojt.Ecommerce.service.DeliveryService;
+import com.Ojt.Ecommerce.service.OrderService;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -25,10 +33,36 @@ public class OrderController {
     @Autowired
     private DeliveryService deliveryService;
 
+
     //delivery method
-    @GetMapping("/getdelimethod")
-    public List<DeliveryMethod> getAllDeliveryMethod(){
-        return deliveryService.findAllDelivery();
+    @GetMapping("/getdeliveryservices")
+    public ResponseEntity<?> getAllDeliveryServices() {
+        return ResponseEntity.ok(deliveryService.getAll());
+    }
+
+    @GetMapping("/preview-delivery-fee")
+    public ResponseEntity<?> getDeliveryFee(
+            @RequestParam Long deliveryServiceId,
+            @RequestParam Long addressId) {
+        try {
+            double fee = deliveryService.calculateFeeByDistance(deliveryServiceId, addressId);
+            return ResponseEntity.ok(Map.of("fee", fee));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Failed to calculate delivery fee: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/calculateFeeByDistance")
+    public ResponseEntity<?> calculateFeeByDistance(@RequestParam Long deliveryServiceId, @RequestParam Long addressId) {
+        try {
+            double fee = deliveryService.calculateFeeByDistance(deliveryServiceId, addressId);
+            return ResponseEntity.ok(Map.of("fee", fee));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Failed to calculate delivery fee: " + e.getMessage());
+        }
     }
 
     //discount

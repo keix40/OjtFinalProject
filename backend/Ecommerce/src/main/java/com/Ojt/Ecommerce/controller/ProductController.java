@@ -101,4 +101,33 @@ public class ProductController {
     public ProductDTO getProductDetail(@PathVariable Long id) {
         return service.getProductDetailById(id);
     }
+
+    @GetMapping("/productquantity/{id}")
+    public ResponseEntity<?> getProductQuantity(@PathVariable("id") Long productId) {
+        Long quantity = service.getProductQuantity(productId);
+        return ResponseEntity.ok(quantity);
+    }
+
+    @GetMapping("/variantstock/{id}")
+    public ResponseEntity<?> getProductVariantStock(@PathVariable("id") Long variantId) {
+        Integer stock = service.getProductVariantStock(variantId);
+        return ResponseEntity.ok(stock);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<List<Product>> getLatestProducts() {
+        return ResponseEntity.ok(service.getLatest4Products());
+    }
+
+    @GetMapping("/topordered")
+    public ResponseEntity<List<Product>> getTopOrderedProducts() {
+        return ResponseEntity.ok(service.getTop4OrderedProducts());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String keyword) {
+        List<ProductDTO> results = service.searchProducts(keyword);
+        return ResponseEntity.ok(results);
+    }
+
 }

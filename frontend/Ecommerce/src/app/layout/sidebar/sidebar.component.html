@@ -115,10 +115,31 @@
         </ul>
       </li>
 
+      <!-- Delivery Service -->
+      <li class="animate-fade-in" style="animation-delay: 0.2s;">
+        <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isDeliveryOpen = !isDeliveryOpen">
+          <span class="flex items-center gap-3">
+            <i data-lucide="package" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+            <span>Delivery Service</span>
+          </span>
+          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform duration-300" [ngClass]="isDeliveryOpen ? 'rotate-180' : ''"></i>
+        </button>
+        <ul *ngIf="isDeliveryOpen" class="pl-8 mt-1 space-y-1 animate-slide-down" style="animation-duration: 0.3s;">
+          <li class="animate-fade-in" style="animation-delay: 0.1s;">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/createdeliveryservice'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
+              <i data-lucide="plus-square" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Add Delivery</span>
+            </a>
+          </li>
+          <li class="animate-fade-in" style="animation-delay: 0.2s;">
+            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/deliveryservicelist'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
+              <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Delivery Service List</span>
+            </a>
+          </li>
+        </ul>
+      </li>
 
-      <!-- Orders -->
-      
-      
       <!-- User Management (expandable) -->
       <li class="animate-fade-in" style="animation-delay: 0.4s;">
         <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isUsersOpen = !isUsersOpen">

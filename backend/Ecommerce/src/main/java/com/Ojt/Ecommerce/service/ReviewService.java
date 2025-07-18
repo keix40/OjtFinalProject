@@ -197,6 +197,7 @@ public class ReviewService {
                 .rating(r.getRating())
                 .timestamp(r.getTimestamp())
                 .userName(r.getUser().getName())
+                .productId(r.getProduct().getId())
                 .userImage(r.getUser().getProfileImage())
                 .productName(r.getProduct().getProductName())
                 .mediaList(
@@ -208,5 +209,12 @@ public class ReviewService {
                 )
                 .build();
     }
+
+    public List<ReviewDTO> getAllReviewsByUserId(Long userId) {
+        List<Review> reviews = repo.findAllByUserId(userId);
+
+        return reviews.stream().map(this::convertToDto).toList(); // Use your existing mapToDTO method
+    }
+
 }
 

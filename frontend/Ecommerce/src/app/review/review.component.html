@@ -93,19 +93,13 @@
                     
                     <p class="text-gray-800 text-base leading-relaxed mb-3">{{ review.comment }}</p>
                     
-                    <!-- Media Grid -->
-                    <div *ngIf="review.imageUrls?.length || review.videoUrls?.length" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <ng-container *ngFor="let media of getAllMedia(review); let idx = index">
+                    <!-- Media Grid (show max 4, overlay if more) -->
+                    <div *ngIf="getAllMedia(review).length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-2">
+                      <ng-container *ngFor="let media of getAllMedia(review).slice(0, 4); let idx = index">
                         <div class="relative group cursor-pointer" (click)="openMediaModal(review, media.type, idx)">
-                          <img *ngIf="media.type === 'image'" 
-                               [src]="media.url" 
-                               class="w-full h-20 sm:h-24 object-cover rounded-lg border border-gray-200 transition group-hover:scale-105 group-hover:shadow-lg">
-                          <video *ngIf="media.type === 'video'" 
-                                 [src]="media.url" 
-                                 controls 
-                                 class="w-full h-20 sm:h-24 object-cover rounded-lg border border-gray-200 transition group-hover:scale-105 group-hover:shadow-lg"></video>
-                          <div *ngIf="idx === 3 && getAllMedia(review).length > 4" 
-                               class="absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg text-white text-base font-bold">
+                          <img *ngIf="media.type === 'image'" [src]="media.url" class="w-full h-32 object-cover rounded-lg border border-gray-200" />
+                          <video *ngIf="media.type === 'video'" [src]="media.url" class="w-full h-32 object-cover rounded-lg border border-gray-200"></video>
+                          <div *ngIf="idx === 3 && getAllMedia(review).length > 4" class="absolute inset-0 bg-black/60 flex items-center justify-center rounded-lg text-white text-lg font-bold">
                             +{{ getAllMedia(review).length - 4 }}
                           </div>
                         </div>
@@ -211,7 +205,7 @@
 
 <!-- Edit Review Modal -->
 <div *ngIf="editModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-  <div class="relative max-w-2xl w-full bg-white/90 rounded-xl overflow-hidden shadow-2xl">
+  <div class="relative max-w-2xl w-full bg-white/90 rounded-xl overflow-hidden shadow-2xl overflow-y-auto max-h-[90vh]">
     <button 
       class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-white/80 rounded-full backdrop-blur-sm hover:bg-gray-100 transition-colors"
       (click)="cancelEdit()">
@@ -255,7 +249,7 @@
         <div *ngIf="mediaModalCurrentReview?.imageUrls?.length || mediaModalCurrentReview?.videoUrls?.length" class="flex flex-wrap gap-3 mb-4">
           <ng-container *ngFor="let imageUrl of mediaModalCurrentReview.imageUrls">
             <div class="relative">
-              <img [src]="imageUrl" class="w-20 h-20 object-cover rounded-lg border border-gray-200" />
+              <img [src]="'http://localhost:8080'+imageUrl" class="w-20 h-20 object-cover rounded-lg border border-gray-200" />
               <button 
                 (click)="removeExistingMedia(imageUrl, 'image')"
                 class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors">

@@ -13,6 +13,7 @@ import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { ImageService } from '../services/image.service';
+import { Router } from '@angular/router';
 declare var $: any;
 declare var lucide: any;
 
@@ -24,10 +25,11 @@ declare var lucide: any;
 })
 export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewInit {
   products: ProductList[] = [];
+  filteredProducts: ProductList[] = [];
   brands: Brand[] = [];
   categories: Category[] = [];
-  filteredProducts: any[] = [];
-
+  searchTerm: string = '';
+  
   selectedCategory: number = 0;
   selectedBrand: number = 0;
   selectAll: boolean = false;
@@ -36,25 +38,27 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   excelDropdownOpen: boolean = false;
   pdfDropdownOpen: boolean = false;
 
+  currentPage: number = 1;
+  pageSize: number = 10;
+  paginatedProducts: ProductList[] = [];
+
   constructor(
     private productService: ProductService,
     private cateService: CategoryService,
     private brandService: BrandService,
     private ngbModel: NgbModal,
-    public imageService: ImageService
+    public imageService: ImageService,
+    private router: Router // <-- Added Router injection
   ) {}
 
   ngOnInit(): void {
     this.loadProduct();
     this.loadCategory();
     this.loadBrand();
-    
-    // Add click outside listener for dropdowns
     document.addEventListener('click', this.handleDocumentClick.bind(this));
   }
 
   ngOnDestroy(): void {
-    // Remove event listener
     document.removeEventListener('click', this.handleDocumentClick.bind(this));
   }
 
@@ -67,24 +71,21 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private handleDocumentClick(event: MouseEvent): void {
-    // Close dropdowns when clicking outside
     const target = event.target as HTMLElement;
-    
-    if (!target.closest('.relative.inline-block')) {
+    if (!target.closest('.relative')) {
       this.excelDropdownOpen = false;
       this.pdfDropdownOpen = false;
     }
   }
 
-  // Dropdown toggle methods
   toggleExcelDropdown(): void {
     this.excelDropdownOpen = !this.excelDropdownOpen;
-    this.pdfDropdownOpen = false; // Close other dropdown
+    if (this.excelDropdownOpen) this.pdfDropdownOpen = false;
   }
 
   togglePdfDropdown(): void {
     this.pdfDropdownOpen = !this.pdfDropdownOpen;
-    this.excelDropdownOpen = false; // Close other dropdown
+    if (this.pdfDropdownOpen) this.excelDropdownOpen = false;
   }
 
   // Edit functionality
@@ -128,7 +129,9 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     this.productService.getAllProduct().subscribe({
       next: (data) => {
         this.products = data.map(p => ({ ...p, checked: false }));
-  
+        this.filteredProducts = [...this.products];
+        this.currentPage = 1;
+        this.updatePaginatedProducts();
         setTimeout(() => {
           $('#productTable').DataTable({
             destroy: true,
@@ -184,17 +187,60 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     });
   }
 
+  onSearch(): void {
+    const term = this.searchTerm.trim().toLowerCase();
+    this.filteredProducts = this.products.filter(product => {
+      const matchesName = product.productName?.toLowerCase().includes(term);
+      // Find brand name by brandId
+      let brandName = '';
+      let categoryName = '';
+      if (product.hasOwnProperty('brandId')) {
+        const brand = this.brands.find(b => b.id === (product as any).brandId);
+        brandName = brand ? brand.name.toLowerCase() : '';
+      }
+      if (product.hasOwnProperty('categoryId')) {
+        const category = this.categories.find(c => c.id === (product as any).categoryId);
+        categoryName = category ? category.name.toLowerCase() : '';
+      }
+      const matchesBrand = brandName.includes(term);
+      const matchesCategory = categoryName.includes(term);
+      return !term || matchesName || matchesBrand || matchesCategory;
+    });
+    this.currentPage = 1;
+    this.updatePaginatedProducts();
+  }
+
+  updatePaginatedProducts(): void {
+    const start = (this.currentPage - 1) * this.pageSize;
+    const end = start + this.pageSize;
+    this.paginatedProducts = this.filteredProducts.slice(start, end);
+  }
+
+  changePage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    this.currentPage = page;
+    this.updatePaginatedProducts();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredProducts.length / this.pageSize);
+  }
+
+  get showPagination(): boolean {
+    return this.filteredProducts.length > this.pageSize;
+  }
+
   get selectedProducts(): any[] {
-    return this.products.filter(p => p.checked);
+    return this.paginatedProducts.filter(p => p.checked);
   }
   
   toggleAllCheckboxes(): void {
-    this.products.forEach(p => p.checked = this.selectAll);
+    this.paginatedProducts.forEach(p => p.checked = this.selectAll);
   }
   
   updateSelection(): void {
-    const total = this.products.length;
-    const selected = this.products.filter(p => p.checked).length;
+    const total = this.paginatedProducts.length;
+    const selected = this.paginatedProducts.filter(p => p.checked).length;
     this.selectAll = total === selected;
   }
 
@@ -429,5 +475,29 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     } else {
       return 'Inactive';
     }
+  }
+
+  get totalItems(): number {
+    return this.filteredProducts.length;
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    for (let i = 1; i <= this.totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  get showingFrom(): number {
+    return (this.currentPage - 1) * this.pageSize + 1;
+  }
+
+  get showingTo(): number {
+    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  }
+
+  goToProductDetail(productId: number): void {
+    this.router.navigate(['/admin/products', productId]);
   }
 }

@@ -175,8 +175,8 @@
                       <span class="text-gray-900 font-medium">{{formatOrderDate(order.orderDate) | date:'MMM dd, yyyy'}}</span>
                     </div>
                     <div class="flex justify-between py-1 border-b border-gray-200">
-                      <span class="text-gray-600">Delivery Method</span>
-                      <span class="text-gray-900 font-medium">{{order.deliveryMethod}}</span>
+                      <span class="text-gray-600">Delivery Service</span>
+                      <span class="text-gray-900 font-medium">{{order.deliveryService}}</span>
                     </div>
                     <div *ngIf="order.discountCode" class="flex justify-between py-1 border-b border-gray-200">
                       <span class="text-gray-600">Discount ({{ order.discountCode }})</span>
@@ -201,7 +201,7 @@
                     </div>
                     <div class="flex justify-between py-1">
                       <span class="text-gray-600">Shipping</span>
-                      <span class="text-gray-900 font-medium">{{order.deliveryFee | number :'1.2-2'}} MMK</span>
+                      <span class="text-gray-900 font-medium">{{order.deliveryFee | number :'1.0-0'}} MMK</span>
                     </div>
                     <div class="flex justify-between py-2 border-t border-gray-300 text-base font-bold">
                       <span class="text-gray-900">Total</span>

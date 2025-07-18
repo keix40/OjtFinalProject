@@ -172,70 +172,9 @@
             </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in">
+            <div *ngFor="let product of trendingProducts" class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer" (click)="goToTrendingProductDetail(product)">
                 <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop" alt="Smartphone Pro Max" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
-                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
-                            <polyline points="17,6 23,6 23,12"></polyline>
-                        </svg>
-                        +15%
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-center mb-3">
-                        <div class="flex items-center">
-                            <span class="text-yellow-400 text-sm">★★★★★</span>
-                        </div>
-                        <span class="text-sm text-neutral-500 ml-2">(4.9)</span>
-                    </div>
-                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Smartphone Pro Max
-                    </h3>
-                    <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold text-neutral-900">$1,099.99</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.1s">
-                <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=300&h=300&fit=crop" alt="Laptop Gaming Beast" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
-                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
-                            <polyline points="17,6 23,6 23,12"></polyline>
-                        </svg>
-                        +23%
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-center mb-3">
-                        <div class="flex items-center">
-                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
-                        </div>
-                        <span class="text-sm text-neutral-500 ml-2">(4.7)</span>
-                    </div>
-                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Laptop Gaming Beast
-                    </h3>
-                    <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold text-neutral-900">$1,599.99</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.2s">
-                <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=300&h=300&fit=crop" alt="Wireless Earbuds Pro" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
-                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
-                            <polyline points="17,6 23,6 23,12"></polyline>
-                        </svg>
-                        +31%
-                    </div>
+                    <img [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'" alt="{{ product.productName }}" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
                 <div class="p-6">
                     <div class="flex items-center mb-3">
@@ -245,37 +184,10 @@
                         <span class="text-sm text-neutral-500 ml-2">(4.8)</span>
                     </div>
                     <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Wireless Earbuds Pro
+                        {{ product.productName }}
                     </h3>
                     <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold text-neutral-900">$249.99</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
-                <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300&h=300&fit=crop" alt="Smart Home Hub" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 right-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center animate-pulse-soft">
-                        <svg class="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
-                            <polyline points="17,6 23,6 23,12"></polyline>
-                        </svg>
-                        +18%
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-center mb-3">
-                        <div class="flex items-center">
-                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
-                        </div>
-                        <span class="text-sm text-neutral-500 ml-2">(4.6)</span>
-                    </div>
-                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Smart Home Hub
-                    </h3>
-                    <div class="flex items-center justify-between">
-                        <span class="text-2xl font-bold text-neutral-900">$199.99</span>
+                        <span class="text-2xl font-bold text-neutral-900">{{ product.price}} MMK</span>
                     </div>
                 </div>
             </div>
@@ -344,196 +256,36 @@
             </div>
         </div>
         <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in">
+            <div *ngFor="let product of featuredProducts" class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer" (click)="goToProductDetail(product)">
                 <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop" alt="Wireless Bluetooth Headphones" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
-                        Best Seller
-                    </div>
-                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                        </button>
-                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
+                    <img [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'" alt="{{ product.productName }}" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div *ngIf="product.quantity > 0" class="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
+                        In Stock
                     </div>
                 </div>
                 <div class="p-6">
                     <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Electronics</span>
                         <div class="flex items-center">
                             <span class="text-yellow-400 text-sm">★★★★★</span>
-                            <span class="text-sm text-neutral-500 ml-2">(324)</span>
                         </div>
                     </div>
                     <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Wireless Bluetooth Headphones
+                        {{ product.productName }}
                     </h3>
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center space-x-2">
-                            <span class="text-2xl font-bold text-neutral-900">$199.99</span>
-                            <span class="text-sm text-neutral-500 line-through">$249.99</span>
+                            <span class="text-2xl font-bold text-neutral-900">{{ product.price}} MMK</span>
                         </div>
-                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
+                        <span *ngIf="product.quantity > 0" class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
+                        <span *ngIf="product.quantity <= 0" class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-medium">Out of Stock</span>
                     </div>
-                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <path d="M16 10a4 4 0 0 1-8 0"></path>
-                        </svg>
-                        Add to Cart
-                    </button>
                 </div>
             </div>
-
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.1s">
-                <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop" alt="Smart Fitness Watch" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
-                        New
                     </div>
-                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                        </button>
-                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Electronics</span>
-                        <div class="flex items-center">
-                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
-                            <span class="text-sm text-neutral-500 ml-2">(189)</span>
-                        </div>
-                    </div>
-                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Smart Fitness Watch
-                    </h3>
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-2xl font-bold text-neutral-900">$299.99</span>
-                        </div>
-                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
-                    </div>
-                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <path d="M16 10a4 4 0 0 1-8 0"></path>
-                        </svg>
-                        Add to Cart
+        <div class="flex justify-center mt-8">
+            <button class="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold text-lg transition-all duration-300" (click)="goToAllProducts()">
+                View All Products
                     </button>
-                </div>
-            </div>
-
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.2s">
-                <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=300&h=300&fit=crop" alt="Premium Coffee Maker" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
-                        Sale
-                    </div>
-                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                        </button>
-                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Home</span>
-                        <div class="flex items-center">
-                            <span class="text-yellow-400 text-sm">★★★★★</span>
-                            <span class="text-sm text-neutral-500 ml-2">(567)</span>
-                        </div>
-                    </div>
-                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Premium Coffee Maker
-                    </h3>
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-2xl font-bold text-neutral-900">$159.99</span>
-                            <span class="text-sm text-neutral-500 line-through">$199.99</span>
-                        </div>
-                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
-                    </div>
-                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <path d="M16 10a4 4 0 0 1-8 0"></path>
-                        </svg>
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
-
-            <div class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in" style="animation-delay: 0.3s">
-                <div class="relative overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=300&h=300&fit=crop" alt="Ergonomic Office Chair" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
-                    <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                        <button class="wishlist-btn w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                        </button>
-                        <button class="w-10 h-10 bg-white/90 hover:bg-white hover:scale-110 transition-all duration-300 rounded-full flex items-center justify-center shadow-lg">
-                            <svg class="h-4 w-4 text-neutral-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-                <div class="p-6">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-xs border border-neutral-300 px-3 py-1 rounded-full text-neutral-600">Furniture</span>
-                        <div class="flex items-center">
-                            <span class="text-yellow-400 text-sm">★★★★</span><span class="text-neutral-300 text-sm">★</span>
-                            <span class="text-sm text-neutral-500 ml-2">(234)</span>
-                        </div>
-                    </div>
-                    <h3 class="font-semibold text-neutral-900 mb-3 group-hover:text-primary-600 transition-colors duration-300">
-                        Ergonomic Office Chair
-                    </h3>
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-2">
-                            <span class="text-2xl font-bold text-neutral-900">$449.99</span>
-                        </div>
-                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
-                    </div>
-                    <button class="add-to-cart w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-xl font-semibold opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105 flex items-center justify-center">
-                        <svg class="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                            <line x1="3" y1="6" x2="21" y2="6"></line>
-                            <path d="M16 10a4 4 0 0 1-8 0"></path>
-                        </svg>
-                        Add to Cart
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </section>

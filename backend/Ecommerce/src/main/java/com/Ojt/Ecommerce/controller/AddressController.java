@@ -1,14 +1,23 @@
 package com.Ojt.Ecommerce.controller;
 
 
-import com.Ojt.Ecommerce.dto.AddressDTO;
-import com.Ojt.Ecommerce.entity.Address;
-import com.Ojt.Ecommerce.service.AddressService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.Ojt.Ecommerce.dto.AddressDTO;
+import com.Ojt.Ecommerce.service.AddressService;
+
+import lombok.RequiredArgsConstructor;
 
 @CrossOrigin
 @RestController
@@ -22,7 +31,7 @@ public class AddressController {
     //add controller method (Kei_)
     @PostMapping("/addNewAddress")
     public ResponseEntity<?> addNewAddress(@RequestBody AddressDTO dto) {
-        String result = addressService.addNewAddress(dto);
+        Long result = addressService.addNewAddress(dto);
         return ResponseEntity.ok(result);
     }
 
@@ -35,5 +44,16 @@ public class AddressController {
         return ResponseEntity.ok(addressList); // 200 OK
     }
 
+    @PutMapping("/updateAddress/{id}")
+    public ResponseEntity<?> updateAddress(@PathVariable Long id, @RequestBody AddressDTO dto) {
+        Long result = addressService.updateAddress(id, dto);
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/deleteAddress/{id}")
+    public ResponseEntity<?> deleteAddress(@PathVariable Long id) {
+        addressService.deleteAddress(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }
