@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { PermissionService } from '../../services/permission.service';
 import { ImageService } from '../../services/image.service';
+import { AdminUserService } from '../../services/admin-user.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -42,7 +43,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     private router: Router,
     private authService: AuthService,
     public permissionService: PermissionService,
-    private imageService: ImageService
+    private imageService: ImageService,
+    private adminUserService: AdminUserService
   ) { }
 
   toggleSidebar() {
@@ -60,6 +62,11 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     this.handleResize();
     this.loadUserInfo();
     document.addEventListener('click', this.handleDocumentClick.bind(this));
+    this.adminUserService.getAdminUsers().subscribe(users => {
+      this.adminCount = users.length;
+    });
+    // Log admin activity on sidebar load
+    this.logAdminActivity('page_view');
   }
 
   ngAfterViewInit(): void {
@@ -177,5 +184,19 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  // Log admin activity (placeholder, implement backend call as needed)
+  logAdminActivity(type: string) {
+    // Get current admin user ID from AuthService
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.adminUserService.logAdminActivity(userId, type).subscribe({
+        next: () => {},
+        error: err => { console.error('Failed to log admin activity', err); }
+      });
+    } else {
+      console.warn('No admin user ID found for activity logging');
+    }
   }
 }

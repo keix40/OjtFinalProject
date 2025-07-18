@@ -50,6 +50,7 @@ import { Observable } from 'rxjs';
 import { IpService } from './services/ip.service';
 import { LoginAttemptsService } from './services/login-attempts.service';
 import { ProductEditComponent } from './product-edit/product-edit.component';
+import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
 
 
 @Injectable({ providedIn: 'root' })
@@ -141,6 +142,7 @@ const routes: Routes = [
   { path: 'return-request', component: ReturnRequestComponent }, 
   { path: 'verify-otp', component: VerifyOtpComponent },  { path: 'usercategorylist', component: UserCategoryListComponent },
   { path: 'userbrandlist', component: UserBrandListComponent },
+  { path: 'admin/revenue-target', component: RevenueTargetAdminComponent },
 ];
 
 @NgModule({

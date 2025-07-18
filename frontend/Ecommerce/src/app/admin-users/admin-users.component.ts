@@ -1,31 +1,15 @@
 import { Component, OnInit, AfterViewChecked } from '@angular/core';
 import { ImageService } from '../services/image.service';
-
-interface AdminUser {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  role: 'super_admin' | 'admin' | 'manager' | 'moderator' | 'support';
-  department: string;
-  status: 'active' | 'inactive' | 'suspended';
-  isOnline: boolean;
-  lastLogin: Date;
-  permissions: string[];
-  createdAt: Date;
-  lastActivity: Date;
-}
+import { AdminUserService, AdminUser } from '../services/admin-user.service';
+import { PermissionCategoryService, PermissionCategory } from '../services/permission-category.service';
+import { RoleService } from '../services/role.service';
+import { Client, IMessage } from '@stomp/stompjs';
+import * as SockJS from 'sockjs-client';
 
 interface Permission {
   key: string;
   name: string;
   description: string;
-}
-
-interface PermissionCategory {
-  name: string;
-  icon: string;
-  permissions: Permission[];
 }
 
 interface AdminActivity {
@@ -49,17 +33,23 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
   allAdmins: AdminUser[] = [];
   filteredAdmins: AdminUser[] = [];
   paginatedAdmins: AdminUser[] = [];
-  selectedAdmins: string[] = [];
+  selectedAdmins: number[] = [];
+  // Permissions modal logic
   selectedAdminForPermissions: AdminUser | null = null;
+
+  // Edit modal logic
+  editingAdmin: AdminUser | null = null;
+  editFormData: { name?: string; email?: string; status?: string; roleName?: string } = {};
+
+  // Activity methods
   selectedAdminForActivity: AdminUser | null = null;
-  adminActivities: AdminActivity[] = [];
-  openDropdownId: string | null = null;
+  adminActivities: any[] = [];
 
   // Filter properties
   searchTerm = '';
   roleFilter = '';
   statusFilter = '';
-  departmentFilter = '';
+  statuses: string[] = ['active', 'inactive', 'suspended'];
   activityFilter = '';
   activityDateFrom = '';
   activityDateTo = '';
@@ -74,141 +64,92 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
   Math = Math;
 
   // Permission categories
-  permissionCategories: PermissionCategory[] = [
-    {
-      name: 'User Management',
-      icon: 'fas fa-users',
-      permissions: [
-        { key: 'users.view', name: 'View Users', description: 'View customer and user accounts' },
-        { key: 'users.create', name: 'Create Users', description: 'Create new user accounts' },
-        { key: 'users.edit', name: 'Edit Users', description: 'Modify user account information' },
-        { key: 'users.delete', name: 'Delete Users', description: 'Delete user accounts' },
-        { key: 'users.export', name: 'Export Users', description: 'Export user data' }
-      ]
-    },
-    {
-      name: 'Product Management',
-      icon: 'fas fa-box',
-      permissions: [
-        { key: 'products.view', name: 'View Products', description: 'View product catalog' },
-        { key: 'products.create', name: 'Create Products', description: 'Add new products' },
-        { key: 'products.edit', name: 'Edit Products', description: 'Modify product information' },
-        { key: 'products.delete', name: 'Delete Products', description: 'Remove products from catalog' },
-        { key: 'products.pricing', name: 'Manage Pricing', description: 'Update product prices and discounts' }
-      ]
-    },
-    {
-      name: 'Order Management',
-      icon: 'fas fa-shopping-cart',
-      permissions: [
-        { key: 'orders.view', name: 'View Orders', description: 'View customer orders' },
-        { key: 'orders.edit', name: 'Edit Orders', description: 'Modify order details' },
-        { key: 'orders.cancel', name: 'Cancel Orders', description: 'Cancel customer orders' },
-        { key: 'orders.refund', name: 'Process Refunds', description: 'Issue refunds to customers' },
-        { key: 'orders.export', name: 'Export Orders', description: 'Export order data' }
-      ]
-    },
-    {
-      name: 'Financial Operations',
-      icon: 'fas fa-dollar-sign',
-      permissions: [
-        { key: 'finance.view', name: 'View Reports', description: 'View financial reports and analytics' },
-        { key: 'finance.transactions', name: 'View Transactions', description: 'Access transaction history' },
-        { key: 'finance.refunds', name: 'Process Refunds', description: 'Issue customer refunds' },
-        { key: 'finance.export', name: 'Export Data', description: 'Export financial data' }
-      ]
-    },
-    {
-      name: 'System Administration',
-      icon: 'fas fa-cog',
-      permissions: [
-        { key: 'system.settings', name: 'System Settings', description: 'Modify system configuration' },
-        { key: 'system.logs', name: 'View Logs', description: 'Access system and audit logs' },
-        { key: 'system.backup', name: 'Backup Management', description: 'Manage system backups' },
-        { key: 'system.maintenance', name: 'Maintenance Mode', description: 'Enable/disable maintenance mode' }
-      ]
-    },
-    {
-      name: 'Security & Compliance',
-      icon: 'fas fa-shield-alt',
-      permissions: [
-        { key: 'security.audit', name: 'Security Audit', description: 'Access security audit logs' },
-        { key: 'security.permissions', name: 'Manage Permissions', description: 'Modify user permissions' },
-        { key: 'security.sessions', name: 'Manage Sessions', description: 'View and terminate user sessions' },
-        { key: 'security.compliance', name: 'Compliance Reports', description: 'Generate compliance reports' }
-      ]
-    }
-  ];
+  permissionCategories: PermissionCategory[] = [];
+  roles: any[] = [];
+
+  openDropdownId: number | null = null;
+  adminOnlineStatus: { [userId: number]: { lastActive: string | null, isOnline: boolean } } = {};
+  onlineStatusInterval: any;
+  onlineAdmins: number = 0;
+  autoRefreshInterval: any;
+  stompClient: Client | null = null;
+  stompSub: any;
 
   constructor(
-    public imageService: ImageService
+    public imageService: ImageService,
+    private adminUserService: AdminUserService,
+    private permissionCategoryService: PermissionCategoryService,
+    private roleService: RoleService
   ) {
   }
 
   ngOnInit(): void {
-    this.loadAdminUsers();
+    this.permissionCategoryService.getPermissionCategories().subscribe(categories => {
+      this.permissionCategories = categories;
+    });
+    this.roleService.getAllRoles().subscribe(roles => {
+      this.roles = roles;
+    });
+    this.adminUserService.getAdminUsers().subscribe(users => {
+      users.forEach(admin => {
+        (admin as any).role = (admin as any).roleName;
+      });
+      this.allAdmins = users;
+      this.applyFilters();
+    });
+    this.fetchAdminOnlineStatus();
+    this.autoRefreshInterval = setInterval(() => {
+      this.fetchAdminOnlineStatus();
+      this.refreshData();
+    }, 30000);
+    this.onlineStatusInterval = setInterval(() => this.fetchAdminOnlineStatus(), 60000);
+    this.connectWebSocket();
+  }
+
+  connectWebSocket(): void {
+    this.stompClient = new Client({
+      brokerURL: undefined,
+      webSocketFactory: () => new (SockJS as any)('http://localhost:8080/ws'),
+      reconnectDelay: 5000,
+      onConnect: () => {
+        this.stompSub = this.stompClient!.subscribe('/topic/admin-online-status', (message: IMessage) => {
+          const status = JSON.parse(message.body);
+          this.adminOnlineStatus = status;
+          this.onlineAdmins = Object.values(status).filter((s: any) => s.isOnline).length;
+        });
+      },
+      onStompError: () => {},
+      onWebSocketClose: () => {}
+    });
+    this.stompClient.activate();
+  }
+
+  ngOnDestroy(): void {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+    }
+    if (this.onlineStatusInterval) {
+      clearInterval(this.onlineStatusInterval);
+    }
+    if (this.stompSub) {
+      this.stompSub.unsubscribe();
+    }
+    if (this.stompClient) {
+      this.stompClient.deactivate();
+    }
+  }
+
+  fetchAdminOnlineStatus(): void {
+    this.adminUserService.getAdminUsersOnlineStatus().subscribe(statusMap => {
+      this.adminOnlineStatus = statusMap;
+      this.onlineAdmins = Object.values(statusMap).filter((s: any) => s.isOnline).length;
+    });
   }
 
   ngAfterViewChecked() {
     if ((window as any)['lucide']) {
       (window as any)['lucide'].createIcons();
     }
-  }
-
-  loadAdminUsers(): void {
-    // Mock data - replace with actual API call
-    this.allAdmins = this.generateMockAdmins();
-    this.applyFilters();
-  }
-
-  generateMockAdmins(): AdminUser[] {
-    const departments = ['it', 'sales', 'support', 'marketing', 'finance'];
-    const roles: AdminUser['role'][] = ['super_admin', 'admin', 'manager', 'moderator', 'support'];
-    const statuses: AdminUser['status'][] = ['active', 'inactive', 'suspended'];
-
-    const admins: AdminUser[] = [];
-    const now = new Date();
-
-    for (let i = 0; i < 25; i++) {
-      const role = roles[Math.floor(Math.random() * roles.length)];
-      const department = departments[Math.floor(Math.random() * departments.length)];
-      const status = statuses[Math.floor(Math.random() * statuses.length)];
-      const lastLogin = new Date(now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000);
-
-      admins.push({
-        id: `ADMIN${String(i + 1).padStart(3, '0')}`,
-        name: `Admin User ${i + 1}`,
-        email: `admin${i + 1}@company.com`,
-        avatar: `/placeholder.svg?height=40&width=40`,
-        role,
-        department,
-        status,
-        isOnline: Math.random() > 0.7,
-        lastLogin,
-        permissions: this.generateRandomPermissions(role),
-        createdAt: new Date(now.getTime() - Math.random() * 365 * 24 * 60 * 60 * 1000),
-        lastActivity: new Date(now.getTime() - Math.random() * 24 * 60 * 60 * 1000)
-      });
-    }
-
-    return admins.sort((a, b) => a.name.localeCompare(b.name));
-  }
-
-  generateRandomPermissions(role: AdminUser['role']): string[] {
-    const allPermissions = this.permissionCategories.flatMap(cat => cat.permissions.map(p => p.key));
-    
-    // Different roles get different permission sets
-    const rolePermissionCount = {
-      super_admin: allPermissions.length,
-      admin: Math.floor(allPermissions.length * 0.8),
-      manager: Math.floor(allPermissions.length * 0.6),
-      moderator: Math.floor(allPermissions.length * 0.4),
-      support: Math.floor(allPermissions.length * 0.3)
-    };
-
-    const count = rolePermissionCount[role];
-    const shuffled = [...allPermissions].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, count);
   }
 
   // Statistics getters
@@ -218,10 +159,6 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
 
   get activeAdmins(): number {
     return this.allAdmins.filter(admin => admin.status === 'active').length;
-  }
-
-  get onlineAdmins(): number {
-    return this.allAdmins.filter(admin => admin.isOnline).length;
   }
 
   get suspendedAdmins(): number {
@@ -234,12 +171,13 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
       const matchesSearch = !this.searchTerm || 
         admin.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         admin.email.toLowerCase().includes(this.searchTerm.toLowerCase());
-
-      const matchesRole = !this.roleFilter || admin.role === this.roleFilter;
+      let roleName = '';
+      if (typeof admin.role === 'string') roleName = admin.role;
+      else if (admin.role && 'name' in admin.role) roleName = admin.role.name;
+      const matchesRole = !this.roleFilter || roleName === this.roleFilter;
       const matchesStatus = !this.statusFilter || admin.status === this.statusFilter;
-      const matchesDepartment = !this.departmentFilter || admin.department === this.departmentFilter;
-
-      return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
+      // Remove department filter logic
+      return matchesSearch && matchesRole && matchesStatus;
     });
 
     this.currentPage = 1;
@@ -250,7 +188,6 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     this.searchTerm = '';
     this.roleFilter = '';
     this.statusFilter = '';
-    this.departmentFilter = '';
     this.applyFilters();
   }
 
@@ -297,7 +234,7 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     }
   }
 
-  toggleAdminSelection(adminId: string, event: any): void {
+  toggleAdminSelection(adminId: number, event: any): void {
     if (event.target.checked) {
       this.selectedAdmins.push(adminId);
     } else {
@@ -312,27 +249,82 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
 
   // Admin management methods
   openCreateAdminModal(): void {
-    console.log('Open create admin modal');
-    // Implement modal opening logic
+    // Example: open a modal and collect data, then call createAdminUser
+    // For now, just a placeholder
+    const newAdmin = {
+      name: 'New Admin',
+      email: 'newadmin@example.com',
+      password: 'password123',
+      department: 'it',
+      roleName: 'admin',
+      status: 'ACTIVE'
+    };
+    this.adminUserService.createAdminUser(newAdmin).subscribe({
+      next: () => {
+        alert('Admin created successfully');
+        this.refreshData();
+      },
+      error: err => alert('Failed to create admin: ' + (err.error?.message || err.message))
+    });
   }
 
-  editAdmin(admin: AdminUser): void {
-    console.log('Edit admin:', admin);
-    // Implement edit functionality
+  // Permissions modal logic
+  viewPermissions(admin: AdminUser): void {
+    this.selectedAdminForPermissions = admin;
+  }
+
+  closePermissionsModal(): void {
+    this.selectedAdminForPermissions = null;
+  }
+
+  // Edit modal logic
+  openEditAdminModal(admin: AdminUser): void {
+    this.editingAdmin = { ...admin };
+    this.editFormData = { name: admin.name, email: admin.email, status: admin.status, roleName: (admin as any).roleName || (typeof admin.role === 'string' ? admin.role : (admin.role && 'name' in admin.role ? admin.role.name : '')) };
+  }
+
+  closeEditAdminModal(): void {
+    this.editingAdmin = null;
+    this.editFormData = {};
+  }
+
+  saveEditAdmin(): void {
+    if (!this.editingAdmin) return;
+    const updatedAdmin = {
+      name: this.editFormData.name || this.editingAdmin.name,
+      email: this.editFormData.email || this.editingAdmin.email,
+      department: this.editingAdmin.department,
+      roleName: this.editFormData.roleName || (this.editingAdmin as any).roleName || (typeof this.editingAdmin.role === 'string' ? this.editingAdmin.role : (this.editingAdmin.role && 'name' in this.editingAdmin.role ? this.editingAdmin.role.name : '')),
+      status: this.editFormData.status || this.editingAdmin.status
+    };
+    this.adminUserService.updateAdminUser(this.editingAdmin.id, updatedAdmin).subscribe({
+      next: () => {
+        this.closeEditAdminModal();
+        this.refreshData();
+      },
+      error: err => alert('Failed to update admin: ' + (err.error?.message || err.message))
+    });
   }
 
   deleteAdmin(admin: AdminUser): void {
     if (confirm(`Are you sure you want to delete ${admin.name}?`)) {
-      this.allAdmins = this.allAdmins.filter(a => a.id !== admin.id);
-      this.applyFilters();
-      console.log('Admin deleted:', admin);
+      this.adminUserService.deleteAdminUser(admin.id).subscribe({
+        next: () => {
+          this.refreshData();
+        },
+        error: err => alert('Failed to delete admin: ' + (err.error?.message || err.message))
+      });
     }
   }
 
   toggleAdminStatus(admin: AdminUser): void {
     const newStatus = admin.status === 'active' ? 'suspended' : 'active';
-    admin.status = newStatus;
-    console.log(`Admin ${admin.name} status changed to ${newStatus}`);
+    this.adminUserService.updateAdminStatus(admin.id, newStatus).subscribe({
+      next: () => {
+        this.refreshData();
+      },
+      error: err => alert('Failed to update status: ' + (err.error?.message || err.message))
+    });
   }
 
   resetPassword(admin: AdminUser): void {
@@ -343,111 +335,50 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
   }
 
   // Permission methods
-  viewPermissions(admin: AdminUser): void {
-    this.selectedAdminForPermissions = admin;
-    // Modal would be triggered via Bootstrap JS or Angular CDK
-  }
-
   managePermissions(admin: AdminUser): void {
     this.selectedAdminForPermissions = admin;
     // Modal would be triggered via Bootstrap JS or Angular CDK
   }
 
   hasPermission(admin: AdminUser, permissionKey: string): boolean {
-    return admin.permissions.includes(permissionKey);
+    return (admin.permissions || []).includes(permissionKey);
   }
 
   togglePermission(permissionKey: string, event: any): void {
     if (!this.selectedAdminForPermissions) return;
 
     if (event.target.checked) {
-      if (!this.selectedAdminForPermissions.permissions.includes(permissionKey)) {
+      if (!(this.selectedAdminForPermissions.permissions || []).includes(permissionKey)) {
+        if (!this.selectedAdminForPermissions.permissions) this.selectedAdminForPermissions.permissions = [];
         this.selectedAdminForPermissions.permissions.push(permissionKey);
       }
     } else {
       this.selectedAdminForPermissions.permissions = 
-        this.selectedAdminForPermissions.permissions.filter(p => p !== permissionKey);
+        (this.selectedAdminForPermissions.permissions || []).filter((p: string) => p !== permissionKey);
     }
   }
 
   savePermissions(): void {
     if (this.selectedAdminForPermissions) {
-      console.log('Saving permissions for:', this.selectedAdminForPermissions);
+      // Call backend to update permissions if endpoint exists
+      // Example: this.adminUserService.updatePermissions(this.selectedAdminForPermissions.id, this.selectedAdminForPermissions.permissions).subscribe(...)
       alert('Permissions updated successfully');
-      // Close modal and refresh data
+      this.closePermissionsModal();
+      this.refreshData();
     }
   }
 
   // Activity methods
   viewAdminActivity(admin: AdminUser): void {
     this.selectedAdminForActivity = admin;
-    this.loadAdminActivity(admin.id);
-    // Modal would be triggered via Bootstrap JS or Angular CDK
-  }
-
-  loadAdminActivity(adminId: string): void {
-    // Mock activity data
-    this.adminActivities = this.generateMockActivity();
-  }
-
-  generateMockActivity(): AdminActivity[] {
-    const activities: AdminActivity[] = [];
-    const now = new Date();
-    const activityTypes = ['login', 'logout', 'create', 'update', 'delete', 'security'];
-    const actions = [
-      'Logged into system',
-      'Updated product pricing',
-      'Created new user account',
-      'Processed customer refund',
-      'Deleted inactive user',
-      'Changed system settings',
-      'Exported customer data',
-      'Reset user password'
-    ];
-
-    for (let i = 0; i < 20; i++) {
-      const type = activityTypes[Math.floor(Math.random() * activityTypes.length)];
-      const action = actions[Math.floor(Math.random() * actions.length)];
-      const timestamp = new Date(now.getTime() - Math.random() * 7 * 24 * 60 * 60 * 1000);
-
-      activities.push({
-        id: `ACT${String(i + 1).padStart(3, '0')}`,
-        type,
-        action,
-        description: `${action} - Additional details about this activity`,
-        timestamp,
-        ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      });
-    }
-
-    return activities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-  }
-
-  exportAdminActivity(): void {
-    if (!this.selectedAdminForActivity) return;
-
-    const csvContent = this.generateActivityCSV();
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `admin-activity-${this.selectedAdminForActivity.name}-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-  generateActivityCSV(): string {
-    const headers = ['Timestamp', 'Type', 'Action', 'Description', 'IP Address'];
-    const rows = this.adminActivities.map(activity => [
-      activity.timestamp.toISOString(),
-      activity.type,
-      activity.action,
-      activity.description,
-      activity.ipAddress
-    ]);
-
-    return [headers, ...rows].map(row => row.join(',')).join('\n');
+    this.adminUserService.getAdminActivities(admin.id).subscribe({
+      next: activities => {
+        this.adminActivities = activities;
+        // Open activity modal (implement modal logic as needed)
+        alert('Loaded ' + activities.length + ' activities for ' + admin.name);
+      },
+      error: err => alert('Failed to load activities: ' + (err.error?.message || err.message))
+    });
   }
 
   // Utility methods
@@ -462,7 +393,13 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     return icons[role as keyof typeof icons] || 'fas fa-user';
   }
 
-  getRoleLabel(role: string): string {
+  getRoleLabel(role: string | { name: string } | { id: number; name: string }): string {
+    let roleName: string = '';
+    if (typeof role === 'string') {
+      roleName = role;
+    } else if (role && 'name' in role) {
+      roleName = role.name;
+    }
     const labels = {
       super_admin: 'Super Admin',
       admin: 'Administrator',
@@ -470,7 +407,7 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
       moderator: 'Moderator',
       support: 'Support Agent'
     };
-    return labels[role as keyof typeof labels] || role;
+    return labels[roleName as keyof typeof labels] || roleName;
   }
 
   getStatusIcon(status: string): string {
@@ -494,20 +431,25 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     return icons[type as keyof typeof icons] || 'fas fa-info-circle';
   }
 
-  getTimeAgo(date: Date): string {
+  getTimeAgo(date: string | Date | undefined): string {
+    if (!date) return '';
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return '';
     const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
+    const diffInMs = now.getTime() - d.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInHours / 24);
 
-    if (diffInHours < 1) return 'Just now';
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes} min${diffInMinutes === 1 ? '' : 's'} ago`;
     if (diffInHours < 24) return `${diffInHours}h ago`;
     if (diffInDays < 7) return `${diffInDays}d ago`;
-    return date.toLocaleDateString();
+    return d.toLocaleDateString();
   }
 
   refreshData(): void {
-    this.loadAdminUsers();
+    this.ngOnInit();
     console.log('Data refreshed');
   }
 
@@ -528,16 +470,20 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
       admin.name,
       admin.email,
       this.getRoleLabel(admin.role),
-      admin.department,
+      admin.department || '',
       admin.status,
-      admin.lastLogin.toISOString(),
-      admin.permissions.length.toString()
+      (admin.lastLogin ? new Date(admin.lastLogin).toISOString() : ''),
+      (admin.permissions ? admin.permissions.length.toString() : '0')
     ]);
 
     return [headers, ...rows].map(row => row.join(',')).join('\n');
   }
 
-  trackByAdminId(index: number, admin: AdminUser): string {
+  trackByAdminId(index: number, admin: AdminUser): number {
     return admin.id;
+  }
+
+  editAdmin(admin: AdminUser): void {
+    this.openEditAdminModal(admin);
   }
 }

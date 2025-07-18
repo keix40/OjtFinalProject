@@ -6,11 +6,15 @@ import { CategoryService } from '../services/category.service';
 import { BrandService } from '../services/brand.service';
 import { AttributeService } from '../services/attribute.service';
 import Swal from 'sweetalert2';
+import { CommonModule } from '@angular/common';
+import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-product-edit',
   templateUrl: './product-edit.component.html',
-  styleUrls: ['./product-edit.component.css']
+  styleUrls: ['./product-edit.component.css'],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule, FormsModule]
 })
 export class ProductEditComponent implements OnInit {
   productForm!: FormGroup;
@@ -167,5 +171,9 @@ export class ProductEditComponent implements OnInit {
         }
       });
     }
+  }
+
+  get variants(): FormArray {
+    return this.productForm.get('variants') as FormArray;
   }
 } 

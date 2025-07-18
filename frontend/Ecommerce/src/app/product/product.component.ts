@@ -1048,15 +1048,15 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
         });
       } else {
         // Create new product
-        this.proService.createProduct(fd).subscribe({
-          next: (data) => {
-            console.log('Product created:', data);
-            this.router.navigate(['/productlist']);
-          },
-          error: (err) => {
-            console.error('Error creating product:', err);
-          }
-        });
+      this.proService.createProduct(fd).subscribe({
+        next: (data) => {
+          console.log('Product created:', data);
+          this.router.navigate(['/productlist']);
+        },
+        error: (err) => {
+          console.error('Error creating product:', err);
+        }
+      });
       }
     } else {
       this.markFormGroupTouched(this.productForm);

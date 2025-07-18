@@ -109,17 +109,17 @@
         </div>
         <div formArrayName="variants">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div *ngFor="let variant of productForm.get('variants').controls; let variantIndex = index" [formGroupName]="variantIndex" class="bg-slate-50 rounded-xl p-6 border border-slate-200">
+            <div *ngFor="let variant of variants.controls; let variantIndex = index" [formGroupName]="variantIndex" class="bg-slate-50 rounded-xl p-6 border border-slate-200">
               <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-2">
                   <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
                   <h4 class="font-semibold text-slate-800">Variant {{ variantIndex + 1 }}</h4>
                 </div>
-                <span class="text-sm text-slate-500">{{ variant.get('sku').value }}</span>
+                <span class="text-sm text-slate-500">{{ variant.get('sku')?.value }}</span>
               </div>
               <div class="mb-4">
                 <div class="flex flex-wrap gap-2">
-                  <span *ngFor="let attr of variant.get('attributes').value" class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-sm">
+                  <span *ngFor="let attr of (variant.get('attributes')?.value || [])" class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-sm">
                     {{ attr.attributeName }}: {{ attr.value }}
                   </span>
                 </div>
@@ -139,8 +139,8 @@
               </div>
               <div class="mb-4">
                 <label class="block text-sm font-medium text-slate-700 mb-2">Variant Images</label>
-                <div class="grid grid-cols-4 gap-2 mt-3" *ngIf="variant.get('images').value?.length > 0">
-                  <div class="relative group" *ngFor="let image of variant.get('images').value; let imageIndex = index">
+                <div class="grid grid-cols-4 gap-2 mt-3" *ngIf="(variant.get('images')?.value || []).length > 0">
+                  <div class="relative group" *ngFor="let image of (variant.get('images')?.value || []); let imageIndex = index">
                     <img [src]="image.preview || image" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
                   </div>
                 </div>
