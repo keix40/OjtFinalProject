@@ -1,228 +1,387 @@
-<div class="fixed sm:static top-0 left-0 h-full z-40" [class.hidden]="!sidebarVisible && isMobile()">
-  <aside class="sticky top-0 bg-white w-72 max-w-full min-h-screen flex flex-col shadow-lg border-r border-slate-200 transition-all duration-300 ease-in-out overflow-y-auto animate-fade-in font-sans hover:shadow-xl">
-    <!-- Close button for mobile -->
-    <button class="absolute top-4 right-4 sm:hidden w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 shadow transition-all duration-200 z-50 transform hover:scale-110" (click)="toggleSidebar()">
-      <i data-lucide="x" class="w-6 h-6"></i>
-    </button>
+<!-- BEGIN: Britium Glassmorphism Sidebar Template -->
+<div class="h-full">
+  <!-- Background Effects -->
+  <div class="absolute inset-0 opacity-20">
+    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 25px 25px, rgba(0,0,0,0.02) 2px, transparent 0); background-size: 50px 50px;"></div>
+  </div>
+  <div class="absolute top-0 left-0 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+  <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-100/30 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+
+  <!-- Sidebar Container -->
+  <div id="sidebar"
+    class="fixed top-0 left-0 h-screen z-50 backdrop-blur-xl bg-white/80 border-r border-gray-200/50 flex flex-col shadow-2xl shadow-gray-900/5 sidebar-animated"
+    [style.width]="sidebarWidth"
+    (mouseenter)="onMouseEnter()"
+    (mouseleave)="onMouseLeave()">
     
-    <!-- Header -->
-    <div class="py-6 px-4 border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white">
-      <h5 class="text-center text-slate-700 font-extrabold text-2xl flex items-center justify-center gap-2 font-sans animate-pulse">
-        <i data-lucide="layout-dashboard" class="w-7 h-7 text-slate-500 animate-bounce"></i>
-        <span>Admin Panel</span>
-      </h5>
+    <!-- Glassmorphism overlay -->
+    <div class="absolute inset-0 bg-white/60 backdrop-blur-sm rounded-r-2xl"></div>
+
+    <!-- Logo Section -->
+    <div class="relative p-4 border-b border-gray-200/50 flex items-center transition-all duration-300"
+      [class.justify-start]="sidebarExpanded">
+      <div class="flex items-center gap-2">
+        <img src="./assets/images/britium-logo.png" alt="Britium Logo" class="w-10 h-10 object-contain" />
+        <div class="transition-all duration-300 overflow-hidden"
+          [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+          [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+          <div class="flex flex-col leading-tight items-start">
+            <span class="text-lg font-semibold text-slate-800">Britium</span>
+            <span class="text-sm font-medium text-slate-800">Gallery</span>
+          </div>
+        </div>
+      </div>
     </div>
     
-    <!-- Navigation Menu -->
-    <ul class="flex-1 py-4 px-2 space-y-1">
-      <!-- Dashboard -->
-      <li class="animate-fade-in" style="animation-delay: 0.1s;">
-        <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105 font-sans" [routerLink]="'/dashboard'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
-          <i data-lucide="home" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-          <span>Dashboard</span>
-        </a>
+    <!-- Navigation and Profile Section -->
+    <ng-container *ngIf="sidebarExpanded; else collapsedSidebar">
+      <!-- Navigation -->
+      <nav class="relative flex-1 py-4 overflow-y-auto scrollbar-hide">
+        <!-- Main Navigation -->
+        <div *ngIf="currentMenu === 'main'">
+          <ul class="space-y-1 px-2">
+            <li>
+              <button class="w-full flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 relative">
+                <i data-lucide="home" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Dashboard
+                </span>
+              </button>
+            </li>
+            
+            <!-- Products (submenu) -->
+            <li>
+              <button (click)="showSubmenu('products')" class="w-full flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 relative">
+                <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Products
+                </span>
+              </button>
+            </li>
+            
+            <!-- Orders main nav item -->
+            <li>
+              <button (click)="showSubmenu('orders')" class="w-full flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 relative">
+                <i data-lucide="shopping-cart" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Orders
+                </span>
+              </button>
+            </li>
+            
+            <!-- Discounts main nav item -->
+            <li>
+              <button (click)="showSubmenu('discounts')" class="w-full flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 relative">
+                <i data-lucide="percent" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Discounts
+                </span>
+              </button>
+            </li>
+            
+            <!-- Delivery Service main nav item -->
+            <li>
+              <button (click)="showSubmenu('delivery')" class="w-full flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 relative">
+                <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Delivery Service
+                </span>
+              </button>
+            </li>
+            
+            <!-- User Management (submenu) -->
+            <li>
+              <button (click)="showSubmenu('users')" class="w-full flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 relative">
+                <i data-lucide="users" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  User Management
+                </span>
+              </button>
       </li>
       
-      <!-- Products (expandable) -->
-      <li class="animate-fade-in" style="animation-delay: 0.2s;">
-        <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isProductsOpen = !isProductsOpen">
-          <span class="flex items-center gap-3">
-            <i data-lucide="package" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-            <span>Products</span>
+            <!-- Admin Tools -->
+            <li>
+              <button class="w-full flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 relative">
+                <i data-lucide="target" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Revenue Target
+                </span>
+              </button>
+            </li>
+          </ul>
+        </div>
+        
+        <!-- Products Submenu -->
+        <div *ngIf="currentMenu === 'products'" [attr.data-menu]="currentMenu">
+          <button (click)="showMainMenu()" class="w-full flex items-center gap-3 pl-6 py-3 mb-2 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-500"></i>
+            <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+              [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+              [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+              Back
           </span>
-          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform duration-300" [ngClass]="isProductsOpen ? 'rotate-180' : ''"></i>
         </button>
-        <ul *ngIf="isProductsOpen" class="pl-8 mt-1 space-y-1 animate-slide-down" style="animation-duration: 0.3s;">
-          <li class="animate-fade-in" style="animation-delay: 0.1s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/product'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="plus-square" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Add Product</span>
+          <ul class="space-y-1 px-2">
+            <li>
+              <a [routerLink]="'/product'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="plus-square" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Add Product
+                </span>
             </a>
           </li>
-          <li class="animate-fade-in" style="animation-delay: 0.2s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/productlist'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Product List</span>
+            <li>
+              <a [routerLink]="'/productlist'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="list" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Product List
+                </span>
             </a>
           </li>
-          <li class="animate-fade-in" style="animation-delay: 0.3s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/brandlist'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="tag" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Brand List</span>
+            <li>
+              <a [routerLink]="'/brandlist'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="tag" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Brand List
+                </span>
             </a>
           </li>
-          <li class="animate-fade-in" style="animation-delay: 0.3s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/categorylist'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="tag" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Category List</span>
+            <li>
+              <a [routerLink]="'/categorylist'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="tag" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Category List
+                </span>
             </a>
           </li>
         </ul>
-      </li>
-
-      <li class="animate-fade-in" style="animation-delay: 0.2s;">
-        <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isOrdersOpen = !isOrdersOpen">
-          <span class="flex items-center gap-3">
-            <i data-lucide="shopping-cart" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-            <span>Order</span>
+        </div>
+        <!-- Orders Submenu -->
+        <div *ngIf="currentMenu === 'orders'" [attr.data-menu]="currentMenu">
+          <button (click)="showMainMenu()" class="w-full flex items-center gap-3 pl-6 py-3 mb-2 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-500"></i>
+            <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+              [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+              [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+              Back
           </span>
-          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform duration-300" [ngClass]="isOrdersOpen ? 'rotate-180' : ''"></i>
         </button>
-        <ul *ngIf="isOrdersOpen" class="pl-8 mt-1 space-y-1 animate-slide-down" style="animation-duration: 0.3s;">
-          <li class="animate-fade-in" style="animation-delay: 0.3s;">
-            <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" [routerLink]="'/orders'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400">
-              <i data-lucide="clipboard-list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Order Management</span>
+          <ul class="space-y-1 px-2">
+            <li>
+              <a [routerLink]="'/orders'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="clipboard-list" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Order Management
+                </span>
             </a>
           </li>
-          <li class="animate-fade-in" style="animation-delay: 0.3s;">
-            <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" [routerLink]="'/return'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400">
-              <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Refund Management</span>
+            <li>
+              <a [routerLink]="'/return'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Refund Management
+                </span>
             </a>
           </li>
         </ul>
-      </li>
-      
-      <!-- Discounts (expandable) -->
-      <li class="animate-fade-in" style="animation-delay: 0.25s;">
-        <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isDiscountsOpen = !isDiscountsOpen">
-          <span class="flex items-center gap-3">
-            <i data-lucide="percent" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-            <span>Discounts</span>
+        </div>
+        <!-- Discounts Submenu -->
+        <div *ngIf="currentMenu === 'discounts'" [attr.data-menu]="currentMenu">
+          <button (click)="showMainMenu()" class="w-full flex items-center gap-3 pl-6 py-3 mb-2 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-500"></i>
+            <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+              [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+              [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+              Back
           </span>
-          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform duration-300" [ngClass]="isDiscountsOpen ? 'rotate-180' : ''"></i>
         </button>
-        <ul *ngIf="isDiscountsOpen" class="pl-8 mt-1 space-y-1 animate-slide-down" style="animation-duration: 0.3s;">
-          <li class="animate-fade-in" style="animation-delay: 0.1s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/discount-list'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Discount List</span>
+          <ul class="space-y-1 px-2">
+            <li>
+              <a [routerLink]="'/discount-list'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="list" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Discount List
+                </span>
             </a>
           </li>
-          <li class="animate-fade-in" style="animation-delay: 0.2s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'discount-add'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="plus" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Add Discount</span>
+            <li>
+              <a [routerLink]="'discount-add'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="plus" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Add Discount
+                </span>
             </a>
           </li>
-          <li class="animate-fade-in" style="animation-delay: 0.3s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/discount-coupon'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="ticket" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Coupon List</span>
+            <li>
+              <a [routerLink]="'/discount-coupon'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="ticket" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Coupon List
+                </span>
             </a>
           </li>
         </ul>
+        </div>
+        <!-- Delivery Service Submenu -->
+        <div *ngIf="currentMenu === 'delivery'" [attr.data-menu]="currentMenu">
+          <button (click)="showMainMenu()" class="w-full flex items-center gap-3 pl-6 py-3 mb-2 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-500"></i>
+            <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+              [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+              [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+              Back
+            </span>
+          </button>
+          <ul class="space-y-1 px-2">
+            <li>
+              <a [routerLink]="'/createdeliveryservice'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="plus-square" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Add Delivery
+                </span>
+              </a>
+            </li>
+            <li>
+              <a [routerLink]="'/deliveryservicelist'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200 font-medium" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="list" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Delivery Service List
+                </span>
+              </a>
       </li>
-
-      <!-- Delivery Service -->
-      <li class="animate-fade-in" style="animation-delay: 0.2s;">
-        <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isDeliveryOpen = !isDeliveryOpen">
-          <span class="flex items-center gap-3">
-            <i data-lucide="package" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-            <span>Delivery Service</span>
+          </ul>
+        </div>
+        
+        <!-- User Management Submenu -->
+        <div *ngIf="currentMenu === 'users'" [attr.data-menu]="currentMenu">
+          <button (click)="showMainMenu()" class="w-full flex items-center gap-3 pl-6 py-3 mb-2 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-500"></i>
+            <span class="font-medium transition-all duration-300 overflow-hidden whitespace-nowrap"
+              [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+              [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+              Back
           </span>
-          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform duration-300" [ngClass]="isDeliveryOpen ? 'rotate-180' : ''"></i>
         </button>
-        <ul *ngIf="isDeliveryOpen" class="pl-8 mt-1 space-y-1 animate-slide-down" style="animation-duration: 0.3s;">
-          <li class="animate-fade-in" style="animation-delay: 0.1s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/createdeliveryservice'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="plus-square" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Add Delivery</span>
+          <ul class="space-y-1 px-2">
+            <li>
+              <a [routerLink]="'/users/customers'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="user" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  All Customers
+                </span>
             </a>
           </li>
-          <li class="animate-fade-in" style="animation-delay: 0.2s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/deliveryservicelist'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Delivery Service List</span>
+            <li>
+              <a [routerLink]="'/users/vip'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="crown" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  VIP Customers
+                </span>
+            </a>
+          </li>
+            <li>
+              <a [routerLink]="'/users/blacklist'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="ban" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Blacklisted Users
+                </span>
+            </a>
+          </li>
+            <li>
+              <a [routerLink]="'/users/create'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="user-plus" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Create User
+                </span>
+            </a>
+          </li>
+            <li>
+              <a [routerLink]="'/users/admins'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="shield" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Admin Users
+                </span>
+            </a>
+          </li>
+            <li>
+              <a [routerLink]="'/users/roles'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="key-round" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Roles & Permissions
+                </span>
+            </a>
+          </li>
+            <li>
+              <a [routerLink]="'/users/login-attempts'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Login Attempts
+                </span>
+            </a>
+          </li>
+            <li>
+              <a [routerLink]="'/users/activity'" class="flex items-center gap-3 pl-6 py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-blue-700 transition-all duration-200 font-medium" routerLinkActive="bg-slate-100 text-blue-700 font-bold" [routerLinkActiveOptions]="{ exact: true }">
+                <i data-lucide="activity" class="w-5 h-5 text-slate-500"></i>
+                <span class="transition-all duration-300 overflow-hidden whitespace-nowrap"
+                  [class.opacity-0]="!sidebarExpanded" [class.w-0]="!sidebarExpanded"
+                  [class.opacity-100]="sidebarExpanded" [class.w-auto]="sidebarExpanded">
+                  Activity Logs
+                </span>
             </a>
           </li>
         </ul>
-      </li>
-
-      <!-- User Management (expandable) -->
-      <li class="animate-fade-in" style="animation-delay: 0.4s;">
-        <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105" (click)="isUsersOpen = !isUsersOpen">
-          <span class="flex items-center gap-3">
-            <i data-lucide="users" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-            <span>User Management</span>
-          </span>
-          <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform duration-300" [ngClass]="isUsersOpen ? 'rotate-180' : ''"></i>
-        </button>
-        <ul *ngIf="isUsersOpen" class="pl-8 mt-1 space-y-1 animate-slide-down" style="animation-duration: 0.3s;">
-          <li class="mt-2 mb-1 animate-fade-in" style="animation-delay: 0.1s;">
-            <span class="text-xs font-bold text-slate-500 tracking-wider">CUSTOMERS</span>
-          </li>
-          <li class="animate-fade-in" style="animation-delay: 0.2s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/users/customers'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="user" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>All Customers</span>
-              <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold animate-pulse">{{ totalCustomers }}</span>
-            </a>
-          </li>
-          <li class="animate-fade-in" style="animation-delay: 0.3s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/users/vip'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="crown" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>VIP Customers</span>
-              <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ vipCount }}</span>
-            </a>
-          </li>
-          <li class="animate-fade-in" style="animation-delay: 0.4s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/users/blacklist'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="ban" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Blacklisted Users</span>
-              <span *ngIf="blacklistCount > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ blacklistCount }}</span>
-            </a>
-          </li>
-          <li class="mt-3 mb-1 animate-fade-in" style="animation-delay: 0.5s;">
-            <span class="text-xs font-bold text-slate-500 tracking-wider">USER CONTROLS</span>
-          </li>
-          <li *ngIf="permissionService.hasPermission('Users Create')" class="animate-fade-in" style="animation-delay: 0.6s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 shadow-sm border border-transparent hover:border-green-200 transform hover:scale-105" [routerLink]="'/users/create'" routerLinkActive="bg-green-100 text-green-700 font-bold border-green-300">
-              <i data-lucide="user-plus" class="w-5 h-5 text-green-400 transition-transform duration-200 hover:scale-110"></i>
-              <span>Create User</span>
-            </a>
-          </li>
-          <li class="animate-fade-in" style="animation-delay: 0.7s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 shadow-sm border border-transparent hover:border-slate-300 transform hover:scale-105" [routerLink]="'/users/admins'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-300">
-              <i data-lucide="shield" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-              <span>Admin Users</span>
-              <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ adminCount }}</span>
-            </a>
-          </li>
-          <li class="animate-fade-in" style="animation-delay: 0.8s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 shadow-sm border border-transparent hover:border-purple-200 transform hover:scale-105" [routerLink]="'/users/roles'" routerLinkActive="bg-purple-100 text-purple-700 font-bold border-purple-300">
-              <i data-lucide="key-round" class="w-5 h-5 text-purple-400 transition-transform duration-200 hover:scale-110"></i>
-              <span>Roles & Permissions</span>
-            </a>
-          </li>
-          <li class="mt-3 mb-1 animate-fade-in" style="animation-delay: 0.9s;">
-            <span class="text-xs font-bold text-slate-500 tracking-wider">SECURITY</span>
-          </li>
-          <li class="animate-fade-in" style="animation-delay: 1.0s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 shadow-sm border border-transparent hover:border-red-200 transform hover:scale-105" [routerLink]="'/users/login-attempts'" routerLinkActive="bg-red-100 text-red-700 font-bold border-red-300">
-              <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 transition-transform duration-200 hover:scale-110"></i>
-              <span>Login Attempts</span>
-              <span *ngIf="suspiciousLogins > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold animate-pulse">{{ suspiciousLogins }}</span>
-            </a>
-          </li>
-          <li class="animate-fade-in" style="animation-delay: 1.1s;">
-            <a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all duration-200 shadow-sm border border-transparent hover:border-yellow-200 transform hover:scale-105" [routerLink]="'/users/activity'" routerLinkActive="bg-yellow-100 text-yellow-800 font-bold border-yellow-300">
-              <i data-lucide="activity" class="w-5 h-5 text-yellow-400 transition-transform duration-200 hover:scale-110"></i>
-              <span>Activity Logs</span>
-              <span *ngIf="recentSecurityEvents > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold animate-pulse">!</span>
-            </a>
-          </li>
-        </ul>
-      </li>
-      <!-- Revenue Target Admin -->
-      <li class="animate-fade-in" style="animation-delay: 0.45s;">
-        <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold shadow-sm border border-transparent hover:border-slate-300 hover:shadow-md transform hover:scale-105 font-sans" [routerLink]="'/revenue-target-admin'" routerLinkActive="bg-slate-200 text-slate-900 font-bold border-slate-400 shadow-md">
-          <i data-lucide="target" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-          <span>Revenue Target Admin</span>
-        </a>
-      </li>
-    </ul>
+        </div>
+      </nav>
     
     <!-- Profile Section -->
     <div class="p-4 border-t border-slate-200 bg-gradient-to-t from-slate-50 to-white">
@@ -242,7 +401,6 @@
           <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" [ngClass]="profileDropdownOpen ? 'rotate-180' : ''"></i>
         </button>
       </div>
-      
       <!-- Profile Dropdown -->
       <div *ngIf="profileDropdownOpen" class="mb-3 bg-white border border-slate-200 rounded-xl shadow-lg animate-slide-down" style="animation-duration: 0.3s;">
         <div class="p-3 border-b border-slate-100">
@@ -264,14 +422,75 @@
             <i data-lucide="settings" class="w-4 h-4 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
             <span>Settings</span>
           </button>
+            <button class="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 font-semibold text-sm transform hover:scale-105" (click)="logout()">
+              <i data-lucide="log-out" class="w-4 h-4 transition-transform duration-200 hover:scale-110"></i>
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </div>
-      
-      <!-- Logout Button -->
-      <button class="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-red-600 font-semibold hover:bg-red-50 transition-all duration-200 shadow-sm border border-transparent hover:border-red-200 transform hover:scale-105 hover:shadow-md" (click)="logout()">
-        <i data-lucide="log-out" class="w-5 h-5 transition-transform duration-200 hover:scale-110"></i>
-        <span>Logout</span>
+    </ng-container>
+
+    <ng-template #collapsedSidebar>
+      <nav class="relative flex-1 py-4 overflow-y-auto scrollbar-hide">
+        <div *ngIf="currentMenu === 'main'">
+          <ul class="space-y-1 px-2">
+            <!-- Main menu icons only -->
+            <li>
+              <button class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+                <i data-lucide="home" class="w-5 h-5 text-slate-500"></i>
+              </button>
+            </li>
+            <li>
+              <button (click)="showSubmenu('products')" class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+                <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
+              </button>
+            </li>
+            <li>
+              <button (click)="showSubmenu('orders')" class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+                <i data-lucide="shopping-cart" class="w-5 h-5 text-slate-500"></i>
+              </button>
+            </li>
+            <li>
+              <button (click)="showSubmenu('discounts')" class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+                <i data-lucide="percent" class="w-5 h-5 text-slate-500"></i>
+              </button>
+            </li>
+            <li>
+              <button (click)="showSubmenu('delivery')" class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+                <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
+              </button>
+            </li>
+            <li>
+              <button (click)="showSubmenu('users')" class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+                <i data-lucide="users" class="w-5 h-5 text-slate-500"></i>
+              </button>
+            </li>
+            <li>
+              <button class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200">
+                <i data-lucide="target" class="w-5 h-5 text-slate-500"></i>
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div *ngIf="currentMenu !== 'main'">
+          <ul class="space-y-1 px-2">
+            <li *ngFor="let item of collapsedSubmenuItems">
+              <button class="w-full flex items-center justify-center py-3 rounded-xl text-slate-700 hover:bg-slate-100/80 hover:text-slate-900 transition-all duration-200"
+                (click)="item.link ? router.navigate([item.link]) : showMainMenu()">
+                <i [attr.data-lucide]="item.icon" class="w-5 h-5 text-slate-500"></i>
       </button>
+            </li>
+          </ul>
+        </div>
+      </nav>
+      <div class="flex items-center justify-center py-4 backdrop-blur-0 bg-white/90">
+        <img [src]="getProfileImageUrl()" 
+             [alt]="getUserDisplayName()" 
+             class="rounded-full border-2 border-slate-300 w-10 h-10 object-cover"
+             (error)="onImageError($event)">
+      </div>
+    </ng-template>
     </div>
-  </aside>
 </div>
+<!-- END: Britium Glassmorphism Sidebar Template -->

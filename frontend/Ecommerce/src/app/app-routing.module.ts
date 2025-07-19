@@ -76,6 +76,7 @@ export class BlockedGuard implements CanActivate {
 }
 import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
 import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
+import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
 
 const routes: Routes = [
   { path: 'banned', component: BannedPageComponent },
@@ -85,6 +86,7 @@ const routes: Routes = [
   { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
+  { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Products' } },
   {path: '',
     component: LayoutComponent,
     canActivate: [AuthGuard],
@@ -108,13 +110,13 @@ const routes: Routes = [
   { path: 'checkout/confirm', component: OrderConfirmComponent, data: { breadcrumb: 'Order Confirmation' } },
   { path: 'display', component: ProductDisplayComponent, data: { breadcrumb: 'Product Display' } },
   { path: 'wishlist', component: WishlistComponent, data: { breadcrumb: 'Wishlist' } },
+
   {
     path: '',
     component: LayoutComponent,
     canActivate: [AuthGuard],
     children: [
       { path: 'product', component: ProductComponent, data: { breadcrumb: 'Products' } },
-      { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Products' } },
       { path: 'productlist', component: ProductMangementComponent, data: { breadcrumb: 'Product List' } },
       { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
       { path: 'users/customers', component: CustomersComponent, data: { breadcrumb: 'Customers' } },
@@ -135,6 +137,7 @@ const routes: Routes = [
       { path: 'revenue-target-admin', component: RevenueTargetAdminComponent },
       { path: 'createdeliveryservice', component: CreateDeliveryServiceComponent },
       { path: 'deliveryservicelist', component: DeliveryServiceListComponent },
+      { path: 'admin/vip-tiers', component: VipTiersAdminComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },

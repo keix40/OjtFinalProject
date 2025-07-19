@@ -1,12 +1,18 @@
 <div class="d-flex flex-column vh-100 custom-layout">
   <app-navbar class="shadow-sm"></app-navbar>
-  <!-- <app-breadcrumb [items]="breadcrumbService.breadcrumbs$ | async"></app-breadcrumb> -->
-  <div class="d-flex flex-grow-1 layout-container">
-    <app-sidebar class="sidebar shadow-sm"></app-sidebar>
-    <div class="main-content p-4 flex-grow-1">
-      <div class="content-wrapper">
+  
+  <div class="d-flex flex-grow-1 layout-container position-relative">
+    <!-- Sidebar - Fixed positioning with proper z-index -->
+    <app-sidebar class="shadow-sm position-fixed h-full" 
+                style="z-index: 1000;"></app-sidebar>
+    
+    <!-- Main Content - Dynamic padding based on sidebar state -->
+    <div class="main-content flex-grow-1 transition-all duration-500" 
+         [ngClass]="sidebarExpanded ? 'ml-64' : 'ml-20'">
+      <div class="content-wrapper p-4" [ngClass]="{'rounded-tl-none': sidebarExpanded}">
         <router-outlet></router-outlet>
       </div>
     </div>
   </div>
 </div>
+

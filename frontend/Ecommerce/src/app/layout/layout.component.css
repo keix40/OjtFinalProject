@@ -5,10 +5,11 @@
 .layout-container {
   position: relative;
   /* overflow: hidden; */ /* Remove this to prevent dropdown clipping */
+  margin-top: 0;
+  height: 100vh;
 }
 
 .sidebar {
-  width: 250px;
   min-height: 100vh;
   transition: all 0.3s ease;
   z-index: 1000;
@@ -81,4 +82,42 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Add these styles to your global stylesheet */
+
+/* Ensure full height for sidebar */
+.h-full {
+  height: 100vh;
+}
+
+/* Sidebar width transitions */
+.sidebar {
+  transition: width 0.5s ease-in-out;
+  width: 20rem; /* 64 - when expanded */
+}
+
+.sidebar.collapsed {
+  width: 5rem; /* 20 - when collapsed */
+}
+
+/* Main content adjustments */
+.main-content {
+  margin-left: 5rem; /* matches collapsed sidebar width */
+  transition: margin-left 0.5s ease-in-out;
+}
+
+.main-content.expanded {
+  margin-left: 20rem; /* matches expanded sidebar width */
+}
+
+/* Ensure content stays below navbar */
+.layout-container {
+  margin-top: 0;
+  height: 100vh;
+}
+
+/* Remove top-left border radius when sidebar is expanded */
+.rounded-tl-none {
+  border-top-left-radius: 0 !important;
 }

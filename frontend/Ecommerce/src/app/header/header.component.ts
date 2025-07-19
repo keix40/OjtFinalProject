@@ -43,6 +43,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
   brands: BrandListDTO[] = [];
   searchQuery: string = '';
   products: ProductDTO[] = [];
+  displayedBritium = '';
+  displayedGallery = '';
+  showCursorBritium = true;
+  showCursorGallery = false;
+  private britiumText = 'Britium';
+  private galleryText = 'Gallery';
+  private britiumIndex = 0;
+  private galleryIndex = 0;
+  private typingInterval: any;
+  private typingState: 'britium' | 'gallery' | 'done' = 'britium';
 
   constructor(
     private router: Router,
@@ -111,6 +121,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         }
       }
     });
+    this.startTypewriter();
   }
 
   isMobileMenuOpen = false;
@@ -132,6 +143,7 @@ toggleMobileMenu(): void {
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.typingInterval) clearInterval(this.typingInterval);
   }
 
   private checkAuthStatus() {
@@ -252,6 +264,42 @@ toggleMobileMenu(): void {
     const value = this.searchQuery?.trim();
     if (value) {
       this.router.navigate(['/userproductlist'], { queryParams: { search: value } });
+    }
+  }
+
+  startTypewriter() {
+    if (this.typingInterval) clearInterval(this.typingInterval);
+    this.displayedBritium = '';
+    this.displayedGallery = '';
+    this.britiumIndex = 0;
+    this.galleryIndex = 0;
+    this.typingState = 'britium';
+    this.showCursorBritium = true;
+    this.showCursorGallery = false;
+    this.typingInterval = setInterval(() => this.typewriterStep(), 90);
+  }
+
+  resetTypewriter() {
+    this.startTypewriter();
+  }
+
+  private typewriterStep() {
+    if (this.typingState === 'britium') {
+      if (this.britiumIndex < this.britiumText.length) {
+        this.displayedBritium += this.britiumText[this.britiumIndex++];
+      } else {
+        this.typingState = 'gallery';
+        this.showCursorBritium = false;
+        this.showCursorGallery = true;
+      }
+    } else if (this.typingState === 'gallery') {
+      if (this.galleryIndex < this.galleryText.length) {
+        this.displayedGallery += this.galleryText[this.galleryIndex++];
+      } else {
+        this.typingState = 'done';
+        this.showCursorGallery = false;
+        clearInterval(this.typingInterval);
+      }
     }
   }
 

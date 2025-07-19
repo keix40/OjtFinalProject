@@ -2,10 +2,18 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
-      <div class="flex items-center animate-fade-in">
-        <a routerLink="/home" class="text-2xl font-bold bg-gradient-to-r from-blue-500 to-blue-400 text-transparent bg-clip-text select-none">
-          Gallery
-        </a>
+      <div class="flex items-center gap-2 animate-fade-in">
+        <div class="p-0 flex items-center justify-center">
+          <img src="./assets/images/britium-logo.png" alt="Britium Logo" class="w-14 h-14 object-contain" />
+        </div>
+        <span class="flex flex-col leading-tight">
+          <span class="typewriter-britium text-lg md:text-xl font-semibold text-slate-800">
+            <span>{{ displayedBritium }}</span><span *ngIf="showCursorBritium" class="typewriter-cursor">|</span>
+          </span>
+          <span class="typewriter-gallery text-sm md:text-base font-medium text-slate-800">
+            <span>{{ displayedGallery }}</span><span *ngIf="showCursorGallery" class="typewriter-cursor">|</span>
+          </span>
+        </span>
       </div>
 
       <!-- Desktop Navigation -->
