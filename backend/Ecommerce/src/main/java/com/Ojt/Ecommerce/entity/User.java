@@ -107,4 +107,11 @@ public class User {
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
 
+    public String getTier() {
+        if (totalPoints == null) return "Regular";
+        if (totalPoints < 10000) return "Regular";
+        if (totalPoints < 100000) return "Silver";
+        if (totalPoints < 1000000) return "Gold";
+        return "Platinum";
+    }
 }

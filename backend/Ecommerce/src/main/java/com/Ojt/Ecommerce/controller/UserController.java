@@ -86,6 +86,11 @@ public class UserController {
         return userService.getAllCustomerSummaries();
     }
 
+    @GetMapping("/vip-customers")
+    public List<CustomerSummaryDTO> getAllVipCustomers() {
+        return userService.getAllVipCustomers();
+    }
+
 
     //to show userProfile userinfo (kei_1)
     @PutMapping("/{id}")

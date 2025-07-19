@@ -378,18 +378,20 @@ public class UserServiceImpl implements UserService {
                     }
                 }
             }
-            result.add(new CustomerSummaryDTO(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getPhoneNumber(),
-                user.getStatus() != null ? user.getStatus().name() : null,
-                user.getRole() != null ? user.getRole().getName() : null,
-                user.getCreatedDate(),
-                totalOrders,
-                totalSpent,
-                user.getProfileImage()
-            ));
+            CustomerSummaryDTO dto = new CustomerSummaryDTO();
+            dto.setUserId(user.getId());
+            dto.setName(user.getName());
+            dto.setEmail(user.getEmail());
+            dto.setPhoneNumber(user.getPhoneNumber());
+            dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
+            dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+            dto.setJoinDate(user.getCreatedDate());
+            dto.setTotalOrders(totalOrders);
+            dto.setTotalSpent(totalSpent);
+            dto.setProfileImage(user.getProfileImage());
+            // Set tier if available
+            try { dto.setTier(user.getTier()); } catch (Exception ignored) {}
+            result.add(dto);
         }
         return result;
     }
@@ -401,4 +403,36 @@ public class UserServiceImpl implements UserService {
         return getAllCustomerSummaries();
     }
 
+    @Override
+    public List<CustomerSummaryDTO> getAllVipCustomers() {
+        List<User> users = userRepository.findByRole_Name("customer");
+        return users.stream().map(user -> {
+            int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
+            double totalSpent = 0.0;
+            if (user.getOrders() != null) {
+                for (var order : user.getOrders()) {
+                    if (order.getOrderProducts() != null) {
+                        for (var op : order.getOrderProducts()) {
+                            if (op.getUnitPrice() != null && op.getQuantity() != null) {
+                                totalSpent += op.getUnitPrice() * op.getQuantity();
+                            }
+                        }
+                    }
+                }
+            }
+            CustomerSummaryDTO dto = new CustomerSummaryDTO();
+            dto.setUserId(user.getId());
+            dto.setName(user.getName());
+            dto.setEmail(user.getEmail());
+            dto.setPhoneNumber(user.getPhoneNumber());
+            dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
+            dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+            dto.setJoinDate(user.getCreatedDate());
+            dto.setTotalOrders(totalOrders);
+            dto.setTotalSpent(totalSpent);
+            dto.setProfileImage(user.getProfileImage());
+            dto.setTier(user.getTier());
+            return dto;
+        }).toList();
+    }
 }
