@@ -23,6 +23,8 @@ public class DiscountServiceImpl implements DiscountService {
     private final BrandRepository brandRepository;
     private final CategoryRepository categoryRepository;
     private final UserCouponUsageRepository userCouponUsageRepository;
+    private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Override
     public ResponseEntity<?> createDiscount(DiscountRequestDTO dto) {
@@ -30,6 +32,7 @@ public class DiscountServiceImpl implements DiscountService {
             // Only create Discount, no DiscountEvent
             Discount discount = createDiscounts(dto);
             createDiscountRules(dto, discount);
+            sendDiscountNotificationToAllUsers(dto,discount.getId());
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -40,14 +43,15 @@ public class DiscountServiceImpl implements DiscountService {
     public ResponseEntity<?> createDiscountWithResolution(DiscountRequestDTO dto, String resolutionChoice) {
         try {
             Discount discount = createDiscounts(dto);
-            
+
             // Handle conflict resolution
             if ("OVERWRITE".equals(resolutionChoice)) {
                 // Remove existing conflicting discounts before creating new ones
                 removeConflictingDiscounts(dto);
             }
-            
+
             createDiscountRules(dto, discount);
+            sendDiscountNotificationToAllUsers(dto,discount.getId());
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -72,7 +76,7 @@ public class DiscountServiceImpl implements DiscountService {
     private void removeConflictingDiscounts(DiscountRequestDTO dto) {
         String targetType = dto.getTargetType().toUpperCase();
         System.out.println("[Discount] removeConflictingDiscounts called for targetType: " + targetType + ", DTO: " + dto);
-        
+
         switch (targetType) {
             case "CATEGORY":
                 if (dto.getCategoryIds() != null && !dto.getCategoryIds().trim().isEmpty()) {
@@ -96,7 +100,7 @@ public class DiscountServiceImpl implements DiscountService {
                                     List<Product> unaffectedProducts = productRepository.findByBrandId(brand.getId());
                                     for (Product product : unaffectedProducts) {
                                         boolean isInCategory = product.getProductCategories().stream()
-                                            .anyMatch(phc -> phc.getCategory() != null && phc.getCategory().getId().equals(categoryId));
+                                                .anyMatch(phc -> phc.getCategory() != null && phc.getCategory().getId().equals(categoryId));
                                         if (!isInCategory) {
                                             // Check if a product-level rule already exists for this discount and product
                                             List<DiscountRule> existingProductRules = discountRuleRepository.findByProductIdAndDiscountStatusTrue(product.getId());
@@ -208,7 +212,7 @@ public class DiscountServiceImpl implements DiscountService {
                                     List<Product> brandProducts = productRepository.findByBrandId(brandId);
                                     for (Product product : brandProducts) {
                                         boolean isInCategory = product.getProductCategories().stream()
-                                            .anyMatch(phc -> phc.getCategory() != null && phc.getCategory().getId().equals(categoryId));
+                                                .anyMatch(phc -> phc.getCategory() != null && phc.getCategory().getId().equals(categoryId));
                                         if (!isInCategory) {
                                             List<DiscountRule> existingProductRules = discountRuleRepository.findByProductIdAndDiscountStatusTrue(product.getId());
                                             boolean hasProductRule = existingProductRules.stream().anyMatch(r -> r.getDiscount().getId().equals(discount.getId()) && r.getTargetType() == DiscountEventEnum.PRODUCT);
@@ -363,7 +367,7 @@ public class DiscountServiceImpl implements DiscountService {
         try {
             List<Map<String, Object>> conflicts = new ArrayList<>();
             String targetType = dto.getTargetType().toUpperCase();
-            
+
             switch (targetType) {
                 case "BRAND":
                     if (dto.getBrandIds() != null && !dto.getBrandIds().trim().isEmpty()) {
@@ -400,7 +404,7 @@ public class DiscountServiceImpl implements DiscountService {
                     }
                     break;
             }
-            
+
             return ResponseEntity.ok(conflicts);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -410,7 +414,7 @@ public class DiscountServiceImpl implements DiscountService {
     private void checkBrandDuplicate(Long brandId, List<Map<String, Object>> conflicts) {
         Brand brand = brandRepository.findById(brandId).orElse(null);
         if (brand == null) return;
-        
+
         // 1. Check for existing brand discounts
         List<DiscountRule> existingRules = discountRuleRepository.findByBrandIdAndDiscountStatusTrue(brandId);
         for (DiscountRule rule : existingRules) {
@@ -427,7 +431,7 @@ public class DiscountServiceImpl implements DiscountService {
                 conflicts.add(conflict);
             }
         }
-        
+
         // 2. Check for existing brand-category discounts that would be affected
         // Get all categories that this brand is joined with
         List<Category> categoriesJoinedWithBrand = categoryRepository.findAllCategoryByBrandId(brandId);
@@ -456,18 +460,18 @@ public class DiscountServiceImpl implements DiscountService {
             List<DiscountRule> categoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(category.getId());
             for (DiscountRule rule : categoryRules) {
                 if (rule.getTargetType() == DiscountEventEnum.CATEGORY) {
-            Map<String, Object> conflict = new HashMap<>();
-            conflict.put("targetType", "BRAND");
-            conflict.put("targetId", brandId);
-            conflict.put("targetName", brand.getName());
-            conflict.put("existingDiscountName", rule.getDiscount().getName());
-            conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "BRAND");
+                    conflict.put("targetId", brandId);
+                    conflict.put("targetName", brand.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
                     conflict.put("conflictType", "CATEGORY_DISCOUNT");
                     conflict.put("conflictDescription", "Category '" + category.getName() + "' already has a discount that affects products of this brand.");
                     conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                     conflict.put("conflictingCategoryId", category.getId());
                     conflict.put("conflictingCategoryName", category.getName());
-            conflicts.add(conflict);
+                    conflicts.add(conflict);
                 }
             }
         }
@@ -476,7 +480,7 @@ public class DiscountServiceImpl implements DiscountService {
     private void checkCategoryDuplicate(Long categoryId, List<Map<String, Object>> conflicts) {
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (category == null) return;
-        
+
         // 1. Check for direct category discounts
         List<DiscountRule> existingCategoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(categoryId);
         for (DiscountRule rule : existingCategoryRules) {
@@ -493,7 +497,7 @@ public class DiscountServiceImpl implements DiscountService {
                 conflicts.add(conflict);
             }
         }
-        
+
         // 2. Check for brand-category discounts that include this category
         for (DiscountRule rule : existingCategoryRules) {
             if (rule.getTargetType() == DiscountEventEnum.BRAND_CATEGORY && rule.getBrand() != null) {
@@ -509,27 +513,27 @@ public class DiscountServiceImpl implements DiscountService {
                 conflicts.add(conflict);
             }
         }
-        
+
         // 3. Check for brand discounts ONLY if the category is actually joined with those brands
         // Get all brands that are joined with this category
         List<Brand> brandsJoinedWithCategory = brandRepository.findAllBrandByCateId(categoryId);
-        
+
         for (Brand brand : brandsJoinedWithCategory) {
             List<DiscountRule> brandRules = discountRuleRepository.findByBrandIdAndDiscountStatusTrue(brand.getId());
             for (DiscountRule rule : brandRules) {
                 if (rule.getTargetType() == DiscountEventEnum.BRAND) {
-            Map<String, Object> conflict = new HashMap<>();
-            conflict.put("targetType", "CATEGORY");
-            conflict.put("targetId", categoryId);
-            conflict.put("targetName", category.getName());
-            conflict.put("existingDiscountName", rule.getDiscount().getName());
-            conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "CATEGORY");
+                    conflict.put("targetId", categoryId);
+                    conflict.put("targetName", category.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
                     conflict.put("conflictType", "BRAND_DISCOUNT");
                     conflict.put("conflictDescription", "Category is joined with brand '" + brand.getName() + "' which already has a discount");
                     conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                     conflict.put("conflictingBrandId", brand.getId());
                     conflict.put("conflictingBrandName", brand.getName());
-            conflicts.add(conflict);
+                    conflicts.add(conflict);
                 }
             }
         }
@@ -539,7 +543,7 @@ public class DiscountServiceImpl implements DiscountService {
     private boolean isCategorySafeForDiscount(Long categoryId) {
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (category == null) return false;
-        
+
         // Check if category has any direct discounts
         List<DiscountRule> existingCategoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(categoryId);
         for (DiscountRule rule : existingCategoryRules) {
@@ -547,7 +551,7 @@ public class DiscountServiceImpl implements DiscountService {
                 return false; // Category already has a direct discount
             }
         }
-        
+
         // Check if category is joined with any brands that have discounts
         List<Brand> brandsJoinedWithCategory = brandRepository.findAllBrandByCateId(categoryId);
         for (Brand brand : brandsJoinedWithCategory) {
@@ -558,7 +562,7 @@ public class DiscountServiceImpl implements DiscountService {
                 }
             }
         }
-        
+
         return true; // Category is safe for discount
     }
 
@@ -568,7 +572,7 @@ public class DiscountServiceImpl implements DiscountService {
             Long productId = Long.parseLong(idStr.trim());
             Product product = productRepository.findById(productId).orElse(null);
             if (product == null) continue;
-            
+
             List<DiscountRule> existingRules = discountRuleRepository.findByProductIdAndDiscountStatusTrue(productId);
             for (DiscountRule rule : existingRules) {
                 Map<String, Object> conflict = new HashMap<>();
@@ -586,7 +590,7 @@ public class DiscountServiceImpl implements DiscountService {
         Brand brand = brandRepository.findById(brandId).orElse(null);
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (brand == null || category == null) return;
-        
+
         // 1. Check for existing brand-category discounts
         List<DiscountRule> existingRules = discountRuleRepository.findByBrandIdAndCategoryIdAndDiscountStatusTrue(brandId, categoryId);
         for (DiscountRule rule : existingRules) {
@@ -601,7 +605,7 @@ public class DiscountServiceImpl implements DiscountService {
             conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
             conflicts.add(conflict);
         }
-        
+
         // 2. Check for existing brand discounts that would affect the same products
         List<DiscountRule> existingBrandRules = discountRuleRepository.findByBrandIdAndDiscountStatusTrue(brandId);
         for (DiscountRule rule : existingBrandRules) {
@@ -618,7 +622,7 @@ public class DiscountServiceImpl implements DiscountService {
                 conflicts.add(conflict);
             }
         }
-        
+
         // 3. Check for existing category discounts that would affect the same products
         List<DiscountRule> existingCategoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(categoryId);
         for (DiscountRule rule : existingCategoryRules) {
@@ -655,9 +659,16 @@ public class DiscountServiceImpl implements DiscountService {
         discount.setDescription(dto.getDescription());
         discount.setDiscountType(DiscountType.valueOf(dto.getDiscountType()));
         discount.setDiscountValue(dto.getDiscountType().equals("PERCENTAGE") ? dto.getDiscount_percent() : dto.getDiscount_amount());
+        discount.setDescription(dto.getDescription());
         discount.setStartDate(dto.getStartDate().toLocalDate());
         discount.setEndDate(dto.getEndDate().toLocalDate());
-        // Don't set status here - it will be calculated dynamically based on dates
+        // Set status based on current date
+        LocalDate today = LocalDate.now();
+        if ((today.isAfter(discount.getStartDate().minusDays(1))) && (today.isBefore(discount.getEndDate().plusDays(1)))) {
+            discount.setStatus(true); // Active
+        } else {
+            discount.setStatus(false); // Inactive
+        }
         discount.setAutoApply(true);
         return discountRepository.save(discount);
     }
@@ -717,12 +728,12 @@ public class DiscountServiceImpl implements DiscountService {
     private void createCategoryDiscountRule(Long categoryId, Discount discount) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new RuntimeException("Category not found with id: " + categoryId));
-        
+
         // Validate that the category exists and is valid
         if (category == null) {
             throw new RuntimeException("Category not found with id: " + categoryId);
         }
-        
+
         DiscountRule rule = new DiscountRule();
         rule.setTargetType(DiscountEventEnum.CATEGORY);
         rule.setDiscount(discount);
@@ -772,8 +783,6 @@ public class DiscountServiceImpl implements DiscountService {
     public List<DiscountDTO> getAllDiscounts() {
         List<Discount> Discounts = discountRepository.findAll();
         List<DiscountDTO> dtos = new ArrayList<>();
-        LocalDate currentDate = LocalDate.now();
-        
         for(Discount d : Discounts){
             // Update autoApply field if it's null
             if (d.getAutoApply() == null) {
@@ -782,22 +791,20 @@ public class DiscountServiceImpl implements DiscountService {
                 d.setAutoApply(d.getCode() == null || d.getCode().trim().isEmpty());
                 discountRepository.save(d);
             }
-            
-            // Dynamically calculate status based on current date vs start/end dates
-            boolean isActive = currentDate.isAfter(d.getStartDate().minusDays(1)) 
-                             && currentDate.isBefore(d.getEndDate().plusDays(1));
-            
+
             DiscountDTO dto = new DiscountDTO();
             dto.setId(d.getId());
             dto.setName(d.getName());
-            dto.setCode(d.getCode());
             dto.setDescription(d.getDescription());
             dto.setDiscountType(d.getDiscountType());
             dto.setDiscountValue(d.getDiscountValue());
             dto.setStartDate(d.getStartDate());
             dto.setEndDate(d.getEndDate());
-            dto.setStatus(isActive); // Use dynamically calculated status
-            dto.setAutoApply(d.getAutoApply());
+            LocalDate today = LocalDate.now();
+            boolean isActive = d.isStatus() && today.isAfter(d.getStartDate().minusDays(1))
+                    && today.isBefore(d.getEndDate().plusDays(1));
+            dto.setStatus(isActive);
+            dto.setAutoApply(d.getAutoApply()); // Add autoApply field
             dtos.add(dto);
         }
         return dtos;
@@ -807,21 +814,15 @@ public class DiscountServiceImpl implements DiscountService {
     public ResponseEntity<?> getActiveDiscounts() {
         try {
             List<Map<String, Object>> activeDiscounts = new ArrayList<>();
-            LocalDate currentDate = LocalDate.now();
-            
-            // Get all discounts and filter by dynamic status
-            List<Discount> allDiscounts = discountRepository.findAll();
-            
-            for (Discount discount : allDiscounts) {
-                // Dynamically calculate if discount should be active
-                boolean isActive = currentDate.isAfter(discount.getStartDate().minusDays(1)) 
-                                 && currentDate.isBefore(discount.getEndDate().plusDays(1));
-                
-                // Only include discounts that are currently active
-                if (!isActive) {
-                    continue; // Skip inactive discounts
-                }
-                
+
+            // Get all active discounts
+            List<Discount> discounts = discountRepository.findByStatusTrue();
+
+            for (Discount discount : discounts) {
+                LocalDate today = LocalDate.now();
+                boolean isActive =discount.isStatus() && today.isAfter(discount.getStartDate().minusDays(1))
+                        && today.isBefore(discount.getEndDate().plusDays(1));
+                if (!isActive) continue;
                 Map<String, Object> discountInfo = new HashMap<>();
                 discountInfo.put("id", discount.getId());
                 discountInfo.put("name", discount.getName());
@@ -831,16 +832,16 @@ public class DiscountServiceImpl implements DiscountService {
                 discountInfo.put("discountType", discount.getDiscountType().toString());
                 discountInfo.put("startDate", discount.getStartDate());
                 discountInfo.put("endDate", discount.getEndDate());
-                discountInfo.put("status", isActive); // Use dynamically calculated status
-                
+                discountInfo.put("status", isActive);
+
                 // Get discount rules
                 List<Map<String, Object>> rules = new ArrayList<>();
                 List<DiscountRule> discountRules = discountRuleRepository.findByDiscount_Id(discount.getId());
-                
+
                 for (DiscountRule rule : discountRules) {
                     Map<String, Object> ruleInfo = new HashMap<>();
                     ruleInfo.put("targetType", rule.getTargetType().toString());
-                    
+
                     switch (rule.getTargetType()) {
                         case PRODUCT:
                             if (rule.getProduct() != null) {
@@ -870,12 +871,12 @@ public class DiscountServiceImpl implements DiscountService {
                     }
                     rules.add(ruleInfo);
                 }
-                
+
                 discountInfo.put("rules", rules);
-                
+
                 // Get affected product IDs based on discount rules
                 List<Long> affectedProductIds = new ArrayList<>();
-                
+
                 for (DiscountRule rule : discountRules) {
                     switch (rule.getTargetType()) {
                         case PRODUCT:
@@ -901,17 +902,17 @@ public class DiscountServiceImpl implements DiscountService {
                             if (rule.getBrand() != null && rule.getCategory() != null) {
                                 // Get all products for this brand-category combination
                                 List<Product> brandCategoryProducts = productRepository.findByBrandIdAndCategoryId(
-                                    rule.getBrand().getId(), rule.getCategory().getId());
+                                        rule.getBrand().getId(), rule.getCategory().getId());
                                 brandCategoryProducts.forEach(product -> affectedProductIds.add(product.getId()));
                             }
                             break;
                     }
                 }
-                
+
                 discountInfo.put("affectedProductIds", affectedProductIds);
                 activeDiscounts.add(discountInfo);
             }
-            
+
             return ResponseEntity.ok(activeDiscounts);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -924,20 +925,20 @@ public class DiscountServiceImpl implements DiscountService {
             // Find the existing discount
             Discount existingDiscount = discountRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Discount not found with id: " + id));
-            
+
             // Update discount properties
             existingDiscount.setName(dto.getName());
-            existingDiscount.setCode(dto.getCode());
             existingDiscount.setDescription(dto.getDescription());
             existingDiscount.setDiscountType(DiscountType.valueOf(dto.getDiscountType()));
             existingDiscount.setDiscountValue(dto.getDiscountType().equals("PERCENTAGE") ? dto.getDiscount_percent() : dto.getDiscount_amount());
+            existingDiscount.setDescription(dto.getDescription());
             existingDiscount.setStartDate(dto.getStartDate().toLocalDate());
             existingDiscount.setEndDate(dto.getEndDate().toLocalDate());
-            // Don't update status - it will be calculated dynamically based on dates
-            
+            existingDiscount.setStatus(dto.isStatus());
+
             // Save the updated discount
             discountRepository.save(existingDiscount);
-            System.out.println("Code :"+ dto.getCode());
+            System.out.println("description :"+ dto.getDescription());
             return ResponseEntity.ok(Map.of("message", "Discount updated successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -950,23 +951,23 @@ public class DiscountServiceImpl implements DiscountService {
         try {
             List<Map<String, Object>> productDiscounts = new ArrayList<>();
             LocalDate currentDate = LocalDate.now();
-            
+
             // Get all active discounts
             List<Discount> allDiscounts = discountRepository.findAll();
-            
+
             for (Discount discount : allDiscounts) {
                 // Dynamically calculate if discount should be active
-                boolean isActive = currentDate.isAfter(discount.getStartDate().minusDays(1)) 
-                                 && currentDate.isBefore(discount.getEndDate().plusDays(1));
-                
+                boolean isActive = currentDate.isAfter(discount.getStartDate().minusDays(1))
+                        && currentDate.isBefore(discount.getEndDate().plusDays(1));
+
                 // Only include discounts that are currently active
                 if (!isActive) {
                     continue; // Skip inactive discounts
                 }
-                
+
                 // Get discount rules for this discount
                 List<DiscountRule> discountRules = discountRuleRepository.findByDiscount_Id(discount.getId());
-                
+
                 // Check if this product is affected by any rule of this discount
                 boolean isProductAffected = false;
                 for (DiscountRule rule : discountRules) {
@@ -975,7 +976,7 @@ public class DiscountServiceImpl implements DiscountService {
                         break;
                     }
                 }
-                
+
                 if (isProductAffected) {
                     Map<String, Object> discountInfo = new HashMap<>();
                     discountInfo.put("id", discount.getId());
@@ -989,17 +990,17 @@ public class DiscountServiceImpl implements DiscountService {
                     discountInfo.put("status", isActive);
                     discountInfo.put("autoApply", discount.getAutoApply());
                     discountInfo.put("code", discount.getCode());
-                    
+
                     productDiscounts.add(discountInfo);
                 }
             }
-            
+
             return ResponseEntity.ok(productDiscounts);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
-    
+
     private boolean isProductAffectedByRule(Long productId, DiscountRule rule) {
         switch (rule.getTargetType()) {
             case PRODUCT:
@@ -1008,8 +1009,8 @@ public class DiscountServiceImpl implements DiscountService {
                 if (rule.getBrand() != null) {
                     // Check if the product belongs to this brand
                     Product product = productRepository.findById(productId).orElse(null);
-                    return product != null && product.getBrand() != null && 
-                           product.getBrand().getId().equals(rule.getBrand().getId());
+                    return product != null && product.getBrand() != null &&
+                            product.getBrand().getId().equals(rule.getBrand().getId());
                 }
                 break;
             case CATEGORY:
@@ -1028,12 +1029,39 @@ public class DiscountServiceImpl implements DiscountService {
                     Product product = productRepository.findById(productId).orElse(null);
                     if (product != null && product.getBrand() != null) {
                         return product.getBrand().getId().equals(rule.getBrand().getId()) &&
-                               product.getProductCategories().stream()
-                                       .anyMatch(pc -> pc.getCategory().getId().equals(rule.getCategory().getId()));
+                                product.getProductCategories().stream()
+                                        .anyMatch(pc -> pc.getCategory().getId().equals(rule.getCategory().getId()));
                     }
                 }
                 break;
         }
         return false;
     }
-} 
+
+    // Helper method to send notification to all users
+    private void sendDiscountNotificationToAllUsers(DiscountRequestDTO dto,Long discountId) {
+        String discountValueText;
+        if ("PERCENTAGE".equalsIgnoreCase(dto.getDiscountType())) {
+            double percent = (dto.getDiscount_percent() <= 1 && dto.getDiscount_percent() != 0)
+                    ? dto.getDiscount_percent() * 100
+                    : dto.getDiscount_percent();
+            discountValueText = percent + "% off";
+        } else {
+            discountValueText = dto.getDiscount_amount() + " MMK off";
+        }
+
+        String notificationMessage = "🔥 \"" + dto.getName() + "\" is live: " + discountValueText + "! Click here to view products.";
+        String type = "discount";
+        String link = "/userproductlist?discountId=" + discountId;
+
+        userRepository.findAll().forEach(user -> {
+            try {
+                notificationService.createNotificationForUser(user.getEmail(), notificationMessage, type, link);
+            } catch (Exception e) {
+                System.err.println("[Notification] Failed to send notification to " + user.getEmail() + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
+}

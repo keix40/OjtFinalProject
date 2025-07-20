@@ -63,6 +63,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim("createda.te", user.getCreatedDate().toString())
                 .claim("createdate", user.getCreatedDate().toString())
                 .claim("profileImage",user.getProfileImage())
+                .claim("orderCount",user.getOrderCount())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(secretKey, SignatureAlgorithm.HS512)
