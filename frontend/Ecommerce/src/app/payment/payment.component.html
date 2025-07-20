@@ -243,20 +243,6 @@
                 </div>
               </div>
             </div>
-            <!-- Billing Address -->
-            <div class="pt-8 border-t border-gray-100">
-              <h3 class="text-lg font-semibold text-gray-900 mb-4">Billing Address</h3>
-              <div class="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="same-as-shipping"
-                  checked
-                  class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  [disabled]="isSubmitting"
-                />
-                <label for="same-as-shipping" class="text-gray-700">Same as shipping address</label>
-              </div>
-            </div>
           </form>
 
           <!-- Security Notice -->
@@ -334,9 +320,10 @@
                 {{ shipping?.address }}, {{ shipping?.city }}
               </span>
             </div>
+            <!-- Delivery Service Name (optional, can show delivery.service if needed) -->
             <div class="flex justify-between text-sm">
               <span class="text-gray-500">Delivery</span>
-              <span class="font-medium text-gray-900">{{ delivery?.method }}</span>
+              <span class="font-medium text-gray-900">{{ delivery?.service }}</span>
             </div>
           </div>
 
@@ -353,7 +340,7 @@
                 <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
                 <!-- Product Discount Display: Only show if not first time buyer discount -->
                 <div *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(item.productId || item.id)" class="text-green-600 text-xs font-medium">
-                  {{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }}
+                  <span *ngIf="getProductDiscount(item.productId || item.id)?.eventName">{{ getProductDiscount(item.productId || item.id)?.eventName }} </span>({{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }})
                 </div>
               </div>
               <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">

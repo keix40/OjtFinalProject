@@ -51,9 +51,19 @@ public class SavedCardController {
         return ResponseEntity.ok(cards);
     }
 
-    @DeleteMapping("/{cardId}")
-    public ResponseEntity<?> deleteCard(@PathVariable Long cardId) {
-        cardService.deleteCard(cardId);
-        return ResponseEntity.ok().build();
+    @PutMapping("/delete/{cardId}")
+    public ResponseEntity<?> softDeleteCard(@PathVariable Long cardId) {
+        cardService.softDeleteCard(cardId);
+        return ResponseEntity.ok("Card soft-deleted successfully.");
     }
+
+    @PutMapping("/update/{cardId}")
+    public ResponseEntity<SavedCardResponseDTO> updateCard(
+            @PathVariable Long cardId,
+            @RequestBody SavedCardRequestDTO dto
+    ) {
+        SavedCardResponseDTO updatedCard = cardService.updateCard(cardId, dto);
+        return ResponseEntity.ok(updatedCard);
+    }
+
 }

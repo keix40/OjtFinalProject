@@ -2,6 +2,7 @@ package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.dto.RegisterRequest;
 import com.Ojt.Ecommerce.dto.UserDTO;
 import com.Ojt.Ecommerce.dto.AdminCreateUserRequest;
@@ -16,6 +17,7 @@ import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
 import com.Ojt.Ecommerce.service.AddressService;
 import com.Ojt.Ecommerce.service.UserService;
+import com.Ojt.Ecommerce.service.UserActivityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -32,6 +34,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -48,6 +51,8 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final AddressService addressService;
     private final RoleRepository roleRepository;
+    @Autowired
+    private UserActivityService userActivityService;
 
     @GetMapping("/hello")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -82,8 +87,14 @@ public class UserController {
         return userService.getAllCustomerSummaries();
     }
 
+    @GetMapping("/vip-customers")
+    public List<CustomerSummaryDTO> getAllVipCustomers() {
+        return userService.getAllVipCustomers();
+    }
+
 
     //to show userProfile userinfo (kei_1)
+    @LogActivity(actionType = "UPDATE", entityType = "USER", description = "Updated user", severityLevel = "MEDIUM", entityIdParam = "id")
     @PutMapping("/{id}")
     @Transactional
     @RequiresPermission(value = "users.update", level = "intermediate",route = "/users/update") // add
@@ -130,6 +141,7 @@ public class UserController {
         return ResponseEntity.ok(userDTOs);
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "USER", description = "Admin created user", severityLevel = "MEDIUM")
     @PostMapping("/createUser")
     @RequiresPermission(value = "users.create", level = "intermediate", route = "/users/create")
     public ResponseEntity<?> createUserByAdmin(@RequestBody AdminCreateUserRequest request) {
@@ -198,6 +210,7 @@ public class UserController {
 
     // --- Added for customer management actions ---
     // Delete user endpoint (for customer management table delete action)
+    @LogActivity(actionType = "DELETE", entityType = "USER", description = "Deleted user", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         // Why: JPA cascade only works if you load the entity first. This ensures related entities are deleted as well.
@@ -238,6 +251,14 @@ public class UserController {
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         User user = userRepository.findById(id).orElseThrow();
         return ResponseEntity.ok(new UserDTO(user));
+    }
+
+    @PostMapping("/user/activity")
+    public ResponseEntity<?> logUserActivity(@RequestBody Map<String, Object> payload) {
+        Long userId = Long.valueOf(payload.get("userId").toString());
+        String type = payload.get("type").toString();
+        userActivityService.logActivity(userId, type);
+        return ResponseEntity.ok().build();
     }
     // --- End customer management actions ---
 

@@ -67,4 +67,29 @@ export class ProductService {
     // Assuming backend supports this endpoint, otherwise you need to implement it
     return this.http.post<ProductDTO[]>(`${this.baseUrl}/by-ids`, { ids });
   }
+
+  updateProduct(id: string, formData: FormData): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update/${id}`, formData);
+  }
+
+  getProductQuantity(productId: number): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/productquantity/${productId}`);
+  }
+
+  getProductVariantStock(variantId: number): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/variantstock/${variantId}`);
+  }
+
+  getLatestProducts(): Observable<ProductDTO[]> {
+    return this.http.get<ProductDTO[]>(`${this.baseUrl}/latest`);
+  }
+
+  getTopOrderedProducts(): Observable<ProductList[]> {
+    return this.http.get<ProductList[]>(`${this.baseUrl}/topordered`);
+  }
+
+  searchProducts(keyword: string): Observable<ProductDTO[]> {
+    return this.http.get<ProductDTO[]>(`${this.baseUrl}/search?keyword=${encodeURIComponent(keyword)}`);
+  }
+  
 }

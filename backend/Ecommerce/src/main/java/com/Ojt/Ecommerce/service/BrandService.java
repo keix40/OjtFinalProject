@@ -38,6 +38,7 @@ public class BrandService {
             // Get Unique Categories (avoid duplication)
             Set<Category> categorySet = brandCategories.stream()
                     .map(BrandHasCategory::getCategory)
+                    .filter(cat -> cat != null && cat.getStatus() != 0)
                     .collect(Collectors.toSet());
 
             List<CategoryListDTO> categoryDTOs = categorySet.stream()
@@ -57,6 +58,7 @@ public class BrandService {
     private CategoryListDTO mapCategoryToDTORecursive(Category category) {
         List<CategoryListDTO> subcategories = category.getChildren() != null
                 ? category.getChildren().stream()
+                .filter(sub -> sub.getStatus() != 0) // Filter out id == 0
                 .map(this::mapCategoryToDTORecursive)
                 .collect(Collectors.toList())
                 : new ArrayList<>();

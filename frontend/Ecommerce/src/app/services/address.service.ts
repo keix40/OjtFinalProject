@@ -15,7 +15,8 @@ export interface Address {
   latitude: number;
   longitude: number;
   type: string;
-  userId: number;
+  userId?: number;
+  deliveryServiceId?: number; // Optional delivery service ID
 }
 
 @Injectable({
@@ -74,10 +75,10 @@ export class AddressService {
   }
 
   updateAddress(id: number, address: Address): Observable<Address> {
-    return this.http.put<Address>(`${this.apiUrl}/${id}`, address);
+    return this.http.put<Address>(`${this.apiUrl}/updateAddress/${id}`, address);
   }
 
   deleteAddress(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/deleteAddress/${id}`);
   }
 } 

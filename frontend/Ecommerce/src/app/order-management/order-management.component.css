@@ -709,3 +709,48 @@ hr.dotted-bold {
 }
 /* === END OF NEW INVOICE STYLES === */
 
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #printable-invoice, #printable-invoice * {
+    visibility: visible !important;
+  }
+  #printable-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    background: white;
+    z-index: 9999;
+    display: block !important;
+  }
+}
+
+@media print {
+  .modal,
+  .modal-backdrop,
+  .ngb-modal-backdrop {
+    display: none !important;
+  }
+}
+
+/* Use Poppins font for the entire order management page */
+.p-4.bg-slate-50.min-h-screen, .p-4.bg-slate-50.min-h-screen * {
+  font-family: 'Poppins', 'Inter', Arial, sans-serif !important;
+}
+
+.p-4.bg-slate-50.min-h-screen {
+  font-size: 16px;
+}
+
+.p-4.bg-slate-50.min-h-screen h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.p-4.bg-slate-50.min-h-screen .font-semibold, .p-4.bg-slate-50.min-h-screen .font-extrabold {
+  font-size: 1.1rem;
+}
+

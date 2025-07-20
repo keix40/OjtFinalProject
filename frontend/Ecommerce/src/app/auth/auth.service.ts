@@ -29,13 +29,8 @@ export class AuthService {
         .catch(() => ({ city: '', region: '', country: '', countryCode: '' }))
     ).pipe(
       mergeMap(loc => {
-        const locationData = {
-          city: loc.city || '',
-          region: loc.region || '',
-          country: loc.country || '',
-          countryCode: loc.country || ''
-        };
-        const payload = { ...data, ...locationData };
+        const locationString = [loc.city, loc.region, loc.country].filter(Boolean).join(', ');
+        const payload = { ...data, location: locationString, countryCode: loc.country || '' };
         let headers = new HttpHeaders();
         if (this.publicIp) {
           headers = headers.set('X-Client-IP', this.publicIp);

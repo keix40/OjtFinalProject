@@ -4,8 +4,14 @@ package com.Ojt.Ecommerce.service;
 import com.Ojt.Ecommerce.dto.LoginAttemptDTO;
 import com.Ojt.Ecommerce.dto.PagedResponse;
 import com.Ojt.Ecommerce.entity.LoginAttempt;
+import com.Ojt.Ecommerce.entity.BlockedIP;
 import com.Ojt.Ecommerce.repository.LoginAttemptRepository;
+import com.Ojt.Ecommerce.repository.BlockedIPRepository;
 import com.Ojt.Ecommerce.service.LoginAttemptService;
+import com.Ojt.Ecommerce.service.EmailService;
+import com.Ojt.Ecommerce.service.SecurityPolicyService;
+import com.Ojt.Ecommerce.entity.SecurityPolicyRule;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,10 +19,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class LoginAttemptServiceImpl implements LoginAttemptService {
@@ -25,7 +34,20 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     private LoginAttemptRepository repository;
 
     @Autowired
+    private BlockedIPRepository blockedIPRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private SecurityPolicyService securityPolicyService;
+
+    @Autowired
     private ModelMapper modelMapper;
+
+    private static final int BLOCK_MINUTES = 15;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private LoginAttemptDTO convertToDTO(LoginAttempt entity) {
         return modelMapper.map(entity, LoginAttemptDTO.class);
@@ -143,7 +165,10 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     }
 
     @Override
+    @Transactional
     public void blockIP(String ip) {
+        System.out.println("Blocking IP in service: " + ip);
+        // Block in login attempts (legacy, for UI)
         List<LoginAttempt> attempts = repository.findAll();
         attempts.stream()
                 .filter(a -> a.getIpAddress().equals(ip))
@@ -151,6 +176,41 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     a.setBlocked(true);
                     repository.save(a);
                 });
+        // Block in BlockedIP table
+        LocalDateTime blockedUntil = LocalDateTime.now().plusMinutes(BLOCK_MINUTES);
+        Optional<BlockedIP> existing = blockedIPRepository.findByIpAddress(ip);
+        String userEmail = attempts.stream().filter(a -> a.getIpAddress().equals(ip) && a.getUsername() != null).map(LoginAttempt::getUsername).findFirst().orElse(null);
+        if (existing.isPresent()) {
+            BlockedIP block = existing.get();
+            block.setBlockedUntil(blockedUntil);
+            blockedIPRepository.save(block);
+            System.out.println("Updated existing BlockedIP for: " + ip);
+        } else {
+            BlockedIP block = BlockedIP.builder()
+                    .ipAddress(ip)
+                    .blockedUntil(blockedUntil)
+                    .userEmail(userEmail)
+                    .reason("Manual block or threat detected")
+                    .build();
+            blockedIPRepository.save(block);
+            System.out.println("Created new BlockedIP for: " + ip);
+        }
+        // Send alert email if userEmail is available
+        if (userEmail != null && !userEmail.isEmpty()) {
+            emailService.sendEmail(userEmail, "Security Alert: IP Blocked", "Your IP (" + ip + ") has been blocked for 15 minutes due to suspicious activity or manual action. If this was not you, please contact support.");
+        }
+    }
+
+    public boolean isIPBlocked(String ip) {
+        // Remove expired blocks
+        blockedIPRepository.findByBlockedUntilBefore(LocalDateTime.now()).forEach(blockedIPRepository::delete);
+        Optional<BlockedIP> block = blockedIPRepository.findByIpAddress(ip);
+        return block.isPresent() && block.get().getBlockedUntil().isAfter(LocalDateTime.now());
+    }
+
+    public LocalDateTime getBlockedUntil(String ip) {
+        Optional<BlockedIP> block = blockedIPRepository.findByIpAddress(ip);
+        return block.map(BlockedIP::getBlockedUntil).orElse(null);
     }
 
     @Override
@@ -264,8 +324,27 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
             score += 20;
         }
 
+        // If there are 5 or more attempts in the last 5 minutes, increase score
         if (dto.getAttemptCount() != null && dto.getAttemptCount() >= 5) {
             score += 15;
+        }
+
+        // NEW LOGIC: If this is a successful login, but there were multiple recent failed attempts from this IP, increase threat score
+        if ("successful".equalsIgnoreCase(dto.getStatus())) {
+            // Count failed attempts from this IP in the last 15 minutes
+            int recentFailed = (int) repository.findAll().stream()
+                .filter(a -> a.getIpAddress().equals(dto.getIpAddress()))
+                .filter(a -> a.getStatus().equalsIgnoreCase("failed"))
+                .filter(a -> a.getTimestamp().isAfter(LocalDateTime.now().minusMinutes(15)))
+                .count();
+            if (recentFailed >= 3) {
+                // If 3 or more failed attempts in last 15 min, treat as high risk
+                score += 40; // This will push the score to high/critical
+            } else if (recentFailed == 2) {
+                score += 20; // Medium risk
+            } else if (recentFailed == 1) {
+                score += 10; // Slightly elevated
+            }
         }
 
         return Math.min(score, 100); // Max cap at 100
@@ -276,6 +355,124 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
         if (score >= 60) return "high";
         if (score >= 30) return "medium";
         return "low";
+    }
+
+    @Override
+    public void blockIPForDuration(String ip, int minutes) {
+        // Block in BlockedIP table for custom duration
+        LocalDateTime blockedUntil = LocalDateTime.now().plusMinutes(minutes);
+        Optional<BlockedIP> existing = blockedIPRepository.findByIpAddress(ip);
+        if (existing.isPresent()) {
+            BlockedIP block = existing.get();
+            block.setBlockedUntil(blockedUntil);
+            blockedIPRepository.save(block);
+        } else {
+            BlockedIP block = BlockedIP.builder()
+                    .ipAddress(ip)
+                    .blockedUntil(blockedUntil)
+                    .reason("Auto-ban after repeated failed logins")
+                    .build();
+            blockedIPRepository.save(block);
+        }
+    }
+
+    @Override
+    public void resetFailedAttempts(String ip) {
+        // Remove all failed attempts for this IP in the last 15 min (optional: could be a flag or cleanup)
+        // For now, do nothing as attempts are time-based; could implement cleanup if needed
+    }
+
+    // Helper: Track OTP/CAPTCHA requirement per IP (in-memory for demo; use Redis/DB for prod)
+    private final Map<String, LocalDateTime> otpCaptchaRequired = new HashMap<>();
+
+    // Helper: Get failed attempts for IP in last X minutes
+    private int getRecentFailedAttempts(String ip, int minutes) {
+        LocalDateTime since = LocalDateTime.now().minusMinutes(minutes);
+        return (int) repository.findAll().stream()
+            .filter(a -> a.getIpAddress().equals(ip))
+            .filter(a -> a.getStatus().equalsIgnoreCase("failed"))
+            .filter(a -> a.getTimestamp().isAfter(since))
+            .count();
+    }
+
+    // Helper: Get last successful login IP for user
+    private String getLastSuccessIp(String username) {
+        return repository.findAll().stream()
+            .filter(a -> a.getUsername().equals(username))
+            .filter(a -> a.getStatus().equalsIgnoreCase("successful"))
+            .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+            .map(LoginAttempt::getIpAddress)
+            .findFirst().orElse(null);
+    }
+
+    // Call this on each failed login attempt
+    public void handleFailedLogin(String username, String ip, String location) {
+        List<SecurityPolicyRule> rules = securityPolicyService.getAllRules();
+        for (SecurityPolicyRule rule : rules) {
+            int fails = getRecentFailedAttempts(ip, rule.getWindowMinutes());
+            switch (rule.getAction()) {
+                case "email_alert":
+                    if (fails == rule.getAttempts()) {
+                        String lastSuccessIp = getLastSuccessIp(username);
+                        if (lastSuccessIp == null || !lastSuccessIp.equals(ip)) {
+                            emailService.sendEmail(username, "Suspicious Login Attempt", "A suspicious login attempt was detected from " + location + ". If this wasn't you, please secure your account.");
+                        }
+                    }
+                    break;
+                case "require_otp":
+                    if (fails == rule.getAttempts()) {
+                        otpCaptchaRequired.put(ip, LocalDateTime.now().plusMinutes(rule.getWindowMinutes()));
+                        emailService.sendEmail(username, "Security Alert: Extra Verification Required", "Multiple failed login attempts detected. OTP and CAPTCHA will be required for your next login from this device.");
+                        // TODO: Notify admin (implement as needed)
+                    }
+                    break;
+                case "ban_ip":
+                    if (fails >= rule.getAttempts()) {
+                        int banMinutes = 24 * 60; // default 24h
+                        try {
+                            if (rule.getExtraData() != null) {
+                                banMinutes = objectMapper.readTree(rule.getExtraData()).path("banMinutes").asInt(banMinutes);
+                            }
+                        } catch (Exception ignored) {}
+                        blockIPCustom(ip, username, banMinutes, "Too many failed login attempts");
+                        emailService.sendEmail(username, "IP Banned", "Your IP (" + ip + ") has been banned for " + (banMinutes/60) + " hours due to repeated failed login attempts.");
+                    }
+                    break;
+                // Add more dynamic actions as needed
+            }
+        }
+    }
+
+    // Helper: Ban IP for custom minutes
+    public void blockIPCustom(String ip, String username, int minutes, String reason) {
+        LocalDateTime blockedUntil = LocalDateTime.now().plusMinutes(minutes);
+        Optional<BlockedIP> existing = blockedIPRepository.findByIpAddress(ip);
+        if (existing.isPresent()) {
+            BlockedIP block = existing.get();
+            block.setBlockedUntil(blockedUntil);
+            block.setReason(reason);
+            blockedIPRepository.save(block);
+        } else {
+            BlockedIP block = BlockedIP.builder()
+                    .ipAddress(ip)
+                    .blockedUntil(blockedUntil)
+                    .userEmail(username)
+                    .reason(reason)
+                    .build();
+            blockedIPRepository.save(block);
+        }
+    }
+
+    // Call this on successful login
+    public void handleSuccessfulLogin(String ip) {
+        // Reset OTP/CAPTCHA requirement for this IP
+        otpCaptchaRequired.remove(ip);
+    }
+
+    // Check if OTP/CAPTCHA is required for this IP
+    public boolean isOtpCaptchaRequired(String ip) {
+        LocalDateTime until = otpCaptchaRequired.get(ip);
+        return until != null && until.isAfter(LocalDateTime.now());
     }
 
 }

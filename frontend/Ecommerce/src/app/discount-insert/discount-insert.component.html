@@ -409,9 +409,6 @@
     <div *ngIf="discountForm.get('startDate')?.invalid && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
       Start date is required.
     </div>
-    <div *ngIf="discountForm.errors?.['startInPast'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
-      Start date cannot be in the past.
-    </div>
     <div *ngIf="discountForm.errors?.['sameDateTime'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
       Start and end date cannot be the same time.
     </div>
@@ -423,23 +420,10 @@
     <div *ngIf="discountForm.get('endDate')?.invalid && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
       End date is required.
     </div>
-    <div *ngIf="discountForm.errors?.['endInPast'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
-      End date cannot be in the past.
-    </div>
     <div *ngIf="discountForm.errors?.['sameDateTime'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
       Start and end date cannot be the same time.
     </div>
   </div>
-
-  <!-- Activate Discount Now Switch -->
-  <div class="form-group">
-    <label>Activate Discount Now?</label>
-    <label class="switch">
-      <input type="checkbox" formControlName="status">
-      <span class="slider round"></span>
-    </label>
-  </div>
-
 
   <div class="form-group mt-3">
     <button type="submit" class="btn btn-primary" [disabled]="discountForm.invalid || isSubmitting">Submit</button>

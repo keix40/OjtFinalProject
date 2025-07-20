@@ -3,6 +3,7 @@ package com.Ojt.Ecommerce.dto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Getter
@@ -15,5 +16,6 @@ public class UserOrderDTO {
     private Double totalAmount;
     private List<CartDTO> cartItem;
     private Long cardId;
-
+    private Long deliveryServiceId;
+    private BigDecimal deliveryFee;
 }

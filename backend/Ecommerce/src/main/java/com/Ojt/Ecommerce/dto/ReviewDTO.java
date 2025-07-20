@@ -18,6 +18,7 @@ public class ReviewDTO {
     private LocalDateTime timestamp;
     private String userName;
     private String userImage;
+    private Long productId;
     private String productName;
     private List<ReviewMediaDTO> mediaList;
 }

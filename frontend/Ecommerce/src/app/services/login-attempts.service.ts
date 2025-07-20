@@ -133,4 +133,9 @@ export class LoginAttemptsService {
   whitelistSession(sessionId: string) {
     return this.http.post(`${this.apiUrl}/whitelist-session`, null, { params: { sessionId } });
   }
+
+  // 🚫 Check if IP is blocked
+  isIPBlocked(ip: string) {
+    return this.http.get<{ blocked: boolean; blockedUntil: string }>(`${this.apiUrl}/is-blocked`, { params: { ip } });
+  }
 }

@@ -63,6 +63,13 @@ import { HeaderComponent } from './header/header.component';
 import { BreadcrumbComponent } from './breadcrumb.component';import { CategoryListComponent } from './category-list/category-list.component';
 import { BrandListComponent } from './brand-list/brand-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
+import { BannedPageComponent } from './banned-page.component';
+import { NotifcationService } from './notifcation.service';
+import { ProductEditComponent } from './product-edit/product-edit.component';
+import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
+import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
+import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
+import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
 
 @NgModule({
   declarations: [
@@ -108,6 +115,7 @@ import { UserBrandListComponent } from './user-brand-list/user-brand-list.compon
     ReturnListComponent,
     BrandListComponent,
     UserBrandListComponent,
+    
   ],
   imports: [
     BrowserModule,
@@ -137,12 +145,17 @@ import { UserBrandListComponent } from './user-brand-list/user-brand-list.compon
     NotificationComponent,
     HeaderComponent,
     BreadcrumbComponent,
+    BannedPageComponent,
+    ProductEditComponent,
+    NotificationSidebarComponent,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
     AddressService,
+    NotifcationService,
   ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
+

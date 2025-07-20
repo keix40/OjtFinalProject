@@ -43,14 +43,48 @@ import { BrandListComponent } from './brand-list/brand-list.component';
 import { CategoryAddSubcategoryComponent } from './category-add-subcategory/category-add-subcategory.component';
 import { UserCategoryListComponent } from './user-category-list/user-category-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
+import { BannedPageComponent } from './banned-page.component';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { IpService } from './services/ip.service';
+import { LoginAttemptsService } from './services/login-attempts.service';
+import { ProductEditComponent } from './product-edit/product-edit.component';
+import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
+
+
+@Injectable({ providedIn: 'root' })
+export class BlockedGuard implements CanActivate {
+  constructor(private ipService: IpService, private loginAttemptsService: LoginAttemptsService, private router: Router) {}
+  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    return new Promise(resolve => {
+      this.ipService.getPublicIp().subscribe(ip => {
+        if (ip) {
+          this.loginAttemptsService.isIPBlocked(ip).subscribe(res => {
+            if (res.blocked) {
+              resolve(this.router.createUrlTree(['/banned'], { queryParams: { until: res.blockedUntil } }));
+            } else {
+              resolve(true);
+            }
+          });
+        } else {
+          resolve(true);
+        }
+      });
+    });
+  }
+}
+import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
+import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
+import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
 
 const routes: Routes = [
-  { path: 'home', component: HomeComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Home' } },
-  { path: 'login', component: LoginComponent, data: { breadcrumb: 'Login' } },
+  { path: 'banned', component: BannedPageComponent },
+  { path: 'home', component: HomeComponent, canActivate: [BlockedGuard] },
+  { path: 'login', component: LoginComponent, canActivate: [BlockedGuard] },
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
   { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
-
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
     component: LayoutComponent,
@@ -75,13 +109,13 @@ const routes: Routes = [
   { path: 'checkout/confirm', component: OrderConfirmComponent, data: { breadcrumb: 'Order Confirmation' } },
   { path: 'display', component: ProductDisplayComponent, data: { breadcrumb: 'Product Display' } },
   { path: 'wishlist', component: WishlistComponent, data: { breadcrumb: 'Wishlist' } },
+
   {
     path: '',
     component: LayoutComponent,
     canActivate: [AuthGuard],
     children: [
       { path: 'product', component: ProductComponent, data: { breadcrumb: 'Products' } },
-      { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Products' } },
       { path: 'productlist', component: ProductMangementComponent, data: { breadcrumb: 'Product List' } },
       { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
       { path: 'users/customers', component: CustomersComponent, data: { breadcrumb: 'Customers' } },
@@ -99,17 +133,24 @@ const routes: Routes = [
       { path: 'brandlist', component: BrandListComponent},
       { path: 'categorylist', component: CategoryListComponent},
       { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent },
+      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent },
+      { path: 'createdeliveryservice', component: CreateDeliveryServiceComponent },
+      { path: 'deliveryservicelist', component: DeliveryServiceListComponent },
+      { path: 'admin/vip-tiers', component: VipTiersAdminComponent },
+      { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Products' } },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent,canActivate: [AuthGuard] , data: { breadcrumb: 'Order Tracking' } },
   // { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
   { path: 'product/:id', component: UserProductDetailComponent, data: { breadcrumb: 'Product Detail' } },
+  { path: 'product-edit/:id', component: ProductEditComponent  },
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },
-  { path: 'return-request', component: ReturnRequestComponent },
+  { path: 'return-request', component: ReturnRequestComponent }, 
   { path: 'verify-otp', component: VerifyOtpComponent },  { path: 'usercategorylist', component: UserCategoryListComponent },
   { path: 'userbrandlist', component: UserBrandListComponent },
+  
 ];
 
 @NgModule({

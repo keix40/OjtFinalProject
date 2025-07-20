@@ -99,5 +99,34 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByBrandIdAndCategoryId(@Param("brandId") Long brandId, @Param("categoryId") Long categoryId);
 
     List<Product> findByIdIn(List<Long> ids);
+
+    @Query("select p.quantity from Product p where p.id = :productId")
+    Long findProductQuantity(@Param("productId") Long productId);
+
+    @Query("SELECT p FROM Product p WHERE p.status = 1 ORDER BY p.createDate DESC")
+    List<Product> findTop4ByOrderByCreateDateDesc();
+
+    @Query(value = """
+    SELECT p.* FROM products p
+    JOIN user_order_has_product uohp ON p.id = uohp.product_id
+    GROUP BY p.id
+    ORDER BY COUNT(uohp.id) DESC
+    LIMIT 4
+    """, nativeQuery = true)
+    List<Product> findTop4OrderedProductsNative();
+
+    @Query("""
+    SELECT p FROM Product p
+    JOIN p.productCategories pc
+    LEFT JOIN pc.category c
+    LEFT JOIN p.brand b
+    WHERE p.status = 1 AND (
+        LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        CAST(p.price AS string) LIKE CONCAT('%', :keyword, '%') OR
+        LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+""")
+    List<Product> searchProducts(@Param("keyword") String keyword);
 }
 

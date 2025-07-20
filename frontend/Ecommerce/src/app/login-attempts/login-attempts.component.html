@@ -174,12 +174,108 @@
         </div>
       </div>
     </div>
+
+    <!-- Security Policy Box (Modern UI, Expandable) -->
+<div class="mb-8">
+  <div class=" rounded-2xl shadow-lg p-6">
+    <div class="flex items-center gap-3 mb-4 cursor-pointer select-none" (click)="showPolicyExpanded = !showPolicyExpanded">
+      <div class="bg-blue-500 text-white rounded-full p-2 flex items-center justify-center shadow">
+        <i class="fas fa-shield-alt text-xl"></i>
+      </div>
+      <div class="flex-1">
+        <h2 class="text-xl font-bold text-blue-900 tracking-tight">Security Policy Rules</h2>
+        <p class="text-gray-500 text-sm">These rules control what happens after failed login attempts.</p>
+      </div>
+      <button class="ml-2 bg-blue-100 hover: rounded-full p-2 transition" [attr.aria-expanded]="showPolicyExpanded">
+        <i class="fas" [ngClass]="showPolicyExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </button>
+    </div>
+    <div *ngIf="showPolicyExpanded" class="overflow-x-auto transition-all duration-300">
+      <table class="min-w-full bg-white/80 rounded-xl shadow divide-y divide-blue-100">
+        <thead>
+          <tr class="text-blue-700 text-sm font-semibold">
+            <th class="px-4 py-2 text-left">Action</th>
+            <th class="px-4 py-2 text-center">Attempts</th>
+            <th class="px-4 py-2 text-center">Window (min)</th>
+            <th class="px-4 py-2 text-center">Edit</th>
+            <th class="px-4 py-2 text-center">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rule of securityPolicy" class="hover:bg-blue-50 transition">
+            <td class="px-4 py-2 flex items-center gap-2">
+              <ng-container *ngIf="editingRuleId !== rule.id; else editActionTpl">
+                <i *ngIf="rule.action === 'email_alert'" class="fas fa-envelope text-blue-400"></i>
+                <i *ngIf="rule.action === 'require_otp'" class="fas fa-key text-yellow-500"></i>
+                <i *ngIf="rule.action === 'require_captcha'" class="fas fa-robot text-green-500"></i>
+                <i *ngIf="rule.action === 'ban_ip'" class="fas fa-ban text-red-500"></i>
+                <span class="capitalize font-medium">{{ rule.action.replace('_', ' ') }}</span>
+              </ng-container>
+              <ng-template #editActionTpl>
+                <select [(ngModel)]="editedRule.action" class="form-select form-select-xs w-32">
+                  <option value="email_alert">Email Alert</option>
+                  <option value="require_otp">Require OTP</option>
+                  <option value="require_captcha">Require CAPTCHA</option>
+                  <option value="ban_ip">Ban IP</option>
+                </select>
+              </ng-template>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <ng-container *ngIf="editingRuleId !== rule.id; else editAttemptsTpl">
+                <span class="font-bold text-blue-700">{{ rule.attempts }}</span>
+              </ng-container>
+              <ng-template #editAttemptsTpl>
+                <input type="number" min="1" [(ngModel)]="editedRule.attempts" class="form-input form-input-xs w-14 text-center" />
+              </ng-template>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <ng-container *ngIf="editingRuleId !== rule.id; else editWindowTpl">
+                <span class="text-gray-700">{{ rule.windowMinutes }}</span>
+              </ng-container>
+              <ng-template #editWindowTpl>
+                <input type="number" min="1" [(ngModel)]="editedRule.windowMinutes" class="form-input form-input-xs w-16 text-center" />
+              </ng-template>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <ng-container *ngIf="editingRuleId !== rule.id">
+                <button class="text-blue-600 hover:text-blue-800 transition" (click)="editRule(rule)" title="Edit"><i class="fas fa-edit"></i></button>
+              </ng-container>
+              <ng-container *ngIf="editingRuleId === rule.id">
+                <button class="text-green-600 hover:text-green-800 mr-2" (click)="saveRule(editedRule)" [disabled]="isSavingRule" title="Save"><i class="fas fa-check"></i></button>
+                <button class="text-gray-500 hover:text-gray-700" (click)="cancelEdit()" title="Cancel"><i class="fas fa-times"></i></button>
+              </ng-container>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <button class="text-red-500 hover:text-red-700 transition" (click)="deleteRule(rule)" [disabled]="isDeletingRule" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="!showPolicyExpanded" class="flex flex-wrap gap-3 mt-2">
+      <ng-container *ngFor="let rule of securityPolicy">
+        <div class="flex items-center gap-2 px-3 py-1 rounded-lg  text-blue-900 text-sm font-medium shadow-sm">
+          <i *ngIf="rule.action === 'email_alert'" class="fas fa-envelope text-blue-400"></i>
+          <i *ngIf="rule.action === 'require_otp'" class="fas fa-key text-yellow-500"></i>
+          <i *ngIf="rule.action === 'require_captcha'" class="fas fa-robot text-green-500"></i>
+          <i *ngIf="rule.action === 'ban_ip'" class="fas fa-ban text-red-500"></i>
+          <span class="capitalize">{{ rule.action.replace('_', ' ') }}</span>
+          <span class="mx-1">at</span>
+          <span class="font-bold">{{ rule.attempts }}</span>
+          <span>fail</span>
+          <span class="text-xs text-gray-500">({{ rule.windowMinutes }} min)</span>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
   
     <!-- View Mode Toggle -->
-    <div class="view-toggle" style="margin-bottom: 16px; display: flex; gap: 8px;">
+    <!-- REMOVE THIS SECTION -->
+    <!-- <div class="view-toggle" style="margin-bottom: 16px; display: flex; gap: 8px;">
       <button class="btn" [class.active]="viewMode === 'summary'" (click)="setViewMode('summary')">Summary View</button>
       <button class="btn" [class.active]="viewMode === 'detailed'" (click)="setViewMode('detailed')">Detailed Log</button>
-    </div>
+    </div> -->
 
 <!-- Reusable Table Template -->
 <ng-template #logTable let-attempts>
@@ -195,6 +291,7 @@
           <th>Threat Level</th>
           <th>Timestamp</th>
           <th>Actions</th>
+          <th>Detailed Log</th> <!-- NEW COLUMN -->
         </tr>
       </thead>
       <tbody>
@@ -240,6 +337,11 @@
               </button>
             </div>
           </td>
+          <td>
+            <button class="btn btn-glassmorphism btn-detailed-log" (click)="openDetailedLogModal(attempt)">
+              <i class="fas fa-list"></i> Detailed Log
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -247,12 +349,13 @@
 </ng-template>
 
 <!-- Summary View Table (now uses detailed log table template) -->
-<div *ngIf="viewMode === 'summary'">
+<div>
   <ng-container *ngTemplateOutlet="logTable; context: { $implicit: summaryAttempts }"></ng-container>
 </div>
 
 <!-- Detailed Log Table (existing table, now uses template) -->
-<div *ngIf="viewMode === 'detailed'">
+<!-- REMOVE global detailed log and pagination section -->
+<!-- <div *ngIf="viewMode === 'detailed'">
   <ng-container *ngTemplateOutlet="logTable; context: { $implicit: paginatedAttempts }"></ng-container>
   <!-- Pagination and other controls remain below as before -->
   <div class="pagination-container">
@@ -281,7 +384,7 @@
       </ul>
     </nav>
   </div>
-</div>
+</div> 
   
     <!-- Real-time Activity Feed -->
     <div class="activity-feed" *ngIf="isRealTimeActive">
@@ -311,7 +414,6 @@
         </div>
       </div>
     </div>
-  </div>
   
   <!-- Modals -->
   <!-- Details Modal -->
@@ -520,4 +622,67 @@
     </div>
   </div>
 </div>
+  
+<!-- BLUR OVERLAY FOR MODAL (must be outside all main containers) -->
+<div *ngIf="showDetailedLogModal" class="fixed inset-0 z-50 bg-white/40 backdrop-blur-sm transition-all duration-300"></div>
+
+<!-- MODAL FOR DETAILED LOG (must be outside all main containers) -->
+<div class="modal fade" id="detailedLogModal" tabindex="-1" [ngClass]="{'show d-block': showDetailedLogModal}" style="z-index:60;">
+  <div class="modal-dialog max-w-full w-full sm:w-11/12 md:w-4/5 lg:w-3/5 xl:w-2/5 mx-auto flex items-center min-h-screen">
+    <div class="modal-content glass-card bg-white/80 backdrop-blur-lg border border-gray-200 shadow-2xl rounded-3xl p-0 m-0 w-full" *ngIf="showDetailedLogModal">
+      <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-3xl bg-white/90">
+        <h5 class="modal-title flex items-center gap-2 text-lg md:text-2xl font-bold text-blue-900">
+          <i class="fas fa-list text-blue-500"></i>
+          <span>Detailed Log for</span>
+          <span class="truncate max-w-[120px] md:max-w-[200px]">{{ detailedLogContext?.username }}</span>
+          <span class="text-gray-400">&#64;</span>
+          <span class="truncate max-w-[100px] md:max-w-[160px]">{{ detailedLogContext?.ipAddress }}</span>
+        </h5>
+        <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition flex items-center justify-center" (click)="closeDetailedLogModal()" aria-label="Close">
+          <svg xmlns="http://www.w3.org/2000/svg" class="lucide lucide-x w-6 h-6 text-gray-500 hover:text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body p-4 md:p-8 overflow-x-auto">
+        <div class="table-responsive">
+          <table class="table min-w-[600px] md:min-w-full text-xs md:text-sm">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Threat</th>
+                <th>Attempts</th>
+                <th>Location</th>
+                <th>User Agent</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="filteredDetailedLog.length === 0">
+                <td colspan="6" class="text-center text-gray-400">No log entries found for this user/IP.</td>
+              </tr>
+              <tr *ngFor="let log of filteredDetailedLog">
+                <td>{{ log.timestamp | date:'MMM dd, HH:mm:ss' }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="log.status">
+                    <i class="fas" [ngClass]="getStatusIcon(log.status)"></i>
+                    {{ log.status | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <span class="threat-badge" [ngClass]="log.threatLevel">
+                    {{ log.threatScore }}/100 ({{ log.threatLevel | titlecase }})
+                  </span>
+                </td>
+                <td>{{ log.attemptCount }}</td>
+                <td>{{ log.location }}</td>
+                <td class="break-all text-xs">{{ log.userAgent }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
   

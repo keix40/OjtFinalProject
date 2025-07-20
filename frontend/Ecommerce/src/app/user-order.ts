@@ -1,16 +1,17 @@
 export interface UserOrder {
     orderCode?: string;
-    userId : number,
-    addressId : number,
-    discountId : number | null,
-    deliveryId : number,
-    totalAmount : number,
-    cartItem : {
-        productId : number,
-        quantity : number,
-        price : number,
-        variantId?: number | null; 
-    }[]
+    userId: number;
+    addressId: number;
+    discountId: number | null;
+    deliveryServiceId: number;
+    deliveryFee: number;
+    totalAmount: number;
+    cartItem: {
+        productId: number;
+        quantity: number;
+        price: number;
+        variantId?: number | null;
+    }[];
     cardId?: number;
 }
 
@@ -55,6 +56,7 @@ export interface UserOrderListDTO {
   status: string;
 
   deliveryMethod: string;
+  deliveryService : String;
   deliveryFee: number;
 
   discountType?: string;

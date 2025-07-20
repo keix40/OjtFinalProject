@@ -28,7 +28,12 @@ export class CardService {
     return this.http.post<SavedCard>(this.baseUrl, card);
   }
 
-  deleteCard(cardId: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${cardId}`);
+  softDeleteCard(cardId: number): Observable<any> {
+    return this.http.put(`${this.baseUrl}/delete/${cardId}`, {}, {responseType : 'text'});
   }
+
+  updateCard(cardId: number, cardData: any): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update/${cardId}`, cardData);
+  }
+  
 }

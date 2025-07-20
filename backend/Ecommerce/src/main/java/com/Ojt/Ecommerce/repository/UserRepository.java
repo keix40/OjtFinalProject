@@ -19,4 +19,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByName(String username);
 
     List<User> findByRole_Name(String roleName);
+    List<User> findByRole_NameNot(String roleName);
+
+    @Query("SELECT u FROM User u WHERE LOWER(u.role.name) <> LOWER(:roleName)")
+    List<User> findByRoleNameNotIgnoreCase(@Param("roleName") String roleName);
+
+    @Query("SELECT u FROM User u JOIN FETCH u.role WHERE u.email = :email")
+    Optional<User> findByEmailWithRole(@Param("email") String email);
 }

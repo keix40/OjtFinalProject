@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -16,15 +16,16 @@ import { HeaderComponent } from '../header/header.component';
 import { DiscountService } from '../services/discount.service';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
+import { OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-user-product-list',
   standalone: true,
   templateUrl: './user-product-list.html',
   styleUrls: ['./user-product-list.css'],
-  imports: [CommonModule, FormsModule, BreadcrumbComponent, HeaderComponent]
+  imports: [CommonModule, FormsModule, HeaderComponent]
 })
-export class UserProductListComponent {
+export class UserProductListComponent implements OnInit,OnDestroy {
   @Output() wishlistChanged = new EventEmitter<void>();
   allProducts: ProductDTO[] = [];
   products: ProductDTO[] = [];
@@ -64,10 +65,15 @@ export class UserProductListComponent {
   activeDiscounts: any[] = [];
   productDiscounts: Map<number, any> = new Map(); // productId -> discount info
   isFirstTimeBuyerDiscount: boolean = false;
+  showFirstTimeBuyerPopup = false;
+
+  discountId: number | null = null;
 
   breadcrumbItems = [
     { label: 'Home' }
   ];
+
+  searchQuery: string = '';
 
   constructor(
     private productService: ProductService,
@@ -91,10 +97,38 @@ export class UserProductListComponent {
       return;
     }
     this.route.queryParams.subscribe(params => {
+      const search = params['search'];
+      if (search) {
+        this.searchQuery = search;
+        this.productService.searchProducts(search).subscribe(products => {
+          this.products = products;
+        });
+      } else {
+        this.searchQuery = '';
+        // Load all products as usual
+        this.loadProducts(() => {
+          const category = params['category'];
+          const brand = params['brand'];
+          this.selectedCategory = category || null;
+          this.selectedBrand = brand || null;
+          if (this.selectedCategory) {
+            this.filters.category = [this.selectedCategory];
+          }
+          if (this.selectedBrand) {
+            this.filters.brand = [this.selectedBrand];
+          }
+          if (this.selectedCategory || this.selectedBrand) {
+            this.applyFilters();
+          }
+        });
+      }
       const category = params['category'];
       const brand = params['brand'];
       this.selectedCategory = category || null;
       this.selectedBrand = brand || null;
+
+      this.discountId = params['discountId'] ? Number(params['discountId']) : null; // <-- Add this line
+
       this.loadProducts(() => {
         if (this.selectedCategory) {
           this.filters.category = [this.selectedCategory];
@@ -105,6 +139,11 @@ export class UserProductListComponent {
         if (this.selectedCategory || this.selectedBrand) {
           this.applyFilters();
         }
+
+        if (this.discountId) {
+          this.sortProductsByDiscount(this.discountId);
+        }
+
       });
     });
     this.loadCategories();
@@ -112,7 +151,6 @@ export class UserProductListComponent {
     this.loadWishlist();
     this.loadActiveDiscounts();
     this.checkFirstTimeBuyerDiscount();
-
   }
 
   loadProducts(callback?: () => void): void {
@@ -630,6 +668,14 @@ export class UserProductListComponent {
     this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
       next: (preview: any) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
+        if (this.isFirstTimeBuyerDiscount && !localStorage.getItem('firstTimeBuyerPopupShown')) {
+          this.showFirstTimeBuyerPopup = true;
+          localStorage.setItem('firstTimeBuyerPopupShown', 'true');
+          console.log('First time buyer check:', {
+            isFirstTimeBuyerDiscount: this.isFirstTimeBuyerDiscount,
+            popupShown: localStorage.getItem('firstTimeBuyerPopupShown')
+          });
+        }
       },
       error: () => {
         this.isFirstTimeBuyerDiscount = false;
@@ -637,5 +683,31 @@ export class UserProductListComponent {
     });
   }
 
+  closeFirstTimeBuyerPopup() {
+    this.showFirstTimeBuyerPopup = false;
+  }
+
+  sortProductsByDiscount(discountId: number): void {
+    // Find products with the given discountId
+    const discounted = this.products.filter(product => {
+      const discount = this.getProductDiscount(product.id);
+      return discount && discount.id === discountId;
+    });
+    const others = this.products.filter(product => {
+      const discount = this.getProductDiscount(product.id);
+      return !discount || discount.id !== discountId;
+    });
+    // Place discounted products first
+    this.products = [...discounted, ...others];
+  }
   
+  ngOnDestroy(): void {
+    // Remove the popup flag from localStorage when leaving the page
+    localStorage.removeItem('firstTimeBuyerPopupShown');
+  }
+
+  formatPrice(value: number): string {
+    if (value == null) return '';
+    return Number.isInteger(value) ? value.toString() : value.toFixed(2);
+  }
 }

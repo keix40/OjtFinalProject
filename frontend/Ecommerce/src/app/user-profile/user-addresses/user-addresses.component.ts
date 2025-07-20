@@ -477,4 +477,16 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
     });
     setTimeout(() => this.initMap(), 0);
   }
+
+  deleteAddress(addressId: number) {
+    if (!confirm('Are you sure you want to delete this address?')) return;
+    this.addressService.deleteAddress(addressId).subscribe({
+      next: () => {
+        this.addresses = this.addresses.filter(addr => addr.id !== addressId);
+      },
+      error: () => {
+        alert('Failed to delete address.');
+      }
+    });
+  }
 }

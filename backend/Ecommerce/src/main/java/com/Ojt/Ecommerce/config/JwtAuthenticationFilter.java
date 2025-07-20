@@ -1,5 +1,7 @@
 package com.Ojt.Ecommerce.config;
 
+import com.Ojt.Ecommerce.dto.UserDTO;
+import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
 import com.Ojt.Ecommerce.service.TokenBlacklistService;
 import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
@@ -32,6 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -77,11 +80,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .collect(Collectors.toList());
                     authorities.addAll(permissionAuthorities);
                 }
-
-                var userDetails = userDetailsService.loadUserByUsername(email);
+                // var userDetails = userDetailsService.loadUserByUsername(email);
+                // Load User entity and map to UserDTO
+                com.Ojt.Ecommerce.entity.User userEntity = userRepository.findByEmail(email).orElse(null);
+                UserDTO userDTO = userEntity != null ? new UserDTO(userEntity) : null;
 
                 var authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, authorities);
+                        userDTO, null, authorities);
 
                 authentication.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)

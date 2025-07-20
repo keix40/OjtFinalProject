@@ -47,12 +47,21 @@ export class LoginComponent implements OnInit {
   resetConfirmPasswordError='';
   resetSuccessMessage = '';
 
+  // Add state for login-time OTP and CAPTCHA
+  showCaptchaModal = false;
+  captchaInput = '';
+  captchaQuestion = '';
+  captchaAnswer = '';
+  isVerifyingCaptcha = false;
+  captchaError = '';
+
 
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private http: HttpClient // Inject HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -84,7 +93,21 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
 
   this.auth.login(this.loginForm.value).subscribe({
     next: (res) => {
+      // Redirect to OTP page if required
+      if (res.otpRequired) {
+        const email = this.loginForm.get('email')?.value;
+        this.router.navigate(['/verify-otp'], { queryParams: { email, reason: 'login' } });
+        return;
+      }
+      if (res.captchaRequired) {
+        this.generateCaptcha();
+        this.showCaptchaModal = true;
+        return;
+      }
       this.auth.saveToken(res.accessToken);
+
+      // Call backend to check first time buyer eligibility
+      this.http.get('/api/notifications/check-first-time-buyer').subscribe();
 
       const decoded = this.auth.getDecodedToken(); // Only declare once
       const permissionString = decoded?.permissions || '';
@@ -105,6 +128,16 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       }
     },
     error: (err) => {
+      if (err?.error?.otpRequired) {
+        const email = this.loginForm.get('email')?.value;
+        this.router.navigate(['/verify-otp'], { queryParams: { email, reason: 'login' } });
+        return;
+      }
+      if (err?.error?.captchaRequired) {
+        this.generateCaptcha();
+        this.showCaptchaModal = true;
+        return;
+      }
       console.error(err);
       if (err?.error?.message && err.error.message.toLowerCase().includes('verify your email')) {
         // Redirect to OTP verification page with email
@@ -115,6 +148,31 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       }
     }
   });
+  }
+
+  // CAPTCHA logic (simple math question)
+  generateCaptcha() {
+    const a = Math.floor(Math.random() * 10) + 1;
+    const b = Math.floor(Math.random() * 10) + 1;
+    this.captchaQuestion = `What is ${a} + ${b}?`;
+    this.captchaAnswer = (a + b).toString();
+    this.captchaInput = '';
+    this.captchaError = '';
+  }
+
+  verifyCaptcha() {
+    this.captchaError = '';
+    this.isVerifyingCaptcha = true;
+    if (this.captchaInput.trim() === this.captchaAnswer) {
+      this.isVerifyingCaptcha = false;
+      this.showCaptchaModal = false;
+      // After CAPTCHA, try login again
+      this.submitLogin();
+    } else {
+      this.isVerifyingCaptcha = false;
+      this.captchaError = 'Incorrect answer. Please try again.';
+      this.generateCaptcha();
+    }
   }
 
   // ---------- FORGOT PASSWORD ----------
