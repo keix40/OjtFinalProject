@@ -1,19 +1,19 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, DoCheck, HostListener } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/auth.service';
 import { PermissionService } from '../../services/permission.service';
 import { ImageService } from '../../services/image.service';
 import { AdminUserService } from '../../services/admin-user.service';
-import { trigger, state, style, animate, transition } from '@angular/animations';
 
 @Component({
   selector: 'app-sidebar',
   standalone: false,
   templateUrl: './sidebar.component.html',
-  styleUrl: './sidebar.component.css',
-  // Remove the animations array entirely or only keep menuAnimation if used for submenu transitions
+  styleUrl: './sidebar.component.css'
 })
-export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoCheck {
+export class SidebarComponent implements OnInit, AfterViewInit {
+  isProductsOpen = false;
+  isUsersOpen: boolean = false;
   isOrdersOpen: boolean = false;
   isContentOpen: boolean = false;
   isSettingsOpen: boolean = false;
@@ -27,8 +27,9 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
   suspiciousLogins: number = 0;
   recentSecurityEvents: number = 0;
   sidebarVisible: boolean = window.innerWidth >= 640; // Show sidebar by default on desktop
-  sidebarExpanded = false;
-  sidebarWidth: string = '5rem'; // Default collapsed width
+  sidebarCollapsed: boolean = false;
+  currentMenu: string | null = null;
+  currentSubmenu: string | null = null; // Track which submenu is active
 
   // Profile dropdown properties
   userName: string | null = null;
@@ -40,33 +41,30 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
   userStatus: string = 'Online';
   userData: any = null; // Store complete user data
 
-  displayedBritium = '';
-  displayedGallery = '';
-  showCursorBritium = true;
-  showCursorGallery = false;
-  private britiumText = 'Britium';
-  private galleryText = 'Gallery';
-  private britiumIndex = 0;
-  private galleryIndex = 0;
-  private typingInterval: any;
-  private typingState: 'britium' | 'gallery' | 'done' = 'britium';
-
-  currentMenu: 'main' | 'products' | 'users' | 'orders' | 'discounts' | 'delivery' = 'main';
-
-  showSubmenu(menu: 'products' | 'users' | 'orders' | 'discounts' | 'delivery') {
-    this.currentMenu = menu;
-    setTimeout(() => this.initializeIcons(), 0);
-  }
-
-  showMainMenu() {
-    this.currentMenu = 'main';
-    setTimeout(() => this.initializeIcons(), 0);
-  }
-
   // Fetch these values from your backend
 
+  private collapseTimeout: any;
+
+  // Sidebar hover handlers for smooth animation and icon reinit
+  onSidebarMouseEnter() {
+    if (this.collapseTimeout) {
+      clearTimeout(this.collapseTimeout);
+    }
+    this.sidebarCollapsed = false;
+    // Reduced delay for smoother transition
+    setTimeout(() => this.initializeIcons(), 50);
+  }
+
+  onSidebarMouseLeave() {
+    this.collapseTimeout = setTimeout(() => {
+      this.sidebarCollapsed = true;
+      // Reduced delay for smoother transition
+      setTimeout(() => this.initializeIcons(), 50);
+    }, 120); // 120ms delay for smoothness
+  }
+
   constructor(
-    public router: Router,
+    private router: Router,
     private authService: AuthService,
     public permissionService: PermissionService,
     private imageService: ImageService,
@@ -74,7 +72,16 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
   ) { }
 
   toggleSidebar() {
+    // Only for mobile overlay
     this.sidebarVisible = !this.sidebarVisible;
+  }
+
+  toggleCollapsedSidebar() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    // Reinitialize icons after state change with reduced delay
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 30);
   }
 
   isMobile(): boolean {
@@ -83,7 +90,7 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
 
   ngOnInit(): void {
     // Debug: log current permissions
-    // console.log('[Sidebar] Permissions:', this.permissionService.getPermissions());
+    console.log('[Sidebar] Permissions:', this.permissionService.getPermissions());
     window.addEventListener('resize', this.handleResize.bind(this));
     this.handleResize();
     this.loadUserInfo();
@@ -93,11 +100,6 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
     });
     // Log admin activity on sidebar load
     this.logAdminActivity('page_view');
-    this.startTypewriter();
-    // Debug: log sidebarExpanded initial state
-    // console.log('[Sidebar] ngOnInit, sidebarExpanded:', this.sidebarExpanded);
-    // Set initial width based on expanded state
-    this.sidebarWidth = this.sidebarExpanded ? '16rem' : '5rem';
   }
 
   ngAfterViewInit(): void {
@@ -108,27 +110,6 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
     document.removeEventListener('click', this.handleDocumentClick.bind(this));
-    if (this.typingInterval) clearInterval(this.typingInterval);
-  }
-
-  private prevSidebarExpanded: boolean = this.sidebarExpanded;
-  private prevCurrentMenu: 'main' | 'products' | 'users' | 'orders' | 'discounts' | 'delivery' = this.currentMenu;
-
-  ngDoCheck(): void {
-    // Auto-close profile dropdown when sidebar is collapsed
-    if (!this.sidebarExpanded && this.profileDropdownOpen) {
-      this.profileDropdownOpen = false;
-    }
-    // Re-initialize Lucide icons if sidebarExpanded changes
-    if (this.prevSidebarExpanded !== this.sidebarExpanded) {
-      setTimeout(() => this.initializeIcons(), 0);
-      this.prevSidebarExpanded = this.sidebarExpanded;
-    }
-    // Re-initialize Lucide icons if currentMenu changes (for submenus)
-    if (this.prevCurrentMenu !== this.currentMenu) {
-      setTimeout(() => this.initializeIcons(), 0);
-      this.prevCurrentMenu = this.currentMenu;
-    }
   }
 
   private initializeIcons(): void {
@@ -136,6 +117,13 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
     if (typeof window !== 'undefined' && (window as any).lucide) {
       (window as any).lucide.createIcons();
     }
+  }
+
+  // Force reinitialize icons when needed
+  forceReinitializeIcons(): void {
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 20);
   }
 
   handleResize() {
@@ -252,55 +240,6 @@ export class SidebarComponent implements OnInit, AfterViewInit, OnDestroy, DoChe
     }
   }
 
-  // Update the sidebarExpanded logic to use proper width classes
-@HostListener('mouseenter') 
-onMouseEnter() {
-  this.sidebarExpanded = true;
-  this.sidebarWidth = '16rem'; // Expanded width
-}
-
-@HostListener('mouseleave') 
-onMouseLeave() {
-  this.sidebarExpanded = false;
-  this.sidebarWidth = '5rem'; // Collapsed width
-}
-
-  startTypewriter() {
-    if (this.typingInterval) clearInterval(this.typingInterval);
-    this.displayedBritium = '';
-    this.displayedGallery = '';
-    this.britiumIndex = 0;
-    this.galleryIndex = 0;
-    this.typingState = 'britium';
-    this.showCursorBritium = true;
-    this.showCursorGallery = false;
-    this.typingInterval = setInterval(() => this.typewriterStep(), 90);
-  }
-
-  private typewriterStep() {
-    if (this.typingState === 'britium') {
-      if (this.britiumIndex < this.britiumText.length) {
-        this.displayedBritium += this.britiumText[this.britiumIndex++];
-      } else {
-        this.typingState = 'gallery';
-        this.showCursorBritium = false;
-        this.showCursorGallery = true;
-      }
-    } else if (this.typingState === 'gallery') {
-      if (this.galleryIndex < this.galleryText.length) {
-        this.displayedGallery += this.galleryText[this.galleryIndex++];
-      } else {
-        this.typingState = 'done';
-        this.showCursorGallery = false;
-        clearInterval(this.typingInterval);
-      }
-    }
-  }
-
-  ngAfterViewChecked(): void {
-    this.initializeIcons();
-  }
-
   get collapsedSubmenuItems() {
     switch (this.currentMenu) {
       case 'products':
@@ -344,6 +283,29 @@ onMouseLeave() {
         ];
       default:
         return [];
+    }
+  }
+
+  // Navigate to submenu
+  navigateToSubmenu(menuName: string) {
+    this.currentSubmenu = menuName;
+    this.currentMenu = menuName;
+    // Reinitialize icons after navigation with reduced delay
+    setTimeout(() => this.initializeIcons(), 30);
+  }
+
+  // Go back to main menu
+  goBackToMainMenu() {
+    this.currentSubmenu = null;
+    this.currentMenu = null;
+    // Reinitialize icons after navigation with reduced delay
+    setTimeout(() => this.initializeIcons(), 30);
+  }
+
+  // Handle submenu item click
+  onSubmenuItemClick(item: any) {
+    if (item.link) {
+      this.router.navigate([item.link]);
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { AdminUserService } from '../services/admin-user.service';
 import { AuthService } from '../auth/auth.service';
@@ -11,13 +11,10 @@ import { SidebarComponent } from './sidebar/sidebar.component';
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.css'
 })
-export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild(SidebarComponent) sidebar!: SidebarComponent;
-
-  get sidebarExpanded(): boolean {
-    return this.sidebar?.sidebarExpanded ?? false;
-  }
-
+export class LayoutComponent implements OnInit, OnDestroy {
+  @ViewChild(SidebarComponent) sidebarComponent!: SidebarComponent;
+  
+  sidebarCollapsed: boolean = false;
   private lastActivityLog = 0;
   private activityEvents = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
   private activityHandler = this.handleActivity.bind(this);
@@ -28,8 +25,7 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     public breadcrumbService: BreadcrumbService,
     private adminUserService: AdminUserService,
     private authService: AuthService,
-    private router: Router,
-    private cdr: ChangeDetectorRef
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -42,14 +38,22 @@ export class LayoutComponent implements OnInit, OnDestroy, AfterViewInit {
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
   }
 
+  ngAfterViewInit(): void {
+    // Listen to sidebar state changes
+    if (this.sidebarComponent) {
+      // Use a simple interval to check sidebar state
+      setInterval(() => {
+        if (this.sidebarComponent && this.sidebarCollapsed !== this.sidebarComponent.sidebarCollapsed) {
+          this.sidebarCollapsed = this.sidebarComponent.sidebarCollapsed;
+        }
+      }, 100);
+    }
+  }
+
   ngOnDestroy(): void {
     this.activityEvents.forEach(event => window.removeEventListener(event, this.activityHandler));
     if (this.navSub) this.navSub.unsubscribe();
     window.removeEventListener('beforeunload', this.beforeUnloadHandler);
-  }
-
-  ngAfterViewInit(): void {
-    this.cdr.detectChanges();
   }
 
   handleActivity(): void {

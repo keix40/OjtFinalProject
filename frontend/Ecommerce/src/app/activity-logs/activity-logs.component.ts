@@ -1,27 +1,7 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { ActivityLogService, ActivityLog, ActivityLogFilter, ActivityLogResponse, ActivityStatistics } from '../services/activity-log.service';
 
 declare var lucide: any;
-
-interface ActivityLog {
-  id: string;
-  timestamp: Date;
-  user: {
-    id: string;
-    name: string;
-    role: string;
-  };
-  actionType: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  description: string;
-  ipAddress: string;
-  userAgent: string;
-  details?: any;
-  changes?: Array<{
-    field: string;
-    oldValue: any;
-    newValue: any;
-  }>;
-}
 
 interface LogFilters {
   dateFrom: string;
@@ -68,6 +48,13 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
   itemsPerPage = 25;
   totalPages = 1;
 
+  // Statistics
+  statistics: ActivityStatistics = {
+    totalLogs: 0,
+    uniqueUsers: 0,
+    criticalEvents: 0
+  };
+
   // Utility property
   Math = Math;
 
@@ -80,27 +67,30 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
   ];
 
   actionTypes = [
-    { value: 'login', label: 'Login', icon: 'log-in' },
-    { value: 'logout', label: 'Logout', icon: 'log-out' },
-    { value: 'create', label: 'Create', icon: 'plus' },
-    { value: 'update', label: 'Update', icon: 'edit-3' },
-    { value: 'delete', label: 'Delete', icon: 'trash-2' },
-    { value: 'view', label: 'View', icon: 'eye' },
-    { value: 'export', label: 'Export', icon: 'download' },
-    { value: 'import', label: 'Import', icon: 'upload' },
-    { value: 'security', label: 'Security', icon: 'shield' },
-    { value: 'system', label: 'System', icon: 'settings' }
+    { value: 'LOGIN', label: 'Login', icon: 'log-in' },
+    { value: 'LOGOUT', label: 'Logout', icon: 'log-out' },
+    { value: 'CREATE', label: 'Create', icon: 'plus' },
+    { value: 'UPDATE', label: 'Update', icon: 'edit-3' },
+    { value: 'DELETE', label: 'Delete', icon: 'trash-2' },
+    { value: 'VIEW', label: 'View', icon: 'eye' },
+    { value: 'EXPORT', label: 'Export', icon: 'download' },
+    { value: 'IMPORT', label: 'Import', icon: 'upload' },
+    { value: 'SECURITY', label: 'Security', icon: 'shield' },
+    { value: 'SYSTEM', label: 'System', icon: 'settings' }
   ];
 
   severityLevels = [
-    { value: 'low', label: 'Low', icon: 'info' },
-    { value: 'medium', label: 'Medium', icon: 'alert-triangle' },
-    { value: 'high', label: 'High', icon: 'alert-circle' },
-    { value: 'critical', label: 'Critical', icon: 'x-circle' }
+    { value: 'LOW', label: 'Low', icon: 'info' },
+    { value: 'MEDIUM', label: 'Medium', icon: 'alert-triangle' },
+    { value: 'HIGH', label: 'High', icon: 'alert-circle' },
+    { value: 'CRITICAL', label: 'Critical', icon: 'x-circle' }
   ];
+
+  constructor(private activityLogService: ActivityLogService) {}
 
   ngOnInit(): void {
     this.loadActivityLogs();
+    this.loadStatistics();
     this.setDefaultDateRange();
   }
 
@@ -115,7 +105,6 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
       lucide.createIcons();
     }
     
-    // Re-initialize icons after a short delay to ensure DOM is ready
     setTimeout(() => {
       if (typeof window !== 'undefined' && (window as any).lucide) {
         (window as any).lucide.createIcons();
@@ -128,77 +117,43 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
   loadActivityLogs(): void {
     this.isLoading = true;
     
-    // Mock data - replace with actual API call
-    setTimeout(() => {
-      this.allLogs = this.generateMockLogs();
-      this.applyFilters();
+    const filter: ActivityLogFilter = {
+      page: this.currentPage - 1,
+      size: this.itemsPerPage
+    };
+
+    this.activityLogService.getActivityLogs(filter).subscribe({
+      next: (response: ActivityLogResponse) => {
+        this.allLogs = response.logs;
+        this.filteredLogs = response.logs;
+        this.paginatedLogs = response.logs;
+        this.totalPages = response.totalPages;
+        this.currentPage = response.currentPage + 1;
       this.isLoading = false;
-      
-      // Re-initialize icons after data loads
+        // Update totalLogs from backend response if available
+        if (typeof response.totalElements === 'number') {
+          this.statistics.totalLogs = response.totalElements;
+        }
       setTimeout(() => {
         this.initializeIcons();
       }, 100);
-    }, 1000);
+      },
+      error: (error) => {
+        console.error('Error loading activity logs:', error);
+        this.isLoading = false;
+      }
+    });
   }
 
-  generateMockLogs(): ActivityLog[] {
-    const users = [
-      { id: '1', name: 'John Admin', role: 'Administrator' },
-      { id: '2', name: 'Sarah Manager', role: 'Manager' },
-      { id: '3', name: 'Mike Staff', role: 'Staff' },
-      { id: '4', name: 'Lisa Support', role: 'Support' },
-      { id: '5', name: 'David Customer', role: 'Customer' }
-    ];
-
-    const actions = [
-      { type: 'login', description: 'User logged into the system', severity: 'low' },
-      { type: 'logout', description: 'User logged out of the system', severity: 'low' },
-      { type: 'create', description: 'Created new product "Wireless Headphones"', severity: 'medium' },
-      { type: 'update', description: 'Updated customer profile for John Doe', severity: 'medium' },
-      { type: 'delete', description: 'Deleted order #12345', severity: 'high' },
-      { type: 'export', description: 'Exported customer data to CSV', severity: 'medium' },
-      { type: 'security', description: 'Failed login attempt detected', severity: 'critical' },
-      { type: 'system', description: 'System backup completed successfully', severity: 'low' }
-    ];
-
-    const logs: ActivityLog[] = [];
-    const now = new Date();
-
-    for (let i = 0; i < 150; i++) {
-      const user = users[Math.floor(Math.random() * users.length)];
-      const action = actions[Math.floor(Math.random() * actions.length)];
-      const timestamp = new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000);
-
-      logs.push({
-        id: `LOG${String(i + 1).padStart(4, '0')}`,
-        timestamp,
-        user,
-        actionType: action.type,
-        severity: action.severity as any,
-        description: action.description,
-        ipAddress: `192.168.1.${Math.floor(Math.random() * 255)}`,
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        details: {
-          sessionId: `sess_${Math.random().toString(36).substr(2, 9)}`,
-          duration: Math.floor(Math.random() * 3600),
-          location: 'New York, US'
-        },
-        changes: action.type === 'update' ? [
-          {
-            field: 'email',
-            oldValue: 'old@example.com',
-            newValue: 'new@example.com'
-          },
-          {
-            field: 'status',
-            oldValue: 'inactive',
-            newValue: 'active'
-          }
-        ] : undefined
-      });
-    }
-
-    return logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  loadStatistics(): void {
+    this.activityLogService.getActivityStatistics().subscribe({
+      next: (stats: ActivityStatistics) => {
+        this.statistics = stats;
+      },
+      error: (error) => {
+        console.error('Error loading statistics:', error);
+      }
+    });
   }
 
   setDefaultDateRange(): void {
@@ -237,50 +192,37 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
   }
 
   applyFilters(): void {
-    this.filteredLogs = this.allLogs.filter(log => {
-      // Date range filter
-      if (this.filters.dateFrom && log.timestamp < new Date(this.filters.dateFrom)) {
-        return false;
-      }
-      if (this.filters.dateTo && log.timestamp > new Date(this.filters.dateTo + 'T23:59:59')) {
-        return false;
-      }
-
-      // User filter
-      if (this.filters.userId && log.user.id !== this.filters.userId) {
-        return false;
-      }
-
-      // Action type filter
-      if (this.filters.actionTypes.length > 0 && !this.filters.actionTypes.includes(log.actionType)) {
-        return false;
-      }
-
-      // Severity filter
-      if (this.filters.severityLevels.length > 0 && !this.filters.severityLevels.includes(log.severity)) {
-        return false;
-      }
-
-      // IP address filter
-      if (this.filters.ipAddress && !log.ipAddress.includes(this.filters.ipAddress)) {
-        return false;
-      }
-
-      // Search filter
-      if (this.filters.searchTerm && !log.description.toLowerCase().includes(this.filters.searchTerm.toLowerCase())) {
-        return false;
-      }
-
-      return true;
-    });
-
-    this.currentPage = 1;
-    this.updatePagination();
+    this.isLoading = true;
     
-    // Re-initialize icons after filtering
+    const filter: ActivityLogFilter = {
+      dateFrom: this.filters.dateFrom,
+      dateTo: this.filters.dateTo,
+      userId: this.filters.userId ? parseInt(this.filters.userId) : undefined,
+      actionTypes: this.filters.actionTypes.length > 0 ? this.filters.actionTypes : undefined,
+      severityLevels: this.filters.severityLevels.length > 0 ? this.filters.severityLevels : undefined,
+      ipAddress: this.filters.ipAddress || undefined,
+      searchTerm: this.filters.searchTerm || undefined,
+      page: 0,
+      size: this.itemsPerPage
+    };
+
+    this.activityLogService.getActivityLogs(filter).subscribe({
+      next: (response: ActivityLogResponse) => {
+        this.filteredLogs = response.logs;
+        this.paginatedLogs = response.logs;
+        this.totalPages = response.totalPages;
+    this.currentPage = 1;
+        this.isLoading = false;
+    
     setTimeout(() => {
       this.initializeIcons();
     }, 50);
+      },
+      error: (error) => {
+        console.error('Error applying filters:', error);
+        this.isLoading = false;
+      }
+    });
   }
 
   toggleActionType(actionType: string, event: any): void {
@@ -326,23 +268,13 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
 
   // Pagination methods
   updatePagination(): void {
-    this.totalPages = Math.ceil(this.filteredLogs.length / this.itemsPerPage);
-    this.currentPage = Math.min(this.currentPage, this.totalPages);
-    this.paginatedLogs = this.filteredLogs.slice(
-      (this.currentPage - 1) * this.itemsPerPage,
-      this.currentPage * this.itemsPerPage
-    );
-    
-    // Re-initialize icons after pagination
-    setTimeout(() => {
-      this.initializeIcons();
-    }, 50);
+    this.applyFilters();
   }
 
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
-      this.updatePagination();
+      this.applyFilters();
     }
   }
 
@@ -366,7 +298,6 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
   // View methods
   setViewMode(mode: 'detailed' | 'compact'): void {
     this.viewMode = mode;
-    // Re-initialize icons when view mode changes
     setTimeout(() => {
       this.initializeIcons();
     }, 50);
@@ -374,7 +305,6 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
 
   viewLogDetails(log: ActivityLog): void {
     this.selectedLog = log;
-    // Re-initialize icons when modal opens
     setTimeout(() => {
       this.initializeIcons();
     }, 100);
@@ -390,18 +320,24 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
 
   // Utility methods
   get uniqueUsers() {
-    const users = this.allLogs.map(log => log.user);
+    const users = this.allLogs
+      .filter(log => log.userId != null)
+      .map(log => ({
+        id: log.userId ? log.userId.toString() : '',
+        name: log.userName,
+        role: log.userRole
+      }));
     return users.filter((user, index, self) => 
       index === self.findIndex(u => u.id === user.id)
     );
   }
 
   get totalLogs(): number {
-    return this.allLogs.length;
+    return this.statistics.totalLogs;
   }
 
   get criticalCount(): number {
-    return this.allLogs.filter(log => log.severity === 'critical').length;
+    return this.statistics.criticalEvents;
   }
 
   getActionIcon(actionType: string): string {
@@ -419,21 +355,67 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
     return sev ? sev.icon : 'alert-circle';
   }
 
-  getLogDetails(details: any): Array<{key: string, value: string}> {
+  getLogDetails(details: string): Array<{key: string, value: string}> {
     if (!details) return [];
     
-    return Object.keys(details).map(key => ({
+    try {
+      const parsed = JSON.parse(details);
+      return Object.keys(parsed).map(key => ({
       key: key.charAt(0).toUpperCase() + key.slice(1),
-      value: typeof details[key] === 'object' ? JSON.stringify(details[key]) : details[key]
-    }));
+        value: typeof parsed[key] === 'object' ? JSON.stringify(parsed[key]) : parsed[key]
+      }));
+    } catch (e) {
+      return [];
+    }
+  }
+
+  getLogChanges(changes: string): Array<{field: string, before: any, after: any}> {
+    if (!changes) return [];
+    try {
+      const parsed = JSON.parse(changes);
+      
+      // Handle the new changes structure with before/after
+      if (parsed.before && parsed.after) {
+        const changes: Array<{field: string, before: any, after: any}> = [];
+        const before = parsed.before;
+        const after = parsed.after;
+        
+        // Get all unique fields from both before and after
+        const allFields = new Set([...Object.keys(before), ...Object.keys(after)]);
+        
+        allFields.forEach(field => {
+          changes.push({
+            field: field.charAt(0).toUpperCase() + field.slice(1),
+            before: before[field] || 'N/A',
+            after: after[field] || 'N/A'
+          });
+        });
+        
+        return changes;
+      }
+      
+      // Handle legacy array format
+      if (Array.isArray(parsed)) {
+        return parsed.map((change: any) => ({
+          field: change.field || change.key || 'Unknown',
+          before: change.before || change.oldValue || 'N/A',
+          after: change.after || change.newValue || 'N/A'
+        }));
+      }
+      
+      return [];
+    } catch (e) {
+      console.error('Error parsing changes:', e);
+      return [];
+    }
   }
 
   copyLogInfo(log: ActivityLog): void {
     const logInfo = `
-Timestamp: ${log.timestamp.toISOString()}
-User: ${log.user.name} (${log.user.role})
+Timestamp: ${log.timestamp}
+User: ${log.userName} (${log.userRole})
 Action: ${this.getActionLabel(log.actionType)}
-Severity: ${log.severity}
+Severity: ${log.severityLevel}
 Description: ${log.description}
 IP Address: ${log.ipAddress}
     `.trim();
@@ -447,7 +429,7 @@ IP Address: ${log.ipAddress}
     this.isLoading = true;
     setTimeout(() => {
       this.loadActivityLogs();
-      // Re-initialize icons after refresh
+      this.loadStatistics();
       setTimeout(() => {
         this.initializeIcons();
       }, 100);
@@ -456,58 +438,33 @@ IP Address: ${log.ipAddress}
 
   // Export methods
   exportLogs(format: 'csv' | 'json' | 'pdf'): void {
-    switch (format) {
-      case 'csv':
-        this.exportToCsv();
-        break;
-      case 'json':
-        this.exportToJson();
-        break;
-      case 'pdf':
-        this.exportToPdf();
-        break;
-    }
-  }
+    const filter: ActivityLogFilter = {
+      dateFrom: this.filters.dateFrom,
+      dateTo: this.filters.dateTo,
+      userId: this.filters.userId ? parseInt(this.filters.userId) : undefined,
+      actionTypes: this.filters.actionTypes.length > 0 ? this.filters.actionTypes : undefined,
+      severityLevels: this.filters.severityLevels.length > 0 ? this.filters.severityLevels : undefined,
+      ipAddress: this.filters.ipAddress || undefined,
+      searchTerm: this.filters.searchTerm || undefined
+    };
 
-  private exportToCsv(): void {
-    const headers = ['Timestamp', 'User', 'Role', 'Action', 'Severity', 'Description', 'IP Address'];
-    const rows = this.filteredLogs.map(log => [
-      log.timestamp.toISOString(),
-      log.user.name,
-      log.user.role,
-      this.getActionLabel(log.actionType),
-      log.severity,
-      log.description,
-      log.ipAddress
-    ]);
-
-    const csvContent = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    this.activityLogService.exportActivityLogs(filter, format).subscribe({
+      next: (blob: Blob) => {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `activity-logs-${new Date().toISOString().split('T')[0]}.csv`;
+        link.download = `activity-logs-${new Date().toISOString().split('T')[0]}.${format}`;
     link.click();
     window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        console.error('Error exporting logs:', error);
+        alert('Error exporting logs');
+      }
+    });
   }
 
-  private exportToJson(): void {
-    const jsonContent = JSON.stringify(this.filteredLogs, null, 2);
-    const blob = new Blob([jsonContent], { type: 'application/json' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `activity-logs-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    window.URL.revokeObjectURL(url);
-  }
-
-  private exportToPdf(): void {
-    // This would typically use a PDF library like jsPDF
-    alert('PDF export functionality would be implemented with a PDF library like jsPDF');
-  }
-
-  trackByLogId(index: number, log: ActivityLog): string {
+  trackByLogId(index: number, log: ActivityLog): number {
     return log.id;
   }
 }

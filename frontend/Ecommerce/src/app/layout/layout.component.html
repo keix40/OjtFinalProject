@@ -1,18 +1,11 @@
-<div class="d-flex flex-column vh-100 custom-layout">
+<div class="flex flex-col min-h-screen">
   <app-navbar class="shadow-sm"></app-navbar>
-  
-  <div class="d-flex flex-grow-1 layout-container position-relative">
-    <!-- Sidebar - Fixed positioning with proper z-index -->
-    <app-sidebar class="shadow-sm position-fixed h-full" 
-                style="z-index: 1000;"></app-sidebar>
-    
-    <!-- Main Content - Dynamic padding based on sidebar state -->
-    <div class="main-content flex-grow-1 transition-all duration-500" 
-         [ngClass]="sidebarExpanded ? 'ml-64' : 'ml-20'">
-      <div class="content-wrapper p-4" [ngClass]="{'rounded-tl-none': sidebarExpanded}">
+  <div class="relative flex-1">
+    <app-sidebar class="fixed top-0 left-0 z-40 h-full"></app-sidebar>
+    <div class="flex-1 p-4 transition-all duration-300 ml-20">
+      <div class="content-wrapper">
         <router-outlet></router-outlet>
       </div>
     </div>
   </div>
 </div>
-

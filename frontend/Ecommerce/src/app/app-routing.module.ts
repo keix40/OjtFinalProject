@@ -86,7 +86,6 @@ const routes: Routes = [
   { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
   { path: '', redirectTo: 'home', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Products' } },
   {path: '',
     component: LayoutComponent,
     canActivate: [AuthGuard],
@@ -138,6 +137,7 @@ const routes: Routes = [
       { path: 'createdeliveryservice', component: CreateDeliveryServiceComponent },
       { path: 'deliveryservicelist', component: DeliveryServiceListComponent },
       { path: 'admin/vip-tiers', component: VipTiersAdminComponent },
+      { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Products' } },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
