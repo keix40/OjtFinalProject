@@ -37,6 +37,10 @@ import java.net.http.HttpResponse;
 import org.json.JSONObject;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import com.Ojt.Ecommerce.service.UserActivityService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.security.CustomUserDetails;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.service.ActivityLogService;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -52,6 +56,9 @@ public class AuthController {
 
     @Autowired
     private UserActivityService userActivityService;
+
+    @Autowired
+    private ActivityLogService activityLogService;
 
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
@@ -80,37 +87,14 @@ public class AuthController {
     }
 
 
-//    @PostMapping("/login")
-//    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-//        String email = loginRequest.getEmail().trim().toLowerCase();// add for case
-//        Authentication authentication = authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(
-//                        email,
-//                        loginRequest.getPassword()
-//                )
-//        );
-//
-//
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        org.springframework.security.core.userdetails.User springUser =
-//                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-//
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-//
-//        if (!user.isVerified()) {
-//            throw new CustomException("Please verify your email before logging in.");
-//        }
-//
-//        String accessToken = jwtTokenProvider.generateToken(user);
-//        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-//
-//        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
-//    }
 
+
+//    @LogActivity(actionType = "LOGIN", entityType = "USER", description = "User login", severityLevel = "LOW")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, Object> loginRequest, HttpServletRequest request) {
+        // Start timing for duration tracking
+        java.time.LocalDateTime startTime = java.time.LocalDateTime.now();
+        
         String email = ((String)loginRequest.get("email")).trim().toLowerCase();
         String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
         String ip = request.getRemoteAddr();
@@ -171,7 +155,8 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             org.springframework.security.core.userdetails.User springUser =
                     (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-            User user = userRepository.findByEmail(email)
+            // Fetch user with role for activity log
+            User user = userRepository.findByEmailWithRole(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
             if (!user.isVerified()) {
                 throw new CustomException("Please verify your email before logging in.");
@@ -222,6 +207,44 @@ public class AuthController {
             loginAttemptService.handleSuccessfulLogin(ip);
             String accessToken = jwtTokenProvider.generateToken(user);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+            // --- MANUAL ACTIVITY LOGGING FOR LOGIN ---
+            java.time.LocalDateTime endTime = java.time.LocalDateTime.now();
+            java.time.Duration duration = java.time.Duration.between(startTime, endTime);
+            long durationMillis = duration.toMillis();
+            
+            // Get real user location
+            String userLocation = getUserLocation(ip);
+            
+            Map<String, Object> detailsMap = new java.util.HashMap<>();
+            detailsMap.put("SessionId", sessionId);
+            detailsMap.put("Location", userLocation);
+            detailsMap.put("Duration", durationMillis + "ms");
+            detailsMap.put("StartTime", startTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss")));
+            detailsMap.put("EndTime", endTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss")));
+            String detailsJson;
+            try {
+                detailsJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(detailsMap);
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                detailsJson = "{\"SessionId\":\"" + sessionId + "\",\"Location\":\"" + location + "\",\"Duration\":\"" + durationMillis + "ms\"}";
+            }
+
+            ActivityLog log = activityLogService.createActivityLog(
+                user.getId(),
+                user.getName(),
+                user.getRole() != null ? user.getRole().getName() : "UNKNOWN",
+                "LOGIN",
+                "USER",
+                String.valueOf(user.getId()),
+                "User login",
+                "LOW",
+                getClientIpAddress(request),
+                request.getHeader("User-Agent"),
+                request.getSession().getId()
+            );
+            log.setDetails(detailsJson);
+            activityLogService.createActivityLog(log);
+            System.out.println("Activity log insert called.");
+            // --- END MANUAL LOGGING ---
             return ResponseEntity.ok(Map.of(
                 "accessToken", accessToken,
                 "refreshToken", refreshToken.getToken()
@@ -292,6 +315,81 @@ public class AuthController {
         return sb.toString();
     }
 
+    private String getUserLocation(String ipAddress) {
+        if ("unknown".equals(ipAddress) || ipAddress == null || ipAddress.isEmpty()) {
+            return "Unknown Location";
+        }
+        
+        // Handle localhost and local IPs
+        if ("127.0.0.1".equals(ipAddress) || "0:0:0:0:0:0:0:1".equals(ipAddress) || 
+            "localhost".equals(ipAddress) || ipAddress.startsWith("192.168.") || 
+            ipAddress.startsWith("10.") || ipAddress.startsWith("172.16.")) {
+            return "Local Development";
+        }
+        
+        try {
+            // Use a free IP geolocation service
+            String apiUrl = "http://ip-api.com/json/" + ipAddress;
+            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                .uri(java.net.URI.create(apiUrl))
+                .build();
+            
+            java.net.http.HttpResponse<String> response = client.send(request, 
+                java.net.http.HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() == 200) {
+                String responseBody = response.body();
+                // Parse JSON response to extract location
+                if (responseBody.contains("\"status\":\"success\"")) {
+                    // Extract city and country from response
+                    String city = extractJsonValue(responseBody, "city");
+                    String country = extractJsonValue(responseBody, "country");
+                    String region = extractJsonValue(responseBody, "regionName");
+                    
+                    if (city != null && country != null) {
+                        return city + ", " + country;
+                    } else if (region != null && country != null) {
+                        return region + ", " + country;
+                    } else if (country != null) {
+                        return country;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Log error but don't fail the operation
+            System.err.println("Error getting location for IP " + ipAddress + ": " + e.getMessage());
+        }
+        
+        return "Unknown Location";
+    }
+    
+    private String extractJsonValue(String json, String key) {
+        try {
+            String pattern = "\"" + key + "\":\"([^\"]+)\"";
+            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
+            java.util.regex.Matcher m = p.matcher(json);
+            if (m.find()) {
+                return m.group(1);
+            }
+        } catch (Exception e) {
+            // Ignore parsing errors
+        }
+        return null;
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0];
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp;
+        }
+        return request.getRemoteAddr();
+    }
+
 
     @PostMapping("/refresh-token")
     public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
@@ -307,6 +405,7 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }
 
+    @LogActivity(actionType = "LOGOUT", entityType = "USER", description = "User logout", severityLevel = "LOW")
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String tokenHeader) {
         String token = tokenHeader.replace("Bearer ", "");
