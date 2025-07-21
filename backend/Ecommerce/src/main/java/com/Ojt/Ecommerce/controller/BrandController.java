@@ -110,7 +110,7 @@ public class BrandController {
         return ResponseEntity.ok("Brand created successfully.");
     }
 
-    @LogActivity(actionType = "UPDATE", entityType = "BRAND", description = "Updated brand", severityLevel = "MEDIUM", entityIdParam = "id")
+    @LogActivity(actionType = "UPDATE", entityType = "BRAND", description = "Updated brand", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateBrand(@PathVariable Long id,
                                          @RequestPart("brand") BrandDTO dto,

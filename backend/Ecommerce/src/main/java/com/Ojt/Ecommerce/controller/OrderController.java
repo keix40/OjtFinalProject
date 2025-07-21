@@ -363,7 +363,7 @@ public class OrderController {
         return ResponseEntity.ok(result);
     }
 
-    @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId")
+    @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId", logChanges = true)
     @PutMapping("/updatestatus/{orderId}")
     public ResponseEntity<String> updateOrderStatus(
             @PathVariable Long orderId,

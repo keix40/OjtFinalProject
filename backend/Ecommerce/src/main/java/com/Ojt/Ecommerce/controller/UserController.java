@@ -94,7 +94,7 @@ public class UserController {
 
 
     //to show userProfile userinfo (kei_1)
-    @LogActivity(actionType = "UPDATE", entityType = "USER", description = "Updated user", severityLevel = "MEDIUM", entityIdParam = "id")
+    @LogActivity(actionType = "UPDATE", entityType = "USER", description = "Updated user", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/{id}")
     @Transactional
     @RequiresPermission(value = "users.update", level = "intermediate",route = "/users/update") // add

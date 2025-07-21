@@ -290,15 +290,32 @@ public class UserServiceImpl implements UserService {
     public RegisterRequest updateUser(Long id, RegisterRequest dto){
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setGender(dto.getGender());
-        user.setPhoneNumber(dto.getPhoneNumber());
-        user.setDateOfBirth(dto.getDateOfBirth());
+        boolean changed = false;
+        if (dto.getName() != null && !dto.getName().equals(user.getName())) {
+            user.setName(dto.getName());
+            changed = true;
+        }
+        if (dto.getEmail() != null && !dto.getEmail().equals(user.getEmail())) {
+            user.setEmail(dto.getEmail());
+            changed = true;
+        }
+        if (dto.getGender() != null && !dto.getGender().equals(user.getGender())) {
+            user.setGender(dto.getGender());
+            changed = true;
+        }
+        if (dto.getPhoneNumber() != null && !dto.getPhoneNumber().equals(user.getPhoneNumber())) {
+            user.setPhoneNumber(dto.getPhoneNumber());
+            changed = true;
+        }
+        if (dto.getDateOfBirth() != null && !dto.getDateOfBirth().equals(user.getDateOfBirth())) {
+            user.setDateOfBirth(dto.getDateOfBirth());
+            changed = true;
+        }
 
-
-        userRepository.save(user);
-        notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
+        if (changed) {
+            userRepository.save(user);
+            notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
+        }
 
         return modelMapper.map(user, RegisterRequest.class);
     }

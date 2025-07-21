@@ -137,7 +137,7 @@ public class CategoryController {
         return service.getAllCategoryWithBrand();
     }
 
-    @LogActivity(actionType = "UPDATE", entityType = "CATEGORY", description = "Updated category", severityLevel = "MEDIUM", entityIdParam = "id")
+    @LogActivity(actionType = "UPDATE", entityType = "CATEGORY", description = "Updated category", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateCategory(
             @PathVariable Long id,

@@ -82,7 +82,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Activated product", severityLevel = "MEDIUM", entityIdParam = "id")
+    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Activated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/active/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> activeProduct(@PathVariable Long id){
@@ -92,7 +92,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Deactivated product", severityLevel = "MEDIUM", entityIdParam = "id")
+    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Deactivated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/inactive/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> inactiveProduct(@PathVariable Long id){
