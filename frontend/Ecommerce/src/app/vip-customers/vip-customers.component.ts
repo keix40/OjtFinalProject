@@ -4,27 +4,29 @@ import { ImageService } from '../services/image.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { UserService } from '../services/user.service';
+import { VipTier, VipTierService } from '../services/vip-tier.service';
 
 interface VipCustomer {
-  id: string;
+  userId: number;
   name: string;
   email: string;
-  avatar: string;
-  vipTier: 'silver' | 'gold' | 'platinum';
-  totalSpent: number;
+  phoneNumber?: string;
+  status: string;
+  roleName: string;
+  joinDate: string;
   totalOrders: number;
-  avgOrderValue: number;
-  lastOrderDate: Date;
-  lastOrderAmount: number;
-  status: 'active' | 'inactive';
-  segments: string[];
+  totalSpent: number;
+  profileImage?: string;
+  tier: 'Regular' | 'Silver' | 'Gold' | 'Platinum';
+  // Static/mock fields for UI completeness
   location?: string;
-  spendingTrend: 'up' | 'down';
-  spendingChange: number;
-  loyaltyPoints: number;
-  joinedDate: Date;
-  specialNotes?: string;
-  recentOrders: Order[];
+  spendingTrend?: 'up' | 'down';
+  spendingChange?: number;
+  avgOrderValue?: number;
+  lastOrderDate?: string;
+  lastOrderAmount?: number;
+  segments?: string[];
 }
 
 interface Order {
@@ -32,19 +34,6 @@ interface Order {
   date: Date;
   amount: number;
   status: 'completed' | 'pending' | 'cancelled';
-}
-
-interface VipTier {
-  level: string;
-  name: string;
-  description: string;
-  icon: string;
-  customerCount: number;
-  revenue: number;
-  benefits: string[];
-  minSpending: number;
-  bgClass?: string;
-  iconColor?: string;
 }
 
 interface SearchResult {
@@ -101,48 +90,20 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   customerTab: 'overview' | 'orders' | 'benefits' = 'overview';
 
   // VIP Tiers configuration
-  vipTiers: VipTier[] = [
-    {
-      level: 'silver',
-      name: 'Silver',
-      description: 'Entry VIP tier with basic benefits',
-      icon: 'fas fa-star',
-      customerCount: 67,
-      revenue: 281000,
-      benefits: ['Free shipping', 'Early access'],
-      minSpending: 500,
-      bgClass: 'bg-gray-100/20',
-      iconColor: 'text-gray-700'
-    },
-    {
-      level: 'gold',
-      name: 'Gold',
-      description: 'Premium tier with enhanced perks',
-      icon: 'fas fa-award',
-      customerCount: 34,
-      revenue: 298000,
-      benefits: ['Free shipping', 'Priority support', 'Exclusive deals'],
-      minSpending: 1500,
-      bgClass: 'bg-yellow-100/20',
-      iconColor: 'text-yellow-700'
-    },
-    {
-      level: 'platinum',
-      name: 'Platinum',
-      description: 'Elite tier with premium benefits',
-      icon: 'fas fa-crown',
-      customerCount: 12,
-      revenue: 185000,
-      benefits: ['Free shipping', 'Personal assistant', 'VIP events', 'Luxury gifts'],
-      minSpending: 5000,
-      bgClass: 'bg-purple-100/20',
-      iconColor: 'text-purple-700'
-    }
-  ];
+  // Remove the hardcoded vipTiers array
+  // VIP Tier management state
+  showAddTierModal = false;
+  showTierListModal = false;
+  tiers: VipTier[] = [];
+  tierForm: FormGroup;
+  editTierId: number | null = null;
+  showTierDropdown: boolean = false;
 
   constructor(
     private fb: FormBuilder,
-    public imageService: ImageService
+    public imageService: ImageService,
+    private userService: UserService,
+    private vipTierService: VipTierService
   ) {
     this.vipForm = this.fb.group({
       customerSearch: ['', Validators.required],
@@ -153,10 +114,20 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
       wholesale: [false],
       specialNotes: ['']
     });
+    this.tierForm = this.fb.group({
+      name: [''],
+      description: [''],
+      minPoints: [0],
+      icon: [''],
+      color: [''],
+      benefits: [''],
+      order: [0]
+    });
   }
 
   ngOnInit(): void {
     this.loadVipCustomers();
+    this.loadTiers();
     this.handleResponsiveView();
     window.addEventListener('resize', this.handleResponsiveView.bind(this));
   }
@@ -177,73 +148,28 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     }
   }
 
-  ngAfterViewChecked(): void {
-    if ((window as any)['lucide']) {
-      (window as any)['lucide'].createIcons();
-    }
-  }
+  ngAfterViewChecked(): void {}
 
   loadVipCustomers(): void {
-    // Mock data - replace with actual API call
-    this.allCustomers = this.generateMockVipCustomers();
-    this.applyFilters();
-  }
-
-  generateMockVipCustomers(): VipCustomer[] {
-    const customers: VipCustomer[] = [];
-    const names = [
-      'Alexandra Thompson', 'Marcus Johnson', 'Isabella Rodriguez', 'James Wilson',
-      'Sophia Chen', 'David Martinez', 'Emma Davis', 'Michael Brown',
-      'Olivia Taylor', 'Christopher Lee', 'Ava Anderson', 'Daniel Garcia',
-      'Mia Jackson', 'Matthew White', 'Charlotte Harris', 'Anthony Clark',
-      'Amelia Lewis', 'Joshua Robinson', 'Harper Walker', 'Andrew Hall'
-    ];
-    
-    const locations = ['New York, NY', 'Los Angeles, CA', 'Chicago, IL', 'Houston, TX', 'Phoenix, AZ'];
-    const tiers: VipCustomer['vipTier'][] = ['silver', 'gold', 'platinum'];
-    const segments = ['high_spender', 'frequent_buyer', 'influencer', 'wholesale'];
-
-    for (let i = 0; i < 85; i++) {
-      const tier = tiers[Math.floor(Math.random() * tiers.length)];
-      const baseSpending = tier === 'platinum' ? 5000 : tier === 'gold' ? 1500 : 500;
-      const totalSpent = baseSpending + Math.random() * baseSpending * 3;
-      const totalOrders = Math.floor(totalSpent / (100 + Math.random() * 300));
-      const avgOrderValue = totalSpent / totalOrders;
-
-      const recentOrders: Order[] = [];
-      for (let j = 0; j < 5; j++) {
-        recentOrders.push({
-          id: `ORD${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-          date: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000),
-          amount: 50 + Math.random() * 500,
-          status: ['completed', 'pending', 'cancelled'][Math.floor(Math.random() * 3)] as Order['status']
-        });
-      }
-
-      customers.push({
-        id: `VIP${String(i + 1).padStart(3, '0')}`,
-        name: names[i % names.length] || `VIP Customer ${i + 1}`,
-        email: `vip${i + 1}@example.com`,
-        avatar: `https://ui-avatars.com/api/?name=${names[i % names.length]}`,
-        vipTier: tier,
-        totalSpent,
-        totalOrders,
-        avgOrderValue,
-        lastOrderDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        lastOrderAmount: 50 + Math.random() * 300,
-        status: Math.random() > 0.1 ? 'active' : 'inactive',
-        segments: segments.filter(() => Math.random() > 0.6),
-        location: locations[Math.floor(Math.random() * locations.length)],
-        spendingTrend: Math.random() > 0.3 ? 'up' : 'down',
-        spendingChange: Math.floor(Math.random() * 30) + 5,
-        loyaltyPoints: Math.floor(totalSpent * 0.1),
-        joinedDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
-        specialNotes: Math.random() > 0.7 ? 'Prefers premium products' : undefined,
-        recentOrders: recentOrders.sort((a, b) => b.date.getTime() - a.date.getTime())
+    this.userService.getVipCustomers().subscribe((customers: VipCustomer[]) => {
+      this.allCustomers = customers.map(c => ({
+        ...c,
+        location: c.location ?? 'Yangon, MM',
+        spendingTrend: c.spendingTrend ?? (Math.random() > 0.5 ? 'up' : 'down'),
+        spendingChange: c.spendingChange ?? Math.floor(Math.random() * 30) + 1,
+        avgOrderValue: c.avgOrderValue ?? (c.totalOrders > 0 ? Math.round((c.totalSpent / c.totalOrders) * 100) / 100 : 0),
+        lastOrderDate: c.lastOrderDate ?? '2024-06-01',
+        lastOrderAmount: c.lastOrderAmount ?? Math.floor(Math.random() * 500) + 50,
+        segments: c.segments ?? ['high_spender', 'frequent_buyer', 'influencer', 'wholesale'].filter(() => Math.random() > 0.5),
+        status: c.status && (c.status.toLowerCase() === 'active' || c.status.toLowerCase() === 'inactive') ? c.status.toLowerCase() : 'active'
+      }));
+      this.applyFilters();
+      setTimeout(() => {
+        if ((window as any)['lucide']) {
+          (window as any)['lucide'].createIcons();
+        }
       });
-    }
-
-    return customers.sort((a, b) => b.totalSpent - a.totalSpent);
+    });
   }
 
   // Statistics getters
@@ -256,7 +182,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   get averageOrderValue(): number {
-    const totalValue = this.allCustomers.reduce((total, customer) => total + customer.avgOrderValue, 0);
+    const totalValue = this.allCustomers.reduce((total, customer) => total + customer.totalSpent, 0);
     return totalValue / this.allCustomers.length;
   }
 
@@ -272,11 +198,10 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
         customer.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         customer.email.toLowerCase().includes(this.searchTerm.toLowerCase());
 
-      const matchesTier = !this.tierFilter || customer.vipTier === this.tierFilter;
+      const matchesTier = !this.tierFilter || customer.tier === this.tierFilter;
       const matchesStatus = !this.statusFilter || customer.status === this.statusFilter;
-      const matchesSegment = !this.segmentFilter || customer.segments.includes(this.segmentFilter);
-
-      return matchesSearch && matchesTier && matchesStatus && matchesSegment;
+      // Remove matchesSegment
+      return matchesSearch && matchesTier && matchesStatus;
     });
 
     this.currentPage = 1;
@@ -328,7 +253,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   // Selection methods
   selectAll(event: any): void {
     if (event.target.checked) {
-      this.selectedCustomers = this.paginatedCustomers.map(customer => customer.id);
+      this.selectedCustomers = this.paginatedCustomers.map(customer => customer.userId.toString());
     } else {
       this.selectedCustomers = [];
     }
@@ -342,7 +267,6 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
         this.selectedCustomers = this.selectedCustomers.filter(id => id !== customerId);
       }
     } else {
-      // Handle card click
       if (this.selectedCustomers.includes(customerId)) {
         this.selectedCustomers = this.selectedCustomers.filter(id => id !== customerId);
       } else {
@@ -383,7 +307,11 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   viewCustomerDetails(customer: VipCustomer): void {
     this.selectedCustomerDetails = customer;
     this.showCustomerModal = true;
-    this.customerTab = 'overview';
+    setTimeout(() => {
+      if ((window as any)['lucide']) {
+        (window as any)['lucide'].createIcons();
+      }
+    });
   }
 
   editCustomer(customer: VipCustomer): void {
@@ -408,7 +336,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
 
   removeVipStatus(customer: VipCustomer): void {
     if (confirm(`Remove VIP status for ${customer.name}?`)) {
-      this.allCustomers = this.allCustomers.filter(c => c.id !== customer.id);
+      this.allCustomers = this.allCustomers.filter(c => c.userId !== customer.userId);
       this.applyFilters();
       console.log('VIP status removed for:', customer);
     }
@@ -454,7 +382,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   bulkDelete(): void {
     if (!this.selectedCustomers.length) return;
     if (!confirm(`Are you sure you want to delete ${this.selectedCustomers.length} selected VIP customers? This action cannot be undone.`)) return;
-    this.allCustomers = this.allCustomers.filter(c => !this.selectedCustomers.includes(c.id));
+    this.allCustomers = this.allCustomers.filter(c => !this.selectedCustomers.includes(c.userId.toString()));
     this.applyFilters();
     this.selectedCustomers = [];
     setTimeout(() => {
@@ -466,7 +394,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     if (!this.selectedCustomers.length) return;
     if (!confirm(`Toggle status for ${this.selectedCustomers.length} selected VIP customers?`)) return;
     this.allCustomers = this.allCustomers.map(c =>
-      this.selectedCustomers.includes(c.id)
+      this.selectedCustomers.includes(c.userId.toString())
         ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' }
         : c
     );
@@ -505,9 +433,10 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     return labels[segment as keyof typeof labels] || segment;
   }
 
+  // Update getVipBenefits to use tiers
   getVipBenefits(tier: string): string[] {
-    const tierConfig = this.vipTiers.find(t => t.level === tier);
-    return tierConfig ? tierConfig.benefits : [];
+    const tierConfig = this.tiers.find(t => t.name === tier);
+    return tierConfig ? tierConfig.benefits.split(',').map(b => b.trim()) : [];
   }
 
   refreshData(): void {
@@ -527,32 +456,29 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   generateVipCustomersCSV(): string {
-    const headers = ['Name', 'Email', 'VIP Tier', 'Total Spent', 'Total Orders', 'Avg Order Value', 'Status', 'Segments'];
+    const headers = ['Name', 'Email', 'VIP Tier', 'Total Spent', 'Total Orders', 'Status'];
     const rows = this.filteredCustomers.map(customer => [
       customer.name,
       customer.email,
-      customer.vipTier,
+      customer.tier,
       customer.totalSpent.toString(),
       customer.totalOrders.toString(),
-      customer.avgOrderValue.toFixed(2),
-      customer.status,
-      customer.segments.join('; ')
+      customer.status
     ]);
-
     return [headers, ...rows].map(row => row.join(',')).join('\n');
   }
 
-  trackByCustomerId(index: number, customer: VipCustomer): string {
-    return customer.id;
+  trackByCustomerId(index: number, customer: VipCustomer): number {
+    return customer.userId;
   }
 
   getVipIconColor(tier: string): string {
     switch (tier) {
-      case 'platinum':
+      case 'Platinum':
         return 'text-purple-700';
-      case 'gold':
+      case 'Gold':
         return 'text-yellow-700';
-      case 'silver':
+      case 'Silver':
         return 'text-gray-700';
       default:
         return 'text-gray-700';
@@ -561,11 +487,11 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
 
   getLucideIconName(tier: string): string {
     switch (tier) {
-      case 'platinum':
+      case 'Platinum':
         return 'crown';
-      case 'gold':
+      case 'Gold':
         return 'award';
-      case 'silver':
+      case 'Silver':
         return 'star';
       default:
         return 'user';
@@ -579,5 +505,61 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
 
   setCustomerTab(tab: 'overview' | 'orders' | 'benefits'): void {
     this.customerTab = tab;
+  }
+
+  // VIP Tier management methods
+  openAddTierModal() {
+    this.showAddTierModal = true;
+    this.showTierListModal = false;
+    setTimeout(() => { if ((window as any)['lucide']) (window as any)['lucide'].createIcons(); });
+  }
+  closeAddTierModal() {
+    this.showAddTierModal = false;
+    this.resetTierForm();
+  }
+  openTierListModal() {
+    this.showTierListModal = true;
+    this.showAddTierModal = false;
+    setTimeout(() => { if ((window as any)['lucide']) (window as any)['lucide'].createIcons(); });
+  }
+  closeTierListModal() {
+    this.showTierListModal = false;
+  }
+  loadTiers() {
+    this.vipTierService.getAll().subscribe(tiers => {
+      this.tiers = tiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      setTimeout(() => {
+        if ((window as any)['lucide']) {
+          (window as any)['lucide'].createIcons();
+        }
+      });
+    });
+  }
+  onTierSubmit() {
+    const tier: VipTier = this.tierForm.value;
+    if (this.editTierId) {
+      this.vipTierService.update(this.editTierId, tier).subscribe(() => { this.loadTiers(); this.resetTierForm(); this.closeAddTierModal(); });
+    } else {
+      this.vipTierService.create(tier).subscribe(() => { this.loadTiers(); this.resetTierForm(); this.closeAddTierModal(); });
+    }
+  }
+  editTier(tier: VipTier) {
+    this.tierForm.patchValue(tier);
+    this.editTierId = tier.id ?? null;
+    this.openAddTierModal();
+  }
+  deleteTier(id?: number) {
+    if (id && confirm('Delete this tier?')) {
+      this.vipTierService.delete(id).subscribe(() => this.loadTiers());
+    }
+  }
+  resetTierForm() {
+    this.editTierId = null;
+    this.tierForm.reset({ minPoints: 0, order: 0 });
+  }
+
+  // Add trackByTierId for tiers
+  trackByTierId(index: number, tier: VipTier): number | undefined {
+    return tier.id;
   }
 }

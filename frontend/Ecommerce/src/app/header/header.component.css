@@ -444,6 +444,33 @@
   100% { left: 120%; }
 }
 
+.typewriter {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: .15em solid #2b6cb0;
+  animation: typing 2.5s steps(20, end) 1s 1 normal both;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  animation: blink-cursor 0.8s steps(1) infinite;
+  color: #2563eb;
+  font-weight: bold;
+  font-size: 1em;
+  margin-left: 2px;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* Responsive Styles */
 @media (max-width: 1199.98px) {
     .search-form {

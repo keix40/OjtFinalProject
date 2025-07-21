@@ -29,24 +29,33 @@ private client!: Client;
     this.client.onConnect = () => {
       console.log('[NotificationService] Connected to WebSocket server');
 
- this.client.subscribe('/user/queue/notifications', (message: Message) => {
-  let notificationData: any;
+      // User-specific notifications
+      this.client.subscribe('/user/queue/notifications', (message: Message) => {
+        let notificationData: any;
+        try {
+          notificationData = JSON.parse(message.body);
+        } catch {
+          notificationData = { message: message.body, timestamp: new Date().toISOString() };
+        }
+        if (typeof notificationData === 'object') {
+          console.log('[NotificationService] Received notification:', JSON.stringify(notificationData, null, 2));
+        } else {
+          console.log('[NotificationService] Received notification:', notificationData);
+        }
+        this.notificationSubject.next(notificationData);
+      });
 
-  try {
-    notificationData = JSON.parse(message.body); // parse the JSON
-  } catch {
-    notificationData = { message: message.body, timestamp: new Date().toISOString() };
-  }
-
-  // 👇 Log correctly
-  if (typeof notificationData === 'object') {
-    console.log('[NotificationService] Received notification:', JSON.stringify(notificationData, null, 2));
-  } else {
-    console.log('[NotificationService] Received notification:', notificationData);
-  }
-
-  this.notificationSubject.next(notificationData);
-});
+      // Broadcast activity feed events
+      this.client.subscribe('/topic/activity-feed', (message: Message) => {
+        let activityData: any;
+        try {
+          activityData = JSON.parse(message.body);
+        } catch {
+          activityData = { message: message.body, timestamp: new Date().toISOString() };
+        }
+        console.log('[NotificationService] Received activity feed event:', activityData);
+        this.notificationSubject.next(activityData);
+      });
     };
 
     this.client.onStompError = (frame) => {
@@ -62,7 +71,19 @@ private client!: Client;
 
   // Public method to send notifications
   sendNotification(notificationData: any): void {
-    this.notificationSubject.next(notificationData);
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.post('http://localhost:8080/api/notifications', notificationData, { headers }).subscribe({
+      next: (savedNotification) => {
+        this.notificationSubject.next(savedNotification);
+      },
+      error: (err) => {
+        console.error('Failed to save notification:', err);
+      }
+    });
   }
 
    //🔁 Load stored notifications from backend

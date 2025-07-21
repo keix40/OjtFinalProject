@@ -36,4 +36,6 @@ public interface UserService {
      * named for report generation to maintain clear separation of concerns
      */
     List<CustomerSummaryDTO> getCustomersForReport();
+
+    List<CustomerSummaryDTO> getAllVipCustomers();
 }

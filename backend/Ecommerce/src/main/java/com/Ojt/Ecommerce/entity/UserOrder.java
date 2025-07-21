@@ -1,11 +1,27 @@
 package com.Ojt.Ecommerce.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
-import jakarta.persistence.*;
-import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "user_order")
@@ -41,14 +57,16 @@ public class UserOrder {
     private Discount discount;
 
     @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserOrderHasProduct> orderProducts;
+    @Builder.Default
+    private List<UserOrderHasProduct> orderProducts = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name = "delivery_method_id")
     private DeliveryMethod deliveryMethod;
 
     @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OrderStatus> orderStatusHistory;
+    @Builder.Default
+    private List<OrderStatus> orderStatusHistory = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "saved_card_id")
@@ -56,5 +74,13 @@ public class UserOrder {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<ReturnRequest> returnRequests;
+    @Builder.Default
+    private List<ReturnRequest> returnRequests = new ArrayList<>();
+
+    @Column(name = "delivery_fee", precision = 10, scale = 2)
+    private BigDecimal deliveryFee;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "delivery_service_id")
+    private DeliveryService deliveryService;
 }

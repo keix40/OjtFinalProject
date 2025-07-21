@@ -1,18 +1,5 @@
 package com.Ojt.Ecommerce.service;
 
-import com.Ojt.Ecommerce.dto.*;
-import com.Ojt.Ecommerce.entity.*;
-import com.Ojt.Ecommerce.repository.*;
-import com.Ojt.Ecommerce.util.ProductCodeGeneratorUtil;
-//import jakarta.transaction.Transactional;
-import lombok.EqualsAndHashCode;
-import org.springframework.security.authorization.method.AuthorizeReturnObject;
-import org.springframework.transaction.annotation.Transactional;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Files;
@@ -20,8 +7,44 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.Ojt.Ecommerce.dto.CategoryBrandPair;
+import com.Ojt.Ecommerce.dto.ProductDTO;
+import com.Ojt.Ecommerce.dto.ProductImageDTO;
+import com.Ojt.Ecommerce.dto.VariantAttributeDTO;
+import com.Ojt.Ecommerce.dto.VariantDTO;
+import com.Ojt.Ecommerce.entity.AttributeValue;
+import com.Ojt.Ecommerce.entity.Brand;
+import com.Ojt.Ecommerce.entity.Category;
+import com.Ojt.Ecommerce.entity.Product;
+import com.Ojt.Ecommerce.entity.ProductHasCategory;
+import com.Ojt.Ecommerce.entity.ProductImage;
+import com.Ojt.Ecommerce.entity.ProductVariant;
+import com.Ojt.Ecommerce.entity.VariantAttributeValue;
+import com.Ojt.Ecommerce.repository.AttributeValueRepository;
+import com.Ojt.Ecommerce.repository.BrandRepository;
+import com.Ojt.Ecommerce.repository.CategoryRepository;
+import com.Ojt.Ecommerce.repository.ProductHasCategoryRepository;
+import com.Ojt.Ecommerce.repository.ProductImageRepository;
+import com.Ojt.Ecommerce.repository.ProductRepository;
+import com.Ojt.Ecommerce.repository.ProductVariantRepository;
+import com.Ojt.Ecommerce.repository.VariantAttributeValueRepository;
+import com.Ojt.Ecommerce.util.ProductCodeGeneratorUtil;
 
 @Service
 public class ProductService {
@@ -365,6 +388,191 @@ public class ProductService {
         return proRepo.save(savedProduct);
     }
 
+    @Transactional
+    public Product updateProductWithImages(
+            Long productId,
+            ProductDTO dto,
+            MultipartFile[] files,
+            Map<String, List<MultipartFile>> variantImageMap) throws IOException {
+
+        Product product = proRepo.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // 1. Update basic product fields
+        product.setProductName(dto.getProductName());
+        product.setPrice(dto.getPrice());
+        product.setQuantity(dto.getQuantity());
+        product.setDescription(dto.getDescription());
+        product.setUpdateDate(LocalDateTime.now());
+        product.setStatus(Math.toIntExact(dto.getStatus()));
+
+        // 2. Set brand from category-brand pair (optional)
+        Brand selectedBrand = dto.getCategoryBrandPairs().stream()
+                .map(CategoryBrandPair::getBrandId)
+                .filter(Objects::nonNull)
+                .map(brandId -> brandRepo.findById(brandId).orElse(null))
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+        product.setBrand(selectedBrand);
+
+        // 3. Update category-brand pairs
+        productHasCategoryRepository.deleteAll(product.getProductCategories());
+        product.getProductCategories().clear(); // <-- clear the set after deletion
+
+        Set<ProductHasCategory> newPhcSet = new HashSet<>();
+        for (CategoryBrandPair pair : dto.getCategoryBrandPairs()) {
+            Category category = cateRepo.findById(pair.getCategoryId()).orElse(null);
+            Brand brand = (pair.getBrandId() != null) ? brandRepo.findById(pair.getBrandId()).orElse(null) : null;
+            if (category != null) {
+                ProductHasCategory phc = ProductHasCategory.builder()
+                        .product(product)
+                        .category(category)
+                        .brand(brand)
+                        .build();
+                newPhcSet.add(phc);
+                productHasCategoryRepository.save(phc);
+            }
+        }
+        // Instead of setProductCategories, mutate the existing set
+        product.getProductCategories().addAll(newPhcSet);
+
+        // 4. Handle product images (delete only those marked for deletion, not all)
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+        // Delete only images marked for deletion
+        if (dto.getImagesMarkedForDeletion() != null && !dto.getImagesMarkedForDeletion().isEmpty()) {
+            List<ProductImage> toDelete = product.getProductImages().stream()
+                .filter(img -> img.getProductVariant() == null && dto.getImagesMarkedForDeletion().contains(img.getId()))
+                .collect(Collectors.toList());
+            productImageRepo.deleteAll(toDelete);
+            // Remove from product.getProductImages() using a new list to avoid lambda finality issue
+            List<ProductImage> toRemove = product.getProductImages().stream()
+                .filter(img -> img.getProductVariant() == null && dto.getImagesMarkedForDeletion().contains(img.getId()))
+                .collect(Collectors.toList());
+            product.getProductImages().removeAll(toRemove);
+        }
+        // Add new product images
+        if (files != null && files.length > 0) {
+            List<ProductImage> imageList = new ArrayList<>();
+            for (MultipartFile file : files) {
+                if (!file.isEmpty()) {
+                    String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+                    Path filePath = uploadPath.resolve(fileName);
+                    Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                    ProductImage image = ProductImage.builder()
+                            .imageUrl("/product_image/" + fileName)
+                            .product(product)
+                            .status(1)
+                            .build();
+                    imageList.add(image);
+                }
+            }
+            product.getProductImages().addAll(imageList);
+        }
+
+        // 5. Handle variants: insert/update + soft-delete removed ones
+        if (Boolean.TRUE.equals(dto.getHasVariant())) {
+            List<ProductVariant> existingVariants = product.getProductVariants() != null ? product.getProductVariants() : new ArrayList<>();
+            Map<String, ProductVariant> existingMap = existingVariants.stream()
+                    .collect(Collectors.toMap(ProductVariant::getStockKeeping, v -> v));
+
+            List<ProductVariant> updatedVariants = new ArrayList<>();
+            Set<String> incomingSkus = new HashSet<>();
+
+            for (int i = 0; i < dto.getVariants().size(); i++) {
+                VariantDTO variantDTO = dto.getVariants().get(i);
+                String sku = variantDTO.getSku();
+                incomingSkus.add(sku);
+
+                ProductVariant variant = existingMap.get(sku);
+                if (variant == null) {
+                    // New variant
+                    variant = ProductVariant.builder()
+                            .product(product)
+                            .stockKeeping(sku)
+                            .price(BigDecimal.valueOf(variantDTO.getPrice()))
+                            .stock(variantDTO.getStock())
+                            .status(1)
+                            .build();
+                } else {
+                    // Existing variant → update
+                    variant.setPrice(BigDecimal.valueOf(variantDTO.getPrice()));
+                    variant.setStock(variantDTO.getStock());
+                    variant.setStatus(1);
+                }
+
+                variant = variantRepo.save(variant);
+
+                // Remove and re-insert attribute values
+                variantAttributeValueRepo.deleteByProductVariant(variant);
+                for (VariantAttributeDTO attr : variantDTO.getAttributes()) {
+                    AttributeValue attrValue = attrValueRepo.findById(attr.getValueId()).orElse(null);
+                    if (attrValue != null) {
+                        VariantAttributeValue vav = VariantAttributeValue.builder()
+                                .productVariant(variant)
+                                .attributeValue(attrValue)
+                                .build();
+                        variantAttributeValueRepo.save(vav);
+                    }
+                }
+
+                // Handle variant images: delete only those marked for deletion
+                if (dto.getVariantImagesMarkedForDeletion() != null && dto.getVariantImagesMarkedForDeletion().containsKey(String.valueOf(i))) {
+                    List<Long> idsToDelete = dto.getVariantImagesMarkedForDeletion().get(String.valueOf(i));
+                    if (idsToDelete != null && !idsToDelete.isEmpty()) {
+                        List<ProductImage> toDelete = productImageRepo.findByProductVariant(variant).stream()
+                            .filter(img -> idsToDelete.contains(img.getId()))
+                            .collect(Collectors.toList());
+                        productImageRepo.deleteAll(toDelete);
+                        List<ProductImage> toRemove = new ArrayList<>();
+                        for (ProductImage img : product.getProductImages()) {
+                            if (img.getProductVariant() != null && img.getProductVariant().getId().equals(variant.getId()) && idsToDelete.contains(img.getId())) {
+                                toRemove.add(img);
+                            }
+                        }
+                        product.getProductImages().removeAll(toRemove);
+                    }
+                }
+                // Add new variant images
+                List<MultipartFile> variantImages = variantImageMap.get("variantImages_" + i);
+                if (variantImages != null) {
+                    for (MultipartFile imageFile : variantImages) {
+                        if (!imageFile.isEmpty()) {
+                            String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
+                            Path filePath = uploadPath.resolve(fileName);
+                            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                            ProductImage variantImage = ProductImage.builder()
+                                    .imageUrl("/product_image/" + fileName)
+                                    .product(product)
+                                    .productVariant(variant)
+                                    .status(1)
+                                    .build();
+                            productImageRepo.save(variantImage);
+                        }
+                    }
+                }
+
+                updatedVariants.add(variant);
+            }
+
+            // Soft-delete missing variants
+            for (ProductVariant existing : existingVariants) {
+                if (!incomingSkus.contains(existing.getStockKeeping())) {
+                    existing.setStatus(0);
+                    variantRepo.save(existing);
+                }
+            }
+
+            // Instead of setProductVariants, mutate the existing list
+            product.getProductVariants().clear();
+            product.getProductVariants().addAll(updatedVariants);
+        }
+
+        // Save product
+        return proRepo.save(product);
+    }
 
 //    public List<Product> getAllProduct(){
 //        return proRepo.findAllProduct();
@@ -409,7 +617,12 @@ public class ProductService {
         if (product.getProductImages() != null) {
             dto.setProductImages(
                     product.getProductImages().stream()
-                            .map(image -> new ProductImageDTO(image.getId(), image.getImageUrl(), image.getStatus()))
+                            .map(image -> new ProductImageDTO(
+                                    image.getId(),
+                                    image.getImageUrl(),
+                                    image.getStatus(),
+                                    image.getProductVariant() != null ? (image.getProductVariant().getId() != null ? image.getProductVariant().getId().longValue() : null) : null
+                            ))
                             .collect(Collectors.toList())
             );
         }
@@ -425,14 +638,47 @@ public class ProductService {
                 .collect(Collectors.toList());
         dto.setCategoryBrandPairs(pairs);
 
+        List<VariantDTO> variantDTOs = product.getProductVariants().stream()
+                .map(variant -> {
+                    VariantDTO vdto = new VariantDTO();
+                    vdto.setId(variant.getId());
+                    vdto.setName(variant.getStockKeeping());
+                    vdto.setSku(variant.getStockKeeping());
+                    vdto.setPrice(variant.getPrice() != null ? variant.getPrice().doubleValue() : 0.0);
+                    vdto.setStock(variant.getStock() != null ? variant.getStock() : 0);
+
+                    List<VariantAttributeDTO> attrDTOs = variant.getVariantAttributeValues().stream()
+                            .map(vav -> {
+                                VariantAttributeDTO vatd = new VariantAttributeDTO();
+                                if (vav.getAttributeValue() != null) {
+                                    AttributeValue av = vav.getAttributeValue();
+                                    if (av.getAttribute() != null) {
+                                        vatd.setAttributeId(av.getAttribute().getId());
+                                        vatd.setAttributeName(av.getAttribute().getName());
+                                    }
+                                    vatd.setValueId(av.getId());
+                                    vatd.setValue(av.getValue());
+                                }
+                                return vatd;
+                            }).toList();
+
+                    vdto.setAttributes(attrDTOs);
+
+                    return vdto;
+                }).toList();
+
         List<ProductImageDTO> images = product.getProductImages().stream()
                 .map(img -> new ProductImageDTO(
                         img.getId(),
                         img.getImageUrl(),
-                        img.getStatus()
+                        img.getStatus(),
+                        img.getProductVariant() != null ? (img.getProductVariant().getId() != null ? img.getProductVariant().getId().longValue() : null) : null
                 ))
                 .collect(Collectors.toList());
         dto.setProductImages(images);
+
+        dto.setVariants(variantDTOs);
+        dto.setHasVariant(!variantDTOs.isEmpty());
 
         return dto;
     }
@@ -528,5 +774,26 @@ public class ProductService {
 
         return dto;
     }
-}
 
+    public Long getProductQuantity(Long productId) {
+        return proRepo.findProductQuantity(productId);
+    }
+
+    public Integer getProductVariantStock(Long variantId) {
+        return variantRepo.findProductVariant(variantId);
+    }
+
+    public List<Product> getLatest4Products() {
+        return proRepo.findTop4ByOrderByCreateDateDesc().stream().limit(4).toList();
+    }
+
+    public List<Product> getTop4OrderedProducts() {
+        return proRepo.findTop4OrderedProductsNative();
+    }
+
+    public List<ProductDTO> searchProducts(String keyword) {
+        List<Product> products = proRepo.searchProducts(keyword);
+        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+}

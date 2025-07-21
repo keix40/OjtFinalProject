@@ -28,6 +28,7 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
   activeDiscounts: any[] = [];
   productDiscounts: Map<number, any> = new Map();
   productDetails: Map<number, ProductDTO> = new Map();
+  maxQuantities: Map<string, number> = new Map();
 
   constructor(
     private router: Router, 
@@ -44,6 +45,7 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
         this.cartItems = items;
         this.checkFirstTimeBuyerDiscount(); // Check discount when cart changes
         this.loadProductDetails();
+        this.loadMaxQuantities(); // <-- fetch max quantities
       }),
       this.cartService.getCartTotal().subscribe(total => {
         this.cartTotal = total;
@@ -196,14 +198,46 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
+  // Helper to get unique key for maxQuantities map
+  getItemKey(item: CartItem): string {
+    return item.variantId ? `${item.productId || item.id}-${item.variantId}` : `${item.productId || item.id}`;
+  }
+
+  // Fetch max quantity for each cart item (by variant or product)
+  loadMaxQuantities() {
+    this.maxQuantities.clear();
+    for (const item of this.cartItems) {
+      const key = this.getItemKey(item);
+      if (item.variantId) {
+        this.productService.getProductVariantStock(item.variantId).subscribe(stock => {
+          this.maxQuantities.set(key, stock);
+        });
+      } else if (item.productId) {
+        this.productService.getProductQuantity(item.productId).subscribe(stock => {
+          this.maxQuantities.set(key, stock);
+        });
+      } else {
+        this.maxQuantities.set(key, 0);
+      }
+    }
+  }
+
+  // Returns the max quantity allowed for a cart item based on product or variant stock
+  getMaxQuantity(item: CartItem): number {
+    return this.maxQuantities.get(this.getItemKey(item)) ?? 0;
+  }
+
   decrementQty(item: CartItem) {
-    if (item.quantity > 1) {
+    if (item.quantity > 0) {
       this.cartService.updateQuantity(item.id, item.quantity - 1);
     }
   }
 
   incrementQty(item: CartItem) {
-    this.cartService.updateQuantity(item.id, item.quantity + 1);
+    const maxQty = this.getMaxQuantity(item);
+    if (item.quantity < maxQty) {
+      this.cartService.updateQuantity(item.id, item.quantity + 1);
+    }
   }
 
   removeItem(item: CartItem) {

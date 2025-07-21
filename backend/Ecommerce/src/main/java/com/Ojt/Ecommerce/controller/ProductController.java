@@ -3,6 +3,7 @@ package com.Ojt.Ecommerce.controller;
 import com.Ojt.Ecommerce.dto.ProductDTO;
 import com.Ojt.Ecommerce.entity.Product;
 import com.Ojt.Ecommerce.service.ProductService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -24,6 +25,7 @@ public class ProductController {
     @Autowired
     private ProductService service;
 
+    @LogActivity(actionType = "CREATE", entityType = "PRODUCT", description = "Created product", severityLevel = "MEDIUM")
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(
             @RequestPart("product") ProductDTO dto,
@@ -70,6 +72,7 @@ public class ProductController {
         return service.getAllActiveProductDTOs();
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "PRODUCT", description = "Deleted product", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable Long id){
@@ -79,6 +82,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Activated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/active/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> activeProduct(@PathVariable Long id){
@@ -88,6 +92,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Deactivated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/inactive/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> inactiveProduct(@PathVariable Long id){
@@ -97,8 +102,61 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,
+            @RequestPart("product") ProductDTO dto,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            @RequestParam MultiValueMap<String, MultipartFile> fileMap) throws IOException {
+
+        Map<String, List<MultipartFile>> variantImageMap = new HashMap<>();
+        for (Map.Entry<String, List<MultipartFile>> entry : fileMap.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith("variantImages_")) {
+                variantImageMap.put(key, entry.getValue());
+            }
+        }
+
+        Product updatedProduct = service.updateProductWithImages(id, dto, images, variantImageMap);
+
+        if (updatedProduct == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to update product"));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Product updated successfully"));
+    }
+
     @GetMapping("/adminProductDetail/{id}")
     public ProductDTO getProductDetail(@PathVariable Long id) {
         return service.getProductDetailById(id);
     }
+
+    @GetMapping("/productquantity/{id}")
+    public ResponseEntity<?> getProductQuantity(@PathVariable("id") Long productId) {
+        Long quantity = service.getProductQuantity(productId);
+        return ResponseEntity.ok(quantity);
+    }
+
+    @GetMapping("/variantstock/{id}")
+    public ResponseEntity<?> getProductVariantStock(@PathVariable("id") Long variantId) {
+        Integer stock = service.getProductVariantStock(variantId);
+        return ResponseEntity.ok(stock);
+    }
+
+    @GetMapping("/latest")
+    public ResponseEntity<List<Product>> getLatestProducts() {
+        return ResponseEntity.ok(service.getLatest4Products());
+    }
+
+    @GetMapping("/topordered")
+    public ResponseEntity<List<Product>> getTopOrderedProducts() {
+        return ResponseEntity.ok(service.getTop4OrderedProducts());
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String keyword) {
+        List<ProductDTO> results = service.searchProducts(keyword);
+        return ResponseEntity.ok(results);
+    }
+
 }

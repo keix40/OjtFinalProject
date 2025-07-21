@@ -69,4 +69,9 @@ export class ReviewService {
   getTop5StarReviews(): Observable<ReviewDTO[]> {
     return this.http.get<ReviewDTO[]>(`http://localhost:8080/review/top5star`);
   }
+
+  getUserReviews(userId: number) {
+    return this.http.get<ReviewDTO[]>(`http://localhost:8080/review/getallreviewbyid/${userId}`);
+  }
+  
 }

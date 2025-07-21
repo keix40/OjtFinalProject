@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ProductService } from '../services/product.service';
-import { DiscountService, DiscountEventDTO } from '../services/discount.service';
+import { DiscountService, DiscountRequestDTO } from '../services/discount.service';
 import { ProductDTO } from '../product';
 import { Router } from '@angular/router';
 import { BrandService, BrandHasCategory } from '../services/brand.service';
@@ -36,7 +36,7 @@ export class DiscountInsertComponent implements OnInit {
   duplicateConflicts: any[] = [];
   showDuplicateWarning = false;
   conflictResolutions: Map<string, string> = new Map(); // Store resolution choices for each conflict
-  pendingDiscountDTO: DiscountEventDTO | null = null; // Store the DTO that was being submitted
+  pendingDiscountDTO: DiscountRequestDTO | null = null; // Store the DTO that was being submitted
   brandSearchControl = new FormControl('');
   categorySearchControl = new FormControl('');
   brandCategorySearchControl = new FormControl('');
@@ -123,7 +123,7 @@ export class DiscountInsertComponent implements OnInit {
       status: [true, Validators.required],
       isEvent: [false, Validators.required],
     }, {
-      validators: [this.startEndDateNotSameTimeValidator(), this.startEndDateNotPastValidator()]
+      validators: [this.startEndDateNotSameTimeValidator()]
     });
     
     // Add target type change listener to update validation
@@ -185,22 +185,6 @@ export class DiscountInsertComponent implements OnInit {
       const end = group.get('endDate')?.value;
       if (start && end && new Date(start).getTime() === new Date(end).getTime()) {
         return { sameDateTime: true };
-      }
-      return null;
-    };
-  }
-
-  // Validator: start and end date must be present or future (not past)
-  startEndDateNotPastValidator(): ValidatorFn {
-    return (group: AbstractControl): { [key: string]: any } | null => {
-      const start = group.get('startDate')?.value;
-      const end = group.get('endDate')?.value;
-      const now = new Date();
-      if (start && new Date(start) < now) {
-        return { startInPast: true };
-      }
-      if (end && new Date(end) < now) {
-        return { endInPast: true };
       }
       return null;
     };
@@ -420,7 +404,7 @@ export class DiscountInsertComponent implements OnInit {
   }
 
   // New method to check for duplicate discounts
-  checkForDuplicateDiscounts(dto: DiscountEventDTO): void {
+  checkForDuplicateDiscounts(dto: DiscountRequestDTO): void {
     this.discountService.checkDuplicateDiscount(dto).subscribe({
       next: (conflicts) => {
         if (conflicts && conflicts.length > 0) {
@@ -498,7 +482,7 @@ export class DiscountInsertComponent implements OnInit {
   }
 
   // Method to create discount with resolution
-  createDiscountWithResolution(dto: DiscountEventDTO, conflictResolutions: any): void {
+  createDiscountWithResolution(dto: DiscountRequestDTO, conflictResolutions: any): void {
     console.log('[Discount] Sending createDiscountWithResolution payload:', dto, conflictResolutions);
     this.discountService.createDiscountWithResolution(dto, conflictResolutions).subscribe({
       next: () => {
@@ -515,7 +499,7 @@ export class DiscountInsertComponent implements OnInit {
   }
 
   // Method to create discount after duplicate check
-  createDiscount(dto: DiscountEventDTO): void {
+  createDiscount(dto: DiscountRequestDTO): void {
     this.discountService.createDiscount(dto).subscribe({
       next: () => {
         this.isSubmitting = false;
@@ -568,7 +552,7 @@ export class DiscountInsertComponent implements OnInit {
     this.isSubmitting = true;
     const form = this.discountForm.value;
 
-    const dto: DiscountEventDTO = {
+    const dto: DiscountRequestDTO = {
       name: form.name,
       description: form.description,
       discountType: form.discountType,

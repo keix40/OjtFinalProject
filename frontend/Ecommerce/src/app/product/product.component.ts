@@ -10,6 +10,7 @@ import { AttributeService } from '../services/attribute.service';
 import { ModalService } from '../services/modal.service';
 import { AttributeAndValueDTO } from '../attribute';
 import Swal from 'sweetalert2';
+import { ActivatedRoute } from '@angular/router';
 
 
 // ===== Interfaces =====
@@ -66,6 +67,8 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
   submitted = false;
   hasVariant = false;
   sku: string = 'XXXXXXXXXXX';
+  editMode = false;
+  editingProductId: string | null = null;
 
   // ===== Data Properties =====
   categories: Category[] = [];
@@ -76,6 +79,13 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
   // ===== Image Properties =====
   selectedImages: File[] = [];
   selectedImagesPreview: string[] = [];
+  existingImages: any[] = [];
+  imagesMarkedForDeletion: number[] = [];
+  // For variant images
+  existingVariantImages: { [variantIndex: number]: any[] } = {};
+  variantImagesMarkedForDeletion: { [variantIndex: number]: number[] } = {};
+  newVariantImages: { [variantIndex: number]: File[] } = {};
+  newVariantImagesPreview: { [variantIndex: number]: string[] } = {};
   isDragging = false;
   uploadError = '';
 
@@ -94,6 +104,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
 
   // ===== New Form Array =====
   categoryBrandArray!: FormArray;
+  removedCategoryBrandPairs: any[] = [];
 
   // ===== Constructor =====
   constructor(
@@ -105,6 +116,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     private router: Router,
     private modalService: ModalService,
     private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute
   ) {
     this.initForm();
   }
@@ -142,6 +154,16 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     });
     // Also run once on init
     updateHasVariantState();
+
+    // Check for edit mode
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.editMode = true;
+        this.editingProductId = id;
+        this.loadProductForEdit(id);
+      }
+    });
   }
 
   ngAfterViewInit(): void {
@@ -239,12 +261,25 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
   }
 
   get canSubmitProduct(): boolean {
-    const productQuantity = Number(this.productForm.get('quantity')?.value ?? 0);
-    const totalVariantStock = this.variants.controls.reduce((sum, variant) => {
-      const stock = Number((variant as FormGroup).get('stock')?.value ?? 0);
-      return sum + (isNaN(stock) ? 0 : stock);
-    }, 0);
-    return productQuantity > 0 && totalVariantStock === productQuantity;
+    // Allow submit if all required fields are present and valid
+    if (!this.productForm.valid) return false;
+    if (this.productForm.get('hasVariant')?.value) {
+      // For variants, check that all required fields are present
+      for (let i = 0; i < this.variants.length; i++) {
+        const variant = this.variants.at(i) as FormGroup;
+        if (!variant.get('sku')?.value || !variant.get('price')?.valid || !variant.get('stock')?.valid) {
+          return false;
+        }
+      }
+      // Optionally, check that total variant stock matches product quantity
+      const productQuantity = Number(this.productForm.get('quantity')?.value ?? 0);
+      const totalVariantStock = this.variants.controls.reduce((sum, variant) => {
+        const stock = Number((variant as FormGroup).get('stock')?.value ?? 0);
+        return sum + (isNaN(stock) ? 0 : stock);
+      }, 0);
+      return productQuantity > 0 && totalVariantStock === productQuantity;
+    }
+    return true;
   }
 
   // ===== Validation for Variant Checkbox =====
@@ -274,6 +309,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     });
   }
 
+  // After loading brands, update availableBrands for each group
   private loadBrands(): void {
     this.brandService.getAllBrand().subscribe({
       next: (data: Brand[]) => {
@@ -328,6 +364,81 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     });
   }
 
+  // Patch variants (update by id if exists, ensure all fields are present)
+  loadProductForEdit(id: string): void {
+    this.proService.getProductDetailById(id).subscribe(product => {
+      this.productForm.patchValue({
+        productName: product.productName,
+        productCode: product.productCode,
+        price: product.price,
+        quantity: product.quantity,
+        description: product.description,
+        status: product.status,
+        hasVariant: !!product.hasVariant
+      });
+      // Patch categories & brands
+      if (product.categoryBrandArray && product.categoryBrandArray.length > 0) {
+        this.categoryBrandArray.clear();
+        product.categoryBrandArray.forEach((pair: any) => {
+          let availableBrands = this.brands;
+          this.categoryBrandArray.push(this.fb.group({
+            categoryId: [pair.categoryId, Validators.required],
+            brandId: [pair.brandId],
+            availableBrands: [availableBrands]
+          }));
+        });
+      }
+      // Patch product images
+      this.selectedImages = [];
+      this.selectedImagesPreview = [];
+      this.existingImages = (product.productImages || []).filter((img: any) => !img.variantId).map((img: any) => ({
+        id: img.id,
+        imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`
+      }));
+      this.imagesMarkedForDeletion = [];
+      // Patch variants and their images
+      if (product.variants && Array.isArray(product.variants)) {
+        const variantsFormArray = this.productForm.get('variants') as FormArray;
+        variantsFormArray.clear();
+        this.existingVariantImages = {};
+        this.variantImagesMarkedForDeletion = {};
+        this.newVariantImages = {};
+        this.newVariantImagesPreview = {};
+        product.variants.forEach((variant: any, idx: number) => {
+          variantsFormArray.push(this.fb.group({
+            id: [variant.id],
+            sku: [variant.sku, Validators.required],
+            price: [variant.price, [Validators.required, Validators.min(0.01)]],
+            stock: [variant.stock, [Validators.required, Validators.min(1)]],
+            attributes: this.fb.array(variant.attributes || []),
+            images: [[]]
+          }));
+          // Existing images for this variant
+          this.existingVariantImages[idx] = (product.productImages || []).filter((img: any) => img.variantId === variant.id).map((img: any) => ({
+            id: img.id,
+            imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`
+          }));
+          this.variantImagesMarkedForDeletion[idx] = [];
+          this.newVariantImages[idx] = [];
+          this.newVariantImagesPreview[idx] = [];
+        });
+      }
+      // Patch attributes
+      if (product.attributes && Array.isArray(product.attributes)) {
+        this.productAttributes = product.attributes.map((attr: any) => ({
+          attributeId: attr.attributeId,
+          attributeName: attr.attributeName,
+          allowedValues: (attr.values || []).map((val: any) => ({
+            id: val.id,
+            value: val.value,
+            selected: val.selected,
+            isNew: false
+          }))
+        }));
+      }
+    });
+  }
+
   // ===== Image Handling Methods =====
   onImageSelect(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -374,11 +485,27 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     reader.readAsDataURL(file);
   }
 
-  removeImage(index: number): void {
+  // Product image remove
+  removeImage(index: number, isExisting: boolean = false): void {
+    if (isExisting) {
+      this.removeExistingImage(index);
+    } else {
+      this.removeNewImage(index);
+    }
+    setTimeout(() => this.initializeLucideIcons(), 100);
+  }
+
+  removeExistingImage(index: number): void {
+    const img = this.existingImages[index];
+    if (img && img.id) {
+      this.imagesMarkedForDeletion.push(img.id);
+    }
+    this.existingImages.splice(index, 1);
+  }
+
+  removeNewImage(index: number): void {
     this.selectedImages.splice(index, 1);
     this.selectedImagesPreview.splice(index, 1);
-    // Re-initialize icons after removing image
-    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
   // ===== Drag and Drop Methods =====
@@ -647,13 +774,16 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
   private createVariants(combinations: any[][]): void {
     // Preserve existing variant data by SKU
     const oldVariantsMap = new Map<string, any>();
-    this.variants.controls.forEach((variant: any) => {
+    this.variants.controls.forEach((variant: any, idx: number) => {
       const sku = variant.get('sku')?.value;
       if (sku) {
         oldVariantsMap.set(sku, {
           stock: variant.get('stock')?.value,
           price: variant.get('price')?.value,
-          images: variant.get('images')?.value
+          images: variant.get('images')?.value,
+          // Preserve new variant images and previews
+          newVariantImages: this.newVariantImages[idx] || [],
+          newVariantImagesPreview: this.newVariantImagesPreview[idx] || []
         });
       }
     });
@@ -667,8 +797,6 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     const categories = this.getCategoryNames();
     const brands = this.getBrandNames();
     const basePrice = Number(this.productForm.get('price')?.value ?? 0);
-    console.log('[DEBUG] Product price (basePrice):', basePrice);
-
     // Only generate variants if every attribute has at least one selected value
     if (!combinations.length || combinations.some(attrs => !attrs.length)) {
       return;
@@ -699,9 +827,16 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
         stock: [oldData?.stock ?? null, [Validators.required, Validators.min(1)]],
         images: [oldData?.images ?? []]
       });
-      console.log(`[DEBUG] Generated variant #${idx + 1} price:`, basePrice);
-      console.log(`[DEBUG] Variant #${idx + 1} form price value:`, variant.get('price')?.value);
       this.variants.push(variant);
+
+      // Restore newVariantImages and newVariantImagesPreview for this index
+      if (oldData) {
+        this.newVariantImages[idx] = oldData.newVariantImages || [];
+        this.newVariantImagesPreview[idx] = oldData.newVariantImagesPreview || [];
+      } else {
+        this.newVariantImages[idx] = [];
+        this.newVariantImagesPreview[idx] = [];
+      }
     });
 
     // Subscribe to stock changes for all variants
@@ -747,44 +882,32 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     if (input) input.click();
   }
 
-  onVariantImageChange(event: Event, index: number): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files) return;
-
-    const files = Array.from(input.files);
-    const variant = this.variants.at(index);
-    const currentImages = variant.get('images')?.value || [];
-
-    for (let file of files) {
-      if (!this.validateFile(file)) continue;
-
-      this.createVariantImagePreview(file, currentImages, variant);
+  // Variant image add
+  onVariantImageChange(event: any, variantIndex: number): void {
+    const files: FileList = event.target.files;
+    if (!this.newVariantImages[variantIndex]) this.newVariantImages[variantIndex] = [];
+    if (!this.newVariantImagesPreview[variantIndex]) this.newVariantImagesPreview[variantIndex] = [];
+    for (const file of Array.from(files)) {
+      this.newVariantImages[variantIndex].push(file);
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.newVariantImagesPreview[variantIndex].push(e.target.result);
+      };
+      reader.readAsDataURL(file);
     }
-    input.value = '';
-    // Re-initialize icons after adding variant images
-    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
-  private createVariantImagePreview(file: File, currentImages: any[], variant: any): void {
-    const reader = new FileReader();
-    reader.onload = () => {
-      currentImages.push({
-        file: file,
-        preview: reader.result as string
-      });
-      variant.get('images')?.setValue(currentImages);
-      // Re-initialize icons after creating variant image preview
-      setTimeout(() => this.initializeLucideIcons(), 100);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  removeVariantImage(variantIndex: number, imageIndex: number): void {
-    const variant = this.variants.at(variantIndex);
-    const currentImages = variant.get('images')?.value || [];
-    currentImages.splice(imageIndex, 1);
-    variant.get('images')?.setValue(currentImages);
-    // Re-initialize icons after removing variant image
+  // Variant image remove
+  removeVariantImage(variantIndex: number, imageIndex: number, isExisting: boolean = false): void {
+    if (isExisting) {
+      const img = this.existingVariantImages[variantIndex][imageIndex];
+      if (!this.variantImagesMarkedForDeletion[variantIndex]) this.variantImagesMarkedForDeletion[variantIndex] = [];
+      this.variantImagesMarkedForDeletion[variantIndex].push(img.id);
+      this.existingVariantImages[variantIndex].splice(imageIndex, 1);
+    } else {
+      this.newVariantImages[variantIndex].splice(imageIndex, 1);
+      this.newVariantImagesPreview[variantIndex].splice(imageIndex, 1);
+    }
     setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
@@ -938,45 +1061,69 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
 
     if (this.productForm.valid) {
       const formData = this.productForm.value;
-
       const fd = new FormData();
-
       // Map category-brand pairs from the FormArray
       const categoryBrandPairs = this.categoryBrandArray.controls.map((group: any) => ({
         categoryId: group.get('categoryId')?.value,
         brandId: group.get('brandId')?.value || null
       }));
-
       formData.categoryBrandPairs = categoryBrandPairs;
-
+      formData.categoryBrandPairsMarkedForDeletion = this.removedCategoryBrandPairs;
+      formData.imagesMarkedForDeletion = this.imagesMarkedForDeletion;
+      formData.variantImagesMarkedForDeletion = this.variantImagesMarkedForDeletion;
       const productBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
       fd.append('product', productBlob);
-
+      // Product images
       for (const file of this.selectedImages) {
         fd.append('images', file);
       }
-
+      // Variant images
       if (formData.variants && formData.variants.length > 0) {
         formData.variants.forEach((variant: any, variantIndex: number) => {
-          if (variant.images && variant.images.length > 0) {
-            variant.images.forEach((image: any) => {
-              if (image.file) {
-                fd.append(`variantImages_${variantIndex}`, image.file);
-              }
+          // New images
+          if (this.newVariantImages[variantIndex] && this.newVariantImages[variantIndex].length > 0) {
+            this.newVariantImages[variantIndex].forEach((file: File) => {
+              fd.append(`variantImages_${variantIndex}`, file);
             });
           }
         });
       }
-
+      if (this.editMode && this.editingProductId) {
+        // Call update product
+        this.proService.updateProduct(this.editingProductId, fd).subscribe({
+          next: (data) => {
+            // Show Swal success box
+            Swal.fire({
+              icon: 'success',
+              title: 'Product updated successfully!',
+              showConfirmButton: true,
+              confirmButtonText: 'OK'
+            }).then(() => {
+              this.router.navigate(['/productlist']);
+            });
+          },
+          error: (err) => {
+            console.error('Error updating product:', err);
+          }
+        });
+      } else {
+        // Create new product
       this.proService.createProduct(fd).subscribe({
         next: (data) => {
-          console.log('Product created:', data);
-          this.router.navigate(['/productlist']);
+          Swal.fire({
+            icon: 'success',
+            title: 'Product created successfully!',
+            showConfirmButton: true,
+            confirmButtonText: 'OK'
+          }).then(() => {
+            this.router.navigate(['/productlist']);
+          });
         },
         error: (err) => {
           console.error('Error creating product:', err);
         }
       });
+      }
     } else {
       this.markFormGroupTouched(this.productForm);
     }
@@ -1067,9 +1214,13 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
 
   removeCategoryBrandPair(index: number) {
     if (this.categoryBrandArray.length > 1) {
+      const group = this.categoryBrandArray.at(index);
+      const removedPair = {
+        categoryId: group.get('categoryId')?.value,
+        brandId: group.get('brandId')?.value
+      };
+      this.removedCategoryBrandPairs.push(removedPair);
       this.categoryBrandArray.removeAt(index);
-      // Re-initialize icons after removing category-brand pair
-      setTimeout(() => this.initializeLucideIcons(), 100);
     }
   }
 
@@ -1146,5 +1297,13 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
         lastEditedVariant.get('stock')?.setValue(newStock);
       });
     }
+  }
+
+  // TrackBy functions for image ngFor
+  trackByExistingImage(index: number, item: any): any {
+    return item.id || index;
+  }
+  trackByNewImage(index: number, item: any): any {
+    return index;
   }
 }

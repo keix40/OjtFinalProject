@@ -11,6 +11,7 @@ import com.Ojt.Ecommerce.entity.ProductHasCategory;
 import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +52,7 @@ public class CategoryController {
         return ResponseEntity.ok(service.getCategoryTree());
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "CATEGORY", description = "Created category", severityLevel = "MEDIUM")
     @PostMapping(value = "/addcategory", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveCategory(
             @RequestPart("category") CategoryDTO dto,
@@ -135,6 +137,7 @@ public class CategoryController {
         return service.getAllCategoryWithBrand();
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "CATEGORY", description = "Updated category", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateCategory(
             @PathVariable Long id,
@@ -150,6 +153,7 @@ public class CategoryController {
         }
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "CATEGORY", description = "Deleted category", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     public ResponseEntity<?> softDeleteCategory(@PathVariable Long id) {
         try {

@@ -8,6 +8,7 @@ import com.Ojt.Ecommerce.entity.Category;
 import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,6 +51,7 @@ public class BrandController {
         return service.getAllBrandByCateId(id);
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "BRAND", description = "Created brand", severityLevel = "MEDIUM")
     @PostMapping(value = "/addbrand", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> saveBrand(
             @RequestPart("brand") BrandDTO dto,
@@ -108,6 +110,7 @@ public class BrandController {
         return ResponseEntity.ok("Brand created successfully.");
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "BRAND", description = "Updated brand", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateBrand(@PathVariable Long id,
                                          @RequestPart("brand") BrandDTO dto,
@@ -152,6 +155,7 @@ public class BrandController {
         }
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "BRAND", description = "Deleted brand", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     public ResponseEntity<?> deleteBrand(@PathVariable Long id) {
         Brand existing = service.getBrandById(id);

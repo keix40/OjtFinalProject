@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UserPersonalInfoComponent } from './user-personal-info/user-personal-info.component';
+import { OrderService } from '../services/order.service';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
 interface UserDetails {
@@ -35,6 +36,7 @@ export class UserProfileComponent implements OnInit {
   };
 
   activeSection: string = 'orders';
+  orderCount: number = 0; // <-- Add this
 
   breadcrumbItems = [
     { label: 'Home', link: '/home' },
@@ -44,11 +46,13 @@ export class UserProfileComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private orderService: OrderService // <-- Inject OrderService
   ) { }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadUserDetails();
+    this.loadOrderCount(); // <-- Load order count on init
     // Get section from query params
     this.route.queryParams.subscribe(params => {
       if (params['section']) {
@@ -73,6 +77,23 @@ const fullImageUrl = backendBaseUrl + rawImagePath;
       profileImage: fullImageUrl,
       roles: this.authService.getRoles()
     };
+  }
+
+  loadOrderCount() {
+    const user = this.authService.getDecodedToken();
+    const userId = user ? user.id : null;
+    if (!userId) {
+      this.orderCount = 0;
+      return;
+    }
+    this.orderService.getOrderByUserId(userId).subscribe({
+      next: (orders) => {
+        this.orderCount = Array.isArray(orders) ? orders.length : 0;
+      },
+      error: () => {
+        this.orderCount = 0;
+      }
+    });
   }
 
   selectSection(section: string) {

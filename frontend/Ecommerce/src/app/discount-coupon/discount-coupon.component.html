@@ -1,80 +1,93 @@
-<div class="container mt-4">
-  <h2>{{ isEditMode ? 'Edit Discount' : 'Create Discount Coupon' }}</h2>
-  <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="coupon-form">
-    <div class="form-grid">
-      <!-- Row 1: Name & Code -->
-      <div class="form-group">
-        <label for="name" class="form-label">Name</label>
-        <input id="name" type="text" class="form-control" formControlName="name" required placeholder="Discount name" title="Discount name">
-        <div *ngIf="discountForm.get('name')?.invalid && discountForm.get('name')?.touched" class="text-danger small">Name is required.</div>
-      </div>
-      <div class="form-group">
-        <label for="code" class="form-label">Code</label>
-        <input id="code" type="text" class="form-control" formControlName="code" required placeholder="Discount code" title="Discount code">
-        <div *ngIf="discountForm.get('code')?.hasError('required') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty)" class="text-danger small">Code is required.</div>
-        <div *ngIf="discountForm.get('code')?.hasError('codeExists') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty) && !discountForm.get('code')?.hasError('required')" class="text-danger small">This code is already exist</div>
-      </div>
-      <!-- Row 2: Discount Type & Value -->
-      <div class="form-group">
-        <label for="discountType" class="form-label">Discount Type</label>
-        <select id="discountType" class="form-select" formControlName="discountType" title="Discount type">
-          <option value="PERCENTAGE">Percentage</option>
-          <option value="FIXED">Fixed</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="discountValue" class="form-label">Discount Value</label>
-        <input id="discountValue" type="number" class="form-control" formControlName="discountValue" required
-          [attr.max]="discountForm.get('discountType')?.value === 'PERCENTAGE' ? 100 : null"
-          [attr.min]="discountForm.get('discountType')?.value === 'FIXED' ? 1 : null"
-          placeholder="Value" title="Discount value" (wheel)="onWheel($event)" (input)="onDiscountValueInput($event)">
-        <div *ngIf="discountForm.get('discountType')?.value === 'PERCENTAGE' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)">
-          <div *ngIf="discountForm.get('discountValue')?.value === null || discountForm.get('discountValue')?.value === ''">
-            <span class="text-danger small">Discount percentage is required.</span>
+<div class="p-4 bg-slate-50 min-h-screen">
+<!-- Header Section (outside container) -->
+<div class="text-center mb-8 mt-8">
+  <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
+    <i class="fas fa-percent w-8 h-8 text-white text-3xl flex items-center justify-center"></i>
+  </div>
+  <h2 class="text-3xl font-bold text-gray-900 mb-2">{{ isEditMode ? 'Edit Discount Coupon' : 'Create Discount Coupon' }}</h2>
+  <p class="text-gray-600 text-lg">{{ isEditMode ? 'Update an existing discount coupon' : 'Add a new discount coupon to your store' }}</p>
+</div>
+
+<!-- Modern Centered Card Container -->
+<div class="flex justify-center items-center min-h-[60vh]">
+  <div class="w-full max-w-2xl rounded-2xl shadow-xl border border-gray-100 bg-white p-8">
+    <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="coupon-form">
+      <div class="form-grid">
+        <!-- Row 1: Name & Code -->
+        <div class="form-group">
+          <label for="name" class="form-label">Name</label>
+          <input id="name" type="text" class="form-control" formControlName="name" required placeholder="Discount name" title="Discount name">
+          <div *ngIf="discountForm.get('name')?.invalid && discountForm.get('name')?.touched" class="text-danger small">Name is required.</div>
+        </div>
+        <div class="form-group">
+          <label for="code" class="form-label">Code</label>
+          <input id="code" type="text" class="form-control" formControlName="code" required placeholder="Discount code" title="Discount code">
+          <div *ngIf="discountForm.get('code')?.hasError('required') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty)" class="text-danger small">Code is required.</div>
+          <div *ngIf="discountForm.get('code')?.hasError('codeExists') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty) && !discountForm.get('code')?.hasError('required')" class="text-danger small">This code is already exist</div>
+        </div>
+        <!-- Row 2: Discount Type & Value -->
+        <div class="form-group">
+          <label for="discountType" class="form-label">Discount Type</label>
+          <select id="discountType" class="form-select" formControlName="discountType" title="Discount type">
+            <option value="PERCENTAGE">Percentage</option>
+            <option value="FIXED">Fixed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="discountValue" class="form-label">Discount Value</label>
+          <input id="discountValue" type="number" class="form-control" formControlName="discountValue" required
+            [attr.max]="discountForm.get('discountType')?.value === 'PERCENTAGE' ? 100 : null"
+            [attr.min]="discountForm.get('discountType')?.value === 'FIXED' ? 1 : null"
+            placeholder="Value" title="Discount value" (wheel)="onWheel($event)" (input)="onDiscountValueInput($event)">
+          <div *ngIf="discountForm.get('discountType')?.value === 'PERCENTAGE' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)">
+            <div *ngIf="discountForm.get('discountValue')?.value === null || discountForm.get('discountValue')?.value === ''">
+              <span class="text-danger small">Discount percentage is required.</span>
+            </div>
+            <div *ngIf="discountForm.get('discountValue')?.value == 0 && discountForm.get('discountValue')?.value !== '' && discountForm.get('discountValue')?.value !== null">
+              <span class="text-danger small">Discount percentage must be between 1 and 100.</span>
+            </div>
+            <div *ngIf="discountForm.get('discountValue')?.hasError('percentRange') && discountForm.get('discountValue')?.value && discountForm.get('discountValue')?.value != 0">
+              <span class="text-danger small">Discount percentage must be between 1 and 100.</span>
+            </div>
           </div>
-          <div *ngIf="discountForm.get('discountValue')?.value == 0 && discountForm.get('discountValue')?.value !== '' && discountForm.get('discountValue')?.value !== null">
-            <span class="text-danger small">Discount percentage must be between 1 and 100.</span>
-          </div>
-          <div *ngIf="discountForm.get('discountValue')?.hasError('percentRange') && discountForm.get('discountValue')?.value && discountForm.get('discountValue')?.value != 0">
-            <span class="text-danger small">Discount percentage must be between 1 and 100.</span>
+          <div *ngIf="discountForm.get('discountType')?.value === 'FIXED' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)">
+            <div *ngIf="discountForm.get('discountValue')?.value === null || discountForm.get('discountValue')?.value === ''">
+              <span class="text-danger small">Discount amount is required.</span>
+            </div>
+            <div *ngIf="discountForm.get('discountValue')?.value == 0 && discountForm.get('discountValue')?.value !== '' && discountForm.get('discountValue')?.value !== null">
+              <span class="text-danger small">Discount amount must be greater than 0.</span>
+            </div>
+            <div *ngIf="discountForm.get('discountValue')?.hasError('fixedInvalid') && discountForm.get('discountValue')?.value && discountForm.get('discountValue')?.value != 0">
+              <span class="text-danger small">Discount amount must be greater than 0.</span>
+            </div>
           </div>
         </div>
-        <div *ngIf="discountForm.get('discountType')?.value === 'FIXED' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)">
-          <div *ngIf="discountForm.get('discountValue')?.value === null || discountForm.get('discountValue')?.value === ''">
-            <span class="text-danger small">Discount amount is required.</span>
-          </div>
-          <div *ngIf="discountForm.get('discountValue')?.value == 0 && discountForm.get('discountValue')?.value !== '' && discountForm.get('discountValue')?.value !== null">
-            <span class="text-danger small">Discount amount must be greater than 0.</span>
-          </div>
-          <div *ngIf="discountForm.get('discountValue')?.hasError('fixedInvalid') && discountForm.get('discountValue')?.value && discountForm.get('discountValue')?.value != 0">
-            <span class="text-danger small">Discount amount must be greater than 0.</span>
-          </div>
+        <!-- Row 3: Start Date & End Date -->
+        <div class="form-group">
+          <label for="startDate" class="form-label">Start Date</label>
+          <input id="startDate" type="date" class="form-control" formControlName="startDate" required placeholder="Start date" title="Start date">
+          <div *ngIf="discountForm.get('startDate')?.hasError('required') && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger small">Start date is required.</div>
+        </div>
+        <div class="form-group">
+          <label for="endDate" class="form-label">End Date</label>
+          <input id="endDate" type="date" class="form-control" formControlName="endDate" required placeholder="End date" title="End date">
+          <div *ngIf="discountForm.get('endDate')?.hasError('required') && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger small">End date is required.</div>
         </div>
       </div>
-      <!-- Row 3: Start Date & End Date -->
-      <div class="form-group">
-        <label for="startDate" class="form-label">Start Date</label>
-        <input id="startDate" type="date" class="form-control" formControlName="startDate" required placeholder="Start date" title="Start date">
-        <div *ngIf="discountForm.get('startDate')?.hasError('required') && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger small">Start date is required.</div>
+      <!-- Switch for Active Coupon -->
+      <div class="form-switch-row">
+        <label class="switch-label" for="statusSwitch">Active coupon now</label>
+        <label class="switch">
+          <input id="statusSwitch" type="checkbox" formControlName="status">
+          <span class="slider round"></span>
+        </label>
       </div>
-      <div class="form-group">
-        <label for="endDate" class="form-label">End Date</label>
-        <input id="endDate" type="date" class="form-control" formControlName="endDate" required placeholder="End date" title="End date">
-        <div *ngIf="discountForm.get('endDate')?.hasError('required') && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger small">End date is required.</div>
+      <div class="form-actions">
+        <button type="submit" [disabled]="discountForm.invalid" class="px-6 py-3 bg-slate-600 text-white rounded-xl font-semibold hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed me-2">{{ isEditMode ? 'Update' : 'Create' }}</button>
+        <button type="button" class="px-6 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors duration-200" (click)="resetForm()">Reset</button>
       </div>
-    </div>
-    <!-- Switch for Active Coupon -->
-    <div class="form-switch-row">
-      <label class="switch-label" for="statusSwitch">Active coupon now</label>
-      <label class="switch">
-        <input id="statusSwitch" type="checkbox" formControlName="status">
-        <span class="slider round"></span>
-      </label>
-    </div>
-    <div class="form-actions">
-      <button type="submit" class="btn btn-primary me-2" [disabled]="discountForm.invalid">{{ isEditMode ? 'Update' : 'Create' }}</button>
-      <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
-    </div>
-    <div *ngIf="message" class="alert alert-info mt-3">{{ message }}</div>
-  </form>
+      <div *ngIf="message" class="alert alert-info mt-3">{{ message }}</div>
+    </form>
+  </div>
+</div>
 </div>

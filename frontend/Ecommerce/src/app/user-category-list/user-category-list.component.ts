@@ -41,6 +41,7 @@ export class UserCategoryListComponent implements OnInit {
   }
 
   goToCategory(cat: Category) {
-    this.router.navigate(['/uProductlist'], { queryParams: { category: cat.name } });
+    // Already navigates with category name as query param
+    this.router.navigate(['/userproductlist'], { queryParams: { category: cat.name } });
   }
 }

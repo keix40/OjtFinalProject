@@ -1,60 +1,122 @@
 <div class="p-4 bg-slate-50 min-h-screen">
   <!-- Header Section -->
   <div class="text-center mb-8">
-    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-      <i data-lucide="shopping-bag" class="w-8 h-8 text-blue-500"></i>
+    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
+      <i data-lucide="shopping-bag" class="w-8 h-8 text-white"></i>
     </div>
-    <h2 class="text-3xl font-bold text-gray-900 mb-2">Order Management</h2>
-    <p class="text-gray-600">Manage and track all customer orders, status, and fulfillment</p>
-  </div>
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-    <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Order Management</h2>
-    <div class="flex gap-2 flex-wrap">
-      <button class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition flex items-center gap-2 shadow-sm"
-              (click)="exportToExcel()" title="Export to Excel">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
-        Export Excel
-      </button>
-      <button class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition flex items-center gap-2 shadow-sm"
-              (click)="exportToPDF()" title="Export to PDF">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd"/></svg>
-        Export PDF
-      </button>
-      <button class="px-4 py-2 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition border border-slate-200 flex items-center gap-2 shadow-sm"
-              (click)="loadOrders()">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        Refresh
-      </button>
-    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Order Management</h1>
+    <p class="text-gray-600 text-lg">Manage and track all customer orders, status, and fulfillment</p>
   </div>
 
-  <!-- Filters Card -->
-  <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border border-slate-200">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
-        <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
-                [(ngModel)]="selectedStatus" (change)="onStatusChange()">
-          <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
-        </select>
+<!-- Filters Card -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <!-- Search and Filters -->
+    <div class="flex flex-col sm:flex-row gap-4 flex-1">
+      <div class="relative flex-1 max-w-md">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Search order code or status..."
+          class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+        >
       </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Date Range</label>
-        <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
-                [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
-          <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
-        </select>
+  
+      <div class="flex items-center gap-2 text-sm text-gray-600">
+        <span class="font-medium">{{ totalItems }}</span>
+        <span>Orders found</span>
       </div>
     </div>
-    <div class="flex gap-2">
-      <button class="px-4 py-2 bg-rose-50 text-rose-700 rounded-lg border border-rose-200 hover:bg-rose-100 transition disabled:opacity-50"
-              [disabled]="selectedOrders.length === 0">
-        Cancel Orders
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+      <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+              [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+        <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-700 mb-1">Date Range</label>
+      <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+              [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
+        <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
+      </select>
+    </div>
+  </div>
+  </div>
+
+  <!-- Export Dropdowns -->
+  <div class="flex gap-2 mb-4">
+    <!-- Excel Export Dropdown -->
+    <div class="relative">
+      <button 
+        (click)="toggleExcelDropdown()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors shadow-sm">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
+        </svg>
+        Export Excel
+        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': excelDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
       </button>
-      <button class="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg border border-blue-200 hover:bg-blue-100 transition disabled:opacity-50"
-              (click)="exportSelected()" [disabled]="selectedOrders.length === 0">
-        Export Selected
+      <div *ngIf="excelDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
+          (click)="exportToExcel(); excelDropdownOpen = false">
+          <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
+          </svg>
+          Export All Orders
+        </button>
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="selectedOrders.length === 0"
+          (click)="exportSelected(); excelDropdownOpen = false">
+          <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          Export Selected ({{ selectedOrders.length }})
+        </button>
+      </div>
+    </div>
+    <!-- PDF Export Dropdown -->
+    <div class="relative">
+      <button 
+        (click)="togglePdfDropdown()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors shadow-sm">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
+        </svg>
+        Export PDF
+        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': pdfDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
       </button>
+      <div *ngIf="pdfDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
+          (click)="exportToPDF(); pdfDropdownOpen = false">
+          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
+          </svg>
+          Export All Orders
+        </button>
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="selectedOrders.length === 0"
+          (click)="exportToPDF(); pdfDropdownOpen = false">
+          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          Export Selected ({{ selectedOrders.length }})
+        </button>
+      </div>
     </div>
   </div>
 
@@ -67,16 +129,16 @@
             <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
                    [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
           </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Order</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Items</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Total</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-slate-200">
-        <tr *ngFor="let order of filteredOrders" class="hover:bg-slate-50">
+        <tr *ngFor="let order of paginatedOrders" class="hover:bg-slate-50">
           <td class="px-4 py-3 whitespace-nowrap">
             <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
                    [(ngModel)]="order.checked" (change)="updateSelection()">
@@ -93,10 +155,10 @@
           </td>
           <td class="px-4 py-3">
             <span class="text-slate-700">{{ getTotalItems(order) }} items</span>
-            <span class="block text-xs text-slate-500">{{ order.products.length }} products</span>
+            <!-- <span class="block text-xs text-slate-500">{{ order.products.length }} products</span> -->
           </td>
           <td class="px-4 py-3">
-            <span class="font-semibold text-rose-600">{{ order.total }} ks</span>  
+            <span class="font-semibold text-gray-600">{{ order.total }} ks</span>  
 
             <span class="block text-xs text-rose-600" *ngIf="order.discountAmount > 0">
               -{{ order.discountAmount }} ks discount
@@ -137,6 +199,10 @@
           </td>
           <td class="px-4 py-3">
             <div class="flex gap-2">
+              <button class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition text-xs shadow-sm flex items-center gap-1"
+                      (click)="openInvoiceModal(order)">
+                <i data-lucide="file-text" class="w-4 h-4"></i> See Invoice
+              </button>
               <button class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1"
                       (click)="viewOrderDetails(order, orderDetailsModal)">
                 <i data-lucide="eye" class="w-4 h-4"></i> View
@@ -150,6 +216,45 @@
         </tr>
       </tbody>
     </table>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div *ngIf="showPagination" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+    <div class="flex items-center justify-between">
+      <div class="text-sm text-gray-700">
+        Showing {{ showingFrom }} to {{ showingTo }} of {{ totalItems }} results
+      </div>
+      <div class="flex items-center gap-2">
+        <button 
+          (click)="changePage(currentPage - 1)"
+          [disabled]="currentPage === 1"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Previous
+        </button>
+        <div class="flex items-center gap-1">
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            (click)="changePage(page)"
+            [class]="page === currentPage ? 
+              'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
+              'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
+            {{ page }}
+          </button>
+        </div>
+        <button 
+          (click)="changePage(currentPage + 1)"
+          [disabled]="currentPage === totalPages"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+          Next
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Empty State -->
@@ -172,7 +277,7 @@
     <!-- Modal Backdrop -->
     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
     <!-- Modal Content -->
-    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50">
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
       <div class="flex items-center justify-between mb-4 md:mb-6">
         <h4 class="text-lg md:text-xl font-semibold text-slate-800 break-words">
           Invoice - {{ selectedOrder?.orderCode }}
@@ -209,10 +314,6 @@
               <div class="font-medium text-slate-700 break-words">{{ formatDate(selectedOrder.orderDate) }}</div>
             </div>
             <div>
-              <div class="text-xs text-slate-500">Payment</div>
-              <!-- <div class="font-medium text-slate-700">{{ selectedOrder.paymentMethod }}</div> -->
-            </div>
-            <div>
               <div class="text-xs text-slate-500">Status</div>
               <div class="font-medium">
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
@@ -230,6 +331,11 @@
                 </div>
               </div>
             </div>
+        </div>
+        <!-- Delivery Service Info -->
+        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 w-full">
+          <div class="font-medium text-blue-700 mb-1">Delivery Service</div>
+          <div class="text-blue-900">{{ selectedOrder.deliveryService || selectedOrder.deliveryMethod }}</div>
         </div>
         <!-- Order Status History -->
         <div *ngIf="(selectedOrder?.statusHistory || []).length > 0" class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
@@ -254,7 +360,7 @@
                 <span class="font-medium">{{ status.status }}</span>
               </div>
               <span class="text-gray-500">{{ status.statusDate | date:'medium' }}</span>
-              <span *ngIf="i === selectedOrder.statusHistory.length - 1" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              <span *ngIf="i === 0" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
                 Latest
               </span>
             </div>
@@ -428,11 +534,6 @@
                 class="px-4 py-2 bg-white text-slate-700 rounded-lg border border-slate-300 hover:bg-slate-50 transition shadow-sm w-full md:w-auto"
                 (click)="modal.close()">
           Close
-        </button>
-        <button type="button" 
-                class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition shadow-sm w-full md:w-auto"
-                (click)="printInvoice()">
-          Print Invoice
         </button>
       </div>
     </div>

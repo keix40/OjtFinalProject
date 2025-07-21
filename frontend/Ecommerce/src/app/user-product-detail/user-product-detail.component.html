@@ -96,7 +96,14 @@
         <div class="space-y-3">
           <div *ngIf="getBrandName() !== '-'" class="flex items-center space-x-2">
             <span class="text-gray-600 font-medium">Brand:</span>
-            <span class="text-blue-600 font-semibold underline underline-offset-2">{{ getBrandName() }}</span>
+            <button 
+              (click)="navigateToBrandProducts(getBrandName())"
+              class="text-blue-600 font-semibold underline underline-offset-2 hover:text-blue-800 hover:underline-offset-4 transition-all duration-200 cursor-pointer flex items-center space-x-1 group">
+              <span>{{ getBrandName() }}</span>
+              <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+              </svg>
+            </button>
           </div>
           
           <div *ngIf="categoryNames !== '-'" class="flex items-center space-x-2">
@@ -284,7 +291,7 @@
             <div class="flex flex-wrap gap-2" *ngIf="editingReviewId && (mediaModalCurrentReview?.imageUrls?.length || mediaModalCurrentReview?.videoUrls?.length)">
               <ng-container *ngFor="let imageUrl of mediaModalCurrentReview?.imageUrls">
                 <div class="relative">
-                  <img [src]="'http://localhost:8080' + imageUrl" class="w-20 h-20 rounded-lg object-cover border" />
+                  <img [src]="'http://localhost:8080' + imageUrl" class="w-20 h-20 rounded-lg object-cover border" width="80" height="80" />
                   <button type="button" class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-sm hover:bg-red-600 transition-colors duration-200"
                           (click)="removeExistingMedia(imageUrl, 'image')">×</button>
                 </div>
@@ -309,7 +316,7 @@
               </button>
               <button *ngIf="editingReviewId" 
                       class="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-200"
-                      (click)="editingReviewId = null">Cancel</button>
+                      (click)="cancelEdit()">Cancel</button>
             </div>
           </div>
         </div>
@@ -330,7 +337,7 @@
               <div class="flex items-center space-x-3">
                 <img [src]="'http://localhost:8080' + review.userImage"
                      class="w-10 h-10 rounded-full object-cover border border-gray-200"
-                     alt="User Avatar">
+                     alt="User Avatar" width="40" height="40">
                 <div>
                   <div class="font-semibold text-gray-900">{{ review.username }}</div>
                   <div class="flex items-center space-x-1">
@@ -369,10 +376,11 @@
                       </svg>
                       <span>Edit</span>
                     </button>
-                    <button class="w-full px-4 py-2 text-left hover:bg-gray-50 text-sm text-red-600 flex items-center space-x-2"
-                            (click)="deleteReview(review)">
+                    <button 
+                      class="w-full px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 transition-colors duration-200 flex items-center space-x-2"
+                      (click)="confirmDeleteReview(review)">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-7 0h8"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                       </svg>
                       <span>Delete</span>
                     </button>
@@ -392,7 +400,7 @@
                   <img *ngIf="media.type === 'image'" 
                        [src]="media.url"
                        class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
-                       alt="Review Image" />
+                       alt="Review Image" width="100" height="100" />
                   <video *ngIf="media.type === 'video'" 
                          [src]="media.url" 
                          class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"></video>
@@ -405,7 +413,7 @@
                   <ng-container *ngIf="getAllMedia(review)[4].type === 'image'">
                     <img [src]="getAllMedia(review)[4].url"
                          class="w-full h-full object-cover opacity-50"
-                         alt="Review Image" />
+                         alt="Review Image" width="100" height="100" />
                   </ng-container>
                   <ng-container *ngIf="getAllMedia(review)[4].type === 'video'">
                     <video [src]="getAllMedia(review)[4].url" 
@@ -435,39 +443,26 @@
   </div>
 </div>
 
-<!-- Media Preview Modal -->
-<div *ngIf="mediaModalOpen" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-  <div class="relative max-w-4xl max-h-[90vh] mx-4">
-    <button class="absolute top-4 right-4 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 z-10"
-            (click)="closeMediaModal()">
-      <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-      </svg>
+<!-- Media Preview Modal as ng-template -->
+<ng-template #mediaPreviewModal let-modal>
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <button type="button" class="absolute top-6 right-8 text-slate-200 hover:text-white text-3xl z-50" (click)="modal.dismiss()">&times;</button>
+    <div class="relative flex items-center justify-center w-full max-w-2xl">
+      <button *ngIf="mediaModalCanGoLeft" (click)="mediaModalPrev()" class="absolute left-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
     </button>
-    
-    <button *ngIf="mediaModalCanGoLeft" 
-            class="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-            (click)="mediaModalPrev()">
-      <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-      </svg>
-    </button>
-    
-    <button *ngIf="mediaModalCanGoRight" 
-            class="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110"
-            (click)="mediaModalNext()">
-      <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-    </button>
-    
     <ng-container *ngIf="mediaModalCurrentType === 'image'">
-      <img [src]="mediaModalCurrentUrl" class="max-w-full max-h-full object-contain rounded-lg" alt="Media Preview" />
+        <img [src]="mediaModalCurrentUrl" class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40" alt="Media Preview" />
     </ng-container>
     <ng-container *ngIf="mediaModalCurrentType === 'video'">
-      <video [src]="mediaModalCurrentUrl" class="max-w-full max-h-full object-contain rounded-lg" controls></video>
+        <video [src]="mediaModalCurrentUrl" class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40" controls></video>
     </ng-container>
+      <button *ngIf="mediaModalCanGoRight" (click)="mediaModalNext()" class="absolute right-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
   </div>
-</div>
+</ng-template>
 
 <div id="edit-review-form"></div>

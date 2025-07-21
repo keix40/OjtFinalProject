@@ -51,12 +51,6 @@ public class Product {
     @JsonIgnoreProperties({"products"}) // or everything lazy inside Brand
     private Brand brand;
 
-
-
-//    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-//    @JsonIgnore
-//    private List<ProductHasCategory> productCategories;
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonIgnore
     @ToString.Exclude //add this two line to fix infinite loop error
@@ -94,5 +88,4 @@ public class Product {
             status = 1;
         }
     }
-    // product
 }

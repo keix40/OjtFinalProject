@@ -112,4 +112,11 @@ public class ReviewSocketController {
     public ResponseEntity<List<ReviewDTO>> getTop5StarReviews() {
         return ResponseEntity.ok(reviewService.getTop3FiveStarReviews());
     }
+
+    @GetMapping("/review/getallreviewbyid/{userId}")
+    public ResponseEntity<List<ReviewDTO>> getUserReviews(@PathVariable Long userId) {
+        List<ReviewDTO> reviews = reviewService.getAllReviewsByUserId(userId);
+        return ResponseEntity.ok(reviews);
+    }
+
 }

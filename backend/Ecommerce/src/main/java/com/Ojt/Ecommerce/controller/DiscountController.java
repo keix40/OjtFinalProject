@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.dto.DiscountDTO;
 import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
 import com.Ojt.Ecommerce.repository.DiscountRepository;
@@ -18,6 +19,7 @@ public class DiscountController {
     private final DiscountService discountService;
     private final DiscountRepository discountRepository;
 
+    @LogActivity(actionType = "CREATE", entityType = "DISCOUNT", description = "Created discount", severityLevel = "MEDIUM")
     @PostMapping("/create")
     public ResponseEntity<?> createDiscount(@RequestBody DiscountRequestDTO dto) {
         return discountService.createDiscount(dto);
@@ -64,6 +66,7 @@ public class DiscountController {
         return discountService.checkDuplicateDiscount(dto);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "DISCOUNT", description = "Updated discount", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/{id}")
     public ResponseEntity<?> updateDiscount(@PathVariable Long id, @RequestBody DiscountRequestDTO dto) {
         return discountService.updateDiscount(id, dto);
@@ -84,6 +87,7 @@ public class DiscountController {
         return discountService.getDiscountsByProduct(productId);
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "DISCOUNT", description = "Deleted discount", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDiscount(@PathVariable Long id) {
         discountRepository.deleteById(id);

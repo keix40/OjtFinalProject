@@ -56,7 +56,11 @@ public class SavedCardService {
     }
 
     public List<SavedCardResponseDTO> getCardsByUserId(Long userId) {
-        List<SavedCard> cards = cardRepository.findByUserId(userId);
+        List<SavedCard> cards = cardRepository.findByUserId(userId)
+                .stream()
+                .filter(card -> card.getStatus() != null && card.getStatus() == 1)
+                .collect(Collectors.toList());
+
         return cards.stream()
                 .map(card -> new SavedCardResponseDTO(
                         card.getId(),
@@ -64,20 +68,38 @@ public class SavedCardService {
                         card.getCardBrand(),
                         card.getExpiryDate(),
                         card.isDefault(),
-                        maskCardNumber(card.getCardNumber())
+                        card.getCardNumber()
                 ))
                 .collect(Collectors.toList());
     }
 
-    public void deleteCard(Long id) {
-        cardRepository.deleteById(id);
+    public void softDeleteCard(Long cardId) {
+        SavedCard card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+        card.setStatus(0);
+        cardRepository.save(card);
     }
 
-    // Mask card number except last 4 digits for security
-    private String maskCardNumber(String cardNumber) {
-        if (cardNumber == null || cardNumber.length() < 4) return cardNumber;
-        int len = cardNumber.length();
-        String masked = "*".repeat(len - 4) + cardNumber.substring(len - 4);
-        return masked.replaceAll(".{4}(?=.)", "$0 "); // Add spaces every 4 chars
+    public SavedCardResponseDTO updateCard(Long cardId, SavedCardRequestDTO dto) {
+        SavedCard card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+
+        card.setCardholderName(dto.getCardholderName());
+        card.setCardNumber(dto.getCardNumber());
+        card.setExpiryDate(dto.getExpiryDate());
+        card.setCardBrand(dto.getCardBrand());
+        card.setDefault(dto.isDefault());
+
+        SavedCard updated = cardRepository.save(card);
+
+        return new SavedCardResponseDTO(
+                updated.getId(),
+                updated.getCardholderName(),
+                updated.getCardBrand(),
+                updated.getExpiryDate(),
+                updated.isDefault(),
+                updated.getCardNumber()
+        );
     }
+
 }

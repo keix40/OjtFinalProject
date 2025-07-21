@@ -1,9 +1,8 @@
-<div class="d-flex flex-column vh-100 custom-layout">
+<div class="flex flex-col min-h-screen">
   <app-navbar class="shadow-sm"></app-navbar>
-  <!-- <app-breadcrumb [items]="breadcrumbService.breadcrumbs$ | async"></app-breadcrumb> -->
-  <div class="d-flex flex-grow-1 layout-container">
-    <app-sidebar class="sidebar shadow-sm"></app-sidebar>
-    <div class="main-content p-4 flex-grow-1">
+  <div class="relative flex-1">
+    <app-sidebar class="fixed top-0 left-0 z-40 h-full"></app-sidebar>
+    <div class="flex-1 p-4 transition-all duration-300 ml-20">
       <div class="content-wrapper">
         <router-outlet></router-outlet>
       </div>

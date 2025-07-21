@@ -44,7 +44,10 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
             <span class="mx-3 text-base font-medium">{{ item.quantity }}</span>
-            <button class="w-8 h-8 flex items-center justify-center rounded border border-neutral-300 text-lg font-bold text-neutral-600 hover:bg-neutral-100 transition" (click)="incrementQty(item)">
+            <button class="w-8 h-8 flex items-center justify-center rounded border border-neutral-300 text-lg font-bold text-neutral-600 hover:bg-neutral-100 transition"
+                    (click)="incrementQty(item)"
+                    [disabled]="item.quantity >= getMaxQuantity(item)"
+                    [attr.title]="'Max: ' + getMaxQuantity(item)">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke-width="2" stroke-linecap="round"/></svg>
             </button>
             <button class="ml-auto text-red-500 hover:text-red-700 transition-colors text-xl" title="Remove" (click)="removeItem(item)">
@@ -58,9 +61,10 @@
               <!-- Discount display -->
               <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">
                 <div class="d-flex align-items-center mb-2">
-                  <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="badge bg-danger me-2">
-                    {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
-                  </span>
+                  <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold me-2">
+                    <span *ngIf="getProductDiscount(product.id)?.eventName">{{ getProductDiscount(product.id)?.eventName }}</span>({{ getDiscountDisplayText(getProductDiscount(product.id)) }})
+                </span>
+                
                   <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="text-muted text-decoration-line-through me-2">
                     {{ product.price }} MMK
                   </span>
@@ -99,14 +103,6 @@
         <div class="flex items-center justify-between text-neutral-700">
           <span>Subtotal</span>
           <span>{{ getSubtotal() }} MMK</span>
-        </div>
-        <div class="flex items-center justify-between text-neutral-700">
-          <span>Shipping</span>
-          <span class="text-green-600 font-medium">Free</span>
-        </div>
-        <div class="flex items-center justify-between text-neutral-700">
-          <span>Tax</span>
-          <span>{{ getTax() }} MMK</span>
         </div>
         <!-- Discount Savings -->
         <div *ngIf="getTotalSavings() > 0"  class="flex items-center justify-between text-green-600">

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
 import { OrderService } from '../services/order.service';
@@ -12,6 +12,7 @@ import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
 import { ImageService } from '../services/image.service';
 import { CardService } from '../services/card.service';
+import Swal from 'sweetalert2';
 
 interface Card {
   id: number;
@@ -28,7 +29,7 @@ interface Card {
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.css'
 })
-export class PaymentComponent implements OnInit, OnDestroy {
+export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
   customer: any;
   shipping: any;
   delivery: any;
@@ -37,7 +38,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   userId: number | null = null;
   addressId: number | null = null;
-  deliveryMethodId: number | null = null;
+  deliveryServiceId: number | null = null;
   discountId: number | null = null;
   discount: any = null;
   discountAmount: number = 0;
@@ -72,7 +73,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
     private modalService: NgbModal,
     private discountService: DiscountService,
     private productService: ProductService,
-    public imageService: ImageService
+    public imageService: ImageService,
+    private cdr: ChangeDetectorRef
   ) {
     this.cardForm = this.fb.group({
       cardNumber: ['', [
@@ -94,7 +96,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   this.userId = nav.userId;
   this.addressId = nav.addressId;
-  this.deliveryMethodId = nav.deliveryMethodId;
+  this.deliveryServiceId = nav.deliveryServiceId;
   this.discountId = nav.discountId;
   this.discount = nav.discount;
   this.discountAmount = nav.discountAmount || 0;
@@ -113,7 +115,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
   console.log('Payment Component - Received data from checkout:', {
     userId: this.userId,
     addressId: this.addressId,
-    deliveryMethodId: this.deliveryMethodId,
+    deliveryServiceId: this.deliveryServiceId,
     discountId: this.discountId,
     discount: this.discount,
     discountAmount: this.discountAmount,
@@ -143,6 +145,14 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   this.loadActiveDiscounts();
 }
+
+  ngAfterViewInit() {
+    // Ensure cartItems update triggers change detection
+    this.cartService.getCartItems().subscribe(items => {
+      this.cartItems = items;
+      this.cdr.detectChanges();
+    });
+  }
 
   
   loadActiveDiscounts() {
@@ -302,6 +312,28 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
         return;
       }
+      // Expiry date validation (same as user-payment-methods)
+      let expiry = this.cardForm.value.expiryDate?.trim().replace(/\s/g, '');
+      if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) {
+        Swal.fire('Invalid Expiry', 'Expiry date must be in MM/YY format.', 'error');
+        this.isSubmitting = false;
+        return;
+      }
+      const [mm, yy] = expiry.split('/').map(Number);
+      if (mm < 1 || mm > 12) {
+        Swal.fire('Invalid Expiry', 'Month must be between 01 and 12.', 'error');
+        this.isSubmitting = false;
+        return;
+      }
+      const fullYear = 2000 + yy;
+      const expiryDate = new Date(fullYear, mm, 0); // Last day of the expiry month
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (expiryDate <= today) {
+        Swal.fire('Invalid Expiry', 'Expiry date must be after today.', 'error');
+        this.isSubmitting = false;
+        return;
+      }
     } else {
       if (!this.selectedSavedCardId) {
         alert('Please select a saved card to proceed.');
@@ -310,11 +342,11 @@ export class PaymentComponent implements OnInit, OnDestroy {
       }
     }
 
-    if (!this.userId || !this.addressId || !this.deliveryMethodId) {
+    if (!this.userId || !this.addressId || !this.deliveryServiceId) {
       console.error('Missing required data:', {
         userId: this.userId,
         addressId: this.addressId,
-        deliveryMethodId: this.deliveryMethodId
+        deliveryServiceId: this.deliveryServiceId
       });
       alert('Missing required order information.');
       this.isSubmitting = false;
@@ -338,7 +370,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     console.log('Cart Items:', this.cartItems);
     console.log('User ID:', this.userId);
     console.log('Address ID:', this.addressId);
-    console.log('Delivery Method ID:', this.deliveryMethodId);
+    console.log('Delivery Method ID:', this.deliveryServiceId);
     console.log('Discount ID:', this.discountId);
     console.log('Discount:', this.discount);
     console.log('Discount Amount:', this.discountAmount);
@@ -390,7 +422,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
       userId: this.userId!,
       addressId: this.addressId!,
       discountId: this.discountId || null,
-      deliveryId: this.deliveryMethodId!,
+      deliveryServiceId: this.deliveryServiceId!,
+      deliveryFee: this.deliveryFee,
       totalAmount: this.getTotal(),
       cartItem: this.cartItems.map(item => ({
         productId: item.productId ?? item.id,
@@ -438,9 +471,12 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.openConfirmationModal(orderDetails);
       },
       error: (error) => {
-        console.error('Error placing order:', error);
         this.isSubmitting = false;
-        alert('Failed to place order. Please try again.');
+        let msg = 'Failed to place order. Please try again.';
+        if (error?.error && typeof error.error === 'string') {
+          msg += '\n' + error.error;
+        }
+        Swal.fire('Order Error', msg);
       }
     });
   }

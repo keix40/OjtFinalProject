@@ -67,9 +67,16 @@ import { QuillModule } from 'ngx-quill';
 import { NotificationComponent } from './notification/notification.component';
 import { HeaderComponent } from './header/header.component';
 import { BreadcrumbComponent } from './breadcrumb.component';
-import { CategoryListComponent } from './category-list/category-list.component';
+
 import { BrandListComponent } from './brand-list/brand-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
+import { BannedPageComponent } from './banned-page.component';
+import { NotifcationService } from './notifcation.service';
+import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
+import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
+import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
+import { ToastrModule } from 'ngx-toastr';
+import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
 import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
@@ -120,6 +127,9 @@ import { ContactUsComponent } from './contact-us/contact-us.component';
     ReturnListComponent,
     BrandListComponent,
     UserBrandListComponent,
+    CreateDeliveryServiceComponent,
+    DeliveryServiceListComponent,
+    OrderInvoiceComponent,
     AdminPolicyComponent,
     DashboardComponent,
     DiscountAdminComponent,
@@ -161,11 +171,19 @@ import { ContactUsComponent } from './contact-us/contact-us.component';
     VerifyOtpComponent,
     NotificationComponent,
     BreadcrumbComponent,
+    BannedPageComponent,
+    NotificationSidebarComponent,
+    ToastrModule.forRoot({
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+    })
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,
     AddressService,
+    NotifcationService,
   ],
   bootstrap: [AppComponent]
 })

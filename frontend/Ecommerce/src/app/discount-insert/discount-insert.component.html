@@ -1,3 +1,13 @@
+<div class="p-4 bg-slate-50 min-h-screen">
+<!-- Header Section (outside container) -->
+<div class="text-center mb-8 mt-8">
+  <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
+    <i class="fas fa-percent w-8 h-8 text-white text-3xl flex items-center justify-center"></i>
+  </div>
+  <h2 class="text-3xl font-bold text-gray-900 mb-2">Create New Discount</h2>
+  <p class="text-gray-600 text-lg">Add a new discount event to your store</p>
+</div>
+
 <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="discount-insert-form">
   <div class="form-group">
     <label for="name">Discount Name</label>
@@ -200,7 +210,7 @@
 
   <!-- Product Selection Button -->
   <div class="product-selection" *ngIf="targetType === 'PRODUCT'">
-    <button type="button" class="btn-select-products"
+    <button type="button" class="btn-select-products bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-semibold transition-colors duration-200 flex items-center gap-2"
       data-bs-toggle="modal" data-bs-target="#productSelectionModal"
       [ngClass]="{'invalid-input': discountForm.get('productIds')?.invalid && (discountForm.get('productIds')?.touched || discountForm.get('productIds')?.dirty)}">
       <i class="fas fa-list"></i>
@@ -409,9 +419,6 @@
     <div *ngIf="discountForm.get('startDate')?.invalid && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
       Start date is required.
     </div>
-    <div *ngIf="discountForm.errors?.['startInPast'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
-      Start date cannot be in the past.
-    </div>
     <div *ngIf="discountForm.errors?.['sameDateTime'] && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger">
       Start and end date cannot be the same time.
     </div>
@@ -423,27 +430,14 @@
     <div *ngIf="discountForm.get('endDate')?.invalid && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
       End date is required.
     </div>
-    <div *ngIf="discountForm.errors?.['endInPast'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
-      End date cannot be in the past.
-    </div>
     <div *ngIf="discountForm.errors?.['sameDateTime'] && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger">
       Start and end date cannot be the same time.
     </div>
   </div>
 
-  <!-- Activate Discount Now Switch -->
-  <div class="form-group">
-    <label>Activate Discount Now?</label>
-    <label class="switch">
-      <input type="checkbox" formControlName="status">
-      <span class="slider round"></span>
-    </label>
-  </div>
-
-
   <div class="form-group mt-3">
-    <button type="submit" class="btn btn-primary" [disabled]="discountForm.invalid || isSubmitting">Submit</button>
-    <button type="button" class="btn btn-secondary ml-2" (click)="onCancel()">Cancel</button>
+    <button type="submit" [disabled]="discountForm.invalid || isSubmitting" class="px-6 py-3 bg-slate-600 text-white rounded-xl font-semibold hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed">Submit</button>
+    <button type="button" class="ml-2 px-6 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors duration-200" (click)="onCancel()">Cancel</button>
   </div>
 </form>
 
@@ -492,14 +486,14 @@
               </div>
               <div class="resolution-buttons">
                 <button type="button" 
-                        class="btn btn-outline-secondary resolution-btn"
+                        class="btn btn-outline-secondary resolution-btn border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors duration-200"
                         [class.active]="getConflictResolution(conflict) === 'SKIP'"
                         (click)="setConflictResolution(conflict, 'SKIP')">
                   <i class="fas fa-skip-forward me-1"></i>
                   Skip - Keep existing discount
                 </button>
                 <button type="button" 
-                        class="btn btn-outline-warning resolution-btn"
+                        class="btn btn-outline-warning resolution-btn border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors duration-200"
                         [class.active]="getConflictResolution(conflict) === 'OVERWRITE'"
                         (click)="setConflictResolution(conflict, 'OVERWRITE')">
                   <i class="fas fa-edit me-1"></i>
@@ -524,11 +518,11 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeDuplicateWarning()">
+        <button type="button" class="btn btn-secondary border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors duration-200" (click)="closeDuplicateWarning()">
           <i class="fas fa-times me-1"></i>
           Cancel
         </button>
-        <button type="button" class="btn btn-primary" (click)="proceedWithResolution()" [disabled]="!canProceedWithResolution()">
+        <button type="button" class="btn btn-primary bg-slate-600 hover:bg-slate-700 text-white disabled:opacity-50 disabled:cursor-not-allowed" (click)="proceedWithResolution()" [disabled]="!canProceedWithResolution()">
           <i class="fas fa-check me-1"></i>
           Proceed with Resolution
         </button>
@@ -536,6 +530,6 @@
     </div>
   </div>
 </div>
-
+</div>
 <!-- Backdrop for modal -->
 <div class="modal-backdrop fade show" *ngIf="showDuplicateWarning"></div>

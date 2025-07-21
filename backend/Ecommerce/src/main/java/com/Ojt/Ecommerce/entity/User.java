@@ -66,6 +66,9 @@ public class User {
     @Column(name = "total_points")
     private Integer totalPoints;
 
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id", referencedColumnName = "id")
     private Role role;
@@ -104,4 +107,11 @@ public class User {
     @Builder.Default
     private UserStatus status = UserStatus.ACTIVE;
 
+    public String getTier() {
+        if (totalPoints == null) return "Regular";
+        if (totalPoints < 10000) return "Regular";
+        if (totalPoints < 100000) return "Silver";
+        if (totalPoints < 1000000) return "Gold";
+        return "Platinum";
+    }
 }

@@ -34,7 +34,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws", "/ws-review")
-                .setAllowedOrigins("http://localhost:4200")
+                .setAllowedOriginPatterns("http://localhost:4200")
                 .addInterceptors(new JwtHandshakeInterceptor(jwtTokenProvider))
                 .setHandshakeHandler(new DefaultHandshakeHandler() {
                     @Override
@@ -42,7 +42,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         String username = (String) attributes.get("username");
                         System.out.println("Sending notification to: " + username);
                         return username != null ? () -> username : null;
-
                     }
                 })
                 .withSockJS();

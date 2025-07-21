@@ -79,7 +79,10 @@
       <!-- Compact Orders List -->
       <div *ngIf="!isLoading && !error && userOrders.length > 0" class="p-6">
         <div class="space-y-4">
-          <div *ngFor="let order of paginatedOrders()" class="group">
+          <div *ngFor="let order of paginatedOrders()" [attr.id]="'order-' + order.orderId"
+          [class.highlighted]="isOrderExpanded(order)"
+          [ngClass]="{'border border-gray-200': !isOrderExpanded(order)}"
+          class="group">
             <!-- Compact Order Card -->
             <div class="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all duration-300 cursor-pointer" (click)="toggleOrderDetails(order.orderId)">
               <div class="flex items-center justify-between">
@@ -87,7 +90,6 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-3 mb-2">
                     <h3 class="text-lg font-bold text-gray-900">{{order.orderCode}}</h3>
-                    <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">#{{order.orderId}}</span>
                   </div>
                   <div class="flex items-center gap-4 text-gray-500 text-sm">
                     <span class="flex items-center gap-1">
@@ -175,8 +177,8 @@
                       <span class="text-gray-900 font-medium">{{formatOrderDate(order.orderDate) | date:'MMM dd, yyyy'}}</span>
                     </div>
                     <div class="flex justify-between py-1 border-b border-gray-200">
-                      <span class="text-gray-600">Delivery Method</span>
-                      <span class="text-gray-900 font-medium">{{order.deliveryMethod}}</span>
+                      <span class="text-gray-600">Delivery Service</span>
+                      <span class="text-gray-900 font-medium">{{order.deliveryService}}</span>
                     </div>
                     <div *ngIf="order.discountCode" class="flex justify-between py-1 border-b border-gray-200">
                       <span class="text-gray-600">Discount ({{ order.discountCode }})</span>
@@ -201,7 +203,7 @@
                     </div>
                     <div class="flex justify-between py-1">
                       <span class="text-gray-600">Shipping</span>
-                      <span class="text-gray-900 font-medium">{{order.deliveryFee | number :'1.2-2'}} MMK</span>
+                      <span class="text-gray-900 font-medium">{{order.deliveryFee | number :'1.0-0'}} MMK</span>
                     </div>
                     <div class="flex justify-between py-2 border-t border-gray-300 text-base font-bold">
                       <span class="text-gray-900">Total</span>

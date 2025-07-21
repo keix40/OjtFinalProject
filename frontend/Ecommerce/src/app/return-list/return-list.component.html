@@ -1,142 +1,218 @@
-<div class="px-4 py-6 max-w-7xl mx-auto">
-  <h2 class="text-2xl font-bold text-blue-700 mb-6">Return & Refund Panel</h2>
-  <div class="flex flex-wrap gap-4 items-end mb-6 bg-white p-4 rounded-lg shadow">
-    <div class="flex flex-col">
-      <label for="statusFilter" class="text-sm font-medium text-gray-700 mb-1">Status</label>
-      <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
-      </select>
+<div class="p-4 bg-slate-50 min-h-screen">
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
+      <i data-lucide="package" class="w-8 h-8 text-white"></i>
     </div>
-    <div class="flex flex-col">
-      <label for="sortBy" class="text-sm font-medium text-gray-700 mb-1">Sort by</label>
-      <select id="sortBy" [(ngModel)]="sortBy" (change)="onSortChange()" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-        <option *ngFor="let sort of sortOptions" [value]="sort.value">{{ sort.label }}</option>
-      </select>
-    </div>
-    <!--
-    <div class="flex flex-col">
-      <input type="text" [(ngModel)]="searchText" (input)="onSearchChange()" placeholder="Search by customer, product, reason, or Order ID" class="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <button *ngIf="searchText" class="absolute right-2 top-2 text-gray-400 hover:text-gray-700" (click)="searchText=''; onSearchChange()">&times;</button>
-    </div>
-    -->
-    <div class="flex-1"></div>
-    <!-- Export Buttons -->
-    <div class="flex gap-2">
-      <!-- Excel Export Dropdown -->
-      <div class="relative" tabindex="0">
-        <button type="button" class="flex items-center gap-2 px-4 py-2 border border-green-500 text-green-600 rounded-lg bg-white hover:bg-green-50 font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200" (click)="showExcelDropdown = !showExcelDropdown">
-          <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path d="M17 3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14zm-7.707 7.293a1 1 0 0 0-1.414 1.414L9.586 13l-1.707 1.707a1 1 0 0 0 1.414 1.414L11 14.414l1.707 1.707a1 1 0 0 0 1.414-1.414L12.414 13l1.707-1.707a1 1 0 0 0-1.414-1.414L11 11.586l-1.707-1.707z"/></svg>
-          Export Excel
-          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-        </button>
-        <div *ngIf="showExcelDropdown" class="absolute left-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-          <button class="w-full text-left px-4 py-2 hover:bg-green-50 text-green-700" (click)="exportExcel('all'); showExcelDropdown=false">Export All as Excel</button>
-          <button class="w-full text-left px-4 py-2 hover:bg-green-50 text-green-700 disabled:opacity-50" [disabled]="selectedRows.length === 0" (click)="exportExcel('selected'); showExcelDropdown=false">Export Selected as Excel</button>
+    <h1 class="text-4xl font-bold text-gray-900 mb-2">Return & Refund Management</h1>
+    <p class="text-gray-600 text-lg">Easily manage customer return requests, refunds, and product returns in one place.</p>
+  </div>
+  <!-- Filters Card -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <!-- Search and Filters -->
+      <div class="flex flex-col sm:flex-row gap-4 flex-1">
+        <div class="relative flex-1 max-w-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          <input 
+            type="text" 
+            [(ngModel)]="searchText"
+            (input)="onSearchChange()"
+            placeholder="Search by customer, product, reason, or Order ID..."
+            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          >
+        </div>
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <span class="font-medium">{{ dataSource.data.length }}</span>
+          <span>Returns found</span>
         </div>
       </div>
-      <!-- PDF Export Dropdown -->
-      <div class="relative" tabindex="0">
-        <button type="button" class="flex items-center gap-2 px-4 py-2 border border-orange-500 text-orange-600 rounded-lg bg-white hover:bg-orange-50 font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-200" (click)="showPdfDropdown = !showPdfDropdown">
-          <svg class="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20"><path d="M17 3a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14zm-7.707 7.293a1 1 0 0 0-1.414 1.414L9.586 13l-1.707 1.707a1 1 0 0 0 1.414 1.414L11 14.414l1.707 1.707a1 1 0 0 0 1.414-1.414L12.414 13l1.707-1.707a1 1 0 0 0-1.414-1.414L11 11.586l-1.707-1.707z"/></svg>
-          Export PDF
-          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-        </button>
-        <div *ngIf="showPdfDropdown" class="absolute left-0 mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-          <button class="w-full text-left px-4 py-2 hover:bg-orange-50 text-orange-700" (click)="exportPDF('all'); showPdfDropdown=false">Export All as PDF</button>
-          <button class="w-full text-left px-4 py-2 hover:bg-orange-50 text-orange-700 disabled:opacity-50" [disabled]="selectedRows.length === 0" (click)="exportPDF('selected'); showPdfDropdown=false">Export Selected as PDF</button>
-        </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+        <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
+                [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+        </select>
       </div>
     </div>
   </div>
 
-  <div *ngIf="!isLoading; else loadingTpl" class="overflow-x-auto bg-white rounded-lg shadow">
-    <table id="returnsTable" class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-blue-50">
+  <!-- Export Dropdowns -->
+  <div class="flex gap-2 mb-4">
+    <!-- Excel Export Dropdown -->
+    <div class="relative">
+      <button 
+        (click)="toggleExcelDropdown()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors shadow-sm">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
+        </svg>
+        Export Excel
+        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': showExcelDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      <div *ngIf="showExcelDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
+          (click)="exportExcel('all'); showExcelDropdown = false">
+          <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
+          </svg>
+          Export All Returns
+        </button>
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="selectedRows.length === 0"
+          (click)="exportExcel('selected'); showExcelDropdown = false">
+          <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          Export Selected ({{ selectedRows.length }})
+        </button>
+      </div>
+    </div>
+    <!-- PDF Export Dropdown -->
+    <div class="relative">
+      <button 
+        (click)="togglePdfDropdown()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors shadow-sm">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
+        </svg>
+        Export PDF
+        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': showPdfDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      </button>
+      <div *ngIf="showPdfDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
+          (click)="exportPDF('all'); showPdfDropdown = false">
+          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
+          </svg>
+          Export All Returns
+        </button>
+        <button 
+          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="selectedRows.length === 0"
+          (click)="exportPDF('selected'); showPdfDropdown = false">
+          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+          </svg>
+          Export Selected ({{ selectedRows.length }})
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Return List Table -->
+  <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
         <tr>
-          <th class="px-4 py-2">
-            <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll($event)" />
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                   [checked]="isAllSelected()" (change)="toggleSelectAll($event)">
           </th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Order ID</th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Date</th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Customer</th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Product</th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Reason</th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Status</th>
-          <th class="px-4 py-2 text-left text-xs font-semibold text-gray-700">Actions</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
-        <tr *ngFor="let row of dataSource.data" class="hover:bg-blue-50">
-          <td class="px-4 py-2">
-            <input type="checkbox" [checked]="isSelected(row)" (change)="toggleRow(row, $event)" />
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let row of paginatedReturns" class="hover:bg-slate-50">
+          <td class="px-4 py-3 whitespace-nowrap">
+            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
+                   [checked]="isSelected(row)" (change)="toggleRow(row, $event)">
           </td>
-          <td class="px-4 py-2">{{ row.orderCode }}</td>
-          <td class="px-4 py-2">{{ row.requestedAt | date:'dd, MMM, yyyy' }}</td>
-          <td class="px-4 py-2">{{ row.userName }}</td>
-          <td class="px-4 py-2">{{ row.productName }}</td>
-          <td class="px-4 py-2">{{ row.reasonForReturn }}</td>
-          <td class="px-4 py-2">
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-slate-800">{{ row.orderCode }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-slate-700">
+            {{ row.requestedAt | date:'dd, MMM, yyyy' }}
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-slate-700">{{ row.productName }}</span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-slate-700">{{ row.userName }}</span>
+          </td>
+          <td class="px-4 py-3">
+            <span class="text-slate-700">{{ row.reasonForReturn }}</span>
+          </td>
+          <td class="px-4 py-3">
             <span class="inline-block px-2 py-1 rounded text-xs font-semibold"
               [ngClass]="{
-                'bg-yellow-100 text-yellow-800': row.status === 'Pending',
-                'bg-green-100 text-green-800': row.status === 'Approved',
-                'bg-red-100 text-red-800': row.status === 'Rejected'
+                'bg-yellow-100 text-yellow-800': (row.status ? row.status.toLowerCase() : '') === 'pending',
+                'bg-green-100 text-green-800': (row.status ? row.status.toLowerCase() : '') === 'approved',
+                'bg-red-100 text-red-800': (row.status ? row.status.toLowerCase() : '') === 'rejected',
+                'bg-slate-100 text-slate-800': ['pending','approved','rejected'].indexOf(row.status ? row.status.toLowerCase() : '') === -1
               }">
               {{ row.status }}
             </span>
           </td>
-          <td class="px-4 py-2">
-            <button class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-xs font-medium" [routerLink]="['/return', row.id]">View Detail</button>
+          <td class="px-4 py-3">
+            <button class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1" [routerLink]="['/return', row.id]">
+              <i data-lucide="eye" class="w-4 h-4"></i> View
+            </button>
           </td>
         </tr>
       </tbody>
     </table>
-    <div *ngIf="dataSource.data.length === 0" class="text-center text-gray-500 py-8">No return requests found.</div>
+    <div *ngIf="paginatedReturns.length === 0 && !isLoading" class="text-center text-gray-500 py-8">No return requests found.</div>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div *ngIf="showPagination" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+    <div class="flex items-center justify-between">
+      <div class="text-sm text-gray-700">
+        Showing {{ showingFrom }} to {{ showingTo }} of {{ totalItems }} results
+      </div>
+      <div class="flex items-center gap-2">
+        <button 
+          (click)="changePage(currentPage - 1)"
+          [disabled]="currentPage === 1"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Previous
+        </button>
+        <div class="flex items-center gap-1">
+          <button 
+            *ngFor="let page of getPageNumbers()"
+            (click)="changePage(page)"
+            [class]="page === currentPage ? 
+              'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
+              'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
+            {{ page }}
+          </button>
+        </div>
+        <button 
+          (click)="changePage(currentPage + 1)"
+          [disabled]="currentPage === totalPages"
+          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+          Next
+          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
   </div>
   <ng-template #loadingTpl>
     <div class="flex justify-center items-center py-12 text-blue-600 text-lg font-semibold">Loading...</div>
   </ng-template>
-
-  <!-- Detail Modal -->
-  <div *ngIf="showDetailModal" class="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/10">
-    <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-8 relative mx-4 overflow-auto max-h-[90vh]">
-      <button type="button" (click)="closeDetailModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
-      <h3 class="text-xl font-semibold text-blue-700 mb-4">Return Request Detail</h3>
-      <div *ngIf="selectedRequest">
-        <div *ngIf="selectedRequest.imageUrls && selectedRequest.imageUrls.length" class="flex gap-3 flex-wrap mb-4">
-          <img *ngFor="let img of selectedRequest.imageUrls" [src]="getImageUrl(img)" alt="Return Image" class="w-20 h-20 object-cover rounded border border-gray-200 bg-gray-50" />
-        </div>
-        <div class="mb-4 space-y-2">
-          <ng-container *ngIf="selectedRequest.orderCode">
-            <p><span class="font-semibold text-gray-700">Order ID:</span> {{ selectedRequest.orderCode }}</p>
-          </ng-container>
-          <ng-container *ngIf="selectedRequest.productName">
-            <p><span class="font-semibold text-gray-700">Product:</span> {{ selectedRequest.productName }}</p>
-          </ng-container>
-          <ng-container *ngIf="selectedRequest.reasonForReturn">
-            <p><span class="font-semibold text-gray-700">Reason:</span> {{ selectedRequest.reasonForReturn }}</p>
-          </ng-container>
-          <ng-container *ngIf="selectedRequest.returnDetail">
-            <p><span class="font-semibold text-gray-700">Return Detail:</span> {{ selectedRequest.returnDetail }}</p>
-          </ng-container>
-          <ng-container *ngIf="selectedRequest.status">
-            <p><span class="font-semibold text-gray-700">Status:</span> {{ selectedRequest.status }}</p>
-          </ng-container>
-          <ng-container *ngIf="!selectedRequest.orderCode && !selectedRequest.productName && !selectedRequest.reasonForReturn && !selectedRequest.returnDetail && !selectedRequest.status">
-            <p class="italic text-red-600">No details available for this request.</p>
-          </ng-container>
-        </div>
-        <form #adminDecisionForm="ngForm">
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-blue-700 mb-1">Admin Remark</label>
-            <textarea [(ngModel)]="adminDecision" name="adminDecision" required placeholder="Enter your decision or remark..." class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[60px] resize-vertical"></textarea>
-          </div>
-          <div class="flex justify-end gap-3">
-            <button type="button" (click)="closeDetailModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
 </div>
   

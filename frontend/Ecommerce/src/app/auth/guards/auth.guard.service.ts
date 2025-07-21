@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { Observable } from 'rxjs';
 import { AuthService } from '../auth.service';
 import { RoutePermissionMap } from '../../permission-map';
 import Swal from 'sweetalert2';
@@ -8,7 +9,32 @@ import Swal from 'sweetalert2';
 export class AuthGuard implements CanActivate {
   constructor(private auth: AuthService, private router: Router) {}
 
-  canActivate(route: ActivatedRouteSnapshot): boolean {
+  canActivate(
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot
+  ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
+    // Blacklist enforcement: block navigation if blacklisted
+    if (localStorage.getItem('blacklisted') === 'true') {
+      // Check with backend if user is still blacklisted
+      this.auth.checkBlacklistStatus().subscribe({
+        next: (response) => {
+          // If user is no longer blacklisted, clear the flags
+          if (!response.blacklisted) {
+            this.auth.clearBlacklistFlags();
+          }
+        },
+        error: (error) => {
+          // If API call fails, keep the current blacklist status
+          console.error('Failed to check blacklist status:', error);
+        }
+      });
+
+      return this.router.createUrlTree(['/blacklist-blocked'], { queryParams: {
+        reason: localStorage.getItem('blacklistReason') || '',
+        expiryDate: localStorage.getItem('blacklistExpiryDate') || ''
+      }});
+    }
+
     if (!this.auth.isLoggedIn()) {
       this.router.navigate(['/login']);
       return false;

@@ -39,4 +39,8 @@ export class OrderService {
   getOrderById(orderId: number): Observable<UserOrderListDTO> {
     return this.http.get<UserOrderListDTO>(`${this.baseUrl}/getorderbyid/${orderId}`);
   }
+
+  calculateFeeByDistance(deliveryServiceId: number, addressId: number): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/calculateFeeByDistance?deliveryServiceId=${deliveryServiceId}&addressId=${addressId}`);
+  }
 }

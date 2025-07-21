@@ -30,6 +30,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   productDiscounts: Map<number, any> = new Map();
   productDetails: Map<number, ProductDTO> = new Map();
   isFirstTimeBuyerDiscount: boolean = false;
+  maxQuantities: Map<string, number> = new Map();
 
   constructor(
     private router: Router,
@@ -53,6 +54,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         this.cartItems = items;
         this.selectedItems = items.length;
         this.loadProductDetails();
+        this.loadMaxQuantities(); // fetch max quantities
       }),
       this.cartService.getCartTotal().subscribe(total => {
         this.cartTotal = total;
@@ -207,17 +209,15 @@ export class CartPageComponent implements OnInit, OnDestroy {
     return discount;
   }
 
-  // Returns the final order total: subtotal - discount + shipping + tax
+  // Returns the final order total: subtotal - discount (no tax, no shipping)
   getOrderTotal(): number {
     const subtotal = this.getSubtotal();
-    const shipping = 0; // Free shipping
-    const tax = 76.80; // Fixed tax as in template
     if (this.isFirstTimeBuyerDiscount) {
       const firstTimeDiscount = this.getFirstTimeBuyerDiscountAmount();
-      return Math.round(subtotal - firstTimeDiscount + shipping + tax);
+      return Math.round(subtotal - firstTimeDiscount);
     } else {
       const discount = this.getTotalDiscount();
-      return Math.round(subtotal - discount + shipping + tax);
+      return Math.round(subtotal - discount);
     }
   }
 
@@ -391,8 +391,40 @@ export class CartPageComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  // Helper to get unique key for maxQuantities map
+  getItemKey(item: CartItem): string {
+    return item.variantId ? `${item.productId || item.id}-${item.variantId}` : `${item.productId || item.id}`;
+  }
+
+  // Fetch max quantity for each cart item (by variant or product)
+  loadMaxQuantities() {
+    this.maxQuantities.clear();
+    for (const item of this.cartItems) {
+      const key = this.getItemKey(item);
+      if (item.variantId) {
+        this.productService.getProductVariantStock(item.variantId).subscribe(stock => {
+          this.maxQuantities.set(key, stock);
+        });
+      } else if (item.productId) {
+        this.productService.getProductQuantity(item.productId).subscribe(stock => {
+          this.maxQuantities.set(key, stock);
+        });
+      } else {
+        this.maxQuantities.set(key, 0);
+      }
+    }
+  }
+
+  getMaxQuantity(item: CartItem): number {
+    return this.maxQuantities.get(this.getItemKey(item)) ?? 0;
+  }
+
   increaseQty(item: CartItem) {
-    this.updateQuantity(item.id, item.quantity + 1);
+    const maxQty = this.getMaxQuantity(item);
+    if (item.quantity < maxQty) {
+      this.updateQuantity(item.id, item.quantity + 1);
+    }
   }
 
   decreaseQty(item: CartItem) {

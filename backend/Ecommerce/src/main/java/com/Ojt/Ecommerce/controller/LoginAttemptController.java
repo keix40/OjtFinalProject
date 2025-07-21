@@ -3,6 +3,8 @@ package com.Ojt.Ecommerce.controller;
 import com.Ojt.Ecommerce.dto.LoginAttemptDTO;
 import com.Ojt.Ecommerce.dto.PagedResponse;
 import com.Ojt.Ecommerce.service.LoginAttemptService;
+import com.Ojt.Ecommerce.service.SecurityPolicyService;
+import com.Ojt.Ecommerce.entity.SecurityPolicyRule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/login-attempts")
@@ -18,6 +22,8 @@ public class LoginAttemptController {
 
     @Autowired
     private LoginAttemptService loginAttemptService;
+    @Autowired
+    private SecurityPolicyService securityPolicyService;
 
     // ✅ Get all login attempts
     @GetMapping
@@ -93,8 +99,10 @@ public class LoginAttemptController {
 
     @PostMapping("/block-ip")
     public ResponseEntity<?> blockIP(@RequestParam String ip) {
+        System.out.println("Received block request for IP: " + ip);
         loginAttemptService.blockIP(ip);
-        return ResponseEntity.ok("IP blocked");
+        System.out.println("blockIP service called for: " + ip);
+        return ResponseEntity.ok(java.util.Map.of("message", "IP blocked"));
     }
 
     @PostMapping("/whitelist-ip")
@@ -127,6 +135,45 @@ public class LoginAttemptController {
     public ResponseEntity<?> whitelistSession(@RequestParam String sessionId) {
         loginAttemptService.whitelistSession(sessionId);
         return ResponseEntity.ok("Session whitelisted");
+    }
+
+    @GetMapping("/is-blocked")
+    public ResponseEntity<?> isBlocked(@RequestParam String ip) {
+        try {
+            boolean blocked = loginAttemptService.isIPBlocked(ip);
+            LocalDateTime until = loginAttemptService.getBlockedUntil(ip);
+            String untilStr = until != null ? until.toString() : "";
+            Map<String, Object> result = new HashMap<>();
+            result.put("blocked", blocked);
+            result.put("blockedUntil", untilStr);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            e.printStackTrace(); // Log the full stack trace
+            return ResponseEntity.status(500).body(Map.of(
+                "message", "Something went wrong: " + e.getMessage()
+            ));
+        }
+    }
+
+    // Endpoint to get current security policy
+    @GetMapping("/security-policy")
+    public ResponseEntity<List<SecurityPolicyRule>> getSecurityPolicy() {
+        securityPolicyService.seedDefaultsIfEmpty();
+        return ResponseEntity.ok(securityPolicyService.getAllRules());
+    }
+
+    // Update a security policy rule
+    @PutMapping("/security-policy/{id}")
+    public ResponseEntity<SecurityPolicyRule> updateSecurityPolicyRule(@PathVariable Long id, @RequestBody SecurityPolicyRule updatedRule) {
+        SecurityPolicyRule rule = securityPolicyService.updateRule(id, updatedRule);
+        return ResponseEntity.ok(rule);
+    }
+
+    // Delete a security policy rule
+    @DeleteMapping("/security-policy/{id}")
+    public ResponseEntity<?> deleteSecurityPolicyRule(@PathVariable Long id) {
+        securityPolicyService.deleteRule(id);
+        return ResponseEntity.ok().build();
     }
 
 

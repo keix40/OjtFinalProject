@@ -29,13 +29,8 @@ export class AuthService {
         .catch(() => ({ city: '', region: '', country: '', countryCode: '' }))
     ).pipe(
       mergeMap(loc => {
-        const locationData = {
-          city: loc.city || '',
-          region: loc.region || '',
-          country: loc.country || '',
-          countryCode: loc.country || ''
-        };
-        const payload = { ...data, ...locationData };
+        const locationString = [loc.city, loc.region, loc.country].filter(Boolean).join(', ');
+        const payload = { ...data, location: locationString, countryCode: loc.country || '' };
         let headers = new HttpHeaders();
         if (this.publicIp) {
           headers = headers.set('X-Client-IP', this.publicIp);
@@ -103,6 +98,33 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('token');
+    // Clear blacklist flags when user logs out
+    localStorage.removeItem('blacklisted');
+    localStorage.removeItem('blacklistReason');
+    localStorage.removeItem('blacklistExpiryDate');
+  }
+
+  // Method to clear blacklist flags (can be called when user is removed from blacklist)
+  clearBlacklistFlags() {
+    localStorage.removeItem('blacklisted');
+    localStorage.removeItem('blacklistReason');
+    localStorage.removeItem('blacklistExpiryDate');
+  }
+
+  // Method to check if current user is blacklisted
+  checkBlacklistStatus(): Observable<any> {
+    const token = this.getToken();
+    if (!token) {
+      return new Observable(subscriber => {
+        subscriber.error(new Error('No token found'));
+      });
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    return this.http.get(`${this.baseUrl}/check-blacklist-status`, { headers });
   }
 
   getUsername(): string | null {
