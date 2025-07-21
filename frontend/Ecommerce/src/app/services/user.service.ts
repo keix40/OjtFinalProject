@@ -28,6 +28,10 @@ export class UserService {
     return this.http.get<any[]>('http://localhost:8080/api/auth/user/customers');
   }
 
+  getVipCustomers(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/vip-customers`);
+  }
+
   // --- Added for customer management actions ---
   // Delete user by ID (for customer table delete action)
   deleteUser(id: string) {

@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.Ojt.Ecommerce.dto.AddressDTO;
 import com.Ojt.Ecommerce.service.AddressService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,6 +30,7 @@ public class AddressController {
 
 
     //add controller method (Kei_)
+    @LogActivity(actionType = "CREATE", entityType = "ADDRESS", description = "Added new address", severityLevel = "LOW")
     @PostMapping("/addNewAddress")
     public ResponseEntity<?> addNewAddress(@RequestBody AddressDTO dto) {
         Long result = addressService.addNewAddress(dto);
@@ -44,12 +46,14 @@ public class AddressController {
         return ResponseEntity.ok(addressList); // 200 OK
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "ADDRESS", description = "Updated address", severityLevel = "LOW", entityIdParam = "id", logChanges = true)
     @PutMapping("/updateAddress/{id}")
     public ResponseEntity<?> updateAddress(@PathVariable Long id, @RequestBody AddressDTO dto) {
         Long result = addressService.updateAddress(id, dto);
         return ResponseEntity.ok(result);
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "ADDRESS", description = "Deleted address", severityLevel = "LOW", entityIdParam = "id")
     @DeleteMapping("/deleteAddress/{id}")
     public ResponseEntity<?> deleteAddress(@PathVariable Long id) {
         addressService.deleteAddress(id);

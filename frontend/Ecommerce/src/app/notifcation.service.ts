@@ -71,7 +71,19 @@ private client!: Client;
 
   // Public method to send notifications
   sendNotification(notificationData: any): void {
-    this.notificationSubject.next(notificationData);
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    this.http.post('http://localhost:8080/api/notifications', notificationData, { headers }).subscribe({
+      next: (savedNotification) => {
+        this.notificationSubject.next(savedNotification);
+      },
+      error: (err) => {
+        console.error('Failed to save notification:', err);
+      }
+    });
   }
 
    //🔁 Load stored notifications from backend

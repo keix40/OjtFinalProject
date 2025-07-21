@@ -138,7 +138,7 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     
     // Navigate to edit page with the selected product ID
     const productId = selectedProducts[0].id;
-    this.router.navigate(['/product', productId]);
+    this.router.navigate(['/product-edit', productId]);
   }
 
   loadProduct() {

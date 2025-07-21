@@ -3,6 +3,7 @@ package com.Ojt.Ecommerce.controller;
 import com.Ojt.Ecommerce.dto.ProductDTO;
 import com.Ojt.Ecommerce.entity.Product;
 import com.Ojt.Ecommerce.service.ProductService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -24,6 +25,7 @@ public class ProductController {
     @Autowired
     private ProductService service;
 
+    @LogActivity(actionType = "CREATE", entityType = "PRODUCT", description = "Created product", severityLevel = "MEDIUM")
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createProduct(
             @RequestPart("product") ProductDTO dto,
@@ -70,6 +72,7 @@ public class ProductController {
         return service.getAllActiveProductDTOs();
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "PRODUCT", description = "Deleted product", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable Long id){
@@ -79,6 +82,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Activated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/active/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> activeProduct(@PathVariable Long id){
@@ -88,6 +92,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Deactivated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/inactive/{id}")
     @Transactional
     public ResponseEntity<Map<String, Object>> inactiveProduct(@PathVariable Long id){

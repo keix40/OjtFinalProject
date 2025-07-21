@@ -60,7 +60,8 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private http: HttpClient // Inject HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -105,6 +106,9 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       }
       this.auth.saveToken(res.accessToken);
 
+      // Call backend to check first time buyer eligibility
+      this.http.get('/api/notifications/check-first-time-buyer').subscribe();
+
       const decoded = this.auth.getDecodedToken(); // Only declare once
       const permissionString = decoded?.permissions || '';
       const permissionArray = permissionString.split(',').map((p: string) => p.trim());
@@ -132,6 +136,20 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       if (err?.error?.captchaRequired) {
         this.generateCaptcha();
         this.showCaptchaModal = true;
+        return;
+      }
+      // Blacklist enforcement: if blocked, navigate to blocked page
+      if (err?.error?.blocked) {
+        // Set blacklist flags for route guard
+        localStorage.setItem('blacklisted', 'true');
+        localStorage.setItem('blacklistReason', err.error.reason || '');
+        localStorage.setItem('blacklistExpiryDate', err.error.expiryDate || '');
+        this.router.navigate(['/blacklist-blocked'], {
+          queryParams: {
+            reason: err.error.reason,
+            expiryDate: err.error.expiryDate
+          }
+        });
         return;
       }
       console.error(err);

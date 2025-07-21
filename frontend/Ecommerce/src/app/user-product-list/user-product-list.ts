@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -25,7 +25,7 @@ import { OnInit } from '@angular/core';
   styleUrls: ['./user-product-list.css'],
   imports: [CommonModule, FormsModule, HeaderComponent]
 })
-export class UserProductListComponent implements OnInit {
+export class UserProductListComponent implements OnInit,OnDestroy {
   @Output() wishlistChanged = new EventEmitter<void>();
   allProducts: ProductDTO[] = [];
   products: ProductDTO[] = [];
@@ -65,6 +65,9 @@ export class UserProductListComponent implements OnInit {
   activeDiscounts: any[] = [];
   productDiscounts: Map<number, any> = new Map(); // productId -> discount info
   isFirstTimeBuyerDiscount: boolean = false;
+  showFirstTimeBuyerPopup = false;
+
+  discountId: number | null = null;
 
   breadcrumbItems = [
     { label: 'Home' }
@@ -119,6 +122,29 @@ export class UserProductListComponent implements OnInit {
           }
         });
       }
+      const category = params['category'];
+      const brand = params['brand'];
+      this.selectedCategory = category || null;
+      this.selectedBrand = brand || null;
+
+      this.discountId = params['discountId'] ? Number(params['discountId']) : null; // <-- Add this line
+
+      this.loadProducts(() => {
+        if (this.selectedCategory) {
+          this.filters.category = [this.selectedCategory];
+        }
+        if (this.selectedBrand) {
+          this.filters.brand = [this.selectedBrand];
+        }
+        if (this.selectedCategory || this.selectedBrand) {
+          this.applyFilters();
+        }
+
+        if (this.discountId) {
+          this.sortProductsByDiscount(this.discountId);
+        }
+
+      });
     });
     this.loadCategories();
     this.loadBrands();
@@ -642,6 +668,14 @@ export class UserProductListComponent implements OnInit {
     this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
       next: (preview: any) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
+        if (this.isFirstTimeBuyerDiscount && !localStorage.getItem('firstTimeBuyerPopupShown')) {
+          this.showFirstTimeBuyerPopup = true;
+          localStorage.setItem('firstTimeBuyerPopupShown', 'true');
+          console.log('First time buyer check:', {
+            isFirstTimeBuyerDiscount: this.isFirstTimeBuyerDiscount,
+            popupShown: localStorage.getItem('firstTimeBuyerPopupShown')
+          });
+        }
       },
       error: () => {
         this.isFirstTimeBuyerDiscount = false;
@@ -649,5 +683,31 @@ export class UserProductListComponent implements OnInit {
     });
   }
 
+  closeFirstTimeBuyerPopup() {
+    this.showFirstTimeBuyerPopup = false;
+  }
+
+  sortProductsByDiscount(discountId: number): void {
+    // Find products with the given discountId
+    const discounted = this.products.filter(product => {
+      const discount = this.getProductDiscount(product.id);
+      return discount && discount.id === discountId;
+    });
+    const others = this.products.filter(product => {
+      const discount = this.getProductDiscount(product.id);
+      return !discount || discount.id !== discountId;
+    });
+    // Place discounted products first
+    this.products = [...discounted, ...others];
+  }
   
+  ngOnDestroy(): void {
+    // Remove the popup flag from localStorage when leaving the page
+    localStorage.removeItem('firstTimeBuyerPopupShown');
+  }
+
+  formatPrice(value: number): string {
+    if (value == null) return '';
+    return Number.isInteger(value) ? value.toString() : value.toFixed(2);
+  }
 }

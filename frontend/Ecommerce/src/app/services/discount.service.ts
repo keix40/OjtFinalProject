@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-export interface DiscountEventDTO {
+export interface DiscountRequestDTO {
   name: string;
   description?: string;
   code?: string;
@@ -79,11 +79,11 @@ export class DiscountService {
     return this.http.get<DiscountEventResponseDTO>(`${API_URL}/${id}`);
   }
 
-  createDiscount(event: DiscountEventDTO): Observable<DiscountEventResponseDTO> {
+  createDiscount(event: DiscountRequestDTO): Observable<DiscountEventResponseDTO> {
     return this.http.post<DiscountEventResponseDTO>(`${API_URL}/create`, event);
   }
 
-  updateDiscount(id: number, event: DiscountEventDTO): Observable<any> {
+  updateDiscount(id: number, event: DiscountRequestDTO): Observable<any> {
     return this.http.put<any>(`${API_URL}/${id}`, event);
   }
 
@@ -92,11 +92,11 @@ export class DiscountService {
   }
 
   // New method to check for duplicate discounts
-  checkDuplicateDiscount(event: DiscountEventDTO): Observable<DiscountConflictDTO[]> {
-    return this.http.post<DiscountConflictDTO[]>(`${API_URL}/check-duplicate`, event);
+  checkDuplicateDiscount(event: DiscountRequestDTO): Observable<any[]> {
+    return this.http.post<any[]>(`${API_URL}/check-duplicate`, event);
   }
 
-  createDiscountWithResolution(dto: DiscountEventDTO, conflictResolutions: any): Observable<any> {
+  createDiscountWithResolution(dto: DiscountRequestDTO, conflictResolutions: any): Observable<any> {
     return this.http.post(`${API_URL}/create-with-resolution`, {
       ...dto,
       conflictResolutions: Array.from(conflictResolutions.entries())
@@ -106,6 +106,6 @@ export class DiscountService {
   getDiscountsByProduct(productId: number): Observable<any[]> {
     return this.http.get<any[]>(`${API_URL}/product/${productId}`);
   }
-
+  
   // Optionally, add methods for brands, categories, products if needed
 } 

@@ -76,6 +76,8 @@ public class SecurityConfig {
                         .requestMatchers("/brand_and_category_image/**").permitAll()
                         .requestMatchers("/review/**").permitAll()
                         .requestMatchers("/deliveryservice/**").permitAll()
+                        .requestMatchers("/api/notification/**").permitAll()
+
 
                         .anyRequest().authenticated()
 
@@ -92,10 +94,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:4200");
-        configuration.addAllowedMethod("*");
-        configuration.addAllowedHeader("*");
+        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Specific origin instead of *
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
+        configuration.setMaxAge(3600L); // Cache preflight requests for 1 hour
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

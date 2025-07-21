@@ -23,4 +23,6 @@ public class Notification {
 
     private LocalDateTime timestamp;
 
+    private String type; // e.g., 'discount', 'first_time_buyer', etc.
+    private String link; // e.g., '/userproductlist'
 }

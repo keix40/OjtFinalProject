@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
@@ -17,6 +17,9 @@ import { NavigationEnd } from '@angular/router';
 import { ProductDTO } from '../product';
 import { ProductService } from '../services/product.service';
 import { FormsModule } from '@angular/forms';
+import { NotificationSidebarComponent } from '../notification-sidebar/notification-sidebar.component';
+import { NotificationSidebarService } from '../notifcation-sidebar.service';
+import { NotifcationService } from '../notifcation.service';
 
 @Component({
   selector: 'app-header',
@@ -43,6 +46,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
   brands: BrandListDTO[] = [];
   searchQuery: string = '';
   products: ProductDTO[] = [];
+  displayedBritium = '';
+  displayedGallery = '';
+  showCursorBritium = true;
+  showCursorGallery = false;
+  private britiumText = 'Britium';
+  private galleryText = 'Gallery';
+  private britiumIndex = 0;
+  private galleryIndex = 0;
+  private typingInterval: any;
+  private typingState: 'britium' | 'gallery' | 'done' = 'britium';
+  @Output() notificationSidebarOpen = new EventEmitter<void>();
+  newNotificationCount = 0;
+  sidebarOpen = false;
 
   constructor(
     private router: Router,
@@ -55,10 +71,14 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private categoryService: CategoryService,
     private brandService: BrandService,
     private userActivityService: UserActivityService,
-    private productServce: ProductService
+    private productServce: ProductService,
+    private notificationSidebarService: NotificationSidebarService,
+    private notifcationService: NotifcationService
   ) {}
 
   ngOnInit() {
+    const storedCount = localStorage.getItem('newNotificationCount');
+  this.newNotificationCount = storedCount ? parseInt(storedCount, 10) : 0;
     this.checkAuthStatus();
     this.name = this.authService.getUsername();
     this.userId = this.authService.getUserId();
@@ -82,6 +102,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.wishlistService.wishlistUpdated$.subscribe(() => {
         if (this.isAuthenticated && this.userId) {
           this.loadWishlistCount();
+        }
+      }),
+      this.notifcationService.notifications$.subscribe(() => {
+        if (!this.sidebarOpen) {
+          this.newNotificationCount++;
+          localStorage.setItem('newNotificationCount', this.newNotificationCount.toString());
         }
       })
     );
@@ -111,6 +137,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         }
       }
     });
+    this.startTypewriter();
   }
 
   isMobileMenuOpen = false;
@@ -132,6 +159,7 @@ toggleMobileMenu(): void {
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    if (this.typingInterval) clearInterval(this.typingInterval);
   }
 
   private checkAuthStatus() {
@@ -205,6 +233,20 @@ toggleMobileMenu(): void {
   navigateToCart() {
     this.router.navigate(['/cart']);
   }
+ 
+  openNotificationSidebar() {
+    this.sidebarOpen = true;
+    this.newNotificationCount = 0;
+    localStorage.setItem('newNotificationCount', '0');
+    this.notificationSidebarService.open();
+  }
+  closeNotificationSidebar() {
+    this.sidebarOpen = false;
+  }
+
+  get displayNotificationCount(): string {
+    return this.newNotificationCount > 9 ? '9+' : this.newNotificationCount > 0 ? this.newNotificationCount.toString() : '';
+  }
 
   //for first time buyer discount by pmk july 9
   checkFirstTimeBuyerDiscount() {
@@ -252,6 +294,42 @@ toggleMobileMenu(): void {
     const value = this.searchQuery?.trim();
     if (value) {
       this.router.navigate(['/userproductlist'], { queryParams: { search: value } });
+    }
+  }
+
+  startTypewriter() {
+    if (this.typingInterval) clearInterval(this.typingInterval);
+    this.displayedBritium = '';
+    this.displayedGallery = '';
+    this.britiumIndex = 0;
+    this.galleryIndex = 0;
+    this.typingState = 'britium';
+    this.showCursorBritium = true;
+    this.showCursorGallery = false;
+    this.typingInterval = setInterval(() => this.typewriterStep(), 90);
+  }
+
+  resetTypewriter() {
+    this.startTypewriter();
+  }
+
+  private typewriterStep() {
+    if (this.typingState === 'britium') {
+      if (this.britiumIndex < this.britiumText.length) {
+        this.displayedBritium += this.britiumText[this.britiumIndex++];
+      } else {
+        this.typingState = 'gallery';
+        this.showCursorBritium = false;
+        this.showCursorGallery = true;
+      }
+    } else if (this.typingState === 'gallery') {
+      if (this.galleryIndex < this.galleryText.length) {
+        this.displayedGallery += this.galleryText[this.galleryIndex++];
+      } else {
+        this.typingState = 'done';
+        this.showCursorGallery = false;
+        clearInterval(this.typingInterval);
+      }
     }
   }
 

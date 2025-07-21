@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Objects;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -95,6 +96,7 @@ public class OrderController {
         return ResponseEntity.ok(disDto);
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "ORDER", description = "Created order", severityLevel = "MEDIUM")
     @PostMapping("/create")
     public ResponseEntity<?> createOrder(@RequestBody UserOrderDTO dto){
         System.out.println("Received order DTO: " + dto);
@@ -361,6 +363,7 @@ public class OrderController {
         return ResponseEntity.ok(result);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId", logChanges = true)
     @PutMapping("/updatestatus/{orderId}")
     public ResponseEntity<String> updateOrderStatus(
             @PathVariable Long orderId,

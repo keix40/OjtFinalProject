@@ -290,15 +290,32 @@ public class UserServiceImpl implements UserService {
     public RegisterRequest updateUser(Long id, RegisterRequest dto){
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-        user.setName(dto.getName());
-        user.setEmail(dto.getEmail());
-        user.setGender(dto.getGender());
-        user.setPhoneNumber(dto.getPhoneNumber());
-        user.setDateOfBirth(dto.getDateOfBirth());
+        boolean changed = false;
+        if (dto.getName() != null && !dto.getName().equals(user.getName())) {
+            user.setName(dto.getName());
+            changed = true;
+        }
+        if (dto.getEmail() != null && !dto.getEmail().equals(user.getEmail())) {
+            user.setEmail(dto.getEmail());
+            changed = true;
+        }
+        if (dto.getGender() != null && !dto.getGender().equals(user.getGender())) {
+            user.setGender(dto.getGender());
+            changed = true;
+        }
+        if (dto.getPhoneNumber() != null && !dto.getPhoneNumber().equals(user.getPhoneNumber())) {
+            user.setPhoneNumber(dto.getPhoneNumber());
+            changed = true;
+        }
+        if (dto.getDateOfBirth() != null && !dto.getDateOfBirth().equals(user.getDateOfBirth())) {
+            user.setDateOfBirth(dto.getDateOfBirth());
+            changed = true;
+        }
 
-
-        userRepository.save(user);
-        notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
+        if (changed) {
+            userRepository.save(user);
+            notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
+        }
 
         return modelMapper.map(user, RegisterRequest.class);
     }
@@ -378,18 +395,20 @@ public class UserServiceImpl implements UserService {
                     }
                 }
             }
-            result.add(new CustomerSummaryDTO(
-                user.getId(),
-                user.getName(),
-                user.getEmail(),
-                user.getPhoneNumber(),
-                user.getStatus() != null ? user.getStatus().name() : null,
-                user.getRole() != null ? user.getRole().getName() : null,
-                user.getCreatedDate(),
-                totalOrders,
-                totalSpent,
-                user.getProfileImage()
-            ));
+            CustomerSummaryDTO dto = new CustomerSummaryDTO();
+            dto.setUserId(user.getId());
+            dto.setName(user.getName());
+            dto.setEmail(user.getEmail());
+            dto.setPhoneNumber(user.getPhoneNumber());
+            dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
+            dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+            dto.setJoinDate(user.getCreatedDate());
+            dto.setTotalOrders(totalOrders);
+            dto.setTotalSpent(totalSpent);
+            dto.setProfileImage(user.getProfileImage());
+            // Set tier if available
+            try { dto.setTier(user.getTier()); } catch (Exception ignored) {}
+            result.add(dto);
         }
         return result;
     }
@@ -401,4 +420,36 @@ public class UserServiceImpl implements UserService {
         return getAllCustomerSummaries();
     }
 
+    @Override
+    public List<CustomerSummaryDTO> getAllVipCustomers() {
+        List<User> users = userRepository.findByRole_Name("customer");
+        return users.stream().map(user -> {
+            int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
+            double totalSpent = 0.0;
+            if (user.getOrders() != null) {
+                for (var order : user.getOrders()) {
+                    if (order.getOrderProducts() != null) {
+                        for (var op : order.getOrderProducts()) {
+                            if (op.getUnitPrice() != null && op.getQuantity() != null) {
+                                totalSpent += op.getUnitPrice() * op.getQuantity();
+                            }
+                        }
+                    }
+                }
+            }
+            CustomerSummaryDTO dto = new CustomerSummaryDTO();
+            dto.setUserId(user.getId());
+            dto.setName(user.getName());
+            dto.setEmail(user.getEmail());
+            dto.setPhoneNumber(user.getPhoneNumber());
+            dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
+            dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+            dto.setJoinDate(user.getCreatedDate());
+            dto.setTotalOrders(totalOrders);
+            dto.setTotalSpent(totalSpent);
+            dto.setProfileImage(user.getProfileImage());
+            dto.setTier(user.getTier());
+            return dto;
+        }).toList();
+    }
 }

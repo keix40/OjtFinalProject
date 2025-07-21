@@ -68,6 +68,8 @@ import { NotifcationService } from './notifcation.service';
 import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
 import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
 import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
+import { ToastrModule } from 'ngx-toastr';
+import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
 
 @NgModule({
   declarations: [
@@ -145,7 +147,13 @@ import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
     NotificationComponent,
     HeaderComponent,
     BreadcrumbComponent,
-    BannedPageComponent
+    BannedPageComponent,
+    NotificationSidebarComponent,
+    ToastrModule.forRoot({
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+    })
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

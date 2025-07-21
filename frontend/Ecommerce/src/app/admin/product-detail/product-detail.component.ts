@@ -328,7 +328,7 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   goToEditProduct(): void {
     if (this.product && this.route.snapshot.paramMap.get('id')) {
       const productId = this.route.snapshot.paramMap.get('id');
-      this.router.navigate(['/product', productId]);
+      this.router.navigate(['/product-edit', productId]);
     }
   }
 

@@ -37,6 +37,12 @@ import java.net.http.HttpResponse;
 import org.json.JSONObject;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import com.Ojt.Ecommerce.service.UserActivityService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.security.CustomUserDetails;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.service.ActivityLogService;
+import com.Ojt.Ecommerce.util.IpLocationUtil;
+import com.Ojt.Ecommerce.service.BlacklistServiceImpl;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -53,6 +59,9 @@ public class AuthController {
     @Autowired
     private UserActivityService userActivityService;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final UserService userService;
@@ -64,6 +73,7 @@ public class AuthController {
     private final OtpVerificationRepository otpVerificationRepository;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
+    private final BlacklistServiceImpl blacklistServiceImpl;
 
     // Configurable thresholds
     private static final int THREAT_SCORE_BLOCK_THRESHOLD = 60; // 60 = high, 80 = critical
@@ -80,40 +90,17 @@ public class AuthController {
     }
 
 
-//    @PostMapping("/login")
-//    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
-//        String email = loginRequest.getEmail().trim().toLowerCase();// add for case
-//        Authentication authentication = authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(
-//                        email,
-//                        loginRequest.getPassword()
-//                )
-//        );
-//
-//
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        org.springframework.security.core.userdetails.User springUser =
-//                (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-//
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-//
-//        if (!user.isVerified()) {
-//            throw new CustomException("Please verify your email before logging in.");
-//        }
-//
-//        String accessToken = jwtTokenProvider.generateToken(user);
-//        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-//
-//        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
-//    }
 
+
+//    @LogActivity(actionType = "LOGIN", entityType = "USER", description = "User login", severityLevel = "LOW")
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, Object> loginRequest, HttpServletRequest request) {
+        // Start timing for duration tracking
+        java.time.LocalDateTime startTime = java.time.LocalDateTime.now();
+        
         String email = ((String)loginRequest.get("email")).trim().toLowerCase();
         String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
-        String ip = request.getRemoteAddr();
+        String ip = IpLocationUtil.extractClientIp(request); // <-- Use the same logic as activity logs
         System.out.println("[LoginAttempt] Detected client IP: " + ip);
         String location = loginRequest.getOrDefault("location", "").toString();
         boolean isVPN = false;
@@ -145,6 +132,17 @@ public class AuthController {
             ));
         }
         boolean requireOtpCaptcha = loginAttemptService.isOtpCaptchaRequired(ip);
+
+        // Blacklist enforcement: check if user is blacklisted by email
+        BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
+        if (blacklistEntry != null) {
+            return ResponseEntity.status(403).body(Map.of(
+                "blocked", true,
+                "reason", blacklistEntry.getReason(),
+                "expiryDate", blacklistEntry.getExpiryDate()
+            ));
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
@@ -171,7 +169,8 @@ public class AuthController {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             org.springframework.security.core.userdetails.User springUser =
                     (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-            User user = userRepository.findByEmail(email)
+            // Fetch user with role for activity log
+            User user = userRepository.findByEmailWithRole(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
             if (!user.isVerified()) {
                 throw new CustomException("Please verify your email before logging in.");
@@ -222,6 +221,45 @@ public class AuthController {
             loginAttemptService.handleSuccessfulLogin(ip);
             String accessToken = jwtTokenProvider.generateToken(user);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+            // --- MANUAL ACTIVITY LOGGING FOR LOGIN ---
+            java.time.LocalDateTime endTime = java.time.LocalDateTime.now();
+            java.time.Duration duration = java.time.Duration.between(startTime, endTime);
+            long durationMillis = duration.toMillis();
+            
+            // Get real IP and location using the same method as login attempts
+            String realIp = IpLocationUtil.extractClientIp(request);
+            String userLocation = IpLocationUtil.getUserLocation(realIp);
+            
+            Map<String, Object> detailsMap = new java.util.HashMap<>();
+            detailsMap.put("SessionId", sessionId);
+            detailsMap.put("Location", userLocation);
+            detailsMap.put("Duration", durationMillis + "ms");
+            detailsMap.put("StartTime", startTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss")));
+            detailsMap.put("EndTime", endTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss")));
+            String detailsJson;
+            try {
+                detailsJson = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(detailsMap);
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                detailsJson = "{\"SessionId\":\"" + sessionId + "\",\"Location\":\"" + location + "\",\"Duration\":\"" + durationMillis + "ms\"}";
+            }
+
+            ActivityLog log = activityLogService.createActivityLog(
+                user.getId(),
+                user.getName(),
+                user.getRole() != null ? user.getRole().getName() : "UNKNOWN",
+                "LOGIN",
+                "USER",
+                String.valueOf(user.getId()),
+                "User login",
+                "LOW",
+                realIp,
+                request.getHeader("User-Agent"),
+                sessionId
+            );
+            log.setDetails(detailsJson);
+            activityLogService.createActivityLog(log);
+            System.out.println("Activity log insert called.");
+            // --- END MANUAL LOGGING ---
             return ResponseEntity.ok(Map.of(
                 "accessToken", accessToken,
                 "refreshToken", refreshToken.getToken()
@@ -260,27 +298,6 @@ public class AuthController {
         }
     }
 
-    // Utility to extract real client IP (prefers X-Client-IP, then X-Debug-IP, then X-Forwarded-For, then remoteAddr)
-    private String extractClientIp(HttpServletRequest request) {
-        String clientIp = request.getHeader("X-Client-IP");
-        if (clientIp != null && !clientIp.isEmpty() && isPublicIp(clientIp.trim())) {
-            return clientIp.trim();
-        }
-        String debugIp = request.getHeader("X-Debug-IP");
-        if (debugIp != null && !debugIp.isEmpty()) {
-            return debugIp.trim();
-        }
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader != null && !xfHeader.isEmpty()) {
-            return xfHeader.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
-    // Helper to check if IP is public
-    private boolean isPublicIp(String ip) {
-        return !(ip.startsWith("10.") || ip.startsWith("192.168.") || ip.startsWith("172.16.") || ip.equals("127.0.0.1") || ip.equals("::1"));
-    }
-
     // Utility to generate a short, user-friendly session ID
     private static String generateShortSessionId() {
         String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -290,6 +307,18 @@ public class AuthController {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();
+    }
+
+    private String getClientIpAddress(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
+            return xForwardedFor.split(",")[0];
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
+            return xRealIp;
+        }
+        return request.getRemoteAddr();
     }
 
 
@@ -307,6 +336,7 @@ public class AuthController {
                 .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }
 
+    @LogActivity(actionType = "LOGOUT", entityType = "USER", description = "User logout", severityLevel = "LOW")
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String tokenHeader) {
         String token = tokenHeader.replace("Bearer ", "");
@@ -572,5 +602,30 @@ public class AuthController {
         otpVerificationRepository.save(otpVerification);
         emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
         return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
+    }
+
+    @GetMapping("/check-blacklist-status")
+    public ResponseEntity<?> checkBlacklistStatus(@RequestHeader("Authorization") String tokenHeader) {
+        try {
+            String token = tokenHeader.replace("Bearer ", "");
+            String email = jwtTokenProvider.getEmailFromToken(token);
+            
+            // Check if user is blacklisted
+            BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
+            
+            if (blacklistEntry != null) {
+                return ResponseEntity.ok(Map.of(
+                    "blacklisted", true,
+                    "reason", blacklistEntry.getReason(),
+                    "expiryDate", blacklistEntry.getExpiryDate()
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of("blacklisted", false));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                "error", "Failed to check blacklist status: " + e.getMessage()
+            ));
+        }
     }
 }

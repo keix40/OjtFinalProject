@@ -1,4 +1,26 @@
 <app-header></app-header>
+
+<!-- First Time Buyer Discount Alert 
+<div *ngIf="showFirstTimeBuyerAlert && firstTimeBuyerNotification" class="fixed top-24 left-1/2 -translate-x-1/2 z-50 w-full max-w-xl">
+  <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl shadow-lg px-6 py-4">
+    <div class="flex items-center gap-3">
+      <div class="bg-blue-100 rounded-full p-2">
+        <i class="bi bi-gift text-blue-600 text-2xl"></i>
+      </div>
+      <div>
+        <div class="font-semibold text-blue-900 text-lg">First Time Buyer Discount</div>
+        <div class="text-blue-800 text-base">
+          <a *ngIf="firstTimeBuyerNotification.link" [routerLink]="firstTimeBuyerNotification.link" class="underline hover:text-blue-600 transition">{{ firstTimeBuyerNotification.message }}</a>
+          <span *ngIf="!firstTimeBuyerNotification.link">{{ firstTimeBuyerNotification.message }}</span>
+        </div>
+      </div>
+    </div>
+    <button (click)="closeFirstTimeBuyerAlert()" class="ml-4 text-blue-400 hover:text-blue-600 rounded-full p-2 transition">
+      <i class="bi bi-x-lg text-lg"></i>
+    </button>
+  </div>
+</div> -->
+
 <!-- Hero Carousel -->
 <section class="relative h-[80vh] overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100">
     <div class="hero-slide active absolute inset-0 transition-all duration-1000 ease-in-out">

@@ -7,7 +7,7 @@ import { DashboardService } from '../services/dashboard.service';
 import { RevenueTargetService } from '../services/revenue-target.service';
 import { addDays, format, parseISO } from 'date-fns';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
+import SockJS from 'sockjs-client';
 
 
 @Component({
@@ -99,7 +99,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   setupWebSocket(): void {
     this.stompClient = new Client({
       brokerURL: undefined,
-      webSocketFactory: () => new (SockJS as any)('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         this.wsConnected = true;
@@ -154,6 +154,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     });
     // this.fetchOnlineAdminCount();
   }
+
+  // Replace nested subscriptions with forkJoin
 
   ngAfterViewInit(): void {}
 

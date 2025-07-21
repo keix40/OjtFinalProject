@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { BreadcrumbService } from '../breadcrumb.service';
 import { AdminUserService } from '../services/admin-user.service';
 import { AuthService } from '../auth/auth.service';
 import { Router, NavigationEnd } from '@angular/router';
+import { SidebarComponent } from './sidebar/sidebar.component';
 
 @Component({
   selector: 'app-layout',
@@ -11,6 +12,9 @@ import { Router, NavigationEnd } from '@angular/router';
   styleUrl: './layout.component.css'
 })
 export class LayoutComponent implements OnInit, OnDestroy {
+  @ViewChild(SidebarComponent) sidebarComponent!: SidebarComponent;
+  
+  sidebarCollapsed: boolean = false;
   private lastActivityLog = 0;
   private activityEvents = ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'];
   private activityHandler = this.handleActivity.bind(this);
@@ -32,6 +36,18 @@ export class LayoutComponent implements OnInit, OnDestroy {
       }
     });
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
+  }
+
+  ngAfterViewInit(): void {
+    // Listen to sidebar state changes
+    if (this.sidebarComponent) {
+      // Use a simple interval to check sidebar state
+      setInterval(() => {
+        if (this.sidebarComponent && this.sidebarCollapsed !== this.sidebarComponent.sidebarCollapsed) {
+          this.sidebarCollapsed = this.sidebarComponent.sidebarCollapsed;
+        }
+      }, 100);
+    }
   }
 
   ngOnDestroy(): void {

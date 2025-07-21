@@ -137,7 +137,7 @@
                 <div class="text-gray-500 text-xs">Quantity: {{item.quantity}}</div>
                 <!-- Product Discount Display -->
                 <div *ngIf="getProductDiscount(item.productId || item.id)" class="text-green-600 text-xs font-medium">
-                  {{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }}
+                  <span *ngIf="getProductDiscount(item.productId || item.id)?.eventName">{{ getProductDiscount(item.productId || item.id)?.eventName }} </span>({{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }})
                 </div>
               </div>
               <div class="text-right">

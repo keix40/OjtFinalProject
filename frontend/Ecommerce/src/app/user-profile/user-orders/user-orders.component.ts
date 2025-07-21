@@ -1,9 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, QueryList, ViewChildren,AfterViewChecked } from '@angular/core';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { OrderService } from '../../services/order.service';
 import { UserOrderListDTO } from '../../user-order';
 import { AuthService } from '../../auth/auth.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-orders',
@@ -12,7 +12,11 @@ import { Router } from '@angular/router';
   styleUrl: './user-orders.component.css',
   providers: [DatePipe, CurrencyPipe]
 })
-export class UserOrdersComponent implements OnInit {
+export class UserOrdersComponent implements OnInit, AfterViewChecked {
+  @ViewChildren('orderRow') orderRows!: QueryList<ElementRef>;
+  private hasScrolled = false;
+
+
   userOrders: UserOrderListDTO[] = [];
   expandedOrderId: number | null = null;
   isLoading: boolean = false;
@@ -39,11 +43,27 @@ export class UserOrdersComponent implements OnInit {
   constructor(
     private orderService: OrderService,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      this.expandedOrderId = params['orderId'] ? Number(params['orderId']) : null;
+      this.hasScrolled = false;
+      setTimeout(() => this.scrollToExpandedOrder(), 300);
+    });
     this.loadUserOrders();
+  }
+
+  ngAfterViewChecked() {
+    if (this.expandedOrderId !== null && !this.hasScrolled) {
+      const el = document.getElementById('order-' + this.expandedOrderId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        this.hasScrolled = true;
+      }
+    }
   }
 
   loadUserOrders(): void {
@@ -63,6 +83,16 @@ export class UserOrdersComponent implements OnInit {
         // Sort orders by orderDate descending
         this.userOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
         this.updatePagination();
+         
+        //for going to page that order exist and scroll by pmk july 18
+        if (this.expandedOrderId !== null) {
+          const index = this.filteredOrders().findIndex(order => order.orderId === this.expandedOrderId);
+          if (index !== -1) {
+            this.currentPage = Math.floor(index / this.itemsPerPage) + 1;
+          }
+          setTimeout(() => this.scrollToExpandedOrder(), 300);
+        }
+
         this.isLoading = false;
       },
       error: (err) => {
@@ -192,4 +222,15 @@ export class UserOrdersComponent implements OnInit {
   goToTracking(orderId: number): void {
     this.router.navigate(['/ordertracking', orderId]);
   }
+
+
+  scrollToExpandedOrder() {
+    if (this.expandedOrderId !== null) {
+      const el = document.getElementById('order-' + this.expandedOrderId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }
+
 }

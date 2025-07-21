@@ -1,63 +1,46 @@
-import { Component, type OnInit } from "@angular/core"
-import { FormBuilder, type FormGroup, Validators } from "@angular/forms"
-import { CommonModule } from "@angular/common"
-import { FormsModule } from "@angular/forms"
-import { ReactiveFormsModule } from "@angular/forms"
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from "@angular/core";
+import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { ReactiveFormsModule } from "@angular/forms";
+import { BlacklistService, BlacklistEntry, BlacklistStats, AutoRules } from "../services/blacklist.service";
+import { Subject, forkJoin, of } from 'rxjs';
+import { takeUntil, catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ToastrService } from 'ngx-toastr';
 declare var lucide: any;
-
-interface BlacklistEntry {
-  id: string
-  targetType: "email" | "ip" | "device" | "phone" | "user_id"
-  targetValue: string
-  category: "fraud" | "spam" | "abuse" | "chargeback" | "fake_account" | "policy_violation"
-  riskLevel: "low" | "medium" | "high" | "critical"
-  reason: string
-  addedDate: Date
-  addedBy: string
-  status: "active" | "appealed" | "expired" | "lifted"
-  expiryDate?: Date
-  associatedEmail?: string
-  deviceFingerprint?: string
-  incidentCount: number
-  notes?: string
-  isAutomatic: boolean
-  lastIncidentDate: Date
-}
-
-interface AutoRules {
-  failedPayments: boolean
-  chargebacks: boolean
-  suspiciousActivity: boolean
-  multipleAccounts: boolean
-  vpnDetection: boolean
-}
 
 @Component({
   selector: "app-blacklist",
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: "./blacklist.component.html",
-  styleUrls: ["./blacklist.component.css"]
+  styleUrls: ["./blacklist.component.css"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BlacklistComponent implements OnInit {
+export class BlacklistComponent implements OnInit, OnDestroy {
   // Data properties
-  allEntries: BlacklistEntry[] = []
-  filteredEntries: BlacklistEntry[] = []
-  paginatedEntries: BlacklistEntry[] = []
-  selectedEntries: string[] = []
-  selectedEntryDetails: BlacklistEntry | null = null
+  filteredEntries: BlacklistEntry[] = [];
+  paginatedEntries: BlacklistEntry[] = [];
+  selectedEntries: string[] = [];
+  selectedEntryDetails: BlacklistEntry | null = null;
+  stats: BlacklistStats | null = null;
+  showEditModal = false;
+  showIncidentHistoryModal = false;
+  incidentHistory: any[] = [];
 
   // Filter properties
-  searchTerm = ""
-  categoryFilter = ""
-  statusFilter = ""
-  riskFilter = ""
+  searchTerm = "";
+  categoryFilter = "";
+  statusFilter = "";
+  riskFilter = "";
 
   // UI state
-  viewMode: "table" | "cards" = "table"
-  currentPage = 1
-  itemsPerPage = 12
-  totalPages = 1
+  viewMode: "table" | "cards" = "table";
+  currentPage = 1;
+  itemsPerPage = 12;
+  totalItems = 0;
+  loading = false;
+  private destroy$ = new Subject<void>();
 
   // Auto rules
   autoRules: AutoRules = {
@@ -66,15 +49,25 @@ export class BlacklistComponent implements OnInit {
     suspiciousActivity: false,
     multipleAccounts: false,
     vpnDetection: false,
-  }
+  };
+
+  // Add missing properties for template binding
+  fraudPrevented: number = 0;
+  estimatedSavings: number = 0;
+  pendingAppeals: number = 0;
+  avgAppealTime: number = 0;
+  activeTab: string = 'overview';
+  Math = Math;
 
   // Form
-  blacklistForm: FormGroup
+  blacklistForm: FormGroup;
 
-  // Utility property
-  Math = Math
-
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private blacklistService: BlacklistService,
+    private toastr: ToastrService,
+    private cdr: ChangeDetectorRef
+  ) {
     this.blacklistForm = this.fb.group({
       targetType: ["email", Validators.required],
       targetValue: ["", Validators.required],
@@ -82,221 +75,165 @@ export class BlacklistComponent implements OnInit {
       riskLevel: ["medium", Validators.required],
       reason: ["", Validators.required],
       expiryDate: [""],
-      associatedEmail: [""],
+      associatedEmail: ["", [Validators.email]],
       notes: [""],
       notifyTeam: [true],
       blockRelated: [false],
-    })
+    });
   }
 
   ngOnInit(): void {
-    this.loadBlacklistEntries()
+    this.loadData();
+    this.loadAutoRules();
+    // Demo/mock values for dashboard stats
+    this.fraudPrevented = 42; // Replace with real value if available
+    this.estimatedSavings = 1200; // Replace with real value if available
+    this.pendingAppeals = 3; // Replace with real value if available
+    this.avgAppealTime = 12; // Replace with real value if available
+    // Setup debounced search
+    this.blacklistForm.get('searchTerm')?.valueChanges
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => this.applyFilters());
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   ngAfterViewInit() {
-    lucide.createIcons();
-  }
-  ngAfterViewChecked() {
-    lucide.createIcons();
+    this.refreshIcons();
   }
 
-  loadBlacklistEntries(): void {
-    // Mock data - replace with actual API call
-    this.allEntries = this.generateMockEntries()
-    this.applyFilters()
-    lucide.createIcons();
+  private refreshIcons(): void {
+    setTimeout(() => lucide.createIcons(), 0);
   }
 
-  generateMockEntries(): BlacklistEntry[] {
-    const entries: BlacklistEntry[] = []
-    const targetTypes: BlacklistEntry["targetType"][] = ["email", "ip", "device", "phone", "user_id"]
-    const categories: BlacklistEntry["category"][] = [
-      "fraud",
-      "spam",
-      "abuse",
-      "chargeback",
-      "fake_account",
-      "policy_violation",
-    ]
-    const riskLevels: BlacklistEntry["riskLevel"][] = ["low", "medium", "high", "critical"]
-    const statuses: BlacklistEntry["status"][] = ["active", "appealed", "expired", "lifted"]
+  loadData(): void {
+    this.loading = true;
+    this.filteredEntries = [];
+    this.paginatedEntries = [];
+    this.cdr.markForCheck();
 
-    const reasons = [
-      "Multiple failed payment attempts",
-      "Chargeback fraud pattern detected",
-      "Fake account creation",
-      "Spam complaints received",
-      "Policy violation - harassment",
-      "Suspicious login activity",
-      "Credit card fraud attempt",
-      "Account takeover attempt",
-      "Phishing activity detected",
-      "Abuse of refund policy",
-    ]
-
-    for (let i = 0; i < 75; i++) {
-      const targetType = targetTypes[Math.floor(Math.random() * targetTypes.length)]
-      const addedDate = new Date()
-      addedDate.setDate(addedDate.getDate() - Math.floor(Math.random() * 180))
-
-      const lastIncidentDate = new Date(addedDate)
-      lastIncidentDate.setDate(lastIncidentDate.getDate() + Math.floor(Math.random() * 30))
-
-      let targetValue = ""
-      switch (targetType) {
-        case "email":
-          targetValue = `suspicious${i + 1}@example.com`
-          break
-        case "ip":
-          targetValue = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
-          break
-        case "device":
-          targetValue = `device_${Math.random().toString(36).substring(2, 15)}`
-          break
-        case "phone":
-          targetValue = `+1${Math.floor(Math.random() * 9000000000) + 1000000000}`
-          break
-        case "user_id":
-          targetValue = `user_${Math.floor(Math.random() * 10000)}`
-          break
+    forkJoin([
+      this.blacklistService.getStats().pipe(
+        catchError(() => of(null))
+      ),
+      this.blacklistService.getEntries({
+        search: this.searchTerm,
+        category: this.categoryFilter,
+        status: this.statusFilter,
+        riskLevel: this.riskFilter,
+        page: this.currentPage - 1,
+        pageSize: this.itemsPerPage
+      }).pipe(
+        catchError(() => of({ entries: [], total: 0, totalPages: 0, currentPage: 0 }))
+      )
+    ]).pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: ([stats, entriesResponse]) => {
+        this.stats = stats;
+        
+        if (entriesResponse) {
+          this.filteredEntries = entriesResponse.entries;
+          this.paginatedEntries = entriesResponse.entries;
+          this.totalItems = entriesResponse.total;
+          
+          if (this.currentPage > entriesResponse.totalPages && entriesResponse.totalPages > 0) {
+            this.currentPage = entriesResponse.totalPages;
+          }
+        }
+        
+        this.loading = false;
+        this.cdr.markForCheck();
+        this.refreshIcons();
+      },
+      error: (error) => {
+        this.loading = false;
+        this.toastr.error('Failed to load data');
+        console.error('Error loading data:', error);
+        this.cdr.markForCheck();
       }
-
-      entries.push({
-        id: `BL${String(i + 1).padStart(3, "0")}`,
-        targetType,
-        targetValue,
-        category: categories[Math.floor(Math.random() * categories.length)],
-        riskLevel: riskLevels[Math.floor(Math.random() * riskLevels.length)],
-        reason: reasons[Math.floor(Math.random() * reasons.length)],
-        addedDate,
-        addedBy: Math.random() > 0.3 ? "Security Team" : "Auto-System",
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        expiryDate: Math.random() > 0.5 ? new Date(Date.now() + Math.random() * 365 * 24 * 60 * 60 * 1000) : undefined,
-        associatedEmail: targetType !== "email" && Math.random() > 0.4 ? `related${i}@example.com` : undefined,
-        deviceFingerprint: Math.random() > 0.6 ? Math.random().toString(36).substring(2, 20) : undefined,
-        incidentCount: Math.floor(Math.random() * 10) + 1,
-        notes: Math.random() > 0.5 ? `Additional security notes for entry ${i + 1}` : undefined,
-        isAutomatic: Math.random() > 0.4,
-        lastIncidentDate,
-      })
-    }
-
-    return entries.sort((a, b) => b.addedDate.getTime() - a.addedDate.getTime())
+    });
   }
 
-  // Statistics getters
-  get totalBlacklisted(): number {
-    return this.allEntries.filter((e) => e.status === "active").length
+  loadAutoRules(): void {
+    this.blacklistService.getAutoRules()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (rules) => {
+          this.autoRules = rules;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.toastr.error('Failed to load auto rules');
+          console.error('Error loading auto rules:', error);
+        }
+      });
   }
 
-  get newThisWeek(): number {
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return this.allEntries.filter((e) => e.addedDate >= weekAgo).length
-  }
-
-  get fraudPrevented(): number {
-    return this.allEntries.reduce((sum, entry) => sum + entry.incidentCount, 0)
-  }
-
-  get estimatedSavings(): number {
-    return this.allEntries.reduce((sum, entry) => {
-      const avgLoss = entry.riskLevel === "critical" ? 500 : entry.riskLevel === "high" ? 200 : 100
-      return sum + entry.incidentCount * avgLoss
-    }, 0)
-  }
-
-  get pendingAppeals(): number {
-    return this.allEntries.filter((e) => e.status === "appealed").length
-  }
-
-  get avgAppealTime(): number {
-    return 24 // Mock average appeal response time in hours
-  }
-
-  // Filter methods
   applyFilters(): void {
-    this.filteredEntries = this.allEntries.filter((entry) => {
-      const matchesSearch =
-        !this.searchTerm ||
-        entry.targetValue.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        entry.reason.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
-        (entry.associatedEmail && entry.associatedEmail.toLowerCase().includes(this.searchTerm.toLowerCase()))
-
-      const matchesCategory = !this.categoryFilter || entry.category === this.categoryFilter
-      const matchesStatus = !this.statusFilter || entry.status === this.statusFilter
-      const matchesRisk = !this.riskFilter || entry.riskLevel === this.riskFilter
-
-      return matchesSearch && matchesCategory && matchesStatus && matchesRisk
-    })
-
-    this.currentPage = 1
-    this.updatePagination()
-    lucide.createIcons();
+    this.currentPage = 1;
+    this.loadData();
   }
 
   clearFilters(): void {
-    this.searchTerm = ""
-    this.categoryFilter = ""
-    this.statusFilter = ""
-    this.riskFilter = ""
-    this.applyFilters()
+    this.searchTerm = "";
+    this.categoryFilter = "";
+    this.statusFilter = "";
+    this.riskFilter = "";
+    this.applyFilters();
   }
 
-  // Pagination methods
-  updatePagination(): void {
-    this.totalPages = Math.ceil(this.filteredEntries.length / this.itemsPerPage)
-    this.currentPage = Math.min(this.currentPage, this.totalPages || 1)
-
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage
-    const endIndex = startIndex + this.itemsPerPage
-    this.paginatedEntries = this.filteredEntries.slice(startIndex, endIndex)
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.totalItems / this.itemsPerPage));
   }
 
   goToPage(page: number): void {
     if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page
-      this.updatePagination()
+      this.currentPage = page;
+      this.loadData();
     }
   }
 
   getPageNumbers(): number[] {
-    const pages: number[] = []
-    const maxVisiblePages = 5
-    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2))
-    const endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1)
+    if (this.totalPages <= 1) return [];
+    
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
 
     if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1)
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i)
-    }
-
-    return pages
+    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
   }
 
   // Selection methods
   selectAll(event: any): void {
     if (event.target.checked) {
-      this.selectedEntries = this.paginatedEntries.map((entry) => entry.id)
+      this.selectedEntries = this.paginatedEntries.map((entry) => entry.id);
     } else {
-      this.selectedEntries = []
+      this.selectedEntries = [];
     }
   }
 
   toggleEntrySelection(entryId: string, event: any): void {
     if (event.target.checked) {
-      this.selectedEntries.push(entryId)
+      this.selectedEntries.push(entryId);
     } else {
-      this.selectedEntries = this.selectedEntries.filter((id) => id !== entryId)
+      this.selectedEntries = this.selectedEntries.filter((id) => id !== entryId);
     }
   }
 
   // View methods
   setViewMode(mode: "table" | "cards"): void {
-    this.viewMode = mode
+    this.viewMode = mode;
     lucide.createIcons();
   }
 
@@ -308,159 +245,227 @@ export class BlacklistComponent implements OnInit {
       riskLevel: "medium",
       notifyTeam: true,
       blockRelated: false,
-    })
+    });
+    this.showEditModal = true;
+  }
+
+  closeEditModal(): void {
+    this.showEditModal = false;
+  }
+
+  closeIncidentHistoryModal(): void {
+    this.showIncidentHistoryModal = false;
   }
 
   addToBlacklist(): void {
     if (this.blacklistForm.valid) {
-      const formValue = this.blacklistForm.value
-
-      const newEntry: BlacklistEntry = {
-        id: `BL${String(this.allEntries.length + 1).padStart(3, "0")}`,
-        targetType: formValue.targetType,
+      const formValue = this.blacklistForm.value;
+      // Ensure enums are sent in uppercase as required by backend
+      this.blacklistService.addEntry({
+        targetType: formValue.targetType ? formValue.targetType.toUpperCase() : undefined,
         targetValue: formValue.targetValue,
-        category: formValue.category,
-        riskLevel: formValue.riskLevel,
+        category: formValue.category ? formValue.category.toUpperCase() : undefined,
+        riskLevel: formValue.riskLevel ? formValue.riskLevel.toUpperCase() : undefined,
         reason: formValue.reason,
-        addedDate: new Date(),
-        addedBy: "Current User",
-        status: "active",
         expiryDate: formValue.expiryDate ? new Date(formValue.expiryDate) : undefined,
         associatedEmail: formValue.associatedEmail,
-        incidentCount: 1,
         notes: formValue.notes,
-        isAutomatic: false,
-        lastIncidentDate: new Date(),
-      }
-
-      this.allEntries.unshift(newEntry)
-      this.applyFilters()
-
-      console.log("Added to blacklist:", newEntry)
-      alert("Entry added to blacklist successfully!")
-
-      // Reset form
-      this.blacklistForm.reset()
+        addedBy: 'System' // Default value; replace with actual user if available
+      })
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.toastr.success('Entry added to blacklist successfully');
+          this.loadData();
+          this.blacklistForm.reset();
+          this.showEditModal = false;
+          this.cdr.markForCheck();
+        },
+        error: (error) => {
+          this.toastr.error('Failed to add entry to blacklist');
+          console.error('Error adding entry:', error);
+        }
+      });
     }
   }
 
-  previewBlacklist(): void {
-    const formValue = this.blacklistForm.value
-    console.log("Preview blacklist impact:", formValue)
-    // Implement preview functionality
-  }
-
-  viewEntryDetails(entry: BlacklistEntry): void {
-    this.selectedEntryDetails = entry
-    lucide.createIcons();
-  }
-
-  editEntry(entry: BlacklistEntry): void {
-    console.log("Edit entry:", entry)
-    // Implement edit functionality
-  }
-
+  // Similar updates for other methods that modify state
   liftBan(entry: BlacklistEntry): void {
     if (confirm(`Lift ban for ${entry.targetValue}?`)) {
-      entry.status = "lifted"
-      console.log("Ban lifted for:", entry)
-      alert("Ban has been lifted successfully!")
+      this.blacklistService.liftBan(entry.id)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('Ban lifted successfully');
+            this.loadData();
+            this.cdr.markForCheck();
+          },
+          error: (error) => {
+            this.toastr.error('Failed to lift ban');
+            console.error('Error lifting ban:', error);
+          }
+        });
     }
   }
 
-  extendBan(entry: BlacklistEntry): void {
-    console.log("Extend ban for:", entry)
-    // Implement ban extension functionality
+
+  viewEntryDetails(entry: BlacklistEntry): void {
+    this.blacklistService.getEntry(entry.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (details) => {
+          this.selectedEntryDetails = details;
+          lucide.createIcons();
+        },
+        error: (error) => {
+          this.toastr.error('Failed to load entry details');
+          console.error('Error loading entry details:', error);
+        }
+      });
   }
+
+  
 
   addNote(entry: BlacklistEntry): void {
-    const note = prompt("Add a note for this entry:")
+    const note = prompt("Add a note for this entry:");
     if (note) {
-      entry.notes = entry.notes ? `${entry.notes}\n\n${note}` : note
-      console.log("Note added to:", entry)
+      this.blacklistService.addNote(entry.id, note)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (updatedEntry) => {
+            this.toastr.success('Note added successfully');
+            if (this.selectedEntryDetails?.id === entry.id) {
+              this.selectedEntryDetails = updatedEntry;
+            }
+            this.loadData();
+          },
+          error: (error) => {
+            this.toastr.error('Failed to add note');
+            console.error('Error adding note:', error);
+          }
+        });
     }
-  }
-
-  viewIncidentHistory(entry: BlacklistEntry): void {
-    console.log("View incident history for:", entry)
-    // Implement incident history view
   }
 
   // Bulk actions
   bulkLiftBan(): void {
     if (confirm(`Lift ban for ${this.selectedEntries.length} selected entries?`)) {
-      this.allEntries.forEach((entry) => {
-        if (this.selectedEntries.includes(entry.id)) {
-          entry.status = "lifted"
-        }
-      })
-      this.selectedEntries = []
-      this.applyFilters()
-      console.log("Bulk ban lift completed")
+      this.blacklistService.bulkLiftBan(this.selectedEntries)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('Bans lifted successfully');
+            this.selectedEntries = [];
+            this.loadData();
+          },
+          error: (error) => {
+            this.toastr.error('Failed to lift bans');
+            console.error('Error lifting bans:', error);
+          }
+        });
     }
   }
 
   bulkExtendBan(): void {
-    console.log("Bulk extend ban for:", this.selectedEntries)
-    // Implement bulk ban extension
+    const date = prompt("Enter new expiry date (YYYY-MM-DD):");
+    if (date) {
+      const newExpiryDate = new Date(date);
+      this.blacklistService.bulkExtendBan(this.selectedEntries, newExpiryDate)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('Bans extended successfully');
+            this.selectedEntries = [];
+            this.loadData();
+          },
+          error: (error) => {
+            this.toastr.error('Failed to extend bans');
+            console.error('Error extending bans:', error);
+          }
+        });
+    }
   }
 
   bulkUpdateCategory(): void {
-    console.log("Bulk update category for:", this.selectedEntries)
-    // Implement bulk category update
+    const category = prompt("Enter new category (fraud/spam/abuse/chargeback/fake_account/policy_violation):");
+    if (category) {
+      this.blacklistService.bulkUpdateCategory(this.selectedEntries, category)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('Categories updated successfully');
+            this.selectedEntries = [];
+            this.loadData();
+          },
+          error: (error) => {
+            this.toastr.error('Failed to update categories');
+            console.error('Error updating categories:', error);
+          }
+        });
+    }
   }
 
   bulkExport(): void {
-    const selectedData = this.allEntries.filter((e) => this.selectedEntries.includes(e.id))
-    this.exportBlacklistData(selectedData)
+    this.blacklistService.exportEntries({
+      search: this.searchTerm,
+      category: this.categoryFilter,
+      status: this.statusFilter,
+      riskLevel: this.riskFilter
+    })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `blacklist-entries-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (error) => {
+        this.toastr.error('Failed to export entries');
+        console.error('Error exporting entries:', error);
+      }
+    });
   }
 
   // Auto rules management
   updateAutoRule(ruleName: keyof AutoRules): void {
-    console.log(`Auto rule ${ruleName} updated:`, this.autoRules[ruleName])
-    // Implement auto rule update API call
-  }
-
-  manageAutoRules(): void {
-    console.log("Open auto rules management")
-    // Implement comprehensive auto rules management
+    this.blacklistService.updateAutoRules({
+      [ruleName]: this.autoRules[ruleName]
+    })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: (updatedRules) => {
+        this.autoRules = updatedRules;
+        this.toastr.success('Auto rule updated successfully');
+      },
+      error: (error) => {
+        this.toastr.error('Failed to update auto rule');
+        console.error('Error updating auto rule:', error);
+      }
+    });
   }
 
   // Form helpers
   onTargetTypeChange(): void {
-    const targetType = this.blacklistForm.get("targetType")?.value
-    this.blacklistForm.get("targetValue")?.setValue("")
+    const targetType = this.blacklistForm.get("targetType")?.value;
+    this.blacklistForm.get("targetValue")?.setValue("");
   }
 
   getTargetPlaceholder(): string {
-    const targetType = this.blacklistForm.get("targetType")?.value
+    const targetType = this.blacklistForm.get("targetType")?.value;
     const placeholders = {
       email: "user@example.com",
       ip: "192.168.1.1",
       device: "device_fingerprint_hash",
       phone: "+1234567890",
       user_id: "user_12345",
-    }
-    return placeholders[targetType as keyof typeof placeholders] || ""
+    };
+    return placeholders[targetType as keyof typeof placeholders] || "";
   }
 
-  getAffectedAccounts(): number {
-    // Mock calculation based on target value
-    return Math.floor(Math.random() * 5) + 1
-  }
-
-  getRelatedEntries(): number {
-    // Mock calculation for related entries
-    return Math.floor(Math.random() * 3)
-  }
-
-  getRiskScore(): number {
-    const riskLevel = this.blacklistForm.get("riskLevel")?.value
-    const scores = { low: 25, medium: 50, high: 75, critical: 95 }
-    return scores[riskLevel as keyof typeof scores] || 50
-  }
-
-  // Utility methods
+  // Utility methods for icons and labels
   getTargetIconName(targetType: string): string {
     switch (targetType) {
       case 'email': return 'mail';
@@ -479,8 +484,8 @@ export class BlacklistComponent implements OnInit {
       device: "Device Fingerprint",
       phone: "Phone Number",
       user_id: "User ID",
-    }
-    return labels[targetType as keyof typeof labels] || targetType
+    };
+    return labels[targetType as keyof typeof labels] || targetType;
   }
 
   getCategoryIconName(category: string): string {
@@ -503,8 +508,8 @@ export class BlacklistComponent implements OnInit {
       chargeback: "Chargeback",
       fake_account: "Fake Account",
       policy_violation: "Policy Violation",
-    }
-    return labels[category as keyof typeof labels] || category
+    };
+    return labels[category as keyof typeof labels] || category;
   }
 
   getRiskIconName(riskLevel: string): string {
@@ -533,95 +538,154 @@ export class BlacklistComponent implements OnInit {
       appealed: "Under Appeal",
       expired: "Expired",
       lifted: "Lifted",
-    }
-    return labels[status as keyof typeof labels] || status
+    };
+    return labels[status as keyof typeof labels] || status;
   }
 
   getTimeAgo(date: Date): string {
-    const now = new Date()
-    const diffInMs = now.getTime() - date.getTime()
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+    const now = new Date();
+    const diffInMs = now.getTime() - new Date(date).getTime();
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
 
-    if (diffInDays === 0) return "Today"
-    if (diffInDays === 1) return "Yesterday"
-    if (diffInDays < 7) return `${diffInDays} days ago`
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`
-    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`
-    return `${Math.floor(diffInDays / 365)} years ago`
+    if (diffInDays === 0) return "Today";
+    if (diffInDays === 1) return "Yesterday";
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} months ago`;
+    return `${Math.floor(diffInDays / 365)} years ago`;
   }
 
   getBlockedAttempts(entry: BlacklistEntry): number {
-    return entry.incidentCount * Math.floor(Math.random() * 5) + entry.incidentCount
+    return entry.incidentCount;
   }
 
   getEstimatedLoss(entry: BlacklistEntry): number {
-    const avgLoss = entry.riskLevel === "critical" ? 500 : entry.riskLevel === "high" ? 200 : 100
-    return entry.incidentCount * avgLoss
+    const avgLoss = entry.riskLevel === "critical" ? 500 : entry.riskLevel === "high" ? 200 : 100;
+    return entry.incidentCount * avgLoss;
   }
 
   getLastIncidentDays(entry: BlacklistEntry): number {
-    const now = new Date()
-    const diffInMs = now.getTime() - entry.lastIncidentDate.getTime()
-    return Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+    const now = new Date();
+    const diffInMs = now.getTime() - new Date(entry.lastIncidentDate).getTime();
+    return Math.floor(diffInMs / (1000 * 60 * 60 * 24));
   }
 
   refreshData(): void {
-    this.loadBlacklistEntries()
-    console.log("Blacklist data refreshed")
+    this.loadData();
+    this.toastr.info('Refreshing data...');
   }
 
   exportBlacklist(): void {
-    this.exportBlacklistData(this.filteredEntries)
-  }
-
-  exportBlacklistData(entries: BlacklistEntry[]): void {
-    const csvContent = this.generateBlacklistCSV(entries)
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `blacklist-entries-${new Date().toISOString().split("T")[0]}.csv`
-    link.click()
-    window.URL.revokeObjectURL(url)
-  }
-
-  generateBlacklistCSV(entries: BlacklistEntry[]): string {
-    const headers = [
-      "Target Type",
-      "Target Value",
-      "Category",
-      "Risk Level",
-      "Reason",
-      "Status",
-      "Added Date",
-      "Added By",
-      "Incident Count",
-      "Associated Email",
-      "Notes",
-    ]
-
-    const rows = entries.map((entry) => [
-      this.getTargetTypeLabel(entry.targetType),
-      entry.targetValue,
-      this.getCategoryLabel(entry.category),
-      entry.riskLevel,
-      entry.reason,
-      this.getStatusLabel(entry.status),
-      entry.addedDate.toISOString().split("T")[0],
-      entry.addedBy,
-      entry.incidentCount.toString(),
-      entry.associatedEmail || "",
-      entry.notes || "",
-    ])
-
-    return [headers, ...rows].map((row) => row.join(",")).join("\n")
+    this.bulkExport();
   }
 
   trackByEntryId(index: number, entry: BlacklistEntry): string {
-    return entry.id
+    return entry.id;
   }
 
   getAutomaticIconName(isAutomatic: boolean): string {
     return isAutomatic ? 'bot' : 'user';
+  }
+
+  manageAutoRules(): void {
+    this.toastr.info('Auto rules management coming soon');
+  }
+
+  editEntry(entry: BlacklistEntry): void {
+    this.blacklistForm.patchValue({
+      targetType: entry.targetType.toLowerCase(),
+      targetValue: entry.targetValue,
+      category: entry.category.toLowerCase(),
+      riskLevel: entry.riskLevel.toLowerCase(),
+      reason: entry.reason,
+      expiryDate: entry.expiryDate ? entry.expiryDate.toString().split('T')[0] : '',
+      associatedEmail: entry.associatedEmail || '',
+      notes: entry.notes || ''
+    });
+    
+    this.showEditModal = true;
+  }
+
+  viewIncidentHistory(entry: BlacklistEntry): void {
+    this.blacklistService.getIncidentHistory(entry.id)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (history) => {
+          this.incidentHistory = history;
+          this.showIncidentHistoryModal = true;
+        },
+        error: (error) => {
+          this.toastr.error('Failed to load incident history');
+          console.error('Error loading incident history:', error);
+        }
+      });
+  }
+
+  extendBan(entry: BlacklistEntry): void {
+    const date = prompt("Enter new expiry date (YYYY-MM-DD):");
+    if (date) {
+      const newExpiryDate = new Date(date);
+      this.blacklistService.extendBan(entry.id, newExpiryDate)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.toastr.success('Ban extended successfully');
+            this.loadData();
+          },
+          error: (error) => {
+            this.toastr.error('Failed to extend ban');
+            console.error('Error extending ban:', error);
+          }
+        });
+    }
+  }
+
+  getAffectedAccounts(): number {
+    const targetValue = this.blacklistForm.get('targetValue')?.value;
+    if (!targetValue) return 0;
+
+    // In a real implementation, this would make an API call to check impact
+    // For now, return a mock value based on target type
+    const targetType = this.blacklistForm.get('targetType')?.value;
+    switch (targetType) {
+      case 'ip':
+        return Math.floor(Math.random() * 5) + 2; // 2-6 accounts
+      case 'device':
+        return Math.floor(Math.random() * 3) + 1; // 1-3 accounts
+      default:
+        return 1;
+    }
+  }
+
+  getRelatedEntries(): number {
+    const targetValue = this.blacklistForm.get('targetValue')?.value;
+    if (!targetValue) return 0;
+
+    // In a real implementation, this would make an API call to find related entries
+    // For now, return a mock value
+    return Math.floor(Math.random() * 3);
+  }
+
+  getRiskScore(): number {
+    const riskLevel = this.blacklistForm.get('riskLevel')?.value;
+    const scores = { 
+      low: 25, 
+      medium: 50, 
+      high: 75, 
+      critical: 95 
+    };
+    return scores[riskLevel as keyof typeof scores] || 50;
+  }
+
+  previewBlacklist(): void {
+    if (this.blacklistForm.valid) {
+      const formValue = this.blacklistForm.value;
+      this.toastr.info(`Impact preview for ${formValue.targetValue}:
+        - Affected Accounts: ${this.getAffectedAccounts()}
+        - Related Entries: ${this.getRelatedEntries()}
+        - Risk Score: ${this.getRiskScore()}%`);
+    } else {
+      this.toastr.warning('Please fill in required fields first');
+    }
   }
 }

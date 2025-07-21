@@ -340,7 +340,7 @@
                 <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
                 <!-- Product Discount Display: Only show if not first time buyer discount -->
                 <div *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(item.productId || item.id)" class="text-green-600 text-xs font-medium">
-                  {{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }}
+                  <span *ngIf="getProductDiscount(item.productId || item.id)?.eventName">{{ getProductDiscount(item.productId || item.id)?.eventName }} </span>({{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }})
                 </div>
               </div>
               <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">

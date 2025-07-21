@@ -27,6 +27,9 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   suspiciousLogins: number = 0;
   recentSecurityEvents: number = 0;
   sidebarVisible: boolean = window.innerWidth >= 640; // Show sidebar by default on desktop
+  sidebarCollapsed: boolean = false;
+  currentMenu: string | null = null;
+  currentSubmenu: string | null = null; // Track which submenu is active
 
   // Profile dropdown properties
   userName: string | null = null;
@@ -40,6 +43,26 @@ export class SidebarComponent implements OnInit, AfterViewInit {
 
   // Fetch these values from your backend
 
+  private collapseTimeout: any;
+
+  // Sidebar hover handlers for smooth animation and icon reinit
+  onSidebarMouseEnter() {
+    if (this.collapseTimeout) {
+      clearTimeout(this.collapseTimeout);
+    }
+    this.sidebarCollapsed = false;
+    // Reduced delay for smoother transition
+    setTimeout(() => this.initializeIcons(), 50);
+  }
+
+  onSidebarMouseLeave() {
+    this.collapseTimeout = setTimeout(() => {
+      this.sidebarCollapsed = true;
+      // Reduced delay for smoother transition
+      setTimeout(() => this.initializeIcons(), 50);
+    }, 120); // 120ms delay for smoothness
+  }
+
   constructor(
     private router: Router,
     private authService: AuthService,
@@ -49,7 +72,16 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   ) { }
 
   toggleSidebar() {
+    // Only for mobile overlay
     this.sidebarVisible = !this.sidebarVisible;
+  }
+
+  toggleCollapsedSidebar() {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+    // Reinitialize icons after state change with reduced delay
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 30);
   }
 
   isMobile(): boolean {
@@ -85,6 +117,13 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     if (typeof window !== 'undefined' && (window as any).lucide) {
       (window as any).lucide.createIcons();
     }
+  }
+
+  // Force reinitialize icons when needed
+  forceReinitializeIcons(): void {
+    setTimeout(() => {
+      this.initializeIcons();
+    }, 20);
   }
 
   handleResize() {
@@ -198,6 +237,75 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       });
     } else {
       console.warn('No admin user ID found for activity logging');
+    }
+  }
+
+  get collapsedSubmenuItems() {
+    switch (this.currentMenu) {
+      case 'products':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'plus-square', link: '/product' },
+          { icon: 'list', link: '/productlist' },
+          { icon: 'tag', link: '/brandlist' },
+          { icon: 'tag', link: '/categorylist' },
+        ];
+      case 'orders':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'clipboard-list', link: '/orders' },
+          { icon: 'rotate-ccw', link: '/return' },
+        ];
+      case 'discounts':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'list', link: '/discount-list' },
+          { icon: 'plus', link: 'discount-add' },
+          { icon: 'ticket', link: '/discount-coupon' },
+        ];
+      case 'delivery':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'plus-square', link: '/createdeliveryservice' },
+          { icon: 'list', link: '/deliveryservicelist' },
+        ];
+      case 'users':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'user', link: '/users/customers' },
+          { icon: 'crown', link: '/users/vip' },
+          { icon: 'ban', link: '/users/blacklist' },
+          { icon: 'user-plus', link: '/users/create' },
+          { icon: 'shield', link: '/users/admins' },
+          { icon: 'key-round', link: '/users/roles' },
+          { icon: 'alert-triangle', link: '/users/login-attempts' },
+          { icon: 'activity', link: '/users/activity' },
+        ];
+      default:
+        return [];
+    }
+  }
+
+  // Navigate to submenu
+  navigateToSubmenu(menuName: string) {
+    this.currentSubmenu = menuName;
+    this.currentMenu = menuName;
+    // Reinitialize icons after navigation with reduced delay
+    setTimeout(() => this.initializeIcons(), 30);
+  }
+
+  // Go back to main menu
+  goBackToMainMenu() {
+    this.currentSubmenu = null;
+    this.currentMenu = null;
+    // Reinitialize icons after navigation with reduced delay
+    setTimeout(() => this.initializeIcons(), 30);
+  }
+
+  // Handle submenu item click
+  onSubmenuItemClick(item: any) {
+    if (item.link) {
+      this.router.navigate([item.link]);
     }
   }
 }
