@@ -6,6 +6,7 @@ export interface DeliveryService {
   id?: number;
   name: string;
   feePerKm: number | string;
+  phoneNumber?: string;
   baseAddress: {
     id?: number;
     address: string;

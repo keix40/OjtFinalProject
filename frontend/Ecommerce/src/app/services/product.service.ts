@@ -64,7 +64,6 @@ export class ProductService {
   }
 
   getProductsByIds(ids: number[]): Observable<ProductDTO[]> {
-    // Assuming backend supports this endpoint, otherwise you need to implement it
     return this.http.post<ProductDTO[]>(`${this.baseUrl}/by-ids`, { ids });
   }
 

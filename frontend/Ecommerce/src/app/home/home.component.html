@@ -174,7 +174,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div *ngFor="let product of trendingProducts" class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer" (click)="goToTrendingProductDetail(product)">
                 <div class="relative overflow-hidden">
-                    <img [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'" alt="{{ product.productName }}" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <img [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'" alt="{{ product.productName }}" class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700" width="400" height="192">
                 </div>
                 <div class="p-6">
                     <div class="flex items-center mb-3">
@@ -258,7 +258,7 @@
         <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div *ngFor="let product of featuredProducts" class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer" (click)="goToProductDetail(product)">
                 <div class="relative overflow-hidden">
-                    <img [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'" alt="{{ product.productName }}" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
+                    <img [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'" alt="{{ product.productName }}" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700" width="400" height="192">
                     <div *ngIf="product.quantity > 0" class="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
                         In Stock
                     </div>

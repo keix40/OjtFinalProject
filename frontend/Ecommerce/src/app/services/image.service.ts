@@ -235,4 +235,64 @@ export class ImageService {
   getConfig(): ImageConfig {
     return { ...this.config };
   }
+
+  /**
+   * Get optimized product image URL with proper sizing
+   * @param product - Product object with image information
+   * @param size - Desired image size (thumbnail, small, medium, large)
+   * @returns Optimized URL for product image
+   */
+  getOptimizedProductImageUrl(product: any, size: 'thumbnail' | 'small' | 'medium' | 'large' = 'medium'): string {
+    const baseUrl = this.getProductImageUrl(product);
+    
+    // For now, return the base URL since we don't have image resizing on backend
+    // In a production environment, you would append size parameters to the URL
+    // Example: return `${baseUrl}?size=${size}`;
+    return baseUrl;
+  }
+
+  /**
+   * Get responsive image attributes for better performance
+   * @param product - Product object with image information
+   * @returns Object with src, srcset, and sizes attributes
+   */
+  getResponsiveImageAttributes(product: any): { src: string, srcset?: string, sizes?: string } {
+    const baseUrl = this.getProductImageUrl(product);
+    
+    // For now, return basic attributes
+    // In production, you would generate different sizes and srcset
+    return {
+      src: baseUrl,
+      sizes: '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+    };
+  }
+
+  /**
+   * Get lazy loading attributes for images
+   * @param priority - Whether this image should be loaded with high priority
+   * @returns Object with loading and decoding attributes
+   */
+  getLazyLoadingAttributes(priority: boolean = false): { loading: 'lazy' | 'eager', decoding: 'async' } {
+    return {
+      loading: priority ? 'eager' : 'lazy',
+      decoding: 'async'
+    };
+  }
+
+  /**
+   * Get optimized image URL with size parameters
+   * @param imagePath - The image path
+   * @param width - Desired width
+   * @param height - Desired height
+   * @param quality - Image quality (1-100)
+   * @returns Optimized image URL
+   */
+  getOptimizedImageUrl(imagePath: string, width?: number, height?: number, quality: number = 80): string {
+    const baseUrl = this.getFullImageUrl(imagePath);
+    
+    // For now, return the base URL
+    // In production, you would append optimization parameters
+    // Example: return `${baseUrl}?w=${width}&h=${height}&q=${quality}`;
+    return baseUrl;
+  }
 } 

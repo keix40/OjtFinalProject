@@ -26,12 +26,82 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   displayedColumns: string[] = ['id', 'date', 'customer', 'product', 'reason', 'returnDetail', 'status', 'actions'];
   dataSource = new MatTableDataSource<ReturnRequestDTO>([]);
 
+  // Pagination
+  pageSize: number = 10;
+  currentPage: number = 1;
+  // Returns after all filters (status, search, sort) applied
+  get filteredReturns(): ReturnRequestDTO[] {
+    let filtered = this.dataSource.data;
+    if (this.statusFilter !== 'All') {
+      filtered = filtered.filter((r: any) => r.status === this.statusFilter);
+    }
+    if (this.searchText) {
+      const search = this.searchText.toLowerCase();
+      filtered = filtered.filter((r: any) =>
+        r.userName.toLowerCase().includes(search) ||
+        r.productName.toLowerCase().includes(search) ||
+        r.reasonForReturn.toLowerCase().includes(search) ||
+        r.id.toString().includes(search)
+      );
+    }
+    if (this.sortBy === 'Newest') {
+      filtered = filtered.sort((a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
+    } else {
+      filtered = filtered.sort((a: any, b: any) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
+    }
+    return filtered;
+  }
+
+  get paginatedReturns(): ReturnRequestDTO[] {
+    const start = (this.currentPage - 1) * this.pageSize;
+    return this.filteredReturns.slice(start, start + this.pageSize);
+  }
+  get totalItems(): number {
+    return this.filteredReturns.length;
+  }
+  get showingFrom(): number {
+    return this.totalItems === 0 ? 0 : (this.pageSize * (this.currentPage - 1)) + 1;
+  }
+  get showingTo(): number {
+    return Math.min(this.pageSize * this.currentPage, this.totalItems);
+  }
+  get showPagination(): boolean {
+    return this.totalPages > 1;
+  }
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    for (let i = 1; i <= this.totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+  changePage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+  prevPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
   statusFilter: string = 'All';
   sortBy: string = 'Newest';
   searchText: string = '';
   isLoading = false;
 
-  statusOptions = ['All', 'Pending', 'Approved', 'Rejected'];
+  statusOptions: string[] = ['All']; // Will be updated dynamically
   sortOptions = [
     { value: 'Newest', label: 'Newest' },
     { value: 'Oldest', label: 'Oldest' }
@@ -49,6 +119,24 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   showExcelDropdown: boolean = false;
   showPdfDropdown: boolean = false;
 
+  toggleExcelDropdown() {
+    this.showExcelDropdown = !this.showExcelDropdown;
+    if (this.showExcelDropdown) {
+      this.showPdfDropdown = false;
+    }
+  }
+
+  togglePdfDropdown() {
+    this.showPdfDropdown = !this.showPdfDropdown;
+    if (this.showPdfDropdown) {
+      this.showExcelDropdown = false;
+    }
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredReturns.length / this.pageSize);
+  }
+
   constructor(private returnService: ReturnService) {}
 
   ngOnInit() {
@@ -56,13 +144,11 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit() {
-    this.initDataTable();
+    // DataTables removed
   }
 
   ngOnDestroy() {
-    if (this.dataTable) {
-      this.dataTable.destroy(true);
-    }
+    // DataTables removed
   }
 
   fetchReturns() {
@@ -70,13 +156,11 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.returnService.getAllReturn().subscribe({
       next: (data) => {
         this.dataSource.data = data;
+        // Dynamically extract unique statuses from data
+        const statuses = Array.from(new Set(data.map((r: any) => r.status).filter((s: any) => !!s)));
+        this.statusOptions = ['All', ...statuses];
         this.isLoading = false;
-        setTimeout(() => {
-          if (this.dataTable) {
-            this.dataTable.destroy(true);
-          }
-          this.initDataTable();
-        }, 0);
+        this.currentPage = 1; // Reset to first page on fetch
       },
       error: () => { this.isLoading = false; }
     });
@@ -105,7 +189,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onStatusFilterChange() {
-    this.fetchReturns();
+    this.currentPage = 1;
   }
 
   onSortChange() {

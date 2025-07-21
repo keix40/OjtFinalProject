@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
 import { OrderService } from '../services/order.service';
@@ -29,7 +29,7 @@ interface Card {
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.css'
 })
-export class PaymentComponent implements OnInit, OnDestroy {
+export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
   customer: any;
   shipping: any;
   delivery: any;
@@ -73,7 +73,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
     private modalService: NgbModal,
     private discountService: DiscountService,
     private productService: ProductService,
-    public imageService: ImageService
+    public imageService: ImageService,
+    private cdr: ChangeDetectorRef
   ) {
     this.cardForm = this.fb.group({
       cardNumber: ['', [
@@ -144,6 +145,14 @@ export class PaymentComponent implements OnInit, OnDestroy {
 
   this.loadActiveDiscounts();
 }
+
+  ngAfterViewInit() {
+    // Ensure cartItems update triggers change detection
+    this.cartService.getCartItems().subscribe(items => {
+      this.cartItems = items;
+      this.cdr.detectChanges();
+    });
+  }
 
   
   loadActiveDiscounts() {
@@ -462,9 +471,12 @@ export class PaymentComponent implements OnInit, OnDestroy {
         this.openConfirmationModal(orderDetails);
       },
       error: (error) => {
-        console.error('Error placing order:', error);
         this.isSubmitting = false;
-        alert('Failed to place order. Please try again.');
+        let msg = 'Failed to place order. Please try again.';
+        if (error?.error && typeof error.error === 'string') {
+          msg += '\n' + error.error;
+        }
+        Swal.fire('Order Error', msg);
       }
     });
   }

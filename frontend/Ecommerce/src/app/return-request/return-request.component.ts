@@ -38,6 +38,8 @@ export class ReturnRequestComponent implements OnInit {
         next: (order: UserOrderListDTO) => {
           this.orderCode = order.orderCode;
           this.products = order.products;
+          console.log('Loaded products:', this.products);
+          this.products.forEach((p, i) => console.log(`Product[${i}]`, p));
         },
         error: (err) => {
           console.error('Failed to load order details:', err);
@@ -62,18 +64,19 @@ export class ReturnRequestComponent implements OnInit {
       alert('Please complete the form.');
       return;
     }
-
+    if (!this.orderId || !this.selectedProduct || this.selectedProduct.productId == null) {
+      alert('Order or product information is missing.');
+      return;
+    }
     const formData = new FormData();
-    formData.append('orderId', this.orderId!.toString());
+    formData.append('orderId', this.orderId.toString());
     formData.append('productId', this.selectedProduct.productId.toString());
     formData.append('reason', this.reason);
     formData.append('returnDetail', this.details);
     formData.append('orderStatusAtCancelRequest', this.orderStatusAtCancelRequest ?? '');
-
     this.files.forEach(file => {
       formData.append('images', file);
     });
-
     this.returnService.submitReturnRequest(formData).subscribe({
       next: () => {
         Swal.fire({
@@ -92,7 +95,6 @@ export class ReturnRequestComponent implements OnInit {
         this.activeModal.close();
       }
     });
-
     console.log('Submitting form data:', formData);
   }
 
@@ -107,6 +109,4 @@ export class ReturnRequestComponent implements OnInit {
       this.previewUrls.splice(index, 1);
     }
   }
-  
-  
 }

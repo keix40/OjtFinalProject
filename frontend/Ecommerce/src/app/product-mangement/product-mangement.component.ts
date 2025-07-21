@@ -1,5 +1,4 @@
 import { Component, OnInit, OnDestroy, AfterViewInit } from '@angular/core';
-import { ProductList } from '../product';
 import { ProductService } from '../services/product.service';
 import { Brand } from '../brand';
 import { Category } from '../category';
@@ -16,6 +15,31 @@ import { ImageService } from '../services/image.service';
 import { Router } from '@angular/router';
 declare var $: any;
 declare var lucide: any;
+
+// Update ProductImage type for productImages array to include variantId
+export interface ProductImage {
+  id: number;
+  imageUrl: string;
+  status: number;
+  variantId?: number | null;
+}
+
+// Update ProductList to use ProductImage[]
+export interface ProductList {
+  id: number;
+  productName: string;
+  productCode: string;
+  price: number;
+  quantity: number;
+  status: number;
+  description: string;
+  createDate: string;
+  updateDate: string;
+  checked: boolean;
+  productImages: ProductImage[];
+  brandId?: number;
+  categoryId?: number;
+}
 
 @Component({
   selector: 'app-product-mangement',
@@ -114,7 +138,7 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     
     // Navigate to edit page with the selected product ID
     const productId = selectedProducts[0].id;
-    this.router.navigate(['/product-edit', productId]);
+    this.router.navigate(['/product', productId]);
   }
 
   loadProduct() {
@@ -247,21 +271,27 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   
   showDeleteConfirm() {
     const selectedIds = this.selectedProducts.map(p => p.id);
-  
+
     if (selectedIds.length === 0) {
-      alert('Please select at least one product to delete.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Products Selected',
+        text: 'Please select at least one product to delete.',
+        confirmButtonColor: '#3085d6'
+      });
       return;
     }
-  
-    const modalRef = this.ngbModel.open(ConfirmModelComponent, {
-      backdrop: 'static',
-      keyboard: false,
-    });
-  
-    modalRef.componentInstance.message = `Are you sure you want to delete ${selectedIds.length} product(s)?`;
-  
-    modalRef.result.then((result) => {
-      if (result) {
+
+    Swal.fire({
+      title: `Are you sure you want to delete ${selectedIds.length} product(s)?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
         this.deleteSelectedProducts(selectedIds);
       }
     });
@@ -271,14 +301,26 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     const deleteRequests = ids.map(id =>
       this.productService.deleteProduct(id)
     );
-  
+
     Promise.all(deleteRequests.map(req => req.toPromise()))
       .then(() => {
         this.loadProduct();
-        window.location.reload();
+        Swal.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Selected product(s) have been deleted.',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#3085d6'
+        });
       })
       .catch(err => {
         console.error('Error deleting products', err);
+        Swal.fire({
+          icon: 'error',
+          title: 'Delete Failed',
+          text: 'There was an error deleting the products.',
+          confirmButtonColor: '#3085d6'
+        });
       });
   }
   

@@ -60,7 +60,8 @@ export class UserOrdersComponent implements OnInit {
     this.orderService.getOrderByUserId(userId).subscribe({
       next: (orders) => {
         console.log('Orders:', orders);
-        this.userOrders = orders;
+        // Sort orders by orderDate descending
+        this.userOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
         this.updatePagination();
         this.isLoading = false;
       },

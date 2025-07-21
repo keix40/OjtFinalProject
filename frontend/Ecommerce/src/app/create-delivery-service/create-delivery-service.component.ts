@@ -8,6 +8,7 @@ import * as L from 'leaflet';
 import { Address as ServiceAddress } from '../services/address.service';
 import { AuthService } from '../auth/auth.service';
 import Swal from 'sweetalert2';
+import { Router } from '@angular/router';
 
 interface Address extends Omit<ServiceAddress, 'userId'> {
   userId?: number;
@@ -63,12 +64,13 @@ export class CreateDeliveryServiceComponent {
     private notification: NotificationService,
     private addressService: AddressService,
     private authService: AuthService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private router: Router
   ) {
     this.deliveryServiceForm = this.fb.group({
-      name: ['', [Validators.required, Validators.maxLength(100)]],
+      name: ['', Validators.required],
       feePerKm: [0, [Validators.required, Validators.min(0)]],
-      baseAddress: [null, Validators.required]
+      phoneNumber: ['', [Validators.required, Validators.pattern('^[0-9+() \- ]{7,20}$')]]
     });
     this.addressForm = this.fb.group({
       address: ['', Validators.required],
@@ -305,6 +307,7 @@ export class CreateDeliveryServiceComponent {
     const payload: DeliveryService = {
       name: this.deliveryServiceForm.value.name,
       feePerKm: this.deliveryServiceForm.value.feePerKm,
+      phoneNumber: this.deliveryServiceForm.value.phoneNumber,
       baseAddress: {
         id: baseAddress.id,
         address: baseAddress.address,
@@ -326,7 +329,10 @@ export class CreateDeliveryServiceComponent {
           icon: 'success',
           title: 'Success',
           text: 'Delivery service created successfully!'
+        }).then(() => {
+          this.router.navigate(['/deliveryservicelist']);
         });
+        
       },
       error: (err) => {
         this.notification.showError('Failed to create delivery service.');

@@ -49,7 +49,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { IpService } from './services/ip.service';
 import { LoginAttemptsService } from './services/login-attempts.service';
-import { ProductEditComponent } from './product-edit/product-edit.component';
 import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
 
 
@@ -90,6 +89,7 @@ const routes: Routes = [
     canActivate: [AuthGuard],
     children: [
       { path: 'product', component: ProductComponent },
+      { path: 'product/:id', component: ProductComponent },
       { path: 'productlist', component: ProductMangementComponent },
       { path: 'admin/products/:id', component: ProductDetailComponent },
       { path: 'orders', component: OrderManagementComponent },
@@ -139,9 +139,7 @@ const routes: Routes = [
     ]
   },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent,canActivate: [AuthGuard] , data: { breadcrumb: 'Order Tracking' } },
-  // { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
   { path: 'product/:id', component: UserProductDetailComponent, data: { breadcrumb: 'Product Detail' } },
-  { path: 'product-edit/:id', component: ProductEditComponent  },
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },
   { path: 'return-request', component: ReturnRequestComponent }, 

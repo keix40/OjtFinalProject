@@ -1,4 +1,4 @@
-<div class="p-6 bg-white min-h-screen">
+<div class="p-4 bg-slate-50 min-h-screen">
   <!-- Header Section -->
   <div class="text-center mb-8">
     <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
@@ -166,12 +166,13 @@
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-slate-100">
           <tr *ngFor="let product of paginatedProducts"
               class="hover:bg-slate-50/50 transition-colors cursor-pointer"
-              (click)="goToProductDetail(product.id)">
+              (click)="product.checked = !product.checked; updateSelection()">
             <td class="px-4 py-3">
               <input type="checkbox"
                      class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
@@ -182,11 +183,14 @@
             <td class="px-4 py-3">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-md overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0">
-                  <img *ngIf="product.productImages && product.productImages.length > 0"
-                       [src]="imageService.getFullImageUrl(product.productImages[0].imageUrl)"
-                       alt="Product Image"
-                       class="w-full h-full object-cover"
-                       (error)="imageService.handleImageError($event, 'product')">
+                  <ng-container *ngIf="product.productImages && product.productImages.length > 0">
+                    <ng-container *ngFor="let img of product.productImages">
+                      <img *ngIf="img.variantId == null; else skip" [src]="imageService.getFullImageUrl(img.imageUrl)" alt="Product Image" class="w-full h-full object-cover" (error)="imageService.handleImageError($event, 'product')">
+                      <ng-template #skip></ng-template>
+                      <!-- Only show the first base image -->
+                      <ng-container *ngIf="img.variantId == null; break"></ng-container>
+                    </ng-container>
+                  </ng-container>
                   <div *ngIf="!product.productImages?.length" class="w-full h-full flex items-center justify-center">
                     <i data-lucide="image" class="w-5 h-5 text-slate-400"></i>
                   </div>
@@ -220,6 +224,12 @@
                   </span>
                 </ng-container>
               </ng-template>
+            </td>
+            <td class="px-4 py-3">
+              <button class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1"
+                      (click)="$event.stopPropagation(); goToProductDetail(product.id)">
+                <i data-lucide="eye" class="w-4 h-4"></i> View
+              </button>
             </td>
           </tr>
         </tbody>

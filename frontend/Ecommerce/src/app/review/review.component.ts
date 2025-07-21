@@ -4,6 +4,8 @@ import { ReviewService } from '../services/review.service';
 import { AuthService } from '../auth/auth.service';
 import Swal from 'sweetalert2';
 import { ReviewMessage } from '../review-message';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { HostListener, ViewChild, ElementRef } from '@angular/core';
 // Import your review service and review model as needed
 
 @Component({
@@ -36,10 +38,14 @@ export class ReviewComponent implements OnInit, OnDestroy {
   reviewCommentError: string = '';
   reviewFileError: string = '';
 
+  @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate!: ElementRef;
+  private mediaModalRef: NgbModalRef | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private reviewService: ReviewService,
-    private authService: AuthService
+    private authService: AuthService,
+    private modalService: NgbModal
   ) {}
 
   ngOnInit() {
@@ -92,20 +98,48 @@ export class ReviewComponent implements OnInit, OnDestroy {
 
   // Open the modal for a review's image or video
   openMediaModal(review: any, type: 'image' | 'video', index: number) {
-    this.mediaModalOpen = true;
     this.mediaModalCurrentReview = review;
     this.mediaModalCurrentType = type;
     this.mediaModalCurrentIndex = index;
-    this.updateMediaModalUrl();
-    document.body.classList.add('modal-open');
+    this.updateMediaModalTypeAndUrl();
+    if (this.mediaModalRef) {
+      this.mediaModalRef.close();
+    }
+    this.mediaModalRef = this.modalService.open(this.mediaPreviewModalTemplate, {
+      centered: true,
+      backdrop: 'static',
+      keyboard: true,
+      // size: 'lg',
+      windowClass: 'media-preview-modal',
+      scrollable: false
+    });
+    this.mediaModalRef.result.finally(() => {
+      this.mediaModalRef = null;
+      this.mediaModalCurrentReview = null;
+      this.mediaModalCurrentIndex = 0;
+      this.mediaModalCurrentUrl = '';
+    });
   }
 
   closeMediaModal() {
-    this.mediaModalOpen = false;
-    this.mediaModalCurrentReview = null;
-    this.mediaModalCurrentIndex = 0;
-    this.mediaModalCurrentUrl = '';
-    document.body.classList.remove('modal-open');
+    if (this.mediaModalRef) {
+      this.mediaModalRef.close();
+    }
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    if (!this.mediaModalRef) return;
+    if (event.key === 'ArrowLeft' && this.mediaModalCanGoLeft) {
+      event.preventDefault();
+      this.mediaModalPrev();
+    } else if (event.key === 'ArrowRight' && this.mediaModalCanGoRight) {
+      event.preventDefault();
+      this.mediaModalNext();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeMediaModal();
+    }
   }
 
   get mediaModalCanGoLeft(): boolean {
@@ -251,9 +285,35 @@ export class ReviewComponent implements OnInit, OnDestroy {
           timerProgressBar: true,
           customClass: { popup: 'swal2-toast' }
         });
+        this.loadReviews();
       },
       error: () => {
         Swal.fire('Error', 'Failed to delete review.', 'error');
+      }
+    });
+  }
+
+  confirmDeleteReview(review?: any) {
+    // Store the review ID for deletion without changing edit mode
+    const reviewIdToDelete = review?.id || this.editingReviewId;
+    if (!reviewIdToDelete) return;
+    
+    Swal.fire({
+      title: 'Delete Review',
+      text: 'Are you sure you want to delete this review?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const reviewToDelete = this.reviews.find(r => r.id === reviewIdToDelete);
+        if (reviewToDelete) {
+          this.deleteReview(reviewToDelete);
+        }
       }
     });
   }
