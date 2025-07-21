@@ -327,6 +327,10 @@ public class OrderService {
                     .build();
             pointRepo.save(history);
 
+            String message = "Your order " + order.getOrderCode() + " has been placed.";
+            String link = "/profile/" + user.getId() + "?section=orders&orderId=" + order.getId();
+            String type = "order";
+            notificationService.createNotificationForUser(order.getUser().getEmail(), message, type, link );
             notificationService.sendNotification(user.getEmail(), "Your order was successful");
             // Log user activity for dashboard active users metric (order)
             userActivityService.logActivity(user.getId(), "order");
@@ -560,6 +564,28 @@ public class OrderService {
 
         order.setUpdatedDate(LocalDateTime.now());
         repo.save(order);
+
+        String statusMessage;
+        switch (type) {
+            case SHIPPED:
+                statusMessage = "has been shipped.";
+                break;
+            case DELIVERED:
+                statusMessage = "has been delivered.";
+                break;
+            case CANCELLED:
+                statusMessage = "has been cancelled.";
+                break;
+            default:
+                statusMessage = "has been placed.";
+                break;
+        }
+
+        String message = "Your order " + order.getOrderCode() + " " + statusMessage;
+        String link = "/profile/" + order.getUser().getId() + "?section=orders&orderId=" + order.getId();
+        String notiType = "order";
+
+        notificationService.createNotificationForUser(order.getUser().getEmail(), message, notiType, link);
 
         return true;
     }

@@ -79,7 +79,10 @@
       <!-- Compact Orders List -->
       <div *ngIf="!isLoading && !error && userOrders.length > 0" class="p-6">
         <div class="space-y-4">
-          <div *ngFor="let order of paginatedOrders()" class="group">
+          <div *ngFor="let order of paginatedOrders()" [attr.id]="'order-' + order.orderId"
+          [class.highlighted]="isOrderExpanded(order)"
+          [ngClass]="{'border border-gray-200': !isOrderExpanded(order)}"
+          class="group">
             <!-- Compact Order Card -->
             <div class="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all duration-300 cursor-pointer" (click)="toggleOrderDetails(order.orderId)">
               <div class="flex items-center justify-between">

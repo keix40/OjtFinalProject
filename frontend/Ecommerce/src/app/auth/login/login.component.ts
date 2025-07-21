@@ -60,7 +60,8 @@ export class LoginComponent implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private router: Router,
-    private permissionService: PermissionService
+    private permissionService: PermissionService,
+    private http: HttpClient // Inject HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -104,6 +105,9 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         return;
       }
       this.auth.saveToken(res.accessToken);
+
+      // Call backend to check first time buyer eligibility
+      this.http.get('/api/notifications/check-first-time-buyer').subscribe();
 
       const decoded = this.auth.getDecodedToken(); // Only declare once
       const permissionString = decoded?.permissions || '';

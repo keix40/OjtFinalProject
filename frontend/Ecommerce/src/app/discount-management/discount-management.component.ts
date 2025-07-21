@@ -1,6 +1,6 @@
 import { Component, OnInit, ElementRef, Renderer2 } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
-import { DiscountDTO, DiscountService, DiscountEventDTO } from '../services/discount.service';
+import { DiscountDTO, DiscountService, DiscountRequestDTO } from '../services/discount.service';
 import { debounceTime, first, map, Observable, of } from 'rxjs';
 import { DiscountCouponService } from '../services/discount-coupon.service';
 import { NotificationService } from '../services/notification.service';
@@ -111,7 +111,6 @@ export class DiscountEventManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDiscounts();
-    this.showActiveDiscountNotification();
   }
 
   loadDiscounts() {
@@ -236,7 +235,7 @@ onDiscountTypeChange() {
     }
     if (this.editForm.valid && this.editingDiscount) {
       const formValue = this.editForm.value;
-      const updateData: DiscountEventDTO = {
+      const updateData: DiscountRequestDTO = {
         name: formValue.name,
         description: formValue.description,
         discountType: formValue.discountType,
@@ -427,7 +426,7 @@ onDiscountTypeChange() {
       return;
     }
     
-    const updateData: DiscountEventDTO = {
+    const updateData: DiscountRequestDTO = {
       name: formValue.name,
       code: formValue.code,
       description: formValue.description,
@@ -520,43 +519,5 @@ onDiscountTypeChange() {
     codeControl?.updateValueAndValidity();
   }
 
-  showActiveDiscountNotification() {
-    this.discountService.getAllDiscount().subscribe(discounts => {
-      const now = new Date();
-      const activeDiscount = discounts.find(d =>
-        d.status &&
-        new Date(d.startDate) <= now &&
-        new Date(d.endDate) >= now
-      );
-      if (activeDiscount) {
-        let discountValueText = '';
-        if (activeDiscount.discountType === 'PERCENTAGE') {
-          const percent = (activeDiscount.discountValue <= 1 && activeDiscount.discountValue !== 0)
-            ? activeDiscount.discountValue * 100
-            : activeDiscount.discountValue;
-          discountValueText = `${percent}% off`;
-        } else {
-          discountValueText = `${activeDiscount.discountValue} MMK off`;
-        }
-        
-        const notificationMessage = `🔥 "${activeDiscount.name}" is live: ${discountValueText}! Click here to view products.`;
-        
-        // 1. Show pop-up notification
-        this.notificationService.showInfo(
-          notificationMessage,
-          '/userproductlist'
-        );
-        
-        // 2. Add to user's notification list
-        const notificationData = {
-          message: notificationMessage,
-          timestamp: new Date().toISOString(),
-          type: 'discount',
-          link: '/userproductlist'
-        };
-        this.notifcationService.sendNotification(notificationData);
-      }
-    });
-  }
     
 }

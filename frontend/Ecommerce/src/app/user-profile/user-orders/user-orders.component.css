@@ -9,3 +9,25 @@
 .order-item-hover:hover {
   transform: translateY(-2px);
 }
+
+@keyframes modernGlow {
+  0% {
+    box-shadow: 0 4px 24px 0 rgba(37, 99, 235, 0.10), 0 0 0 4px #3b82f633;
+  }
+  50% {
+    box-shadow: 0 8px 32px 0 rgba(37, 99, 235, 0.18), 0 0 0 12px #3b82f655;
+  }
+  100% {
+    box-shadow: 0 4px 24px 0 rgba(37, 99, 235, 0.10), 0 0 0 4px #3b82f633;
+  }
+}
+
+.highlighted {
+  background: linear-gradient(90deg, #f0f6ff 0%, #e0e7ff 100%);
+  box-shadow: 0 4px 24px 0 rgba(37, 99, 235, 0.10), 0 0 0 4px #3b82f633;
+  border-radius: 1rem;
+  transition: box-shadow 0.3s, background 0.3s;
+  position: relative;
+  z-index: 1;
+  animation: modernGlow 1.5s ease-in-out infinite;
+}

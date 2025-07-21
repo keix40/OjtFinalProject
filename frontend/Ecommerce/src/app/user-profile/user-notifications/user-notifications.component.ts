@@ -1,5 +1,6 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { NotifcationService } from '../../notifcation.service';
+import { Router } from '@angular/router';
 
 
 @Component({
@@ -10,8 +11,13 @@ import { NotifcationService } from '../../notifcation.service';
 })
 export class UserNotificationsComponent implements OnInit {
   notifications: any[] = [];
+  multiSelectMode = false;
+  selectedIds: Set<number> = new Set<number>();
 
-  constructor(private notificationService: NotifcationService) {}
+  constructor(
+    private notificationService: NotifcationService,
+    private router: Router // Inject Router
+  ) {}
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -23,11 +29,13 @@ export class UserNotificationsComponent implements OnInit {
   ngOnInit() {
     this.notificationService.getStoredNotifications().subscribe({
       next: (stored) => {
-        this.notifications = (stored || []).map(n => ({
-          ...n,
-          formattedTimestamp: this.formatTimestamp(n.timestamp),
-          showMenu: false
-        }));
+        this.notifications = (stored || [])
+          .map(n => ({
+            ...n,
+            formattedTimestamp: this.formatTimestamp(n.timestamp),
+            showMenu: false
+          }))
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       },
       error: (err) => {
         console.error('Failed to fetch stored notifications:', err);
@@ -41,6 +49,7 @@ export class UserNotificationsComponent implements OnInit {
         showMenu: false
       };
       this.notifications.unshift(newNotif);
+      this.notifications.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     });
   }
 
@@ -117,5 +126,61 @@ export class UserNotificationsComponent implements OnInit {
     }
 
     return notifDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  }
+
+  toggleMultiSelectMode(): void {
+    this.multiSelectMode = !this.multiSelectMode;
+    if (!this.multiSelectMode) {
+      this.selectedIds.clear();
+    }
+  }
+  
+  isSelected(id: number): boolean {
+    return this.selectedIds.has(id);
+  }
+  
+  toggleSelect(id: number, event: MouseEvent): void {
+    event.stopPropagation();
+    if (this.selectedIds.has(id)) {
+      this.selectedIds.delete(id);
+    } else {
+      this.selectedIds.add(id);
+    }
+  }
+  
+  deleteSelectedNotifications(): void {
+    const idsToDelete = Array.from(this.selectedIds);
+    // Optionally, you can call your service in parallel for all IDs
+    idsToDelete.forEach(id => {
+      this.notificationService.deleteNotification(id).subscribe({
+        next: () => {
+          this.notifications = this.notifications.filter(n => n.id !== id);
+        },
+        error: (err) => {
+          console.error('Failed to delete notification:', err);
+        }
+      });
+    });
+    this.toggleMultiSelectMode();
+  }
+
+  onNotificationClick(notification: any): void {
+  if (this.multiSelectMode) return; // Prevent navigation in multi-select mode
+  this.markAsRead(notification);
+  if (notification.link) {
+    if (notification.link.startsWith('http')) {
+      window.open(notification.link, '_blank');
+    } else {
+      this.router.navigate([notification.link]);
+    }
+  }
+}
+
+  private shouldShowFirstTimeBuyerNotification(notification: any): boolean {
+    if (notification.type !== 'first time buyer discount') return true;
+    const lastShown = localStorage.getItem('ftb_discount_last_shown');
+    const now = Date.now();
+    const sixHours = 6 * 60 * 60 * 1000;
+    return !lastShown || now - parseInt(lastShown, 10) > sixHours;
   }
 }

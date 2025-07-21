@@ -153,9 +153,12 @@
 
       <!-- Actions -->
       <div class="flex items-center space-x-3 animate-slide-in-right">
-        <!-- Profile Dropdown (Tailwind UI, dynamic data only) -->
-        <div class="relative">
-          <button (click)="toggleDropdown($event, 'account-dropdown')" class="flex items-center space-x-2 focus:outline-none" type="button">
+
+        <!-- add space between notification and profile button by pmk july 14-->
+        <div class="relative flex items-center space-x-2">  
+         <button (click)="toggleDropdown($event, 'account-dropdown')" class="flex items-center space-x-2 focus:outline-none" type="button">
+
+
             <ng-container *ngIf="userProfileImage; else initialsAvatar">
               <img [src]="userProfileImage" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-neutral-200" />
             </ng-container>
@@ -251,6 +254,17 @@
             </div>
           </div>
         </div>
+
+        <!-- Notification Icon Button by pmk july 14-->
+        <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-blue-500 transition-all duration-300 hover:scale-110 relative group" type="button" (click)="openNotificationSidebar()">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.73 21a2 2 0 01-3.46 0" />
+          </svg>
+          <span *ngIf="displayNotificationCount" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-red-500 text-white rounded-full animate-pulse-soft">{{ displayNotificationCount }}</span>
+        </button>
+        <!-- Notification Sidebar Component -->
+
         <!-- Wishlist Button -->
         <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-blue-500 transition-all duration-300 hover:scale-110 relative group" routerLink="/wishlist">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

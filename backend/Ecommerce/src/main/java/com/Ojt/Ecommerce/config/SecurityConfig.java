@@ -76,6 +76,8 @@ public class SecurityConfig {
                         .requestMatchers("/brand_and_category_image/**").permitAll()
                         .requestMatchers("/review/**").permitAll()
                         .requestMatchers("/deliveryservice/**").permitAll()
+                        .requestMatchers("/api/notification/**").permitAll()
+
 
                         .anyRequest().authenticated()
 

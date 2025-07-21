@@ -70,6 +70,7 @@ import { CreateDeliveryServiceComponent } from './create-delivery-service/create
 import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
 import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
 import { ToastrModule } from 'ngx-toastr';
+import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
 
 @NgModule({
   declarations: [
@@ -148,6 +149,8 @@ import { ToastrModule } from 'ngx-toastr';
     HeaderComponent,
     BreadcrumbComponent,
     BannedPageComponent,
+    ProductEditComponent,
+    NotificationSidebarComponent,
     ProductEditComponent,
     ToastrModule.forRoot({
       timeOut: 3000,

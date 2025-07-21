@@ -11,4 +11,6 @@ import java.util.Optional;
 public interface NotificationRepository extends JpaRepository<Notification,Long> {
     List<Notification> findByRecipientEmail(String recipientEmail);
     Optional<Notification> findFirstByRecipientEmailAndMessageAndReadFalse(String recipientEmail, String message);
+    boolean existsByRecipientEmailAndType(String email, String type);
+    Notification findTopByRecipientEmailAndTypeOrderByTimestampDesc(String email, String type);
 }
