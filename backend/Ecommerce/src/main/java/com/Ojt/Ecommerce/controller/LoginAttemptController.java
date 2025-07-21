@@ -109,5 +109,25 @@ public class LoginAttemptController {
         return ResponseEntity.ok("IPs blocked");
     }
 
+    // ✅ Get all login attempts by sessionId
+    @GetMapping("/session/{sessionId}")
+    public ResponseEntity<List<LoginAttemptDTO>> getBySessionId(@PathVariable String sessionId) {
+        return ResponseEntity.ok(loginAttemptService.getBySessionId(sessionId));
+    }
+
+    // ✅ Block all attempts by sessionId
+    @PostMapping("/block-session")
+    public ResponseEntity<?> blockSession(@RequestParam String sessionId) {
+        loginAttemptService.blockSession(sessionId);
+        return ResponseEntity.ok("Session blocked");
+    }
+
+    // ✅ Whitelist all attempts by sessionId
+    @PostMapping("/whitelist-session")
+    public ResponseEntity<?> whitelistSession(@RequestParam String sessionId) {
+        loginAttemptService.whitelistSession(sessionId);
+        return ResponseEntity.ok("Session whitelisted");
+    }
+
 
 }

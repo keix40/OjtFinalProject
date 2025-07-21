@@ -1,78 +1,161 @@
 <app-header></app-header>
-<div class="tracking-title">Tracking Order</div>
-<div *ngIf="!isLoading && order">
-  <div *ngIf="isReturned(); else trackingContent">
-    <div class="alert alert-info">
-      This order has been returned. Tracking is no longer available.
+<div class="max-w-2xl mx-auto p-4">
+  <!-- Title -->
+  <div class="text-2xl font-bold text-slate-800 mb-6 text-center">Order Tracking</div>
+
+  <!-- Order Info -->
+  <div class="bg-white rounded-xl shadow p-4 mb-6 border border-slate-200">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+      <div>
+        <div class="text-xs text-slate-500">Order Code</div>
+        <div class="font-semibold text-slate-800">{{ order.orderCode }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Status</div>
+        <div class="font-semibold text-blue-700">{{ statusSteps[getCurrentStep()] }}</div>
+      </div>
+    </div>
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2 mt-2">
+      <div>
+        <div class="text-xs text-slate-500">Placed On</div>
+        <div class="text-slate-700">{{ order.orderDate | date:'medium' }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Total</div>
+        <div class="text-slate-700">{{ order.total | number:'1.2-2' }} ks</div>
+      </div>
     </div>
   </div>
 
-  <ng-template #trackingContent>
-    <!-- Order Info -->
-    <div class="order-info">
-      <div class="order-id-label">INFO ABOUT YOUR ORDER</div>
-      <div class="tracking-code-status">
-        <span class="tracking-code">{{ order.orderCode }}</span>
-        <span class="tracking-status">Status:
-          <span [ngClass]="{ 'delivered': getCurrentStep() === 4 }">
-            {{ statusSteps[getCurrentStep()] }}
-          </span>
-        </span>
-      </div>
-    </div>
-
-    <!-- Progress -->
-    <div class="tracking-steps-green">
-      <div *ngFor="let step of statusSteps; let i = index"
-           class="step-green"
-           [class.active-green]="i <= getCurrentStep()">
-        <div class="dot-green">
-          <span *ngIf="i <= getCurrentStep()" class="checkmark">&#10003;</span>
+  <!-- Progress Steps -->
+  <div class="flex items-center justify-between mb-8">
+    <ng-container *ngFor="let step of statusSteps; let i = index">
+      <div class="flex-1 flex flex-col items-center">
+        <div [ngClass]="{
+              'bg-blue-600 text-white': i <= getCurrentStep(),
+              'bg-slate-200 text-slate-400': i > getCurrentStep()
+            }"
+            class="w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 transition">
+          <span *ngIf="i < getCurrentStep()" class="text-lg">&#10003;</span>
+          <span *ngIf="i === getCurrentStep()">{{ i + 1 }}</span>
+          <span *ngIf="i > getCurrentStep()">{{ i + 1 }}</span>
         </div>
-        <div class="label-green">{{ step }}</div>
+        <div class="text-xs text-center w-20 text-slate-700">{{ step }}</div>
       </div>
+      <div *ngIf="i < statusSteps.length - 1" class="flex-1 h-1 bg-slate-200 mx-1">
+        <div [ngClass]="{ 'bg-blue-600': i < getCurrentStep() }" class="h-1 transition"></div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Status History -->
+  <div class="bg-white rounded-xl shadow p-4 mb-6 border border-slate-200">
+    <div class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Status History
     </div>
-
-    <!-- Status History -->
-    <div class="status-history">
-      <ul class="status-list">
-        <li *ngFor="let s of (showAllStatus ? order.statusHistory : order.statusHistory?.slice(0, 3))">
-          <span class="status-circle"><span class="status-checkmark">&#10003;</span></span>
-          <strong>{{ s.status }}</strong> &rarr;
-          <span class="status-date">{{ s.statusDate | date: 'yyyy-MM-dd HH:mm' }} UTC</span>
-
-          <!-- If this status is CANCELLED, show the return request details nested under it -->
-          <div *ngIf="s.status === 'CANCELLED' && order.returnRequests?.length > 0" style="margin-left: 2rem; margin-top: 0.5rem;">
-            <ng-container *ngFor="let r of order.returnRequests">
-              <div *ngIf="(r.status === 'CANCELLED' || r.status === 'PENDING') && isSameStatusDate(s.statusDate, r.requestedAt)">
-                <div><strong>Reason:</strong> {{ formatReason(r.reasonForReturn) | titlecase }}</div>
-                <div *ngIf="r.returnDetail"><strong>Details:</strong> {{ r.returnDetail }}</div>
-                <div>
-                  <strong>Status:</strong> {{ r.status }}
-                  <span *ngIf="r.status !== 'PENDING'"> → </span>
-                  <span *ngIf="r.status !== 'PENDING'" class="status-date">{{ r.cancelledAt | date:'yyyy-MM-dd HH:mm' }} UTC</span>
-                  <br>
-                  <button *ngIf="r.status === 'PENDING'" class="btn btn-sm btn-outline-danger" (click)="cancelReturnRequest(r.id)">
-                    Cancel Request
-                  </button>
+    <div class="space-y-4">
+      <div *ngFor="let s of order.statusHistory" class="mb-4">
+        <div class="flex flex-col md:flex-row md:items-center gap-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full"
+                 [ngClass]="{
+                   'bg-green-500': s.status === 'DELIVERED',
+                   'bg-blue-500': s.status === 'PAID' || s.status === 'SHIPPED',
+                   'bg-red-500': s.status === 'CANCELLED',
+                   'bg-yellow-500': s.status === 'PENDING',
+                   'bg-purple-500': s.status === 'PROCESSING',
+                   'bg-gray-500': ['DELIVERED','PAID','CANCELLED','SHIPPED','PENDING','PROCESSING'].indexOf(s.status) === -1
+                 }"></div>
+            <span class="font-medium">{{ s.status }}</span>
+          </div>
+          <span class="text-xs text-slate-500">{{ s.statusDate | date:'yyyy-MM-dd HH:mm' }}</span>
+        </div>
+        <!-- Return Request Details for CANCELLED (always below, full width) -->
+        <div *ngIf="s.status === 'CANCELLED' && order.returnRequests?.length > 0" class="ml-6 mt-2 flex flex-col">
+          <ng-container *ngFor="let r of order.returnRequests">
+            <div *ngIf="isSameStatusDate(s.statusDate, r.requestedAt)">
+              <div class="text-sm text-slate-700 mb-1">
+                <strong>Reason:</strong> {{ formatReason(r.reasonForReturn) | titlecase }}
+              </div>
+              <div *ngIf="r.returnDetail" class="text-xs text-slate-500 mb-1">
+                <strong>Details:</strong> {{ r.returnDetail }}
+              </div>
+              <div class="text-xs mb-1">
+                <strong>Status:</strong> {{ r.status }}
+              </div>
+              <div *ngIf="r.status === 'APPROVED'" class="text-xs mb-1">
+                <strong>Admin Remark:</strong> {{ r.adminRemark }}
+              </div>
+              <div *ngIf="r.status === 'APPROVED'" class="text-xs mb-1">
+                <strong>Decision At:</strong> {{ r.decisionAt | date:'yyyy-MM-dd HH:mm' }} UTC
+              </div>
+              <div *ngIf="r.status === 'CANCELLED'" class="text-xs mb-1">
+                <strong>Cancelled At:</strong> {{ r.cancelledAt | date:'yyyy-MM-dd HH:mm' }} UTC
+              </div>
+              <div *ngIf="r.status === 'APPROVED' && r.refundId" class="text-xs mb-1">
+                <strong>Refund Info:</strong>
+                <div *ngIf="r.refundType === 'MONEY_REFUND'">
+                  <div>Amount: {{ r.refundAmount }}</div>
+                  <div>Card: ****{{ r.cardNumber?.slice(-4) }}</div>
+                  <div>Completed At: {{ r.completedAt | date:'yyyy-MM-dd HH:mm' }} UTC</div>
+                </div>
+                <div *ngIf="r.refundType === 'REPLACEMENT'">
+                  <div><strong>Replacement Sent</strong></div>
+                  <div *ngIf="r.initiatedAt">Initiated At: {{ r.initiatedAt | date:'yyyy-MM-dd HH:mm' }} UTC</div>
+                  <div *ngIf="r.completedAt">Completed At: {{ r.completedAt | date:'yyyy-MM-dd HH:mm' }} UTC</div>
+                  <div *ngIf="r.trackingCode">Tracking: {{ r.trackingCode }}</div>
                 </div>
               </div>
-            </ng-container>
-          </div>
-        </li>
-      </ul>
-      
-      <!-- Toggle SHOW MORE/LESS -->
-      <div *ngIf="order.statusHistory?.length > 3" class="show-more" (click)="toggleShowAllStatus()">
-        {{ showAllStatus ? 'SHOW LESS' : 'SHOW MORE' }}
+            </div>
+          </ng-container>
+        </div>
       </div>
     </div>
-  </ng-template>
-</div>
+  </div>
 
-<!-- Cancel Order Button -->
-<div class="tracking-actions">
-  <button class="cancel-order-btn" (click)="goToReturnRequest()" *ngIf="order?.status !== 'CANCELLED' && order?.status !== 'RETURNED'">
-    Cancel Order
-  </button>
-</div>
+  <!-- Cancel Order Button -->
+  <div class="flex justify-end mt-6">
+    <button
+      class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition shadow"
+      (click)="goToReturnRequest()"
+      *ngIf="shouldShowCancelOrder()"
+    >
+      Return Request
+    </button>
+  </div>
+
+  <!-- Return Policy Modal -->
+  <div *ngIf="showPolicyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 p-8 relative max-h-[90vh] flex flex-col">
+      <button (click)="onClosePolicyModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
+      <h2 class="text-2xl font-bold text-blue-700 mb-4 text-center">Return Policy</h2>
+      <div class="text-gray-700 mb-6 text-base leading-relaxed overflow-y-auto" style="max-height:50vh;">
+        <div class="mb-4">
+          Customers are eligible to request returns under the following conditions. All return requests must be reviewed and approved by the admin before any refund or replacement is processed.
+        </div>
+        <div class="mb-3">
+          <span class="block font-bold text-lg mb-1">1. Wrong Item Delivered</span>
+          <div>If the item received is different from what was ordered, a return request must be submitted within 7 days of delivery.</div>
+          <div class="mt-1">Upon verification, a full refund will be issued.</div>
+        </div>
+        <div class="mb-3">
+          <span class="block font-bold text-lg mb-1">2. Damaged on Arrival</span>
+          <div>If the item is received in a damaged or defective condition, photo evidence must be provided.</div>
+          <div class="mt-1">After verification by the admin, customers will be offered either a refund or a replacement.</div>
+        </div>
+        <div class="mb-3">
+          <span class="block font-bold text-lg mb-1">3. Changed Mind</span>
+          <div>Returns due to a change of mind are accepted only if the product is unused and sealed.</div>
+          <div class="mt-1">The customer is responsible for the return shipping costs.</div>
+          <div class="mt-1">A refund will be processed after the returned product is inspected and approved.</div>
+        </div>
+      </div>
+      <div class="flex justify-end gap-3 mt-auto">
+        <button (click)="onClosePolicyModal()" class="px-5 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition">Close</button>
+        <button (click)="onAgreePolicy()" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-semibold">Agree</button>
+      </div>
+    </div>
+  </div>

@@ -69,9 +69,13 @@ public class SecurityConfig {
                         .requestMatchers("/return_images/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/user/**").permitAll()
+                        .requestMatchers("/api/discounts/**").permitAll()
                         .requestMatchers("/api/admin/discounts/**").permitAll()
                         .requestMatchers("/api/policies/**").permitAll()
                         .requestMatchers("/api/coupons/validate").permitAll()
+                        .requestMatchers("/brand_and_category_image/**").permitAll()
+                        .requestMatchers("/review/**").permitAll()
+
                         .anyRequest().authenticated()
 
                 );

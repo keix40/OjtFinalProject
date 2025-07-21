@@ -2,10 +2,13 @@ package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.dto.CouponApplyRequest;
 import com.Ojt.Ecommerce.dto.CouponApplyResponse;
+import com.Ojt.Ecommerce.dto.DiscountEventResponseDTO;
 import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
-import com.Ojt.Ecommerce.dto.DiscountResponseDTO;
+import com.Ojt.Ecommerce.repository.DiscountRepository;
+import com.Ojt.Ecommerce.service.DiscountCouponService;
 import com.Ojt.Ecommerce.service.DiscountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,31 +18,38 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DiscountAdminController {
 
-    private final DiscountService discountService;
+    private final DiscountCouponService discountCouponService;
+    private final DiscountRepository discountRepository;
 
     @PostMapping
-    public DiscountResponseDTO create(@RequestBody DiscountRequestDTO dto) {
-        return discountService.createDiscount(dto);
+    public DiscountEventResponseDTO create(@RequestBody DiscountRequestDTO dto) {
+        return discountCouponService.createDiscount(dto);
     }
 
     @GetMapping("/{id}")
-    public DiscountResponseDTO get(@PathVariable Long id) {
-        return discountService.getDiscount(id);
+    public DiscountEventResponseDTO get(@PathVariable Long id) {
+        return discountCouponService.getDiscount(id);
     }
 
     @GetMapping
-    public List<DiscountResponseDTO> getAll() {
-        return discountService.getAllDiscounts();
+    public List<DiscountEventResponseDTO> getAll() {
+        return discountCouponService.getAllDiscounts();
     }
 
     @PutMapping("/{id}")
-    public DiscountResponseDTO update(@PathVariable Long id, @RequestBody DiscountRequestDTO dto) {
-        return discountService.updateDiscount(id, dto);
+    public DiscountEventResponseDTO update(@PathVariable Long id, @RequestBody DiscountRequestDTO dto) {
+        return discountCouponService.updateDiscount(id, dto);
+    }
+
+    @GetMapping("/check-code")
+    public ResponseEntity<Boolean> checkCodeExists(@RequestParam String code) {
+        boolean exists = discountRepository.existsByCode(code);
+        return ResponseEntity.ok(exists);
     }
 
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        discountService.deleteDiscount(id);
+        discountCouponService.deleteDiscount(id);
     }
 
 }

@@ -16,7 +16,9 @@ export class AdminPolicyComponent implements OnInit {
 
   quillModules = {
     toolbar: [
-      ['bold', 'italic']
+      ['bold', 'italic'],
+      [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+      ['clean']
     ]
   };
 
@@ -48,8 +50,10 @@ export class AdminPolicyComponent implements OnInit {
   }
 
   submitForm() {
+    console.log('Form submitted', this.policyForm.value, this.policyForm.valid);
     if (this.policyForm.invalid) return;
     const data = this.policyForm.value;
+     console.log('Submitting Policy:', data);
     if (this.editingPolicy) {
       this.policyService.updatePolicy(this.editingPolicy.id, data).subscribe(() => {
         this.cancelEdit();

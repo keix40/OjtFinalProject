@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import com.Ojt.Ecommerce.dto.ReviewDTO;
 import com.Ojt.Ecommerce.entity.Review;
 import com.Ojt.Ecommerce.dto.ReviewMessageDTO;
 import com.Ojt.Ecommerce.service.ReviewService;
@@ -105,5 +106,10 @@ public class ReviewSocketController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/review/top5star")
+    public ResponseEntity<List<ReviewDTO>> getTop5StarReviews() {
+        return ResponseEntity.ok(reviewService.getTop3FiveStarReviews());
     }
 }

@@ -6,13 +6,14 @@ export interface Policy {
   id: number;
   title: string;
   content: string;
+  open?: boolean;
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class PolicyService {
-  private baseUrl = '/api/policies';
+  private baseUrl = 'http://localhost:8080/api/policies';
 
   constructor(private http: HttpClient) { }
 

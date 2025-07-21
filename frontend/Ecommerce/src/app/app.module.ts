@@ -18,10 +18,10 @@ import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlis
 import { UserPaymentMethodsComponent } from './user-profile/user-payment-methods/user-payment-methods.component';
 import { UserReviewsComponent } from './user-profile/user-reviews/user-reviews.component';
 import { UserPersonalInfoComponent } from './user-profile/user-personal-info/user-personal-info.component';
-import { ProductComponent } from './product/product.component';
-import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { UserAddressesComponent } from './user-profile/user-addresses/user-addresses.component';
 import { UserNotificationsComponent } from './user-profile/user-notifications/user-notifications.component';
+import { ProductComponent } from './product/product.component';
+import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { AddressService } from './services/address.service';
 import { AuthService } from './auth/auth.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -45,40 +45,43 @@ import { LoginAttemptsComponent } from './login-attempts/login-attempts.componen
 import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ReviewComponent } from './review/review.component';
-import { HomeComponent } from './home/home.component';
+import { BlacklistComponent } from './blacklist/blacklist.component';
+import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
+import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
+import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
 import { FooterComponent } from './footer/footer.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { ReturnRequestComponent } from './return-request/return-request.component';
 import { ReturnListComponent } from './return-list/return-list.component';
-import { HeaderComponent } from './header/header.component';
-import { BreadcrumbComponent } from './breadcrumb.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
-import { VipCustomersComponent } from './vip-customers/vip-customers.component';
-import { ReturnDetailComponent } from './return-detail/return-detail.component';
-import { CreateAttributeValueComponent } from './create-attribute-value/create-attribute-value.component';
-import { BlacklistComponent } from './blacklist/blacklist.component';
 import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
-import { ConfirmModelComponent } from './confirm-model/confirm-model.component';
-import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
-import { MatTableModule } from '@angular/material/table';
+import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
+import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { QuillModule } from 'ngx-quill';
+import { NotificationComponent } from './notification/notification.component';
+import { HeaderComponent } from './header/header.component';
+import { BreadcrumbComponent } from './breadcrumb.component';
+import { CategoryListComponent } from './category-list/category-list.component';
+import { BrandListComponent } from './brand-list/brand-list.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
+import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
+import { UserPolicyComponent } from './user-policy/user-policy.component';
+import { AboutUsComponent } from './about-us/about-us.component';
+import { ContactUsComponent } from './contact-us/contact-us.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    TestComponent,
-    HomeComponent,
     LoginComponent,
     RegisterComponent,
-
     UserProfileComponent,
     UserOrdersComponent,
     UserWishlistComponent,
@@ -110,42 +113,55 @@ import { QuillModule } from 'ngx-quill';
     ReviewComponent,
     OrderManagementComponent,
     OrderTrackingComponent,
+    DiscountInsertComponent,
+    DiscountEventManagementComponent,
+    DiscountCouponComponent,
     ReturnRequestComponent,
     ReturnListComponent,
+    BrandListComponent,
+    UserBrandListComponent,
+    AdminPolicyComponent,
     DashboardComponent,
     DiscountAdminComponent,
-    CreateAttributeValueComponent,
-    ConfirmModelComponent,
-    AdminPolicyComponent,
+    UserPolicyComponent,
+    AboutUsComponent,
+    ContactUsComponent,
+
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    ReactiveFormsModule,
     FormsModule,
+    ReactiveFormsModule,
+    CommonModule,
+    BrowserAnimationsModule,
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CommonModule,
-    BrowserAnimationsModule,
+    CartSidebarComponent,
+    ProductDetailComponent,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    QuillModule.forRoot(),
+    BlacklistComponent,
+    TestComponent,
+    //MatInputModule,
+    //MatAutocompleteModule,
+    //MatFormFieldModule,
+    // MatIconModule,
+    //MatButtonModule,
     FooterComponent,
     HeaderComponent,
     BreadcrumbComponent,
     VerifyOtpComponent,
-    VipCustomersComponent,
-    ReturnDetailComponent,
-    BlacklistComponent,
-    CartSidebarComponent,
-    MatTableModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    QuillModule.forRoot()
+    NotificationComponent,
+    BreadcrumbComponent,
   ],
-
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
     AuthService,

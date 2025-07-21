@@ -1,4 +1,4 @@
-<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-sm transition-all duration-300">
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-sm transition-all duration-300">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
@@ -19,33 +19,23 @@
             </svg>
           </button>
           <div *ngIf="openDropdown === 'categories'" class="absolute top-full left-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-neutral-200 transition-all duration-200 animate-dropdown-enter z-50">
-            <div class="p-6 grid grid-cols-2 gap-4">
-              <div class="space-y-3">
-                <h3 class="font-semibold text-neutral-900 text-sm uppercase tracking-wide">Popular</h3>
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 group/item">
-                  <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <span class="text-blue-500">⚡</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-neutral-900 group-hover/item:text-blue-500">Electronics</p>
-                    <p class="text-xs text-neutral-500">2,847 items</p>
-                  </div>
-                </a>
-                <!-- Add more categories as needed -->
+            <div class="p-6 grid grid-cols-2 gap-4 max-h-80 overflow-y-auto">
+              <div class="space-y-3 col-span-2">
+                <h3 class="font-semibold text-neutral-900 text-sm uppercase tracking-wide">All Categories</h3>
+                <ng-container *ngFor="let category of categories">
+                  <a (click)="goToCategory(category)" class="flex items-center space-x-3 p-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 group/item cursor-pointer">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <span class="text-blue-500 font-bold text-lg">{{ category.name ? category.name[0] : '?' }}</span>
+                    </div>
+                    <div>
+                      <p class="font-medium text-neutral-900 group-hover/item:text-blue-500">{{ category.name }}</p>
+                    </div>
+                  </a>
+                </ng-container>
               </div>
-              <div class="space-y-3">
-                <h3 class="font-semibold text-neutral-900 text-sm uppercase tracking-wide">More</h3>
-                <a href="#" class="flex items-center space-x-3 p-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 group/item">
-                  <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <span class="text-purple-500">📚</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-neutral-900 group-hover/item:text-blue-500">Books & Media</p>
-                    <p class="text-xs text-neutral-500">987 items</p>
-                  </div>
-                </a>
-                <!-- Add more categories as needed -->
-              </div>
+            </div>
+            <div class="border-t border-neutral-200 px-6 py-3 bg-white rounded-b-2xl">
+              <a [routerLink]="getAllCategoriesUrl()" class="block w-full text-center text-primary-600 font-semibold py-2 rounded-xl hover:bg-primary-50 transition">View All Categories</a>
             </div>
           </div>
         </div>
@@ -58,19 +48,23 @@
             </svg>
           </button>
           <div *ngIf="openDropdown === 'brands'" class="absolute top-full left-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-neutral-200 transition-all duration-200 animate-dropdown-enter z-50">
-            <div class="p-6">
+            <div class="p-6 max-h-80 overflow-y-auto">
               <div class="space-y-4">
-                <h3 class="font-semibold text-neutral-900 text-sm uppercase tracking-wide mb-3">Featured Brands</h3>
+                <h3 class="font-semibold text-neutral-900 text-sm uppercase tracking-wide mb-3">All Brands</h3>
                 <div class="grid grid-cols-3 gap-3">
-                  <a href="#" class="group/brand p-3 rounded-xl hover:bg-neutral-50 transition-colors duration-200 text-center">
-                    <div class="w-12 h-8 bg-neutral-100 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                      <span class="text-xs font-bold text-neutral-600">APPLE</span>
-                    </div>
-                    <p class="text-xs text-neutral-600 group-hover/brand:text-blue-500">Apple</p>
-                  </a>
-                  <!-- Add more brands as needed -->
+                  <ng-container *ngFor="let brand of brands">
+                    <a (click)="goToBrand(brand)" class="group/brand p-3 rounded-xl hover:bg-neutral-50 transition-colors duration-200 text-center cursor-pointer">
+                      <div class="w-12 h-12 bg-neutral-100 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                        <span class="text-xs font-bold text-neutral-600">{{ brand.name ? brand.name[0] : '?' }}</span>
+                      </div>
+                      <p class="text-xs text-neutral-600 group-hover/brand:text-blue-500">{{ brand.name }}</p>
+                    </a>
+                  </ng-container>
                 </div>
               </div>
+            </div>
+            <div class="border-t border-neutral-200 px-6 py-3 bg-white rounded-b-2xl">
+              <a [routerLink]="getAllBrandsUrl()" class="block w-full text-center text-primary-600 font-semibold py-2 rounded-xl hover:bg-primary-50 transition">View All Brands</a>
             </div>
           </div>
         </div>
@@ -81,6 +75,10 @@
         </a>
         <a routerLink="/trending" class="text-neutral-700 hover:text-blue-500 transition-colors duration-300 font-medium relative group">
           Trending
+          <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
+        </a>
+        <a routerLink="/about-us" class="text-neutral-700 hover:text-blue-500 transition-colors duration-300 font-medium relative group">
+          About Us
           <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
         </a>
       </div>
@@ -234,4 +232,3 @@
 
 <!-- Cart Sidebar Component -->
 <app-cart-sidebar [showCartSidebar]="showCartSidebar" (closeSidebar)="closeSidebar()"></app-cart-sidebar>
-

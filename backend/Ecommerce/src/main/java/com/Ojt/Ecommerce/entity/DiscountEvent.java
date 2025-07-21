@@ -1,26 +1,30 @@
 package com.Ojt.Ecommerce.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "discount_event")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class DiscountEvent {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private String event_name;
+    
+    private String description;
+
+    private double discount_percent;
+
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+
+    private boolean status;
 
     @OneToMany(mappedBy = "discountEvent")
     private List<Discount> discounts;

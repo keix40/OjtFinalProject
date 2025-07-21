@@ -8,7 +8,10 @@ import { AddressService, Address } from '../services/address.service';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import * as L from 'leaflet';
 import { OrderService } from '../services/order.service';
+import { HttpClient } from '@angular/common/http';
 import { DiscountService } from '../services/discount.service';
+import { ProductService } from '../services/product.service';
+import { ProductDTO } from '../product';
 
 @Component({
   selector: 'app-checkout',
@@ -18,6 +21,7 @@ import { DiscountService } from '../services/discount.service';
 })
 export class CheckoutComponent implements OnInit, OnDestroy {
   discount: any;
+  discountId: number | null = null;
   activeStep = 1;
   orderNumber = '';
 
@@ -72,7 +76,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   showAddAddressModal = false;
   addressForm: FormGroup;
   isEditMode = false;
-
+  
   // Map properties
   map: L.Map | undefined;
   marker: L.Marker | undefined;
@@ -85,15 +89,28 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   deliveryId: number | null = null;
   // userId: number | undefined;
 
+  orderPreview: any = null;
+  isFirstTimeBuyerDiscount = false;
+
+  activeDiscounts: any[] = [];
+  productDiscounts: Map<number, any> = new Map();
+  productDetails: Map<number, ProductDTO> = new Map();
+  Math = Math; // Make Math available in template
+
   constructor(
+    
     private router: Router,
+   
     private cartService: CartService,
-    public imageService: ImageService,
+    public imageService: ImageService
+  ,
     private authService: AuthService,
     private addressService: AddressService,
     private fb: FormBuilder,
     private orderService: OrderService,
-    private discountService: DiscountService
+    private http: HttpClient, // Add HttpClient for preview API
+    private discountService: DiscountService,
+    private productService: ProductService
   ) {
     this.addressForm = this.fb.group({
       address: ['', Validators.required],
@@ -111,6 +128,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.subscriptions.push(
       this.cartService.getCartItems().subscribe(items => {
         this.cartItems = items;
+        this.loadProductDetails();
+        this.updateOrderPreview();
       })
     );
 
@@ -136,6 +155,150 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         phone: user.phoneNumber || user.phNumber || ''
       };
     }
+    this.loadActiveDiscounts();
+  }
+
+  loadActiveDiscounts() {
+    this.discountService.getActiveDiscount().subscribe({
+      next: (discounts) => {
+        this.activeDiscounts = discounts;
+        this.calculateProductDiscounts();
+      }
+    });
+  }
+
+  loadProductDetails() {
+    const productIds = this.cartItems.map(item => item.productId || item.id);
+    if (productIds.length === 0) return;
+    this.productService.getProductsByIds(productIds).subscribe(products => {
+      products.forEach(product => {
+        this.productDetails.set(product.id, product);
+      });
+      this.calculateProductDiscounts();
+    });
+  }
+
+  calculateProductDiscounts() {
+    this.productDiscounts.clear();
+    this.cartItems.forEach(item => {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        const discount = this.findApplicableDiscount(product);
+        if (discount) {
+          this.productDiscounts.set(product.id, discount);
+        }
+      }
+    });
+  }
+
+  findApplicableDiscount(product: ProductDTO): any {
+    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+      return null;
+    }
+    for (const discount of this.activeDiscounts) {
+      const rules = discount.rules || [];
+      for (const rule of rules) {
+        if (this.isProductAffectedByRule(product, rule)) {
+          return {
+            id: discount.id,
+            name: discount.name,
+            discount_percent: discount.discount_percent,
+            discount_amount: discount.discount_amount,
+            discountType: discount.discountType,
+            targetType: rule.targetType,
+            eventName: discount.name
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  isProductAffectedByRule(product: ProductDTO, rule: any): boolean {
+    switch (rule.targetType) {
+      case 'PRODUCT':
+        return rule.productId === product.id;
+      case 'BRAND':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.brandId === rule.brandId);
+      case 'CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.categoryId === rule.categoryId);
+      case 'BRAND_CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.brandId === rule.brandId && pair.categoryId === rule.categoryId);
+      default:
+        return false;
+    }
+  }
+
+  getProductDiscount(productId: number): any {
+    if (this.isFirstTimeBuyerDiscount) return null;
+    return this.productDiscounts.get(productId);
+  }
+
+    getDiscountedPrice(product: ProductDTO): number {
+    if (this.isFirstTimeBuyerDiscount) return product.price;
+    const discount = this.getProductDiscount(product.id);
+    if (!discount) return product.price;
+    
+    let discountedPrice: number;
+    if (discount.discountType === 'PERCENTAGE') {
+      discountedPrice = product.price - (product.price * discount.discount_percent / 100);
+    } else {
+      discountedPrice = Math.max(0, product.price - discount.discount_amount);
+    }
+    
+    // Round to whole number (no decimals)
+    return Math.round(discountedPrice);
+  }
+
+  getItemDiscountedPrice(item: CartItem): number {
+    const product = this.productDetails.get(item.productId || item.id);
+    if (product) {
+      return this.getDiscountedPrice(product);
+    }
+    // Fallback to original price if product details not loaded
+    return item.price;
+  }
+  
+  getDiscountDisplayText(discount: any): string {
+    if (!discount) return '';
+    if (discount.discountType === 'PERCENTAGE') {
+      return `${discount.discount_percent}% OFF`;
+    } else {
+      return `Save ${discount.discount_amount} MMK`;
+    }
+  }
+
+  updateOrderPreview() {
+    const user = this.authService.getDecodedToken();
+    if (!user || this.cartItems.length === 0) {
+      this.orderPreview = null;
+      this.isFirstTimeBuyerDiscount = false;
+      return;
+    }
+    const userOrderDto: any = {
+      userId: user.id,
+      cartItem: this.cartItems.map(item => ({
+        productId: item.productId || item.id,
+        quantity: item.quantity,
+        price: item.price
+      }))
+    };
+    if (this.discountId) {
+      userOrderDto.discountId = this.discountId;
+    }
+    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+      next: (preview) => {
+        this.orderPreview = preview;
+        this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
+      },
+      error: () => {
+        this.orderPreview = null;
+        this.isFirstTimeBuyerDiscount = false;
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -151,7 +314,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   nextStep(form?: any) {
     if (form && !form.valid) return;
-
+    
     // Check if phone number is null/empty and update user details if needed
     if (this.activeStep === 1) {
       const user = this.authService.getDecodedToken();
@@ -167,7 +330,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
           gender: user.gender || null,
           roles: user.roles ? user.roles.split(',') : []
         };
-
+        
         this.authService.updateUserDetails(updateData).subscribe({
           next: (response) => {
             console.log('Phone number updated successfully:', response);
@@ -216,12 +379,54 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   // Cart summary helpers
+  getOriginalSubtotal() {
+    let subtotal = 0;
+    for (const item of this.cartItems) {
+      subtotal += item.price * item.quantity;
+    }
+    return subtotal;
+  }
+
+getTotalDiscount() {
+    if (this.discount && this.discountId) {
+      return this.orderPreview?.discountAmount || 0;
+    }
+    if (this.isFirstTimeBuyerDiscount && this.orderPreview?.discountAmount > 0) {
+      return this.orderPreview.discountAmount;
+    }
+    let discount = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        const discounted = this.getDiscountedPrice(product);
+        if (discounted < product.price) {
+          discount += (product.price - discounted) * item.quantity;
+        }
+      }
+    }
+    return discount;
+  }
+
   getSubtotal() {
-    return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    // Always return the sum of original prices
+    let subtotal = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        subtotal += product.price * item.quantity;
+      } else {
+        subtotal += item.price * item.quantity;
+      }
+    }
+    return subtotal;
   }
   getTotal() {
-    return this.getSubtotal() + (this.deliveryFee || 0) - (this.discountAmount || 0);
+  if (this.orderPreview && typeof this.orderPreview.total === 'number') {
+    return this.orderPreview.total;
   }
+  return this.getSubtotal() - this.getTotalDiscount() + this.deliveryFee;
+}
+
   // Quantity controls for cart review (if needed)
   decrementQty(item: any) {
     if (item.quantity > 1) item.quantity--;
@@ -240,24 +445,25 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       alert('Please apply a valid coupon code first.');
       return;
     }
-
+    
     this.stepCompleted[3] = true;
-
+    
     // Get user ID from auth service
     const user = this.authService.getDecodedToken();
     const userId = user ? user.id : null;
-
+    
     // Get selected address ID
-    const selectedAddressId = this.selectedAddressIndex !== null && this.addresses[this.selectedAddressIndex]
-      ? this.addresses[this.selectedAddressIndex].id
+    const selectedAddressId = this.selectedAddressIndex !== null && this.addresses[this.selectedAddressIndex] 
+      ? this.addresses[this.selectedAddressIndex].id 
       : null;
-
+    
     // Get delivery method ID
     const deliveryMethodId = this.deliveryId;
-
+    
     // Get discount ID if coupon is applied
     const discountId = this.discount && this.isCouponValid ? this.discount.id : null;
-
+    
+    const productDiscountAmount = this.getTotalDiscount();
     this.router.navigate(['/checkout/payment'], {
       state: {
         customer: this.customer,
@@ -270,7 +476,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         discountId: discountId,
         discount: this.discount,
         discountAmount: this.discountAmount,
-        deliveryFee: this.deliveryFee
+        deliveryFee: this.deliveryFee,
+        productDiscountAmount: productDiscountAmount,
+        orderPreview: this.orderPreview
       }
     });
   }
@@ -489,35 +697,60 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.couponCode === this.appliedCouponCode && this.isCouponValid) {
+    if (this.couponCode === this.appliedCouponCode) {
       this.discountMessage = 'This coupon has already been applied.';
+      this.isCouponValid = false;
       return;
     }
 
     const user = this.authService.getDecodedToken();
     const userId = user ? user.id : null;
-    const productIds = this.cartItems
-      .map(item => item.productId)
-      .filter((id): id is number => typeof id === 'number');
 
-    this.discountService.validateCoupon(this.couponCode, userId, productIds).subscribe({
-      next: (response) => {
-        if (response.valid) {
-          this.discountAmount = response.discountAmount;
+    this.orderService.getDiscount(userId, this.couponCode).subscribe({
+      next: (discount) => {
+        this.discount = discount;
+        this.discountId = discount.id;
+        const today = new Date();
+        const start = new Date(discount.startDate);
+        const end = new Date(discount.endDate);
+        const subtotal = this.getSubtotal();
+
+        if (today >= start && today <= end && discount.canUse) {
+          if (discount.discountType === 'PERCENTAGE') {
+            this.discountAmount = subtotal * (discount.discountValue || 0);
+          } else {
+            this.discountAmount = discount.discountValue || 0;
+          }
+
+          this.appliedCouponCode = this.couponCode;
           this.isCouponValid = true;
           this.discountMessage = `✅ Coupon applied! You saved ${Math.round(this.discountAmount).toLocaleString()} MMK.`;
-          this.appliedCouponCode = this.couponCode;
+          this.updateOrderPreview(); // Refresh preview with coupon
         } else {
           this.discountAmount = 0;
           this.isCouponValid = false;
-          this.discountMessage = `❌ ${response.message}`;
+          this.discountMessage = '❌ This coupon is not valid or has expired.';
         }
       },
       error: (err) => {
         this.discountAmount = 0;
         this.isCouponValid = false;
-        this.discountMessage = '❌ Failed to validate coupon. Please try again.';
+      
+        if (err.error === 'used') {
+          this.discountMessage = '❌ This coupon has already been used.';
+        } else if (err.status === 404) {
+          this.discountMessage = '❌ Discount code not found.';
+        } else {
+          this.discountMessage = '❌ Invalid coupon code.';
+        }
       }
+    });
+  }
+
+  hasDiscountedProduct(): boolean {
+    return this.cartItems.some(item => {
+      const product = this.productDetails.get(item.productId || item.id);
+      return product && this.getProductDiscount(product.id);
     });
   }
 }

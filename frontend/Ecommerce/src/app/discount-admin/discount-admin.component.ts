@@ -30,11 +30,13 @@ export class DiscountAdminComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.loadDiscounts();
+    this.discountService.getAllDiscount().subscribe((data: any) => {
+      this.discounts = data;
+    });
   }
 
   loadDiscounts() {
-    this.discountService.getDiscounts().subscribe(data => {
+    this.discountService.getAllDiscount().subscribe((data: any) => {
       this.discounts = data;
     });
   }

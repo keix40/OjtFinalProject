@@ -1,5 +1,7 @@
 package com.Ojt.Ecommerce.service;
 
+import com.Ojt.Ecommerce.dto.ReviewDTO;
+import com.Ojt.Ecommerce.dto.ReviewMediaDTO;
 import com.Ojt.Ecommerce.entity.MediaType;
 import com.Ojt.Ecommerce.entity.Review;
 import com.Ojt.Ecommerce.dto.ReviewMessageDTO;
@@ -180,6 +182,31 @@ public class ReviewService {
         // Delete review entity
         repo.delete(review);
     }
+    public List<ReviewDTO> getTop3FiveStarReviews() {
+        return repo.findTop3ByRatingFive()
+                .stream()
+                .limit(3)
+                .map(this::convertToDto)
+                .toList();
+    }
 
+    private ReviewDTO convertToDto(Review r) {
+        return ReviewDTO.builder()
+                .id(r.getId())
+                .comment(r.getComment())
+                .rating(r.getRating())
+                .timestamp(r.getTimestamp())
+                .userName(r.getUser().getName())
+                .userImage(r.getUser().getProfileImage())
+                .productName(r.getProduct().getProductName())
+                .mediaList(
+                        r.getMediaList().stream().map(m -> ReviewMediaDTO.builder()
+                                .id(m.getId())
+                                .type(String.valueOf(m.getType()))
+                                .url(m.getMediaUrl())
+                                .build()).toList()
+                )
+                .build();
+    }
 }
 

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReturnService } from '../services/return.service';
+import { OrderService } from '../services/order.service';
 import { ReturnRequestById } from '../return';
 import { RefundDTO } from '../refund';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +17,7 @@ import Swal from 'sweetalert2';
 })
 export class ReturnDetailComponent implements OnInit {
   returnDetail: ReturnRequestById | null = null;
-  showModal = false;
+  orderDetails: any = null;
   refundOrReplacement: 'refund' | 'replacement' = 'refund';
   adminRemark = '';
   selectedCard = '';
@@ -26,10 +27,15 @@ export class ReturnDetailComponent implements OnInit {
 
   constructor(
     private returnService: ReturnService,
+    private orderService: OrderService,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
+    this.loadRequestDetail();
+  }
+
+  loadRequestDetail(){
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.returnService.getReturnById(+id).subscribe(data => {
@@ -37,9 +43,26 @@ export class ReturnDetailComponent implements OnInit {
         this.refundAmount = data.totalAmount;
         this.selectedCard = data.cardNumber;
         this.adminRemark = data.adminRemark || '';
+  
+        // ✅ Chain: load order details after getting return
+        this.loadOrderDetails();  // This ensures fresh status history
       });
     }
   }
+  
+
+  private loadOrderDetails() {
+    if (this.returnDetail?.orderId) {
+      this.orderService.getOrderById(this.returnDetail.orderId).subscribe({
+        next: (order) => {
+          this.orderDetails = order;
+        },
+        error: (error) => {
+          console.error('Error loading order details:', error);
+        }
+      });
+    }
+  }  
 
   onApprove() {
     if (!this.returnDetail) return;
@@ -47,18 +70,43 @@ export class ReturnDetailComponent implements OnInit {
       returnRequestId: this.returnDetail.id,
       adminRemark: this.adminRemark
     }).subscribe(() => {
-      this.showModal = true;
+      // Update the status locally so the UI updates immediately
+      this.returnDetail!.status = 'APPROVED';
       Swal.fire('Success', 'Return request approved!', 'success');
     });
   }
 
   onReject() {
     if (!this.returnDetail) return;
+
     this.returnService.rejectRequest({
       returnRequestId: this.returnDetail.id,
       adminRemark: this.adminRemark
-    }).subscribe(() => {
-      Swal.fire('Success', 'Return request rejected!', 'success');
+    }).subscribe({
+      next: () => {
+        // After rejection, restore order status to before cancellation
+        this.orderService.getOrderById(this.returnDetail!.orderId).subscribe({
+          next: (order) => {
+            const statusBeforeCancellation = this.findStatusBeforeCancellation(order);
+            const targetStatus = statusBeforeCancellation || 'PENDING';
+            this.orderService.updateOrderStatus(this.returnDetail!.orderId, targetStatus).subscribe({
+              next: () => {
+                Swal.fire('Success', `Return request rejected and order status restored to ${targetStatus}.`, 'success');
+                this.loadRequestDetail();
+              },
+              error: (error) => {
+                Swal.fire('Error', `Return request rejected but failed to update order status: ${error.error || error.message || 'Unknown error'}`, 'error');
+              }
+            });
+          },
+          error: (error) => {
+            Swal.fire('Error', `Return request rejected but failed to fetch order details: ${error.error || error.message || 'Unknown error'}`, 'error');
+          }
+        });
+      },
+      error: (error) => {
+        Swal.fire('Error', 'Failed to reject return request: ' + (error.error || error.message || 'Unknown error'), 'error');
+      }
     });
   }
 
@@ -73,20 +121,64 @@ export class ReturnDetailComponent implements OnInit {
 
     this.returnService.processRefund(refundDTO).subscribe(() => {
       Swal.fire('Success', 'Refund sent successfully!', 'success');
-      this.showModal = false;
     });
   }
 
   onSendReplacement() {
     if (!this.returnDetail) return;
-    this.returnService.processReplacement({
+
+    const requestBody = {
       returnRequestId: this.returnDetail.id,
-      adminRemark: this.adminRemark
-    }).subscribe(() => {
-      Swal.fire('Success', 'Replacement processed successfully!', 'success');
-      this.showModal = false;
+      adminRemark: this.adminRemark || ''
+    };
+
+    this.returnService.processReplacement(requestBody).subscribe({
+      next: (response) => {
+        Swal.fire('Success', 'Replacement processed and order status set to PENDING.', 'success');
+        this.loadRequestDetail();
+      },
+      error: (error) => {
+        Swal.fire('Error', 'Failed to process replacement: ' + (error.error || error.message || 'Unknown error'), 'error');
+      }
     });
   }
+  private findStatusBeforeCancellation(order: any): string | null {
+    console.log('Finding status before cancellation for order:', order);
+    
+    if (!order.statusHistory || order.statusHistory.length === 0) {
+      console.log('No status history found');
+      return null;
+    }
+
+    console.log('Original status history:', order.statusHistory);
+
+    // Sort status history by date (oldest first)
+    const sortedHistory = [...order.statusHistory].sort(
+      (a: any, b: any) => new Date(a.statusDate).getTime() - new Date(b.statusDate).getTime()
+    );
+
+    console.log('Sorted status history:', sortedHistory);
+
+    // Find the status before CANCELLED
+    for (let i = sortedHistory.length - 1; i >= 0; i--) {
+      console.log(`Checking status at index ${i}:`, sortedHistory[i].status);
+      if (sortedHistory[i].status === 'CANCELLED') {
+        console.log('Found CANCELLED status at index:', i);
+        // Return the status before CANCELLED
+        if (i > 0) {
+          const previousStatus = sortedHistory[i - 1].status;
+          console.log('Status before CANCELLED:', previousStatus);
+          return previousStatus;
+        } else {
+          console.log('CANCELLED is the first status, no previous status');
+          break;
+        }
+      }
+    }
+
+    console.log('No CANCELLED status found or it\'s the first status');
+    return null;
+  }  
 
   onImageClick(img: string) {
     this.selectedImage = img;
@@ -134,5 +226,42 @@ export class ReturnDetailComponent implements OnInit {
       this.returnDetail.refundAmount > 0
     );
   }
-  
+
+  get showRefundSection(): boolean {
+    return this.returnDetail?.status === 'APPROVED';
+  }
+
+  get statusBeforeCancellation(): string | null {
+    if (!this.orderDetails || !this.orderDetails.statusHistory) {
+      return null;
+    }
+    return this.findStatusBeforeCancellation(this.orderDetails);
+  }
+
+  getCurrentDateTime(): string {
+    return new Date().toLocaleString();
+  }
+
+  // Test method to manually test order status update
+  testOrderStatusUpdate() {
+    if (!this.returnDetail) {
+      console.error('No return detail available for testing');
+      return;
+    }
+
+    console.log('Testing order status update for order ID:', this.returnDetail.orderId);
+    
+    // Test with a simple status update
+    this.orderService.updateOrderStatus(this.returnDetail.orderId, 'PENDING').subscribe({
+      next: (response) => {
+        console.log('Test order status update successful:', response);
+        Swal.fire('Success', 'Test order status update successful!', 'success');
+        this.loadRequestDetail(); // Reload to see changes
+      },
+      error: (error) => {
+        console.error('Test order status update failed:', error);
+        Swal.fire('Error', `Test failed: ${error.error || error.message || 'Unknown error'}`, 'error');
+      }
+    });
+  }
 }

@@ -45,7 +45,6 @@ public class User {
     @Column(name="phone_number",length = 45)
     private String phoneNumber;
 
-
     @Column(name = "profile_image", columnDefinition = "TEXT")
     private String profileImage;
 
@@ -54,7 +53,6 @@ public class User {
 
 //    @Column(name = "is_verified")
 //    private boolean isVerified = false;
-
 
     @Column(name = "reset_token")
     private String resetToken;
@@ -80,6 +78,10 @@ public class User {
     private List<Purchase> purchases;
 
 
+
+    //add for first time buyer discount buy pmk july 7
+    @Column(name = "order_count")
+    private Integer orderCount = 0;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore

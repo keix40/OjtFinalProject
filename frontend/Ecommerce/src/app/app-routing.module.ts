@@ -26,6 +26,9 @@ import { RolesPermissionsComponent } from './roles-permissions/roles-permissions
 import { VipCustomersComponent } from './vip-customers/vip-customers.component';
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
+import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
+import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
 import { HomeComponent } from './home/home.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { UserProductListComponent } from './user-product-list/user-product-list';
@@ -35,6 +38,16 @@ import { ReturnRequestComponent } from './return-request/return-request.componen
 import { ReturnListComponent } from './return-list/return-list.component';
 import { ReturnDetailComponent } from './return-detail/return-detail.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
+import { CategoryListComponent } from './category-list/category-list.component';
+import { BrandListComponent } from './brand-list/brand-list.component';
+import { CategoryAddSubcategoryComponent } from './category-add-subcategory/category-add-subcategory.component';
+import { UserCategoryListComponent } from './user-category-list/user-category-list.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
+import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
+import { UserPolicyComponent } from './user-policy/user-policy.component';
+import { AboutUsComponent } from './about-us/about-us.component';
+import { ContactUsComponent } from './contact-us/contact-us.component';
+
 
 const routes: Routes = [
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Home' } },
@@ -42,15 +55,27 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
   { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
+  { path: 'about-us', component: AboutUsComponent, data: { breadcrumb: 'About Us' } },
+  { path: 'contact-us', component: ContactUsComponent, data: { breadcrumb: 'Contact Us' } },
+
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
     component: LayoutComponent,
     canActivate: [AuthGuard],
     children: [
+      { path: 'product', component: ProductComponent },
+      { path: 'productlist', component: ProductMangementComponent },
+      { path: 'admin/products/:id', component: ProductDetailComponent },
+      { path: 'orders', component: OrderManagementComponent },
+      {path: 'discount-add', component: DiscountInsertComponent},
+      {path: 'discount-list', component:DiscountEventManagementComponent},
+      {path: 'discount-coupon', component:DiscountCouponComponent},
       { path: 'product', component: ProductComponent, data: { breadcrumb: 'Products' } },
       { path: 'productlist', component: ProductMangementComponent, data: { breadcrumb: 'Product List' } },
       { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
       { path: 'orders', component: OrderManagementComponent, data: { breadcrumb: 'Orders' } },
+      { path: 'admin/policies', component: AdminPolicyComponent, data: { breadcrumb: 'Policies' } },
+      { path: 'user/policies', component: UserPolicyComponent, data: { breadcrumb: 'User Policies' } },
       // add more routes here
     ],},
   { path: 'cart', component: CartPageComponent, data: { breadcrumb: 'Shopping Cart' } },
@@ -79,21 +104,26 @@ const routes: Routes = [
       { path: 'users/login-attempts', component: LoginAttemptsComponent, data: { breadcrumb: 'Login Attempts' }},
       { path: 'return', component: ReturnListComponent },
       { path: 'return/:id', component: ReturnDetailComponent },
+      { path: 'categorylist', component: CategoryListComponent},
+      { path: 'brandlist', component: BrandListComponent},
+      { path: 'categorylist', component: CategoryListComponent},
+      { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent },
       { path: '', redirectTo: 'home', pathMatch: 'full' }
     ]
   },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent,canActivate: [AuthGuard] , data: { breadcrumb: 'Order Tracking' } },
-  { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
+  // { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
   { path: 'product/:id', component: UserProductDetailComponent, data: { breadcrumb: 'Product Detail' } },
   { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
   { path: 'review', component: ReviewComponent },
   { path: 'return-request', component: ReturnRequestComponent },
-  { path: 'verify-otp', component: VerifyOtpComponent },
+  { path: 'verify-otp', component: VerifyOtpComponent },  { path: 'usercategorylist', component: UserCategoryListComponent },
+  { path: 'userbrandlist', component: UserBrandListComponent },
 ];
 
 @NgModule({
   imports: [
-    RouterModule.forRoot(routes),
+    RouterModule.forRoot(routes, { scrollPositionRestoration: 'enabled' }),
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -101,4 +131,3 @@ const routes: Routes = [
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
-

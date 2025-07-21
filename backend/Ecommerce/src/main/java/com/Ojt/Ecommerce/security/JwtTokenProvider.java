@@ -60,6 +60,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim("gender", user.getGender())
                 .claim("phoneNumber", user.getPhoneNumber())
                 .claim("dateofbirth", user.getDateOfBirth().toString()) // 👈 convert LocalDate to String
+                .claim("createda.te", user.getCreatedDate().toString())
                 .claim("createdate", user.getCreatedDate().toString())
                 .claim("profileImage",user.getProfileImage())
                 .setIssuedAt(now)

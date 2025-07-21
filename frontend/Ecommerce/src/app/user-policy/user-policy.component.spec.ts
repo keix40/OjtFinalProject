@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ReturnListComponent } from '../return-list/return-list.component';
+import { UserPolicyComponent } from './user-policy.component';
 
-describe('ReturnListComponent', () => {
-  let component: ReturnListComponent;
-  let fixture: ComponentFixture<ReturnListComponent>;
+describe('UserPolicyComponent', () => {
+  let component: UserPolicyComponent;
+  let fixture: ComponentFixture<UserPolicyComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [ReturnListComponent]
+      declarations: [UserPolicyComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(ReturnListComponent);
+    fixture = TestBed.createComponent(UserPolicyComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

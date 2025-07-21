@@ -40,8 +40,8 @@ export class ReturnService {
     return this.http.post(`${this.baseUrl}/refund`, data, { responseType: 'text' });
   }
 
-  processReplacement(data: { returnRequestId: number, adminRemark?: string }) {
+  processReplacement(data: { returnRequestId: number; adminRemark?: string }) {
     return this.http.post(`${this.baseUrl}/replacement`, data, { responseType: 'text' });
-  }
+  }  
   
 }

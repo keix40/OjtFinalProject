@@ -15,10 +15,14 @@ export class OrderTrackingComponent {
   order: any;
   isLoading = true;
   error: string | null = null;
-  statusSteps = ['Order Placed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+  statusSteps = ['Order Placed', 'Processing', 'Shipped', 'Delivered'];
   showAllStatus: boolean = false;
   stopStatuses = ['CANCELLED', 'RETURNED'];
   orderStatusAtCancelRequest: string | null = null;
+
+  // Return Policy Modal
+  showPolicyModal: boolean = false;
+  returnPolicyText: string = `Customers are eligible to request returns under the following conditions. All return requests must be reviewed and approved by the admin before any refund or replacement is processed.\n\n1. Wrong Item Delivered\nIf the item received is different from what was ordered, a return request must be submitted within 7 days of delivery.\n\nUpon verification, a full refund will be issued.\n\n2. Damaged on Arrival\nIf the item is received in a damaged or defective condition, photo evidence must be provided.\n\nAfter verification by the admin, customers will be offered either a refund or a replacement.\n\n3. Changed Mind\nReturns due to a change of mind are accepted only if the product is unused and sealed.\n\nThe customer is responsible for the return shipping costs.\n\nA refund will be processed after the returned product is inspected and approved.`;
 
   constructor(
     private route: ActivatedRoute,
@@ -93,9 +97,13 @@ export class OrderTrackingComponent {
   }  
 
   goToReturnRequest() {
+    this.showPolicyModal = true;
+  }
+
+  onAgreePolicy() {
+    this.showPolicyModal = false;
     const lastStatus = this.getLastNonCancelledStatus();
     this.orderStatusAtCancelRequest = lastStatus;
-
     const orderId = Number(this.route.snapshot.paramMap.get('orderId'));
     if (orderId) {
       this.modalService.openReturnRequestModal(orderId, lastStatus).then((result) => {
@@ -104,6 +112,10 @@ export class OrderTrackingComponent {
         }
       });
     }
+  }
+
+  onClosePolicyModal() {
+    this.showPolicyModal = false;
   }
 
   cancelReturnRequest(returnRequestId: number) {
@@ -163,5 +175,16 @@ export class OrderTrackingComponent {
     return Math.abs(d1.getTime() - d2.getTime()) < 10 * 60 * 1000; // 10 minutes
   }
   
+  shouldShowCancelOrder(): boolean {
+    if (!this.order) return false;
+    // Only show if order is delivered and within 7 days
+    if (this.order.status !== 'DELIVERED') return false;
+    const deliveredDate = this.getDeliveredDate();
+    if (!deliveredDate) return false;
+    const now = new Date();
+    const diffDays = (now.getTime() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (diffDays > 7) return false;
+    return true;
+  }
 }
   

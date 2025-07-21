@@ -121,4 +121,16 @@ export class LoginAttemptsService {
   bulkBlock(ipList: string[]): Observable<any> {
     return this.http.post(`${this.apiUrl}/block-ip/bulk`, ipList);
   }
+
+  getBySessionId(sessionId: string) {
+    return this.http.get<LoginAttempt[]>(`${this.apiUrl}/session/${sessionId}`);
+  }
+
+  blockSession(sessionId: string) {
+    return this.http.post(`${this.apiUrl}/block-session`, null, { params: { sessionId } });
+  }
+
+  whitelistSession(sessionId: string) {
+    return this.http.post(`${this.apiUrl}/whitelist-session`, null, { params: { sessionId } });
+  }
 }
