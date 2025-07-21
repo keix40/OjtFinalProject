@@ -1,32 +1,41 @@
 <div class="min-h-screen bg-gradient-to-b from-neutral-50 to-white flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
   <div class="w-full max-w-4xl bg-white rounded-3xl shadow-xl p-8 sm:p-12 flex flex-col gap-8">
-    <!-- Contact Form -->
     <div class="flex flex-col gap-8">
       <div class="text-center mb-4">
         <h1 class="text-3xl font-extrabold text-black mb-2">Contact Us</h1>
         <p class="text-neutral-700">We'd love to hear from you! Fill out the form below and our team will get back to you soon.</p>
       </div>
-      <form class="flex flex-col gap-5">
+      <form class="flex flex-col gap-5" (ngSubmit)="onSubmit()" autocomplete="off" novalidate>
         <div>
           <label for="name" class="block text-sm font-medium text-neutral-700 mb-1">Name</label>
-          <input id="name" name="name" type="text" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50" placeholder="Your Name" />
+          <input id="name" name="name" type="text" [(ngModel)]="contact.name" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50" placeholder="Your Name" [class.border-red-500]="submitted && !contact.name.trim()" />
+          <div *ngIf="submitted && !contact.name.trim()" class="text-red-500 text-xs mt-1">Name is required.</div>
         </div>
         <div>
           <label for="email" class="block text-sm font-medium text-neutral-700 mb-1">Email</label>
-          <input id="email" name="email" type="email" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50" placeholder="you@email.com" />
+          <input id="email" name="email" type="email" [(ngModel)]="contact.email" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50" placeholder="you@email.com" [class.border-red-500]="submitted && (!contact.email.trim() || !validateEmail(contact.email))" />
+          <div *ngIf="submitted && !contact.email.trim()" class="text-red-500 text-xs mt-1">Email is required.</div>
+          <div *ngIf="submitted && contact.email.trim() && !validateEmail(contact.email)" class="text-red-500 text-xs mt-1">Please enter a valid email address.</div>
         </div>
         <div>
           <label for="subject" class="block text-sm font-medium text-neutral-700 mb-1">Subject</label>
-          <input id="subject" name="subject" type="text" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50" placeholder="Subject" />
+          <input id="subject" name="subject" type="text" [(ngModel)]="contact.subject" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50" placeholder="Subject" [class.border-red-500]="submitted && !contact.subject.trim()" />
+          <div *ngIf="submitted && !contact.subject.trim()" class="text-red-500 text-xs mt-1">Subject is required.</div>
         </div>
         <div>
           <label for="message" class="block text-sm font-medium text-neutral-700 mb-1">Message</label>
-          <textarea id="message" name="message" rows="5" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50 resize-none" placeholder="Type your message here..."></textarea>
+          <textarea id="message" name="message" rows="5" [(ngModel)]="contact.message" class="w-full px-4 py-3 border border-neutral-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-black focus:border-black transition text-neutral-900 bg-neutral-50 resize-none" placeholder="Type your message here..." [class.border-red-500]="submitted && !contact.message.trim()"></textarea>
+          <div *ngIf="submitted && !contact.message.trim()" class="text-red-500 text-xs mt-1">Message is required.</div>
         </div>
-        <button type="submit" class="mt-2 w-full px-6 py-3 bg-black text-white font-semibold rounded-xl shadow hover:bg-neutral-900 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50">Send Message</button>
+        <button type="submit" [disabled]="!isValid() || loading" class="mt-2 w-full px-6 py-3 bg-black text-white font-semibold rounded-xl shadow hover:bg-neutral-900 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50 disabled:opacity-60 disabled:cursor-not-allowed">
+          <span *ngIf="!loading">Send Message</span>
+          <span *ngIf="loading">Sending...</span>
+        </button>
+        <div *ngIf="successMessage" class="text-green-600 text-center font-medium mt-2">{{ successMessage }}</div>
+        <div *ngIf="errorMessage" class="text-red-600 text-center font-medium mt-2">{{ errorMessage }}</div>
       </form>
     </div>
-    <!-- Contact Details Card -->
+    <!-- Contact Details Card (unchanged) -->
     <div class="flex flex-col justify-center">
       <div class="bg-neutral-100 rounded-2xl shadow-md p-6 flex flex-col gap-4">
         <h2 class="text-xl font-bold text-black mb-2">Contact Details</h2>
