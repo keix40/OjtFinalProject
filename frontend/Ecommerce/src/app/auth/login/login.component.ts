@@ -134,6 +134,20 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         this.showCaptchaModal = true;
         return;
       }
+      // Blacklist enforcement: if blocked, navigate to blocked page
+      if (err?.error?.blocked) {
+        // Set blacklist flags for route guard
+        localStorage.setItem('blacklisted', 'true');
+        localStorage.setItem('blacklistReason', err.error.reason || '');
+        localStorage.setItem('blacklistExpiryDate', err.error.expiryDate || '');
+        this.router.navigate(['/blacklist-blocked'], {
+          queryParams: {
+            reason: err.error.reason,
+            expiryDate: err.error.expiryDate
+          }
+        });
+        return;
+      }
       console.error(err);
       if (err?.error?.message && err.error.message.toLowerCase().includes('verify your email')) {
         // Redirect to OTP verification page with email

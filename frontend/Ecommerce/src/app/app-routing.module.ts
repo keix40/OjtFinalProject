@@ -51,6 +51,7 @@ import { IpService } from './services/ip.service';
 import { LoginAttemptsService } from './services/login-attempts.service';
 import { ProductEditComponent } from './product-edit/product-edit.component';
 import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
+import { BlacklistBlockedComponent } from './blacklist/blacklist-blocked.component';
 
 
 @Injectable({ providedIn: 'root' })
@@ -79,37 +80,27 @@ import { DeliveryServiceListComponent } from './delivery-service-list/delivery-s
 import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
 
 const routes: Routes = [
-  { path: 'banned', component: BannedPageComponent },
-  { path: 'home', component: HomeComponent, canActivate: [BlockedGuard] },
-  { path: 'login', component: LoginComponent, canActivate: [BlockedGuard] },
+  { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent, data: { breadcrumb: 'Register' } },
-  { path: 'userproductlist', component: UserProductListComponent, data: { breadcrumb: 'ProductList' } },
+  { path: 'verify-otp', component: VerifyOtpComponent },
+  { path: 'blacklist-blocked', component: BlacklistBlockedComponent },
+  { path: 'banned', component: BannedPageComponent },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: 'cart', component: CartPageComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Shopping Cart' } },
+  { path: 'checkout', component: CheckoutComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Checkout' } },
+  { path: 'checkout/payment', component: PaymentComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Payment' } },
+  { path: 'checkout/confirm', component: OrderConfirmComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Order Confirmation' } },
+  { path: 'display', component: ProductDisplayComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Product Display' } },
+  { path: 'wishlist', component: WishlistComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Wishlist' } },
+  { path: 'userproductlist', component: UserProductListComponent, canActivate: [AuthGuard], data: { breadcrumb: 'ProductList' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
-  { path: '', redirectTo: 'home', pathMatch: 'full' },
-  {path: '',
-    component: LayoutComponent,
-    canActivate: [AuthGuard],
-    children: [
-      { path: 'product', component: ProductComponent },
-      { path: 'productlist', component: ProductMangementComponent },
-      { path: 'admin/products/:id', component: ProductDetailComponent },
-      { path: 'orders', component: OrderManagementComponent },
-      {path: 'discount-add', component: DiscountInsertComponent},
-      {path: 'discount-list', component:DiscountEventManagementComponent},
-      {path: 'discount-coupon', component:DiscountCouponComponent},
-      { path: 'product', component: ProductComponent, data: { breadcrumb: 'Products' } },
-      { path: 'productlist', component: ProductMangementComponent, data: { breadcrumb: 'Product List' } },
-      { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
-      { path: 'orders', component: OrderManagementComponent, data: { breadcrumb: 'Orders' } },
-      // add more routes here
-    ],},
-  { path: 'cart', component: CartPageComponent, data: { breadcrumb: 'Shopping Cart' } },
-  { path: 'checkout', component: CheckoutComponent, data: { breadcrumb: 'Checkout' } },
-  { path: 'checkout/payment', component: PaymentComponent, data: { breadcrumb: 'Payment' } },
-  { path: 'checkout/confirm', component: OrderConfirmComponent, data: { breadcrumb: 'Order Confirmation' } },
-  { path: 'display', component: ProductDisplayComponent, data: { breadcrumb: 'Product Display' } },
-  { path: 'wishlist', component: WishlistComponent, data: { breadcrumb: 'Wishlist' } },
-
+  { path: 'product/:id', component: UserProductDetailComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
+  { path: 'product-edit/:id', component: ProductEditComponent, canActivate: [AuthGuard] },
+  { path: 'review', component: ReviewComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Review' } },
+  { path: 'return-request', component: ReturnRequestComponent, canActivate: [AuthGuard] },
+  { path: 'usercategorylist', component: UserCategoryListComponent, canActivate: [AuthGuard] },
+  { path: 'userbrandlist', component: UserBrandListComponent, canActivate: [AuthGuard] },
+  { path: 'ordertracking/:orderId', component: OrderTrackingComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Order Tracking' } },
   {
     path: '',
     component: LayoutComponent,
@@ -118,39 +109,32 @@ const routes: Routes = [
       { path: 'product', component: ProductComponent, data: { breadcrumb: 'Products' } },
       { path: 'productlist', component: ProductMangementComponent, data: { breadcrumb: 'Product List' } },
       { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
+      { path: 'orders', component: OrderManagementComponent, data: { breadcrumb: 'Orders' } },
+      { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Dashboard' } },
+      { path: 'discount-add', component: DiscountInsertComponent, data: { breadcrumb: 'Add Discount' } },
+      { path: 'discount-list', component: DiscountEventManagementComponent, data: { breadcrumb: 'Discount List' } },
+      { path: 'discount-coupon', component: DiscountCouponComponent, data: { breadcrumb: 'Discount Coupons' } },
       { path: 'users/customers', component: CustomersComponent, data: { breadcrumb: 'Customers' } },
-      { path: 'users/create', component: CreateUserComponent ,canActivate: [AuthGuard],
-        data: { breadcrumb: 'Create User', permission: 'Users Create' }},
-      { path: 'users/activity', component: ActivityLogsComponent, data: { breadcrumb: 'Activity Logs' }},
-      { path: 'users/admins', component: AdminUsersComponent, data: { breadcrumb: 'Admins' }},
-      { path: 'users/roles', component: RolesPermissionsComponent, data: { breadcrumb: 'Roles & Permissions' }},
-      { path: 'users/vip', component: VipCustomersComponent, data: { breadcrumb: 'VIP Customers' }},
-      { path: 'users/blacklist', component: BlacklistComponent, data: { breadcrumb: 'Blacklist' }},
-      { path: 'users/login-attempts', component: LoginAttemptsComponent, data: { breadcrumb: 'Login Attempts' }},
-      { path: 'return', component: ReturnListComponent },
-      { path: 'return/:id', component: ReturnDetailComponent },
-      { path: 'categorylist', component: CategoryListComponent},
-      { path: 'brandlist', component: BrandListComponent},
-      { path: 'categorylist', component: CategoryListComponent},
-      { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent },
-      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent },
-      { path: 'createdeliveryservice', component: CreateDeliveryServiceComponent },
-      { path: 'deliveryservicelist', component: DeliveryServiceListComponent },
-      { path: 'admin/vip-tiers', component: VipTiersAdminComponent },
-      { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Products' } },
-      { path: '', redirectTo: 'home', pathMatch: 'full' }
+      { path: 'users/create', component: CreateUserComponent, data: { breadcrumb: 'Create User', permission: 'Users Create' } },
+      { path: 'users/activity', component: ActivityLogsComponent, data: { breadcrumb: 'Activity Logs' } },
+      { path: 'users/admins', component: AdminUsersComponent, data: { breadcrumb: 'Admins' } },
+      { path: 'users/roles', component: RolesPermissionsComponent, data: { breadcrumb: 'Roles & Permissions' } },
+      { path: 'users/vip', component: VipCustomersComponent, data: { breadcrumb: 'VIP Customers' } },
+      { path: 'users/blacklist', component: BlacklistComponent, data: { breadcrumb: 'Blacklist' } },
+      { path: 'users/login-attempts', component: LoginAttemptsComponent, data: { breadcrumb: 'Login Attempts' } },
+      { path: 'return', component: ReturnListComponent, data: { breadcrumb: 'Returns' } },
+      { path: 'return/:id', component: ReturnDetailComponent, data: { breadcrumb: 'Return Detail' } },
+      { path: 'categorylist', component: CategoryListComponent, data: { breadcrumb: 'Categories' } },
+      { path: 'brandlist', component: BrandListComponent, data: { breadcrumb: 'Brands' } },
+      { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent, data: { breadcrumb: 'Add Subcategory' } },
+      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent, data: { breadcrumb: 'Revenue Target' } },
+      { path: 'createdeliveryservice', component: CreateDeliveryServiceComponent, data: { breadcrumb: 'Create Delivery Service' } },
+      { path: 'deliveryservicelist', component: DeliveryServiceListComponent, data: { breadcrumb: 'Delivery Services' } },
+      { path: 'admin/vip-tiers', component: VipTiersAdminComponent, data: { breadcrumb: 'VIP Tiers' } },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
-  { path: 'ordertracking/:orderId', component: OrderTrackingComponent,canActivate: [AuthGuard] , data: { breadcrumb: 'Order Tracking' } },
-  // { path: 'user-product-detail/:id', component: UserProductDetailComponent,canActivate: [AuthGuard], data: { breadcrumb: 'Product Detail' } },
-  { path: 'product/:id', component: UserProductDetailComponent, data: { breadcrumb: 'Product Detail' } },
-  { path: 'product-edit/:id', component: ProductEditComponent  },
-  { path: 'review', component: ReviewComponent, data: { breadcrumb: 'Review' } },
-  { path: 'review', component: ReviewComponent },
-  { path: 'return-request', component: ReturnRequestComponent }, 
-  { path: 'verify-otp', component: VerifyOtpComponent },  { path: 'usercategorylist', component: UserCategoryListComponent },
-  { path: 'userbrandlist', component: UserBrandListComponent },
-  
+  { path: '', redirectTo: 'home', pathMatch: 'full' }
 ];
 
 @NgModule({

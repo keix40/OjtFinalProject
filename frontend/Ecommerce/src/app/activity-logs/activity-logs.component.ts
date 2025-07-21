@@ -1,5 +1,5 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
-import { ActivityLogService, ActivityLog, ActivityLogFilter, ActivityLogResponse, ActivityStatistics } from '../services/activity-log.service';
+import { ActivityLogService, ActivityLogFilter, ActivityLogResponse, ActivityStatistics } from '../services/activity-log.service';
 
 declare var lucide: any;
 
@@ -11,6 +11,27 @@ interface LogFilters {
   severityLevels: string[];
   ipAddress: string;
   searchTerm: string;
+}
+
+// Update the ActivityLog interface to allow 'changes' to be string or object
+export interface ActivityLog {
+  id: number;
+  userId: number;
+  userName: string;
+  userRole: string;
+  actionType: string;
+  entityType: string;
+  entityId: string;
+  description: string;
+  severityLevel: string;
+  ipAddress: string;
+  userAgent: string;
+  sessionId: string;
+  timestamp: string;
+  details: string;
+  changes: any; // allow string or object
+  status: string;
+  errorMessage: string;
 }
 
 @Component({
@@ -124,6 +145,16 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
 
     this.activityLogService.getActivityLogs(filter).subscribe({
       next: (response: ActivityLogResponse) => {
+        // Parse changes for all logs
+        response.logs.forEach(log => {
+          if (typeof log.changes === 'string') {
+            try {
+              log.changes = JSON.parse(log.changes);
+            } catch (e) {
+              log.changes = {};
+            }
+          }
+        });
         this.allLogs = response.logs;
         this.filteredLogs = response.logs;
         this.paginatedLogs = response.logs;
@@ -152,7 +183,7 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
       },
       error: (error) => {
         console.error('Error loading statistics:', error);
-      }
+    }
     });
   }
 
@@ -208,6 +239,16 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
 
     this.activityLogService.getActivityLogs(filter).subscribe({
       next: (response: ActivityLogResponse) => {
+        // Parse changes for all logs
+        response.logs.forEach(log => {
+          if (typeof log.changes === 'string') {
+            try {
+              log.changes = JSON.parse(log.changes);
+            } catch (e) {
+              log.changes = {};
+            }
+          }
+        });
         this.filteredLogs = response.logs;
         this.paginatedLogs = response.logs;
         this.totalPages = response.totalPages;
@@ -369,10 +410,11 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
     }
   }
 
-  getLogChanges(changes: string): Array<{field: string, before: any, after: any}> {
+  getLogChanges(changes: any): Array<{field: string, before: any, after: any}> {
     if (!changes) return [];
     try {
-      const parsed = JSON.parse(changes);
+      // If already parsed object, use directly
+      const parsed = typeof changes === 'string' ? JSON.parse(changes) : changes;
       
       // Handle the new changes structure with before/after
       if (parsed.before && parsed.after) {

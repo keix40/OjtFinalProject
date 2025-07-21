@@ -69,6 +69,7 @@ import { ProductEditComponent } from './product-edit/product-edit.component';
 import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
 import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
 import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
+import { ToastrModule } from 'ngx-toastr';
 
 @NgModule({
   declarations: [
@@ -147,7 +148,12 @@ import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
     HeaderComponent,
     BreadcrumbComponent,
     BannedPageComponent,
-    ProductEditComponent
+    ProductEditComponent,
+    ToastrModule.forRoot({
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+    })
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

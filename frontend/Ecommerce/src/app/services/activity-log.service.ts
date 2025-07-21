@@ -18,7 +18,7 @@ export interface ActivityLog {
   sessionId: string;
   timestamp: string;
   details: string;
-  changes: string;
+  changes: any; // allow string or object
   status: string;
   errorMessage: string;
 }
