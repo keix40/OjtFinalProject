@@ -97,6 +97,30 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updateProduct(
+            @PathVariable Long id,
+            @RequestPart("product") ProductDTO dto,
+            @RequestPart(value = "images", required = false) MultipartFile[] images,
+            @RequestParam MultiValueMap<String, MultipartFile> fileMap) throws IOException {
+
+        Map<String, List<MultipartFile>> variantImageMap = new HashMap<>();
+        for (Map.Entry<String, List<MultipartFile>> entry : fileMap.entrySet()) {
+            String key = entry.getKey();
+            if (key.startsWith("variantImages_")) {
+                variantImageMap.put(key, entry.getValue());
+            }
+        }
+
+        Product updatedProduct = service.updateProductWithImages(id, dto, images, variantImageMap);
+
+        if (updatedProduct == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to update product"));
+        }
+
+        return ResponseEntity.ok(Map.of("message", "Product updated successfully"));
+    }
+
     @GetMapping("/adminProductDetail/{id}")
     public ProductDTO getProductDetail(@PathVariable Long id) {
         return service.getProductDetailById(id);

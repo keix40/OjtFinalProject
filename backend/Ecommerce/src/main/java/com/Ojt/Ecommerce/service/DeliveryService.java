@@ -58,6 +58,7 @@ public class DeliveryService {
         entity.setName(dto.getName());
         entity.setFeePerKm(dto.getFeePerKm());
         entity.setStatus(1);
+        entity.setPhoneNumber(dto.getPhoneNumber());
 
         if (dto.getBaseAddress() != null && dto.getBaseAddress().getId() != null) {
             Address managedAddress = addressRepo.findById(dto.getBaseAddress().getId())
@@ -77,6 +78,7 @@ public class DeliveryService {
         // 2. Update the entity fields
         existing.setName(updatedDto.getName());
         existing.setFeePerKm(updatedDto.getFeePerKm());
+        existing.setPhoneNumber(updatedDto.getPhoneNumber());
 
         // 3. Update the base address if provided
         AddressDTO baseAddressDto = updatedDto.getBaseAddress();
@@ -96,6 +98,7 @@ public class DeliveryService {
         dto.setId(entity.getId());
         dto.setName(entity.getName());
         dto.setFeePerKm(entity.getFeePerKm());
+        dto.setPhoneNumber(entity.getPhoneNumber());
 
         if (entity.getBaseAddress() != null) {
             dto.setBaseAddress(convertToAddressDTO(entity.getBaseAddress()));

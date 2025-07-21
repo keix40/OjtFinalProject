@@ -594,6 +594,7 @@ public class OrderService {
         // Order products
         List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(p -> {
             OrderProductDTO pdto = new OrderProductDTO();
+            pdto.setProductId(p.getProduct().getId());
             pdto.setProductName(p.getProduct().getProductName());
             pdto.setQuantity(p.getQuantity());
             pdto.setUnitPrice(p.getUnitPrice());
