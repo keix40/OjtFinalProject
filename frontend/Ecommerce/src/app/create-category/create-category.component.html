@@ -87,34 +87,96 @@
         required
       />
     </div>
-    <!-- Category Image Upload -->
+    <!-- Icon Type Selector -->
     <div class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Category Image:</label>
-      <div class="relative">
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Icon Type:</label>
+      <select class="w-full px-4 py-3 border border-gray-300 rounded-lg" [(ngModel)]="iconInputType" name="iconInputType">
+        <option value="upload">Upload SVG/PNG</option>
+        <option value="url">Icon URL (SVG/PNG)</option>
+        <option value="class">Font Icon Class (FontAwesome, Bootstrap, etc)</option>
+      </select>
+    </div>
+    <!-- Upload SVG/PNG -->
+    <div *ngIf="iconInputType === 'upload'" class="space-y-3">
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Upload SVG/PNG:</label>
+      <div class="relative w-full">
         <input
           type="file"
+          accept=".svg,.png"
+          id="iconFileInput"
+          (change)="onIconFileSelected($event)"
           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          (change)="onImageSelected($event)"
-          accept="image/*"
-          id="categoryImageInput"
         />
-        <label for="categoryImageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-blue-400 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors duration-200 cursor-pointer select-none text-center p-6">
-          <svg class="h-14 w-14 text-blue-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+        <label for="iconFileInput" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-blue-400 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors duration-200 cursor-pointer select-none text-center p-4">
+          <svg class="h-8 w-8 text-blue-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           <span class="text-base font-medium text-blue-700">Click to upload or drag and drop</span>
-          <span class="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</span>
+          <span class="text-xs text-gray-500 mt-1">SVG, PNG up to 10MB</span>
         </label>
       </div>
+      <div *ngIf="iconFilePreview" class="mt-2 flex items-center gap-2">
+        <img [src]="iconFilePreview" alt="Icon Preview" class="w-6 h-6 object-contain" />
+        <span class="text-gray-600 text-sm">Preview</span>
+      </div>
     </div>
-    <!-- Image preview -->
-    <div *ngIf="imagePreviewUrl" class="space-y-2">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Image Preview:</label>
-      <div class="relative inline-block">
-        <img [src]="imagePreviewUrl" alt="Image Preview" class="max-w-[120px] max-h-[90px] rounded-lg shadow-md border border-gray-200 object-contain" />
+    <!-- Icon URL Input -->
+    <div *ngIf="iconInputType === 'url'" class="space-y-3">
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Icon URL (SVG/PNG):</label>
+      <input
+        type="url"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg"
+        [(ngModel)]="iconUrl"
+        name="iconUrl"
+        placeholder="https://example.com/icon.svg"
+      />
+      <div *ngIf="iconUrl" class="mt-2 flex items-center gap-2">
+        <img [src]="iconUrl" alt="Icon Preview" class="w-6 h-6 object-contain" (error)="iconUrl=''" />
+        <span class="text-gray-600 text-sm">Preview</span>
+      </div>
+    </div>
+    <!-- Font Icon Class Input -->
+    <div *ngIf="iconInputType === 'class'" class="space-y-3">
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Font Icon Class (FontAwesome, Bootstrap, etc):</label>
+      <input
+        type="text"
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg"
+        [(ngModel)]="iconClass"
+        name="iconClass"
+        placeholder="e.g. fa fa-user, bi bi-alarm"
+      />
+      <div class="text-xs text-gray-500 mt-1">
+        Enter the CSS class for your icon (e.g., <code>fa fa-fire</code> for FontAwesome, <code>bi bi-alarm</code> for Bootstrap Icons).
+      </div>
+      <div *ngIf="iconClass" class="mt-2 flex items-center gap-2">
+        <i [class]="iconClass" style="font-size: 24px;"></i>
+        <span class="text-gray-600 text-sm">Preview</span>
+      </div>
+    </div>
+    <!-- Category Image Upload (not icon) -->
+    <div class="space-y-3">
+      <label class="block text-sm font-semibold text-gray-700 mb-2">Category Image:</label>
+      <div class="relative w-full">
+        <input
+          type="file"
+          accept=".jpg,.jpeg,.png,.gif,.webp,.svg"
+          id="categoryImageInput"
+          (change)="onCategoryImageSelected($event)"
+          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+        />
+        <label for="categoryImageInput" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-blue-400 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors duration-200 cursor-pointer select-none text-center p-4">
+          <svg class="h-8 w-8 text-blue-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span class="text-base font-medium text-blue-700">Click to upload or drag and drop</span>
+          <span class="text-xs text-gray-500 mt-1">PNG, JPG, GIF, WEBP, SVG up to 10MB</span>
+        </label>
+      </div>
+      <div *ngIf="imagePreviewUrl" class="mt-2 flex items-center gap-2">
+        <img [src]="imagePreviewUrl" alt="Image Preview" class="w-16 h-16 object-contain rounded-lg border border-gray-200 shadow" />
         <button 
           type="button"
-          class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
+          class="ml-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
           (click)="removeImage()">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

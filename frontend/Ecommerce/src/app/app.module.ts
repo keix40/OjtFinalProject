@@ -70,6 +70,7 @@ import { DeliveryServiceListComponent } from './delivery-service-list/delivery-s
 import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
 import { ToastrModule } from 'ngx-toastr';
 import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
+import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'lucide-angular';
 
 @NgModule({
   declarations: [
@@ -130,15 +131,10 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
     RouterModule,
     CommonModule, // Required for pipes like date, currency, number
     CartSidebarComponent, // Standalone component must be imported here
-   ProductDetailComponent,
+    ProductDetailComponent,
     BrowserAnimationsModule,
     BlacklistComponent,
     TestComponent,
-    //MatInputModule,
-    //MatAutocompleteModule,
-    //MatFormFieldModule,
-    // MatIconModule,
-    //MatButtonModule,
     FooterComponent,
     HeaderComponent,
     BreadcrumbComponent,
@@ -153,7 +149,8 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
       timeOut: 3000,
       positionClass: 'toast-top-right',
       preventDuplicates: true,
-    })
+    }),
+    LucideAngularModule.pick({ Tag, Box, Gift, Heart, ShoppingBag, Star })
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

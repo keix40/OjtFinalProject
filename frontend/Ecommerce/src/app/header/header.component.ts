@@ -20,6 +20,7 @@ import { FormsModule } from '@angular/forms';
 import { NotificationSidebarComponent } from '../notification-sidebar/notification-sidebar.component';
 import { NotificationSidebarService } from '../notifcation-sidebar.service';
 import { NotifcationService } from '../notifcation.service';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-header',
@@ -73,7 +74,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private userActivityService: UserActivityService,
     private productServce: ProductService,
     private notificationSidebarService: NotificationSidebarService,
-    private notifcationService: NotifcationService
+    private notifcationService: NotifcationService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit() {
@@ -331,6 +333,20 @@ toggleMobileMenu(): void {
         clearInterval(this.typingInterval);
       }
     }
+  }
+
+  getSafeIconUrl(cat: Category): SafeUrl | string | undefined {
+    if (cat.iconUrl) {
+      if (cat.iconUrl.startsWith('data:image')) {
+        return this.sanitizer.bypassSecurityTrustUrl(cat.iconUrl);
+      }
+      if (cat.iconUrl.startsWith('http://') || cat.iconUrl.startsWith('https://')) {
+        return cat.iconUrl;
+      }
+      // If it's a relative path (uploaded file)
+      return `http://localhost:8080${cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl}`;
+    }
+    return undefined;
   }
 
 }

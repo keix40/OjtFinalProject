@@ -3,9 +3,9 @@
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
       <div class="flex items-center gap-2 animate-fade-in">
-        <div class="p-0 flex items-center justify-center">
+        <a routerLink="/home" class="p-0 flex items-center justify-center">
           <img src="./assets/images/britium-logo.png" alt="Britium Logo" class="w-14 h-14 object-contain" />
-        </div>
+        </a>
         <span class="flex flex-col leading-tight">
           <span class="typewriter-britium text-lg md:text-xl font-semibold text-slate-800">
             <span>{{ displayedBritium }}</span><span *ngIf="showCursorBritium" class="typewriter-cursor">|</span>
@@ -33,7 +33,17 @@
                 <ng-container *ngFor="let category of categories">
                   <a (click)="goToCategory(category)" class="flex items-center space-x-3 p-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 group/item cursor-pointer">
                     <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <span class="text-blue-500 font-bold text-lg">{{ category.name ? category.name[0] : '?' }}</span>
+                      <ng-container *ngIf="category.iconUrl; else checkIconClass">
+                        <img [src]="getSafeIconUrl(category)" alt="icon" class="w-6 h-6 object-contain" />
+                      </ng-container>
+                      <ng-template #checkIconClass>
+                        <ng-container *ngIf="category.iconClass; else fallbackInitial">
+                          <i [class]="category.iconClass" style="font-size: 1.5rem;"></i>
+                        </ng-container>
+                      </ng-template>
+                      <ng-template #fallbackInitial>
+                        <span class="text-blue-500 font-bold text-lg">{{ category.name ? category.name[0] : '?' }}</span>
+                      </ng-template>
                     </div>
                     <div>
                       <p class="font-medium text-neutral-900 group-hover/item:text-blue-500">{{ category.name }}</p>

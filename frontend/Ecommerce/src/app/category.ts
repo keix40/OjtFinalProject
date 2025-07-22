@@ -4,6 +4,8 @@ export interface Category {
     image?: string;
     parentId?: number;
     status?: number;
+    iconUrl?: string;
+    iconClass?: string;
 }
 
 export interface CategoryDTO{
@@ -12,6 +14,9 @@ export interface CategoryDTO{
     brandName : String;
     parentId?: number;
     image?: String;
+    icon?: string;
+    iconUrl?: string;
+    iconClass?: string;
 }
 
 export interface CategoryListDTO {
