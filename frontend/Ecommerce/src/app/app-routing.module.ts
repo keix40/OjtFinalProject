@@ -106,6 +106,7 @@ const routes: Routes = [
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
   { path: 'about-us', component: AboutUsComponent, data: { breadcrumb: 'About Us' } },
   { path: 'contact-us', component: ContactUsComponent, data: { breadcrumb: 'Contact Us' } },
+   { path: 'user/policies', component: UserPolicyComponent, data: { breadcrumb: 'User Policies' } },
 
   { path: '', redirectTo: 'home', pathMatch: 'full' },
   {path: '',
@@ -124,7 +125,6 @@ const routes: Routes = [
       { path: 'admin/products/:id', component: ProductDetailComponent, data: { breadcrumb: 'Admin Product Detail' } },
       { path: 'orders', component: OrderManagementComponent, data: { breadcrumb: 'Orders' } },
       { path: 'admin/policies', component: AdminPolicyComponent, data: { breadcrumb: 'Policies' } },
-      { path: 'user/policies', component: UserPolicyComponent, data: { breadcrumb: 'User Policies' } },
       // add more routes here
     ],},
   { path: 'cart', component: CartPageComponent, data: { breadcrumb: 'Shopping Cart' } },
