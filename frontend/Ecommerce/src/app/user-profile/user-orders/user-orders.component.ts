@@ -80,7 +80,8 @@ export class UserOrdersComponent implements OnInit, AfterViewChecked {
     this.orderService.getOrderByUserId(userId).subscribe({
       next: (orders) => {
         console.log('Orders:', orders);
-        this.userOrders = orders;
+        // Sort orders by orderDate descending
+        this.userOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
         this.updatePagination();
          
         //for going to page that order exist and scroll by pmk july 18

@@ -46,7 +46,7 @@ public class AddressController {
         return ResponseEntity.ok(addressList); // 200 OK
     }
 
-    @LogActivity(actionType = "UPDATE", entityType = "ADDRESS", description = "Updated address", severityLevel = "LOW", entityIdParam = "id")
+    @LogActivity(actionType = "UPDATE", entityType = "ADDRESS", description = "Updated address", severityLevel = "LOW", entityIdParam = "id", logChanges = true)
     @PutMapping("/updateAddress/{id}")
     public ResponseEntity<?> updateAddress(@PathVariable Long id, @RequestBody AddressDTO dto) {
         Long result = addressService.updateAddress(id, dto);

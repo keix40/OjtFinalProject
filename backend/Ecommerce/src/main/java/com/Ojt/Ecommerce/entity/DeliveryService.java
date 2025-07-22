@@ -1,8 +1,21 @@
 package com.Ojt.Ecommerce.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
 import java.math.BigDecimal;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "delivery_service")
@@ -19,6 +32,8 @@ public class DeliveryService {
     private String name; // e.g. "Standard Delivery", "Express Delivery"
 
     private BigDecimal feePerKm; // e.g. 500 MMK per km
+
+    private String phoneNumber;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")

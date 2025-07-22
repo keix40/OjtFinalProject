@@ -1,4 +1,8 @@
-<div id="invoice-content" class="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto font-sans text-gray-900 relative print:bg-white print:shadow-none print:p-0 print:max-w-full print:rounded-none">
+<div class="fixed inset-0 z-40 flex items-center justify-center">
+
+<div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+
+<div id="invoice-content" class="bg-white rounded-xl shadow-lg p-8 max-w-2xl mx-auto font-sans text-gray-900 relative print:bg-white print:shadow-none print:p-0 print:max-w-full print:rounded-none overflow-y-auto scrollbar-hide" style="max-height:90vh;">
   <!-- Close button in absolute top right corner -->
   <button (click)="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold leading-none focus:outline-none print:hidden z-50" aria-label="Close">&times;</button>
   <div class="flex justify-between items-center mb-8">
@@ -73,4 +77,5 @@
   </div>
   <!-- Decorative SVG for print, only visible on screen -->
   <!-- <svg class="absolute left-0 bottom-0 w-full h-32 text-gray-200 print:hidden" viewBox="0 0 1440 320"><path fill="currentColor" fill-opacity="1" d="M0,224L48,197.3C96,171,192,117,288,117.3C384,117,480,171,576,197.3C672,224,768,224,864,197.3C960,171,1056,117,1152,122.7C1248,128,1344,192,1392,224L1440,256L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg> -->
+</div>
 </div>

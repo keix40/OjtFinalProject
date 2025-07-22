@@ -3,11 +3,11 @@
   <div class="max-w-4xl mx-auto">
     <!-- Header Section -->
     <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-        <i data-lucide="package-plus" class="w-8 h-8 text-blue-500"></i>
+      <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
+        <i data-lucide="package-plus" class="w-8 h-8 text-white"></i>
       </div>
       <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ editMode ? 'Edit Product' : 'Create New Product' }}</h1>
-      <p class="text-gray-600">Add a new product to your inventory</p>
+      <p class="text-gray-600 text-lg">{{ editMode ? 'Update product information below' : 'Add a new product to your inventory' }}</p>
     </div>
 
     <!-- Main Form -->
@@ -88,8 +88,7 @@
             </label>
             <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" formControlName="status">
               <option value=1>Active</option>
-              <option value=2>Draft</option>
-              <option value=3>Archived</option>
+              <option value=0>Inactive</option>
             </select>
           </div>
         </div>
@@ -139,10 +138,9 @@
             <div class="flex items-center gap-2">
               <button type="button" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200" (click)="removeCategoryBrandPair(i)" [disabled]="categoryBrandArray.length === 1">
                 <i data-lucide="trash-2" class="w-5 h-5"></i>
-                
               </button>
               <button type="button" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-200" (click)="addCategoryBrandPair()" *ngIf="i === categoryBrandArray.length - 1">
-                <i data-lucide="plus" class="w-5 h-5"></i>
+                <i data-lucide="plus" class="w-4 h-4"></i>
               </button>
             </div>
           </div>
@@ -181,10 +179,18 @@
         </div>
 
         <!-- Image Previews -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6" *ngIf="selectedImagesPreview.length > 0">
-          <div class="relative group" *ngFor="let image of selectedImagesPreview; let i = index">
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
+          <!-- Existing images -->
+          <div *ngFor="let image of existingImages; let existingIdx = index; trackBy: trackByExistingImage" class="relative group">
+            <img [src]="image.imageUrl" alt="Preview" class="w-full h-24 object-cover rounded-lg" />
+            <button type="button" class="absolute -top-2 -right-2 w-6 h-6 text-red-400 rounded-full flex items-center justify-center transition-all duration-200" (click)="$event.stopPropagation(); removeImage(existingIdx, true)">
+              <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </button>
+          </div>
+          <!-- New images -->
+          <div *ngFor="let image of selectedImagesPreview; let newIdx = index; trackBy: trackByNewImage" class="relative group">
             <img [src]="image" alt="Preview" class="w-full h-24 object-cover rounded-lg" />
-            <button type="button" class="absolute -top-2 -right-2 w-6 h-6  text-red-400 rounded-full flex items-center justify-center transition-all duration-200" (click)="removeImage(i)">
+            <button type="button" class="absolute -top-2 -right-2 w-6 h-6 text-red-400 rounded-full flex items-center justify-center transition-all duration-200" (click)="$event.stopPropagation(); removeImage(newIdx, false)">
               <i data-lucide="trash-2" class="w-5 h-5"></i>
             </button>
           </div>
@@ -348,15 +354,25 @@
                       accept="image/jpeg,image/png,image/gif,image/webp" 
                       class="hidden">
                   </div>
-                  
                   <!-- Variant Image Previews -->
-                  <div class="grid grid-cols-4 gap-2 mt-3" *ngIf="variant.get('images')?.value?.length > 0">
-                    <div class="relative group" *ngFor="let image of variant.get('images')?.value; let imageIndex = index">
-                      <img [src]="image.preview" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
+                  <div class="grid grid-cols-4 gap-2 mt-3">
+                    <!-- Existing images -->
+                    <div class="relative group" *ngFor="let image of existingVariantImages[variantIndex]; let imageIndex = index; trackBy: trackByExistingImage">
+                      <img [src]="image.imageUrl" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
                       <button 
                         type="button" 
-                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200" 
-                        (click)="removeVariantImage(variantIndex, imageIndex)">
+                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-100 transition-all duration-200" 
+                        (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, true)">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                      </button>
+                    </div>
+                    <!-- New images -->
+                    <div class="relative group" *ngFor="let image of newVariantImagesPreview[variantIndex]; let imageIndex = index; trackBy: trackByNewImage">
+                      <img [src]="image" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
+                      <button 
+                        type="button" 
+                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-100 transition-all duration-200" 
+                        (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, false)">
                         <i data-lucide="x" class="w-3 h-3"></i>
                       </button>
                     </div>

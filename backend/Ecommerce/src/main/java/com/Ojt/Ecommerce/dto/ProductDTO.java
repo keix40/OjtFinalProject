@@ -1,9 +1,14 @@
 package com.Ojt.Ecommerce.dto;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.*;
-import org.hibernate.sql.exec.spi.StandardEntityInstanceResolver;
-
 import java.util.List;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -26,4 +31,10 @@ public class ProductDTO {
     private Boolean hasVariant;
     private List<AttributeAndValueDTO> attributes;  // use your existing DTO here
     private List<VariantDTO> variants;               // create this DTO as it's missing
+
+    // For image deletion
+    private List<Long> imagesMarkedForDeletion;
+    private Map<String, List<Long>> variantImagesMarkedForDeletion;
+    // For category-brand pair deletion
+    private List<CategoryBrandPair> categoryBrandPairsMarkedForDeletion;
 }

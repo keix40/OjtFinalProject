@@ -41,9 +41,8 @@
               }
             ],
             "styles": [
-              
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
-              "node_modules/bootstrap/dist/css/bootstrap.min.css",
+              "node_modules/quill/dist/quill.snow.css",
               "src/styles.css",
               "node_modules/leaflet/dist/leaflet.css",
               "node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css"
@@ -81,6 +80,9 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json"
+          },
           "configurations": {
             "production": {
               "buildTarget": "final_Prj:build:production"

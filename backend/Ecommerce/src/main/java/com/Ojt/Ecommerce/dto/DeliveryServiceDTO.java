@@ -1,8 +1,8 @@
 package com.Ojt.Ecommerce.dto;
 
-import lombok.Data;
-
 import java.math.BigDecimal;
+
+import lombok.Data;
 
 @Data
 public class DeliveryServiceDTO {
@@ -10,4 +10,5 @@ public class DeliveryServiceDTO {
     private String name;
     private BigDecimal feePerKm;
     private AddressDTO baseAddress;
+    private String phoneNumber;
 }

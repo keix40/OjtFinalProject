@@ -14,6 +14,8 @@ import { WishlistService } from '../services/wishlist.service';
 import { BreadcrumbComponent } from '../breadcrumb.component';
 import { DiscountService } from '../services/discount.service';
 import { HttpClient } from '@angular/common/http';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { HostListener } from '@angular/core';
 
 interface ProductImage {
   id: number;
@@ -117,6 +119,8 @@ export class UserProductDetailComponent implements OnInit {
   isFirstTimeBuyerDiscount: boolean = false;
 
   @ViewChild('mainImage', { static: false }) mainImageRef!: ElementRef<HTMLImageElement>;
+  @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate!: ElementRef;
+  private mediaModalRef: NgbModalRef | null = null;
 
   wishlistPulse = false;
   wishlistFeedback = '';
@@ -135,7 +139,8 @@ export class UserProductDetailComponent implements OnInit {
     private router: Router,
     private wishlistService: WishlistService,
     private discountService: DiscountService,
-    private http:HttpClient
+    private http:HttpClient,
+    private modalService: NgbModal
   ) {}
 
   ngOnInit(): void {
@@ -622,15 +627,20 @@ checkFirstTimeBuyerDiscount(): void {
     this.mediaModalCurrentReview = review;
     this.selectedReviewFiles = [];
     this.removedMedia = [];
-    setTimeout(() => {
-      const form = document.getElementById('edit-review-form');
-      if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
+  }
+
+  cancelEdit() {
+    this.editingReviewId = null;
+    this.newReview = '';
+    this.newRating = 5;
+    this.mediaModalCurrentReview = null;
+    this.selectedReviewFiles = [];
+    this.removedMedia = [];
   }
   
-  deleteReview(review: ReviewMessage) {
+  deleteReview(review: any) {
     const formData = new FormData();
-    formData.append('id', review.id!.toString());
+    formData.append('id', review.id.toString());
     formData.append('productId', review.productId.toString());
     formData.append('username', review.username);
     formData.append('action', 'delete');
@@ -646,9 +656,35 @@ checkFirstTimeBuyerDiscount(): void {
           timerProgressBar: true,
           customClass: { popup: 'swal2-toast' }
         });
+        this.loadReviews();
       },
       error: () => {
         Swal.fire('Error', 'Failed to delete review.', 'error');
+      }
+    });
+  }
+
+  confirmDeleteReview(review?: any) {
+    // Store the review ID for deletion without changing edit mode
+    const reviewIdToDelete = review?.id || this.editingReviewId;
+    if (!reviewIdToDelete) return;
+    
+    Swal.fire({
+      title: 'Delete Review',
+      text: 'Are you sure you want to delete this review?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const reviewToDelete = this.reviews.find(r => r.id === reviewIdToDelete);
+        if (reviewToDelete) {
+          this.deleteReview(reviewToDelete);
+        }
       }
     });
   }
@@ -710,22 +746,52 @@ checkFirstTimeBuyerDiscount(): void {
     this.selectedReviewFiles.splice(index, 1);
   }
 
-  // Open the modal for a review's image or video
+  // Remove old openMediaModal and closeMediaModal, replace with NgbModal logic
   openMediaModal(review: any, type: 'image' | 'video', index: number) {
-    this.mediaModalOpen = true;
     this.mediaModalCurrentReview = review;
     this.mediaModalCurrentType = type;
     this.mediaModalCurrentIndex = index;
-    this.updateMediaModalUrl();
-    document.body.classList.add('modal-open');
-  }
-
-  closeMediaModal() {
-    this.mediaModalOpen = false;
+    this.updateMediaModalTypeAndUrl();
+    if (this.mediaModalRef) {
+      this.mediaModalRef.close();
+    }
+    this.mediaModalRef = this.modalService.open(this.mediaPreviewModalTemplate, {
+      centered: true,
+      backdrop: 'static',
+      keyboard: true,
+      // size: 'lg',
+      windowClass: 'media-preview-modal',
+      scrollable: false
+    });
+    this.mediaModalRef.result.finally(() => {
+      this.mediaModalRef = null;
     this.mediaModalCurrentReview = null;
     this.mediaModalCurrentIndex = 0;
     this.mediaModalCurrentUrl = '';
-    document.body.classList.remove('modal-open');
+    });
+  }
+
+  // Close modal via code
+  closeMediaModal() {
+    if (this.mediaModalRef) {
+      this.mediaModalRef.close();
+    }
+  }
+
+  // Keyboard navigation for modal
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    if (!this.mediaModalRef) return;
+    if (event.key === 'ArrowLeft' && this.mediaModalCanGoLeft) {
+      event.preventDefault();
+      this.mediaModalPrev();
+    } else if (event.key === 'ArrowRight' && this.mediaModalCanGoRight) {
+      event.preventDefault();
+      this.mediaModalNext();
+    } else if (event.key === 'Escape') {
+      event.preventDefault();
+      this.closeMediaModal();
+    }
   }
 
   get mediaModalCanGoLeft(): boolean {
@@ -777,6 +843,14 @@ checkFirstTimeBuyerDiscount(): void {
 
   goToAllReviews() {
     this.router.navigate(['/review'], { queryParams: { productId: this.product.id } });
+  }
+
+  navigateToBrandProducts(brandName: string) {
+    this.router.navigate(['/userproductlist'], { 
+      queryParams: { 
+        brand: brandName 
+      } 
+    });
   }
 
   removeExistingMedia(url: string, type: 'image' | 'video') {

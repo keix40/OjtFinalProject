@@ -1,0 +1,25 @@
+<div class="flex items-center justify-center min-h-screen bg-gradient-to-br from-rose-50 to-slate-100">
+  <div class="w-full max-w-3xl mx-auto bg-white rounded-2xl shadow-2xl border-2 border-rose-200 p-10 flex flex-col items-center" style="width:70vw;">
+    <div class="flex flex-col items-center gap-4">
+      <div class="bg-rose-100 rounded-full p-6 mb-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-1.414-1.414A9 9 0 105.636 18.364l1.414 1.414A9 9 0 1018.364 5.636z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9l6 6m0-6l-6 6" />
+        </svg>
+      </div>
+      <h1 class="text-3xl font-bold text-rose-700 mb-2 drop-shadow">Your Account is Blacklisted</h1>
+      <p class="text-lg text-slate-700 text-center max-w-xl mb-4">
+        For your security and the safety of our platform, your account has been temporarily restricted.<br/>
+        <span class="font-semibold text-rose-600">Reason:</span> <span class="font-medium" data-testid="blacklist-reason">{{ reason }}</span>
+      </p>
+      <div class="bg-rose-50 border border-rose-200 rounded-lg px-6 py-4 flex flex-col items-center mb-4">
+        <span class="text-slate-600 text-base">Blacklist will end on:</span>
+        <span class="text-2xl font-bold text-rose-700 mt-1" data-testid="blacklist-expiry">{{ expiryDate | date:'MMM dd, yyyy HH:mm' }}</span>
+        <span class="mt-2 text-lg font-semibold text-rose-600" *ngIf="countdown">⏳ {{ countdown }}</span>
+      </div>
+      <div class="mt-2 text-center">
+        <p class="text-slate-500">If you believe this is a mistake, please contact our support team for further assistance.</p>
+      </div>
+    </div>
+  </div>
+</div> 

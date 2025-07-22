@@ -41,6 +41,8 @@ import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.security.CustomUserDetails;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.service.ActivityLogService;
+import com.Ojt.Ecommerce.util.IpLocationUtil;
+import com.Ojt.Ecommerce.service.BlacklistServiceImpl;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -71,6 +73,7 @@ public class AuthController {
     private final OtpVerificationRepository otpVerificationRepository;
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
+    private final BlacklistServiceImpl blacklistServiceImpl;
 
     // Configurable thresholds
     private static final int THREAT_SCORE_BLOCK_THRESHOLD = 60; // 60 = high, 80 = critical
@@ -97,7 +100,7 @@ public class AuthController {
         
         String email = ((String)loginRequest.get("email")).trim().toLowerCase();
         String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
-        String ip = request.getRemoteAddr();
+        String ip = IpLocationUtil.extractClientIp(request); // <-- Use the same logic as activity logs
         System.out.println("[LoginAttempt] Detected client IP: " + ip);
         String location = loginRequest.getOrDefault("location", "").toString();
         boolean isVPN = false;
@@ -129,6 +132,17 @@ public class AuthController {
             ));
         }
         boolean requireOtpCaptcha = loginAttemptService.isOtpCaptchaRequired(ip);
+
+        // Blacklist enforcement: check if user is blacklisted by email
+        BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
+        if (blacklistEntry != null) {
+            return ResponseEntity.status(403).body(Map.of(
+                "blocked", true,
+                "reason", blacklistEntry.getReason(),
+                "expiryDate", blacklistEntry.getExpiryDate()
+            ));
+        }
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
@@ -212,8 +226,9 @@ public class AuthController {
             java.time.Duration duration = java.time.Duration.between(startTime, endTime);
             long durationMillis = duration.toMillis();
             
-            // Get real user location
-            String userLocation = getUserLocation(ip);
+            // Get real IP and location using the same method as login attempts
+            String realIp = IpLocationUtil.extractClientIp(request);
+            String userLocation = IpLocationUtil.getUserLocation(realIp);
             
             Map<String, Object> detailsMap = new java.util.HashMap<>();
             detailsMap.put("SessionId", sessionId);
@@ -237,9 +252,9 @@ public class AuthController {
                 String.valueOf(user.getId()),
                 "User login",
                 "LOW",
-                getClientIpAddress(request),
+                realIp,
                 request.getHeader("User-Agent"),
-                request.getSession().getId()
+                sessionId
             );
             log.setDetails(detailsJson);
             activityLogService.createActivityLog(log);
@@ -283,27 +298,6 @@ public class AuthController {
         }
     }
 
-    // Utility to extract real client IP (prefers X-Client-IP, then X-Debug-IP, then X-Forwarded-For, then remoteAddr)
-    private String extractClientIp(HttpServletRequest request) {
-        String clientIp = request.getHeader("X-Client-IP");
-        if (clientIp != null && !clientIp.isEmpty() && isPublicIp(clientIp.trim())) {
-            return clientIp.trim();
-        }
-        String debugIp = request.getHeader("X-Debug-IP");
-        if (debugIp != null && !debugIp.isEmpty()) {
-            return debugIp.trim();
-        }
-        String xfHeader = request.getHeader("X-Forwarded-For");
-        if (xfHeader != null && !xfHeader.isEmpty()) {
-            return xfHeader.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
-    }
-    // Helper to check if IP is public
-    private boolean isPublicIp(String ip) {
-        return !(ip.startsWith("10.") || ip.startsWith("192.168.") || ip.startsWith("172.16.") || ip.equals("127.0.0.1") || ip.equals("::1"));
-    }
-
     // Utility to generate a short, user-friendly session ID
     private static String generateShortSessionId() {
         String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -313,69 +307,6 @@ public class AuthController {
             sb.append(chars.charAt(random.nextInt(chars.length())));
         }
         return sb.toString();
-    }
-
-    private String getUserLocation(String ipAddress) {
-        if ("unknown".equals(ipAddress) || ipAddress == null || ipAddress.isEmpty()) {
-            return "Unknown Location";
-        }
-        
-        // Handle localhost and local IPs
-        if ("127.0.0.1".equals(ipAddress) || "0:0:0:0:0:0:0:1".equals(ipAddress) || 
-            "localhost".equals(ipAddress) || ipAddress.startsWith("192.168.") || 
-            ipAddress.startsWith("10.") || ipAddress.startsWith("172.16.")) {
-            return "Local Development";
-        }
-        
-        try {
-            // Use a free IP geolocation service
-            String apiUrl = "http://ip-api.com/json/" + ipAddress;
-            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                .uri(java.net.URI.create(apiUrl))
-                .build();
-            
-            java.net.http.HttpResponse<String> response = client.send(request, 
-                java.net.http.HttpResponse.BodyHandlers.ofString());
-            
-            if (response.statusCode() == 200) {
-                String responseBody = response.body();
-                // Parse JSON response to extract location
-                if (responseBody.contains("\"status\":\"success\"")) {
-                    // Extract city and country from response
-                    String city = extractJsonValue(responseBody, "city");
-                    String country = extractJsonValue(responseBody, "country");
-                    String region = extractJsonValue(responseBody, "regionName");
-                    
-                    if (city != null && country != null) {
-                        return city + ", " + country;
-                    } else if (region != null && country != null) {
-                        return region + ", " + country;
-                    } else if (country != null) {
-                        return country;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Log error but don't fail the operation
-            System.err.println("Error getting location for IP " + ipAddress + ": " + e.getMessage());
-        }
-        
-        return "Unknown Location";
-    }
-    
-    private String extractJsonValue(String json, String key) {
-        try {
-            String pattern = "\"" + key + "\":\"([^\"]+)\"";
-            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-            java.util.regex.Matcher m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1);
-            }
-        } catch (Exception e) {
-            // Ignore parsing errors
-        }
-        return null;
     }
 
     private String getClientIpAddress(HttpServletRequest request) {
@@ -671,5 +602,30 @@ public class AuthController {
         otpVerificationRepository.save(otpVerification);
         emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
         return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
+    }
+
+    @GetMapping("/check-blacklist-status")
+    public ResponseEntity<?> checkBlacklistStatus(@RequestHeader("Authorization") String tokenHeader) {
+        try {
+            String token = tokenHeader.replace("Bearer ", "");
+            String email = jwtTokenProvider.getEmailFromToken(token);
+            
+            // Check if user is blacklisted
+            BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
+            
+            if (blacklistEntry != null) {
+                return ResponseEntity.ok(Map.of(
+                    "blacklisted", true,
+                    "reason", blacklistEntry.getReason(),
+                    "expiryDate", blacklistEntry.getExpiryDate()
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of("blacklisted", false));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                "error", "Failed to check blacklist status: " + e.getMessage()
+            ));
+        }
     }
 }

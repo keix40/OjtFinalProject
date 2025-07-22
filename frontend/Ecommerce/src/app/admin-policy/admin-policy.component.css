@@ -1,0 +1,107 @@
+.admin-policy-root {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 900px;
+  margin: 32px auto;
+  padding: 16px;
+}
+
+.policy-form-card, .policy-table-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+}
+
+.policy-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.quill-field {
+  margin-bottom: 0;
+}
+
+.quill-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.quill-editor-large {
+  min-height: 200px;
+  height: 220px;
+  border-radius: 8px;
+  background: #fafbfc;
+  border: 1px solid #e0e0e0;
+  padding-bottom: 32px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+}
+
+.table-wrapper {
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+mat-table {
+  width: 100%;
+  margin-top: 0;
+  background: #fff;
+  border-radius: 8px;
+}
+
+mat-header-cell, mat-cell {
+  padding: 12px 16px;
+  font-size: 15px;
+  vertical-align: top;
+}
+
+.policy-content-cell {
+  max-width: 350px;
+  word-break: break-word;
+  white-space: pre-line;
+  font-size: 15px;
+}
+
+@media (max-width: 900px) {
+  .admin-policy-root {
+    max-width: 100%;
+    padding: 8px;
+  }
+  .policy-form-card, .policy-table-card {
+    margin-bottom: 16px;
+  }
+  .policy-content-cell {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-policy-root {
+    padding: 0;
+  }
+  .form-fields {
+    gap: 12px;
+  }
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+}

@@ -1,9 +1,11 @@
 // Updated ProductDetailComponent with variant attribute selection logic
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener, AfterViewInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { CommonModule } from '@angular/common';
-import { NgbCarouselModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCarouselModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Router } from '@angular/router';
+import { ReviewService } from '../../services/review.service';
 
 interface ProductImage {
   id: number;
@@ -49,26 +51,46 @@ interface Product {
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.css']
 })
-export class ProductDetailComponent implements OnInit {
+export class ProductDetailComponent implements OnInit, AfterViewInit {
   product: Product | null = null;
   selectedImage: string | null = null;
   selectedVariant: Variant | null = null;
-  showImageModal = false;
   displayedImages: ProductImage[] = [];
   currentImageIndex: number = 0;
   selectedAttributes: Record<string, string> = {};
   attributeValuesMap: Record<string, string[]> = {};
   public attributeNames: string[] = [];
+  reviews: any[] = [];
+  overallRating: number = 0;
+  totalReviews: number = 0;
+  ratingBreakdown: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  @ViewChild('imagePreviewModal') imagePreviewModalTemplate: any;
+  isModalOpen = false;
 
   constructor(
     private route: ActivatedRoute,
-    private productService: ProductService
+    private productService: ProductService,
+    private modalService: NgbModal,
+    private router: Router,
+    private reviewService: ReviewService
   ) {}
 
   ngOnInit(): void {
     const productId = this.route.snapshot.paramMap.get('id');
     if (productId) {
       this.loadProductDetails(productId);
+      this.reviewService.connect(+productId, 'admin');
+      this.reviewService.reviews$.subscribe((reviews: any[]) => {
+        // Filter reviews for this productId if needed
+        this.reviews = reviews.filter(r => r.productId == productId);
+        this.computeReviewStats();
+      });
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined' && (window as any).lucide) {
+      (window as any).lucide.createIcons();
     }
   }
 
@@ -207,12 +229,20 @@ export class ProductDetailComponent implements OnInit {
 
   openImageModal(imageUrl: string): void {
     this.selectedImage = imageUrl;
-    this.showImageModal = true;
+    this.isModalOpen = true;
+    const modalRef = this.modalService.open(this.imagePreviewModalTemplate, {
+      centered: true,
+      // size: 'lg',
+      backdrop: 'static',
+      windowClass: 'p-0',
+      scrollable: true
+    });
+    modalRef.result.finally(() => {
+      this.isModalOpen = false;
+    });
   }
 
-  closeImageModal(): void {
-    this.showImageModal = false;
-  }
+  // No need for closeImageModal, handled by modal.dismiss()
 
   getStatusBadgeClass(status: string): string {
     switch (status.toLowerCase()) {
@@ -262,5 +292,44 @@ export class ProductDetailComponent implements OnInit {
   this.selectedImage = this.displayedImages[0]?.url || null;
   this.currentImageIndex = 0;
 }
+
+  computeReviewStats() {
+    if (!this.reviews.length) {
+      this.overallRating = 0;
+      this.totalReviews = 0;
+      this.ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      return;
+    }
+    this.totalReviews = this.reviews.length;
+    let sum = 0;
+    this.ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    this.reviews.forEach(r => {
+      sum += r.rating;
+      this.ratingBreakdown[r.rating] = (this.ratingBreakdown[r.rating] || 0) + 1;
+    });
+    this.overallRating = Math.round((sum / this.totalReviews) * 10) / 10;
+  }
+
+  round(value: number): number {
+    return Math.round(value);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    if (this.isModalOpen && this.displayedImages.length > 1) {
+      if (event.key === 'ArrowLeft' && this.currentImageIndex > 0) {
+        this.selectImageByIndex(this.currentImageIndex - 1);
+      } else if (event.key === 'ArrowRight' && this.currentImageIndex < this.displayedImages.length - 1) {
+        this.selectImageByIndex(this.currentImageIndex + 1);
+      }
+    }
+  }
+
+  goToEditProduct(): void {
+    if (this.product && this.route.snapshot.paramMap.get('id')) {
+      const productId = this.route.snapshot.paramMap.get('id');
+      this.router.navigate(['/product-edit', productId]);
+    }
+  }
 
 }

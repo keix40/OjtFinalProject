@@ -44,6 +44,7 @@ export class DeliveryServiceListComponent implements OnInit {
     this.updateForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
       feePerKm: [0, [Validators.required, Validators.min(0)]],
+      phoneNumber: ['', [Validators.required, Validators.pattern('^[0-9+() \- ]{7,20}$')]]
     });
     this.updateAddressForm = this.fb.group({
       address: ['', Validators.required],
@@ -99,12 +100,12 @@ export class DeliveryServiceListComponent implements OnInit {
     this.currentPage = page;
   }
 
-  getPageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-  }
-
   get Math() {
     return Math;
+  }
+
+  getPageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
   deleteDeliveryService(service: DeliveryService): void {
@@ -125,8 +126,9 @@ export class DeliveryServiceListComponent implements OnInit {
               icon: 'success',
               title: 'Deleted!',
               text: 'Delivery service has been deleted successfully.',
-              timer: 2000,
-              showConfirmButton: false
+              confirmButtonColor: '#d33',
+              confirmButtonText: 'Ok',
+              showConfirmButton: true
             });
           },
           error: () => {
@@ -152,7 +154,8 @@ export class DeliveryServiceListComponent implements OnInit {
         this.updateService = service;
         this.updateForm.patchValue({
           name: service.name,
-          feePerKm: service.feePerKm
+          feePerKm: service.feePerKm,
+          phoneNumber: service.phoneNumber || ''
         });
         this.updateAddressForm.patchValue({
           address: service.baseAddress.address,
@@ -261,6 +264,7 @@ export class DeliveryServiceListComponent implements OnInit {
           id: this.selectedServiceId!,
           name: this.updateForm.value.name,
           feePerKm: this.updateForm.value.feePerKm,
+          phoneNumber: this.updateForm.value.phoneNumber,
           baseAddress: { ...updatedAddress }
         };
         this.deliveryServiceService.update(this.selectedServiceId!, deliveryPayload).subscribe({
@@ -272,8 +276,9 @@ export class DeliveryServiceListComponent implements OnInit {
               icon: 'success',
               title: 'Updated!',
               text: 'Delivery service updated successfully.',
-              timer: 2000,
-              showConfirmButton: false
+              confirmButtonColor: '#3085d6',
+              confirmButtonText: 'Ok',
+              showConfirmButton: true
             });
           },
           error: () => {

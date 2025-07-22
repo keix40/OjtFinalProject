@@ -17,6 +17,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.util.ContentCachingRequestWrapper;
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.Duration;
@@ -28,6 +29,16 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import com.Ojt.Ecommerce.dto.UserDTO;
+import com.Ojt.Ecommerce.util.IpLocationUtil;
+import com.Ojt.Ecommerce.repository.UserRepository;
+import com.Ojt.Ecommerce.repository.ProductRepository;
+import com.Ojt.Ecommerce.repository.CategoryRepository;
+import com.Ojt.Ecommerce.repository.BrandRepository;
+import com.Ojt.Ecommerce.repository.AddressRepository;
+import com.Ojt.Ecommerce.repository.OrderRepository;
+import com.Ojt.Ecommerce.entity.Discount;
+import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
+import com.Ojt.Ecommerce.repository.DiscountRepository;
 
 @Aspect
 @Component
@@ -35,6 +46,16 @@ public class ActivityLogAspect {
 
     @Autowired
     private ActivityLogService activityLogService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired private ProductRepository productRepository;
+    @Autowired private CategoryRepository categoryRepository;
+    @Autowired private BrandRepository brandRepository;
+    @Autowired private AddressRepository addressRepository;
+    @Autowired private OrderRepository orderRepository;
+    @Autowired private DiscountRepository discountRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -81,13 +102,20 @@ public class ActivityLogAspect {
             ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
                 HttpServletRequest request = attributes.getRequest();
-                ipAddress = getClientIpAddress(request);
+                ipAddress = IpLocationUtil.extractClientIp(request);
                 userAgent = request.getHeader("User-Agent");
                 sessionId = request.getSession().getId();
-                userLocation = getUserLocation(ipAddress);
+                userLocation = IpLocationUtil.getUserLocation(ipAddress);
+                
+                // Debug logging
+                System.out.println("Activity Log Debug - IP: " + ipAddress + ", Location: " + userLocation);
+                System.out.println("Activity Log Debug - RemoteAddr: " + request.getRemoteAddr());
+                System.out.println("Activity Log Debug - X-Forwarded-For: " + request.getHeader("X-Forwarded-For"));
+                System.out.println("Activity Log Debug - X-Client-IP: " + request.getHeader("X-Client-IP"));
+                System.out.println("Activity Log Debug - X-Debug-IP: " + request.getHeader("X-Debug-IP"));
             }
         } catch (Exception e) {
-            // Log error but continue
+            System.err.println("Error getting request info: " + e.getMessage());
         }
 
         // Extract entity information from method parameters
@@ -143,7 +171,7 @@ public class ActivityLogAspect {
 
             // Log changes if enabled and it's an update operation
             if (logActivity.logChanges() && logActivity.actionType().equals("UPDATE")) {
-                Map<String, Object> changes = captureChanges(originalState, result, logActivity);
+                Map<String, Object> changes = captureChanges(originalState, result, logActivity, joinPoint);
                 if (!changes.isEmpty()) {
                     try {
                         activityLog.setChanges(objectMapper.writeValueAsString(changes));
@@ -197,6 +225,19 @@ public class ActivityLogAspect {
             activityLog.setStatus(status);
             activityLog.setErrorMessage(errorMessage);
             activityLog.setDetails(details);
+            
+            // Log changes for failed operations too
+            if (logActivity.logChanges() && logActivity.actionType().equals("UPDATE")) {
+                Map<String, Object> changes = captureChanges(originalState, null, logActivity, joinPoint);
+                if (!changes.isEmpty()) {
+                    try {
+                        activityLog.setChanges(objectMapper.writeValueAsString(changes));
+                    } catch (JsonProcessingException ex) {
+                        activityLog.setChanges("Error serializing changes: " + ex.getMessage());
+                    }
+                }
+            }
+            
             activityLogService.createActivityLog(activityLog);
             throw e;
         }
@@ -244,67 +285,413 @@ public class ActivityLogAspect {
     }
 
     private Object captureOriginalState(ProceedingJoinPoint joinPoint, LogActivity logActivity, String entityId) {
-        // This method should capture the original state of the entity before modification
-        // For now, we'll return null and handle changes in captureChanges method
-        // In a real implementation, you would fetch the current state from the database
+        try {
+            if (logActivity.entityType().equals("USER") && entityId != null) {
+                Long id = Long.valueOf(entityId);
+                return userRepository.findById(id).orElse(null);
+            }
+            if (logActivity.entityType().equals("PRODUCT") && entityId != null) {
+                Long id = Long.valueOf(entityId);
+                return productRepository.findById(id).orElse(null);
+            }
+            if (logActivity.entityType().equals("CATEGORY") && entityId != null) {
+                Long id = Long.valueOf(entityId);
+                return categoryRepository.findById(id).orElse(null);
+            }
+            if (logActivity.entityType().equals("BRAND") && entityId != null) {
+                Long id = Long.valueOf(entityId);
+                return brandRepository.findById(id).orElse(null);
+            }
+            if (logActivity.entityType().equals("ADDRESS") && entityId != null) {
+                Long id = Long.valueOf(entityId);
+                return addressRepository.findById(id).orElse(null);
+            }
+            if (logActivity.entityType().equals("ORDER") && entityId != null) {
+                Long id = Long.valueOf(entityId);
+                return orderRepository.findById(id).orElse(null);
+            }
+            if (logActivity.entityType().equals("DISCOUNT") && entityId != null) {
+                Long id = Long.valueOf(entityId);
+                return discountRepository.findById(id).orElse(null);
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching original entity: " + e.getMessage());
+        }
         return null;
     }
 
-    private Map<String, Object> captureChanges(Object originalState, Object newState, LogActivity logActivity) {
+    private Map<String, Object> captureChanges(Object originalState, Object newState, LogActivity logActivity, ProceedingJoinPoint joinPoint) {
         Map<String, Object> changes = new HashMap<>();
-        
         try {
-            // Always generate sample changes for UPDATE operations
             Map<String, Object> beforeChanges = new HashMap<>();
             Map<String, Object> afterChanges = new HashMap<>();
-            
-            // Add relevant fields based on entity type with sample before values
-            switch (logActivity.entityType()) {
-                case "USER":
-                    beforeChanges.put("name", "Previous Name");
-                    afterChanges.put("name", "Updated Name");
-                    beforeChanges.put("email", "previous@email.com");
-                    afterChanges.put("email", "updated@email.com");
-                    beforeChanges.put("role", "Previous Role");
-                    afterChanges.put("role", "Updated Role");
-                    break;
-                case "PRODUCT":
-                    beforeChanges.put("name", "Previous Product Name");
-                    afterChanges.put("name", "Updated Product Name");
-                    beforeChanges.put("price", "$0.00");
-                    afterChanges.put("price", "$29.99");
-                    beforeChanges.put("description", "Previous description");
-                    afterChanges.put("description", "Updated description");
-                    break;
-                case "CATEGORY":
-                    beforeChanges.put("name", "Previous Category");
-                    afterChanges.put("name", "Updated Category");
-                    beforeChanges.put("description", "Previous category description");
-                    afterChanges.put("description", "Updated category description");
-                    break;
-                case "BRAND":
-                    beforeChanges.put("name", "Previous Brand");
-                    afterChanges.put("name", "Updated Brand");
-                    beforeChanges.put("description", "Previous brand description");
-                    afterChanges.put("description", "Updated brand description");
-                    break;
-                default:
-                    // For other entity types, capture common fields
-                    beforeChanges.put("name", "Previous Name");
-                    afterChanges.put("name", "Updated Name");
-                    beforeChanges.put("description", "Previous description");
-                    afterChanges.put("description", "Updated description");
-                    break;
+            // USER (already implemented)
+            if (logActivity.entityType().equals("USER") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.User) {
+                com.Ojt.Ecommerce.entity.User beforeUser = (com.Ojt.Ecommerce.entity.User) originalState;
+                MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+                String[] parameterNames = signature.getParameterNames();
+                Object[] args = joinPoint.getArgs();
+                com.Ojt.Ecommerce.dto.RegisterRequest request = null;
+                for (int i = 0; i < parameterNames.length; i++) {
+                    if (args[i] != null && args[i] instanceof com.Ojt.Ecommerce.dto.RegisterRequest) {
+                        request = (com.Ojt.Ecommerce.dto.RegisterRequest) args[i];
+                        break;
+                    }
+                }
+                boolean anyChange = false;
+                if (request != null) {
+                    if (request.getName() != null && !request.getName().equals(beforeUser.getName())) {
+                        beforeChanges.put("name", beforeUser.getName());
+                        afterChanges.put("name", request.getName());
+                        anyChange = true;
+                    }
+                    if (request.getEmail() != null && !request.getEmail().equals(beforeUser.getEmail())) {
+                        beforeChanges.put("email", beforeUser.getEmail());
+                        afterChanges.put("email", request.getEmail());
+                        anyChange = true;
+                    }
+                    if (request.getPhoneNumber() != null && !request.getPhoneNumber().equals(beforeUser.getPhoneNumber())) {
+                        beforeChanges.put("phoneNumber", beforeUser.getPhoneNumber());
+                        afterChanges.put("phoneNumber", request.getPhoneNumber());
+                        anyChange = true;
+                    }
+                    if (request.getDateOfBirth() != null && !request.getDateOfBirth().equals(beforeUser.getDateOfBirth())) {
+                        beforeChanges.put("dateOfBirth", beforeUser.getDateOfBirth());
+                        afterChanges.put("dateOfBirth", request.getDateOfBirth());
+                        anyChange = true;
+                    }
+                    if (request.getGender() != null && !request.getGender().equals(beforeUser.getGender())) {
+                        beforeChanges.put("gender", beforeUser.getGender());
+                        afterChanges.put("gender", request.getGender());
+                        anyChange = true;
+                    }
+                }
+                // Always log changes, even if no field changed
+                if (!anyChange) {
+                    beforeChanges.put("info", "No changes detected");
+                    afterChanges.put("info", "No changes detected");
+                }
+            }
+            // PRODUCT
+            if (logActivity.entityType().equals("PRODUCT") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.Product) {
+                com.Ojt.Ecommerce.entity.Product beforeProduct = (com.Ojt.Ecommerce.entity.Product) originalState;
+                Object[] args = joinPoint.getArgs();
+                for (Object arg : args) {
+                    if (arg instanceof com.Ojt.Ecommerce.dto.ProductDTO) {
+                        com.Ojt.Ecommerce.dto.ProductDTO dto = (com.Ojt.Ecommerce.dto.ProductDTO) arg;
+                        // Basic fields
+                        if (dto.getProductName() != null && !dto.getProductName().equals(beforeProduct.getProductName())) {
+                            beforeChanges.put("productName", beforeProduct.getProductName());
+                            afterChanges.put("productName", dto.getProductName());
+                        }
+                        if (dto.getProductCode() != null && !dto.getProductCode().equals(beforeProduct.getProductCode())) {
+                            beforeChanges.put("productCode", beforeProduct.getProductCode());
+                            afterChanges.put("productCode", dto.getProductCode());
+                        }
+                        if (dto.getPrice() != beforeProduct.getPrice()) {
+                            beforeChanges.put("price", beforeProduct.getPrice());
+                            afterChanges.put("price", dto.getPrice());
+                        }
+                        if (dto.getQuantity() != null && !dto.getQuantity().equals(beforeProduct.getQuantity())) {
+                            beforeChanges.put("quantity", beforeProduct.getQuantity());
+                            afterChanges.put("quantity", dto.getQuantity());
+                        }
+                        if (dto.getDescription() != null && !dto.getDescription().equals(beforeProduct.getDescription())) {
+                            beforeChanges.put("description", beforeProduct.getDescription());
+                            afterChanges.put("description", dto.getDescription());
+                        }
+                        if (dto.getStatus() != null && !dto.getStatus().equals(beforeProduct.getStatus())) {
+                            beforeChanges.put("status", beforeProduct.getStatus());
+                            afterChanges.put("status", dto.getStatus());
+                        }
+                        // Brand
+                        Long beforeBrandId = beforeProduct.getBrand() != null ? beforeProduct.getBrand().getId() : null;
+                        Long afterBrandId = null;
+                        if (dto.getCategoryBrandPairs() != null && !dto.getCategoryBrandPairs().isEmpty()) {
+                            afterBrandId = dto.getCategoryBrandPairs().get(0).getBrandId();
+                        }
+                        if (afterBrandId != null && !afterBrandId.equals(beforeBrandId)) {
+                            beforeChanges.put("brandId", beforeBrandId);
+                            afterChanges.put("brandId", afterBrandId);
+                        }
+                        // Categories
+                        java.util.Set<Long> beforeCategoryIds = new java.util.HashSet<>();
+                        if (beforeProduct.getProductCategories() != null) {
+                            for (com.Ojt.Ecommerce.entity.ProductHasCategory phc : beforeProduct.getProductCategories()) {
+                                if (phc.getCategory() != null) beforeCategoryIds.add(phc.getCategory().getId());
+                            }
+                        }
+                        java.util.Set<Long> afterCategoryIds = new java.util.HashSet<>();
+                        if (dto.getCategoryBrandPairs() != null) {
+                            for (com.Ojt.Ecommerce.dto.CategoryBrandPair pair : dto.getCategoryBrandPairs()) {
+                                if (pair.getCategoryId() != null) afterCategoryIds.add(pair.getCategoryId());
+                            }
+                        }
+                        if (!beforeCategoryIds.equals(afterCategoryIds)) {
+                            beforeChanges.put("categoryIds", beforeCategoryIds);
+                            afterChanges.put("categoryIds", afterCategoryIds);
+                        }
+                        // Attributes
+                        java.util.Map<Long, java.util.List<String>> beforeAttrs = new java.util.HashMap<>();
+                        if (beforeProduct.getProductVariants() != null && !beforeProduct.getProductVariants().isEmpty()) {
+                            for (com.Ojt.Ecommerce.entity.ProductVariant variant : beforeProduct.getProductVariants()) {
+                                if (variant.getVariantAttributeValues() != null) {
+                                    for (com.Ojt.Ecommerce.entity.VariantAttributeValue vav : variant.getVariantAttributeValues()) {
+                                        if (vav.getAttributeValue() != null && vav.getAttributeValue().getAttribute() != null) {
+                                            Long attrId = vav.getAttributeValue().getAttribute().getId();
+                                            String value = vav.getAttributeValue().getValue();
+                                            beforeAttrs.computeIfAbsent(attrId, k -> new java.util.ArrayList<>()).add(value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        java.util.Map<Long, java.util.List<String>> afterAttrs = new java.util.HashMap<>();
+                        if (dto.getAttributes() != null) {
+                            for (com.Ojt.Ecommerce.dto.AttributeAndValueDTO attr : dto.getAttributes()) {
+                                if (attr.getAttributeId() != null && attr.getValues() != null) {
+                                    java.util.List<String> values = new java.util.ArrayList<>();
+                                    for (com.Ojt.Ecommerce.dto.AttributeValueDTO val : attr.getValues()) {
+                                        values.add(val.getValue());
+                                    }
+                                    afterAttrs.put(attr.getAttributeId(), values);
+                                }
+                            }
+                        }
+                        if (!beforeAttrs.equals(afterAttrs)) {
+                            beforeChanges.put("attributes", beforeAttrs);
+                            afterChanges.put("attributes", afterAttrs);
+                        }
+                        // Variants
+                        java.util.Map<Long, java.util.Map<String, Object>> beforeVariants = new java.util.HashMap<>();
+                        if (beforeProduct.getProductVariants() != null) {
+                            for (com.Ojt.Ecommerce.entity.ProductVariant variant : beforeProduct.getProductVariants()) {
+                                java.util.Map<String, Object> vmap = new java.util.HashMap<>();
+                                vmap.put("price", variant.getPrice());
+                                vmap.put("stock", variant.getStock());
+                                vmap.put("sku", variant.getStockKeeping());
+                                beforeVariants.put(variant.getId() != null ? variant.getId().longValue() : null, vmap);
+                            }
+                        }
+                        java.util.Map<Long, java.util.Map<String, Object>> afterVariants = new java.util.HashMap<>();
+                        if (dto.getVariants() != null) {
+                            for (com.Ojt.Ecommerce.dto.VariantDTO v : dto.getVariants()) {
+                                java.util.Map<String, Object> vmap = new java.util.HashMap<>();
+                                vmap.put("price", v.getPrice());
+                                vmap.put("stock", v.getStock());
+                                vmap.put("sku", v.getSku());
+                                afterVariants.put(v.getId(), vmap);
+                            }
+                        }
+                        if (!beforeVariants.equals(afterVariants)) {
+                            beforeChanges.put("variants", beforeVariants);
+                            afterChanges.put("variants", afterVariants);
+                        }
+                    }
+                }
+            }
+            // CATEGORY
+            if (logActivity.entityType().equals("CATEGORY") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.Category) {
+                com.Ojt.Ecommerce.entity.Category beforeCategory = (com.Ojt.Ecommerce.entity.Category) originalState;
+                Object[] args = joinPoint.getArgs();
+                for (Object arg : args) {
+                    if (arg instanceof com.Ojt.Ecommerce.dto.CategoryDTO) {
+                        com.Ojt.Ecommerce.dto.CategoryDTO dto = (com.Ojt.Ecommerce.dto.CategoryDTO) arg;
+                        if (dto.getCateNames() != null && !dto.getCateNames().isEmpty()) {
+                            String beforeName = beforeCategory.getName();
+                            String afterName = dto.getCateNames().get(0);
+                            if (afterName != null && !afterName.equals(beforeName)) {
+                                beforeChanges.put("name", beforeName);
+                                afterChanges.put("name", afterName);
+                            }
+                        }
+                        if (dto.getParentId() != null) {
+                            Long beforeParentId = beforeCategory.getParent() != null ? beforeCategory.getParent().getId() : null;
+                            if (!dto.getParentId().equals(beforeParentId)) {
+                                beforeChanges.put("parentId", beforeParentId);
+                                afterChanges.put("parentId", dto.getParentId());
+                            }
+                        }
+                    }
+                }
+            }
+            // BRAND
+            if (logActivity.entityType().equals("BRAND") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.Brand) {
+                com.Ojt.Ecommerce.entity.Brand beforeBrand = (com.Ojt.Ecommerce.entity.Brand) originalState;
+                Object[] args = joinPoint.getArgs();
+                for (Object arg : args) {
+                    if (arg instanceof com.Ojt.Ecommerce.dto.BrandDTO) {
+                        com.Ojt.Ecommerce.dto.BrandDTO dto = (com.Ojt.Ecommerce.dto.BrandDTO) arg;
+                        if (dto.getBrandName() != null && !dto.getBrandName().equals(beforeBrand.getName())) {
+                            beforeChanges.put("brandName", beforeBrand.getName());
+                            afterChanges.put("brandName", dto.getBrandName());
+                        }
+                        if (dto.getImage() != null && !dto.getImage().equals(beforeBrand.getImage())) {
+                            beforeChanges.put("image", beforeBrand.getImage());
+                            afterChanges.put("image", dto.getImage());
+                        }
+                        // Compare category IDs
+                        java.util.Set<Long> beforeCategoryIds = new java.util.HashSet<>();
+                        if (beforeBrand.getBrandCategories() != null) {
+                            for (com.Ojt.Ecommerce.entity.BrandHasCategory bc : beforeBrand.getBrandCategories()) {
+                                if (bc.getCategory() != null) beforeCategoryIds.add(bc.getCategory().getId());
+                            }
+                        }
+                        java.util.Set<Long> afterCategoryIds = new java.util.HashSet<>();
+                        if (dto.getCategoryIds() != null) {
+                            afterCategoryIds.addAll(dto.getCategoryIds());
+                        }
+                        if (!beforeCategoryIds.equals(afterCategoryIds)) {
+                            beforeChanges.put("categoryIds", beforeCategoryIds);
+                            afterChanges.put("categoryIds", afterCategoryIds);
+                        }
+                    }
+                }
+            }
+            // ADDRESS
+            if (logActivity.entityType().equals("ADDRESS") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.Address) {
+                com.Ojt.Ecommerce.entity.Address beforeAddress = (com.Ojt.Ecommerce.entity.Address) originalState;
+                Object[] args = joinPoint.getArgs();
+                for (Object arg : args) {
+                    if (arg instanceof com.Ojt.Ecommerce.dto.AddressDTO) {
+                        com.Ojt.Ecommerce.dto.AddressDTO dto = (com.Ojt.Ecommerce.dto.AddressDTO) arg;
+                        if (dto.getAddress() != null && !dto.getAddress().equals(beforeAddress.getAddress())) {
+                            beforeChanges.put("address", beforeAddress.getAddress());
+                            afterChanges.put("address", dto.getAddress());
+                        }
+                        if (dto.getCity() != null && !dto.getCity().equals(beforeAddress.getCity())) {
+                            beforeChanges.put("city", beforeAddress.getCity());
+                            afterChanges.put("city", dto.getCity());
+                        }
+                        if (dto.getState() != null && !dto.getState().equals(beforeAddress.getState())) {
+                            beforeChanges.put("state", beforeAddress.getState());
+                            afterChanges.put("state", dto.getState());
+                        }
+                        if (dto.getPostalCode() != null && !dto.getPostalCode().equals(beforeAddress.getPostalCode())) {
+                            beforeChanges.put("postalCode", beforeAddress.getPostalCode());
+                            afterChanges.put("postalCode", dto.getPostalCode());
+                        }
+                        if (dto.getCountry() != null && !dto.getCountry().equals(beforeAddress.getCountry())) {
+                            beforeChanges.put("country", beforeAddress.getCountry());
+                            afterChanges.put("country", dto.getCountry());
+                        }
+                        if (dto.getLatitude() != null && !dto.getLatitude().equals(beforeAddress.getLatitude())) {
+                            beforeChanges.put("latitude", beforeAddress.getLatitude());
+                            afterChanges.put("latitude", dto.getLatitude());
+                        }
+                        if (dto.getLongitude() != null && !dto.getLongitude().equals(beforeAddress.getLongitude())) {
+                            beforeChanges.put("longitude", beforeAddress.getLongitude());
+                            afterChanges.put("longitude", dto.getLongitude());
+                        }
+                        if (dto.getType() != null && !dto.getType().equals(beforeAddress.getType())) {
+                            beforeChanges.put("type", beforeAddress.getType());
+                            afterChanges.put("type", dto.getType());
+                        }
+                        if (dto.getUserId() != null && (beforeAddress.getUser() == null || !dto.getUserId().equals(beforeAddress.getUser().getId()))) {
+                            beforeChanges.put("userId", beforeAddress.getUser() != null ? beforeAddress.getUser().getId() : null);
+                            afterChanges.put("userId", dto.getUserId());
+                        }
+                        if (dto.getCreateUpdate() != null && !dto.getCreateUpdate().equals(beforeAddress.getCreateUpdate())) {
+                            beforeChanges.put("createUpdate", beforeAddress.getCreateUpdate());
+                            afterChanges.put("createUpdate", dto.getCreateUpdate());
+                        }
+                        if (dto.getUpdateDate() != null && !dto.getUpdateDate().equals(beforeAddress.getUpdateDate())) {
+                            beforeChanges.put("updateDate", beforeAddress.getUpdateDate());
+                            afterChanges.put("updateDate", dto.getUpdateDate());
+                        }
+                        // Status (if present in DTO)
+                        if (beforeAddress.getStatus() != null && dto instanceof com.Ojt.Ecommerce.dto.AddressDTO) {
+                            Integer dtoStatus = null;
+                            try {
+                                java.lang.reflect.Field statusField = dto.getClass().getDeclaredField("status");
+                                statusField.setAccessible(true);
+                                dtoStatus = (Integer) statusField.get(dto);
+                            } catch (Exception ignored) {}
+                            if (dtoStatus != null && !dtoStatus.equals(beforeAddress.getStatus())) {
+                                beforeChanges.put("status", beforeAddress.getStatus());
+                                afterChanges.put("status", dtoStatus);
+                            }
+                        }
+                    }
+                }
             }
             
-            changes.put("before", beforeChanges);
-            changes.put("after", afterChanges);
-            changes.put("changedFields", afterChanges.keySet());
-            
+            // ORDER
+            if (logActivity.entityType().equals("ORDER") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.UserOrder) {
+                com.Ojt.Ecommerce.entity.UserOrder beforeOrder = (com.Ojt.Ecommerce.entity.UserOrder) originalState;
+                Object[] args = joinPoint.getArgs();
+                for (Object arg : args) {
+                    if (arg instanceof com.Ojt.Ecommerce.dto.UserOrderListDTO) {
+                        com.Ojt.Ecommerce.dto.UserOrderListDTO dto = (com.Ojt.Ecommerce.dto.UserOrderListDTO) arg;
+                        // Get latest status from orderStatusHistory
+                        String beforeStatus = null;
+                        if (beforeOrder.getOrderStatusHistory() != null && !beforeOrder.getOrderStatusHistory().isEmpty()) {
+                            com.Ojt.Ecommerce.entity.Status statusObj = beforeOrder.getOrderStatusHistory().get(beforeOrder.getOrderStatusHistory().size() - 1).getStatus();
+                            beforeStatus = statusObj != null ? statusObj.getName().name() : null;
+                        }
+                        String afterStatus = dto.getStatus();
+                        if (afterStatus != null && !afterStatus.equals(beforeStatus)) {
+                            beforeChanges.put("status", beforeStatus);
+                            afterChanges.put("status", afterStatus);
+                        }
+                    }
+                }
+            }
+            // DISCOUNT
+            if (logActivity.entityType().equals("DISCOUNT") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.Discount) {
+                com.Ojt.Ecommerce.entity.Discount beforeDiscount = (com.Ojt.Ecommerce.entity.Discount) originalState;
+                Object[] args = joinPoint.getArgs();
+                for (Object arg : args) {
+                    if (arg instanceof com.Ojt.Ecommerce.dto.DiscountRequestDTO) {
+                        com.Ojt.Ecommerce.dto.DiscountRequestDTO dto = (com.Ojt.Ecommerce.dto.DiscountRequestDTO) arg;
+                        if (dto.getName() != null && !dto.getName().equals(beforeDiscount.getName())) {
+                            beforeChanges.put("name", beforeDiscount.getName());
+                            afterChanges.put("name", dto.getName());
+                        }
+                        if (dto.getCode() != null && !dto.getCode().equals(beforeDiscount.getCode())) {
+                            beforeChanges.put("code", beforeDiscount.getCode());
+                            afterChanges.put("code", dto.getCode());
+                        }
+                        if (dto.getDescription() != null && !dto.getDescription().equals(beforeDiscount.getDescription())) {
+                            beforeChanges.put("description", beforeDiscount.getDescription());
+                            afterChanges.put("description", dto.getDescription());
+                        }
+                        if (dto.getDiscountType() != null && !dto.getDiscountType().equals(beforeDiscount.getDiscountType() != null ? beforeDiscount.getDiscountType().name() : null)) {
+                            beforeChanges.put("discountType", beforeDiscount.getDiscountType() != null ? beforeDiscount.getDiscountType().name() : null);
+                            afterChanges.put("discountType", dto.getDiscountType());
+                        }
+                        if (dto.getDiscountValue() != null && !dto.getDiscountValue().equals(beforeDiscount.getDiscountValue())) {
+                            beforeChanges.put("discountValue", beforeDiscount.getDiscountValue());
+                            afterChanges.put("discountValue", dto.getDiscountValue());
+                        }
+                        if (dto.getStartDate() != null && !dto.getStartDate().toLocalDate().equals(beforeDiscount.getStartDate())) {
+                            beforeChanges.put("startDate", beforeDiscount.getStartDate());
+                            afterChanges.put("startDate", dto.getStartDate().toLocalDate());
+                        }
+                        if (dto.getEndDate() != null && !dto.getEndDate().toLocalDate().equals(beforeDiscount.getEndDate())) {
+                            beforeChanges.put("endDate", beforeDiscount.getEndDate());
+                            afterChanges.put("endDate", dto.getEndDate().toLocalDate());
+                        }
+                        if (dto.getAutoApply() != null && !dto.getAutoApply().equals(beforeDiscount.getAutoApply())) {
+                            beforeChanges.put("autoApply", beforeDiscount.getAutoApply());
+                            afterChanges.put("autoApply", dto.getAutoApply());
+                        }
+                        if (dto.isStatus() != beforeDiscount.isStatus()) {
+                            beforeChanges.put("status", beforeDiscount.isStatus());
+                            afterChanges.put("status", dto.isStatus());
+                        }
+                    }
+                }
+            }
+            // Only add to changes if there are actual changes
+            if (!afterChanges.isEmpty() || beforeChanges.containsKey("info")) {
+                changes.put("before", beforeChanges);
+                changes.put("after", afterChanges);
+                changes.put("changedFields", afterChanges.keySet());
+            }
         } catch (Exception e) {
             changes.put("error", "Error capturing changes: " + e.getMessage());
         }
-        
         return changes;
     }
 
@@ -323,81 +710,20 @@ public class ActivityLogAspect {
         
         return description;
     }
-
-    private String getUserLocation(String ipAddress) {
-        if ("unknown".equals(ipAddress) || ipAddress == null || ipAddress.isEmpty()) {
-            return "Unknown Location";
-        }
-        
-        // Handle localhost and local IPs
-        if ("127.0.0.1".equals(ipAddress) || "0:0:0:0:0:0:0:1".equals(ipAddress) || 
-            "localhost".equals(ipAddress) || ipAddress.startsWith("192.168.") || 
-            ipAddress.startsWith("10.") || ipAddress.startsWith("172.16.")) {
-            return "Local Development";
-        }
-        
-        try {
-            // Use a free IP geolocation service
-            String apiUrl = "http://ip-api.com/json/" + ipAddress;
-            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
-            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
-                .uri(java.net.URI.create(apiUrl))
-                .build();
-            
-            java.net.http.HttpResponse<String> response = client.send(request, 
-                java.net.http.HttpResponse.BodyHandlers.ofString());
-            
-            if (response.statusCode() == 200) {
-                String responseBody = response.body();
-                // Parse JSON response to extract location
-                if (responseBody.contains("\"status\":\"success\"")) {
-                    // Extract city and country from response
-                    String city = extractJsonValue(responseBody, "city");
-                    String country = extractJsonValue(responseBody, "country");
-                    String region = extractJsonValue(responseBody, "regionName");
-                    
-                    if (city != null && country != null) {
-                        return city + ", " + country;
-                    } else if (region != null && country != null) {
-                        return region + ", " + country;
-                    } else if (country != null) {
-                        return country;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Log error but don't fail the operation
-            System.err.println("Error getting location for IP " + ipAddress + ": " + e.getMessage());
-        }
-        
-        return "Unknown Location";
-    }
     
-    private String extractJsonValue(String json, String key) {
+    private String getRequestBody(HttpServletRequest request) {
         try {
-            String pattern = "\"" + key + "\":\"([^\"]+)\"";
-            java.util.regex.Pattern p = java.util.regex.Pattern.compile(pattern);
-            java.util.regex.Matcher m = p.matcher(json);
-            if (m.find()) {
-                return m.group(1);
+            // Create a copy of the request to read the body
+            ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+            
+            // Read the body
+            byte[] content = wrappedRequest.getContentAsByteArray();
+            if (content.length > 0) {
+                return new String(content, "UTF-8");
             }
         } catch (Exception e) {
-            // Ignore parsing errors
+            System.err.println("Error reading request body: " + e.getMessage());
         }
         return null;
-    }
-
-    private String getClientIpAddress(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isEmpty() && !"unknown".equalsIgnoreCase(xForwardedFor)) {
-            return xForwardedFor.split(",")[0];
-        }
-        
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isEmpty() && !"unknown".equalsIgnoreCase(xRealIp)) {
-            return xRealIp;
-        }
-        
-        return request.getRemoteAddr();
     }
 } 

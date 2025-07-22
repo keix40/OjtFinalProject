@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReturnService } from '../services/return.service';
 import { OrderService } from '../services/order.service';
@@ -7,6 +7,7 @@ import { RefundDTO } from '../refund';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-return-detail',
@@ -24,11 +25,24 @@ export class ReturnDetailComponent implements OnInit {
   refundAmount = 0;
   selectedImage: string | null = null;
   selectedImageIndex: number | null = null;
+  @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate: any;
+  @HostListener('window:keydown', ['$event'])
+  handleKeyDown(event: KeyboardEvent) {
+    if (this.selectedImageIndex !== null && this.mediaPreviewModalTemplate && this.isModalOpen) {
+      if (event.key === 'ArrowLeft') {
+        this.imageModalPrev();
+      } else if (event.key === 'ArrowRight') {
+        this.imageModalNext();
+      }
+    }
+  }
+  isModalOpen = false;
 
   constructor(
     private returnService: ReturnService,
     private orderService: OrderService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private modalService: NgbModal
   ) {}
 
   ngOnInit() {
@@ -121,6 +135,7 @@ export class ReturnDetailComponent implements OnInit {
 
     this.returnService.processRefund(refundDTO).subscribe(() => {
       Swal.fire('Success', 'Refund sent successfully!', 'success');
+      this.loadRequestDetail();
     });
   }
 
@@ -198,6 +213,20 @@ export class ReturnDetailComponent implements OnInit {
 
   openImageModal(idx: number) {
     this.selectedImageIndex = idx;
+  }
+
+  openMediaPreviewModal(idx: number) {
+    this.selectedImageIndex = idx;
+    this.isModalOpen = true;
+    const modalRef = this.modalService.open(this.mediaPreviewModalTemplate, {
+      centered: true,
+      backdrop: 'static',
+      windowClass: 'p-0',
+      scrollable: true
+    });
+    modalRef.result.finally(() => {
+      this.isModalOpen = false;
+    });
   }
 
   imageModalCanGoLeft(): boolean {

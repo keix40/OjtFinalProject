@@ -35,11 +35,11 @@
           <i data-lucide="ban" class="w-8 h-8 text-rose-600"></i>
         </div>
         <div>
-          <h3 class="text-2xl font-bold text-rose-700">{{ totalBlacklisted }}</h3>
+          <h3 class="text-2xl font-bold text-rose-700">{{ stats?.totalActive || 0 }}</h3>
           <p class="text-slate-600 text-sm">Total Blacklisted</p>
           <div class="flex items-center gap-1 text-xs text-rose-600 mt-1">
             <i data-lucide="trending-up" class="w-4 h-4 text-rose-600"></i>
-            <span>+{{ newThisWeek }} this week</span>
+            <span>+{{ stats?.newThisWeek || 0 }} this week</span>
           </div>
         </div>
       </div>
@@ -198,7 +198,7 @@
   <div class="w-full max-w-7xl mx-auto">
     <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h5 class="text-lg font-semibold text-slate-700"><i data-lucide="list" class="w-5 h-5 mr-2 text-slate-600"></i>Blacklist Entries ({{ filteredEntries.length }})</h5>
+        <h5 class="text-lg font-semibold text-slate-700"><i data-lucide="list" class="w-5 h-5 mr-2 text-slate-600"></i>Blacklist Entries ({{ (filteredEntries && filteredEntries.length) || 0 }})</h5>
         <div class="flex items-center gap-2">
           <div class="bulk-actions me-3" *ngIf="selectedEntries.length > 0">
             <span class="selected-count">{{ selectedEntries.length }} selected</span>
@@ -245,299 +245,311 @@
         </div>
       </div>
       <div class="p-6">
-        <!-- Table View -->
-        <div *ngIf="viewMode === 'table'" class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead class="table-header">
-              <tr>
-                <th width="50">
-                  <input 
-                    type="checkbox" 
-                    class="form-check-input"
-                    (change)="selectAll($event)"
-                    [checked]="selectedEntries.length === paginatedEntries.length && paginatedEntries.length > 0"
-                  >
-                </th>
-                <th>Target Information</th>
-                <th>Category</th>
-                <th>Risk Level</th>
-                <th>Reason</th>
-                <th>Added Date</th>
-                <th>Status</th>
-                <th>Added By</th>
-                <th width="120">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr 
-                *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId"
-                [class.table-row-selected]="selectedEntries.includes(entry.id)"
-                [class.table-row-critical]="entry.riskLevel === 'critical'"
-              >
-                <td>
-                  <input 
-                    type="checkbox" 
-                    class="form-check-input"
-                    [checked]="selectedEntries.includes(entry.id)"
-                    (change)="toggleEntrySelection(entry.id, $event)"
-                  >
-                </td>
-                <td>
-                  <div class="target-info">
-                    <div class="target-primary">
-                      <i [attr.data-lucide]="getTargetIconName(entry.targetType)" class="w-5 h-5 text-slate-600 me-2"></i>
-                      <strong>{{ entry.targetValue }}</strong>
-                    </div>
-                    <div class="target-details">
-                      <span class="target-type">{{ getTargetTypeLabel(entry.targetType) }}</span>
-                      <span *ngIf="entry.associatedEmail" class="associated-info">
-                        <i data-lucide="link" class="w-3 h-3 mr-1 text-blue-600"></i>
-                        {{ entry.associatedEmail }}
-                      </span>
-                    </div>
-                    <div class="fingerprint-info" *ngIf="entry.deviceFingerprint">
-                      <small class="text-muted">
-                        <i data-lucide="fingerprint" class="w-3 h-3 mr-1 text-slate-600"></i>
-                        Device: {{ entry.deviceFingerprint.substring(0, 12) }}...
-                      </small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="category-badge" [ngClass]="'category-' + entry.category">
-                    <i [attr.data-lucide]="getCategoryIconName(entry.category)" class="w-5 h-5 text-blue-600"></i>
-                    {{ getCategoryLabel(entry.category) }}
-                  </div>
-                </td>
-                <td>
-                  <div class="risk-badge" [ngClass]="'risk-' + entry.riskLevel">
-                    <i [attr.data-lucide]="getRiskIconName(entry.riskLevel)" class="w-5 h-5 text-yellow-600"></i>
-                    {{ entry.riskLevel | titlecase }}
-                  </div>
-                </td>
-                <td>
-                  <div class="reason-info">
-                    <div class="reason-primary">{{ entry.reason }}</div>
-                    <div class="incident-count" *ngIf="entry.incidentCount > 1">
-                      <small class="text-muted">{{ entry.incidentCount }} incidents</small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="date-info">
-                    <div>{{ entry.addedDate | date:'MMM dd, yyyy' }}</div>
-                    <small class="text-muted">{{ getTimeAgo(entry.addedDate) }}</small>
-                  </div>
-                </td>
-                <td>
-                  <div class="status-info">
-                    <div class="status-badge" [ngClass]="'status-' + entry.status">
-                      <i [attr.data-lucide]="getStatusIconName(entry.status)" class="w-5 h-5 text-green-600"></i>
-                      {{ getStatusLabel(entry.status) }}
-                    </div>
-                    <div class="expiry-info" *ngIf="entry.expiryDate && entry.status === 'active'">
-                      <small class="text-muted">
-                        Expires: {{ entry.expiryDate | date:'MMM dd' }}
-                      </small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <div class="added-by-info">
-                    <div class="staff-name">{{ entry.addedBy }}</div>
-                    <div class="add-method">
-                      <small class="text-muted">
-                        <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-4 h-4 ms-1 text-slate-600"></i>
-                        {{ entry.isAutomatic ? 'Auto' : 'Manual' }}
-                      </small>
-                    </div>
-                  </div>
-                </td>
-                <td class="flex items-center gap-2 justify-center">
-                  <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="viewEntryDetails(entry)" title="View Details" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
-                    <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i>
-                  </button>
-                  <button class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="editEntry(entry)" title="Edit Entry">
-                    <i data-lucide="edit" class="w-4 h-4 text-yellow-600"></i>
-                  </button>
-                  <div class="dropdown">
-                    <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                      <i data-lucide="more-horizontal" class="w-4 h-4 text-slate-600"></i>
-                    </button>
-                    <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)"><i data-lucide="history" class="w-4 h-4 mr-2 text-slate-600"></i>Incident History</a></li>
-                      <li><a class="dropdown-item" (click)="addNote(entry)"><i data-lucide="sticky-note" class="w-4 h-4 mr-2 text-yellow-600"></i>Add Note</a></li>
-                      <li><a class="dropdown-item" (click)="extendBan(entry)"><i data-lucide="clock" class="w-4 h-4 mr-2 text-yellow-600"></i>Extend Ban</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><a class="dropdown-item text-green-500" (click)="liftBan(entry)"><i data-lucide="unlock" class="w-4 h-4 mr-2 text-green-600"></i>Lift Ban</a></li>
-                    </ul>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Loading State -->
+        <div *ngIf="loading" class="text-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600 mx-auto"></div>
+          <p class="mt-2 text-slate-600">Loading entries...</p>
         </div>
 
-        <!-- Cards View -->
-        <div *ngIf="viewMode === 'cards'" class="cards-container">
-          <div class="row">
-            <div 
-              *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId" 
-              class="col-xl-4 col-lg-6 col-md-6 mb-4"
-            >
-              <div class="blacklist-entry-card" 
-                   [class.selected]="selectedEntries.includes(entry.id)"
-                   [class.critical-entry]="entry.riskLevel === 'critical'">
-                <div class="card-header">
-                  <div class="entry-header">
-                    <div class="form-check">
-                      <input 
-                        type="checkbox" 
-                        class="form-check-input"
-                        [checked]="selectedEntries.includes(entry.id)"
-                        (change)="toggleEntrySelection(entry.id, $event)"
-                      >
-                    </div>
-                    <div class="entry-info">
-                      <div class="target-value">
+        <!-- Content when not loading -->
+        <ng-container *ngIf="!loading">
+          <!-- Table View -->
+          <div *ngIf="viewMode === 'table'" class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-header">
+                <tr>
+                  <th width="50">
+                    <input 
+                      type="checkbox" 
+                      class="form-check-input"
+                      (change)="selectAll($event)"
+                      [checked]="selectedEntries.length === paginatedEntries.length && paginatedEntries.length > 0"
+                    >
+                  </th>
+                  <th>Target Information</th>
+                  <th>Category</th>
+                  <th>Risk Level</th>
+                  <th>Reason</th>
+                  <th>Added Date</th>
+                  <th>Status</th>
+                  <th>Added By</th>
+                  <th width="120">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr 
+                  *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId"
+                  [class.table-row-selected]="selectedEntries.includes(entry.id)"
+                  [class.table-row-critical]="entry.riskLevel === 'critical'"
+                >
+                  <td>
+                    <input 
+                      type="checkbox" 
+                      class="form-check-input"
+                      [checked]="selectedEntries.includes(entry.id)"
+                      (change)="toggleEntrySelection(entry.id, $event)"
+                    >
+                  </td>
+                  <td>
+                    <div class="target-info">
+                      <div class="target-primary">
                         <i [attr.data-lucide]="getTargetIconName(entry.targetType)" class="w-5 h-5 text-slate-600 me-2"></i>
-                        {{ entry.targetValue }}
+                        <strong>{{ entry.targetValue }}</strong>
                       </div>
-                      <div class="target-type-label">{{ getTargetTypeLabel(entry.targetType) }}</div>
+                      <div class="target-details">
+                        <span class="target-type">{{ getTargetTypeLabel(entry.targetType) }}</span>
+                        <span *ngIf="entry.associatedEmail" class="associated-info">
+                          <i data-lucide="link" class="w-3 h-3 mr-1 text-blue-600"></i>
+                          {{ entry.associatedEmail }}
+                        </span>
+                      </div>
+                      <div class="fingerprint-info" *ngIf="entry.deviceFingerprint">
+                        <small class="text-muted">
+                          <i data-lucide="fingerprint" class="w-3 h-3 mr-1 text-slate-600"></i>
+                          Device: {{ entry.deviceFingerprint.substring(0, 12) }}...
+                        </small>
+                      </div>
                     </div>
-                    <div class="risk-indicator" [ngClass]="'risk-' + entry.riskLevel">
-                      <i [attr.data-lucide]="getRiskIconName(entry.riskLevel)" class="w-5 h-5 text-yellow-600"></i>
-                    </div>
-                  </div>
-                </div>
-                <div class="card-body">
-                  <div class="entry-badges">
-                    <div class="category-badge-card" [ngClass]="'category-' + entry.category">
+                  </td>
+                  <td>
+                    <div class="category-badge" [ngClass]="'category-' + entry.category">
                       <i [attr.data-lucide]="getCategoryIconName(entry.category)" class="w-5 h-5 text-blue-600"></i>
                       {{ getCategoryLabel(entry.category) }}
                     </div>
-                    <div class="status-badge-card" [ngClass]="'status-' + entry.status">
-                      {{ getStatusLabel(entry.status) }}
+                  </td>
+                  <td>
+                    <div class="risk-badge" [ngClass]="'risk-' + entry.riskLevel">
+                      <i [attr.data-lucide]="getRiskIconName(entry.riskLevel)" class="w-5 h-5 text-yellow-600"></i>
+                      {{ entry.riskLevel | titlecase }}
                     </div>
-                  </div>
-                  <div class="entry-details">
-                    <div class="detail-item">
-                      <span class="detail-label">Reason:</span>
-                      <span class="detail-value">{{ entry.reason }}</span>
+                  </td>
+                  <td>
+                    <div class="reason-info">
+                      <div class="reason-primary">{{ entry.reason }}</div>
+                      <div class="incident-count" *ngIf="entry.incidentCount > 1">
+                        <small class="text-muted">{{ entry.incidentCount }} incidents</small>
+                      </div>
                     </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Added:</span>
-                      <span class="detail-value">{{ entry.addedDate | date:'MMM dd, yyyy' }}</span>
+                  </td>
+                  <td>
+                    <div class="date-info">
+                      <div>{{ entry.addedDate | date:'MMM dd, yyyy' }}</div>
+                      <small class="text-muted">{{ getTimeAgo(entry.addedDate) }}</small>
                     </div>
-                    <div class="detail-item">
-                      <span class="detail-label">Added by:</span>
-                      <span class="detail-value">
-                        {{ entry.addedBy }}
-                        <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-4 h-4 ms-1 text-slate-600"></i>
-                      </span>
+                  </td>
+                  <td>
+                    <div class="status-info">
+                      <div class="status-badge" [ngClass]="'status-' + entry.status">
+                        <i [attr.data-lucide]="getStatusIconName(entry.status)" class="w-5 h-5 text-green-600"></i>
+                        {{ getStatusLabel(entry.status) }}
+                      </div>
+                      <div class="expiry-info" *ngIf="entry.expiryDate && entry.status === 'active'">
+                        <small class="text-muted">
+                          Expires: {{ entry.expiryDate | date:'MMM dd' }}
+                        </small>
+                      </div>
                     </div>
-                    <div class="detail-item" *ngIf="entry.incidentCount > 1">
-                      <span class="detail-label">Incidents:</span>
-                      <span class="detail-value">{{ entry.incidentCount }} total</span>
+                  </td>
+                  <td>
+                    <div class="added-by-info">
+                      <div class="staff-name">{{ entry.addedBy }}</div>
+                      <div class="add-method">
+                        <small class="text-muted">
+                          <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-4 h-4 ms-1 text-slate-600"></i>
+                          {{ entry.isAutomatic ? 'Auto' : 'Manual' }}
+                        </small>
+                      </div>
                     </div>
-                  </div>
-                  <div class="entry-notes" *ngIf="entry.notes">
-                    <div class="notes-preview">
-                      <i data-lucide="sticky-note" class="w-3 h-3 mr-1 text-yellow-600"></i>
-                      {{ entry.notes.substring(0, 100) }}{{ entry.notes.length > 100 ? '...' : '' }}
-                    </div>
-                  </div>
-                </div>
-                <div class="card-footer">
-                  <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="viewEntryDetails(entry)" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
-                    <i data-lucide="eye" class="w-4 h-4 mr-1 text-blue-600"></i>
-                    Details
-                  </button>
-                  <button class="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="liftBan(entry)">
-                    <i data-lucide="unlock" class="w-4 h-4 mr-1 text-green-600"></i>
-                    Lift Ban
-                  </button>
-                  <div class="dropdown">
-                    <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                      <i data-lucide="more-horizontal" class="w-4 h-4 text-slate-600"></i>
+                  </td>
+                  <td class="flex items-center gap-2 justify-center">
+                    <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="viewEntryDetails(entry)" title="View Details" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
+                      <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i>
                     </button>
-                    <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" (click)="editEntry(entry)">Edit</a></li>
-                      <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)">History</a></li>
-                      <li><a class="dropdown-item" (click)="addNote(entry)">Add Note</a></li>
-                    </ul>
+                    <button class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="editEntry(entry)" title="Edit Entry">
+                      <i data-lucide="edit" class="w-4 h-4 text-yellow-600"></i>
+                    </button>
+                    <div class="dropdown">
+                      <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i data-lucide="more-horizontal" class="w-4 h-4 text-slate-600"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)"><i data-lucide="history" class="w-4 h-4 mr-2 text-slate-600"></i>Incident History</a></li>
+                        <li><a class="dropdown-item" (click)="addNote(entry)"><i data-lucide="sticky-note" class="w-4 h-4 mr-2 text-yellow-600"></i>Add Note</a></li>
+                        <li><a class="dropdown-item" (click)="extendBan(entry)"><i data-lucide="clock" class="w-4 h-4 mr-2 text-yellow-600"></i>Extend Ban</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-green-500" (click)="liftBan(entry)"><i data-lucide="unlock" class="w-4 h-4 mr-2 text-green-600"></i>Lift Ban</a></li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Cards View -->
+          <div *ngIf="viewMode === 'cards'" class="cards-container">
+            <div class="row">
+              <div 
+                *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId" 
+                class="col-xl-4 col-lg-6 col-md-6 mb-4"
+              >
+                <div class="blacklist-entry-card" 
+                     [class.selected]="selectedEntries.includes(entry.id)"
+                     [class.critical-entry]="entry.riskLevel === 'critical'">
+                  <div class="card-header">
+                    <div class="entry-header">
+                      <div class="form-check">
+                        <input 
+                          type="checkbox" 
+                          class="form-check-input"
+                          [checked]="selectedEntries.includes(entry.id)"
+                          (change)="toggleEntrySelection(entry.id, $event)"
+                        >
+                      </div>
+                      <div class="entry-info">
+                        <div class="target-value">
+                          <i [attr.data-lucide]="getTargetIconName(entry.targetType)" class="w-5 h-5 text-slate-600 me-2"></i>
+                          {{ entry.targetValue }}
+                        </div>
+                        <div class="target-type-label">{{ getTargetTypeLabel(entry.targetType) }}</div>
+                      </div>
+                      <div class="risk-indicator" [ngClass]="'risk-' + entry.riskLevel">
+                        <i [attr.data-lucide]="getRiskIconName(entry.riskLevel)" class="w-5 h-5 text-yellow-600"></i>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="entry-badges">
+                      <div class="category-badge-card" [ngClass]="'category-' + entry.category">
+                        <i [attr.data-lucide]="getCategoryIconName(entry.category)" class="w-5 h-5 text-blue-600"></i>
+                        {{ getCategoryLabel(entry.category) }}
+                      </div>
+                      <div class="status-badge-card" [ngClass]="'status-' + entry.status">
+                        {{ getStatusLabel(entry.status) }}
+                      </div>
+                    </div>
+                    <div class="entry-details">
+                      <div class="detail-item">
+                        <span class="detail-label">Reason:</span>
+                        <span class="detail-value">{{ entry.reason }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Added:</span>
+                        <span class="detail-value">{{ entry.addedDate | date:'MMM dd, yyyy' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Added by:</span>
+                        <span class="detail-value">
+                          {{ entry.addedBy }}
+                          <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-4 h-4 ms-1 text-slate-600"></i>
+                        </span>
+                      </div>
+                      <div class="detail-item" *ngIf="entry.incidentCount > 1">
+                        <span class="detail-label">Incidents:</span>
+                        <span class="detail-value">{{ entry.incidentCount }} total</span>
+                      </div>
+                    </div>
+                    <div class="entry-notes" *ngIf="entry.notes">
+                      <div class="notes-preview">
+                        <i data-lucide="sticky-note" class="w-3 h-3 mr-1 text-yellow-600"></i>
+                        {{ entry.notes.substring(0, 100) }}{{ entry.notes.length > 100 ? '...' : '' }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-footer">
+                    <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="viewEntryDetails(entry)" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
+                      <i data-lucide="eye" class="w-4 h-4 mr-1 text-blue-600"></i>
+                      Details
+                    </button>
+                    <button class="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="liftBan(entry)">
+                      <i data-lucide="unlock" class="w-4 h-4 mr-1 text-green-600"></i>
+                      Lift Ban
+                    </button>
+                    <div class="dropdown">
+                      <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i data-lucide="more-horizontal" class="w-4 h-4 text-slate-600"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" (click)="editEntry(entry)">Edit</a></li>
+                        <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)">History</a></li>
+                        <li><a class="dropdown-item" (click)="addNote(entry)">Add Note</a></li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Empty State -->
-        <div *ngIf="filteredEntries.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <i data-lucide="shield" class="w-16 h-16 text-slate-400"></i>
+          <!-- Empty State -->
+          <div *ngIf="!loading && (!filteredEntries || filteredEntries.length === 0)" class="empty-state">
+            <div class="empty-icon">
+              <i data-lucide="shield" class="w-16 h-16 text-slate-400"></i>
+            </div>
+            <h4 class="text-2xl font-bold text-slate-700">No Blacklist Entries Found</h4>
+            <p class="text-slate-500">No entries match your current filters. Your security measures are working well!</p>
+            <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="clearFilters()">
+              <i data-lucide="filter" class="w-4 h-4 text-slate-600"></i>
+              Clear Filters
+            </button>
           </div>
-          <h4 class="text-2xl font-bold text-slate-700">No Blacklist Entries Found</h4>
-          <p class="text-slate-500">No entries match your current filters. Your security measures are working well!</p>
-          <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="clearFilters()">
-            <i data-lucide="filter" class="w-4 h-4 text-slate-600"></i>
-            Clear Filters
-          </button>
-        </div>
 
-        <!-- Pagination -->
-        <div *ngIf="filteredEntries.length > 0" class="table-pagination">
-          <div class="row align-items-center">
-            <div class="col-md-6">
-              <div class="pagination-info">
-                Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
-                {{ Math.min(currentPage * itemsPerPage, filteredEntries.length) }} 
-                of {{ filteredEntries.length }} blacklist entries
+          <!-- Pagination -->
+          <div *ngIf="!loading && filteredEntries && filteredEntries.length > 0" class="table-pagination">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <div class="pagination-info">
+                  Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
+                  {{ Math.min(currentPage * itemsPerPage, filteredEntries.length) }} 
+                  of {{ filteredEntries.length }} blacklist entries
+                </div>
+              </div>
+              <div class="col-md-6">
+                <nav class="d-flex justify-content-md-end">
+                  <ul class="pagination pagination-sm mb-0 flex gap-2 justify-center">
+                    <li class="page-item" [class.disabled]="currentPage === 1">
+                      <a class="page-link" (click)="goToPage(currentPage - 1)">
+                        <i data-lucide="chevron-left" class="w-4 h-4 text-slate-600"></i>
+                      </a>
+                    </li>
+                    <li 
+                      *ngFor="let page of getPageNumbers()" 
+                      class="page-item"
+                      [class.active]="page === currentPage"
+                    >
+                      <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
+                    </li>
+                    <li class="page-item" [class.disabled]="currentPage === totalPages">
+                      <a class="page-link" (click)="goToPage(currentPage + 1)">
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
               </div>
             </div>
-            <div class="col-md-6">
-              <nav class="d-flex justify-content-md-end">
-                <ul class="pagination pagination-sm mb-0 flex gap-2 justify-center">
-                  <li class="page-item" [class.disabled]="currentPage === 1">
-                    <a class="page-link" (click)="goToPage(currentPage - 1)">
-                      <i data-lucide="chevron-left" class="w-4 h-4 text-slate-600"></i>
-                    </a>
-                  </li>
-                  <li 
-                    *ngFor="let page of getPageNumbers()" 
-                    class="page-item"
-                    [class.active]="page === currentPage"
-                  >
-                    <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
-                  </li>
-                  <li class="page-item" [class.disabled]="currentPage === totalPages">
-                    <a class="page-link" (click)="goToPage(currentPage + 1)">
-                      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i>
-                    </a>
-                  </li>
-                </ul>
-              </nav>
-            </div>
           </div>
-        </div>
+        </ng-container>
       </div>
     </div>
   </div>
 
   <!-- Add to Blacklist Modal -->
-  <div class="modal fade" id="addBlacklistModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i data-lucide="ban" class="w-5 h-5 mr-2 text-rose-600"></i>
+  <div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h5 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="ban" class="w-5 h-5 text-rose-600"></i>
             Add to Blacklist
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button class="text-gray-400 hover:text-gray-600" (click)="closeEditModal()">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
         </div>
-        <div class="modal-body">
-          <form [formGroup]="blacklistForm">
+      </div>
+      <div class="p-6">
+        <form [formGroup]="blacklistForm">
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Target Type</label>
@@ -606,223 +618,289 @@
               </div>
             </div>
           </form>
-          <div class="impact-preview" *ngIf="blacklistForm.get('targetValue')?.value">
-            <h6>Impact Preview</h6>
-            <div class="row">
-              <div class="col-md-4">
-                <div class="impact-stat">
-                  <div class="stat-number">{{ getAffectedAccounts() }}</div>
-                  <div class="stat-label">Accounts Affected</div>
-                </div>
+          <div class="impact-preview mt-6" *ngIf="blacklistForm.get('targetValue')?.value">
+            <h6 class="text-lg font-semibold mb-4">Impact Preview</h6>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-2xl font-bold">{{ getAffectedAccounts() }}</div>
+                <div class="text-gray-600">Accounts Affected</div>
               </div>
-              <div class="col-md-4">
-                <div class="impact-stat">
-                  <div class="stat-number">{{ getRelatedEntries() }}</div>
-                  <div class="stat-label">Related Entries</div>
-                </div>
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-2xl font-bold">{{ getRelatedEntries() }}</div>
+                <div class="text-gray-600">Related Entries</div>
               </div>
-              <div class="col-md-4">
-                <div class="impact-stat">
-                  <div class="stat-number">{{ getRiskScore() }}%</div>
-                  <div class="stat-label">Risk Score</div>
-                </div>
+              <div class="bg-white rounded-lg p-4 border border-gray-200">
+                <div class="text-2xl font-bold">{{ getRiskScore() }}%</div>
+                <div class="text-gray-600">Risk Score</div>
               </div>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-outline-warning" (click)="previewBlacklist()">
-            <i data-lucide="eye" class="w-4 h-4 mr-1 text-blue-600"></i>Preview Impact
+        <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+          <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg" (click)="closeEditModal()">
+            Cancel
           </button>
-          <button type="button" class="btn btn-danger" (click)="addToBlacklist()" data-bs-dismiss="modal">
-            <i data-lucide="ban" class="w-4 h-4 mr-1 text-rose-600"></i>Add to Blacklist
+          <button class="px-4 py-2 text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded-lg" (click)="previewBlacklist()">
+            <i data-lucide="eye" class="w-4 h-4 inline-block mr-1"></i>Preview Impact
+          </button>
+          <button class="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg" (click)="addToBlacklist()">
+            <i data-lucide="ban" class="w-4 h-4 inline-block mr-1"></i>Add to Blacklist
           </button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Incident History Modal -->
+  <div *ngIf="showIncidentHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h5 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="history" class="w-5 h-5 text-blue-600"></i>
+            Incident History
+          </h5>
+          <button class="text-gray-400 hover:text-gray-600" (click)="closeIncidentHistoryModal()">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <div *ngFor="let incident of incidentHistory" class="bg-white rounded-lg p-4 border border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="text-gray-900 font-semibold">{{ incident.type }}</div>
+              <div class="text-gray-500 text-sm">{{ incident.date | date:'medium' }}</div>
+            </div>
+            <div class="text-gray-600 mt-2">{{ incident.details }}</div>
+          </div>
+          <div *ngIf="incidentHistory.length === 0" class="text-center text-gray-500 py-8">
+            No incident history available
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-gray-200 flex justify-end">
+        <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg" (click)="closeIncidentHistoryModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Entry Details Modal -->
-  <div class="modal fade" id="entryDetailsModal" tabindex="-1" *ngIf="selectedEntryDetails">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i data-lucide="shield" class="w-5 h-5 mr-2 text-blue-600"></i>
+  <div *ngIf="selectedEntryDetails" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-7xl mx-4">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h5 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="shield" class="w-5 h-5 text-blue-600"></i>
             Blacklist Entry Details
           </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button class="text-gray-400 hover:text-gray-600" (click)="selectedEntryDetails = null">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
         </div>
-        <div class="modal-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="entry-profile-card">
-                <div class="profile-header">
-                  <div class="target-icon-large" [ngClass]="'risk-' + selectedEntryDetails.riskLevel">
-                    <i [attr.data-lucide]="getTargetIconName(selectedEntryDetails.targetType)" class="w-8 h-8 text-slate-600"></i>
-                  </div>
-                  <div class="target-value-large">{{ selectedEntryDetails.targetValue }}</div>
-                  <div class="target-type-large">{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</div>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div class="md:col-span-4">
+            <div class="bg-white rounded-lg p-6 border border-gray-200">
+              <div class="text-center">
+                <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4"
+                     [ngClass]="'bg-' + selectedEntryDetails.riskLevel.toLowerCase() + '-100'">
+                  <i [attr.data-lucide]="getTargetIconName(selectedEntryDetails.targetType)" 
+                     class="w-10 h-10" 
+                     [ngClass]="'text-' + selectedEntryDetails.riskLevel.toLowerCase() + '-600'"></i>
                 </div>
-                <div class="profile-badges">
-                  <div class="category-badge-large" [ngClass]="'category-' + selectedEntryDetails.category">
-                    <i [attr.data-lucide]="getCategoryIconName(selectedEntryDetails.category)" class="w-5 h-5 text-blue-600"></i>
+                <div class="text-xl font-bold mb-1">{{ selectedEntryDetails.targetValue }}</div>
+                <div class="text-gray-500">{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</div>
+              </div>
+              <div class="mt-6 space-y-3">
+                <div class="flex items-center justify-center gap-2">
+                  <span class="px-3 py-1 rounded-full text-sm font-medium"
+                        [ngClass]="'bg-' + selectedEntryDetails.category.toLowerCase() + '-100 text-' + selectedEntryDetails.category.toLowerCase() + '-700'">
+                    <i [attr.data-lucide]="getCategoryIconName(selectedEntryDetails.category)" class="w-4 h-4 inline-block mr-1"></i>
                     {{ getCategoryLabel(selectedEntryDetails.category) }}
-                  </div>
-                  <div class="risk-badge-large" [ngClass]="'risk-' + selectedEntryDetails.riskLevel">
-                    <i [attr.data-lucide]="getRiskIconName(selectedEntryDetails.riskLevel)" class="w-5 h-5 text-yellow-600"></i>
+                  </span>
+                  <span class="px-3 py-1 rounded-full text-sm font-medium"
+                        [ngClass]="'bg-' + selectedEntryDetails.riskLevel.toLowerCase() + '-100 text-' + selectedEntryDetails.riskLevel.toLowerCase() + '-700'">
+                    <i [attr.data-lucide]="getRiskIconName(selectedEntryDetails.riskLevel)" class="w-4 h-4 inline-block mr-1"></i>
                     {{ selectedEntryDetails.riskLevel | titlecase }}
-                  </div>
+                  </span>
                 </div>
-                <div class="profile-stats">
-                  <div class="profile-stat">
-                    <strong>{{ selectedEntryDetails.incidentCount }}</strong>
-                    <span>Total Incidents</span>
-                  </div>
-                  <div class="profile-stat">
-                    <strong>{{ getBlockedAttempts(selectedEntryDetails) }}</strong>
-                    <span>Blocked Attempts</span>
-                  </div>
-                  <div class="profile-stat">
-                    <strong>${{ getEstimatedLoss(selectedEntryDetails) }}</strong>
-                    <span>Prevented Loss</span>
-                  </div>
+              </div>
+              <div class="mt-6 grid grid-cols-3 gap-4 text-center">
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <div class="text-2xl font-bold">{{ selectedEntryDetails.incidentCount }}</div>
+                  <div class="text-sm text-gray-500">Incidents</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <div class="text-2xl font-bold">{{ getBlockedAttempts(selectedEntryDetails) }}</div>
+                  <div class="text-sm text-gray-500">Blocked</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <div class="text-2xl font-bold">${{ getEstimatedLoss(selectedEntryDetails) }}</div>
+                  <div class="text-sm text-gray-500">Saved</div>
                 </div>
               </div>
             </div>
-            <div class="col-md-8">
-              <div class="entry-details-tabs">
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <a class="nav-link active" data-bs-toggle="tab" href="#overview">Overview</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#incidents">Incidents</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#notes">Notes</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#appeals">Appeals</a>
-                  </li>
-                </ul>
-                <div class="tab-content">
-                  <div class="tab-pane fade show active" id="overview">
-                    <div class="overview-content">
-                      <div class="row">
-                        <div class="col-md-6">
-                          <div class="info-section">
-                            <h6>Entry Information</h6>
-                            <div class="info-item">
-                              <label>Target:</label>
-                              <span>{{ selectedEntryDetails.targetValue }}</span>
-                            </div>
-                            <div class="info-item">
-                              <label>Type:</label>
-                              <span>{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</span>
-                            </div>
-                            <div class="info-item">
-                              <label>Reason:</label>
-                              <span>{{ selectedEntryDetails.reason }}</span>
-                            </div>
-                            <div class="info-item" *ngIf="selectedEntryDetails.associatedEmail">
-                              <label>Associated Email:</label>
-                              <span>{{ selectedEntryDetails.associatedEmail }}</span>
-                            </div>
+          </div>
+          <div class="md:col-span-8">
+            <div class="bg-white rounded-lg border border-gray-200">
+              <div class="border-b border-gray-200">
+                <nav class="flex">
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'overview'"
+                          [class.border-blue-600]="activeTab === 'overview'"
+                          (click)="activeTab = 'overview'">
+                    Overview
+                  </button>
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'incidents'"
+                          [class.border-blue-600]="activeTab === 'incidents'"
+                          (click)="activeTab = 'incidents'">
+                    Incidents
+                  </button>
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'notes'"
+                          [class.border-blue-600]="activeTab === 'notes'"
+                          (click)="activeTab = 'notes'">
+                    Notes
+                  </button>
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'appeals'"
+                          [class.border-blue-600]="activeTab === 'appeals'"
+                          (click)="activeTab = 'appeals'">
+                    Appeals
+                  </button>
+                </nav>
+              </div>
+              <div class="p-6">
+                <!-- Overview Tab -->
+                <div *ngIf="activeTab === 'overview'" class="space-y-6">
+                  <div class="grid grid-cols-2 gap-6">
+                    <div>
+                      <h6 class="text-sm font-medium text-gray-600 mb-4">Entry Information</h6>
+                      <div class="space-y-3">
+                        <div>
+                          <label class="text-sm text-gray-500">Target</label>
+                          <div class="font-medium">{{ selectedEntryDetails.targetValue }}</div>
+                        </div>
+                        <div>
+                          <label class="text-sm text-gray-500">Type</label>
+                          <div class="font-medium">{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</div>
+                        </div>
+                        <div>
+                          <label class="text-sm text-gray-500">Reason</label>
+                          <div class="font-medium">{{ selectedEntryDetails.reason }}</div>
+                        </div>
+                        <div *ngIf="selectedEntryDetails.associatedEmail">
+                          <label class="text-sm text-gray-500">Associated Email</label>
+                          <div class="font-medium">{{ selectedEntryDetails.associatedEmail }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h6 class="text-sm font-medium text-gray-600 mb-4">Status & Timing</h6>
+                      <div class="space-y-3">
+                        <div>
+                          <label class="text-sm text-gray-500">Status</label>
+                          <div class="font-medium">
+                            <span class="px-2 py-1 rounded text-sm"
+                                  [ngClass]="'bg-' + selectedEntryDetails.status.toLowerCase() + '-100 text-' + selectedEntryDetails.status.toLowerCase() + '-700'">
+                              {{ getStatusLabel(selectedEntryDetails.status) }}
+                            </span>
                           </div>
                         </div>
-                        <div class="col-md-6">
-                          <div class="info-section">
-                            <h6>Status & Timing</h6>
-                            <div class="info-item">
-                              <label>Status:</label>
-                              <span class="status-badge" [ngClass]="'status-' + selectedEntryDetails.status">
-                                {{ getStatusLabel(selectedEntryDetails.status) }}
-                              </span>
-                            </div>
-                            <div class="info-item">
-                              <label>Added Date:</label>
-                              <span>{{ selectedEntryDetails.addedDate | date:'MMM dd, yyyy HH:mm' }}</span>
-                            </div>
-                            <div class="info-item">
-                              <label>Added By:</label>
-                              <span>{{ selectedEntryDetails.addedBy }}</span>
-                            </div>
-                            <div class="info-item" *ngIf="selectedEntryDetails.expiryDate">
-                              <label>Expires:</label>
-                              <span>{{ selectedEntryDetails.expiryDate | date:'MMM dd, yyyy' }}</span>
-                            </div>
-                          </div>
+                        <div>
+                          <label class="text-sm text-gray-500">Added Date</label>
+                          <div class="font-medium">{{ selectedEntryDetails.addedDate | date:'MMM dd, yyyy HH:mm' }}</div>
+                        </div>
+                        <div>
+                          <label class="text-sm text-gray-500">Added By</label>
+                          <div class="font-medium">{{ selectedEntryDetails.addedBy }}</div>
+                        </div>
+                        <div *ngIf="selectedEntryDetails.expiryDate">
+                          <label class="text-sm text-gray-500">Expires</label>
+                          <div class="font-medium">{{ selectedEntryDetails.expiryDate | date:'MMM dd, yyyy' }}</div>
                         </div>
                       </div>
                     </div>
                   </div>
-                  <div class="tab-pane fade" id="incidents">
-                    <div class="incidents-history">
-                      <div class="incidents-summary">
-                        <div class="row">
-                          <div class="col-md-3">
-                            <div class="summary-stat">
-                              <strong>{{ selectedEntryDetails.incidentCount }}</strong>
-                              <span>Total Incidents</span>
-                            </div>
-                          </div>
-                          <div class="col-md-3">
-                            <div class="summary-stat">
-                              <strong>{{ getBlockedAttempts(selectedEntryDetails) }}</strong>
-                              <span>Blocked Attempts</span>
-                            </div>
-                          </div>
-                          <div class="col-md-3">
-                            <div class="summary-stat">
-                              <strong>${{ getEstimatedLoss(selectedEntryDetails) }}</strong>
-                              <span>Prevented Loss</span>
-                            </div>
-                          </div>
-                          <div class="col-md-3">
-                            <div class="summary-stat">
-                              <strong>{{ getLastIncidentDays(selectedEntryDetails) }}</strong>
-                              <span>Days Since Last</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <!-- Recent incidents would be listed here -->
+                </div>
+
+                <!-- Incidents Tab -->
+                <div *ngIf="activeTab === 'incidents'" class="space-y-6">
+                  <div class="grid grid-cols-4 gap-4">
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold">{{ selectedEntryDetails.incidentCount }}</div>
+                      <div class="text-sm text-gray-500">Total Incidents</div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold">{{ getBlockedAttempts(selectedEntryDetails) }}</div>
+                      <div class="text-sm text-gray-500">Blocked Attempts</div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold">${{ getEstimatedLoss(selectedEntryDetails) }}</div>
+                      <div class="text-sm text-gray-500">Prevented Loss</div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold">{{ getLastIncidentDays(selectedEntryDetails) }}</div>
+                      <div class="text-sm text-gray-500">Days Since Last</div>
                     </div>
                   </div>
-                  <div class="tab-pane fade" id="notes">
-                    <div class="notes-section">
-                      <div class="notes-content">
-                        <p>{{ selectedEntryDetails.notes || 'No notes available for this entry.' }}</p>
+                  <div class="space-y-4">
+                    <div *ngFor="let incident of incidentHistory" class="p-4 bg-white border border-gray-200 rounded-lg">
+                      <div class="flex items-center justify-between">
+                        <div class="font-medium">{{ incident.type }}</div>
+                        <div class="text-sm text-gray-500">{{ incident.date | date:'medium' }}</div>
                       </div>
-                      <button class="btn btn-outline-primary" (click)="addNote(selectedEntryDetails)">
-                        <i data-lucide="plus" class="w-4 h-4 mr-1 text-blue-600"></i>Add Note
-                      </button>
+                      <div class="mt-2 text-gray-600">{{ incident.details }}</div>
+                    </div>
+                    <div *ngIf="incidentHistory.length === 0" class="text-center text-gray-500 py-8">
+                      No incident history available
                     </div>
                   </div>
-                  <div class="tab-pane fade" id="appeals">
-                    <div class="appeals-section">
-                      <p>Appeal history and management for this blacklist entry.</p>
-                      <!-- Appeals list would be here -->
-                    </div>
+                </div>
+
+                <!-- Notes Tab -->
+                <div *ngIf="activeTab === 'notes'" class="space-y-6">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="whitespace-pre-line">{{ selectedEntryDetails.notes || 'No notes available for this entry.' }}</p>
+                  </div>
+                  <button class="px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center gap-2"
+                          (click)="addNote(selectedEntryDetails)">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Add Note
+                  </button>
+                </div>
+
+                <!-- Appeals Tab -->
+                <div *ngIf="activeTab === 'appeals'" class="space-y-6">
+                  <div class="text-center text-gray-500 py-8">
+                    Appeal history and management coming soon
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-outline-warning" (click)="editEntry(selectedEntryDetails)">
-            <i data-lucide="edit" class="w-4 h-4 mr-1 text-yellow-600"></i>Edit Entry
-          </button>
-          <button type="button" class="btn btn-success" (click)="liftBan(selectedEntryDetails)" data-bs-dismiss="modal">
-            <i data-lucide="unlock" class="w-4 h-4 mr-1 text-green-600"></i>Lift Ban
-          </button>
-        </div>
+      </div>
+      <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+        <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg" 
+                (click)="selectedEntryDetails = null">
+          Close
+        </button>
+        <button class="px-4 py-2 text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded-lg"
+                (click)="editEntry(selectedEntryDetails)">
+          <i data-lucide="edit" class="w-4 h-4 inline-block mr-1"></i>
+          Edit Entry
+        </button>
+        <button class="px-4 py-2 text-green-700 bg-green-100 hover:bg-green-200 rounded-lg"
+                (click)="liftBan(selectedEntryDetails)">
+          <i data-lucide="unlock" class="w-4 h-4 inline-block mr-1"></i>
+          Lift Ban
+        </button>
       </div>
     </div>
   </div>
-</div>
-  

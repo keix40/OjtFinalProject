@@ -22,6 +22,8 @@ import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { UserAddressesComponent } from './user-profile/user-addresses/user-addresses.component';
 import { UserNotificationsComponent } from './user-profile/user-notifications/user-notifications.component';
+import { ProductComponent } from './product/product.component';
+import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { AddressService } from './services/address.service';
 import { AuthService } from './auth/auth.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -57,19 +59,32 @@ import { ReturnListComponent } from './return-list/return-list.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
 import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
 import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { QuillModule } from 'ngx-quill';
 import { NotificationComponent } from './notification/notification.component';
 import { HeaderComponent } from './header/header.component';
-import { BreadcrumbComponent } from './breadcrumb.component';import { CategoryListComponent } from './category-list/category-list.component';
+import { BreadcrumbComponent } from './breadcrumb.component';
+
 import { BrandListComponent } from './brand-list/brand-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
 import { NotifcationService } from './notifcation.service';
-import { ProductEditComponent } from './product-edit/product-edit.component';
 import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
 import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
 import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
+import { ToastrModule } from 'ngx-toastr';
 import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
+import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
+import { UserPolicyComponent } from './user-policy/user-policy.component';
+import { AboutUsComponent } from './about-us/about-us.component';
+import { ContactUsComponent } from './contact-us/contact-us.component';
 
 @NgModule({
   declarations: [
@@ -117,21 +132,38 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
     UserBrandListComponent,
     DeliveryServiceListComponent,
     OrderInvoiceComponent,
-    
+
+    CreateDeliveryServiceComponent,
+    DeliveryServiceListComponent,
+    OrderInvoiceComponent,
+    AdminPolicyComponent,
+    DashboardComponent,
+    DiscountAdminComponent,
+    UserPolicyComponent,
+    AboutUsComponent,
+    ContactUsComponent,
+
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    ReactiveFormsModule,
     FormsModule,
+    ReactiveFormsModule,
+    CommonModule,
+    BrowserAnimationsModule,
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CommonModule, // Required for pipes like date, currency, number
-    CartSidebarComponent, // Standalone component must be imported here
-   ProductDetailComponent,
-    BrowserAnimationsModule,
+    CartSidebarComponent,
+    ProductDetailComponent,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    QuillModule.forRoot(),
     BlacklistComponent,
     TestComponent,
     //MatInputModule,
@@ -143,11 +175,15 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
     HeaderComponent,
     BreadcrumbComponent,
     VerifyOtpComponent,
-    MatTableModule,
     NotificationComponent,
+    BreadcrumbComponent,
     BannedPageComponent,
-    ProductEditComponent,
     NotificationSidebarComponent,
+    ToastrModule.forRoot({
+      timeOut: 3000,
+      positionClass: 'toast-top-right',
+      preventDuplicates: true,
+    })
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
@@ -158,4 +194,3 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
   bootstrap: [AppComponent]
 })
 export class AppModule { }
-

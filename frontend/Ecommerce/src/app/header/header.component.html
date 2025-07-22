@@ -89,6 +89,10 @@
           <span class="absolute -bottom-1 left-0 h-0.5 bg-blue-500 transition-all duration-300 w-0 group-hover:w-full"
                 [ngClass]="{'w-full': rlaAbout.isActive}"></span>
         </a>
+        <a routerLink="/about-us" class="text-neutral-700 hover:text-blue-500 transition-colors duration-300 font-medium relative group">
+          About Us
+          <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-500 transition-all duration-300 group-hover:w-full"></span>
+        </a>
       </div>
 
       <!-- Mobile search bar -->
@@ -303,4 +307,3 @@
 
 <!-- Cart Sidebar Component -->
 <app-cart-sidebar [showCartSidebar]="showCartSidebar" (closeSidebar)="closeSidebar()"></app-cart-sidebar>
-
