@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -40,6 +41,14 @@ public class Category {
 
     @Column(name = "image", columnDefinition = "TEXT")
     private String image;
+
+    @Column(name = "icon_url", columnDefinition = "TEXT")
+    @JsonProperty("iconUrl")
+    private String iconUrl;
+
+    @Column(name = "icon_class", length = 100)
+    @JsonProperty("iconClass")
+    private String iconClass;
 
     @Column(name = "status", columnDefinition = "INT DEFAULT 1")
     private Integer status;

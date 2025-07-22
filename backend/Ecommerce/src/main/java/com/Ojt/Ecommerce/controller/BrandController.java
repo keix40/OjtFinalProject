@@ -29,7 +29,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/brand")
 public class BrandController {
-    private final String IMAGE_FOLDER = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
+    private final String IMAGE_FOLDER = "C:/Users/Kit Kit/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
     private final String IMAGE_PATH_DB_PREFIX = "/brand_and_category_image/";
 
     @Autowired
@@ -57,7 +57,7 @@ public class BrandController {
             @RequestPart("brand") BrandDTO dto,
             @RequestPart(value = "image", required = false) MultipartFile imageFile
     ) {
-        String folder = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
+        String folder = "C:/Users/Kit Kit/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
         String dbPrefix = "/brand_and_category_image/";
 
         if (service.checkNameExist(dto.getBrandName())) {
@@ -129,7 +129,7 @@ public class BrandController {
                 Path path = Paths.get(IMAGE_FOLDER + filename);
                 Files.createDirectories(path.getParent());
                 Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                existing.setImage("/images/" + filename);
+                existing.setImage("/brand_and_category_image/" + filename);
             }
 
             Brand updated = service.saveBrand(existing);

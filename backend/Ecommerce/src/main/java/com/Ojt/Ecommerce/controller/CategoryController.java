@@ -30,7 +30,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/category")
 public class CategoryController {
-    private final String IMAGE_FOLDER = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
+    private final String IMAGE_FOLDER = "C:/Users/Kit Kit/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
     private final String IMAGE_PATH_DB_PREFIX = "/brand_and_category_image/";
 
     @Autowired
@@ -58,7 +58,8 @@ public class CategoryController {
             @RequestPart("category") CategoryDTO dto,
             @RequestPart(value = "image", required = false) MultipartFile imageFile
     ) {
-        String folder = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
+        System.out.println("[DEBUG] Received image file: " + (imageFile != null ? imageFile.getOriginalFilename() : "null"));
+        String folder = "C:/Users/Kit Kit/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
         String dbPrefix = "/brand_and_category_image/";
 
         Brand brand = null;
@@ -105,6 +106,8 @@ public class CategoryController {
                 Category newCate = new Category();
                 newCate.setName(cateName.trim());
                 newCate.setParent(parent);
+                newCate.setIconUrl(dto.getIconUrl());
+                newCate.setIconClass(dto.getIconClass());
 
                 if (imageFile != null && !imageFile.isEmpty()) {
                     try {
@@ -113,7 +116,9 @@ public class CategoryController {
                         Files.createDirectories(path.getParent());
                         Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
                         newCate.setImage(dbPrefix + filename);
+                        System.out.println("[DEBUG] Saved category image to: " + path.toString());
                     } catch (IOException e) {
+                        e.printStackTrace();
                         return ResponseEntity.internalServerError().body("Category image upload failed.");
                     }
                 }

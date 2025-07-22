@@ -91,7 +91,7 @@ public class CategoryService {
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                Path path = Paths.get("C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/" + filename);
+                Path path = Paths.get("C:/Users/Kit Kit/OjtFinalProject/backend/Ecommerce/brand_and_category_image/" + filename);
                 Files.createDirectories(path.getParent());
                 Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
                 category.setImage("/brand_and_category_image/" + filename);
