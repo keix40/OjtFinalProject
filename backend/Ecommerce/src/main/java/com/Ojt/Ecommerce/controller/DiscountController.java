@@ -48,6 +48,8 @@ public class DiscountController {
         dto.setBrandIds((String) request.get("brandIds"));
         dto.setCategoryIds((String) request.get("categoryIds"));
         dto.setBrandCategoryIds((String) request.get("brandCategoryIds"));
+        dto.setUserIds((String) request.get("userIds"));
+        dto.setVipTierId((String)request.get("vipTierId"));
         // You can add more fields as needed
 
         // Parse conflictResolutions
