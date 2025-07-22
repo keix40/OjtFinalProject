@@ -142,15 +142,27 @@
                   <span *ngIf="product.quantity === 0" class="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">Out of stock</span>
                 </div>
                 <!-- Discount Badge -->
-                <div *ngIf="getProductDiscount(product.id)" class="mb-2 flex flex-wrap gap-2 items-center">
-                  <span class="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold discount-badge">
+                <div class="mb-2 flex flex-wrap gap-2 items-center">
+                  <!-- Product-based discount badge -->
+                  <span
+                    *ngIf="getProductDiscount(product.id)"
+                    class="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold"
+                  >
                     {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+                  </span>
+                  <!-- VIP tier discount badge -->
+                  <span
+                    *ngIf="getVipDiscountPercentForProduct(product)"
+                    class="inline-block px-2 py-1 rounded-full text-xs font-bold"
+                    [ngClass]="getVipBadgeClass(getUserVipTier())"
+                  >
+                    {{ getUserVipTier() | titlecase }} Tier {{ getVipDiscountPercentForProduct(product) }}% OFF
                   </span>
                 </div>
                 <!-- Price Display -->
-                <div class="mb-2">
-                  <div *ngIf="getProductDiscount(product.id); else originalPrice" class="flex items-center gap-2">
-                    <span class="discount-price text-xl">{{ formatPrice(getDiscountedPrice(product)) }} MMK</span>
+                <div class="mb-2">`
+                  <div *ngIf="getFinalDiscountedPrice(product) !== product.price; else originalPrice" class="flex items-center gap-2">
+                    <span class="discount-price text-xl">{{ formatPrice(getFinalDiscountedPrice(product)) }} MMK</span>
                     <span class="original-price">{{ formatPrice(product.price) }} MMK</span>
                   </div>
                   <ng-template #originalPrice>

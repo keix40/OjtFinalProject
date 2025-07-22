@@ -313,3 +313,17 @@
 .animate-bounce-in {
   animation: bounceIn 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
+
+.glow-badge {
+  box-shadow: 0 0 8px 2px #f87171, 0 0 16px 4px #fca5a5;
+  animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 8px 2px #f87171, 0 0 16px 4px #fca5a5;
+  }
+  to {
+    box-shadow: 0 0 16px 6px #f87171, 0 0 32px 8px #fca5a5;
+  }
+}

@@ -199,4 +199,17 @@ uploadProfileImage(file: File): Observable<any> { //add for profile avatar updat
   sendLoginOtp(email: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/send-login-otp`, { email });
   }
+
+    getUserVipTier(): string | null {
+    const token = localStorage.getItem('token');
+    
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.vipTier || null;
+    } catch {
+      return null;
+    }
+  }
+
 }

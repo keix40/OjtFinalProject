@@ -76,7 +76,7 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
     AppComponent,
     LoginComponent,
     RegisterComponent,
-
+    CreateDeliveryServiceComponent,
     UserProfileComponent,
     UserOrdersComponent,
     UserWishlistComponent,
@@ -115,6 +115,8 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
     ReturnListComponent,
     BrandListComponent,
     UserBrandListComponent,
+    DeliveryServiceListComponent,
+    OrderInvoiceComponent,
     
   ],
   imports: [
@@ -143,8 +145,6 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
     VerifyOtpComponent,
     MatTableModule,
     NotificationComponent,
-    HeaderComponent,
-    BreadcrumbComponent,
     BannedPageComponent,
     ProductEditComponent,
     NotificationSidebarComponent,
