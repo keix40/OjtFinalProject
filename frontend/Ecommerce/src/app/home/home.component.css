@@ -6,3 +6,16 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
+          @media (hover: hover) {
+            .group:hover .group-hover\:translate-y-0 {
+              transform: translateY(0) !important;
+            }
+            .group:hover .group-hover\:opacity-100 {
+              opacity: 1 !important;
+            }
+          }
+          @keyframes shine {
+            0% { opacity: 0; transform: translateX(-100%); }
+            60% { opacity: 1; }
+            100% { opacity: 0; transform: translateX(100%); }
+          }

@@ -32,9 +32,9 @@
                 <h3 class="font-semibold text-neutral-900 text-sm uppercase tracking-wide">All Categories</h3>
                 <ng-container *ngFor="let category of categories">
                   <a (click)="goToCategory(category)" class="flex items-center space-x-3 p-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 group/item cursor-pointer">
-                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center backdrop-blur-md bg-white/30 border border-white/50 shadow-lg" style="background: rgba(255, 255, 255, 0.2);">
                       <ng-container *ngIf="category.iconUrl; else checkIconClass">
-                        <img [src]="getSafeIconUrl(category)" alt="icon" class="w-6 h-6 object-contain" />
+                        <img [src]="getSafeIconUrl(category)" alt="icon" class="w-6 h-6 object-contain" style="background:transparent;" />
                       </ng-container>
                       <ng-template #checkIconClass>
                         <ng-container *ngIf="category.iconClass; else fallbackInitial">
@@ -72,10 +72,20 @@
                 <div class="grid grid-cols-3 gap-3">
                   <ng-container *ngFor="let brand of brands">
                     <a (click)="goToBrand(brand)" class="group/brand p-3 rounded-xl hover:bg-neutral-50 transition-colors duration-200 text-center cursor-pointer">
-                      <div class="w-12 h-12 bg-neutral-100 rounded-lg mx-auto mb-2 flex items-center justify-center">
-                        <span class="text-xs font-bold text-neutral-600">{{ brand.name ? brand.name[0] : '?' }}</span>
+                      <div class="w-12 h-12 bg-neutral-100 rounded-lg mx-auto mb-2 flex items-center justify-center overflow-hidden">
+                        <!-- Show brand image if available and loaded -->
+                        <img *ngIf="brand.image && isBrandImageLoaded(brand.id)" 
+                             [src]="getBrandImageUrl(brand.image)" 
+                             class="w-full h-full object-contain p-1"
+                             [alt]="brand.name"
+                             (error)="handleBrandImageError(brand.id)">
+                        <!-- Show initial if no image or image failed to load -->
+                        <span *ngIf="!brand.image || !isBrandImageLoaded(brand.id)" 
+                              class="text-lg font-bold text-neutral-600">
+                          {{ brand.name[0].toUpperCase() }}
+                        </span>
                       </div>
-                      <p class="text-xs text-neutral-600 group-hover/brand:text-blue-500">{{ brand.name }}</p>
+                      <p class="text-xs text-neutral-600 group-hover/brand:text-blue-500 font-medium">{{ brand.name }}</p>
                     </a>
                   </ng-container>
                 </div>
@@ -165,105 +175,7 @@
       <div class="flex items-center space-x-3 animate-slide-in-right">
 
         <!-- add space between notification and profile button by pmk july 14-->
-        <div class="relative flex items-center space-x-2">  
-         <button (click)="toggleDropdown($event, 'account-dropdown')" class="flex items-center space-x-2 focus:outline-none" type="button">
-
-
-            <ng-container *ngIf="userProfileImage; else initialsAvatar">
-              <img [src]="userProfileImage" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-neutral-200" />
-            </ng-container>
-            <ng-template #initialsAvatar>
-              <span class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-semibold">
-                {{ name ? (name | slice:0:2) : '?' }}
-              </span>
-            </ng-template>
-            <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </button>
-          <div *ngIf="openDropdown === 'account-dropdown'" class="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-neutral-200 z-50 animate-dropdown-enter">
-            <div class="p-4">
-              <!-- User Info Section -->
-              <div class="flex items-center space-x-3 pb-4 border-b border-neutral-200">
-                <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center overflow-hidden">
-                  <ng-container *ngIf="userProfileImage; else initialsAvatarInfo">
-                    <img [src]="userProfileImage" alt="Profile" class="w-10 h-10 rounded-full object-cover border border-neutral-200" />
-                  </ng-container>
-                  <ng-template #initialsAvatarInfo>
-                    <span class="text-primary-600 font-semibold">{{ name ? (name | slice:0:2) : '?' }}</span>
-                  </ng-template>
-                </div>
-                <div>
-                  <ng-container *ngIf="isAuthenticated; else notAuthenticatedHeader">
-                    <p class="font-semibold text-neutral-900">{{ name }}</p>
-                    <p class="text-sm text-neutral-500">{{ userId }}</p>
-                  </ng-container>
-                  <ng-template #notAuthenticatedHeader>
-                    <p class="font-semibold text-neutral-900">Welcome to <span class="text-primary">Gallery</span></p>
-                    <p class="text-sm text-neutral-500">Access account & manage orders</p>
-                  </ng-template>
-                </div>
-              </div>
-              <!-- Menu Items -->
-              <div class="py-2 space-y-1">
-                <ng-container *ngIf="isAuthenticated; else notAuthenticated">
-                  <a (click)="navigateToProfile()" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 cursor-pointer">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                    <span class="text-neutral-700">My Profile</span>
-                  </a>
-                  <a (click)="navigateToOrders()" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 cursor-pointer">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
-                    </svg>
-                    <span class="text-neutral-700">My Orders</span>
-                  </a>
-                  <a routerLink="/wishlist" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                    </svg>
-                    <span class="text-neutral-700">My Wishlist</span>
-                  </a>
-                  <a routerLink="/returns" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
-                    </svg>
-                    <span class="text-neutral-700">Returns & Refunds</span>
-                  </a>
-                  <a routerLink="/settings" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    <span class="text-neutral-700">Settings</span>
-                  </a>
-                  <a (click)="logout()" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors duration-200 cursor-pointer">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                    <span class="text-neutral-700 group-hover/item:text-red-600">Logout</span>
-                  </a>
-                </ng-container>
-                <ng-template #notAuthenticated>
-                  <a routerLink="/login" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                    </svg>
-                    <span class="text-neutral-700">Sign In</span>
-                  </a>
-                  <a routerLink="/register" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
-                    <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    <span class="text-neutral-700">Register</span>
-                  </a>
-                </ng-template>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         <!-- Notification Icon Button by pmk july 14-->
         <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-blue-500 transition-all duration-300 hover:scale-110 relative group" type="button" (click)="openNotificationSidebar()">
@@ -291,8 +203,107 @@
           </svg>
           <span *ngIf="cartItems.length > 0" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-blue-500 text-white rounded-full animate-bounce-gentle">{{ cartItems.length }}</span>
         </button>
+
+        <div class="relative flex items-center space-x-2">  
+          <button (click)="toggleDropdown($event, 'account-dropdown')" class="flex items-center space-x-2 focus:outline-none" type="button">
+ 
+ 
+             <ng-container *ngIf="userProfileImage; else initialsAvatar">
+               <img [src]="userProfileImage" alt="Profile" class="w-8 h-8 rounded-full object-cover border border-neutral-200" />
+             </ng-container>
+             <ng-template #initialsAvatar>
+               <span class="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-semibold">
+                 {{ name ? (name | slice:0:2) : '?' }}
+               </span>
+             </ng-template>
+             <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+             </svg>
+           </button>
+           <div *ngIf="openDropdown === 'account-dropdown'" class="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-neutral-200 z-50 animate-dropdown-enter">
+             <div class="p-4">
+               <!-- User Info Section -->
+               <div class="flex items-center space-x-3 pb-4 border-b border-neutral-200">
+                 <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center overflow-hidden">
+                   <ng-container *ngIf="userProfileImage; else initialsAvatarInfo">
+                     <img [src]="userProfileImage" alt="Profile" class="w-10 h-10 rounded-full object-cover border border-neutral-200" />
+                   </ng-container>
+                   <ng-template #initialsAvatarInfo>
+                     <span class="text-primary-600 font-semibold">{{ name ? (name | slice:0:2) : '?' }}</span>
+                   </ng-template>
+                 </div>
+                 <div>
+                   <ng-container *ngIf="isAuthenticated; else notAuthenticatedHeader">
+                     <p class="font-semibold text-neutral-900">{{ name }}</p>
+                   </ng-container>
+                   <ng-template #notAuthenticatedHeader>
+                     <p class="font-semibold text-neutral-900">Welcome to <span class="text-primary">Gallery</span></p>
+                     <p class="text-sm text-neutral-500">Access account & manage orders</p>
+                   </ng-template>
+                 </div>
+               </div>
+               <!-- Menu Items -->
+               <div class="py-2 space-y-1">
+                 <ng-container *ngIf="isAuthenticated; else notAuthenticated">
+                   <a (click)="navigateToProfile()" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 cursor-pointer">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                     </svg>
+                     <span class="text-neutral-700">My Profile</span>
+                   </a>
+                   <a (click)="navigateToOrders()" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200 cursor-pointer">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+                     </svg>
+                     <span class="text-neutral-700">My Orders</span>
+                   </a>
+                   <a routerLink="/wishlist" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                     </svg>
+                     <span class="text-neutral-700">My Wishlist</span>
+                   </a>
+                   <a routerLink="/returns" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                     </svg>
+                     <span class="text-neutral-700">Returns & Refunds</span>
+                   </a>
+                   <a routerLink="/settings" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                     </svg>
+                     <span class="text-neutral-700">Settings</span>
+                   </a>
+                   <a (click)="logout()" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors duration-200 cursor-pointer">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                     </svg>
+                     <span class="text-neutral-700 group-hover/item:text-red-600">Logout</span>
+                   </a>
+                 </ng-container>
+                 <ng-template #notAuthenticated>
+                   <a routerLink="/login" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                     </svg>
+                     <span class="text-neutral-700">Sign In</span>
+                   </a>
+                   <a routerLink="/register" class="flex items-center space-x-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-colors duration-200">
+                     <svg class="w-4 h-4 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                     </svg>
+                     <span class="text-neutral-700">Register</span>
+                   </a>
+                 </ng-template>
+               </div>
+             </div>
+           </div>
+         </div>
         <!-- Mobile Menu Toggle -->
-        <button class="lg:hidden p-2.5 rounded-xl hover:bg-neutral-100 transition-colors duration-300">
+        <button class="lg:hidden p-2.5 rounded-xl hover:bg-neutral-100 transition-colors duration-300" (click)="toggleMobileMenu()">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -313,4 +324,118 @@
 
 <!-- Cart Sidebar Component -->
 <app-cart-sidebar [showCartSidebar]="showCartSidebar" (closeSidebar)="closeSidebar()"></app-cart-sidebar>
+
+<!-- Mobile Nav Drawer -->
+<div *ngIf="isMobileMenuOpen" class="fixed inset-0 z-50">
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-black/40" (click)="toggleMobileMenu()"></div>
+  
+  <!-- Menu Content -->
+  <nav class="absolute top-0 right-0 w-64 h-full bg-white shadow-xl transform transition-transform duration-300">
+    <!-- Close Button -->
+    <button class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full" (click)="toggleMobileMenu()">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+
+    <!-- Menu Items -->
+    <div class="pt-16 pb-8 px-4">
+      <!-- Main Navigation -->
+      <div class="space-y-4">
+        <a routerLink="/home" class="block py-2 hover:text-blue-600 transition-colors" (click)="toggleMobileMenu()">Home</a>
+        <a routerLink="/userproductlist" class="block py-2 hover:text-blue-600 transition-colors" (click)="toggleMobileMenu()">Products</a>
+        <a routerLink="/" class="block py-2 hover:text-blue-600 transition-colors" (click)="toggleMobileMenu()">About Us</a>
+      </div>
+
+      <!-- Categories Section -->
+      <div class="mt-6">
+        <button class="flex items-center justify-between w-full py-2 text-left" (click)="toggleCategories()">
+          <span>Categories</span>
+          <svg class="w-4 h-4 transition-transform" [class.rotate-180]="isCategoriesExpanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <div *ngIf="isCategoriesExpanded" class="pl-4 mt-2 space-y-2">
+          <ng-container *ngIf="topCategories.length > 0; else noCategories">
+            <a *ngFor="let category of topCategories" 
+               [routerLink]="['/usercategorylist']" 
+               [queryParams]="{category: category.categoryName}"
+               class="block py-1.5 text-sm hover:text-blue-600 transition-colors"
+               (click)="toggleMobileMenu()">
+              <div class="flex items-center space-x-3">
+                <!-- Show icon if available -->
+                <div *ngIf="category.iconUrl" 
+                     class="w-6 h-6 flex items-center justify-center rounded-lg backdrop-blur-md bg-white/30 border border-white/50 shadow-lg" style="background: rgba(255, 255, 255, 0.2);">
+                  <img [src]="category.iconUrl" 
+                       class="w-5 h-5 object-contain"
+                       [alt]="category.categoryName"
+                       style="background:transparent;">
+                </div>
+                <!-- Show initial if no icon -->
+                <div *ngIf="!category.iconUrl" 
+                     class="w-6 h-6 rounded-lg flex items-center justify-center backdrop-blur-md bg-white/30 border border-white/50 shadow-lg text-sm font-medium"
+                     style="background: rgba(255, 255, 255, 0.2);">
+                  {{ category.initial }}
+                </div>
+                <span>{{ category.categoryName }}</span>
+              </div>
+            </a>
+          </ng-container>
+          <ng-template #noCategories>
+            <div class="text-sm text-gray-500 py-2">Loading categories...</div>
+          </ng-template>
+          <a routerLink="/usercategorylist" 
+             class="block py-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+             (click)="toggleMobileMenu()">
+            View All Categories →
+          </a>
+        </div>
+      </div>
+
+      <!-- Brands Section -->
+      <div class="mt-4">
+        <button class="flex items-center justify-between w-full py-2 text-left" (click)="toggleBrands()">
+          <span>Brands</span>
+          <svg class="w-4 h-4 transition-transform" [class.rotate-180]="isBrandsExpanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <div *ngIf="isBrandsExpanded" class="pl-4 mt-2 space-y-2">
+          <ng-container *ngIf="topBrands.length > 0; else noBrands">
+            <a *ngFor="let brand of topBrands" 
+               [routerLink]="['/userbrandlist']"
+               [queryParams]="{brand: brand.brandName}"
+               class="block py-1.5 text-sm hover:text-blue-600 transition-colors"
+               (click)="toggleMobileMenu()">
+              <div class="flex items-center space-x-3">
+                <!-- Show image if available and loaded -->
+                <img *ngIf="brand.imageUrl && isBrandImageLoaded(brand.id)" 
+                     [src]="brand.imageUrl" 
+                     class="w-6 h-6 object-contain rounded-full bg-gray-50"
+                     [alt]="brand.brandName"
+                     (error)="handleBrandImageError(brand.id)">
+                <!-- Show initial if no image or image failed to load -->
+                <div *ngIf="!brand.imageUrl || !isBrandImageLoaded(brand.id)" 
+                     class="w-6 h-6 rounded-full flex items-center justify-center text-white text-sm font-medium"
+                     [class]="getRandomColor(brand.initial)">
+                  {{ brand.initial }}
+                </div>
+                <span>{{ brand.brandName }}</span>
+              </div>
+            </a>
+          </ng-container>
+          <ng-template #noBrands>
+            <div class="text-sm text-gray-500 py-2">Loading brands...</div>
+          </ng-template>
+          <a routerLink="/userbrandlist" 
+             class="block py-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+             (click)="toggleMobileMenu()">
+            View All Brands →
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</div>
 

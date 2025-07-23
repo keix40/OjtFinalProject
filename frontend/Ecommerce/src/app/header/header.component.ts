@@ -21,6 +21,7 @@ import { NotificationSidebarComponent } from '../notification-sidebar/notificati
 import { NotificationSidebarService } from '../notifcation-sidebar.service';
 import { NotifcationService } from '../notifcation.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-header',
@@ -60,6 +61,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   @Output() notificationSidebarOpen = new EventEmitter<void>();
   newNotificationCount = 0;
   sidebarOpen = false;
+  isMobileMenuOpen = false;
+  isCategoriesExpanded = false;
+  isBrandsExpanded = false;
+  topCategories: any[] = [];
+  topBrands: any[] = [];
+  brandImagesLoaded: { [key: number]: boolean } = {};
 
   constructor(
     private router: Router,
@@ -75,7 +82,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private productServce: ProductService,
     private notificationSidebarService: NotificationSidebarService,
     private notifcationService: NotifcationService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private imageService: ImageService // Inject ImageService
   ) {}
 
   ngOnInit() {
@@ -87,10 +95,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     // Get user profile image from JWT
     const decoded = this.authService.getDecodedToken();
-    if (decoded && decoded.profileImage && decoded.profileImage !== '/upload/defaultProfile.png') {
-      this.userProfileImage = decoded.profileImage;
+    if (decoded && (decoded.profileImage || decoded.avatar)) {
+      this.userProfileImage = this.imageService.getAvatarImageUrl(decoded);
     } else {
-      this.userProfileImage = null;
+      this.userProfileImage = this.imageService.getAvatarImageUrl({});
     }
 
     this.subscriptions.push(
@@ -124,8 +132,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
       next: (data) => this.categories = data,
       error: () => this.categories = []
     });
+
     this.brandService.getAllBrand().subscribe({
-      next: (data) => this.brands = data,
+      next: (data) => {
+        this.brands = data.map(brand => ({
+          ...brand,
+          imageLoaded: true
+        }));
+        // Initialize brandImagesLoaded for all brands
+        this.brands.forEach(brand => {
+          this.brandImagesLoaded[brand.id] = true;
+        });
+      },
       error: () => this.brands = []
     });
 
@@ -140,13 +158,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
       }
     });
     this.startTypewriter();
+    this.loadTopCategories();
+    this.loadTopBrands();
   }
-
-  isMobileMenuOpen = false;
-
-toggleMobileMenu(): void {
-  this.isMobileMenuOpen = !this.isMobileMenuOpen;
-}
 
   private loadWishlistCount() {
     this.wishlistService.getWishlist(this.userId!).subscribe({
@@ -347,6 +361,111 @@ toggleMobileMenu(): void {
       return `http://localhost:8080${cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl}`;
     }
     return undefined;
+  }
+
+  loadTopCategories() {
+    this.categoryService.getAllCategory().subscribe(
+      (categories: Category[]) => {
+        this.topCategories = categories.slice(0, 4).map(cat => ({
+          id: cat.id,
+          categoryName: cat.name,
+          iconUrl: this.getCategoryIconUrl(cat.iconUrl || null),
+          initial: cat.name ? cat.name.charAt(0).toUpperCase() : '',
+          iconClass: cat.iconClass || ''
+        }));
+      },
+      error => {
+        console.error('Error loading categories:', error);
+        this.topCategories = [];
+      }
+    );
+  }
+
+  getCategoryIconUrl(iconUrl: string | null): string | null {
+    if (!iconUrl) return null;
+    if (iconUrl.startsWith('data:')) return iconUrl;
+    if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) return iconUrl;
+    return `http://localhost:8080${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+  }
+
+  getInitialColor(initial: string): string {
+    const colors = [
+      'bg-emerald-500',
+      'bg-blue-500',
+      'bg-violet-500',
+      'bg-amber-500',
+      'bg-rose-500',
+      'bg-cyan-500',
+      'bg-fuchsia-500'
+    ];
+    const index = initial.charCodeAt(0) % colors.length;
+    return colors[index];
+  }
+
+  handleBrandImageError(brandId: number) {
+    this.brandImagesLoaded[brandId] = false;
+  }
+
+  isBrandImageLoaded(brandId: number): boolean {
+    return this.brandImagesLoaded[brandId] !== false;
+  }
+
+  getBrandImageUrl(image: string): string {
+    if (!image) return '';
+    if (image.startsWith('data:')) return image;
+    if (image.startsWith('http://') || image.startsWith('https://')) return image;
+    // Make sure the image path is properly formatted
+    return `http://localhost:8080/uploads/${image}`;
+  }
+
+  loadTopBrands() {
+    this.brandService.getAllBrand().subscribe(
+      (brands: BrandListDTO[]) => {
+        this.topBrands = brands.slice(0, 4).map(brand => {
+          this.brandImagesLoaded[brand.id] = true;
+          return {
+            id: brand.id,
+            brandName: brand.name,
+            imageUrl: brand.image ? this.getBrandImageUrl(brand.image) : '',
+            initial: brand.name.charAt(0).toUpperCase()
+          };
+        });
+      },
+      error => {
+        console.error('Error loading brands:', error);
+        this.topBrands = [];
+      }
+    );
+  }
+
+  getRandomColor(initial: string): string {
+    const colors = [
+      'bg-blue-500',
+      'bg-green-500',
+      'bg-yellow-500',
+      'bg-red-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-indigo-500'
+    ];
+    const index = initial.charCodeAt(0) % colors.length;
+    return colors[index];
+  }
+
+  toggleMobileMenu() {
+    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+    if (!this.isMobileMenuOpen) {
+      this.isCategoriesExpanded = false;
+      this.isBrandsExpanded = false;
+    }
+  }
+
+  toggleCategories() {
+    this.isCategoriesExpanded = !this.isCategoriesExpanded;
+  }
+
+  toggleBrands() {
+    this.isBrandsExpanded = !this.isBrandsExpanded;
   }
 
 }
