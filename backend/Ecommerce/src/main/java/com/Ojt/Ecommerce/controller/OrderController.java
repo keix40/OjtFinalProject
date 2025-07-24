@@ -132,7 +132,7 @@ public class OrderController {
     }
 
     @GetMapping("/getallorder")
-    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic", description = "Get all orders")
     public ResponseEntity<List<UserOrderListDTO>> getAllOrder(){
         List<UserOrderListDTO> orders = service.getAllOrders();
         return ResponseEntity.ok(orders);
@@ -378,7 +378,7 @@ public class OrderController {
 
     @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId", logChanges = true)
     @PutMapping("/updatestatus/{orderId}")
-    @RequiresPermission(value = ORDERS_UPDATE, level = "basic")
+    @RequiresPermission(value = ORDERS_UPDATE, level = "basic", description = "Update order status")
     public ResponseEntity<String> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestBody Map<String, String> request) {

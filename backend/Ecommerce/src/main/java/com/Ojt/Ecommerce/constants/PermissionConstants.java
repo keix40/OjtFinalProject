@@ -46,10 +46,6 @@ public class PermissionConstants {
     public static final String ACTIVITY_LOGS_CREATE = "activity_logs.create";
 
     // Addresses
-    public static final String ADDRESSES_VIEW = "addresses.view";
-    public static final String ADDRESSES_CREATE = "addresses.create";
-    public static final String ADDRESSES_UPDATE = "addresses.update";
-    public static final String ADDRESSES_DELETE = "addresses.delete";
 
     // Admin Users
     public static final String ADMIN_USERS_VIEW = "admin_users.view";
@@ -75,11 +71,7 @@ public class PermissionConstants {
     public static final String VIP_TIERS_UPDATE = "vip_tiers.update";
     public static final String VIP_TIERS_DELETE = "vip_tiers.delete";
 
-    // Delivery Services
-    public static final String DELIVERY_SERVICES_VIEW = "delivery_services.view";
-    public static final String DELIVERY_SERVICES_CREATE = "delivery_services.create";
-    public static final String DELIVERY_SERVICES_UPDATE = "delivery_services.update";
-    public static final String DELIVERY_SERVICES_DELETE = "delivery_services.delete";
+
 
     // Discounts
     public static final String DISCOUNTS_VIEW = "discounts.view";
@@ -133,5 +125,11 @@ public class PermissionConstants {
     //whitelist
     public static final String WHITELIST_VIEW = "whitelist.view";
     public static final String WHITELIST_CREATE = "whitelist.create";
+
+    //Refund
+    public static final String REFUND_VIEW = "refund.view";
+    public static final String REFUND_UPDATE = "refund.update";    
+    //Return
+ 
 
 } 
