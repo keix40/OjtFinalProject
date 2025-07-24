@@ -4,7 +4,7 @@ import { AdminUserService, AdminUser } from '../services/admin-user.service';
 import { PermissionCategoryService, PermissionCategory } from '../services/permission-category.service';
 import { RoleService } from '../services/role.service';
 import { Client, IMessage } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
+import SockJS from 'sockjs-client';
 
 interface Permission {
   key: string;
@@ -109,7 +109,7 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
   connectWebSocket(): void {
     this.stompClient = new Client({
       brokerURL: undefined,
-      webSocketFactory: () => new (SockJS as any)('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         this.stompSub = this.stompClient!.subscribe('/topic/admin-online-status', (message: IMessage) => {

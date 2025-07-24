@@ -34,5 +34,6 @@ public class DiscountRequestDTO {
     private String categoryIds; // comma-separated category IDs for multi-selection
     private String brandCategoryIds; // comma-separated brand-category IDs for multi-selection
     private List<Long> productIdsforCoupon;
-
+    private String userIds;
+    private String vipTierId;
 }

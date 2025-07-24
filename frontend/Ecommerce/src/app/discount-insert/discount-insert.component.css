@@ -1323,3 +1323,30 @@ input:checked + .slider:before {
     gap: 0.25rem;
   }
 }
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e3e6ef;
+}
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 12px;
+  margin-left: 2px;
+}
+.status-active {
+  background: #e6f9ed;
+  color: #1dbf73;
+  border: 1px solid #1dbf73;
+}
+.status-inactive {
+  background: #ffeaea;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+}

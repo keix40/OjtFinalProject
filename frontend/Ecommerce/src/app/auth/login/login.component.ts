@@ -114,6 +114,8 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       const permissionArray = permissionString.split(',').map((p: string) => p.trim());
 
       this.permissionService.setPermissions(permissionArray);
+      // Also set in localStorage for consistency
+      localStorage.setItem('userPermissions', JSON.stringify(permissionArray));
 
       // Role-based redirect
       const roles = decoded?.roles ? decoded.roles.split(',') : [];

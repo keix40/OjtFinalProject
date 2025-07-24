@@ -149,12 +149,20 @@ public class OrderService {
                 && LocalDate.now().isAfter(discount.getStartDate().minusDays(1))
                 && LocalDate.now().isBefore(discount.getEndDate().plusDays(1));
 
+        // Convert stored decimal percentage back to percentage format for display
+        double displayValue;
+        if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
+            displayValue = discount.getDiscountValue() * 100.0;
+        } else {
+            displayValue = discount.getDiscountValue();
+        }
+
         return DiscountDTO.builder()
                 .id(discount.getId())
                 .code(discount.getCode())
                 .name(discount.getName())
                 .discountType(discount.getDiscountType())
-                .discountValue(discount.getDiscountValue())
+                .discountValue(displayValue)
                 .startDate(discount.getStartDate())
                 .endDate(discount.getEndDate())
                 .canUse(isValid)
@@ -628,12 +636,13 @@ public class OrderService {
         }).collect(Collectors.toList());
         dto.setProducts(productDTOs);
 
-        // Subtotal & Discount
+        // Subtotal
         double subtotal = order.getOrderProducts().stream()
                 .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
                 .sum();
         dto.setSubtotal(Math.round(subtotal));
 
+        // Discount
         Discount discount = order.getDiscount();
         double discountAmount = 0.0;
         if (discount != null) {
@@ -643,25 +652,29 @@ public class OrderService {
             if (discount.getCode() != null) {
                 dto.setDiscountCode(discount.getCode());
             }
-            dto.setDiscountValue(discount.getDiscountValue());
-
-            discountAmount = discount.getDiscountType() == DiscountType.PERCENTAGE
-                    ? subtotal * discount.getDiscountValue()
-                    : discount.getDiscountValue();
-
-            dto.setDiscountAmount(Math.round(discountAmount));
+            if (discount.getDiscountValue() != null) {
+                if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
+                    double percentageValue = discount.getDiscountValue() * 100.0;
+                    dto.setDiscountValue(percentageValue);
+                    discountAmount = subtotal * discount.getDiscountValue();
+                } else {
+                    dto.setDiscountValue(discount.getDiscountValue());
+                    discountAmount = discount.getDiscountValue();
+                }
+                dto.setDiscountAmount(Math.round(discountAmount));
+            }
         } else {
             dto.setDiscountAmount(0L);
         }
 
+        // Total
         double total = subtotal - discountAmount;
-        // Always add deliveryFee (from deliveryService or deliveryMethod) if present
         if (order.getDeliveryFee() != null) {
             total += order.getDeliveryFee().doubleValue();
         }
         dto.setTotal(Math.round(total));
 
-        // Return requests with refund mapping
+        // Return requests
         List<ReturnRequestDTO> returnRequestDTOs = order.getReturnRequests().stream().map(rr -> {
             ReturnRequestDTO rrdto = new ReturnRequestDTO();
             rrdto.setId(rr.getId());
@@ -701,7 +714,6 @@ public class OrderService {
                         .collect(Collectors.toList()));
             }
 
-            // Refund mapping
             if (rr.getRefund() != null) {
                 Refund refund = rr.getRefund();
                 rrdto.setRefundId(refund.getId());

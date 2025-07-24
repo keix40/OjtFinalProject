@@ -9,6 +9,7 @@ import { ImageService } from '../services/image.service';
 import { HttpClient } from '@angular/common/http';
 import { PermissionCategoryService } from '../services/permission-category.service';
 import { trigger, state, style, transition, animate } from '@angular/animations';
+import { PermissionConstants } from '../constants/permission.constants';
 
 interface Role {
   id: number;
@@ -20,6 +21,7 @@ interface Role {
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
+  level: number;
 }
 
 interface Permission {
@@ -69,6 +71,7 @@ interface User {
   ]
 })
 export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterViewChecked {
+  public PermissionConstants = PermissionConstants;
   // Data properties
   allRoles: Role[] = [];
   filteredRoles: Role[] = [];
@@ -87,6 +90,11 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   // This will fix the "select all" bug.
   permissionCheckState = new Map<string, boolean>();
 
+  canCreateRole = false;
+  canEditRolePermission = false;
+  canDeleteRole = false;
+  canAssignPermissions = false;
+
   @ViewChild('assignUsersDialog') assignUsersDialog!: TemplateRef<any>;
 
   // Form
@@ -99,57 +107,53 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   // Permission categories and templates
   permissionCategories: PermissionCategory[] = [];
 
-  permissionTemplates: PermissionTemplate[] = [
-    {
-      id: 'admin',
-      name: 'Administrator',
-      description: 'Full access to all system features and settings',
-      level: 'critical',
-      permissions: this.getAllPermissionKeys()
-    },
-    {
-      id: 'manager',
-      name: 'Manager',
-      description: 'Management access with user and product oversight',
-      level: 'advanced',
-      permissions: [
-        'users.view', 'users.create', 'users.edit', 'users.export',
-        'products.view', 'products.create', 'products.edit', 'products.pricing', 'products.inventory',
-        'orders.view', 'orders.edit', 'orders.cancel', 'orders.export',
-        'finance.view', 'finance.transactions', 'finance.export'
-      ]
-    },
-    {
-      id: 'support',
-      name: 'Support Agent',
-      description: 'Customer support with limited administrative access',
-      level: 'intermediate',
-      permissions: [
-        'users.view', 'users.edit',
-        'products.view',
-        'orders.view', 'orders.edit', 'orders.cancel', 'orders.refund',
-        'finance.view'
-      ]
-    },
-    {
-      id: 'readonly',
-      name: 'Read-Only',
-      description: 'View-only access for reporting and monitoring',
-      level: 'basic',
-      permissions: [
-        'users.view',
-        'products.view',
-        'orders.view',
-        'finance.view',
-        'system.logs'
-      ]
+  permissionTemplates: PermissionTemplate[] = [];
+
+  expandedPreviewCategories: { [index: number]: boolean } = {};
+
+  // Add currentUser property for role level checks in the template
+  currentUser: any = {
+    id: 1,
+    name: 'Current User',
+    role: {
+      id: 1,
+      name: 'ADMIN',
+      level: 6
     }
-  ];
+  };
+
+  // Call this when opening a new preview to expand all categories by default
+  ngOnChanges() {
+    this.expandAllPreviewCategories();
+  }
+
+  expandAllPreviewCategories() {
+    const groups = this.getPreviewedTemplatePermissionsByCategory();
+    this.expandedPreviewCategories = {};
+    groups.forEach((_, i) => {
+      this.expandedPreviewCategories[i] = true;
+    });
+  }
+
+  // Ensure expand all when previewedTemplate changes
+  set previewedTemplateSetter(val: any) {
+    this.previewedTemplate = val;
+    this.expandAllPreviewCategories();
+  }
+
+  private _previewedTemplate: PermissionTemplate | null = null;
+  get previewedTemplate(): PermissionTemplate | null {
+    return this._previewedTemplate;
+  }
+  set previewedTemplate(val: PermissionTemplate | null) {
+    this._previewedTemplate = val;
+    this.expandAllPreviewCategories();
+  }
 
   constructor(
     private fb: FormBuilder,
     private roleService: RoleService,
-    private permissionService: PermissionService,
+    public permissionService: PermissionService,
     private authService: AuthService,
     private modalService: NgbModal,
     public imageService: ImageService,
@@ -158,15 +162,43 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     this.roleForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: [''],
-      status: ['active']
+      status: ['active'],
+      level: [1] // Add level control for dynamic assignment
     });
   }
 
   ngOnInit(): void {
+    // Use the correct permission constants
+    this.canCreateRole = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
+    this.canEditRolePermission = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
+    this.canDeleteRole = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
+    this.canAssignPermissions = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
+    
     this.loadRoles();
     this.loadPermissions();
     this.loadAllUsers();
     this.loadPermissionCategories();
+
+    // Extract roleLevel from JWT and set currentUser dynamically
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      this.currentUser = this.currentUser || {};
+      this.currentUser.role = this.currentUser.role || {};
+      this.currentUser.role.level = payload.roleLevel;
+    }
+
+    // Dynamically load permission templates from roles
+    this.roleService.getAllRoles().subscribe((roles: any[]) => {
+      this.permissionTemplates = roles.map(role => ({
+        id: String(role.id),
+        name: role.name,
+        description: role.description || '',
+        level: this.getPermissionLevelFromCount(role.permissions?.length || 0),
+        permissions: role.permissions || []
+      }));
+    });
+
     // Debug: Check for duplicate permission keys
     const allKeys = this.getAllPermissionKeys();
     const duplicates = allKeys.filter((key, index) => allKeys.indexOf(key) !== index);
@@ -256,7 +288,8 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
           userCount: role.userCount || 0,
           createdAt: role.createdAt ? new Date(role.createdAt) : new Date(),
           updatedAt: role.updatedAt ? new Date(role.updatedAt) : new Date(),
-          createdBy: role.createdBy || 'System'
+          createdBy: role.createdBy || 'System',
+          level: role.level !== undefined ? role.level : 1 // Default to 1 if missing
         }));
         // Debug: Log permissions for each role
         this.allRoles.forEach(r => {
@@ -353,95 +386,95 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     ];
   }
 
-  generateMockRoles(): Role[] {
-    const roles: Role[] = [
-      {
-        id: 1,
-        name: 'Super Administrator',
-        description: 'Full system access with all permissions',
-        status: 'active',
-        permissions: this.getAllPermissionKeys(),
-        userCount: 2,
-        createdAt: new Date('2024-01-15'),
-        updatedAt: new Date('2024-01-20'),
-        createdBy: 'System'
-      },
-      {
-        id: 2,
-        name: 'Store Manager',
-        description: 'Manage products, orders, and customer service',
-        status: 'active',
-        permissions: [
-          'users.view', 'users.edit',
-          'products.view', 'products.create', 'products.edit', 'products.pricing', 'products.inventory',
-          'orders.view', 'orders.edit', 'orders.cancel', 'orders.refund',
-          'finance.view', 'finance.transactions'
-        ],
-        userCount: 5,
-        createdAt: new Date('2024-01-10'),
-        updatedAt: new Date('2024-01-25'),
-        createdBy: 'Admin'
-      },
-      {
-        id: 3,
-        name: 'Customer Support',
-        description: 'Handle customer inquiries and basic order management',
-        status: 'active',
-        permissions: [
-          'users.view', 'users.edit',
-          'products.view',
-          'orders.view', 'orders.edit', 'orders.cancel',
-          'finance.view'
-        ],
-        userCount: 12,
-        createdAt: new Date('2024-01-08'),
-        updatedAt: new Date('2024-01-22'),
-        createdBy: 'Admin'
-      },
-      {
-        id: 4,
-        name: 'Inventory Manager',
-        description: 'Manage product catalog and inventory levels',
-        status: 'active',
-        permissions: [
-          'products.view', 'products.create', 'products.edit', 'products.inventory',
-          'orders.view'
-        ],
-        userCount: 3,
-        createdAt: new Date('2024-01-12'),
-        updatedAt: new Date('2024-01-18'),
-        createdBy: 'Manager'
-      },
-      {
-        id: 5,
-        name: 'Financial Analyst',
-        description: 'Access to financial reports and transaction data',
-        status: 'active',
-        permissions: [
-          'finance.view', 'finance.transactions', 'finance.export', 'finance.reconcile',
-          'orders.view'
-        ],
-        userCount: 2,
-        createdAt: new Date('2024-01-14'),
-        updatedAt: new Date('2024-01-21'),
-        createdBy: 'Admin'
-      },
-      {
-        id: 6,
-        name: 'Content Editor',
-        description: 'Edit product information and descriptions',
-        status: 'inactive',
-        permissions: [
-          'products.view', 'products.edit'
-        ],
-        userCount: 0,
-        createdAt: new Date('2024-01-05'),
-        updatedAt: new Date('2024-01-16'),
-        createdBy: 'Manager'
-      }
-    ];
-    return roles;
-  }
+  // generateMockRoles(): Role[] {
+  //   const roles: Role[] = [
+  //     {
+  //       id: 1,
+  //       name: 'Super Administrator',
+  //       description: 'Full system access with all permissions',
+  //       status: 'active',
+  //       permissions: this.getAllPermissionKeys(),
+  //       userCount: 2,
+  //       createdAt: new Date('2024-01-15'),
+  //       updatedAt: new Date('2024-01-20'),
+  //       createdBy: 'System'
+  //     },
+  //     {
+  //       id: 2,
+  //       name: 'Store Manager',
+  //       description: 'Manage products, orders, and customer service',
+  //       status: 'active',
+  //       permissions: [
+  //         'users.view', 'users.edit',
+  //         'products.view', 'products.create', 'products.edit', 'products.pricing', 'products.inventory',
+  //         'orders.view', 'orders.edit', 'orders.cancel', 'orders.refund',
+  //         'finance.view', 'finance.transactions'
+  //       ],
+  //       userCount: 5,
+  //       createdAt: new Date('2024-01-10'),
+  //       updatedAt: new Date('2024-01-25'),
+  //       createdBy: 'Admin'
+  //     },
+  //     {
+  //       id: 3,
+  //       name: 'Customer Support',
+  //       description: 'Handle customer inquiries and basic order management',
+  //       status: 'active',
+  //       permissions: [
+  //         'users.view', 'users.edit',
+  //         'products.view',
+  //         'orders.view', 'orders.edit', 'orders.cancel',
+  //         'finance.view'
+  //       ],
+  //       userCount: 12,
+  //       createdAt: new Date('2024-01-08'),
+  //       updatedAt: new Date('2024-01-22'),
+  //       createdBy: 'Admin'
+  //     },
+  //     {
+  //       id: 4,
+  //       name: 'Inventory Manager',
+  //       description: 'Manage product catalog and inventory levels',
+  //       status: 'active',
+  //       permissions: [
+  //         'products.view', 'products.create', 'products.edit', 'products.inventory',
+  //         'orders.view'
+  //       ],
+  //       userCount: 3,
+  //       createdAt: new Date('2024-01-12'),
+  //       updatedAt: new Date('2024-01-18'),
+  //       createdBy: 'Manager'
+  //     },
+  //     {
+  //       id: 5,
+  //       name: 'Financial Analyst',
+  //       description: 'Access to financial reports and transaction data',
+  //       status: 'active',
+  //       permissions: [
+  //         'finance.view', 'finance.transactions', 'finance.export', 'finance.reconcile',
+  //         'orders.view'
+  //       ],
+  //       userCount: 2,
+  //       createdAt: new Date('2024-01-14'),
+  //       updatedAt: new Date('2024-01-21'),
+  //       createdBy: 'Admin'
+  //     },
+  //     {
+  //       id: 6,
+  //       name: 'Content Editor',
+  //       description: 'Edit product information and descriptions',
+  //       status: 'inactive',
+  //       permissions: [
+  //         'products.view', 'products.edit'
+  //       ],
+  //       userCount: 0,
+  //       createdAt: new Date('2024-01-05'),
+  //       updatedAt: new Date('2024-01-16'),
+  //       createdBy: 'Manager'
+  //     }
+  //   ];
+  //   return roles;
+  // }
 
   getAllPermissionKeys(): string[] {
     return this.permissionCategories.flatMap(category =>
@@ -540,6 +573,7 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   openCreateRoleModal(): void {
+    if (!this.canCreateRole) return;
     this.editingRole = null;
     this.roleForm.reset({ status: 'active' });
     this.selectedTemplate = '';
@@ -553,13 +587,20 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   editRole(role: Role): void {
+    if (!this.canEditRolePermission) return;
     this.editingRole = role;
     this.roleForm.patchValue({
       name: role.name,
       description: role.description,
       status: role.status
     });
-    // Modal would be triggered via Bootstrap JS or Angular CDK
+    setTimeout(() => {
+      const modal = document.getElementById('roleModal');
+      if (modal && (window as any).bootstrap) {
+        const bsModal = new (window as any).bootstrap.Modal(modal);
+        bsModal.show();
+      }
+    });
   }
 
   saveRole(): void {
@@ -583,7 +624,8 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
           userCount: 0,
           createdAt: new Date(),
           updatedAt: new Date(),
-          createdBy: 'Current User'
+          createdBy: 'Current User',
+          level: formValue.level // Set dynamically from form
         };
 
         this.roleService.createRole(newRole).subscribe({
@@ -629,6 +671,7 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   deleteRole(role: Role): void {
+    if (!this.canDeleteRole) return;
     if (confirm(`Are you sure you want to delete "${role.name}"?`)) {
       this.roleService.deleteRole(role.id).subscribe({
         next: () => {
@@ -743,8 +786,14 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   previewTemplate(template: PermissionTemplate): void {
-    console.log('Preview template:', template);
-    // Show template details in a modal or expand section
+    this.previewedTemplate = template;
+    setTimeout(() => {
+      const modal = document.getElementById('templatePreviewModal');
+      if (modal && (window as any).bootstrap) {
+        const bsModal = new (window as any).bootstrap.Modal(modal);
+        bsModal.show();
+      }
+    });
   }
 
   private getPermissionIdsFromKeys(keys: string[]): number[] {
@@ -755,17 +804,35 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   savePermissions(): void {
-    if (!this.selectedRole) return;
+    console.log('savePermissions');
+    console.log('canAssignPermissions:', this.canAssignPermissions);
+    console.log('selectedRole:', this.selectedRole);
+
+    if (!this.canAssignPermissions) {
+      console.warn('Cannot assign permissions: missing permission');
+      return;
+    }
+    if (!this.selectedRole) {
+      console.warn('No role selected');
+      return;
+    }
 
     // Build the final permissions list from our temporary checklist
-    const finalPermissions: string[] = [];
-    this.permissionCheckState.forEach((isChecked, key) => {
-      if (isChecked) {
-        finalPermissions.push(key);
-      }
-    });
+    const finalPermissions = Array.from(new Set(
+      Array.from(this.permissionCheckState.entries())
+        .filter(([key, isChecked]) => isChecked)
+        .map(([key]) => key)
+    ));
 
     const permissionIds = this.getPermissionIdsFromKeys(finalPermissions);
+    console.log('Selected permission keys:', finalPermissions);
+    console.log('Mapped permission IDs:', permissionIds);
+
+    if (permissionIds.length === 0) {
+      alert('No valid permissions selected or permission IDs missing!');
+      return;
+    }
+
     this.roleService.assignPermissionsToRole(Number(this.selectedRole.id), permissionIds).subscribe({
       next: () => {
         alert('Permissions updated successfully');
@@ -786,6 +853,32 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   // Utility methods
+  isObject(val: any): val is { name: string; description?: string } {
+    return val !== null && typeof val === 'object' && !Array.isArray(val);
+  }
+
+  getPreviewedTemplatePermissionsByCategory() {
+    if (!this.previewedTemplate || !this.previewedTemplate.permissions) return [];
+    // Use permissionCategories from backend for grouping
+    const result: { category: string, permissions: any[] }[] = [];
+    const templatePerms = this.previewedTemplate.permissions;
+    for (const cat of this.permissionCategories) {
+      // Find permissions in the template that match this category by key
+      const permsInCat = templatePerms.filter(perm => {
+        if (typeof perm === 'string') {
+          return cat.permissions.some(p => p.key === perm);
+        } else if (this.isObject(perm) && (perm as any).key) {
+          return cat.permissions.some(p => p.key === (perm as any).key);
+        }
+        return false;
+      });
+      if (permsInCat.length > 0) {
+        result.push({ category: cat.name, permissions: permsInCat });
+      }
+    }
+    return result;
+  }
+
   canEditRole(role: Role): boolean {
     // Add logic to check if current user can edit this role
     return role.status === 'active';
@@ -799,6 +892,13 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     if (percentage >= 80) return 'critical';
     if (percentage >= 60) return 'advanced';
     if (percentage >= 30) return 'intermediate';
+    return 'basic';
+  }
+
+  getPermissionLevelFromCount(count: number): 'basic' | 'intermediate' | 'advanced' | 'critical' {
+    if (count >= 80) return 'critical';
+    if (count >= 60) return 'advanced';
+    if (count >= 30) return 'intermediate';
     return 'basic';
   }
 
@@ -852,16 +952,37 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   generateRolesCSV(): string {
-    const headers = ['Role Name', 'Description', 'Status', 'Users Assigned', 'Permissions Count', 'Created Date'];
+    const headers = [
+      'Role Name',
+      'Description',
+      'Status',
+      'Users Assigned',
+      'Permissions Count',
+      'Permissions',
+      'Users',
+      'Created Date'
+    ];
+    const allPermissions = this.getAllPermissions();
+    const getPermissionName = (key: string) => {
+      const perm = allPermissions.find(p => p.key === key);
+      return perm ? perm.name : key;
+    };
+    const getUserEmails = (roleName: string) => {
+      // Find users assigned to this role by matching role name (if available)
+      // If you have a mapping of user to role, update this logic accordingly
+      // For now, leave blank as User interface does not have role info
+      return '';
+    };
     const rows = this.allRoles.map(role => [
       role.name,
       role.description,
       role.status,
       role.userCount.toString(),
       role.permissions.length.toString(),
+      (role.permissions || []).map((key: any) => typeof key === 'string' ? getPermissionName(key) : (key.name || key.key)).join('; '),
+      getUserEmails(role.name),
       role.createdAt.toISOString().split('T')[0]
     ]);
-
     return [headers, ...rows].map(row => row.join(',')).join('\n');
   }
 
@@ -1026,5 +1147,44 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     if (icon && icon in map) return map[icon];
     if (icon && icon in (window as any)['lucide']?.icons) return icon;
     return 'folder'; // fallback
+  }
+
+  togglePreviewCategory(index: number) {
+    console.log('Toggling category', index, 'Current state:', this.expandedPreviewCategories[index]);
+    this.expandedPreviewCategories[index] = !this.expandedPreviewCategories[index];
+  }
+
+  toggleDropdown(role: Role): void {
+    if (this.currentUser.role.level > role.level) {
+      this.openDropdownId = this.openDropdownId === role.id ? null : role.id;
+    }
+  }
+
+  onEditRole(role: Role): void {
+    if (this.currentUser.role.level > role.level) {
+      this.editRole(role);
+      this.openDropdownId = null;
+    }
+  }
+
+  onDuplicateRole(role: Role): void {
+    if (this.currentUser.role.level > role.level) {
+      this.duplicateRole(role);
+      this.openDropdownId = null;
+    }
+  }
+
+  onToggleRoleStatus(role: Role): void {
+    if (this.currentUser.role.level > role.level) {
+      this.toggleRoleStatus(role);
+      this.openDropdownId = null;
+    }
+  }
+
+  onDeleteRole(role: Role): void {
+    if (this.currentUser.role.level > role.level) {
+      this.deleteRole(role);
+      this.openDropdownId = null;
+    }
   }
 }

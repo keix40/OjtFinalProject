@@ -73,10 +73,12 @@
   <div class="form-group">
     <label>Target Type</label>
     <div class="radio-group">
+      
       <label><input type="radio" formControlName="targetType" value="BRAND" /> Brand</label>
       <label><input type="radio" formControlName="targetType" value="CATEGORY" /> Category</label>
       <label><input type="radio" formControlName="targetType" value="BRAND_CATEGORY" /> Brand Category</label>
       <label><input type="radio" formControlName="targetType" value="PRODUCT" /> Products</label>
+      <label><input type="radio" formControlName="targetType" value="NONE" /> None</label>
     </div>
   </div>
 
@@ -226,191 +228,405 @@
     </div>
   </div>
 
-  <!-- Product Selection Modal -->
-  <div class="modal fade" id="productSelectionModal" tabindex="-1" aria-labelledby="productSelectionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <div class="modal-title-section">
-            <h5 class="modal-title" id="productSelectionModalLabel">
-              <i class="fas fa-tags me-2"></i>
-              Select Products for Discount
-            </h5>
-            <p class="modal-subtitle">Choose products to apply the discount event</p>
-          </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <!-- Search and Filter Section -->
-          <div class="search-filter-section">
-            <div class="search-container">
-              <div class="search-input-wrapper">
-                <i class="fas fa-search search-icon"></i>
-               <input 
-               type="text" 
-              class="search-input" 
-              placeholder="Search products by name, code, brand, or category..." 
-              [formControl]="searchControl">
-              </div>
-              <div class="search-stats">
-                <span class="products-count">{{ getSelectableProductsCount() }} products available for selection</span>
-                <span class="discounted-count" *ngIf="filteredProducts.length - getSelectableProductsCount() > 0">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  {{ filteredProducts.length - getSelectableProductsCount() }} already discounted
-                </span>
-                <span class="selected-count" *ngIf="getSelectedProductsCount() > 0">
-                  <i class="fas fa-check-circle"></i>
-                  {{ getSelectedProductsCount() }} selected
-                </span>
-              </div>
-            </div>
-          </div>
-          <!-- Products Table -->
-          <div class="products-container">
-            <div class="table-wrapper">
-              <table class="products-table">
-                <thead>
-                  <tr>
-                    <th class="select-all-column">
-                      <div class="select-all-wrapper">
-                        <input class="select-all-checkbox" type="checkbox" 
-                               [checked]="areAllProductsSelected()"
-                               [disabled]="getSelectableProductsCount() === 0"
-                               (change)="toggleAllProducts()">
-                        <span class="select-all-text">Select All</span>
-                      </div>
-                    </th>
-                    <th class="image-column">Product</th>
-                    <th class="details-column">Details</th>
-                    <th class="brand-column">Brand</th>
-                    <th class="category-column">Categories</th>
-                    <th class="price-column">Price</th>
-                    <th class="status-column">Discount Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <!-- No results found message -->
-                  <tr *ngIf="filteredProducts.length === 0 && searchTerm.trim() !== ''" class="no-results-row">
-                    <td colspan="7" class="no-results-cell">
-                      <div class="no-results-message">
-                        <i class="fas fa-search"></i>
-                        <span>No products found for "<strong>{{ searchTerm }}</strong>"</span>
-                        <p>Try adjusting your search terms or check the spelling.</p>
-                      </div>
-                    </td>
-                  </tr>
-                  <!-- Products list -->
-                  <tr *ngFor="let product of filteredProducts" 
-                      class="product-row"
-                      [class.selected]="isProductSelected(product.id)"
-                      [class.disabled]="isProductAlreadyDiscounted(product.id)"
-                      (click)="!isProductAlreadyDiscounted(product.id) && toggleProductSelection(product.id)">
-                    <td class="select-cell">
-                      <div class="checkbox-wrapper">
-                        <input class="product-checkbox" type="checkbox" 
-                               [checked]="isProductSelected(product.id)"
-                               [disabled]="isProductAlreadyDiscounted(product.id)"
-                               (click)="$event.stopPropagation()"
-                               (change)="onModalProductCheckboxChange($event, product.id)">
-                      </div>
-                    </td>
-                    <td class="image-cell">
-                      <div class="product-image-container">
-                        <img [src]="getProductImageUrl(product)" 
-                             [alt]="product.productName"
-                             class="product-image">
-                      </div>
-                    </td>
-                    <td class="details-cell">
-                      <div class="product-details">
-                        <div class="product-name">{{ product.productName }}</div>
-                        <div class="product-code">{{ product.productCode }}</div>
-                        <!-- Show existing discount info if product already has discount -->
-                        <div *ngIf="isProductAlreadyDiscounted(product.id)" class="existing-discount-info">
-                          <span class="existing-discount-badge">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Already has {{ getExistingDiscountInfo(product.id).discount_percent }}% discount in "{{ getExistingDiscountInfo(product.id).event_name }}"
-                          </span>
-                        </div>
-                        <!-- Show available status if product doesn't have discount -->
-                        <div *ngIf="!isProductAlreadyDiscounted(product.id)" class="available-status">
-                          <span class="available-badge">
-                            <i class="fas fa-check-circle"></i>
-                            Available for discount
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-
-                   <!-- Brand Cell -->
-                  <td class="brand-cell">
-               <ng-container *ngIf="product.categoryBrandArray && product.categoryBrandArray.length > 0 && product.categoryBrandArray[0]?.brandName; else noBrand">
-              <span class="brand-badge">
-            {{ product.categoryBrandArray[0].brandName }}
-          </span>
-        </ng-container>
-        <ng-template #noBrand>
-          <span class="brand-badge none">None</span>
-      </ng-template>
-        </td>
-
-                   <!-- Category Cell -->
-              <td class="category-cell">
-             <ng-container *ngIf="product.categoryBrandArray && product.categoryBrandArray.length > 0; else noCategory">
-          <div class="category-badges">
-         <span *ngFor="let pair of product.categoryBrandArray" class="category-badge">
-           {{ pair.cateName || 'None' }}
-          </span>
-        </div>
-     </ng-container>
-         <ng-template #noCategory>
-       <span class="category-badge none">None</span>
-       </ng-template>
-      </td>
+  <!-- User Selection Section (styled exactly like Target Type) -->
+<div class="form-group">
+  <label class="form-label" style="font-weight: 600; margin-bottom: 8px;">User Selection</label>
+  <div class="radio-group" style="display: flex; gap: 18px; align-items: center; border: 1px solid #e3e6ef; border-radius: 8px; background: #f9fafb; padding: 16px 12px;">
+    <!-- VIP Tiers as radio buttons (single select) -->
+    <label *ngFor="let tier of vipTiers" class="btn btn-outline-primary" [class.active]="selectedVipTierName === tier.name && selectedUserRadio !== 'user'" style="margin-bottom: 0; display: flex; align-items: center; gap: 6px;">
+      <input type="radio" name="userRadio" [value]="tier.name" [(ngModel)]="selectedUserRadio" [ngModelOptions]="{standalone: true}" (change)="onVipTierRadioChange(tier.name)" autocomplete="off">
+      {{ tier.name }}
+    </label>
+    <!-- User radio button -->
+    <label class="btn btn-outline-primary" [class.active]="selectedUserRadio === 'user'" style="margin-bottom: 0; display: flex; align-items: center; gap: 6px;">
+      <input type="radio" name="userRadio" value="user" [(ngModel)]="selectedUserRadio" [ngModelOptions]="{standalone: true}" (change)="onUserRadioChange()" autocomplete="off">
+      User
+    </label>
+    <!-- Select Users Button (only if User radio is selected) -->
+    
+  </div>
+  <button *ngIf="selectedUserRadio === 'user'" type="button" class="btn-select-products" style="margin-left: 16px;"
       
-                    <td class="price-cell">
-                      <div class="price-display">
-                        <span class="price-amount">{{ product.price }}</span>
-                        <span class="price-currency">MMK</span>
-                      </div>
-                    </td>
-                    <td class="status-cell">
-                      <!-- Show discount status instead of stock status -->
-                      <span *ngIf="isProductAlreadyDiscounted(product.id)" class="status-badge already-discounted">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        Already Discounted
-                      </span>
-                      <span *ngIf="!isProductAlreadyDiscounted(product.id)" class="status-badge available-for-discount">
-                        <i class="fas fa-check-circle"></i>
-                        Available
-                      </span>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+      (click)="openUserModal()">
+      <i class="fas fa-users"></i>
+      Select Users
+      <span class="product-count">{{ getSelectedUsersCount() }}</span>
+    </button>
+  <!-- Selected VIP tier or users as chips/badges -->
+  <div class="selected-items-list mt-2">
+    <span *ngIf="selectedUserRadio !== 'user' && selectedVipTierName" class="selected-item tier-badge">
+      {{ selectedVipTierName }}
+      <button type="button" class="remove-item-btn" (click)="removeVipTierSelection(selectedVipTierName)">
+        <i class="fas fa-times"></i>
+      </button>
+    </span>
+    <ng-container *ngIf="selectedUserRadio === 'user'">
+      <span *ngFor="let userId of selectedUserIds" class="selected-item user-badge">
+        {{ getUserNameById(userId) }}
+        <button type="button" class="remove-item-btn" (click)="removeUserSelection(userId)">
+          <i class="fas fa-times"></i>
+        </button>
+      </span>
+    </ng-container>
+  </div>
+  <!-- Error message if neither product nor user is selected -->
+  <div *ngIf="showProductOrUserError" class="text-danger mt-2" style="font-weight: 500;">
+    <i class="fas fa-exclamation-circle"></i> Please select at least one product or user.
+  </div>
+</div>
+
+<!-- User Selection Modal (Angular only) -->
+<div class="modal fade show d-block" *ngIf="showUserModal" tabindex="-1" aria-labelledby="userSelectionModalLabel" aria-hidden="true" style="background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h5 class="modal-title" id="userSelectionModalLabel">
+            <i class="fas fa-users me-2"></i>
+            Select Users
+          </h5>
+          <p class="modal-subtitle">Choose users to apply the discount event</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Search and Filter Section -->
+        <div class="search-filter-section">
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search users by name, email, or tier..." 
+                [(ngModel)]="searchTerm" [ngModelOptions]="{standalone: true}" (input)="filterUsersBySearch()">
+            </div>
+            <div class="search-stats">
+              <span class="products-count">{{ filteredAllUsers.length }} users available for selection</span>
+              <span class="selected-count" *ngIf="getSelectedUsersCount() > 0">
+                <i class="fas fa-check-circle"></i>
+                {{ getSelectedUsersCount() }} selected
+              </span>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <div class="footer-left">
-            <span class="selection-summary" *ngIf="getSelectedProductsCount() > 0">
-              <i class="fas fa-check-circle"></i>
-              {{ getSelectedProductsCount() }} product{{ getSelectedProductsCount() !== 1 ? 's' : '' }} selected
-            </span>
+        <!-- Users Table -->
+        <div class="products-container">
+          <div class="table-wrapper">
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th class="select-all-column">
+                    <div class="select-all-wrapper">
+                      <input class="select-all-checkbox" type="checkbox" 
+                        [checked]="areAllUsersSelected()"
+                        [disabled]="filteredAllUsers.length === 0"
+                        (change)="toggleAllUsers()">
+                      <span class="select-all-text">Select All</span>
+                    </div>
+                  </th>
+                  <th class="image-column">Profile</th>
+                  <th class="details-column">Details</th>
+                  <th class="tier-column">Tier</th>
+                  <th class="status-column">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- No results found message for user search -->
+                <tr *ngIf="filteredAllUsers.length === 0 && searchTerm.trim() !== ''" class="no-results-row">
+                  <td colspan="5" class="no-results-cell">
+                    <div class="no-results-message">
+                      <i class="fas fa-search"></i>
+                      <span>No users found for "<strong>{{ searchTerm }}</strong>"</span>
+                      <p>Try adjusting your search terms or check the spelling.</p>
+                    </div>
+                  </td>
+                </tr>
+                <!-- Users list -->
+                <tr *ngFor="let user of filteredAllUsers">
+                  <td class="select-cell">
+                    <div class="checkbox-wrapper">
+                      <input class="product-checkbox" type="checkbox" 
+                        [checked]="isUserSelected(user.userId)"
+                        (click)="$event.stopPropagation()"
+                        (change)="toggleUserSelection(user.userId)">
+                    </div>
+                  </td>
+                  <td class="image-cell">
+                    <div class="product-image-container">
+                      <ng-container *ngIf="user.profileImage && user.profileImage !== '/upload/defaultProfile.png'; else showDefaultUserIcon">
+                        <img [src]="getUserProfileImage(user)" [alt]="user.name" class="w-10 h-10 rounded-full object-cover border border-gray-200" (error)="onUserImageError($event)">
+                      </ng-container>
+                      <ng-template #showDefaultUserIcon>
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200">
+                          <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                          </svg>
+                        </div>
+                      </ng-template>
+                    </div>
+                  </td>
+                  <td class="details-cell">
+                    <div class="product-details">
+                      <div class="product-name">{{ user.name }}</div>
+                      <div class="product-code">{{ user.email }}</div>
+                    </div>
+                  </td>
+                  <td class="tier-cell">
+                    <span class="brand-badge">{{ user.tier }}</span>
+                  </td>
+                  <td class="status-cell">
+                    <span class="status-badge" [ngClass]="{
+                      'status-active': user.status && user.status.toLowerCase() === 'active',
+                      'status-inactive': !user.status || user.status.toLowerCase() !== 'active'
+                    }">
+                      <i class="fas" [ngClass]="user.status && user.status.toLowerCase() === 'active' ? 'fa-check-circle' : 'fa-exclamation-triangle'"></i>
+                      {{ user.status | titlecase }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <div class="footer-right">
-            <button type="button" class="btn btn-cancel-modal" data-bs-dismiss="modal">
-              Cancel
-            </button>
-            <button type="button" class="btn btn-confirm-selection" (click)="confirmProductSelection()" data-bs-dismiss="modal">
-              <i class="fas fa-check"></i>
-              Confirm Selection
-            </button>
-          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="footer-left">
+          <span class="selection-summary" *ngIf="getSelectedUsersCount() > 0">
+            <i class="fas fa-check-circle"></i>
+            {{ getSelectedUsersCount() }} user{{ getSelectedUsersCount() !== 1 ? 's' : '' }} selected
+          </span>
+        </div>
+        <div class="footer-right">
+          <button type="button" class="btn btn-cancel-modal" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-confirm-selection" (click)="confirmUserSelection()" data-bs-dismiss="modal">
+            <i class="fas fa-check"></i>
+            Confirm Selection
+          </button>
         </div>
       </div>
     </div>
   </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showUserModal"></div>
+
+<!-- User-Only (Global) Discount Warning Modal -->
+<div class="modal fade show d-block" *ngIf="showUserGlobalWarning" tabindex="-1" aria-labelledby="userGlobalWarningModalLabel" aria-hidden="true" style="background-color: rgba(0,0,0,0.5); z-index: 1200;">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="userGlobalWarningModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          Global Discount Warning
+        </h5>
+        <button type="button" class="btn-close" (click)="cancelUserGlobalWarning()" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning mb-0">
+          <i class="fas fa-info-circle me-2"></i>
+          <strong>Warning:</strong> Selecting users only will set the discount to <b>all products</b> for those users.<br>
+          Are you sure you want to continue?
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelUserGlobalWarning()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" (click)="confirmUserGlobalWarning()">
+          Continue Anyway
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show" *ngIf="showUserGlobalWarning" style="z-index: 1100;"></div>
+
+
+
+<!-- Product Selection Modal -->
+<div class="modal fade" id="productSelectionModal" tabindex="-1" aria-labelledby="productSelectionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="modal-title-section">
+          <h5 class="modal-title" id="productSelectionModalLabel">
+            <i class="fas fa-tags me-2"></i>
+            Select Products for Discount
+          </h5>
+          <p class="modal-subtitle">Choose products to apply the discount event</p>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Search and Filter Section -->
+        <div class="search-filter-section">
+          <div class="search-container">
+            <div class="search-input-wrapper">
+              <i class="fas fa-search search-icon"></i>
+              <input 
+                type="text" 
+                class="search-input" 
+                placeholder="Search products by name, code, brand, or category..." 
+                [formControl]="searchControl">
+            </div>
+            <div class="search-stats">
+              <span class="products-count">{{ getSelectableProductsCount() }} products available for selection</span>
+              <span class="discounted-count" *ngIf="filteredProducts.length - getSelectableProductsCount() > 0">
+                <i class="fas fa-exclamation-triangle"></i>
+                {{ filteredProducts.length - getSelectableProductsCount() }} already discounted
+              </span>
+              <span class="selected-count" *ngIf="getSelectedProductsCount() > 0">
+                <i class="fas fa-check-circle"></i>
+                {{ getSelectedProductsCount() }} selected
+              </span>
+            </div>
+          </div>
+        </div>
+        <!-- Products Table -->
+        <div class="products-container">
+          <div class="table-wrapper">
+            <table class="products-table">
+              <thead>
+                <tr>
+                  <th class="select-all-column">
+                    <div class="select-all-wrapper">
+                      <input class="select-all-checkbox" type="checkbox" 
+                             [checked]="areAllProductsSelected()"
+                             [disabled]="getSelectableProductsCount() === 0"
+                             (change)="toggleAllProducts()">
+                      <span class="select-all-text">Select All</span>
+                    </div>
+                  </th>
+                  <th class="image-column">Product</th>
+                  <th class="details-column">Details</th>
+                  <th class="brand-column">Brand</th>
+                  <th class="category-column">Categories</th>
+                  <th class="price-column">Price</th>
+                  <th class="status-column">Discount Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- No results found message -->
+                <tr *ngIf="filteredProducts.length === 0 && searchTerm.trim() !== ''" class="no-results-row">
+                  <td colspan="7" class="no-results-cell">
+                    <div class="no-results-message">
+                      <i class="fas fa-search"></i>
+                      <span>No products found for "<strong>{{ searchTerm }}</strong>"</span>
+                      <p>Try adjusting your search terms or check the spelling.</p>
+                    </div>
+                  </td>
+                </tr>
+                <!-- Products list -->
+                <tr *ngFor="let product of filteredProducts" 
+                    class="product-row"
+                    [class.selected]="isProductSelected(product.id)"
+                    [class.disabled]="isProductAlreadyDiscounted(product.id)"
+                    (click)="!isProductAlreadyDiscounted(product.id) && toggleProductSelection(product.id)">
+                  <td class="select-cell">
+                    <div class="checkbox-wrapper">
+                      <input class="product-checkbox" type="checkbox" 
+                             [checked]="isProductSelected(product.id)"
+                             [disabled]="isProductAlreadyDiscounted(product.id)"
+                             (click)="$event.stopPropagation()"
+                             (change)="onModalProductCheckboxChange($event, product.id)">
+                    </div>
+                  </td>
+                  <td class="image-cell">
+                    <div class="product-image-container">
+                      <img [src]="getProductImageUrl(product)" 
+                           [alt]="product.productName"
+                           class="product-image">
+                    </div>
+                  </td>
+                  <td class="details-cell">
+                    <div class="product-details">
+                      <div class="product-name">{{ product.productName }}</div>
+                      <div class="product-code">{{ product.productCode }}</div>
+                      <!-- Show existing discount info if product already has discount -->
+                      <div *ngIf="isProductAlreadyDiscounted(product.id)" class="existing-discount-info">
+                        <span class="existing-discount-badge">
+                          <i class="fas fa-exclamation-triangle"></i>
+                          Already has {{ getExistingDiscountInfo(product.id).discount_percent }}% discount in "{{ getExistingDiscountInfo(product.id).event_name }}"
+                        </span>
+                      </div>
+                      <!-- Show available status if product doesn't have discount -->
+                      <div *ngIf="!isProductAlreadyDiscounted(product.id)" class="available-status">
+                        <span class="available-badge">
+                          <i class="fas fa-check-circle"></i>
+                          Available for discount
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <!-- Brand Cell -->
+                  <td class="brand-cell">
+                    <ng-container *ngIf="product.categoryBrandArray && product.categoryBrandArray.length > 0 && product.categoryBrandArray[0]?.brandName; else noBrand">
+                      <span class="brand-badge">
+                        {{ product.categoryBrandArray[0].brandName }}
+                      </span>
+                    </ng-container>
+                    <ng-template #noBrand>
+                      <span class="brand-badge none">None</span>
+                    </ng-template>
+                  </td>
+                  <!-- Category Cell -->
+                  <td class="category-cell">
+                    <ng-container *ngIf="product.categoryBrandArray && product.categoryBrandArray.length > 0; else noCategory">
+                      <div class="category-badges">
+                        <span *ngFor="let pair of product.categoryBrandArray" class="category-badge">
+                          {{ pair.cateName || 'None' }}
+                        </span>
+                      </div>
+                    </ng-container>
+                    <ng-template #noCategory>
+                      <span class="category-badge none">None</span>
+                    </ng-template>
+                  </td>
+                  <td class="price-cell">
+                    <div class="price-display">
+                      <span class="price-amount">{{ product.price }}</span>
+                      <span class="price-currency">MMK</span>
+                    </div>
+                  </td>
+                  <td class="status-cell">
+                    <!-- Show discount status instead of stock status -->
+                    <span *ngIf="isProductAlreadyDiscounted(product.id)" class="status-badge already-discounted">
+                      <i class="fas fa-exclamation-triangle"></i>
+                      Already Discounted
+                    </span>
+                    <span *ngIf="!isProductAlreadyDiscounted(product.id)" class="status-badge available-for-discount">
+                      <i class="fas fa-check-circle"></i>
+                      Available
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="footer-left">
+          <span class="selection-summary" *ngIf="getSelectedProductsCount() > 0">
+            <i class="fas fa-check-circle"></i>
+            {{ getSelectedProductsCount() }} product{{ getSelectedProductsCount() !== 1 ? 's' : '' }} selected
+          </span>
+        </div>
+        <div class="footer-right">
+          <button type="button" class="btn btn-cancel-modal" data-bs-dismiss="modal">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-confirm-selection" (click)="confirmProductSelection()" data-bs-dismiss="modal">
+            <i class="fas fa-check"></i>
+            Confirm Selection
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
   <div class="form-group">
     <label for="startDate">Start Date</label>
