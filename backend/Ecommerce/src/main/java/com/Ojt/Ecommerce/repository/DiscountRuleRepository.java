@@ -1,12 +1,13 @@
 package com.Ojt.Ecommerce.repository;
 
-import com.Ojt.Ecommerce.entity.Discount;
-import com.Ojt.Ecommerce.entity.DiscountRule;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import com.Ojt.Ecommerce.entity.Discount;
+import com.Ojt.Ecommerce.entity.DiscountRule;
 
 public interface DiscountRuleRepository extends JpaRepository <DiscountRule, Long> {
     boolean existsByBrandIdAndDiscount_DiscountEvent_StatusTrue(Long brandId);
@@ -42,4 +43,7 @@ public interface DiscountRuleRepository extends JpaRepository <DiscountRule, Lon
     void deleteByUserIdAndBrandId(Long userId, Long brandId);
     void deleteByUserIdAndCategoryId(Long userId, Long categoryId);
     void deleteByUserIdAndBrandIdAndCategoryId(Long userId, Long brandId, Long categoryId);
+    @Query("SELECT dr FROM DiscountRule dr WHERE dr.product.id = :productId AND (dr.user.id = :userId OR dr.user IS NULL) AND dr.discount.status = true ORDER BY dr.user.id DESC")
+    DiscountRule findActiveProductDiscountRule(@Param("productId") Long productId, @Param("userId") Long userId);
+
 }

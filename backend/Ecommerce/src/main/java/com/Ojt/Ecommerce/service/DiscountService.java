@@ -1,12 +1,11 @@
 package com.Ojt.Ecommerce.service;
 
-import com.Ojt.Ecommerce.dto.DiscountDTO;
-import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
-import com.Ojt.Ecommerce.entity.Discount;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 
-import java.util.List;
-import java.util.Optional;
+import com.Ojt.Ecommerce.dto.DiscountDTO;
+import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
 
 public interface DiscountService {
     ResponseEntity<?> createDiscount(DiscountRequestDTO dto);
@@ -17,4 +16,5 @@ public interface DiscountService {
     List<DiscountDTO> getAllDiscounts();
     ResponseEntity<?> updateDiscount(Long id, DiscountRequestDTO dto);
     ResponseEntity<?> getDiscountsByProduct(Long productId);
+    ResponseEntity<?> getDiscountById(Long id);
 }

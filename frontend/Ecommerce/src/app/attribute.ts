@@ -6,10 +6,10 @@ export interface Attribute {
 export interface AttributeAndValueDTO {
     attributeId?: number; // optional
     attributeName?: string;
-    values: { value: string }[];
+    values: AttributeValue[];
 }
 
 export interface AttributeValue {
-    id: number;
+    id?: number;
     value: string;
 }

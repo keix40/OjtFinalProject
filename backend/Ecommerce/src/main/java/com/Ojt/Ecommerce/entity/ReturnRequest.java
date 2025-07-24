@@ -22,9 +22,13 @@ public class ReturnRequest {
     @JoinColumn(name = "order_id", nullable = false)
     private UserOrder order;
 
-    @ManyToOne
-    @JoinColumn(name = "order_product_id", nullable = false)
-    private UserOrderHasProduct orderProduct;
+//    @ManyToOne
+//    @JoinColumn(name = "order_product_id", nullable = false)
+//    private UserOrderHasProduct orderProduct;
+
+    @OneToMany(mappedBy = "returnRequest", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ReturnRequestProduct> returnRequestProducts = new ArrayList<>();
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

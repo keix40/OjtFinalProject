@@ -11,4 +11,10 @@ public class OrderProductDTO {
     private Integer quantity;
     private Double unitPrice;
     private String variantDetails;
+    private Long orderProductId;
+    private Integer variantId;
+    private String sku;
+    private String status;
+    private Double originalPrice;
+    private Double discountedPrice;
 }

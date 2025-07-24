@@ -17,4 +17,14 @@ public class Attribute {
 
     @Column(length = 15)
     private String name;
+
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }

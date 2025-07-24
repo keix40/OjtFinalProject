@@ -23,4 +23,14 @@ public class AttributeValue {
     @JoinColumn(name = "attribute_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Attribute attribute;
+
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }

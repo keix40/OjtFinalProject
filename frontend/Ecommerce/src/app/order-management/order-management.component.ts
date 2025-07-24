@@ -9,6 +9,7 @@ declare var lucide: any;
 import { OrderInvoiceComponent } from '../order-invoice/order-invoice.component';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { DiscountService } from '../services/discount.service';
 
 // Extended interface to include checked property for selection
 interface OrderWithSelection extends UserOrderListDTO {
@@ -127,11 +128,64 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
   excelDropdownOpen: boolean = false;
   pdfDropdownOpen: boolean = false;
   
+  // Track selected order IDs across all pages
+  selectedOrderIds: Set<number> = new Set();
+
+  // --- Discount Info Helpers ---
+  discountInfoMap: { [id: number]: any } = {};
+
+  // Call this after loading orders to fetch discount info for all used discount IDs
+  async fetchDiscountInfoForOrders() {
+    const ids = Array.from(new Set(this.orders.map(o => o.userDiscountId).filter((id): id is number => id !== undefined && id !== null)));
+    for (const id of ids) {
+      if (!this.discountInfoMap[id]) {
+        try {
+          const discount = await this.discountService.getDiscountById(id).toPromise();
+          if (discount && typeof discount === 'object') {
+            this.discountInfoMap[id] = {
+              code: (discount as any).code || '',
+              name: (discount as any).name || '',
+              type: (discount as any).discountType || '',
+              value: (discount as any).discountValue || 0
+            };
+          } else {
+            this.discountInfoMap[id] = { code: 'N/A', name: 'Unknown Discount', type: '', value: 0 };
+          }
+        } catch (e) {
+          this.discountInfoMap[id] = { code: 'N/A', name: 'Unknown Discount', type: '', value: 0 };
+        }
+      }
+    }
+  }
+
+  getDiscountInfo(order: UserOrderListDTO) {
+    if (!order.userDiscountId) return null;
+    return this.discountInfoMap[order.userDiscountId] || null;
+  }
+
+  getProductOriginalPrice(product: any): number {
+    // If product has discountRule, calculate original price
+    if (product.discountRule && product.unitPrice) {
+      const rule = product.discountRule;
+      if (rule.discount && rule.discount.discountType === 'PERCENTAGE') {
+        return Math.round(product.unitPrice / (1 - rule.discount.discountValue));
+      } else if (rule.discount && rule.discount.discountType === 'FIXED') {
+        return Math.round(product.unitPrice + rule.discount.discountValue);
+      }
+    }
+    return product.unitPrice;
+  }
+
+  getProductDiscountedPrice(product: any): number {
+    return product.unitPrice;
+  }
+
   constructor(
     private orderService: OrderService,
     private authService: AuthService,
     private modalService: NgbModal,
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private discountService: DiscountService
   ) {}
   public PermissionConstants = PermissionConstants;
 
@@ -170,21 +224,21 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
     }
   }
 
-  loadOrders() {
+  async loadOrders() {
     this.orderService.getAllOrder().subscribe({
-      next: (data) => {
+      next: async (data) => {
         this.orders = data.map(order => ({ ...order, checked: false }));
         this.filteredOrders = [...this.orders];
         this.currentPage = 1;
         this.updatePaginatedOrders();
-        
+        await this.fetchDiscountInfoForOrders();
         setTimeout(() => {
           $('#orderTable').DataTable({
             destroy: true,
             columnDefs: [
               { orderable: false, targets: 0 }
             ],
-            order: [[2, 'desc']] // Sort by order date descending
+            order: [[2, 'desc']]
           });
           if (typeof window !== 'undefined' && (window as any).lucide) {
             (window as any).lucide.createIcons();
@@ -328,17 +382,31 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
   }
 
   get selectedOrders(): OrderWithSelection[] {
-    return this.paginatedOrders.filter(order => order.checked);
+    return this.filteredOrders.filter(order => this.selectedOrderIds.has(order.orderId));
   }
   
   toggleAllCheckboxes(): void {
-    this.paginatedOrders.forEach(order => order.checked = this.selectAll);
+    if (this.selectAll) {
+      this.paginatedOrders.forEach(order => this.selectedOrderIds.add(order.orderId));
+    } else {
+      this.paginatedOrders.forEach(order => this.selectedOrderIds.delete(order.orderId));
+    }
+    this.updateSelection();
   }
   
   updateSelection(): void {
     const total = this.paginatedOrders.length;
-    const selected = this.paginatedOrders.filter(order => order.checked).length;
+    const selected = this.paginatedOrders.filter(order => this.selectedOrderIds.has(order.orderId)).length;
     this.selectAll = total === selected && total > 0;
+  }
+
+  onOrderCheckboxChange(order: OrderWithSelection, event: any): void {
+    if (event.target.checked) {
+      this.selectedOrderIds.add(order.orderId);
+    } else {
+      this.selectedOrderIds.delete(order.orderId);
+    }
+    this.updateSelection();
   }
 
   getStatusBadgeClass(status: string): string {
@@ -358,6 +426,70 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
 
   getTotalItems(order: UserOrderListDTO): number {
     return order.products.reduce((total, product) => total + product.quantity, 0);
+  }
+
+  // Helper to get total for non-refunded products
+  getRefundedTotal(order: UserOrderListDTO): number {
+    if (!order.products) return 0;
+    // Only consider non-returned products for subtotal and discount
+    const nonReturnedProducts = order.products.filter(p => p.status !== 'RETURNED');
+    const subtotal = nonReturnedProducts.reduce((sum, p) => sum + (p.quantity * p.unitPrice), 0);
+    // Pro-rate discount if needed (if discount is percentage, apply to subtotal; if fixed, pro-rate by value)
+    let discountAmount = 0;
+    if (order.discountAmount && order.subtotal) {
+      // If discount is percentage, backend already calculates correct discount for subtotal
+      // If fixed, pro-rate by subtotal of non-returned products
+      if (order.discountType === 'PERCENTAGE') {
+        discountAmount = subtotal * (order.discountValue || 0);
+      } else {
+        // Fixed discount: pro-rate by subtotal of non-returned products
+        discountAmount = (order.discountAmount * subtotal) / order.subtotal;
+      }
+    }
+    const deliveryFee = order.deliveryFee || 0;
+    let total = subtotal - discountAmount + deliveryFee;
+    // Check for approved return request with refundType 'MONEY_REFUND'
+    if (order.returnRequests) {
+      const approvedRefund = order.returnRequests.find(r => r.status === 'APPROVED' && r.refundType === 'MONEY_REFUND');
+      if (approvedRefund && approvedRefund.refundAmount) {
+        total -= approvedRefund.refundAmount;
+      }
+    }
+    return Math.max(0, Math.round(total));
+  }
+
+  // Returns the total of originalPrice * quantity for all non-returned products (before any discount)
+  getBeforeDiscountProductTotal(order: UserOrderListDTO): number {
+    if (!order.products) return 0;
+    return order.products
+      .filter(p => p.status !== 'RETURNED')
+      .reduce((sum, p) => sum + ((p.originalPrice || p.unitPrice) * p.quantity), 0);
+  }
+
+  // Returns the total of unitPrice * quantity for all non-returned products (after discount)
+  getAfterDiscountProductTotal(order: UserOrderListDTO): number {
+    if (!order.products) return 0;
+    return order.products
+      .filter(p => p.status !== 'RETURNED')
+      .reduce((sum, p) => sum + (p.unitPrice * p.quantity), 0);
+  }
+
+  // Returns the total before any discount/refund (subtotal + deliveryFee)
+  getBeforeDiscountTotal(order: UserOrderListDTO): number {
+    const subtotal = order.subtotal || 0;
+    const deliveryFee = order.deliveryFee || 0;
+    return subtotal + deliveryFee;
+  }
+
+  // Helper to get refund status and amount for display
+  getMoneyRefundStatus(order: UserOrderListDTO): { show: boolean, amount: number } {
+    if (order.returnRequests) {
+      const approvedRefund = order.returnRequests.find(r => r.status === 'APPROVED' && r.refundType === 'MONEY_REFUND');
+      if (approvedRefund && approvedRefund.refundAmount) {
+        return { show: true, amount: approvedRefund.refundAmount };
+      }
+    }
+    return { show: false, amount: 0 };
   }
 
   viewOrderDetails(order: UserOrderListDTO, content: any) {

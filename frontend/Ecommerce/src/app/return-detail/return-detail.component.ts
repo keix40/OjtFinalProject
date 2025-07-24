@@ -53,15 +53,19 @@ export class ReturnDetailComponent implements OnInit {
     this.loadRequestDetail();
   }
 
+  private getTotalAmountFromProducts(products: any[]): number {
+    if (!products || products.length === 0) return 0;
+    return products.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+  }
+
   loadRequestDetail(){
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.returnService.getReturnById(+id).subscribe(data => {
         this.returnDetail = data;
-        this.refundAmount = data.totalAmount;
+        this.refundAmount = this.getTotalAmountFromProducts(data.products);
         this.selectedCard = data.cardNumber;
         this.adminRemark = data.adminRemark || '';
-  
         // ✅ Chain: load order details after getting return
         this.loadOrderDetails();  // This ensures fresh status history
       });

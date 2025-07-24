@@ -89,6 +89,11 @@ public class DiscountController {
         return discountService.getDiscountsByProduct(productId);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDiscountById(@PathVariable Long id) {
+        return discountService.getDiscountById(id);
+    }
+
     @LogActivity(actionType = "DELETE", entityType = "DISCOUNT", description = "Deleted discount", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDiscount(@PathVariable Long id) {

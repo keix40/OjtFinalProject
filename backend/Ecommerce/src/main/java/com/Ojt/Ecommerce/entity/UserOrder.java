@@ -56,6 +56,9 @@ public class UserOrder {
     @JoinColumn(name = "discount_id")
     private Discount discount;
 
+    @Column(name = "user_discount_id")
+    private Long userDiscountId;
+
     @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<UserOrderHasProduct> orderProducts = new ArrayList<>();

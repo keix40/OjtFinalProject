@@ -354,8 +354,9 @@ public class ProductService {
                 ProductVariant variant = ProductVariant.builder()
                         .price(BigDecimal.valueOf(variantDTO.getPrice()))
                         .stock(variantDTO.getStock())
-                        .stockKeeping(variantDTO.getSku())
+                        .stockKeeping(variantDTO.getSku()) // Always set SKU from frontend
                         .product(savedProduct)
+                        .status(1)
                         .build();
                 variant = variantRepo.save(variant);
 
@@ -546,6 +547,7 @@ public class ProductService {
             List<ProductVariant> updatedVariants = new ArrayList<>();
             Set<String> incomingSkus = new HashSet<>();
 
+            // First, create and save all new/updated variants, setting the product reference
             for (int i = 0; i < dto.getVariants().size(); i++) {
                 VariantDTO variantDTO = dto.getVariants().get(i);
                 String sku = variantDTO.getSku();
@@ -563,12 +565,22 @@ public class ProductService {
                             .build();
                 } else {
                     // Existing variant → update
+                    variant.setStockKeeping(sku); // <-- Always update SKU!
                     variant.setPrice(BigDecimal.valueOf(variantDTO.getPrice()));
                     variant.setStock(variantDTO.getStock());
                     variant.setStatus(1);
                 }
-
+                variant.setProduct(product); // Ensure the product reference is set
                 variant = variantRepo.save(variant);
+                updatedVariants.add(variant);
+            }
+
+            // Now, for each variant, update attribute values and images
+            for (int i = 0; i < dto.getVariants().size(); i++) {
+                VariantDTO variantDTO = dto.getVariants().get(i);
+                String sku = variantDTO.getSku();
+                ProductVariant variant = updatedVariants.stream().filter(v -> v.getStockKeeping().equals(sku)).findFirst().orElse(null);
+                if (variant == null) continue;
 
                 // Remove and re-insert attribute values
                 variantAttributeValueRepo.deleteByProductVariant(variant);
@@ -618,8 +630,6 @@ public class ProductService {
                         }
                     }
                 }
-
-                updatedVariants.add(variant);
             }
 
             // Soft-delete missing variants
@@ -630,8 +640,8 @@ public class ProductService {
                 }
             }
 
-            // Instead of setProductVariants, mutate the existing list
-            product.getProductVariants().clear();
+//            // Instead of setProductVariants, mutate the existing list
+//            product.getProductVariants().clear();
             product.getProductVariants().addAll(updatedVariants);
         }
 

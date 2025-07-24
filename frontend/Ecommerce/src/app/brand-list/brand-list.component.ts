@@ -208,7 +208,13 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
     modalRef.result.then((result) => {
       if (result === 'updated') {
         this.loadBrands();
-        // Optionally show a success message
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Brand updated successfully!',
+          timer: 2000,
+          showConfirmButton: false
+        });
       }
     }).catch(() => {
       // Modal dismissed

@@ -7,12 +7,12 @@ import com.Ojt.Ecommerce.entity.ProductHasCategory;
 import com.Ojt.Ecommerce.repository.CategoryRepository;
 import com.Ojt.Ecommerce.repository.ProductHasCategoryRepository;
 import jakarta.transaction.Transactional;
-import org.hibernate.dialect.unique.CreateTableUniqueDelegate;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,6 +23,7 @@ import java.util.UUID;
 
 @Service
 public class CategoryService {
+    private static final Path uploadPath = Paths.get("brand_and_category_image").toAbsolutePath();
 
     @Autowired
     private CategoryRepository repo;
@@ -76,7 +77,6 @@ public class CategoryService {
         return pcRepo.findAll();
     }
 
-
     @Transactional
     public Category updateCategory(Long id, String newName, Long parentId, MultipartFile imageFile) {
         Category category = repo.findById(id).orElseThrow(() -> new IllegalArgumentException("Category not found"));
@@ -91,8 +91,10 @@ public class CategoryService {
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                Path path = Paths.get("C:/Users/Kit Kit/OjtFinalProject/backend/Ecommerce/brand_and_category_image/" + filename);
-                Files.createDirectories(path.getParent());
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                Path path = uploadPath.resolve(filename);
                 Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
                 category.setImage("/brand_and_category_image/" + filename);
             } catch (IOException e) {

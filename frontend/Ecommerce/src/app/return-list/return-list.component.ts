@@ -39,7 +39,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
       const search = this.searchText.toLowerCase();
       filtered = filtered.filter((r: any) =>
         r.userName.toLowerCase().includes(search) ||
-        r.productName.toLowerCase().includes(search) ||
+        (r.products && r.products.map((p: any) => p.productName).join(', ').toLowerCase().includes(search)) ||
         r.reasonForReturn.toLowerCase().includes(search) ||
         r.id.toString().includes(search)
       );
@@ -236,7 +236,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
       { header: 'Order ID', key: 'orderCode', width: 16 },
       { header: 'Date', key: 'requestedAt', width: 18 },
       { header: 'Customer', key: 'userName', width: 22 },
-      { header: 'Product', key: 'productName', width: 22 },
+      { header: 'Products', key: 'products', width: 32 },
       { header: 'Reason', key: 'reasonForReturn', width: 22 },
       { header: 'Return Detail', key: 'returnDetail', width: 28 },
       { header: 'Status', key: 'status', width: 14 },
@@ -248,7 +248,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
         orderCode: row.orderCode ?? '',
         requestedAt: row.requestedAt ? new Date(row.requestedAt).toLocaleDateString() : '',
         userName: row.userName ?? '',
-        productName: row.productName ?? '',
+        products: row.products ? row.products.map((p: any) => p.productName).join(', ') : '',
         reasonForReturn: row.reasonForReturn ?? '',
         returnDetail: row.returnDetail ?? '',
         status: row.status ?? ''
@@ -304,7 +304,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
       String(row.orderCode ?? ''),
       row.requestedAt ? new Date(row.requestedAt).toLocaleDateString() : '',
       String(row.userName ?? ''),
-      String(row.productName ?? ''),
+      row.products ? row.products.map((p: any) => p.productName).join(', ') : '',
       String(row.reasonForReturn ?? ''),
       String(row.returnDetail ?? ''),
       String(row.status ?? '')
@@ -378,5 +378,12 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
     // Otherwise, prepend the base URL
     return `http://localhost:8080${img}`;
+  }
+
+  getProductNames(row: ReturnRequestDTO): string {
+    if (row.products && row.products.length > 0) {
+      return row.products.map(p => p.productName).join(', ');
+    }
+    return '-';
   }
 }

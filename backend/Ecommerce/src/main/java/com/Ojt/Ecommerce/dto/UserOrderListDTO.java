@@ -23,6 +23,7 @@ public class UserOrderListDTO {
     private Long subtotal;
     private Long discountAmount;
     private Long total;
+    private Long userDiscountId;
     private List<OrderProductDTO> products;
     private AddressDTO address;
     private UserDTO user;
