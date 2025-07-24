@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.dto.ApproveRejectRequest;
 import com.Ojt.Ecommerce.dto.RefundDTO;
 import com.Ojt.Ecommerce.dto.ReplacementRequest;
@@ -14,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
+
 import java.util.List;
 
 // New DTO for submit request
@@ -27,6 +31,7 @@ class SubmitReturnRequest {
 
 @RestController
 @RequestMapping("/returns")
+@PermissionCategoryTag(value = "orders", name = "Order Management", icon = "fa-shopping-cart")
 @RequiredArgsConstructor
 public class ReturnRequestController {
 
@@ -60,6 +65,7 @@ public class ReturnRequestController {
     }
 
     @GetMapping("/getallrequest")
+    @RequiresPermission(value = REFUND_VIEW, level = "basic", description = "View all return requests")
     public ResponseEntity<List<ReturnRequestDTO>> getAllRequest(){
         List<ReturnRequestDTO> returnList = returnRequestService.findAllRequest();
         return ResponseEntity.ok(returnList);
@@ -71,24 +77,28 @@ public class ReturnRequestController {
     }
 
     @PostMapping("/approve")
+    @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Approve return request")
     public ResponseEntity<String> approveReturnRequest(@RequestBody ApproveRejectRequest data) {
         returnRequestService.approveReturnRequest(data.getReturnRequestId(), data.getAdminRemark());
         return ResponseEntity.ok("Return request approved.");
     }
 
     @PostMapping("/reject")
+    @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Reject return request")
     public ResponseEntity<String> rejectReturnRequest(@RequestBody ApproveRejectRequest data) {
         returnRequestService.rejectReturnRequest(data.getReturnRequestId(), data.getAdminRemark());
         return ResponseEntity.ok("Return request rejected.");
     }
 
     @PostMapping("/replacement")
+    @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Process replacement for return request")
     public ResponseEntity<String> processReplacement(@RequestBody ReplacementRequest data) {
         returnRequestService.processReplacement(data.getReturnRequestId(), data.getAdminRemark());
         return ResponseEntity.ok("Replacement processed.");
     }
 
     @PostMapping("/refund")
+    @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Process refund for return request")
     public ResponseEntity<String> processRefund(@RequestBody RefundDTO dto){
         returnRequestService.processRefund(dto);
         return ResponseEntity.ok("Refund processed.");

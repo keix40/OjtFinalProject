@@ -15,6 +15,7 @@ import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
 import { ProductList } from '../product';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-home',
@@ -46,7 +47,8 @@ export class HomeComponent implements OnInit {
     private notificationService : NotificationService,
     private notifcationService : NotifcationService,
     private discountService: DiscountService,
-    private http: HttpClient // Inject HttpClient
+    private http: HttpClient, // Inject HttpClient
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
@@ -166,6 +168,20 @@ export class HomeComponent implements OnInit {
     if (!cat.image || cat.image.includes('null')) return 'assets/images/default-brand.svg';
     if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
     return `http://localhost:8080${cat.image}`;
+  }
+
+  getSafeIconUrl(cat: Category): SafeUrl | string | undefined {
+    if (cat.iconUrl) {
+      if (cat.iconUrl.startsWith('data:image')) {
+        return this.sanitizer.bypassSecurityTrustUrl(cat.iconUrl);
+      }
+      if (cat.iconUrl.startsWith('http://') || cat.iconUrl.startsWith('https://')) {
+        return cat.iconUrl;
+      }
+      // If it's a relative path (uploaded file)
+      return `http://localhost:8080${cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl}`;
+    }
+    return undefined;
   }
 
   getBrandImageUrl(brand: BrandListDTO): string {

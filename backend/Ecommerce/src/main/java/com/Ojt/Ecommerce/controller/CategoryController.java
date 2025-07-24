@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import com.Ojt.Ecommerce.dto.BrandDTO;
 import com.Ojt.Ecommerce.dto.CategoryDTO;
 import com.Ojt.Ecommerce.dto.CategoryListDTO;
@@ -12,6 +13,7 @@ import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
 import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +27,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
+@PermissionCategoryTag(value = "categories", name = "Category Management", icon = "fa-list")
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/category")
@@ -43,17 +47,20 @@ public class CategoryController {
     private BrandHasCategoryService bcService;
 
     @GetMapping("/getallcategory")
+    @RequiresPermission(value = CATEGORIES_VIEW, level = "basic")
     public List<Category> getAllCategory(){
         return service.getAllCategory();
     }
 
     @GetMapping("/tree")
+    // @RequiresPermission(value = CATEGORIES_VIEW, level = "basic")
     public ResponseEntity<List<CategoryListDTO>> getCategoryTree() {
         return ResponseEntity.ok(service.getCategoryTree());
     }
 
     @LogActivity(actionType = "CREATE", entityType = "CATEGORY", description = "Created category", severityLevel = "MEDIUM")
     @PostMapping(value = "/addcategory", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresPermission(value = CATEGORIES_CREATE, level = "advanced")
     public ResponseEntity<?> saveCategory(
             @RequestPart("category") CategoryDTO dto,
             @RequestPart(value = "image", required = false) MultipartFile imageFile
@@ -105,6 +112,8 @@ public class CategoryController {
                 Category newCate = new Category();
                 newCate.setName(cateName.trim());
                 newCate.setParent(parent);
+                newCate.setIconUrl(dto.getIconUrl());
+                newCate.setIconClass(dto.getIconClass());
 
                 if (imageFile != null && !imageFile.isEmpty()) {
                     try {
@@ -116,6 +125,7 @@ public class CategoryController {
                         Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
                         newCate.setImage(IMAGE_PATH_DB_PREFIX + filename);
                     } catch (IOException e) {
+                        e.printStackTrace();
                         return ResponseEntity.internalServerError().body("Category image upload failed.");
                     }
                 }
@@ -141,6 +151,7 @@ public class CategoryController {
 
     @LogActivity(actionType = "UPDATE", entityType = "CATEGORY", description = "Updated category", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresPermission(value = CATEGORIES_UPDATE, level = "advanced")
     public ResponseEntity<?> updateCategory(
             @PathVariable Long id,
             @RequestPart("name") String name,
@@ -157,6 +168,7 @@ public class CategoryController {
 
     @LogActivity(actionType = "DELETE", entityType = "CATEGORY", description = "Deleted category", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
+    @RequiresPermission(value = CATEGORIES_DELETE, level = "advanced")
     public ResponseEntity<?> softDeleteCategory(@PathVariable Long id) {
         try {
             service.softDeleteCategory(id);

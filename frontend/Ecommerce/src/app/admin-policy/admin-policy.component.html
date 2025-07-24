@@ -1,0 +1,64 @@
+<div class="admin-policy-root">
+  <mat-card class="policy-form-card">
+    <mat-card-title>Policy Management</mat-card-title>
+    <mat-card-content>
+      <form [formGroup]="policyForm" (ngSubmit)="submitForm()" class="policy-form">
+        <div class="form-fields">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Title</mat-label>
+            <input matInput formControlName="title" required placeholder="Enter policy title" />
+          </mat-form-field>
+          <div class="quill-field full-width">
+            <label class="quill-label">Content</label>
+            <quill-editor formControlName="content" [modules]="quillModules" placeholder="Enter policy content" class="quill-editor-large"></quill-editor>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit">
+            {{ editingPolicy ? 'Update Policy' : 'Add Policy' }}
+          </button>
+          <button *ngIf="editingPolicy" mat-stroked-button color="warn" type="button" (click)="cancelEdit()">Cancel</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="policy-table-card">
+    <mat-card-title>Existing Policies</mat-card-title>
+    <mat-card-content>
+      <div class="table-wrapper">
+        <mat-table [dataSource]="policies" class="mat-elevation-z8">
+          <ng-container matColumnDef="id">
+            <mat-header-cell *matHeaderCellDef> ID </mat-header-cell>
+            <mat-cell *matCellDef="let policy"> {{policy.id}} </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="title">
+            <mat-header-cell *matHeaderCellDef> Title </mat-header-cell>
+            <mat-cell *matCellDef="let policy"> {{policy.title}} </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="content">
+            <mat-header-cell *matHeaderCellDef> Content </mat-header-cell>
+            <mat-cell *matCellDef="let policy">
+              <div class="policy-content-cell" [innerHTML]="policy.content"></div>
+            </mat-cell>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <mat-header-cell *matHeaderCellDef> Actions </mat-header-cell>
+            <mat-cell *matCellDef="let policy">
+              <button mat-icon-button color="primary" (click)="editPolicy(policy)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deletePolicy(policy.id)">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </mat-cell>
+          </ng-container>
+
+          <mat-header-row *matHeaderRowDef="['id', 'title', 'content', 'actions']"></mat-header-row>
+          <mat-row *matRowDef="let row; columns: ['id', 'title', 'content', 'actions'];"></mat-row>
+        </mat-table>
+        <mat-spinner *ngIf="loading"></mat-spinner>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

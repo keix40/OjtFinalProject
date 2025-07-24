@@ -44,6 +44,9 @@ import com.Ojt.Ecommerce.entity.UserStatus;
 import com.Ojt.Ecommerce.repository.DiscountRepository;
 import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
 import com.Ojt.Ecommerce.entity.DiscountType;
+import com.Ojt.Ecommerce.entity.VipTier;
+import com.Ojt.Ecommerce.repository.VipTierRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Service
 @RequiredArgsConstructor
@@ -63,6 +66,8 @@ public class UserServiceImpl implements UserService {
     private final AddressService addressService;
     private final DiscountRepository discountRepository;
     private final DiscountRuleRepository discountRuleRepository;
+    @Autowired
+    private VipTierRepository vipTierRepository;
 
     // Method to ensure "First Time Buyer" discount exists
     private void ensureFirstTimeBuyerDiscountExists() {
@@ -79,6 +84,11 @@ public class UserServiceImpl implements UserService {
             firstTimeDiscount.setStatus(true);
             discountRepository.save(firstTimeDiscount);
         }
+    }
+
+    public VipTier getUserVipTier(User user) {
+        if (user.getTotalPoints() == null) return null;
+        return vipTierRepository.findTopByMinPointsLessThanEqualOrderByMinPointsDesc(user.getTotalPoints()).orElse(null);
     }
 
     @Override
@@ -280,6 +290,9 @@ public class UserServiceImpl implements UserService {
 
         String accessToken = jwtTokenProvider.generateToken(user);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+
+        VipTier vipTier = getUserVipTier(user);
+        String vipTierName = vipTier != null ? vipTier.getName() : "Regular";
 
         return new LoginResponse(accessToken, refreshToken.getToken());
     }

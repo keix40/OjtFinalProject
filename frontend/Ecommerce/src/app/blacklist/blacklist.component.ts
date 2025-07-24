@@ -7,6 +7,8 @@ import { BlacklistService, BlacklistEntry, BlacklistStats, AutoRules } from "../
 import { Subject, forkJoin, of } from 'rxjs';
 import { takeUntil, catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 declare var lucide: any;
 
 @Component({
@@ -18,6 +20,7 @@ declare var lucide: any;
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BlacklistComponent implements OnInit, OnDestroy {
+  public PermissionConstants = PermissionConstants;
   // Data properties
   filteredEntries: BlacklistEntry[] = [];
   paginatedEntries: BlacklistEntry[] = [];
@@ -66,8 +69,11 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private blacklistService: BlacklistService,
     private toastr: ToastrService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public permissionService: PermissionService
   ) {
+    this.PermissionConstants = PermissionConstants;
+    this.permissionService = permissionService;
     this.blacklistForm = this.fb.group({
       targetType: ["email", Validators.required],
       targetValue: ["", Validators.required],

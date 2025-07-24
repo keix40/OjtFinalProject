@@ -90,6 +90,18 @@ export class UserProductListComponent implements OnInit,OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Debug: log JWT payload and VIP tier
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('JWT payload:', payload);
+        const vipTier = payload.vipTier || null;
+        console.log('VIP tier from JWT:', vipTier);
+      } catch (e) {
+        console.log('Could not parse JWT:', e);
+      }
+    }
     this.cartService.refreshCart();
     this.userId = this.authService.getUserId();
     if (!this.userId) {
@@ -553,39 +565,134 @@ export class UserProductListComponent implements OnInit,OnDestroy {
     }
 
     this.allProducts.forEach(product => {
-      const discount = this.findApplicableDiscount(product);
-      if (discount) {
-        this.productDiscounts.set(product.id, discount);
-      }
-    });
+  const discount = this.findApplicableDiscount(product, this.userId);
+  if (discount) {
+    this.productDiscounts.set(product.id, discount);
+  }
+});
   }
 
-  findApplicableDiscount(product: ProductDTO): any {
-    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
-      return null;
-    }
+ findApplicableDiscount(product: ProductDTO, userId: number | null): any {
+  if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+    return null;
+  }
 
-    // Check each active discount
+    // 1. USER_PRODUCT
+    if (userId) {
     for (const discount of this.activeDiscounts) {
-      const rules = discount.rules || [];
-      
-      for (const rule of rules) {
-        if (this.isProductAffectedByRule(product, rule)) {
-          return {
-            id: discount.id,
-            name: discount.name,
-            discount_percent: discount.discount_percent,
-            discount_amount: discount.discount_amount,
-            discountType: discount.discountType,
-            targetType: rule.targetType,
-            eventName: discount.name
-          };
+      for (const rule of discount.rules || []) {
+        if (rule.targetType === 'USER_PRODUCT' && rule.userId === userId && rule.productId === product.id) {
+          return { ...discount, ...rule,eventName: discount.name };
+        }
         }
       }
     }
-    
-    return null;
+    // 2. USER_BRAND_CATEGORY
+    if (userId && product.categoryBrandArray) {
+    for (const discount of this.activeDiscounts) {
+      for (const pair of product.categoryBrandArray) {
+        for (const rule of discount.rules || []) {
+          if (
+            rule.targetType === 'USER_BRAND_CATEGORY' &&
+            rule.userId === userId &&
+            rule.brandId === pair.brandId &&
+            rule.categoryId === pair.categoryId
+          ) {
+            return { ...discount, ...rule,eventName: discount.name };
+          }
+          }
+        }
+      }
+    }
+    // 3. USER_CATEGORY
+    if (userId && product.categoryBrandArray) {
+    for (const discount of this.activeDiscounts) {
+      for (const pair of product.categoryBrandArray) {
+        for (const rule of discount.rules || []) {
+          if (
+            rule.targetType === 'USER_CATEGORY' &&
+            rule.userId === userId &&
+            rule.categoryId === pair.categoryId
+          ) {
+            return { ...discount, ...rule,eventName: discount.name };
+          }
+          }
+        }
+      }
+    }
+    // 4. USER_BRAND
+    if (userId && product.categoryBrandArray) {
+    for (const discount of this.activeDiscounts) {
+      for (const pair of product.categoryBrandArray) {
+        for (const rule of discount.rules || []) {
+          if (
+            rule.targetType === 'USER_BRAND' &&
+            Number(rule.userId) === Number(userId) &&
+            Number(rule.brandId) === Number(pair.brandId)
+          ) {
+            console.log('MATCHED USER_BRAND:', { userId, brandId: pair.brandId, discount });
+            return { ...discount, ...rule,eventName: discount.name };
+          }
+          }
+        }
+      }
+    }
+    // 5. PRODUCT
+  for (const discount of this.activeDiscounts) {
+    for (const rule of discount.rules || []) {
+      if (rule.targetType === 'PRODUCT' && rule.productId === product.id) {
+        return { ...discount, ...rule,eventName: discount.name };
+      }
+      }
+    }
+    // 6. BRAND_CATEGORY
+    if (product.categoryBrandArray) {
+    for (const discount of this.activeDiscounts) {
+      for (const pair of product.categoryBrandArray) {
+        for (const rule of discount.rules || []) {
+          if (
+            rule.targetType === 'BRAND_CATEGORY' &&
+            rule.brandId === pair.brandId &&
+            rule.categoryId === pair.categoryId
+          ) {
+            return { ...discount, ...rule,eventName: discount.name };
+          }
+          }
+        }
+      }
+    }
+    // 7. CATEGORY
+    if (product.categoryBrandArray) {
+    for (const discount of this.activeDiscounts) {
+      for (const pair of product.categoryBrandArray) {
+        for (const rule of discount.rules || []) {
+          if (
+            rule.targetType === 'CATEGORY' &&
+            rule.categoryId === pair.categoryId
+          ) {
+            return { ...discount, ...rule,eventName: discount.name };
+          }
+          }
+        }
+      }
+    }
+    // 8. BRAND
+    if (product.categoryBrandArray) {
+    for (const discount of this.activeDiscounts) {
+      for (const pair of product.categoryBrandArray) {
+        for (const rule of discount.rules || []) {
+          if (
+            rule.targetType === 'BRAND' &&
+            rule.brandId === pair.brandId
+          ) {
+            return { ...discount, ...rule,eventName: discount.name };
+          }
+        }
+      }
+    }
   }
+  return null;
+}
 
   isProductAffectedByRule(product: ProductDTO, rule: any): boolean {
     switch (rule.targetType) {
@@ -622,12 +729,12 @@ export class UserProductListComponent implements OnInit,OnDestroy {
 
   getDiscountDisplayText(discount: any): string {
     if (!discount) return '';
-    
     if (discount.discountType === 'PERCENTAGE') {
       return `${discount.discount_percent}% OFF`;
-    } else {
+    } else if (discount.discountType === 'FIXED' || discount.discountType === 'AMOUNT') {
       return `Save ${discount.discount_amount} MMK`;
     }
+    return '';
   }
 
   getDiscountedPrice(product: ProductDTO): number {
@@ -645,6 +752,34 @@ export class UserProductListComponent implements OnInit,OnDestroy {
     // Round to whole number (no decimals)
     return Math.round(discountedPrice);
   }
+
+  
+ getFinalDiscountedPrice(product: ProductDTO): number {
+  let price = product.price;
+  const productDiscount = this.getProductDiscount(product.id);
+
+  // 1. Apply product-based discount (if any)
+  if (productDiscount) {
+    if (productDiscount.discountType === 'PERCENTAGE') {
+      price = price - (price * productDiscount.discount_percent / 100);
+    } else {
+      price = price - productDiscount.discount_amount;
+    }
+  }
+
+  // 2. Always apply VIP tier discount (if any)
+  const userVipTier = this.getUserVipTier();
+  if (userVipTier) {
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    if (vipDiscount) {
+      price = price - (price * vipDiscount.discount_percent / 100);
+    }
+  }
+
+  return Math.round(price);
+}
 
   checkFirstTimeBuyerDiscount(): void {
     const token = localStorage.getItem('token');
@@ -710,4 +845,70 @@ export class UserProductListComponent implements OnInit,OnDestroy {
     if (value == null) return '';
     return Number.isInteger(value) ? value.toString() : value.toFixed(2);
   }
+
+  hasVipDiscount(): boolean {
+  const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+  return this.activeDiscounts.some(d =>
+    (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+  );
+}
+
+hasVipDiscountForProduct(product: ProductDTO): boolean {
+  const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+  return this.activeDiscounts.some(d =>
+    (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+  ) && this.getFinalDiscountedPrice(product) !== product.price;
+}
+
+  /**
+   * Returns the user's VIP tier (e.g., 'gold', 'silver', 'bronze') or null.
+   */
+  getUserVipTier(): string | null {
+    return this.authService.getUserVipTier && this.authService.getUserVipTier();
+  }
+
+  /**
+   * Returns the VIP discount percent for the current user's tier, or null if not applicable.
+   */
+  getVipDiscountPercent(): number | null {
+    const userVipTier = this.getUserVipTier();
+    if (!userVipTier) return null;
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    return vipDiscount ? vipDiscount.discount_percent : null;
+  }
+
+  /**
+   * Returns the VIP discount percent for a specific product, or null if not applicable.
+   */
+  getVipDiscountPercentForProduct(product: ProductDTO): number | null {
+    const userVipTier = this.getUserVipTier();
+    if (!userVipTier) return null;
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    // Optionally, check if this product is eligible for the VIP discount
+    if (vipDiscount && this.getFinalDiscountedPrice(product) !== product.price) {
+      return vipDiscount.discount_percent;
+    }
+    return null;
+  }
+
+  /**
+   * Returns a CSS class for the VIP badge based on the tier.
+   */
+  getVipBadgeClass(tier: string | null): string {
+    switch ((tier || '').toLowerCase()) {
+      case 'gold':
+        return 'bg-yellow-200 text-yellow-800';
+      case 'silver':
+        return 'bg-gray-200 text-gray-700';
+      case 'bronze':
+        return 'bg-orange-200 text-orange-800';
+      default:
+        return 'bg-blue-100 text-blue-700';
+    }
+  }
+
 }

@@ -14,8 +14,7 @@ import SockJS from 'sockjs-client';
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
-  standalone: true,
-  imports: [CommonModule, LucideAngularModule, FormsModule]
+  standalone: false
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   currentTimeFrame: 'hour'|'day'|'week'|'month'|'year' = 'day';
@@ -27,7 +26,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     month: 'Monthly',
     year: 'Yearly'
   };
-  
+
   // Data variables
   topMetricsData: any[] = [];
   salesMetricsData: any[] = [];
@@ -50,7 +49,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   // Summary metrics
   totalCustomers = 0;
   engagementRate = 0;
-  
+
   // Charts
   charts: { [key: string]: Chart } = {};
   updateInterval: any;
@@ -320,7 +319,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
     setTimeout(() => {
       this.updateSalesTrendChart();
-      
+
       this.updateRevenueTargetChart();
     }, 300);
   }
@@ -448,18 +447,18 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         },
         scales: {
           x: {
-            grid: { 
+            grid: {
               display: false,
               drawTicks: false
             },
-            ticks: { 
-              color: '#94a3b8', 
+            ticks: {
+              color: '#94a3b8',
               font: { size: 11, weight: 500 },
               maxTicksLimit: 8
             }
           },
           y: {
-            grid: { 
+            grid: {
               color: '#f1f5f9',
               drawTicks: false
             },
@@ -473,9 +472,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             }
           }
         },
-        interaction: { 
-          intersect: false, 
-          mode: 'index' 
+        interaction: {
+          intersect: false,
+          mode: 'index'
         },
         animation: {
           duration: 1500,

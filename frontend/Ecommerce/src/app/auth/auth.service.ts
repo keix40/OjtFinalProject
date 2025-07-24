@@ -98,6 +98,8 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('token');
+    // Clear permissions
+    localStorage.removeItem('userPermissions');
     // Clear blacklist flags when user logs out
     localStorage.removeItem('blacklisted');
     localStorage.removeItem('blacklistReason');
@@ -226,4 +228,22 @@ uploadProfileImage(file: File): Observable<any> { //add for profile avatar updat
   sendLoginOtp(email: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/send-login-otp`, { email });
   }
+
+    getUserVipTier(): string | null {
+    const token = localStorage.getItem('token');
+    
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.vipTier || null;
+    } catch {
+      return null;
+    }
+  }
+
+  refreshToken(): Observable<any> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    return this.http.post(`${this.baseUrl}/refresh-token`, { refreshToken });
+  }
+
 }

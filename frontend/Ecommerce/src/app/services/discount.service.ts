@@ -23,6 +23,9 @@ export interface DiscountRequestDTO {
   brandIds?: string; // comma-separated brand IDs for multi-selection
   categoryIds?: string; // comma-separated category IDs for multi-selection
   brandCategoryIds?: string; // comma-separated brand-category IDs for multi-selection
+  // --- Added fields ---
+  userIds?: string;
+  vipTierId?: number;
 }
 
 export interface DiscountEventResponseDTO {

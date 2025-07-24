@@ -105,6 +105,7 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         return;
       }
       this.auth.saveToken(res.accessToken);
+      localStorage.setItem('refreshToken', res.refreshToken);
 
       // Call backend to check first time buyer eligibility
       this.http.get('/api/notifications/check-first-time-buyer').subscribe();
@@ -114,6 +115,8 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       const permissionArray = permissionString.split(',').map((p: string) => p.trim());
 
       this.permissionService.setPermissions(permissionArray);
+      // Also set in localStorage for consistency
+      localStorage.setItem('userPermissions', JSON.stringify(permissionArray));
 
       // Role-based redirect
       const roles = decoded?.roles ? decoded.roles.split(',') : [];

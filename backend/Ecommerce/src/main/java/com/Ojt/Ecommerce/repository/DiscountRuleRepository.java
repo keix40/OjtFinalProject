@@ -35,6 +35,14 @@ public interface DiscountRuleRepository extends JpaRepository <DiscountRule, Lon
 
     void deleteAllByDiscount(Discount discount);
 
+    List<DiscountRule> findByUserIdAndBrandIdAndDiscountStatusTrue(Long userId, Long brandId);
+    List<DiscountRule> findByUserIdAndCategoryIdAndDiscountStatusTrue(Long userId, Long categoryId);
+    List<DiscountRule> findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(Long userId, Long brandId, Long categoryId);
+    List<DiscountRule> findByUserIdAndProductIdAndDiscountStatusTrue(Long userId, Long productId);
+    void deleteByUserIdAndProductId(Long userId, Long productId);
+    void deleteByUserIdAndBrandId(Long userId, Long brandId);
+    void deleteByUserIdAndCategoryId(Long userId, Long categoryId);
+    void deleteByUserIdAndBrandIdAndCategoryId(Long userId, Long brandId, Long categoryId);
     @Query("SELECT dr FROM DiscountRule dr WHERE dr.product.id = :productId AND (dr.user.id = :userId OR dr.user IS NULL) AND dr.discount.status = true ORDER BY dr.user.id DESC")
     DiscountRule findActiveProductDiscountRule(@Param("productId") Long productId, @Param("userId") Long userId);
 

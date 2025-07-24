@@ -6,6 +6,8 @@ import { DiscountCouponService } from '../services/discount-coupon.service';
 import { NotificationService } from '../services/notification.service';
 import { NotifcationService } from '../notifcation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return { required: true };
@@ -74,7 +76,7 @@ export class DiscountEventManagementComponent implements OnInit {
   showDeleteConfirmModal: boolean = false;
   discountToDelete: DiscountDTO | null = null;
    editDiscountId: number | null = null;
-
+  public PermissionConstants = PermissionConstants;
   // Add properties for filter/search UI
   searchTerm: string = '';
   selectedStatus: string = '';
@@ -154,6 +156,7 @@ export class DiscountEventManagementComponent implements OnInit {
     private notificationService: NotificationService,
     private notifcationService: NotifcationService,
     private modalService: NgbModal,
+    public permissionService: PermissionService
   ) {
     this.editForm = this.fb.group({
       name: ['', Validators.required],

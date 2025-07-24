@@ -7,6 +7,7 @@ import { Category, CategoryDTO } from '../category';
 import { Brand } from '../brand';
 import { NgForm } from '@angular/forms';
 import Swal from 'sweetalert2';
+import { ShoppingBag, Box, Tag, Gift, Star, Heart } from 'lucide-angular';
 
 @Component({
   selector: 'app-create-category',
@@ -25,11 +26,29 @@ export class CreateCategoryComponent {
   brands: Brand[] = [];
   categories: Category[] = [];
 
+  // The category image file (not icon)
   selectedImageFile?: File;
-  imagePreviewUrl: string | ArrayBuffer | null = null; 
+  imagePreviewUrl: string | ArrayBuffer | null = null;
 
   brandId: number | null = null;
   brandName: string | null = null;
+
+  selectedIcon: string = '';
+  availableIcons = [
+    { label: 'Shopping Bag', value: 'shopping-bag' },
+    { label: 'Box', value: 'box' },
+    { label: 'Tag', value: 'tag' },
+    { label: 'Gift', value: 'gift' },
+    { label: 'Star', value: 'star' },
+    { label: 'Heart', value: 'heart' },
+    // Add more Lucide icon names as needed
+  ];
+
+  iconUrl: string = '';
+  iconClass: string = '';
+  iconInputType: 'upload' | 'url' | 'class' = 'upload';
+  iconFile?: File;
+  iconFilePreview: string | ArrayBuffer | null = null;
 
   constructor(
     public activeModal: NgbActiveModal,
@@ -67,6 +86,36 @@ export class CreateCategoryComponent {
     }
   }
 
+  onIconFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.iconFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.iconFilePreview = reader.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.iconFile = undefined;
+      this.iconFilePreview = null;
+    }
+  }
+
+  onCategoryImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedImageFile = file;
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviewUrl = reader.result;
+      };
+      reader.readAsDataURL(file);
+    } else {
+      this.selectedImageFile = undefined;
+      this.imagePreviewUrl = null;
+    }
+  }
+
   createCategory(form: NgForm) {
     if (form.invalid) return;
 
@@ -93,9 +142,44 @@ export class CreateCategoryComponent {
       cateNames: uniqueNames,
       brandId: this.brandId ?? 0,
       brandName: this.brandName ?? '',
-      parentId: this.selectedParentCategoryId || undefined
+      parentId: this.selectedParentCategoryId || undefined,
+      iconUrl: this.iconInputType === 'url' ? this.iconUrl || undefined : undefined,
+      iconClass: this.iconInputType === 'class' ? this.iconClass || undefined : undefined
     };
-
+    // Debug log
+    console.log('Category image file:', this.selectedImageFile);
+    // If upload, use iconFile, else pass as before
+    if (this.iconInputType === 'upload' && this.iconFile) {
+      this.cateService.createCategoryWithImage(dto, this.selectedImageFile).subscribe({
+        next: () => {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Category created successfully!',
+            timer: 1800,
+            showConfirmButton: false
+          });
+          this.activeModal.close('success');
+          if (this.router.url !== '/categorylist') {
+            this.router.navigate(['/product']);
+          }
+          else{
+            this.router.navigate(['/categorylist']);
+          }
+        },
+        error: err => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: err.error || 'Failed to create category.',
+            showConfirmButton: true
+          });
+          console.error('Category create error:', err);
+        }
+      });
+      return;
+    }
+    // Otherwise, use the default method (no file upload)
     this.cateService.createCategoryWithImage(dto, this.selectedImageFile).subscribe({
       next: () => {
         Swal.fire({
@@ -123,23 +207,6 @@ export class CreateCategoryComponent {
         console.error('Category create error:', err);
       }
     });
-  }
-
-  onImageSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.selectedImageFile = file;
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.imagePreviewUrl = reader.result;
-      };
-      reader.readAsDataURL(file);
-    } else {
-      this.selectedImageFile = undefined;
-      this.imagePreviewUrl = null;
-    }
   }
 
   removeImage() {

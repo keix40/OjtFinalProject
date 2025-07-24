@@ -6,6 +6,8 @@ import { CommonModule } from '@angular/common';
 import { NgbCarouselModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ReviewService } from '../../services/review.service';
+import { PermissionService } from '../../services/permission.service';
+import { PermissionConstants } from '../../constants/permission.constants';
 import { animate, style, transition, trigger } from '@angular/animations';
 
 interface ProductImage {
@@ -68,7 +70,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   @ViewChild('imagePreviewModal') imagePreviewModalTemplate: any;
   @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate!: ElementRef;
   isModalOpen = false;
-  mediaModalRef: any;
+  public PermissionConstants = PermissionConstants;
+  public permissionService: PermissionService;  mediaModalRef: any;
   mediaModalCurrentReview: any;
   mediaModalCurrentType: 'image' | 'video' = 'image';
   mediaModalCurrentIndex: number = 0;
@@ -85,8 +88,11 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     private modalService: NgbModal,
     private router: Router,
     private reviewService: ReviewService,
-    private cdr: ChangeDetectorRef // Inject ChangeDetectorRef
-  ) {}
+    private cdr: ChangeDetectorRef,
+    permissionService: PermissionService
+  ) {
+    this.permissionService = permissionService;
+  }
 
   ngOnInit(): void {
     const productId = this.route.snapshot.paramMap.get('id');

@@ -2,6 +2,9 @@ package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.entity.BlacklistEntry;
 import com.Ojt.Ecommerce.service.BlacklistService;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -18,10 +21,12 @@ import java.util.Map;
 @RequestMapping("/api/blacklist")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200", allowCredentials = "true")
+@PermissionCategoryTag(value = "blacklist", name = "Blacklist Management", icon = "fas fa-ban")
 public class BlacklistController {
     private final BlacklistService blacklistService;
 
     @GetMapping("/entries")
+    @RequiresPermission(value = BLACKLIST_VIEW, level = "basic")
     public ResponseEntity<?> getEntries(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
@@ -65,21 +70,25 @@ public class BlacklistController {
     }
 
     @GetMapping("/stats")
+    @RequiresPermission(value = BLACKLIST_VIEW, level = "basic")
     public ResponseEntity<Map<String, Object>> getStats() {
         return ResponseEntity.ok(blacklistService.getStats());
     }
 
     @PostMapping("/entries")
+    @RequiresPermission(value = BLACKLIST_CREATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> addEntry(@RequestBody BlacklistEntry entry) {
         return ResponseEntity.ok(blacklistService.addEntry(entry));
     }
 
     @GetMapping("/entries/{id}")
+    @RequiresPermission(value = BLACKLIST_VIEW, level = "basic")
     public ResponseEntity<BlacklistEntry> getEntry(@PathVariable String id) {
         return ResponseEntity.ok(blacklistService.getEntry(id));
     }
 
     @PutMapping("/entries/{id}")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> updateEntry(
             @PathVariable String id,
             @RequestBody BlacklistEntry entry) {
@@ -87,23 +96,27 @@ public class BlacklistController {
     }
 
     @DeleteMapping("/entries/{id}")
+    @RequiresPermission(value = BLACKLIST_DELETE, level = "advanced")
     public ResponseEntity<Void> deleteEntry(@PathVariable String id) {
         blacklistService.deleteEntry(id);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/entries/{id}/lift")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> liftBan(@PathVariable String id) {
         return ResponseEntity.ok(blacklistService.liftBan(id));
     }
 
     @PostMapping("/entries/bulk-lift")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<Void> bulkLiftBan(@RequestBody Map<String, List<String>> request) {
         blacklistService.bulkLiftBan(request.get("ids"));
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/entries/{id}/notes")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> addNote(
             @PathVariable String id,
             @RequestBody Map<String, String> request) {
@@ -111,6 +124,7 @@ public class BlacklistController {
     }
 
     @PostMapping("/entries/{id}/extend")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> extendBan(
             @PathVariable String id,
             @RequestBody Map<String, String> request) {
@@ -119,6 +133,7 @@ public class BlacklistController {
     }
 
     @PostMapping("/entries/bulk-extend")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<Void> bulkExtendBan(@RequestBody Map<String, Object> request) {
         @SuppressWarnings("unchecked")
         List<String> ids = (List<String>) request.get("ids");
@@ -128,6 +143,7 @@ public class BlacklistController {
     }
 
     @PostMapping("/entries/bulk-category")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<Void> bulkUpdateCategory(@RequestBody Map<String, Object> request) {
         @SuppressWarnings("unchecked")
         List<String> ids = (List<String>) request.get("ids");
@@ -137,6 +153,7 @@ public class BlacklistController {
     }
 
     @GetMapping("/export")
+    @RequiresPermission(value = BLACKLIST_VIEW, level = "basic")
     public ResponseEntity<byte[]> exportEntries(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String category,
@@ -153,16 +170,19 @@ public class BlacklistController {
     }
 
     @GetMapping("/entries/{id}/incidents")
+    @RequiresPermission(value = BLACKLIST_VIEW, level = "basic")
     public ResponseEntity<List<Map<String, Object>>> getIncidentHistory(@PathVariable String id) {
         return ResponseEntity.ok(blacklistService.getIncidentHistory(id));
     }
 
     @GetMapping("/auto-rules")
+    @RequiresPermission(value = BLACKLIST_VIEW, level = "basic")
     public ResponseEntity<Map<String, Boolean>> getAutoRules() {
         return ResponseEntity.ok(blacklistService.getAutoRules());
     }
 
     @PutMapping("/auto-rules")
+    @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<Map<String, Boolean>> updateAutoRules(
             @RequestBody Map<String, Boolean> rules) {
         return ResponseEntity.ok(blacklistService.updateAutoRules(rules));

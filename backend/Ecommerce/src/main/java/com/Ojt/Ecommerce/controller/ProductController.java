@@ -4,6 +4,9 @@ import com.Ojt.Ecommerce.dto.ProductDTO;
 import com.Ojt.Ecommerce.entity.Product;
 import com.Ojt.Ecommerce.service.ProductService;
 import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -21,12 +24,14 @@ import java.util.Map;
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/product")
+@PermissionCategoryTag(value = "products", name = "Product Management", icon = "fa-box")
 public class ProductController {
     @Autowired
     private ProductService service;
 
     @LogActivity(actionType = "CREATE", entityType = "PRODUCT", description = "Created product", severityLevel = "MEDIUM")
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresPermission(value = PRODUCTS_CREATE, level = "advanced")
     public ResponseEntity<?> createProduct(
             @RequestPart("product") ProductDTO dto,
             @RequestPart("images") MultipartFile[] images,
@@ -50,6 +55,7 @@ public class ProductController {
     }
 
     @PostMapping("/by-ids")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public List<ProductDTO> getProductsByIds(@RequestBody Map<String, List<Long>> body) {
         List<Long> ids = body.get("ids");
         return service.getProductDTOsByIds(ids);
@@ -63,11 +69,13 @@ public class ProductController {
 
     //fixing error get all product 6.15.25
     @GetMapping("/getallproduct")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<ProductDTO>> getAllProduct() {
         return ResponseEntity.ok(service.getAllProduct());
     }
 
     @GetMapping("/productlist")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public List<ProductDTO> getAllActiveProducts() {
         return service.getAllActiveProductDTOs();
     }
@@ -75,6 +83,7 @@ public class ProductController {
     @LogActivity(actionType = "DELETE", entityType = "PRODUCT", description = "Deleted product", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     @Transactional
+    @RequiresPermission(value = PRODUCTS_DELETE, level = "advanced")
     public ResponseEntity<Map<String, Object>> deleteProduct(@PathVariable Long id){
         service.deleteProduct(id);
         Map<String, Object> response = new HashMap<>();
@@ -85,6 +94,7 @@ public class ProductController {
     @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Activated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/active/{id}")
     @Transactional
+    @RequiresPermission(value = PRODUCTS_UPDATE, level = "advanced")
     public ResponseEntity<Map<String, Object>> activeProduct(@PathVariable Long id){
         service.activeProduct(id);
         Map<String, Object> response = new HashMap<>();
@@ -95,6 +105,7 @@ public class ProductController {
     @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Deactivated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/inactive/{id}")
     @Transactional
+    @RequiresPermission(value = PRODUCTS_UPDATE, level = "advanced")
     public ResponseEntity<Map<String, Object>> inactiveProduct(@PathVariable Long id){
         service.inactiveProduct(id);
         Map<String, Object> response = new HashMap<>();
@@ -103,6 +114,7 @@ public class ProductController {
     }
 
     @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresPermission(value = PRODUCTS_UPDATE, level = "advanced")
     public ResponseEntity<?> updateProduct(
             @PathVariable Long id,
             @RequestPart("product") ProductDTO dto,
@@ -127,33 +139,39 @@ public class ProductController {
     }
 
     @GetMapping("/adminProductDetail/{id}")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ProductDTO getProductDetail(@PathVariable Long id) {
         return service.getProductDetailById(id);
     }
 
     @GetMapping("/productquantity/{id}")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<?> getProductQuantity(@PathVariable("id") Long productId) {
         Long quantity = service.getProductQuantity(productId);
         return ResponseEntity.ok(quantity);
     }
 
     @GetMapping("/variantstock/{id}")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<?> getProductVariantStock(@PathVariable("id") Long variantId) {
         Integer stock = service.getProductVariantStock(variantId);
         return ResponseEntity.ok(stock);
     }
 
     @GetMapping("/latest")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<Product>> getLatestProducts() {
         return ResponseEntity.ok(service.getLatest4Products());
     }
 
     @GetMapping("/topordered")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<Product>> getTopOrderedProducts() {
         return ResponseEntity.ok(service.getTop4OrderedProducts());
     }
 
     @GetMapping("/search")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String keyword) {
         List<ProductDTO> results = service.searchProducts(keyword);
         return ResponseEntity.ok(results);

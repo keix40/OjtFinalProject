@@ -8,6 +8,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import Swal from 'sweetalert2';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 @Component({
   selector: 'app-return-detail',
@@ -42,8 +44,10 @@ export class ReturnDetailComponent implements OnInit {
     private returnService: ReturnService,
     private orderService: OrderService,
     private route: ActivatedRoute,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    public permissionService: PermissionService
   ) {}
+  public PermissionConstants = PermissionConstants;
 
   ngOnInit() {
     this.loadRequestDetail();

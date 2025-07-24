@@ -13,11 +13,14 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { ImageService } from '../services/image.service';
 import { Router } from '@angular/router';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 import { AttributeService } from '../services/attribute.service';
 import { Attribute, AttributeValue } from '../attribute';
 import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
 declare var $: any;
 declare var lucide: any;
+
 
 // Update ProductImage type for productImages array to include variantId
 export interface ProductImage {
@@ -77,6 +80,9 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   editAttributeValue: string = '';
   expandedAttributeId: number | null = null;
 
+  
+  public PermissionConstants = PermissionConstants;
+  public permissionService: PermissionService;
   constructor(
     private productService: ProductService,
     private cateService: CategoryService,
@@ -84,8 +90,12 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     private ngbModel: NgbModal,
     public imageService: ImageService,
     private router: Router,
-    private attributeService: AttributeService // <-- Inject AttributeService
-  ) {}
+    private attributeService: AttributeService,
+    permissionService: PermissionService
+  ) {
+    this.PermissionConstants = PermissionConstants;
+    this.permissionService = permissionService;
+  }
 
   ngOnInit(): void {
     this.loadProduct();

@@ -11,7 +11,6 @@ import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptors/jwt.interceptors.service';
-
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UserOrdersComponent } from './user-profile/user-orders/user-orders.component';
 import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlist.component';
@@ -57,10 +56,17 @@ import { ReturnListComponent } from './return-list/return-list.component';
 import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
 import { CartSidebarComponent } from './cart-sidebar/cart-sidebar.component';
 import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { QuillModule } from 'ngx-quill';
 import { NotificationComponent } from './notification/notification.component';
 import { HeaderComponent } from './header/header.component';
 import { BreadcrumbComponent } from './breadcrumb.component';
+
 import { BrandListComponent } from './brand-list/brand-list.component';
 import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
@@ -70,13 +76,20 @@ import { DeliveryServiceListComponent } from './delivery-service-list/delivery-s
 import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
 import { ToastrModule } from 'ngx-toastr';
 import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
+import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
+import { UserPolicyComponent } from './user-policy/user-policy.component';
+import { AboutUsComponent } from './about-us/about-us.component';
+import { ContactUsComponent } from './contact-us/contact-us.component';
+import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'lucide-angular';
 
 @NgModule({
   declarations: [
     AppComponent,
     LoginComponent,
     RegisterComponent,
-
+    CreateDeliveryServiceComponent,
     UserProfileComponent,
     UserOrdersComponent,
     UserWishlistComponent,
@@ -115,37 +128,51 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
     ReturnListComponent,
     BrandListComponent,
     UserBrandListComponent,
+    DeliveryServiceListComponent,
+    OrderInvoiceComponent,
+
     CreateDeliveryServiceComponent,
     DeliveryServiceListComponent,
     OrderInvoiceComponent,
+    AdminPolicyComponent,
+    DashboardComponent,
+    DiscountAdminComponent,
+    UserPolicyComponent,
+    AboutUsComponent,
+    ContactUsComponent,
+
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    ReactiveFormsModule,
     FormsModule,
+    ReactiveFormsModule,
+    CommonModule,
+    BrowserAnimationsModule,
     NgbModule,
     GoogleMapsModule,
     RouterModule,
     CommonModule, // Required for pipes like date, currency, number
+    // Angular Material Modules
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTableModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    // Quill Editor
+    QuillModule.forRoot(),
     CartSidebarComponent, // Standalone component must be imported here
    ProductDetailComponent,
     BrowserAnimationsModule,
     BlacklistComponent,
     TestComponent,
-    //MatInputModule,
-    //MatAutocompleteModule,
-    //MatFormFieldModule,
-    // MatIconModule,
-    //MatButtonModule,
     FooterComponent,
     HeaderComponent,
     BreadcrumbComponent,
     VerifyOtpComponent,
-    MatTableModule,
     NotificationComponent,
-    HeaderComponent,
     BreadcrumbComponent,
     BannedPageComponent,
     NotificationSidebarComponent,
@@ -153,7 +180,8 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
       timeOut: 3000,
       positionClass: 'toast-top-right',
       preventDuplicates: true,
-    })
+    }),
+    LucideAngularModule.pick({ Tag, Box, Gift, Heart, ShoppingBag, Star })
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
@@ -164,4 +192,3 @@ import { NotificationSidebarComponent } from './notification-sidebar/notificatio
   bootstrap: [AppComponent]
 })
 export class AppModule { }
-

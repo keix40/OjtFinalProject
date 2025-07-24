@@ -1,0 +1,94 @@
+<div class="container mt-4">
+  <h2>{{ isEditMode ? 'Edit Discount' : 'Create Discount' }}</h2>
+  <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="mb-4">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label for="name" class="form-label">Name</label>
+        <input id="name" type="text" class="form-control" formControlName="name" required placeholder="Discount name" title="Discount name">
+        <div *ngIf="discountForm.get('name')?.invalid && discountForm.get('name')?.touched" class="text-danger small">Name is required.</div>
+      </div>
+      <div class="col-md-4">
+        <label for="code" class="form-label">Code</label>
+        <input id="code" type="text" class="form-control" formControlName="code" required placeholder="Discount code" title="Discount code">
+        <div *ngIf="discountForm.get('code')?.invalid && discountForm.get('code')?.touched" class="text-danger small">Code is required.</div>
+      </div>
+      <div class="col-md-4">
+        <label for="discountType" class="form-label">Discount Type</label>
+        <select id="discountType" class="form-select" formControlName="discountType" title="Discount type">
+          <option value="PERCENTAGE">Percentage</option>
+          <option value="FIXED">Fixed</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="discountValue" class="form-label">Discount Value</label>
+        <input id="discountValue" type="number" class="form-control" formControlName="discountValue" required min="0" placeholder="Value" title="Discount value">
+        <div *ngIf="discountForm.get('discountValue')?.invalid && discountForm.get('discountValue')?.touched" class="text-danger small">Value is required and must be non-negative.</div>
+      </div>
+      <div class="col-md-4">
+        <label for="startDate" class="form-label">Start Date</label>
+        <input id="startDate" type="date" class="form-control" formControlName="startDate" required placeholder="Start date" title="Start date">
+      </div>
+      <div class="col-md-4">
+        <label for="endDate" class="form-label">End Date</label>
+        <input id="endDate" type="date" class="form-control" formControlName="endDate" required placeholder="End date" title="End date">
+      </div>
+      <div class="col-md-4 d-flex align-items-center">
+        <div class="form-check mt-4">
+          <input id="autoApplied" type="checkbox" class="form-check-input" formControlName="autoApplied" title="Auto apply">
+          <label for="autoApplied" class="form-check-label">Auto Apply</label>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label for="discountEventId" class="form-label">Discount Event ID</label>
+        <input id="discountEventId" type="number" class="form-control" formControlName="discountEventId" placeholder="Event ID" title="Discount event ID">
+      </div>
+      <div class="col-md-4">
+        <label for="productIds" class="form-label">Product IDs (comma-separated)</label>
+        <input id="productIds" type="text" class="form-control" formControlName="productIds" placeholder="e.g. 1,2,3" title="Product IDs">
+      </div>
+    </div>
+    <div class="mt-3">
+      <button type="submit" class="btn btn-primary me-2" [disabled]="discountForm.invalid || !permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">{{ isEditMode ? 'Update' : 'Create' }}</button>
+      <button type="button" class="btn btn-secondary" (click)="resetForm()">Reset</button>
+    </div>
+    <div *ngIf="message" class="alert alert-info mt-3">{{ message }}</div>
+  </form>
+
+  <h3>Discounts List</h3>
+  <table class="table table-bordered table-hover mt-3">
+    <thead class="table-light">
+      <tr>
+        <th>Name</th>
+        <th>Code</th>
+        <th>Type</th>
+        <th>Value</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Auto</th>
+        <th>Event ID</th>
+        <th>Product IDs</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let d of discounts">
+        <td>{{ d.name }}</td>
+        <td>{{ d.code }}</td>
+        <td>{{ d.discountType }}</td>
+        <td>{{ d.discountValue }}</td>
+        <td>{{ d.startDate | date:'yyyy-MM-dd' }}</td>
+        <td>{{ d.endDate | date:'yyyy-MM-dd' }}</td>
+        <td>{{ d.autoApplied ? 'Yes' : 'No' }}</td>
+        <td>{{ d.discountEventId }}</td>
+        <td>{{ d.productIds ? d.productIds.join(', ') : '' }}</td>
+        <td>
+          <button class="btn btn-sm btn-warning me-1" (click)="onEdit(d)" [disabled]="!permissionService.hasPermission(PermissionConstants.DISCOUNTS_UPDATE)">Edit</button>
+          <button class="btn btn-sm btn-danger" (click)="onDelete(d.id)" [disabled]="!permissionService.hasPermission(PermissionConstants.DISCOUNTS_DELETE)">Delete</button>
+        </td>
+      </tr>
+      <tr *ngIf="discounts.length === 0">
+        <td colspan="10" class="text-center">No discounts found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

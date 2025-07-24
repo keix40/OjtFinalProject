@@ -36,10 +36,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Objects;
 import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/order")
+@PermissionCategoryTag(value = "orders", name = "Order Management", icon = "fa-shopping-cart")
 public class OrderController {
     @Autowired
     private OrderService service;
@@ -51,13 +55,14 @@ public class OrderController {
     @Autowired
     private UserActivityService userActivityService;
 
-    //delivery method
     @GetMapping("/getdeliveryservices")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> getAllDeliveryServices() {
         return ResponseEntity.ok(deliveryService.getAll());
     }
 
     @GetMapping("/preview-delivery-fee")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> getDeliveryFee(
             @RequestParam Long deliveryServiceId,
             @RequestParam Long addressId) {
@@ -71,6 +76,7 @@ public class OrderController {
     }
 
     @GetMapping("/calculateFeeByDistance")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> calculateFeeByDistance(@RequestParam Long deliveryServiceId, @RequestParam Long addressId) {
         try {
             double fee = deliveryService.calculateFeeByDistance(deliveryServiceId, addressId);
@@ -84,6 +90,7 @@ public class OrderController {
 
     //discount
     @GetMapping("/getdiscount/{userId}/{code}")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> getDiscountByCode(@PathVariable Long userId, @PathVariable String code) {
         DiscountDTO disDto = service.getDiscountByCode(code);
         if (disDto == null) {
@@ -98,6 +105,7 @@ public class OrderController {
 
     @LogActivity(actionType = "CREATE", entityType = "ORDER", description = "Created order", severityLevel = "MEDIUM")
     @PostMapping("/create")
+    @RequiresPermission(value = ORDERS_CREATE, level = "basic")
     public ResponseEntity<?> createOrder(@RequestBody UserOrderDTO dto){
         System.out.println("Received order DTO: " + dto);
         try {
@@ -111,23 +119,27 @@ public class OrderController {
 
     //add for discount  preview by pmk july 9
     @PostMapping("/preview")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> previewOrder(@RequestBody UserOrderDTO dto) {
         return ResponseEntity.ok(service.previewOrder(dto));
     }
 
     @GetMapping("/getorderbyuserid/{userId}")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<List<UserOrderListDTO>> getOrdersByUserId(@PathVariable Long userId) {
         List<UserOrderListDTO> orders = service.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/getallorder")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic", description = "Get all orders")
     public ResponseEntity<List<UserOrderListDTO>> getAllOrder(){
         List<UserOrderListDTO> orders = service.getAllOrders();
         return ResponseEntity.ok(orders);
     }
 
     @GetMapping("/total-sales")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Double> getTotalSales() {
         double totalSales = service.getAllOrders().stream()
             .mapToDouble(order -> order.getTotal() != null ? order.getTotal() : 0)
@@ -136,6 +148,7 @@ public class OrderController {
     }
 
     @GetMapping("/sales-trend")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<List<Map<String, Object>>> getSalesTrend(@RequestParam(defaultValue = "day") String timeFrame) {
         List<UserOrderListDTO> orders = service.getAllOrders();
         Map<String, Double> groupedTotal = new java.util.LinkedHashMap<>();
@@ -365,6 +378,7 @@ public class OrderController {
 
     @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId", logChanges = true)
     @PutMapping("/updatestatus/{orderId}")
+    @RequiresPermission(value = ORDERS_UPDATE, level = "basic", description = "Update order status")
     public ResponseEntity<String> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestBody Map<String, String> request) {
@@ -379,6 +393,7 @@ public class OrderController {
     }
 
     @GetMapping("/getorderbyid/{orderId}")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId) {
             UserOrderListDTO order = service.getOrderById(orderId);
             return ResponseEntity.ok(order);
@@ -386,6 +401,7 @@ public class OrderController {
 
     // Test endpoint to check if user is first-time buyer
     @GetMapping("/test/firsttimebuyer/{userId}")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> testFirstTimeBuyer(@PathVariable Long userId) {
         boolean isFirstTime = service.isUserFirstTimeBuyer(userId);
         return ResponseEntity.ok(Map.of(
@@ -396,6 +412,7 @@ public class OrderController {
 
     // Test endpoint to get user's discount status
     @GetMapping("/test/discountstatus/{userId}")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<?> testDiscountStatus(@PathVariable Long userId) {
         String status = service.getUserDiscountStatus(userId);
         return ResponseEntity.ok(Map.of(
@@ -405,12 +422,14 @@ public class OrderController {
     }
 
     @GetMapping("/count")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Integer> getOrderCount() {
         int count = service.getAllOrders().size();
         return ResponseEntity.ok(count);
     }
 
     @GetMapping("/active-users")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Integer> getActiveUsers(@RequestParam(defaultValue = "day") String timeFrame) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime start;
@@ -427,6 +446,7 @@ public class OrderController {
     }
 
     @GetMapping("/customers-count")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Integer> getCustomersCount() {
         List<UserOrderListDTO> orders = service.getAllOrders();
         long count = orders.stream()
@@ -438,6 +458,7 @@ public class OrderController {
     }
 
     @GetMapping("/previous-metrics")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Map<String, Object>> getPreviousMetrics(@RequestParam(defaultValue = "day") String timeFrame) {
         List<UserOrderListDTO> orders = service.getAllOrders();
         LocalDateTime now = LocalDateTime.now();

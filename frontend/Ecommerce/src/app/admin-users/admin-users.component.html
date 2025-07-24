@@ -86,10 +86,10 @@
             <i data-lucide="download" class="w-4 h-4"></i>
             Export
           </button>
-          <button class="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-3 py-2 flex items-center gap-1 transition-all" (click)="openCreateAdminModal()">
+          <!-- <button class="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-3 py-2 flex items-center gap-1 transition-all" (click)="openCreateAdminModal()">
             <i data-lucide="user-plus" class="w-4 h-4"></i>
             Add Admin
-          </button>
+          </button> -->
         </div>
       </div>
       <div class="p-6">
@@ -244,7 +244,12 @@
                 </div>
               </div>
               <div class="flex gap-2 mt-2">
-                <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-gray-700 hover:bg-gray-50 transition-all" (click)="editAdmin(admin)" title="Edit Admin">
+                <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-gray-700 hover:bg-gray-50 transition-all"
+                  (click)="permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) && currentUser.role.level > getRoleLevel(admin) ? editAdmin(admin) : null"
+                  title="Edit Admin"
+                  [disabled]="!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) || currentUser.role.level < getRoleLevel(admin)"
+                  [ngClass]="(!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) || currentUser.role.level < getRoleLevel(admin)) ? 'pointer-events-none opacity-50' : ''"
+                  [attr.title]="currentUser.role.level < getRoleLevel(admin) ? 'You cannot edit users with equal or higher role level' : (!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) ? 'You do not have permission to edit users' : '')">
                   <i data-lucide="edit" class="w-4 h-4"></i>
                 </button>
                 <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-gray-700 hover:bg-gray-50 transition-all" (click)="viewAdminActivity(admin)" title="View Activity">
@@ -253,10 +258,20 @@
                 <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-blue-700 hover:bg-blue-50 transition-all" (click)="viewPermissions(admin)" title="View Permissions">
                   <i data-lucide="eye" class="w-4 h-4"></i>
                 </button>
-                <button class="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-3 py-2 flex items-center gap-1 transition-all" (click)="toggleAdminStatus(admin)" title="Toggle Status">
+                <button class="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-3 py-2 flex items-center gap-1 transition-all"
+                  (click)="permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) && currentUser.role.level > getRoleLevel(admin) ? toggleAdminStatus(admin) : null"
+                  title="Toggle Status"
+                  [disabled]="!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) || currentUser.role.level < getRoleLevel(admin)"
+                  [ngClass]="(!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) || currentUser.role.level < getRoleLevel(admin)) ? 'pointer-events-none opacity-50' : ''"
+                  [attr.title]="currentUser.role.level < getRoleLevel(admin) ? 'You cannot change status of users with equal or higher role level' : (!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) ? 'You do not have permission to change user status' : '')">
                   <i data-lucide="power" class="w-4 h-4"></i>
                 </button>
-                <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-red-600 hover:bg-red-50 transition-all" (click)="deleteAdmin(admin)" title="Delete">
+                <button class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-red-600 hover:bg-red-50 transition-all"
+                  (click)="permissionService.hasPermission(PermissionConstants.ADMIN_USERS_DELETE) && currentUser.role.level > getRoleLevel(admin) ? deleteAdmin(admin) : null"
+                  title="Delete"
+                  [disabled]="!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_DELETE) || currentUser.role.level < getRoleLevel(admin)"
+                  [ngClass]="(!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_DELETE) || currentUser.role.level < getRoleLevel(admin)) ? 'pointer-events-none opacity-50' : ''"
+                  [attr.title]="currentUser.role.level < getRoleLevel(admin) ? 'You cannot delete users with equal or higher role level' : (!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_DELETE) ? 'You do not have permission to delete users' : '')">
                   <i data-lucide="trash" class="w-4 h-4"></i>
                 </button>
               </div>
@@ -441,7 +456,7 @@
       </div>
       <div class="flex justify-end gap-2 mt-4">
         <button type="button" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700" (click)="closeEditAdminModal()">Cancel</button>
-        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Save Changes</button>
+        <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" [disabled]="!permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE)">Save Changes</button>
       </div>
     </form>
   </div>

@@ -222,7 +222,8 @@
                     <button 
                       class="btn btn-sm btn-outline-primary me-1" 
                       (click)="viewCustomerDetails(customer)"
-                      title="View Details"
+                      title="View Details" 
+                      [disabled]="!permissionService.hasPermission(PermissionConstants.CUSTOMERS_VIEW)"
                     >
                       <i data-lucide="eye" class="w-4 h-4"></i>
                     </button>
@@ -230,17 +231,18 @@
                       class="btn btn-sm btn-outline-secondary" 
                       (click)="openDropdownId === customer.id ? openDropdownId = null : openDropdownId = customer.id"
                       title="More Actions"
+                      [disabled]="!permissionService.hasPermission(PermissionConstants.CUSTOMERS_VIEW)"
                     >
                       <i data-lucide="ellipsis-vertical" class="w-4 h-4"></i>
                     </button>
                     <div *ngIf="openDropdownId === customer.id" class="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="editCustomer(customer); openDropdownId = null">
+                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="editCustomer(customer); openDropdownId = null" [disabled]="!permissionService.hasPermission(PermissionConstants.USERS_UPDATE)">
                         <i data-lucide="edit" class="w-4 h-4"></i> Edit
                       </button>
-                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="toggleCustomerStatus(customer); openDropdownId = null">
+                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="toggleCustomerStatus(customer); openDropdownId = null" [disabled]="!permissionService.hasPermission(PermissionConstants.USERS_UPDATE)">
                         <i data-lucide="power" class="w-4 h-4"></i> {{ customer.status === 'active' ? 'Deactivate' : 'Activate' }}
                       </button>
-                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-600" (click)="deleteCustomer(customer); openDropdownId = null">
+                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-600" (click)="deleteCustomer(customer); openDropdownId = null" [disabled]="!permissionService.hasPermission(PermissionConstants.USERS_DELETE)">
                         <i data-lucide="trash" class="w-4 h-4"></i> Delete
                       </button>
                     </div>

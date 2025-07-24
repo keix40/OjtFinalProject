@@ -9,6 +9,8 @@ import { Address as ServiceAddress } from '../services/address.service';
 import { AuthService } from '../auth/auth.service';
 import Swal from 'sweetalert2';
 import { Router } from '@angular/router';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 interface Address extends Omit<ServiceAddress, 'userId'> {
   userId?: number;
@@ -23,7 +25,7 @@ interface Address extends Omit<ServiceAddress, 'userId'> {
 export class CreateDeliveryServiceComponent {
   deliveryServiceForm: FormGroup;
   isSubmitting = false;
-  
+  public PermissionConstants = PermissionConstants;
   addresses: any[] = [];
   selectedAddressIndex: number | null = null;
   deliveryServiceId: number | null = null;
@@ -65,7 +67,8 @@ export class CreateDeliveryServiceComponent {
     private addressService: AddressService,
     private authService: AuthService,
     private modalService: NgbModal,
-    private router: Router
+    private router: Router,
+    public permissionService: PermissionService
   ) {
     this.deliveryServiceForm = this.fb.group({
       name: ['', Validators.required],

@@ -6,6 +6,8 @@ import { BrandService } from '../services/brand.service';
 import { CategoryService } from '../services/category.service';
 import { BrandListDTO, BrandDTO } from '../brand';
 import { Category } from '../category';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 @Component({
   selector: 'app-brand-update',
@@ -27,8 +29,10 @@ export class BrandUpdateComponent implements OnInit {
   constructor(
     public activeModal: NgbActiveModal,
     private brandService: BrandService,
-    private cateService: CategoryService
+    private cateService: CategoryService,
+    public permissionService: PermissionService
   ) {}
+  public PermissionConstants = PermissionConstants;
 
   ngOnInit(): void {
     // Fetch all categories

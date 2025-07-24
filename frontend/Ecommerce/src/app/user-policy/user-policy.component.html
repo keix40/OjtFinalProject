@@ -1,0 +1,34 @@
+<div class="max-w-3xl mx-auto p-4">
+  <!-- Loading Spinner -->
+  <div *ngIf="loading" class="flex justify-center items-center py-12">
+    <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="bg-red-100 text-red-700 p-4 rounded mb-6 shadow">
+    {{ error }}
+  </div>
+
+  <!-- Policies Accordion -->
+  <div *ngIf="!loading && !error">
+    <ng-container *ngIf="policies.length; else noPolicies">
+      <div *ngFor="let policy of policies; let i = index" class="mb-6">
+        <button type="button" (click)="policy.open = !policy.open" class="w-full text-left p-4 bg-white rounded shadow flex justify-between items-center focus:outline-none">
+          <span class="text-xl font-semibold">{{ policy.title }}</span>
+          <svg [attr.class]="policy.open ? 'rotate-180 h-5 w-5 transition-transform' : 'h-5 w-5 transition-transform'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+        <div *ngIf="policy.open" class="p-4 bg-gray-50 border border-t-0 border-gray-200 rounded-b">
+          <div [innerHTML]="policy.content"></div>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #noPolicies>
+      <div class="text-gray-500 text-center py-8">No policies found.</div>
+    </ng-template>
+  </div>
+</div>

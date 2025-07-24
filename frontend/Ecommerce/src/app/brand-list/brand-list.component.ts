@@ -10,6 +10,8 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { saveAs } from 'file-saver';
 import { BrandUpdateComponent } from '../brand-update/brand-update.component';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 @Component({
   selector: 'app-brand-list',
@@ -40,8 +42,10 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   constructor(
     private brandService: BrandService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    public permissionService: PermissionService
   ) {}
+  public PermissionConstants = PermissionConstants;
 
   ngOnInit(): void {
     this.loadBrands();

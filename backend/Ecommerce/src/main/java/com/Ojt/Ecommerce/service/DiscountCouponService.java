@@ -27,11 +27,15 @@ public class DiscountCouponService {
 
     @Transactional
     public DiscountEventResponseDTO createDiscount(DiscountRequestDTO dto) {
-        double discountValue = dto.getDiscountValue();
+        double discountValue;
 
-        // If percentage and value > 1, convert to decimal
-        if ("PERCENTAGE".equalsIgnoreCase(dto.getDiscountType()) && discountValue > 1) {
-            discountValue = discountValue / 100.0;
+        // Convert percentage to decimal format for storage
+        if ("PERCENTAGE".equalsIgnoreCase(dto.getDiscountType())) {
+            // Convert percentage to decimal (e.g., 1% -> 0.01, 10% -> 0.10)
+            discountValue = dto.getDiscount_percent() / 100.0;
+        } else {
+            // Fixed amount remains unchanged
+            discountValue = dto.getDiscount_amount();
         }
 
         Discount discount = Discount.builder()
@@ -178,7 +182,15 @@ public class DiscountCouponService {
         dto.setName(discount.getName());
         dto.setCode(discount.getCode());
         dto.setDiscountType(discount.getDiscountType());
+        
+        // Convert stored decimal percentage back to percentage format for display
+        if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
+            double percentageValue = discount.getDiscountValue() * 100.0;
+            dto.setDiscountValue(percentageValue);
+        } else {
         dto.setDiscountValue(discount.getDiscountValue());
+        }
+        
         dto.setStartDate(discount.getStartDate().toString());
         dto.setEndDate(discount.getEndDate().toString());
         dto.setAutoApply(discount.getAutoApply());
