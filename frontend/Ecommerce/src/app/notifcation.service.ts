@@ -119,4 +119,8 @@ private client!: Client;
 
     return this.http.post(`http://localhost:8080/api/notifications/${id}/read`, {}, { headers });
   }
+
+  markAsUnread(id: number) {
+    return this.http.post(`/api/notifications/${id}/unread`, {});
+  }
 }

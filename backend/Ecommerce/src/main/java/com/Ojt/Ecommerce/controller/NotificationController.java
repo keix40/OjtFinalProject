@@ -39,6 +39,9 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteNotification(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
+        if (user == null) {
+            return ResponseEntity.status(401).body("User not authenticated");
+        }
         return notificationRepository.findById(id)
                 .map(notification -> {
                     if (!notification.getRecipientEmail().equals(user.getUsername())) {
@@ -59,6 +62,21 @@ public class NotificationController {
                         return ResponseEntity.status(403).body("You are not authorized to modify this notification.");
                     }
                     notification.setRead(true);
+                    notificationRepository.save(notification);
+                    return ResponseEntity.ok(notification);
+                })
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{id}/unread")
+    public ResponseEntity<?> markNotificationAsUnread(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
+        return notificationRepository.findById(id)
+                .map(notification -> {
+                    if (!notification.getRecipientEmail().equals(user.getUsername())) {
+                        return ResponseEntity.status(403).body("You are not authorized to modify this notification.");
+                    }
+                    notification.setRead(false);
                     notificationRepository.save(notification);
                     return ResponseEntity.ok(notification);
                 })

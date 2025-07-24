@@ -129,68 +129,63 @@
           <div class="space-y-4 mb-8">
             <div *ngFor="let item of cartItems" class="flex items-center space-x-3 group transition-transform duration-200 hover:scale-[1.02]">
               <img [src]="item.image" alt="{{item.title}}" class="w-14 h-14 object-cover rounded-xl border border-gray-200 group-hover:shadow-sm transition-shadow duration-200">
-              <div class="flex-1">
-                <div class="font-semibold text-gray-900 text-sm">{{item.title}}</div>
-                <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-gray-500 text-xs">
-                  <div *ngFor="let attr of item.variantAttributes">{{ attr }}</div>
+              <div class="flex-1 min-w-0">
+                <!-- Product name -->
+                <div class="font-bold text-neutral-900 text-base leading-tight truncate">{{item.title}}</div>
+                <!-- Quantity -->
+                <div class="text-xs text-gray-500 mb-1">Quantity: {{item.quantity}}</div>
+                <!-- Price row: right-aligned, all in one line -->
+                <ng-container *ngIf="productDetails.get(item.productId || item.id) as product">
+                  <div class="flex items-center justify-end gap-1 mb-1">
+                    <!-- Original price -->
+                    <span *ngIf="getProductDiscount(product.id)" class="text-xs text-gray-400 line-through mr-1">
+                      {{ product.price }} MMK
+                    </span>
+                    <!-- Product discount badge -->
+                    <span *ngIf="getDiscountDisplayText(getProductDiscount(product.id))"
+                          class="px-1 py-0 rounded bg-red-50 text-red-600 text-[10px] font-semibold border border-red-100 rounded-full mr-1">
+                      {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+                    </span>
+                    <!-- VIP Tier Badge -->
+                    <span *ngIf="getVipDiscountDisplay(product)"
+                          class="px-1 py-0 rounded bg-yellow-50 text-yellow-700 text-[10px] font-semibold border border-yellow-100 rounded-full mr-1">
+                      {{ getVipDiscountDisplay(product) }}
+                    </span>
+                   
+                  </div>
+                </ng-container>
+              </div>
+              <div class="text-right min-w-[90px]">
+                <div *ngIf="productDetails.get(item.productId || item.id) as product">
+                  <div class="font-bold text-blue-700 text-lg">
+                    {{ getFinalDiscountedPrice(product) * item.quantity | number:'1.0-0' }} MMK
+                  </div>
                 </div>
-                <div class="text-gray-500 text-xs">Quantity: {{item.quantity}}</div>
-                <!-- Product Discount Display -->
-                <div *ngIf="getProductDiscount(item.productId || item.id)" class="text-green-600 text-xs font-medium">
-                  <span *ngIf="getProductDiscount(item.productId || item.id)?.eventName">{{ getProductDiscount(item.productId || item.id)?.eventName }} </span>({{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }})
+                <div *ngIf="!productDetails.get(item.productId || item.id)">
+                  <div class="font-bold text-blue-700 text-lg">
+                    {{ item.price * item.quantity | number:'1.0-0' }} MMK
+                  </div>
                 </div>
               </div>
-              <div class="text-right">
-                <div *ngIf="getProductDiscount(item.productId || item.id)" class="text-gray-400 text-xs line-through">
-                  {{ (item.price * item.quantity) | number:'1.0-0' }} MMK
-                </div>
-                <div class="font-bold text-gray-900">
-                  {{ (getItemDiscountedPrice(item) * item.quantity) | number:'1.0-0' }} MMK
-                </div>
-              </div>
             </div>
+            <hr class="my-2 border-gray-200">
           </div>
-          <!-- Coupon Code -->
-          <div class="mb-8">
-            <div class="flex space-x-2">
-              <input type="text" placeholder="Enter coupon code" class="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-sm" [(ngModel)]="couponCode" [disabled]="hasDiscountedProduct() || isFirstTimeBuyerDiscount">
-              <button class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-medium transition-colors duration-200 text-sm" (click)="applyCoupon()" >Apply</button>
-            </div>
-            <div *ngIf="hasDiscountedProduct() || isFirstTimeBuyerDiscount" class="text-red-600 text-sm mt-2">
-              <ng-container *ngIf="isFirstTimeBuyerDiscount">
-                Coupons can be only used for non-discounted items.
-              </ng-container>
-              <ng-container *ngIf="!isFirstTimeBuyerDiscount && hasDiscountedProduct()">
-                Coupons can be only used for non-discounted items.
-              </ng-container>
-            </div>
-            <p [ngClass]="{'text-green-600': isCouponValid, 'text-red-600': !isCouponValid}" class="mt-2 text-sm transition-colors duration-200">{{ discountMessage }}</p>
-          </div>
+          <hr class="my-4 border-gray-200">
           <!-- Summary Details -->
           <div class="space-y-4 mb-8">
             <div class="flex justify-between text-gray-600">
               <span>Subtotal ({{ cartItems.length }} items)</span>
               <span>{{ getSubtotal() | number:'1.0-0' }} MMK</span>
-            </div>      
+            </div>
             <div class="flex justify-between text-gray-600">
               <span>Shipping</span>
               <span class="text-green-600 font-medium">{{ deliveryFee | number:'1.0-0' }} MMK</span>
             </div>
-
             <!-- Product Discounts -->
-             <div class="flex justify-between items-center py-2" *ngIf="getTotalDiscount() > 0">
-              <span>Discount</span>
-              <span>
-                <ng-container *ngIf="isFirstTimeBuyerDiscount && orderPreview?.discountAmount > 0">
-                  <small>(First time buyer 10%)</small> -{{ orderPreview.discountAmount | number:'1.0-0' }} MMK
-                </ng-container>
-                <ng-container *ngIf="!isFirstTimeBuyerDiscount">
-                  -{{ getTotalDiscount() | number:'1.0-0' }} MMK
-                </ng-container>
-              </span>
+            <div class="flex justify-between items-center py-2" *ngIf="getTotalDiscount() > 0">
+              <span class="font-semibold text-red-600">Discount</span>
+              <span class="font-semibold text-red-600">-{{ getTotalDiscount() | number:'1.0-0' }} MMK</span>
             </div>
-            
-
             <div class="border-t border-gray-100 pt-4">
               <div class="flex justify-between text-xl font-bold text-gray-900">
                 <span>Total</span>

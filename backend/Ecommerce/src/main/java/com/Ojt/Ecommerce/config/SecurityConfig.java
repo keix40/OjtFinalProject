@@ -79,8 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/deliveryservice/**").permitAll()
                         .requestMatchers("/api/contact/**").permitAll()
                         .requestMatchers("/api/notification/**").permitAll()
-
-
+                        .requestMatchers("/api/newsletter/**").permitAll()
 
                         .anyRequest().authenticated()
 

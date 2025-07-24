@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { DiscountService } from '../services/discount.service';
 import { NotificationService } from '../services/notification.service';
 import { NotifcationService } from '../notifcation.service';
@@ -15,11 +16,12 @@ import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
 import { ProductList } from '../product';
 import { HttpClient } from '@angular/common/http';
+import { VerifyOtpComponent } from '../auth/verify-otp/verify-otp.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FooterComponent, RouterModule],
+  imports: [CommonModule, HeaderComponent, FooterComponent, RouterModule, FormsModule,],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
@@ -36,6 +38,8 @@ export class HomeComponent implements OnInit {
   trendingProducts: ProductList[] = [];
   firstTimeBuyerNotification: any = null;
   showFirstTimeBuyerAlert = false;
+  newsletterEmail = '';
+  // Removed: showOtpModal, newsletterEmailForOtp
 
   constructor(
     private categoryService: CategoryService,
@@ -265,4 +269,19 @@ export class HomeComponent implements OnInit {
     });
   }
   
+  subscribeToNewsletter() {
+    if (!this.newsletterEmail) return;
+    // Directly subscribe without OTP modal
+    this.http.post('http://localhost:8080/api/newsletter/subscribe?email=' + encodeURIComponent(this.newsletterEmail), {})
+      .subscribe({
+        next: (res: any) => {
+          alert(res.message);
+          this.newsletterEmail = '';
+        },
+        error: () => {
+          alert('Subscription failed.');
+        }
+      });
+  }
+
 }

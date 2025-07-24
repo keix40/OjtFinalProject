@@ -88,6 +88,18 @@ export class UserNotificationsComponent implements OnInit {
     });
   }
 
+  markAsUnread(notification: any): void {
+    this.notificationService.markAsUnread(notification.id).subscribe({
+      next: () => {
+        const notif = this.notifications.find(n => n.id === notification.id);
+        if (notif) notif.read = false;
+      },
+      error: (err) => {
+        console.error('Failed to mark notification as unread:', err);
+      }
+    });
+  }
+
   toggleMenu(notification: any, event: MouseEvent): void {
     event.stopPropagation();
     const currentState = notification.showMenu;
@@ -182,5 +194,20 @@ export class UserNotificationsComponent implements OnInit {
     const now = Date.now();
     const sixHours = 6 * 60 * 60 * 1000;
     return !lastShown || now - parseInt(lastShown, 10) > sixHours;
+  }
+
+  markAllAsRead(): void {
+    const unread = this.notifications.filter(n => !n.read);
+    unread.forEach(notification => {
+      this.notificationService.markAsRead(notification.id).subscribe({
+        next: () => {
+          const notif = this.notifications.find(n => n.id === notification.id);
+          if (notif) notif.read = true;
+        },
+        error: (err) => {
+          console.error('Failed to mark notification as read:', err);
+        }
+      });
+    });
   }
 }

@@ -234,16 +234,68 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.productDiscounts.get(productId);
   }
 
-  getDiscountedPrice(product: ProductDTO): number {
-  if (this.isFirstTimeBuyerDiscount) return product.price;
-  const discount = this.getProductDiscount(product.id);
-  if (!discount) return product.price;
-  if (discount.discountType === 'PERCENTAGE') {
-    return product.price - (product.price * discount.discount_percent / 100);
-  } else {
-    return Math.max(0, product.price - discount.discount_amount);
+  getFinalDiscountedPrice(product: ProductDTO): number {
+    let price = product.price;
+    const productDiscount = this.getProductDiscount(product.id);
+
+    // 1. Apply product-based discount (if any)
+    if (productDiscount) {
+      if (productDiscount.discountType === 'PERCENTAGE') {
+        price = price - (price * productDiscount.discount_percent / 100);
+      } else {
+        price = price - productDiscount.discount_amount;
+      }
+    }
+
+    // 2. Always apply VIP tier discount (if any)
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (userVipTier) {
+      const vipDiscount = this.activeDiscounts.find(d =>
+        (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+      );
+      if (vipDiscount) {
+        price = price - (price * vipDiscount.discount_percent / 100);
+      }
+    }
+    return Math.round(price);
   }
-}
+
+  getVipDiscountPercent(product: ProductDTO): number | null {
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (!userVipTier) return null;
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    return vipDiscount ? vipDiscount.discount_percent : null;
+  }
+
+  getVipDiscountDisplay(product: ProductDTO): string {
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (!userVipTier) return '';
+    const percent = this.getVipDiscountPercent(product);
+    if (percent) {
+      return `${userVipTier.charAt(0).toUpperCase() + userVipTier.slice(1)} Tier ${percent}% OFF`;
+    }
+    return '';
+  }
 
   getDiscountDisplayText(discount: any): string {
     if (!discount) return '';
@@ -264,9 +316,9 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
     for (const item of this.cartItems) {
       const product = this.productDetails.get(item.productId || item.id);
       if (product) {
-        const discounted = this.getDiscountedPrice(product);
-        if (discounted < product.price) {
-          discount += (product.price - discounted) * item.quantity;
+        const finalPrice = this.getFinalDiscountedPrice(product);
+        if (finalPrice < product.price) {
+          discount += (product.price - finalPrice) * item.quantity;
         }
       }
     }

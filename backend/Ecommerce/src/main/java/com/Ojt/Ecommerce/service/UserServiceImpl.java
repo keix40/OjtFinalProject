@@ -6,13 +6,11 @@ import com.Ojt.Ecommerce.dto.RegisterRequest;
 import com.Ojt.Ecommerce.dto.AdminCreateUserRequest;
 import com.Ojt.Ecommerce.dto.AddressDTO;
 import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
-import com.Ojt.Ecommerce.entity.OtpVerification;
 import com.Ojt.Ecommerce.entity.RefreshToken;
 import com.Ojt.Ecommerce.entity.Role;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.entity.AddressType;
 import com.Ojt.Ecommerce.exception.CustomException;
-import com.Ojt.Ecommerce.repository.OtpVerificationRepository;
 import com.Ojt.Ecommerce.repository.RoleRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
@@ -60,7 +58,7 @@ public class UserServiceImpl implements UserService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;  // Inject RefreshTokenService
     private final EmailService emailService;
-    private final OtpVerificationRepository otpVerificationRepository;
+
     private final ModelMapper modelMapper;
     private final NotificationService notificationService;
     private final AddressService addressService;
@@ -94,15 +92,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public String register(RegisterRequest request, MultipartFile profileImage) {
         String email = request.getEmail().trim().toLowerCase();
-
-
-        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException("Email not verified or user not found"));
-
-
-        if (!otpVerification.isVerified() || otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new CustomException("Email not verified or OTP expired. Please verify OTP before registering.");
-        }
 
 // Then check if user already exists (duplicate registration):
         Optional<User> existingUser = userRepository.findByEmail(email);

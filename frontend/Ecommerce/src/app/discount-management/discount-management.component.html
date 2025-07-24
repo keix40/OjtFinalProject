@@ -228,6 +228,31 @@
               </div>
             </div>
           </div>
+          <!-- Discounted Products List (moved here) -->
+          <div *ngIf="detailsDiscount && discountProducts && discountProducts.length > 0" class="mt-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Product List (with Brand & Category):</label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-2">
+              <ng-container *ngFor="let product of discountProducts.slice(0, 5); let i = index">
+                <div class="flex flex-col items-center justify-center p-3 rounded-lg shadow-sm border bg-white" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'">
+                  <div class="relative w-16 h-16 mb-2">
+                    <img *ngIf="product.productImages && product.productImages.length > 0" [src]="getProductImageUrl(product)" alt="{{ product.productName }}" class="w-16 h-16 object-cover rounded-lg border" />
+                    <span *ngIf="!product.productImages || product.productImages.length === 0" class="text-gray-400 italic absolute inset-0 flex items-center justify-center">No image</span>
+                    <ng-container *ngIf="i === 4 && discountProducts.length > 5">
+                      <div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-lg">
+                        <span class="text-white font-bold text-lg">+{{ discountProducts.length - 4 }}</span>
+                      </div>
+                    </ng-container>
+                  </div>
+                  <div class="text-xs font-semibold text-gray-800 text-center truncate max-w-[80px]" title="{{ product.productName }}">{{ product.productName }}</div>
+                </div>
+              </ng-container>
+            </div>
+            <div class="flex justify-center mt-2">
+              <button *ngIf="discountProducts.length > 0" (click)="openProductDetailsModal()" class="px-4 py-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-semibold transition">
+                Show More
+              </button>
+            </div>
+          </div>
         </form>
       </div>
       <!-- Modal Footer -->
@@ -268,3 +293,44 @@
     </div>
   </div>
 </div>
+
+<ng-template #productDetailsModal let-modal>
+  <div class="fixed inset-0 z-40 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-4xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-900">All Discounted Products</h2>
+        <button (click)="modal.dismiss()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm" style="min-width: 600px;">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Image</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Code</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Brand</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of discountProducts; let i = index" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'" class="hover:bg-blue-50 transition group border-b last:border-b-0 text-sm">
+              <td class="px-3 py-2 text-center align-middle">
+                <img *ngIf="product.productImages && product.productImages.length > 0" [src]="getProductImageUrl(product)" alt="{{ product.productName }}" class="w-14 h-14 object-cover rounded-lg shadow border mx-auto" />
+                <span *ngIf="!product.productImages || product.productImages.length === 0" class="text-gray-400 italic">No image</span>
+              </td>
+              <td class="px-3 py-2 font-bold text-gray-900 truncate max-w-xs" title="{{ product.productName }}">{{ product.productName }}</td>
+              <td class="px-3 py-2 text-gray-700 truncate max-w-[120px]" title="{{ product.productCode }}">{{ product.productCode }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0]?.brandName || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0]?.cateName || '-' }}</td>
+              <td class="px-3 py-2 text-blue-700 font-semibold text-right">{{ product.price | number:'1.0-0' }}</td>
+              <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</ng-template>

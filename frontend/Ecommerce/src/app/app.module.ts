@@ -22,8 +22,6 @@ import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { UserAddressesComponent } from './user-profile/user-addresses/user-addresses.component';
 import { UserNotificationsComponent } from './user-profile/user-notifications/user-notifications.component';
-import { ProductComponent } from './product/product.component';
-import { ProductMangementComponent } from './product-mangement/product-mangement.component';
 import { AddressService } from './services/address.service';
 import { AuthService } from './auth/auth.service';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';

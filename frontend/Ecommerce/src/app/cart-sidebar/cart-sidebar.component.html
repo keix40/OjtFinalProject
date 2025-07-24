@@ -33,12 +33,47 @@
       <div *ngFor="let item of cartItems" class="flex items-start bg-white rounded-xl border border-neutral-200 shadow-sm p-4 gap-4">
         <img [src]="item.image" class="w-20 h-20 rounded-lg object-cover border border-neutral-100 flex-shrink-0" [alt]="item.title" (error)="imageService.handleImageError($event, 'product')">
         <div class="flex-1 min-w-0 flex flex-col justify-between">
-          <div>
-            <div class="font-bold text-neutral-900 text-base leading-tight mb-1 truncate">{{ item.title }}</div>
+          <ng-container *ngIf="productDetails.get(item.productId || item.id) as product">
+            <!-- Product Name: full width, bold, top -->
+            <div class="font-bold text-neutral-900 text-base leading-tight mb-1 w-full">{{ product.productName || item.title }}</div>
+            <!-- Discount badges: right-aligned, under product name -->
+            <div class="flex justify-end gap-2 mb-1 w-full">
+              <span *ngIf="getProductDiscount(product.id)?.eventName"
+                    class="px-1.5 py-0 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold border border-blue-100 rounded-full">
+                {{ getProductDiscount(product.id)?.eventName }}
+                <ng-container *ngIf="getDiscountDisplayText(getProductDiscount(product.id))">
+                  {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+                </ng-container>
+              </span>
+              <span *ngIf="getVipDiscountDisplay(product)"
+                    class="px-1.5 py-0 rounded bg-yellow-50 border border-yellow-200 text-yellow-800 text-[10px] font-bold rounded-full">
+                {{ getVipDiscountDisplay(product) }}
+              </span>
+            </div>
+            <!-- Brand: left-aligned, under product name -->
+            <div *ngIf="product.categoryBrandArray && product.categoryBrandArray[0]?.brandName" class="text-xs text-gray-500 mb-0.5 w-full">
+              <span class="font-medium text-gray-700">Brand:</span> <span class="font-semibold text-gray-800">{{ product.categoryBrandArray[0].brandName }}</span>
+            </div>
+            <!-- Category: left-aligned, under brand -->
+            <div *ngIf="product.categoryBrandArray && product.categoryBrandArray[0]?.cateName" class="text-xs text-gray-500 mb-1 w-full">
+              <span class="font-medium text-gray-700">Category:</span> <span class="font-semibold text-gray-800">{{ product.categoryBrandArray[0].cateName }}</span>
+            </div>
+            <!-- Price row: original price, discount badge, VIP badge, final price -->
+            <div class="flex items-center gap-1 mb-1">
+              <!-- Original price -->
+              <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)"
+                    class="text-xs text-gray-400 line-through">
+                {{ product.price }} MMK
+              </span>
+              <!-- Final price -->
+              <span class="font-bold text-blue-700 text-base ms-1">
+                {{ getDiscountedPrice(product) }} MMK
+              </span>
+            </div>
             <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-sm text-neutral-500 mb-2">
               {{ item.variantAttributes.join(' • ') }}
             </div>
-          </div>
+          </ng-container>
           <div class="flex items-center mt-2">
             <button class="w-8 h-8 flex items-center justify-center rounded border border-neutral-300 text-lg font-bold text-neutral-600 hover:bg-neutral-100 transition" (click)="decrementQty(item)">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" stroke-width="2" stroke-linecap="round"/></svg>
@@ -52,33 +87,9 @@
             </button>
             <button class="ml-auto text-red-500 hover:text-red-700 transition-colors text-xl" title="Remove" (click)="removeItem(item)">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-7 0h8" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-7 0h8" />
               </svg>
             </button>
-          </div>
-          <div class="flex items-center justify-between mt-3">
-            <div class="flex flex-col">
-              <!-- Discount display -->
-              <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">
-                <div class="d-flex align-items-center mb-2">
-                  <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold me-2">
-                    <span *ngIf="getProductDiscount(product.id)?.eventName">{{ getProductDiscount(product.id)?.eventName }}</span>({{ getDiscountDisplayText(getProductDiscount(product.id)) }})
-                </span>
-                
-                  <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="text-muted text-decoration-line-through me-2">
-                    {{ product.price }} MMK
-                  </span>
-                  <span class="fw-bold fs-5 me-2">
-                    {{ getDiscountedPrice(product) }} MMK
-                  </span>
-                </div>
-                <div class="fw-bold text-primary fs-6 mt-2">Total: {{ getDiscountedPrice(product) * item.quantity }} MMK</div>
-              </ng-container>
-              <ng-template #noProduct>
-                <div class="fw-bold text-lg text-neutral-900">{{ item.price }} MMK</div>
-                <div class="fw-bold text-primary fs-6 mt-2">Total: {{ item.price * item.quantity }} MMK</div>
-              </ng-template>
-            </div>
           </div>
         </div>
       </div>

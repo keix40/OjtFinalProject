@@ -360,8 +360,8 @@
                 Get exclusive deals, early access to sales, and the latest product updates delivered to your inbox
             </p>
             <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-6">
-                <input type="email" placeholder="Enter your email address" class="flex-1 px-6 py-4 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/70 focus:bg-white/30 focus:border-white focus:ring-2 focus:ring-white/20 transition-all duration-300 outline-none backdrop-blur-sm">
-                <button class="newsletter-btn bg-white text-primary-600 hover:bg-neutral-100 px-8 py-4 rounded-xl hover:scale-105 transition-all duration-300 font-semibold shadow-lg">
+                <input type="email" [(ngModel)]="newsletterEmail" placeholder="Enter your email address" class="flex-1 px-6 py-4 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/70 focus:bg-white/30 focus:border-white focus:ring-2 focus:ring-white/20 transition-all duration-300 outline-none backdrop-blur-sm">
+                <button (click)="subscribeToNewsletter()" class="newsletter-btn bg-white text-primary-600 hover:bg-neutral-100 px-8 py-4 rounded-xl hover:scale-105 transition-all duration-300 font-semibold shadow-lg">
                     Subscribe →
                 </button>
             </div>

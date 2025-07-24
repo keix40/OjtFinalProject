@@ -35,6 +35,7 @@ import com.Ojt.Ecommerce.entity.Product;
 import com.Ojt.Ecommerce.entity.ProductHasCategory;
 import com.Ojt.Ecommerce.entity.ProductImage;
 import com.Ojt.Ecommerce.entity.ProductVariant;
+import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.entity.VariantAttributeValue;
 import com.Ojt.Ecommerce.repository.AttributeValueRepository;
 import com.Ojt.Ecommerce.repository.BrandRepository;
@@ -45,6 +46,8 @@ import com.Ojt.Ecommerce.repository.ProductRepository;
 import com.Ojt.Ecommerce.repository.ProductVariantRepository;
 import com.Ojt.Ecommerce.repository.VariantAttributeValueRepository;
 import com.Ojt.Ecommerce.util.ProductCodeGeneratorUtil;
+import com.Ojt.Ecommerce.service.EmailService;
+import com.Ojt.Ecommerce.service.UserService;
 
 @Service
 public class ProductService {
@@ -76,6 +79,12 @@ public class ProductService {
 
     @Autowired
     private ProductHasCategoryRepository productHasCategoryRepository;
+
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private UserService userService;
 
     @Transactional
 //    public Product saveProductWithImages(ProductDTO dto, MultipartFile[] files,Map<String, List<MultipartFile>> variantImageMap) throws IOException {
@@ -384,8 +393,64 @@ public class ProductService {
             }
         }
 
+
         // 7. Return saved product
-        return proRepo.save(savedProduct);
+        Product finalSavedProduct = proRepo.save(savedProduct);
+
+        // --- EMAIL NOTIFICATION LOGIC ---
+        String productName = finalSavedProduct.getProductName();
+        String date = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("MMMM dd, yyyy"));
+        String subject = "Introducing Our New Arrival: " + productName;
+        String mainImageUrl = null;
+        String mainImagePath = null;
+        if (finalSavedProduct.getProductImages() != null && !finalSavedProduct.getProductImages().isEmpty()) {
+            // Use the first image as the main image
+            mainImageUrl = finalSavedProduct.getProductImages().get(0).getImageUrl();
+            // Convert URL to file system path (assuming /product_image/ maps to product_image/ folder)
+            if (mainImageUrl != null && mainImageUrl.startsWith("/product_image/")) {
+                mainImagePath = Paths.get("product_image", mainImageUrl.substring("/product_image/".length())).toAbsolutePath().toString();
+            }
+        }
+        String imageCid = "productImage001";
+        String htmlBody = String.format(
+                "<div style='font-family:Arial, sans-serif; line-height:1.6; color:#333;'>"
+                        + "<h2 style='color:#2c3e50;'>🎉 New Product Just Dropped!</h2>"
+                        + "<p>We’re thrilled to introduce a brand-new addition to our collection:</p>"
+                        + "<h3 style='color:#34495e;'>%s</h3>"
+                        + (mainImageUrl != null
+                        ? "<img src='cid:" + imageCid + "' alt='Product Image' style='max-width:100%%; height:auto; border-radius:8px; margin:16px 0;'/>"
+                        : "")
+                        + "<p><b>Available Starting:</b> %s</p>"
+                        + "<p>Be among the first to check it out and grab yours today!</p>"
+                        + "<p style='margin-top:32px;'>Warm regards,<br/>The Britium Gallery Team</p>"
+                        + "</div>",
+                productName, date
+        );
+        String plainBody = String.format(
+                "🎉 New Product Alert!\n\n"
+                        + "We're excited to introduce a new item in our store:\n\n"
+                        + "Product: %s\n"
+                        + "Available Starting: %s\n\n"
+                        + "Be among the first to check it out!\n\n"
+                        + "Warm regards,\n"
+                        + "The Britium Gallery Team",
+                productName, date
+        );
+        for (User user : userService.getAllUsers()) {
+            if (user.getEmail() != null && user.isVerified()) {
+                try {
+                    if (mainImagePath != null) {
+                        emailService.sendHtmlEmailWithImage(user.getEmail(), subject, htmlBody, mainImagePath, imageCid);
+                    } else {
+                        emailService.sendEmail(user.getEmail(), subject, plainBody);
+                    }
+                } catch (Exception e) {
+                    // Fallback to plain text if HTML fails
+                    emailService.sendEmail(user.getEmail(), subject, plainBody);
+                }
+            }
+        }
+        return finalSavedProduct;
     }
 
     @Transactional

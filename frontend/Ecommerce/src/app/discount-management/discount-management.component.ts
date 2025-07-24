@@ -1,4 +1,4 @@
-import { Component, OnInit, ElementRef, Renderer2 } from '@angular/core';
+import { Component, OnInit, ElementRef, Renderer2, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, AsyncValidatorFn } from '@angular/forms';
 import { DiscountDTO, DiscountService, DiscountRequestDTO } from '../services/discount.service';
 import { debounceTime, first, map, Observable, of } from 'rxjs';
@@ -6,6 +6,9 @@ import { DiscountCouponService } from '../services/discount-coupon.service';
 import { NotificationService } from '../services/notification.service';
 import { NotifcationService } from '../notifcation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ProductService} from '../services/product.service';
+import { ProductDTO } from '../product';
+
 
 function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return { required: true };
@@ -74,6 +77,9 @@ export class DiscountEventManagementComponent implements OnInit {
   showDeleteConfirmModal: boolean = false;
   discountToDelete: DiscountDTO | null = null;
    editDiscountId: number | null = null;
+  discountProducts: ProductDTO[] = [];
+  showProductDetails: boolean = false;
+  @ViewChild('productDetailsModal') productDetailsModalRef: any;
 
   // Add properties for filter/search UI
   searchTerm: string = '';
@@ -154,6 +160,7 @@ export class DiscountEventManagementComponent implements OnInit {
     private notificationService: NotificationService,
     private notifcationService: NotifcationService,
     private modalService: NgbModal,
+    private productService: ProductService // <-- Inject ProductService
   ) {
     this.editForm = this.fb.group({
       name: ['', Validators.required],
@@ -411,6 +418,35 @@ onDiscountTypeChange() {
       status: discount.status
     });
     this.updateCodeFieldValidators();
+    // Fetch products by productIds, brandId, or categoryId
+    this.discountProducts = [];
+    const d: any = discount;
+    if (d.productIds) {
+      const ids = d.productIds.split(',').map((id: string) => Number(id)).filter((id: number) => !isNaN(id));
+      if (ids.length > 0) {
+        this.productService.getProductsByIds(ids).subscribe({
+          next: (products) => { this.discountProducts = products; },
+          error: () => { this.discountProducts = []; }
+        });
+      }
+    } else if (d.brandIds || d.categoryIds) {
+      this.productService.getAllAcProduct().subscribe({
+        next: (products) => {
+          const brandIdSet = d.brandIds ? new Set(d.brandIds.split(',').map(Number)) : null;
+          const categoryIdSet = d.categoryIds ? new Set(d.categoryIds.split(',').map(Number)) : null;
+          this.discountProducts = products.filter((p: any) => {
+            const pairs = p.categoryBrandArray || [];
+            const matchBrand = brandIdSet ? pairs.some((pair: any) => brandIdSet.has(pair.brandId)) : true;
+            const matchCategory = categoryIdSet ? pairs.some((pair: any) => categoryIdSet.has(pair.categoryId)) : true;
+            return matchBrand && matchCategory;
+          });
+        },
+        error: () => { this.discountProducts = []; }
+      });
+    } else {
+      // fallback: show all products (or none)
+      this.discountProducts = [];
+    }
     this.modalService.open(modalRef, { centered: true, size: 'lg', backdrop: 'static' });
   }
 
@@ -581,6 +617,17 @@ onDiscountTypeChange() {
       codeControl?.disable();
     }
     codeControl?.updateValueAndValidity();
+  }
+
+  getProductImageUrl(product: ProductDTO): string {
+    if (product.productImages?.length > 0) {
+      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+    }
+    return '/assets/project_img/fashion_store.jpg';
+  }
+
+  openProductDetailsModal() {
+    this.modalService.open(this.productDetailsModalRef, { size: 'xl', centered: true, backdrop: 'static' });
   }
 
     

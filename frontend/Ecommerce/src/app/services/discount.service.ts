@@ -51,6 +51,13 @@ export interface DiscountDTO {
   endDate: string;
   status: boolean;
   autoApply?: boolean; // true = discount event, false = coupon
+  productIds?: string;   // comma-separated product IDs
+  brandId?: number;
+  categoryId?: number;
+  brandIds?: string;     // optional, for multi-select
+  categoryIds?: string;  // optional, for multi-select
+  brandCategoryId?: string;
+  brandCategoryIds?: string;
 }
 
 // Add new interface for duplicate checking

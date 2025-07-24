@@ -254,6 +254,69 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     return Math.round(discountedPrice);
   }
 
+  getFinalDiscountedPrice(product: ProductDTO): number {
+    let price = product.price;
+    const productDiscount = this.getProductDiscount(product.id);
+
+    // 1. Apply product-based discount (if any)
+    if (productDiscount) {
+      if (productDiscount.discountType === 'PERCENTAGE') {
+        price = price - (price * productDiscount.discount_percent / 100);
+      } else {
+        price = price - productDiscount.discount_amount;
+      }
+    }
+
+    // 2. Always apply VIP tier discount (if any)
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (userVipTier) {
+      const vipDiscount = this.activeDiscounts.find(d =>
+        (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+      );
+      if (vipDiscount) {
+        price = price - (price * vipDiscount.discount_percent / 100);
+      }
+    }
+    return Math.round(price);
+  }
+
+  getVipDiscountPercent(product: ProductDTO): number | null {
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (!userVipTier) return null;
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    return vipDiscount ? vipDiscount.discount_percent : null;
+  }
+
+  getVipDiscountDisplay(product: ProductDTO): string {
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (!userVipTier) return '';
+    const percent = this.getVipDiscountPercent(product);
+    if (percent) {
+      return `${userVipTier.charAt(0).toUpperCase() + userVipTier.slice(1)} Tier ${percent}% OFF`;
+    }
+    return '';
+  }
+
   getItemDiscountedPrice(item: CartItem): number {
     const product = this.productDetails.get(item.productId || item.id);
     if (product) {
@@ -399,9 +462,9 @@ getTotalDiscount() {
     for (const item of this.cartItems) {
       const product = this.productDetails.get(item.productId || item.id);
       if (product) {
-        const discounted = this.getDiscountedPrice(product);
-        if (discounted < product.price) {
-          discount += (product.price - discounted) * item.quantity;
+        const finalPrice = this.getFinalDiscountedPrice(product);
+        if (finalPrice < product.price) {
+          discount += (product.price - finalPrice) * item.quantity;
         }
       }
     }

@@ -135,7 +135,7 @@ export class UserProductDetailComponent implements OnInit {
     private cartService: CartService,
     private reviewService: ReviewService,
     private sanitizer: DomSanitizer,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router,
     private wishlistService: WishlistService,
     private discountService: DiscountService,
@@ -212,20 +212,18 @@ export class UserProductDetailComponent implements OnInit {
   }
 
   loadProductDiscounts() {
-    if (!this.product?.id) return;
-    
-    this.discountService.getDiscountsByProduct(this.product.id).subscribe({
-      next: (discounts) => {
-        this.activeDiscounts = discounts;
-        this.calculateProductDiscounts();
-        
-        console.log('Product discounts loaded:', discounts);
-      },
-      error: (error) => {
-        console.error('Failed to load product discounts:', error);
-      }
-    });
-  }
+  // Load all active discounts (including VIP tier)
+  this.discountService.getActiveDiscount().subscribe({
+    next: (discounts) => {
+      this.activeDiscounts = discounts;
+      this.calculateProductDiscounts();
+      console.log('Active discounts loaded:', discounts);
+    },
+    error: (error) => {
+      console.error('Failed to load active discounts:', error);
+    }
+  });
+}
 
    getDiscountDisplayText(discount?: any): string {
   // If no argument, use the current product's discount
@@ -240,39 +238,56 @@ export class UserProductDetailComponent implements OnInit {
 }
 
   calculateProductDiscounts() {
-    this.productDiscounts.clear();
-    
-    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
-      return;
-    }
-
-    // For product detail page, we only have one product
-    const discount = this.activeDiscounts[0]; // Get the first applicable discount
-    if (discount) {
-      this.productDiscounts.set(this.product.id, discount);
-    }
+  this.productDiscounts.clear();
+  if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+    return;
   }
+  // Find the best applicable discount for this product
+  const discount = this.findApplicableDiscount(this.product, this.authService.getUserId());
+  if (discount) {
+    this.productDiscounts.set(this.product.id, discount);
+  }
+}
 
   getProductDiscount(): any {
     return this.productDiscounts.get(this.product?.id);
   }
 
-  getDiscountedPrice(): number {
-  const discount = this.getProductDiscount();
-  if (!discount) return this.selectedVariant?.price || this.product?.price || 0;
+  getFinalDiscountedPrice(): number {
+    let price = this.selectedVariant?.price || this.product?.price || 0;
+    const discount = this.getProductDiscount();
 
-  const originalPrice = this.selectedVariant?.price || this.product?.price || 0;
+    // 1. Apply product-based discount (if any)
+    if (discount) {
+      if (discount.discountType === 'PERCENTAGE') {
+        const percent = discount.discount_percent > 1 ? discount.discount_percent / 100 : discount.discount_percent;
+        price = price * (1 - percent);
+      } else if (discount.discountType === 'FIXED') {
+        price = price - discount.discount_amount;
+      }
+    }
 
- if (discount.discountType === 'PERCENTAGE') {
-    // Convert to decimal if value is > 1
-    const percent = discount.discount_percent > 1 ? discount.discount_percent / 100 : discount.discount_percent;
-    return Math.round(originalPrice * (1 - percent));
-  } else if (discount.discountType === 'FIXED') {
-    return Math.max(0, Math.round(originalPrice - discount.discount_amount));
+    // 2. Apply VIP tier discount (if any)
+    const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+    if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
+      // Find VIP_TIER discount for this tier
+      const vipDiscount = this.activeDiscounts.find(d =>
+        (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+      );
+      if (vipDiscount) {
+        price = price - (price * vipDiscount.discount_percent / 100);
+      }
+    }
+
+    return Math.round(price);
   }
 
-  return Math.round(originalPrice);
-}
+  hasVipDiscount(): boolean {
+    const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+    return this.activeDiscounts && this.activeDiscounts.some(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+  }
 
 checkFirstTimeBuyerDiscount(): void {
     const token = localStorage.getItem('token');
@@ -372,7 +387,7 @@ checkFirstTimeBuyerDiscount(): void {
       variantId: variant?.id,
       title: product.productName,
       image,
-      price: this.getDiscountedPrice(), // Use discounted price
+      price: this.getFinalDiscountedPrice(), // Use discounted price
       originalPrice: variant?.price || product.price, // Keep original price for reference
       quantity,
       variantAttributes: attributes.map(attr => `${attr.attributeName}: ${attr.value}`),
@@ -944,4 +959,67 @@ checkFirstTimeBuyerDiscount(): void {
     }, 500);
     this.addToCart();
   }
+
+  findApplicableDiscount(product: any, userId: number | null): any {
+    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+      return null;
+    }
+  
+    // 1. USER_PRODUCT
+    if (userId) {
+      for (const discount of this.activeDiscounts) {
+        for (const rule of discount.rules || []) {
+          if (rule.targetType === 'USER_PRODUCT' && rule.userId === userId && rule.productId === product.id) {
+            return { ...discount, ...rule, eventName: discount.name };
+          }
+        }
+      }
+    }
+    // 2. USER_BRAND_CATEGORY
+    if (userId && product.categoryBrandArray) {
+      for (const discount of this.activeDiscounts) {
+        for (const pair of product.categoryBrandArray) {
+          for (const rule of discount.rules || []) {
+            if (
+              rule.targetType === 'USER_BRAND_CATEGORY' &&
+              rule.userId === userId &&
+              rule.brandId === pair.brandId &&
+              rule.categoryId === pair.categoryId
+            ) {
+              return { ...discount, ...rule, eventName: discount.name };
+            }
+          }
+        }
+      }
+    }
+    // ... (continue with the rest of the logic from your list page)
+    // 3. USER_CATEGORY, 4. USER_BRAND, 5. PRODUCT, 6. BRAND_CATEGORY, 7. CATEGORY, 8. BRAND
+  
+    // 8. BRAND
+    if (product.categoryBrandArray) {
+      for (const discount of this.activeDiscounts) {
+        for (const pair of product.categoryBrandArray) {
+          for (const rule of discount.rules || []) {
+            if (
+              rule.targetType === 'BRAND' &&
+              rule.brandId === pair.brandId
+            ) {
+              return { ...discount, ...rule, eventName: discount.name };
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  getVipDiscountPercent(): number | null {
+    const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+    if (!userVipTier) return null;
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    return vipDiscount ? vipDiscount.discount_percent : null;
+  }
+  
 }

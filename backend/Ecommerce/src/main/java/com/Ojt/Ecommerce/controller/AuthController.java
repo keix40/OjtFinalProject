@@ -368,26 +368,16 @@ public class AuthController {
         String otp = request.getOtp();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP request found for this email."));
-        if (!"login".equals(otpVerification.getType())) {
-            throw new CustomException("This OTP is not for login verification.");
-        }
-        if (otpVerification.isVerified()) {
-            return ResponseEntity.ok(Map.of("message", "Login already verified."));
-        }
+        // Only check OTP correctness and expiry, do not set verified
         if (!otpVerification.getOtpCode().equals(otp)) {
             throw new CustomException("Invalid OTP.");
         }
         if (otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
             throw new CustomException("OTP has expired.");
         }
-        otpVerification.setVerified(true);
-        otpVerificationRepository.save(otpVerification);
-        // Generate JWT and refresh token for seamless login
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException("User not found"));
-        String accessToken = jwtTokenProvider.generateToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
-        return ResponseEntity.ok(new LoginResponse(accessToken, refreshToken.getToken()));
+        // Optionally, you can delete the OTP after successful verification
+        // otpVerificationRepository.delete(otpVerification);
+        return ResponseEntity.ok(Map.of("message", "OTP verified successfully."));
     }
 
     @PostMapping("/resend-otp")

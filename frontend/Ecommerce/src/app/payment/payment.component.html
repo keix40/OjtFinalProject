@@ -336,27 +336,39 @@
                 [alt]="item.title"
               />
               <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-gray-900 truncate">{{ item.title || 'Product' }}</p>
-                <p class="text-xs text-gray-500">Qty: {{ item.quantity }}</p>
-                <!-- Product Discount Display: Only show if not first time buyer discount -->
-                <div *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(item.productId || item.id)" class="text-green-600 text-xs font-medium">
-                  <span *ngIf="getProductDiscount(item.productId || item.id)?.eventName">{{ getProductDiscount(item.productId || item.id)?.eventName }} </span>({{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }})
-                </div>
+                <!-- Product name -->
+                <div class="font-bold text-neutral-900 text-base leading-tight truncate">{{ item.title || 'Product' }}</div>
+                <!-- Quantity -->
+                <div class="text-xs text-gray-500 mb-1">Qty: {{ item.quantity }}</div>
+                <!-- Discount badges row: right-aligned, above price -->
+                <ng-container *ngIf="productDetails.get(item.productId || item.id) as product">
+                  <div class="flex items-center justify-end gap-1 mb-1">
+                    <!-- Product discount badge -->
+                    <span *ngIf="getDiscountDisplayText(getProductDiscount(product.id))"
+                          class="px-1 py-0 rounded bg-red-50 text-red-600 text-[10px] font-semibold border border-red-100 rounded-full mr-1">
+                      {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+                    </span>
+                    <!-- VIP Tier Badge -->
+                    <span *ngIf="getVipDiscountDisplay(product)"
+                          class="px-1 py-0 rounded bg-yellow-50 text-yellow-700 text-[10px] font-semibold border border-yellow-100 rounded-full mr-1">
+                      {{ getVipDiscountDisplay(product) }}
+                    </span>
+                  </div>
+                  <!-- Price row: original price and final price, right-aligned, below badges -->
+                  <div class="flex items-center justify-end gap-2">
+                    <!-- Original price -->
+                    <span *ngIf="getProductDiscount(product.id)" class="text-xs text-gray-400 line-through">
+                      {{ product.price }} MMK
+                    </span>
+                    <!-- Final price -->
+                    <span class="font-bold text-blue-700 text-base">
+                      {{ getFinalDiscountedPrice(product) }} MMK
+                    </span>
+                  </div>
+                </ng-container>
               </div>
-              <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">
-                <div *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(item.productId || item.id)" class="text-gray-400 text-xs line-through">
-                  {{ (item.price * item.quantity) | number : '1.0-0' }} MMK
-                </div>
-                <p class="text-sm font-medium text-gray-900">
-                  {{ (getDiscountedPrice(product) * item.quantity) | number : '1.0-0' }} MMK
-                </p>
-              </ng-container>
-              <ng-template #noProduct>
-                <p class="text-sm font-medium text-gray-900">
-                  {{ (item.price * item.quantity) | number : '1.0-0' }} MMK
-                </p>
-              </ng-template>
             </div>
+            <hr class="my-2 border-gray-200">
           </div>
 
           <!-- Price Summary -->

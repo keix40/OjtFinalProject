@@ -25,5 +25,12 @@ public class DiscountDTO {
     private boolean status;
     private boolean canUse;
     private Boolean autoApply; // true = discount event, false = coupon
+    private String productIds;      // comma-separated product IDs
+    private Integer brandId;
+    private Integer categoryId;
+    private String brandIds;        // optional, for multi-select
+    private String categoryIds;     // optional, for multi-select
+    private String brandCategoryId; // optional
+    private String brandCategoryIds;
 
 }

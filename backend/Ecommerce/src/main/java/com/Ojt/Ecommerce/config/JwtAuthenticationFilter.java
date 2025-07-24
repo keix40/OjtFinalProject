@@ -80,13 +80,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .collect(Collectors.toList());
                     authorities.addAll(permissionAuthorities);
                 }
-                // var userDetails = userDetailsService.loadUserByUsername(email);
-                // Load User entity and map to UserDTO
-                com.Ojt.Ecommerce.entity.User userEntity = userRepository.findByEmail(email).orElse(null);
-                UserDTO userDTO = userEntity != null ? new UserDTO(userEntity) : null;
+                // Load UserDetails instead of UserDTO for Spring Security compatibility
+                var userDetails = userDetailsService.loadUserByUsername(email); 
 
                 var authentication = new UsernamePasswordAuthenticationToken(
-                        userDTO, null, authorities);
+                        userDetails, null, authorities);// change 
 
                 authentication.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)

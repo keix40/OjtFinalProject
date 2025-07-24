@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -1037,6 +1038,27 @@ public class DiscountServiceImpl implements DiscountService {
                     && today.isBefore(d.getEndDate().plusDays(1));
             dto.setStatus(isActive);
             dto.setAutoApply(d.getAutoApply()); // Add autoApply field
+            // --- Aggregate from DiscountRule ---
+            List<DiscountRule> rules = discountRuleRepository.findByDiscount_Id(d.getId());
+            Set<Long> productIds = new HashSet<>();
+            Set<Long> brandIds = new HashSet<>();
+            Set<Long> categoryIds = new HashSet<>();
+            Set<String> brandCategoryIds = new HashSet<>();
+
+            for (DiscountRule rule : rules) {
+                if (rule.getProduct() != null) productIds.add(rule.getProduct().getId());
+                if (rule.getBrand() != null) brandIds.add(rule.getBrand().getId());
+                if (rule.getCategory() != null) categoryIds.add(rule.getCategory().getId());
+                if (rule.getBrand() != null && rule.getCategory() != null) {
+                    brandCategoryIds.add(rule.getBrand().getId() + "-" + rule.getCategory().getId());
+                }
+            }
+
+            // Set as comma-separated strings (or as List<Long> if your DTO supports it)
+            dto.setProductIds(productIds.isEmpty() ? null : productIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            dto.setBrandIds(brandIds.isEmpty() ? null : brandIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            dto.setCategoryIds(categoryIds.isEmpty() ? null : categoryIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+            dto.setBrandCategoryIds(brandCategoryIds.isEmpty() ? null : String.join(",", brandCategoryIds));
             dtos.add(dto);
         }
         return dtos;
