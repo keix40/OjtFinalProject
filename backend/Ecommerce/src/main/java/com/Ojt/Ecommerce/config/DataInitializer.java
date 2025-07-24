@@ -32,10 +32,13 @@ public class DataInitializer implements CommandLineRunner {
                 "CUSTOMER"
         );
 
-        for (String roleName : roles) {
+        int[] levels = {6, 5, 4, 3, 2, 1};
+        for (int i = 0; i < roles.size(); i++) {
+            String roleName = roles.get(i);
+            int level = levels[i];
             if (!roleRepository.existsByName(roleName)) {
                 System.out.println("Creating role: " + roleName);
-                roleRepository.save(Role.builder().name(roleName).build());
+                roleRepository.save(Role.builder().name(roleName).level(level).build());
             }
         }
     }

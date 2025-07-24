@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import com.Ojt.Ecommerce.dto.BrandDTO;
 import com.Ojt.Ecommerce.dto.BrandListDTO;
 import com.Ojt.Ecommerce.entity.Brand;
@@ -9,6 +10,7 @@ import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
 import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -24,7 +26,9 @@ import java.nio.file.StandardCopyOption;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
+@PermissionCategoryTag(value = "brands", name = "Brand Management", icon = "fa-tag")
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/brand")
@@ -42,6 +46,7 @@ public class BrandController {
     private BrandHasCategoryService bcService;
 
     @GetMapping("/getallbrand")
+    @RequiresPermission(value = BRANDS_VIEW, level = "basic")
     public List<BrandListDTO> getAllBrand(){
         return service.getAllBrandsWithCategories();
     }
@@ -53,6 +58,7 @@ public class BrandController {
 
     @LogActivity(actionType = "CREATE", entityType = "BRAND", description = "Created brand", severityLevel = "MEDIUM")
     @PostMapping(value = "/addbrand", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresPermission(value = BRANDS_CREATE, level = "advanced")
     public ResponseEntity<?> saveBrand(
             @RequestPart("brand") BrandDTO dto,
             @RequestPart(value = "image", required = false) MultipartFile imageFile
@@ -112,6 +118,7 @@ public class BrandController {
 
     @LogActivity(actionType = "UPDATE", entityType = "BRAND", description = "Updated brand", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/update/{id}")
+    @RequiresPermission(value = BRANDS_UPDATE, level = "advanced")
     public ResponseEntity<?> updateBrand(@PathVariable Long id,
                                          @RequestPart("brand") BrandDTO dto,
                                          @RequestPart(value = "image", required = false) MultipartFile imageFile) {
@@ -157,6 +164,7 @@ public class BrandController {
 
     @LogActivity(actionType = "DELETE", entityType = "BRAND", description = "Deleted brand", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
+    @RequiresPermission(value = BRANDS_DELETE, level = "advanced")
     public ResponseEntity<?> deleteBrand(@PathVariable Long id) {
         Brand existing = service.getBrandById(id);
         if (existing == null) {

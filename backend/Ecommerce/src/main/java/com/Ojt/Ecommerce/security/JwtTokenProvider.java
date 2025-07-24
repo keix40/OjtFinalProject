@@ -48,7 +48,7 @@ public class JwtTokenProvider implements InitializingBean {
 
         String roles = "ROLE_" + user.getRole().getName();
         String permissions = user.getRole().getRolePermissions().stream()
-                .map(rolePermission -> rolePermission.getPermission().getName())
+                .map(rolePermission -> rolePermission.getPermission().getKey())
                 .collect(Collectors.joining(","));
 
         // --- VIP Tier logic ---
@@ -71,6 +71,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim("profileImage", user.getProfileImage())
                 .claim("orderCount", user.getOrderCount())
                 .claim("vipTier", vipTierName) // <-- Add this line
+                .claim("roleLevel", user.getRole().getLevel())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(secretKey, SignatureAlgorithm.HS512)
