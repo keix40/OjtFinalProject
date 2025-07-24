@@ -1,5 +1,30 @@
 package com.Ojt.Ecommerce.controller;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.dto.BrandDTO;
 import com.Ojt.Ecommerce.dto.BrandListDTO;
 import com.Ojt.Ecommerce.entity.Brand;
@@ -8,29 +33,13 @@ import com.Ojt.Ecommerce.entity.Category;
 import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
-import com.Ojt.Ecommerce.annotations.LogActivity;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/brand")
 public class BrandController {
-    private final String IMAGE_FOLDER = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
     private final String IMAGE_PATH_DB_PREFIX = "/brand_and_category_image/";
+    private static final Path uploadPath = Paths.get("brand_and_category_image").toAbsolutePath();
 
     @Autowired
     private BrandService service;
@@ -57,8 +66,7 @@ public class BrandController {
             @RequestPart("brand") BrandDTO dto,
             @RequestPart(value = "image", required = false) MultipartFile imageFile
     ) {
-        String folder = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
-        String dbPrefix = "/brand_and_category_image/";
+        String dbPrefix = IMAGE_PATH_DB_PREFIX;
 
         if (service.checkNameExist(dto.getBrandName())) {
             return ResponseEntity.badRequest().body("Brand already exists.");
@@ -71,13 +79,16 @@ public class BrandController {
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
                 String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                Path path = Paths.get(folder + filename);
+                Path path = uploadPath.resolve(filename);
                 Files.createDirectories(path.getParent());
                 Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
                 brand.setImage(dbPrefix + filename);
             } catch (IOException e) {
                 return ResponseEntity.internalServerError().body("Brand image upload failed.");
             }
+        } else {
+            // If no image is provided, allow saving brand with null image
+            brand.setImage(null);
         }
 
         Brand savedBrand = service.saveBrand(brand);
@@ -126,10 +137,12 @@ public class BrandController {
             // ✅ Update image if provided
             if (imageFile != null && !imageFile.isEmpty()) {
                 String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                Path path = Paths.get(IMAGE_FOLDER + filename);
-                Files.createDirectories(path.getParent());
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                Path path = uploadPath.resolve(filename);
                 Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                existing.setImage("/images/" + filename);
+                existing.setImage(IMAGE_PATH_DB_PREFIX + filename);
             }
 
             Brand updated = service.saveBrand(existing);
@@ -223,3 +236,4 @@ public class BrandController {
         }
     }
 }
+

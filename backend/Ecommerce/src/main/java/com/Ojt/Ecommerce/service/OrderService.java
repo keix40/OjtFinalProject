@@ -8,17 +8,21 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-import com.Ojt.Ecommerce.dto.*;
-import com.Ojt.Ecommerce.entity.*;
-import com.Ojt.Ecommerce.entity.UserStatus;
-import com.Ojt.Ecommerce.repository.*;
-import com.Ojt.Ecommerce.service.UserActivityService;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.Ojt.Ecommerce.dto.AddressDTO;
+import com.Ojt.Ecommerce.dto.CartDTO;
+import com.Ojt.Ecommerce.dto.DiscountDTO;
+import com.Ojt.Ecommerce.dto.OrderPreviewDTO;
+import com.Ojt.Ecommerce.dto.OrderProductDTO;
+import com.Ojt.Ecommerce.dto.ReturnRequestDTO;
+import com.Ojt.Ecommerce.dto.ReturnRequestProductDTO;
+import com.Ojt.Ecommerce.dto.StatusHistoryDTO;
+import com.Ojt.Ecommerce.dto.UserDTO;
+import com.Ojt.Ecommerce.dto.UserOrderDTO;
+import com.Ojt.Ecommerce.dto.UserOrderListDTO;
 import com.Ojt.Ecommerce.entity.Address;
 import com.Ojt.Ecommerce.entity.AddressType;
 import com.Ojt.Ecommerce.entity.DeliveryService;
@@ -233,6 +237,7 @@ public class OrderService {
             // If no first-time discount applied, apply manual discount if any
             if (dto.getDiscountId() != null) {
                 order.setDiscount(discountRepo.findById(dto.getDiscountId()).orElse(null));
+                order.setUserDiscountId(dto.getDiscountId());
             }
 
             order.setOrderCode(generateUniqueOrderCode());
@@ -285,6 +290,16 @@ public class OrderService {
 
                     product.setQuantity(product.getQuantity() - item.getQuantity());
                     proRepo.save(product);
+                }
+
+                // Set discount rule if applicable
+                DiscountRule discountRule = discountRuleRepository.findActiveProductDiscountRule(product.getId(), user.getId());
+                if (discountRule != null) {
+                    orderProduct.setDiscountRule(discountRule);
+                    // If order-level userDiscountId is not set, set it to the discountRule's discount ID
+                    if (order.getUserDiscountId() == null) {
+                        order.setUserDiscountId(discountRule.getDiscount().getId());
+                    }
                 }
 
                 opRepo.save(orderProduct);
@@ -449,92 +464,7 @@ public class OrderService {
 
     public List<UserOrderListDTO> getOrdersByUserId(Long userId) {
         List<UserOrder> orders = repo.findByUserId(userId);
-
-        return orders.stream().map(order -> {
-            UserOrderListDTO dto = new UserOrderListDTO();
-            dto.setOrderId(order.getId());
-            dto.setOrderCode(order.getOrderCode());
-            dto.setOrderDate(order.getOrderDate());
-            dto.setUpdatedDate(order.getUpdatedDate());
-
-            // Set latest status
-            List<OrderStatus> statusHistory = order.getOrderStatusHistory();
-            if (!statusHistory.isEmpty()) {
-                statusHistory.sort((s1, s2) -> s2.getStatusDate().compareTo(s1.getStatusDate()));
-                dto.setStatus(statusHistory.get(0).getStatus().getName().toString());
-                dto.setStatusHistory(statusHistory.stream()
-                        .map(s -> new StatusHistoryDTO(s.getStatus().getName().toString(), s.getStatusDate()))
-                        .collect(Collectors.toList()));
-            }
-
-            if (order.getDeliveryService() != null) {
-                dto.setDeliveryService(order.getDeliveryService().getName());
-                dto.setDeliveryFee(order.getDeliveryFee() != null ? order.getDeliveryFee().doubleValue() : 0.0);
-            } else if (order.getDeliveryMethod() != null) {
-                dto.setDeliveryMethod(order.getDeliveryMethod().getName());
-                dto.setDeliveryFee(order.getDeliveryMethod().getFee() != null ? order.getDeliveryMethod().getFee().doubleValue() : 0.0);
-            }
-
-            Discount discount = order.getDiscount();
-            double discountAmount = 0.0;
-
-            if (discount != null) {
-                if (discount.getDiscountType() != null) {
-                    dto.setDiscountType(discount.getDiscountType().toString());
-                }
-                if (discount.getCode() != null) {
-                    dto.setDiscountCode(discount.getCode());
-                }
-                if (discount.getDiscountValue() != null) {
-                    dto.setDiscountValue(discount.getDiscountValue());
-                    double subtotal = order.getOrderProducts().stream()
-                            .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
-                            .sum();
-                    if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
-                        discountAmount = subtotal * discount.getDiscountValue();
-                    } else {
-                        discountAmount = discount.getDiscountValue();
-                    }
-                    dto.setDiscountAmount(Math.round(discountAmount));
-                }
-            } else {
-                dto.setDiscountAmount(0L);
-            }
-
-            List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(product -> {
-                OrderProductDTO productDTO = new OrderProductDTO();
-                productDTO.setProductName(product.getProduct().getProductName());
-                productDTO.setQuantity(product.getQuantity());
-                productDTO.setUnitPrice(product.getUnitPrice());
-
-                if (product.getProductVariant() != null) {
-                    String variantInfo = product.getProductVariant().getVariantAttributeValues().stream()
-                            .map(vav -> vav.getAttributeValue().getAttribute().getName() + ": " + vav.getAttributeValue().getValue())
-                            .collect(Collectors.joining(", "));
-                    productDTO.setVariantDetails(variantInfo);
-                } else {
-                    productDTO.setVariantDetails("Base Product");
-                }
-
-                return productDTO;
-            }).collect(Collectors.toList());
-
-            dto.setProducts(productDTOs);
-
-            double subtotal = order.getOrderProducts().stream()
-                    .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
-                    .sum();
-            dto.setSubtotal(Math.round(subtotal));
-
-            double total = subtotal - discountAmount;
-            // Always add deliveryFee (from deliveryService or deliveryMethod) if present
-            if (order.getDeliveryFee() != null) {
-                total += order.getDeliveryFee().doubleValue();
-            }
-            dto.setTotal(Math.round(total));
-
-            return dto;
-        }).collect(Collectors.toList());
+        return orders.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     public List<UserOrderListDTO> getAllOrders() {
@@ -620,10 +550,39 @@ public class OrderService {
         // Order products
         List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(p -> {
             OrderProductDTO pdto = new OrderProductDTO();
+            pdto.setOrderProductId(p.getId()); // Ensure this is set!
             pdto.setProductId(p.getProduct().getId());
             pdto.setProductName(p.getProduct().getProductName());
             pdto.setQuantity(p.getQuantity());
             pdto.setUnitPrice(p.getUnitPrice());
+            if (p.getProductVariant() != null) {
+                pdto.setVariantId(p.getProductVariant().getId());
+                pdto.setSku(p.getProductVariant().getStockKeeping());
+            }
+            pdto.setStatus(p.getStatus() != null ? p.getStatus().toString() : null);
+            // Set originalPrice and discountedPrice
+            pdto.setDiscountedPrice(p.getUnitPrice());
+            Double basePrice = null;
+            if (p.getProductVariant() != null && p.getProductVariant().getPrice() != null) {
+                basePrice = p.getProductVariant().getPrice().doubleValue();
+            } else if (p.getProduct().getPrice() != null) {
+                basePrice = p.getProduct().getPrice();
+            }
+            if (p.getDiscountRule() != null && p.getDiscountRule().getDiscount() != null && basePrice != null) {
+                Double discountValue = p.getDiscountRule().getDiscount().getDiscountValue();
+                String discountType = p.getDiscountRule().getDiscount().getDiscountType().toString();
+                if (discountType.equals("PERCENTAGE")) {
+                    pdto.setOriginalPrice(basePrice);
+                } else if (discountType.equals("FIXED")) {
+                    pdto.setOriginalPrice(basePrice);
+                } else {
+                    pdto.setOriginalPrice(basePrice);
+                }
+            } else if (basePrice != null) {
+                pdto.setOriginalPrice(basePrice);
+            } else {
+                pdto.setOriginalPrice(p.getUnitPrice());
+            }
             return pdto;
         }).collect(Collectors.toList());
         dto.setProducts(productDTOs);
@@ -668,25 +627,14 @@ public class OrderService {
             rrdto.setOrderId(order.getId());
             rrdto.setOrderCode(order.getOrderCode());
             rrdto.setOrderDate(order.getOrderDate());
-
-            if (rr.getOrderProduct() != null) {
-                rrdto.setOrderProductId(rr.getOrderProduct().getId());
-                rrdto.setProductName(rr.getOrderProduct().getProduct().getProductName());
-                rrdto.setQuantity(rr.getOrderProduct().getQuantity());
-                rrdto.setUnitPrice(rr.getOrderProduct().getUnitPrice());
-                rrdto.setTotalAmount(rr.getOrderProduct().getQuantity() * rr.getOrderProduct().getUnitPrice());
-            }
-
             if (rr.getUser() != null) {
                 rrdto.setUserId(rr.getUser().getId());
                 rrdto.setUserName(rr.getUser().getName());
             }
-
             if (order.getSavedCard() != null) {
                 rrdto.setCardId(order.getSavedCard().getId());
                 rrdto.setCardNumber(order.getSavedCard().getCardNumber());
             }
-
             rrdto.setReasonForReturn(rr.getReasonForReturn());
             rrdto.setReturnDetail(rr.getReturnDetail());
             rrdto.setStatus(rr.getStatus().toString());
@@ -694,13 +642,27 @@ public class OrderService {
             rrdto.setRequestedAt(rr.getRequestedAt());
             rrdto.setDecisionAt(rr.getDecisionAt());
             rrdto.setCancelledAt(rr.getCancelledAt());
-
             if (rr.getImages() != null && !rr.getImages().isEmpty()) {
                 rrdto.setImageUrls(rr.getImages().stream()
                         .map(ReturnRequestImage::getImageUrl)
                         .collect(Collectors.toList()));
             }
-
+            // Map products
+            List<ReturnRequestProductDTO> rrProductDTOs = rr.getReturnRequestProducts().stream().map(rrp -> {
+                ReturnRequestProductDTO p = new ReturnRequestProductDTO();
+                p.setId(rrp.getId());
+                p.setOrderProductId(rrp.getOrderProduct().getId());
+                p.setProductName(rrp.getOrderProduct().getProduct().getProductName());
+                if (rrp.getOrderProduct().getProductVariant() != null) {
+                    p.setSku(rrp.getOrderProduct().getProductVariant().getStockKeeping());
+                }
+                p.setQuantity(rrp.getQuantity());
+                p.setUnitPrice(rrp.getOrderProduct().getUnitPrice());
+                p.setTotalAmount(rrp.getQuantity() * rrp.getOrderProduct().getUnitPrice());
+                p.setProductRemark(rrp.getProductRemark());
+                return p;
+            }).toList();
+            rrdto.setProducts(rrProductDTOs);
             // Refund mapping
             if (rr.getRefund() != null) {
                 Refund refund = rr.getRefund();
@@ -712,7 +674,6 @@ public class OrderService {
                 rrdto.setRefundStatus(refund.getStatus() != null ? refund.getStatus().toString() : null);
                 rrdto.setRefundType(refund.getRefundType() != null ? refund.getRefundType().toString() : null);
             }
-
             return rrdto;
         }).collect(Collectors.toList());
         dto.setReturnRequests(returnRequestDTOs);
@@ -750,6 +711,7 @@ public class OrderService {
             dto.setAddress(addressDTO);
         }
 
+        dto.setUserDiscountId(order.getUserDiscountId());
         return dto;
     }
 

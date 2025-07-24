@@ -17,14 +17,8 @@ public class ReturnRequestDTO {
     private Long orderId;
     private String orderCode;
     private LocalDateTime orderDate;
-    private Long orderProductId;
     private Long cardId;
     private String cardNumber;
-    private String productName;
-    private String sku;
-    private Integer quantity;
-    private Double unitPrice;
-    private Double totalAmount;
     private ReturnReason reasonForReturn;
     private String returnDetail;
     private String status;
@@ -40,5 +34,6 @@ public class ReturnRequestDTO {
     private LocalDateTime completedAt;
     private String refundStatus;
     private String refundType;
+    private List<ReturnRequestProductDTO> products;
 }
 

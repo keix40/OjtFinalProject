@@ -4,8 +4,10 @@ import com.Ojt.Ecommerce.dto.ApproveRejectRequest;
 import com.Ojt.Ecommerce.dto.RefundDTO;
 import com.Ojt.Ecommerce.dto.ReplacementRequest;
 import com.Ojt.Ecommerce.dto.ReturnRequestDTO;
+import com.Ojt.Ecommerce.dto.ReturnRequestProductDTO;
 import com.Ojt.Ecommerce.entity.ReturnReason;
 import com.Ojt.Ecommerce.service.ReturnRequestService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,23 +16,31 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+// New DTO for submit request
+class SubmitReturnRequest {
+    public Long orderId;
+    public List<Long> orderProductIds;
+    public ReturnReason reason;
+    public String returnDetail;
+    public List<Integer> quantities; // optional, if partial returns allowed
+}
+
 @RestController
 @RequestMapping("/returns")
 @RequiredArgsConstructor
 public class ReturnRequestController {
 
     private final ReturnRequestService returnRequestService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ReturnRequestDTO> submitReturnRequest(
-            @RequestParam("orderId") Long orderId,
-            @RequestParam("productId") Long orderProductId,
-            @RequestParam("reason") ReturnReason reason,
-            @RequestParam(value = "returnDetail", required = false) String detail,
-            @RequestParam(value = "images", required = false) List<MultipartFile> files
-    ) {
+            @RequestPart("data") String data,
+            @RequestPart(value = "images", required = false) List<MultipartFile> files
+    ) throws Exception {
+        SubmitReturnRequest submitData = objectMapper.readValue(data, SubmitReturnRequest.class);
         ReturnRequestDTO dto = returnRequestService.submitReturnRequest(
-                orderId, orderProductId, reason, detail, files != null ? files : List.of()
+                submitData.orderId, submitData.orderProductIds, submitData.reason, submitData.returnDetail, submitData.quantities, files != null ? files : List.of()
         );
         return ResponseEntity.ok(dto);
     }

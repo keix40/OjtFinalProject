@@ -9,6 +9,7 @@ import com.Ojt.Ecommerce.repository.AttributeValueRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,7 @@ public class AttributeService {
     private ModelMapper mapper;
 
     public List<Attribute> getAllAttribute(){
-        return repo.findAll();
+        return repo.findAllActive();
     }
 
     public Attribute getAttributeById(Long id){
@@ -41,12 +42,11 @@ public class AttributeService {
         }
 
         Attribute attribute = attributeOpt.get();
-        List<AttributeValue> values = avRepo.findByAttribute_Id(attributeId);
+        List<AttributeValue> values = avRepo.findActiveByAttribute_Id(attributeId);
 
         if (values == null) {
             values = new ArrayList<>();
         }
-
 
 
         AttributeAndValueDTO dto = new AttributeAndValueDTO();
@@ -65,10 +65,20 @@ public class AttributeService {
 
 
     public boolean checkExist(String name){
-        return repo.existsByName(name);
+        return repo.existsByNameAndStatus(name, 1);
     }
 
     public Attribute saveAttribute(Attribute attribute){
         return repo.save(attribute);
+    }
+
+    @Transactional
+    public void softDeleteAttribute(Long id) {
+        repo.softDeleteById(id);
+    }
+
+    @Transactional
+    public void updateAttribute(Long id, String name) {
+        repo.updateNameById(id, name);
     }
 }

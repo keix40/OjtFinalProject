@@ -1,18 +1,34 @@
 package com.Ojt.Ecommerce.service;
 
-import com.Ojt.Ecommerce.dto.CouponApplyRequest;
-import com.Ojt.Ecommerce.dto.CouponApplyResponse;
-import com.Ojt.Ecommerce.dto.DiscountDTO;
-import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
-import com.Ojt.Ecommerce.entity.*;
-import com.Ojt.Ecommerce.exception.CustomException;
-import com.Ojt.Ecommerce.repository.*;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.util.*;
+import com.Ojt.Ecommerce.dto.DiscountDTO;
+import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
+import com.Ojt.Ecommerce.entity.Brand;
+import com.Ojt.Ecommerce.entity.Category;
+import com.Ojt.Ecommerce.entity.Discount;
+import com.Ojt.Ecommerce.entity.DiscountEventEnum;
+import com.Ojt.Ecommerce.entity.DiscountRule;
+import com.Ojt.Ecommerce.entity.DiscountType;
+import com.Ojt.Ecommerce.entity.Product;
+import com.Ojt.Ecommerce.repository.BrandRepository;
+import com.Ojt.Ecommerce.repository.CategoryRepository;
+import com.Ojt.Ecommerce.repository.DiscountRepository;
+import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
+import com.Ojt.Ecommerce.repository.ProductRepository;
+import com.Ojt.Ecommerce.repository.UserCouponUsageRepository;
+import com.Ojt.Ecommerce.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -1036,6 +1052,26 @@ public class DiscountServiceImpl implements DiscountService {
                 break;
         }
         return false;
+    }
+
+    public ResponseEntity<?> getDiscountById(Long id) {
+        Optional<Discount> discountOpt = discountRepository.findById(id);
+        if (discountOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        Discount d = discountOpt.get();
+        DiscountDTO dto = new DiscountDTO();
+        dto.setId(d.getId());
+        dto.setName(d.getName());
+        dto.setDescription(d.getDescription());
+        dto.setCode(d.getCode());
+        dto.setDiscountType(d.getDiscountType());
+        dto.setDiscountValue(d.getDiscountValue());
+        dto.setStartDate(d.getStartDate());
+        dto.setEndDate(d.getEndDate());
+        dto.setStatus(d.isStatus());
+        dto.setAutoApply(d.getAutoApply());
+        return ResponseEntity.ok(dto);
     }
 
     // Helper method to send notification to all users

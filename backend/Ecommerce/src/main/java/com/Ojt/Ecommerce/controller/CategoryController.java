@@ -30,7 +30,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/category")
 public class CategoryController {
-    private final String IMAGE_FOLDER = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
+    private static final Path uploadPath = Paths.get("brand_and_category_image").toAbsolutePath();
     private final String IMAGE_PATH_DB_PREFIX = "/brand_and_category_image/";
 
     @Autowired
@@ -58,9 +58,6 @@ public class CategoryController {
             @RequestPart("category") CategoryDTO dto,
             @RequestPart(value = "image", required = false) MultipartFile imageFile
     ) {
-        String folder = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/brand_and_category_image/";
-        String dbPrefix = "/brand_and_category_image/";
-
         Brand brand = null;
 
         if (dto.getBrandId() != null && dto.getBrandId() != 0) {
@@ -74,13 +71,16 @@ public class CategoryController {
             Brand newBrand = new Brand();
             newBrand.setName(dto.getBrandName().trim());
 
+            // Save image (optional)
             if (imageFile != null && !imageFile.isEmpty()) {
                 try {
                     String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                    Path path = Paths.get(folder + filename);
-                    Files.createDirectories(path.getParent());
+                    if (!Files.exists(uploadPath)) {
+                        Files.createDirectories(uploadPath);
+                    }
+                    Path path = uploadPath.resolve(filename);
                     Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                    newBrand.setImage(dbPrefix + filename);
+                    newBrand.setImage(IMAGE_PATH_DB_PREFIX + filename);
                 } catch (IOException e) {
                     return ResponseEntity.internalServerError().body("Brand image upload failed.");
                 }
@@ -109,10 +109,12 @@ public class CategoryController {
                 if (imageFile != null && !imageFile.isEmpty()) {
                     try {
                         String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                        Path path = Paths.get(folder + filename);
-                        Files.createDirectories(path.getParent());
+                        if (!Files.exists(uploadPath)) {
+                            Files.createDirectories(uploadPath);
+                        }
+                        Path path = uploadPath.resolve(filename);
                         Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                        newCate.setImage(dbPrefix + filename);
+                        newCate.setImage(IMAGE_PATH_DB_PREFIX + filename);
                     } catch (IOException e) {
                         return ResponseEntity.internalServerError().body("Category image upload failed.");
                     }
