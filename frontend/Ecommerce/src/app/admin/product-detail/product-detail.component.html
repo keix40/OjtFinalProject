@@ -16,18 +16,18 @@
             <div class="relative">
               <img 
                 [src]="selectedImage" 
-                class="w-full h-auto max-h-96 object-contain rounded-2xl border border-slate-200 cursor-zoom-in transition-all duration-300 hover:shadow-lg"
+                class="w-full h-auto max-h-96 object-contain rounded-2xl border border-slate-200"
                 alt="Main Product Image"
                 (click)="openImageModal(selectedImage!)">
               <!-- Navigation Arrows -->
               <button *ngIf="displayedImages.length > 1" 
-                class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-700 hover:text-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-700"
                 (click)="showPrevImage($event)" 
                 [disabled]="currentImageIndex === 0">
                 <i data-lucide="chevron-left" class="w-5 h-5"></i>
               </button>
               <button *ngIf="displayedImages.length > 1" 
-                class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-700 hover:text-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 w-8 h-8 md:w-10 md:h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-slate-700"
                 (click)="showNextImage($event)" 
                 [disabled]="currentImageIndex === displayedImages.length - 1">
                 <i data-lucide="chevron-right" class="w-5 h-5"></i>
@@ -38,7 +38,7 @@
               <div *ngFor="let image of displayedImages; let i = index" class="flex-shrink-0">
                 <img 
                   [src]="image.url" 
-                  class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md"
+                  class="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg border-2 cursor-pointer"
                   [class.border-blue-500]="selectedImage === image.url"
                   [class.border-slate-200]="selectedImage !== image.url"
                   (click)="selectImageByIndex(i)" 
@@ -91,10 +91,14 @@
                   <ng-container *ngIf="attrName.toLowerCase() === 'color'; else regularOptions">
                     <button
                       *ngFor="let value of attributeValuesMap[attrName]"
-                      class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all duration-200 hover:scale-110"
+                      class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center"
                       [class.border-blue-500]="selectedAttributes[attrName] === value"
                       [class.border-slate-300]="selectedAttributes[attrName] !== value"
-                      (click)="toggleAttribute(attrName, value)">
+                      [class.opacity-50]="isAttributeValueDisabled(attrName, value)"
+                      [class.grayscale]="isAttributeValueDisabled(attrName, value)"
+                      [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
+                      (click)="toggleAttribute(attrName, value)"
+                      [disabled]="isAttributeValueDisabled(attrName, value)">
                       <span class="w-8 h-8 rounded-full" [ngStyle]="{'background-color': value.toLowerCase()}"></span>
                       <span class="sr-only">{{ value }}</span>
                     </button>
@@ -102,13 +106,17 @@
                   <ng-template #regularOptions>
                     <button
                       *ngFor="let value of attributeValuesMap[attrName]"
-                      class="px-4 py-2 rounded-lg font-medium transition-all duration-200"
-                      [class.bg-blue-600]="selectedAttributes[attrName] === value"
-                      [class.text-white]="selectedAttributes[attrName] === value"
-                      [class.bg-slate-100]="selectedAttributes[attrName] !== value"
-                      [class.text-slate-700]="selectedAttributes[attrName] !== value"
-                      [class.hover:bg-blue-50]="selectedAttributes[attrName] !== value"
-                      (click)="toggleAttribute(attrName, value)">
+                      class="px-4 py-2 rounded-lg font-medium"
+                      [class.bg-blue-600]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                      [class.text-white]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                      [class.bg-slate-100]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                      [class.text-slate-700]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                      [class.hover:bg-blue-50]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                      [class.bg-slate-200]="isAttributeValueDisabled(attrName, value)"
+                      [class.text-slate-400]="isAttributeValueDisabled(attrName, value)"
+                      [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
+                      (click)="toggleAttribute(attrName, value)"
+                      [disabled]="isAttributeValueDisabled(attrName, value)">
                       {{ value }}
                     </button>
                   </ng-template>
@@ -146,95 +154,143 @@
           </div>
         </div>
 
-        <!-- Reviews Section -->
-        <div class="mb-12">
-          <div class="flex items-center gap-3 mb-3">
-            <i data-lucide="star" class="w-6 h-6 text-yellow-400"></i>
-            <h2 class="text-2xl font-bold text-slate-800 tracking-tight">Customer Reviews</h2>
-          </div>
-          <div class="border-b border-slate-200 mb-4"></div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-            <!-- Overall Rating -->
-            <div class="text-center p-6 bg-slate-50 rounded-xl border border-slate-100">
-              <div class="text-4xl font-bold text-yellow-400 mb-2">{{ overallRating }}/5</div>
-              <div class="flex justify-center space-x-1 mb-2">
-                <ng-container *ngFor="let star of [1,2,3,4,5]">
-                  <i data-lucide="star" class="w-6 h-6" [ngClass]="star <= round(overallRating) ? 'text-yellow-400' : 'text-slate-300'"></i>
-                </ng-container>
-              </div>
-              <div class="text-slate-600">{{ totalReviews }} reviews</div>
-            </div>
-            <!-- Rating Breakdown -->
-            <div class="md:col-span-2 space-y-3">
-              <h3 class="font-semibold text-slate-800 mb-4">Rating Breakdown</h3>
-              <div *ngFor="let star of [5,4,3,2,1]" class="flex items-center space-x-3">
-                <span class="text-sm text-slate-600 w-4">{{ star }}</span>
-                <i data-lucide="star" class="w-4 h-4 text-yellow-400"></i>
-                <div class="flex-1 bg-slate-200 rounded-full h-2">
-                  <div class="bg-yellow-400 h-2 rounded-full" [style.width]="(ratingBreakdown[star] / (totalReviews || 1)) * 100 + '%'" style="transition: width 0.3s;"></div>
-                </div>
-                <span class="text-sm text-slate-600 w-8">{{ ratingBreakdown[star] || 0 }}</span>
-              </div>
-            </div>
-          </div>
-          <!-- Review List -->
-          <div *ngIf="reviews.length > 0; else noReviews">
-            <div class="space-y-6">
-              <div *ngFor="let review of reviews" class="bg-white rounded-xl border border-slate-100 p-6 shadow-sm">
-                <div class="flex items-center gap-3 mb-2">
-                  <ng-container *ngIf="review.userImage; else defaultUserIcon">
-                    <img [src]="'http://localhost:8080' + review.userImage" alt="User Image" class="w-8 h-8 rounded-full object-cover border border-slate-200" />
+        <!-- Review Breakdown Section -->
+        <div class="mb-10">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-8">Customer Reviews</h2>
+            <!-- Overall Rating and Breakdown -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div class="text-center p-6 bg-gray-50 rounded-xl">
+                <div class="text-4xl font-bold text-blue-600 mb-2">{{ overallRating }}/5</div>
+                <div class="flex justify-center space-x-1 mb-2">
+                  <ng-container *ngFor="let star of createArray(round(overallRating))">
+                    <svg class="w-6 h-6 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
                   </ng-container>
-                  <ng-template #defaultUserIcon>
-                    <i data-lucide="user" class="w-8 h-8 text-slate-400"></i>
-                  </ng-template>
-                  <span class="font-semibold text-slate-800">{{ review.username || 'Anonymous' }}</span>
-                  <span class="text-xs text-slate-400 ml-2">{{ review.timestamp | date:'mediumDate' }}</span>
-                </div>
-                <div class="flex items-center gap-1 mb-1">
-                  <ng-container *ngFor="let star of [1,2,3,4,5]">
-                    <i data-lucide="star" class="w-4 h-4" [ngClass]="star <= review.rating ? 'text-yellow-400' : 'text-slate-300'"></i>
+                  <ng-container *ngFor="let empty of createArray(5 - round(overallRating))">
+                    <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                    </svg>
                   </ng-container>
                 </div>
-                <div class="text-slate-700 text-base">{{ review.comment }}</div>
+                <div class="text-gray-600">{{ totalReviews }} reviews</div>
+              </div>
+              <div class="space-y-3">
+                <h3 class="font-semibold text-gray-900 mb-4">Rating Breakdown</h3>
+                <div *ngFor="let star of [5,4,3,2,1]" class="flex items-center space-x-3">
+                  <span class="text-sm text-gray-600 w-4">{{ star }}</span>
+                  <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="bg-yellow-400 h-2 rounded-full" [style.width]="(ratingBreakdown[star] / (totalReviews || 1)) * 100 + '%'" ></div>
+                  </div>
+                  <span class="text-sm text-gray-600 w-8">{{ ratingBreakdown[star] || 0 }}</span>
+                </div>
               </div>
             </div>
           </div>
-          <ng-template #noReviews>
-            <div class="text-slate-500 text-center py-8">No reviews yet for this product.</div>
-          </ng-template>
+        </div>
+         <!-- Review List -->
+         <div class="space-y-6">
+          <div *ngIf="!reviews.length" class="text-center py-8 text-gray-500">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+            <p class="text-lg font-medium">No reviews yet</p>
+          </div>
+          
+          <div *ngFor="let review of reviews" class="bg-white border border-gray-200 rounded-xl p-6">
+            <!-- Review Header -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <img [src]="'http://localhost:8080' + review.userImage"
+                     class="w-10 h-10 rounded-full object-cover border border-gray-200"
+                     alt="User Avatar" width="40" height="40">
+                <div>
+                  <div class="font-semibold text-gray-900">{{ review.username }}</div>
+                  <div class="flex items-center space-x-1">
+                    <ng-container *ngFor="let star of createArray(review.rating)">
+                      <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                      </svg>
+                    </ng-container>
+                    <ng-container *ngFor="let empty of createArray(5 - review.rating)">
+                      <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                      </svg>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="flex items-center space-x-2">
+                <span class="text-sm text-gray-500">{{ review.timestamp | date:'medium' }}</span>
+                </div>
+            </div>
+            
+            <!-- Review Content -->
+            <p class="text-gray-700 mb-4">{{ review.comment }}</p>
+            
+            <!-- Media Grid -->
+            <div *ngIf="getAllMedia(review).length" class="grid grid-cols-5 gap-2 review-media-grid">
+              <ng-container *ngFor="let media of getMediaPreviewStable(review); let i = index; trackBy: trackByMediaUrl">
+                <div class="aspect-square cursor-pointer rounded-lg overflow-hidden border border-gray-200"
+                     (click)="openMediaModal(review, media.type, i)">
+                  <img *ngIf="media.type === 'image'" 
+                       [src]="media.url"
+                       class="w-full h-full object-cover"
+                       alt="Review Image" width="100" height="100" />
+                  <video *ngIf="media.type === 'video'" 
+                         [src]="media.url" 
+                         class="w-full h-full object-cover"></video>
+                </div>
+              </ng-container>
+              
+              <ng-container *ngIf="getMediaRemainingCount(review) > 0">
+                <div class="aspect-square cursor-pointer rounded-lg overflow-hidden border border-gray-200 relative"
+                     (click)="openMediaModal(review, getAllMedia(review)[4].type, 4)">
+                  <ng-container *ngIf="getAllMedia(review)[4].type === 'image'">
+                    <img [src]="getAllMedia(review)[4].url"
+                         class="w-full h-full object-cover opacity-50"
+                         alt="Review Image" width="100" height="100" />
+                  </ng-container>
+                  <ng-container *ngIf="getAllMedia(review)[4].type === 'video'">
+                    <video [src]="getAllMedia(review)[4].url" 
+                           class="w-full h-full object-cover opacity-50"></video>
+                  </ng-container>
+                  <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                    <span class="text-white font-bold text-lg">+{{ getMediaRemainingCount(review) }}</span>
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
-</div>
-<!-- Image Modal as ng-template -->
-<ng-template #imagePreviewModal let-modal>
+
+<!-- Media Preview Modal as ng-template -->
+<ng-template #mediaPreviewModal let-modal>
   <div class="fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
     <button type="button" class="absolute top-6 right-8 text-slate-200 hover:text-white text-3xl z-50" (click)="modal.dismiss()">&times;</button>
     <div class="relative flex items-center justify-center w-full max-w-2xl">
-      <button *ngIf="displayedImages.length > 1 && currentImageIndex > 0" (click)="showPrevImage($event)" class="absolute left-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
+      <button *ngIf="mediaModalCanGoLeft" (click)="mediaModalPrev()" class="absolute left-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-      </button>
-      <img
-        [src]="selectedImage"
-        alt="Preview"
-        class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40"
-      />
-      <button *ngIf="displayedImages.length > 1 && currentImageIndex < displayedImages.length - 1" (click)="showNextImage($event)" class="absolute right-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
+    </button>
+    <ng-container *ngIf="mediaModalCurrentType === 'image'">
+        <img [src]="mediaModalCurrentUrl" class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40" alt="Media Preview" />
+    </ng-container>
+    <ng-container *ngIf="mediaModalCurrentType === 'video'">
+        <video [src]="mediaModalCurrentUrl" class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40" controls></video>
+    </ng-container>
+      <button *ngIf="mediaModalCanGoRight" (click)="mediaModalNext()" class="absolute right-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
       </button>
     </div>
   </div>
 </ng-template>
-
-<!-- Custom CSS for glassmorphism -->
-<style>
-.glassmorphism {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-</style>

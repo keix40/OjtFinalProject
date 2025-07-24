@@ -230,6 +230,7 @@
                         <div class="text-gray-500 text-xs">Qty: {{item.quantity}}</div>
                       </div>
                       <div class="text-right">
+                        <div *ngIf="hasDiscount(order)" class="line-through text-gray-400 mr-2">{{item.originalPrice}} MMK</div>
                         <div class="font-bold text-blue-600 text-sm">{{item.unitPrice}} MMK</div>
                       </div>
                     </div>

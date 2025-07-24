@@ -16,10 +16,16 @@ export interface UserOrder {
 }
 
 export interface OrderProductDTO {
+  orderProductId: number; // <-- This is the UserOrderHasProduct ID
   productId: number;
   productName: string;
+  variantId?: number;
+  sku?: string;
   quantity: number;
   unitPrice: number;
+  status?: string; // <-- add this line
+  originalPrice?: number;
+  discountedPrice?: number;
 }
 
 
@@ -62,6 +68,7 @@ export interface UserOrderListDTO {
   discountType?: string;
   discountCode?: string;
   discountValue?: number;
+  userDiscountId?: number;
 
   subtotal: number;
   discountAmount: number;
@@ -78,43 +85,42 @@ export interface UserOrderListDTO {
   cardInfo?: CardInfoDTO;
 }
 
-export interface ReturnRequestDTO {
+export interface ReturnRequestProductDTO {
   id: number;
-
-  userId: number;
-  userName: string;
-
-  orderId: number;
-  orderCode: string;
-  orderDate: string;
-
   orderProductId: number;
   productName: string;
-  variantName?: string;
+  sku?: string;
   quantity: number;
   unitPrice: number;
   totalAmount: number;
+  productRemark?: string;
+}
 
+export interface ReturnRequestDTO {
+  id: number;
+  userId: number;
+  userName: string;
+  orderId: number;
+  orderCode: string;
+  orderDate: string;
+  cardId: number;
+  cardNumber: string;
   reasonForReturn: string;
-  returnDetail?: string;
+  returnDetail: string;
   status: string;
-  adminRemark?: string;
-
+  adminRemark: string | null;
   requestedAt: string;
-  cancelledAt?: string;
-  decisionAt?: string;
-
+  cancelledAt: string | null;
+  decisionAt: string | null;
   imageUrls: string[];
-
-  orderStatusAtCancelRequest?: string;
-
   refundId?: number;
   refundAmount?: number;
-  refundAdminRemark?: string;
-  initiatedAt?: string;
+  initiatedAt: string;
   completedAt?: string;
-  refundStatus?: string;
+  refundAdminRemark?: string;
+  refundStatus: string;
   refundType?: string;
+  products: ReturnRequestProductDTO[];
 }
 
 export interface CardInfoDTO {

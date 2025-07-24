@@ -19,8 +19,8 @@ export class AttributeService {
     return this.http.get<AttributeValue[]>(`${this.baseUrl}/getallvalue`);
   }
 
-  getValueById(id : number): Observable<AttributeValue[]> {
-    return this.http.get<AttributeValue[]>(`${this.baseUrl}/getvaluebyid/${id}`);
+  getValueById(id : number): Observable<AttributeAndValueDTO[]> {
+    return this.http.get<AttributeAndValueDTO[]>(`${this.baseUrl}/getvaluebyid/${id}`);
   }
 
   create(attributeDTO : AttributeAndValueDTO): Observable<any> {
@@ -29,6 +29,22 @@ export class AttributeService {
 
   addValue(attributeId: number, value: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/addvalue?attributeId=${attributeId}`, { value }, { responseType: 'text' });
+  }
+
+  updateAttribute(id: number, name: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update/${id}`, { name }, { responseType: 'text' });
+  }
+
+  deleteAttribute(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/delete/${id}`, { responseType: 'text' });
+  }
+
+  updateAttributeValue(id: number, value: string): Observable<any> {
+    return this.http.put(`${this.baseUrl}/update-value/${id}`, { value }, { responseType: 'text' });
+  }
+
+  deleteAttributeValue(id: number): Observable<any> {
+    return this.http.delete(`${this.baseUrl}/delete-value/${id}`, { responseType: 'text' });
   }
   
 }

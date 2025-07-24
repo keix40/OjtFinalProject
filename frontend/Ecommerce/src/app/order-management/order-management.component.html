@@ -141,14 +141,15 @@
         <tr *ngFor="let order of paginatedOrders" class="hover:bg-slate-50">
           <td class="px-4 py-3 whitespace-nowrap">
             <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                   [(ngModel)]="order.checked" (change)="updateSelection()">
+                   [checked]="selectedOrderIds.has(order.orderId)" (change)="onOrderCheckboxChange(order, $event)">
           </td>
           <td class="px-4 py-3">
             <div class="flex items-center gap-2">
               <!-- <i data-lucide="hash" class="w-4 h-4 text-slate-400"></i> -->
               <span class="font-medium text-slate-800">{{ order.orderCode }}</span>
+              <!-- <span *ngIf="order.userDiscountId" class="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Discount Used</span> -->
             </div>
-            <span class="text-xs text-slate-500">{{ order.deliveryMethod }}</span>
+            <span class="text-xs text-slate-500">{{ order.deliveryService }}</span>
           </td>
           <td class="px-4 py-3 text-slate-700">
             {{ formatDate(order.orderDate) }}
@@ -157,12 +158,14 @@
             <span class="text-slate-700">{{ getTotalItems(order) }} items</span>
             <!-- <span class="block text-xs text-slate-500">{{ order.products.length }} products</span> -->
           </td>
-          <td class="px-4 py-3">
-            <span class="font-semibold text-gray-600">{{ order.total }} ks</span>  
-
-            <span class="block text-xs text-rose-600" *ngIf="order.discountAmount > 0">
-              -{{ order.discountAmount }} ks discount
-            </span>
+          <td class="px-4 py-3 text-right">
+            <ng-container *ngIf="order.userDiscountId || order.discountAmount > 0; else noDiscount">
+              <span class="line-through text-gray-400 mr-2">{{ (getBeforeDiscountProductTotal(order) + (order.deliveryFee || 0)) | number:'1.2-2' }}</span>
+              <span class="font-semi text-slate-800">{{ (getAfterDiscountProductTotal(order) + (order.deliveryFee || 0)) | number:'1.2-2' }} ks</span>
+            </ng-container>
+            <ng-template #noDiscount>
+              <span>{{ getRefundedTotal(order) | number:'1.2-2' }} ks</span>
+            </ng-template>
           </td>
           <td class="px-4 py-3">
             <div class="flex flex-col gap-1">
@@ -287,6 +290,18 @@
         </button>
       </div>
       <div *ngIf="selectedOrder" class="space-y-4 md:space-y-6">
+        <!-- Discount Info Section -->
+        <div *ngIf="selectedOrder.userDiscountId" class="bg-blue-50 rounded-lg p-4 border border-blue-200 w-full flex flex-col gap-1">
+          <div class="font-medium text-blue-700">Discount Used</div>
+          <div class="text-blue-900 text-sm">
+            <span *ngIf="getDiscountInfo(selectedOrder)">
+              Code: <span class="font-bold">{{ getDiscountInfo(selectedOrder).code }}</span> -
+              {{ getDiscountInfo(selectedOrder).name }}
+              <span *ngIf="selectedOrder.discountAmount">| Amount: <span class="font-bold">-{{ selectedOrder.discountAmount | number:'1.0-0' }} ks</span></span>
+            </span>
+            <span *ngIf="!getDiscountInfo(selectedOrder)">Discount ID: {{ selectedOrder.userDiscountId }}</span>
+          </div>
+        </div>
         <!-- Customer Info -->
         <div class="flex flex-col md:flex-row gap-4">
           <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
@@ -381,9 +396,15 @@
             <tbody class="bg-white divide-y divide-slate-200">
               <tr *ngFor="let product of selectedOrder.products; let i = index" class="hover:bg-slate-50">
                 <td class="px-3 py-2 whitespace-nowrap">{{ i + 1 }}</td>
-                <td class="px-3 py-2 break-words">{{ product.productName }}</td>
+                <td class="px-3 py-2 break-words">
+                  {{ product.productName }}
+                  <span *ngIf="product.status === 'RETURNED'" class="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Refunded</span>
+                </td>
                 <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
-                <td class="px-3 py-2 text-right">{{ product.unitPrice | number:'1.2-2' }}</td>
+                <td class="px-3 py-2 text-right">
+                  <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="line-through text-gray-400 mr-1" title="Original Price">{{ product.originalPrice | number:'1.2-2' }}</span>
+                  <span title="Discounted Price">{{ product.unitPrice | number:'1.2-2' }}</span>
+                </td>
                 <td class="px-3 py-2 text-right">{{ (product.quantity * product.unitPrice) | number:'1.2-2' }}</td>
               </tr>
             </tbody>
@@ -394,20 +415,30 @@
           <div class="space-y-2">
             <div class="flex justify-between">
               <span class="text-slate-600">Subtotal</span>
-              <span class="text-slate-700">{{ selectedOrder.subtotal | number:'1.2-2' }}</span>
+              <span class="text-slate-700">
+                <span *ngIf="selectedOrder.discountAmount > 0" class="line-through text-gray-400 mr-2">{{ (selectedOrder.subtotal + selectedOrder.discountAmount) | number:'1.2-2' }} ks</span>
+                {{ selectedOrder.subtotal | number:'1.2-2' }} ks
+              </span>
             </div>
             <div class="flex justify-between" *ngIf="selectedOrder.deliveryFee > 0">
               <span class="text-slate-600">Delivery Fee</span>
-              <span class="text-slate-700">{{ selectedOrder.deliveryFee | number:'1.2-2' }}</span>
+              <span class="text-slate-700">{{ selectedOrder.deliveryFee | number:'1.2-2' }} ks</span>
             </div>
             <div class="flex justify-between" *ngIf="selectedOrder.discountAmount > 0">
-              <span class="text-slate-600">Discount</span>
-              <span class="text-rose-600">-{{ selectedOrder.discountAmount | number:'1.2-2' }}</span>
+              <span class="text-slate-600">Discount <span *ngIf="selectedOrder.discountCode">({{ selectedOrder.discountCode }})</span></span>
+              <span class="text-rose-600">-{{ selectedOrder.discountAmount | number:'1.2-2' }} ks</span>
             </div>
             <div class="border-t border-slate-200 my-2"></div>
             <div class="flex justify-between font-semibold">
               <span class="text-slate-700">TOTAL</span>
-              <span class="text-teal-600">{{ selectedOrder.total | number:'1.2-2' }} ks</span>
+              <span class="text-teal-600">
+                {{ getRefundedTotal(selectedOrder) | number:'1.2-2' }} ks
+                <span *ngIf="selectedOrder.total !== getRefundedTotal(selectedOrder)" class="text-xs text-gray-400 line-through ml-2">{{ selectedOrder.total | number:'1.2-2' }} ks</span>
+                <!-- Show refund badge and amount if money refund -->
+                <span *ngIf="getMoneyRefundStatus(selectedOrder).show" class="block text-xs text-green-600 mt-1">
+                  -{{ getMoneyRefundStatus(selectedOrder).amount | number:'1.2-2' }} ks refunded
+                </span>
+              </span>
             </div>
           </div>
         </div>
@@ -450,24 +481,48 @@
           <div *ngIf="getApprovedReturnRequest(selectedOrder) as returnRequest" class="space-y-3">
             <!-- Return Request Details -->
             <div class="bg-white rounded-lg p-3 border border-green-100">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span class="font-medium text-slate-600">Product:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.productName }}</span>
-                </div>
-                <div>
-                  <span class="font-medium text-slate-600">Quantity:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.quantity }}</span>
-                </div>
-                <div>
-                  <span class="font-medium text-slate-600">Reason:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.reasonForReturn }}</span>
-                </div>
-                <div>
-                  <span class="font-medium text-slate-600">Total Amount:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.totalAmount }} ks</span>
-                </div>
-                <div class="md:col-span-2" *ngIf="returnRequest.returnDetail">
+              <div class="space-y-2">
+                <ng-container *ngIf="returnRequest.products && returnRequest.products.length > 0; else singleProduct">
+                  <div *ngFor="let p of returnRequest.products" class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6 items-center border-b border-slate-100 last:border-b-0 py-2">
+                    <div>
+                      <span class="font-medium text-slate-600">Product:</span>
+                      <span class="text-slate-800 ml-2">{{ p.productName }}</span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-slate-600">Reason:</span>
+                      <span class="text-slate-800 ml-2">{{ returnRequest.reasonForReturn }}</span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-slate-600">Quantity:</span>
+                      <span class="text-slate-800 ml-2">{{ p.quantity }}</span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-slate-600">Total Amount:</span>
+                      <span class="text-slate-800 ml-2">{{ p.totalAmount }} ks</span>
+                    </div>
+                  </div>
+                </ng-container>
+                <ng-template #singleProduct>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6 items-center">
+                    <div>
+                      <span class="font-medium text-slate-600">Product:</span>
+                      <span class="text-slate-800 ml-2">{{ returnRequest.productName }}</span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-slate-600">Reason:</span>
+                      <span class="text-slate-800 ml-2">{{ returnRequest.reasonForReturn }}</span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-slate-600">Quantity:</span>
+                      <span class="text-slate-800 ml-2">{{ returnRequest.quantity }}</span>
+                    </div>
+                    <div>
+                      <span class="font-medium text-slate-600">Total Amount:</span>
+                      <span class="text-slate-800 ml-2">{{ returnRequest.totalAmount }} ks</span>
+                    </div>
+                  </div>
+                </ng-template>
+                <div *ngIf="returnRequest.returnDetail" class="pt-2">
                   <span class="font-medium text-slate-600">Details:</span>
                   <span class="text-slate-800 ml-2">{{ returnRequest.returnDetail }}</span>
                 </div>

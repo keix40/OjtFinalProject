@@ -354,6 +354,7 @@ strong {
     font-size: 1.1rem;
   }
 }
+
 @media (max-width: 576px) {
   .main-image-container {
     height: 160px;
@@ -649,4 +650,23 @@ strong {
 .color-circle.selected .circle-swatch {
   border: 2px solid #2563eb;
   box-shadow: 0 0 0 2px #b3d1ff;
+} 
+
+/* Remove all transitions and transforms from review media grid images/videos */
+.review-media-grid img.object-cover,
+.review-media-grid video.object-cover {
+  transition: none !important;
+  transform: none !important;
+  animation: none !important;
+} 
+
+.review-media-grid img,
+.review-media-grid video {
+  transition: none !important;
+  transform: none !important;
+  animation: none !important;
+  will-change: auto !important;
+  backface-visibility: visible !important;
+  opacity: 1 !important;
+  filter: none !important;
 } 

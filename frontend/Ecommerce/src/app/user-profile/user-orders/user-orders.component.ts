@@ -223,6 +223,22 @@ export class UserOrdersComponent implements OnInit, AfterViewChecked {
     this.router.navigate(['/ordertracking', orderId]);
   }
 
+  // Returns the total of originalPrice * quantity for all products (before any discount)
+  getBeforeDiscountProductTotal(order: UserOrderListDTO): number {
+    if (!order.products) return 0;
+    return order.products.reduce((sum, p) => sum + ((p.originalPrice || p.unitPrice) * p.quantity), 0);
+  }
+
+  // Returns the total of unitPrice * quantity for all products (after discount)
+  getAfterDiscountProductTotal(order: UserOrderListDTO): number {
+    if (!order.products) return 0;
+    return order.products.reduce((sum, p) => sum + (p.unitPrice * p.quantity), 0);
+  }
+
+  // Returns true if the order used a discount
+  hasDiscount(order: UserOrderListDTO): boolean {
+    return !!(order.discountAmount > 0 || order.userDiscountId);
+  }
 
   scrollToExpandedOrder() {
     if (this.expandedOrderId !== null) {

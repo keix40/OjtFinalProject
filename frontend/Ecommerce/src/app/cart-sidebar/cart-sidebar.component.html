@@ -36,7 +36,18 @@
           <div>
             <div class="font-bold text-neutral-900 text-base leading-tight mb-1 truncate">{{ item.title }}</div>
             <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-sm text-neutral-500 mb-2">
-              {{ item.variantAttributes.join(' • ') }}
+              <ng-container *ngFor="let attr of item.variantAttributes">
+                <ng-container *ngIf="attr.toLowerCase().startsWith('color:') || attr.toLowerCase().startsWith('colour:'); else regularAttr">
+                  <span style="display:inline-flex;align-items:center;margin-right:8px;">
+                    <span style="font-weight:500;margin-right:4px;">{{ attr.split(':')[0].charAt(0).toUpperCase() + attr.split(':')[0].slice(1) }}:</span>
+                    <span style="display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid #ccc;vertical-align:middle;"
+                          [ngStyle]="{'background-color': attr.split(':')[1].trim() || '#ccc'}"></span>
+                  </span>
+                </ng-container>
+                <ng-template #regularAttr>
+                  <span style="margin-right:8px;">{{ attr }}</span>
+                </ng-template>
+              </ng-container>
             </div>
           </div>
           <div class="flex items-center mt-2">

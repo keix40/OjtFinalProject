@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { Client, IMessage, Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ReviewMessage } from '../review-message';
 import { HttpClient } from '@angular/common/http';
 import { Review, ReviewDTO } from '../review';
@@ -10,7 +11,10 @@ import { Review, ReviewDTO } from '../review';
 export class ReviewService {
   private stompClient!: Client;
   private reviewSubject = new BehaviorSubject<ReviewMessage[]>([]);
-  public reviews$ = this.reviewSubject.asObservable();
+  public reviews$ = this.reviewSubject.asObservable().pipe(
+    debounceTime(500),
+    distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b))
+  );
 
   private productId!: number;
   private http = inject(HttpClient);
@@ -34,22 +38,30 @@ export class ReviewService {
         console.log('Received review message:', msg); // Debug incoming message
       
         const list = this.reviewSubject.value;
+        let newList = list;
       
         if (msg.action === 'create') {
           if (!list.find(r => r.id === msg.id)) {
-            this.reviewSubject.next([msg, ...list]);
+            newList = [msg, ...list];
           }
         } else if (msg.action === 'update') {
-          this.reviewSubject.next(list.map(r => r.id === msg.id ? msg : r));
+          newList = list.map(r => r.id === msg.id ? msg : r);
         } else if (msg.action === 'delete') {
-          this.reviewSubject.next(list.filter(r => r.id !== msg.id));
+          newList = list.filter(r => r.id !== msg.id);
+        }
+        // Only emit if changed
+        if (JSON.stringify(list) !== JSON.stringify(newList)) {
+          this.reviewSubject.next(newList);
         }
       });      
   
       // 📦 Get initial review history
       this.stompClient.subscribe('/user/queue/review-history', (message: IMessage) => {
         const history: ReviewMessage[] = JSON.parse(message.body);
-        this.reviewSubject.next(history);
+        // Only emit if changed
+        if (JSON.stringify(this.reviewSubject.value) !== JSON.stringify(history)) {
+          this.reviewSubject.next(history);
+        }
       });
   
       // ⬇️ Send request for review history
@@ -72,6 +84,10 @@ export class ReviewService {
 
   getUserReviews(userId: number) {
     return this.http.get<ReviewDTO[]>(`http://localhost:8080/review/getallreviewbyid/${userId}`);
+  }
+
+  getReviewsByProduct(productId: number) {
+    return this.http.get<any[]>(`http://localhost:8080/review/getallbyproductid/${productId}`);
   }
   
 }

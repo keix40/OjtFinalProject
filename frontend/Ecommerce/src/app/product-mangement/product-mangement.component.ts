@@ -13,6 +13,9 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { ImageService } from '../services/image.service';
 import { Router } from '@angular/router';
+import { AttributeService } from '../services/attribute.service';
+import { Attribute, AttributeValue } from '../attribute';
+import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
 declare var $: any;
 declare var lucide: any;
 
@@ -66,19 +69,29 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   pageSize: number = 10;
   paginatedProducts: ProductList[] = [];
 
+  attributes: Attribute[] = [];
+  attributeValues: { [attributeId: number]: AttributeValue[] } = {};
+  editingAttributeId: number | null = null;
+  editingAttributeValueId: number | null = null;
+  editAttributeName: string = '';
+  editAttributeValue: string = '';
+  expandedAttributeId: number | null = null;
+
   constructor(
     private productService: ProductService,
     private cateService: CategoryService,
     private brandService: BrandService,
     private ngbModel: NgbModal,
     public imageService: ImageService,
-    private router: Router // <-- Added Router injection
+    private router: Router,
+    private attributeService: AttributeService // <-- Inject AttributeService
   ) {}
 
   ngOnInit(): void {
     this.loadProduct();
     this.loadCategory();
     this.loadBrand();
+    this.loadAttributes();
     document.addEventListener('click', this.handleDocumentClick.bind(this));
   }
 
@@ -201,6 +214,80 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
       next: (data) => this.brands = data,
       error: (err) => console.error('Brand error:', err)
     });
+  }
+
+  loadAttributes() {
+    this.attributeService.getAllAttribute().subscribe(attrs => {
+      this.attributes = attrs;
+      attrs.forEach(attr => {
+        this.attributeService.getValueById(attr.id).subscribe((dtos) => {
+          this.attributeValues[attr.id] = (dtos && dtos.length > 0 && dtos[0].values) ? dtos[0].values : [];
+        });
+      });
+    });
+  }
+
+  startEditAttribute(attr: Attribute) {
+    this.editingAttributeId = attr.id;
+    this.editAttributeName = attr.name;
+  }
+
+  saveEditAttribute(attr: Attribute) {
+    this.attributeService.updateAttribute(attr.id, this.editAttributeName).subscribe(() => {
+      attr.name = this.editAttributeName;
+      this.editingAttributeId = null;
+    });
+  }
+
+  cancelEditAttribute() {
+    this.editingAttributeId = null;
+  }
+
+  deleteAttribute(attr: Attribute) {
+    Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you want to delete this attribute?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'Cancel'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.attributeService.deleteAttribute(attr.id).subscribe(() => {
+          this.attributes = this.attributes.filter(a => a.id !== attr.id);
+          delete this.attributeValues[attr.id];
+          Swal.fire({ icon: 'success', title: 'Attribute deleted successfully!', confirmButtonText: 'OK' });
+        });
+      }
+    });
+  }
+
+  startEditAttributeValue(attrId: number, value: AttributeValue) {
+    this.editingAttributeValueId = value.id ?? null;
+    this.editAttributeValue = value.value;
+  }
+
+  saveEditAttributeValue(attrId: number, value: AttributeValue) {
+    if (value.id !== undefined) {
+      this.attributeService.updateAttributeValue(value.id, this.editAttributeValue).subscribe(() => {
+        value.value = this.editAttributeValue;
+        this.editingAttributeValueId = null;
+      });
+    }
+  }
+
+  cancelEditAttributeValue() {
+    this.editingAttributeValueId = null;
+  }
+
+  deleteAttributeValue(attrId: number, value: AttributeValue) {
+    if (value.id !== undefined) {
+      this.attributeService.deleteAttributeValue(value.id).subscribe(() => {
+        this.attributeValues[attrId] = this.attributeValues[attrId].filter(v => v.id !== value.id);
+      });
+    }
   }
 
   onSearch(): void {
@@ -533,5 +620,31 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
 
   goToProductDetail(productId: number): void {
     this.router.navigate(['/admin/products', productId]);
+  }
+
+  toggleAttributeDropdown(attrId: number) {
+    this.expandedAttributeId = this.expandedAttributeId === attrId ? null : attrId;
+  }
+
+  openEditAttributeValueModal(attr: Attribute) {
+    const modalRef = this.ngbModel.open(CreateAttributeValueComponent);
+    modalRef.componentInstance.attributeId = attr.id;
+    modalRef.result.finally(() => {
+      this.loadAttributes();
+    });
+  }
+
+  isColorAttribute(attrName: string): boolean {
+    if (!attrName) return false;
+    const name = attrName.toLowerCase().trim();
+    return ['color', 'colors', 'colour', 'colours'].includes(name);
+  }
+
+  openCreateAttributeValueModal() {
+    const modalRef = this.ngbModel.open(CreateAttributeValueComponent);
+    modalRef.componentInstance.createMode = true;
+    modalRef.componentInstance.attributeSaved.subscribe(() => {
+      this.loadAttributes();
+    });
   }
 }

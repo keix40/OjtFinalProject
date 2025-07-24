@@ -1,11 +1,12 @@
 // Updated ProductDetailComponent with variant attribute selection logic
-import { Component, OnInit, ViewChild, HostListener, AfterViewInit } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener, AfterViewInit, ElementRef, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { CommonModule } from '@angular/common';
 import { NgbCarouselModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ReviewService } from '../../services/review.service';
+import { animate, style, transition, trigger } from '@angular/animations';
 
 interface ProductImage {
   id: number;
@@ -65,17 +66,37 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   totalReviews: number = 0;
   ratingBreakdown: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   @ViewChild('imagePreviewModal') imagePreviewModalTemplate: any;
+  @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate!: ElementRef;
   isModalOpen = false;
+  mediaModalRef: any;
+  mediaModalCurrentReview: any;
+  mediaModalCurrentType: 'image' | 'video' = 'image';
+  mediaModalCurrentIndex: number = 0;
+  mediaModalCurrentUrl: string = '';
+  currentUser: string = '';
+  activeDropdown: number | null = null;
+
+  // Add a stable media preview map to cache arrays per review
+  private mediaPreviewCache = new WeakMap<any, { type: 'image' | 'video', url: string }[]>();
 
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
     private modalService: NgbModal,
     private router: Router,
-    private reviewService: ReviewService
+    private reviewService: ReviewService,
+    private cdr: ChangeDetectorRef // Inject ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    const productId = this.route.snapshot.paramMap.get('id');
+    if (productId) {
+      this.loadProductDetails(productId);
+      this.loadReview();
+    }
+  }
+
+  loadReview(){
     const productId = this.route.snapshot.paramMap.get('id');
     if (productId) {
       this.loadProductDetails(productId);
@@ -86,6 +107,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
         this.computeReviewStats();
       });
     }
+    // Set currentUser (example: from localStorage or a service)
+    this.currentUser = localStorage.getItem('username') || '';
   }
 
   ngAfterViewInit(): void {
@@ -204,7 +227,6 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     this.selectedImage = this.displayedImages[0]?.url || null;
     this.currentImageIndex = 0;
   }
-  
 
   selectImageByIndex(index: number) {
     if (this.displayedImages[index]) {
@@ -232,7 +254,6 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     this.isModalOpen = true;
     const modalRef = this.modalService.open(this.imagePreviewModalTemplate, {
       centered: true,
-      // size: 'lg',
       backdrop: 'static',
       windowClass: 'p-0',
       scrollable: true
@@ -242,13 +263,10 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // No need for closeImageModal, handled by modal.dismiss()
-
   getStatusBadgeClass(status: string): string {
     switch (status.toLowerCase()) {
       case 'active': return 'bg-success';
       case 'inactive': return 'bg-danger';
-      case 'draft': return 'bg-warning';
       default: return 'bg-secondary';
     }
   }
@@ -267,31 +285,84 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   }
 
   toggleAttribute(attrName: string, value: string): void {
-  if (this.selectedAttributes[attrName] === value) {
-    delete this.selectedAttributes[attrName];
-    this.selectedVariant = null;
-    this.displayedImages = this.product?.images || [];
+    const attrNames = Object.keys(this.attributeValuesMap);
+    const attrIndex = attrNames.indexOf(attrName);
+    if (this.selectedAttributes[attrName] === value) {
+      // Unselect this attribute and all subsequent attributes
+      for (let i = attrIndex; i < attrNames.length; i++) {
+        delete this.selectedAttributes[attrNames[i]];
+      }
+      this.selectedVariant = null;
+      this.displayedImages = this.product?.images || [];
+      this.selectedImage = this.displayedImages[0]?.url || null;
+      this.currentImageIndex = 0;
+      return;
+    }
+
+    // Select this value
+    this.selectedAttributes[attrName] = value;
+
+    // For all subsequent attributes, check if their selected value is still connected; if not, unselect
+    for (let i = attrIndex + 1; i < attrNames.length; i++) {
+      const nextAttr = attrNames[i];
+      const selectedNextValue = this.selectedAttributes[nextAttr];
+      if (selectedNextValue) {
+        // Is there a variant with all selected up to this point?
+        const isConnected = (this.product?.variants || []).some(variant =>
+          attrNames.slice(0, i + 1).every((an, idx) => {
+            const selVal = this.selectedAttributes[an];
+            if (!selVal) return false;
+            return variant.attributes.some(attr => attr.attributeName === an && attr.value === selVal);
+          })
+        );
+        if (!isConnected) {
+          // Unselect if not connected
+          delete this.selectedAttributes[nextAttr];
+        }
+      }
+    }
+
+    const matchingVariant = this.product?.variants?.find(variant =>
+      Object.entries(this.selectedAttributes).every(([k, v]) =>
+        variant.attributes.some(attr => attr.attributeName === k && attr.value === v)
+      )
+    );
+
+    this.selectedVariant = matchingVariant || null;
+    this.displayedImages = this.selectedVariant?.images?.length
+      ? this.selectedVariant.images
+      : (this.product?.images || []);
+
     this.selectedImage = this.displayedImages[0]?.url || null;
     this.currentImageIndex = 0;
-    return;
   }
 
-  this.selectedAttributes[attrName] = value;
-
-  const matchingVariant = this.product?.variants?.find(variant =>
-    Object.entries(this.selectedAttributes).every(([k, v]) =>
-      variant.attributes.some(attr => attr.attributeName === k && attr.value === v)
-    )
-  );
-
-  this.selectedVariant = matchingVariant || null;
-  this.displayedImages = this.selectedVariant?.images?.length
-    ? this.selectedVariant.images
-    : (this.product?.images || []);
-
-  this.selectedImage = this.displayedImages[0]?.url || null;
-  this.currentImageIndex = 0;
-}
+  // Add this method for attribute value disabling logic
+  isAttributeValueDisabled(attrName: string, value: string): boolean {
+    const attrNames = Object.keys(this.attributeValuesMap);
+    const attrIndex = attrNames.indexOf(attrName);
+    if (attrIndex === 0) {
+      // First attribute: always enabled
+      return false;
+    }
+    // For second and later attributes, check previous attribute selection
+    const prevAttrName = attrNames[attrIndex - 1];
+    const prevValue = this.selectedAttributes[prevAttrName];
+    if (!prevValue) {
+      // If previous attribute not selected, disable all
+      return true;
+    }
+    // Find all variants with prevAttr=prevValue and this attr=value
+    const connectedVariants = (this.product?.variants || []).filter(variant =>
+      variant.attributes.some(attr => attr.attributeName === prevAttrName && attr.value === prevValue) &&
+      variant.attributes.some(attr => attr.attributeName === attrName && attr.value === value)
+    );
+    // If no connected variants, disable
+    if (connectedVariants.length === 0) return true;
+    // If all connected variants have stock 0, disable
+    if (connectedVariants.every(v => v.stock === 0)) return true;
+    return false;
+  }
 
   computeReviewStats() {
     if (!this.reviews.length) {
@@ -314,6 +385,114 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     return Math.round(value);
   }
 
+  createArray(n: number): number[] {
+    return Array(n).fill(0);
+  }
+
+  getAllMedia(review: any): { type: 'image' | 'video', url: string }[] {
+    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
+    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    return [...images, ...videos];
+  }
+
+  getMediaPreviewStable(review: any): { type: 'image' | 'video', url: string }[] {
+    if (this.mediaPreviewCache.has(review)) {
+      return this.mediaPreviewCache.get(review)!;
+    }
+    const arr = this.getAllMedia(review).slice(0, 4);
+    this.mediaPreviewCache.set(review, arr);
+    return arr;
+  }
+
+  trackByMediaUrl(index: number, media: { type: 'image' | 'video', url: string }) {
+    return media.url + '-' + media.type;
+  }
+
+  getMediaPreview(review: any): { type: 'image' | 'video', url: string }[] {
+    return this.getAllMedia(review).slice(0, 4);
+  }
+
+  getMediaRemainingCount(review: any): number {
+    const all = this.getAllMedia(review);
+    return all.length > 4 ? all.length - 4 : 0;
+  }
+
+  openMediaModal(review: any, type: 'image' | 'video', index: number) {
+    this.mediaModalCurrentReview = review;
+    this.mediaModalCurrentType = type;
+    this.mediaModalCurrentIndex = index;
+    this.updateMediaModalTypeAndUrl();
+    if (this.mediaModalRef) {
+      this.mediaModalRef.close();
+    }
+    // Ensure DOM is updated before opening modal
+    this.cdr.detectChanges();
+    setTimeout(() => {
+      this.mediaModalRef = this.modalService.open(this.mediaPreviewModalTemplate, {
+        centered: true,
+        backdrop: 'static',
+        keyboard: true,
+        windowClass: 'media-preview-modal',
+        scrollable: false
+      });
+      this.mediaModalRef.result.finally(() => {
+        this.mediaModalRef = null;
+        this.mediaModalCurrentReview = null;
+        this.mediaModalCurrentIndex = 0;
+        this.mediaModalCurrentUrl = '';
+      });
+    }, 0);
+  }
+
+  closeMediaModal() {
+    if (this.mediaModalRef) {
+      this.mediaModalRef.close();
+    }
+  }
+
+  getMediaModalArray(): { type: 'image' | 'video', url: string }[] {
+    if (!this.mediaModalCurrentReview) return [];
+    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
+    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    return [...images, ...videos];
+  }
+  
+  updateMediaModalTypeAndUrl() {
+    const arr = this.getMediaModalArray();
+    if (arr[this.mediaModalCurrentIndex]) {
+      this.mediaModalCurrentType = arr[this.mediaModalCurrentIndex].type;
+      this.mediaModalCurrentUrl = arr[this.mediaModalCurrentIndex].url;
+    }
+  }
+  
+  get mediaModalCanGoLeft(): boolean {
+    if (!this.mediaModalCurrentReview) return false;
+    const arr = this.getMediaModalArray();
+    return this.mediaModalCurrentIndex > 0 && arr.length > 1;
+  }
+  
+  get mediaModalCanGoRight(): boolean {
+    if (!this.mediaModalCurrentReview) return false;
+    const arr = this.getMediaModalArray();
+    return this.mediaModalCurrentIndex < arr.length - 1 && arr.length > 1;
+  }
+  
+  mediaModalPrev() {
+    if (!this.mediaModalCanGoLeft) return;
+    this.mediaModalCurrentIndex--;
+    this.updateMediaModalTypeAndUrl();
+  }
+  
+  mediaModalNext() {
+    if (!this.mediaModalCanGoRight) return;
+    this.mediaModalCurrentIndex++;
+    this.updateMediaModalTypeAndUrl();
+  }
+
+  toggleDropdown(reviewId: number): void {
+    this.activeDropdown = this.activeDropdown === reviewId ? null : reviewId;
+  }
+
   @HostListener('window:keydown', ['$event'])
   handleKeyDown(event: KeyboardEvent) {
     if (this.isModalOpen && this.displayedImages.length > 1) {
@@ -321,6 +500,18 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
         this.selectImageByIndex(this.currentImageIndex - 1);
       } else if (event.key === 'ArrowRight' && this.currentImageIndex < this.displayedImages.length - 1) {
         this.selectImageByIndex(this.currentImageIndex + 1);
+      }
+    }
+    if (this.mediaModalRef) {
+      if (event.key === 'ArrowLeft' && this.mediaModalCanGoLeft) {
+        event.preventDefault();
+        this.mediaModalPrev();
+      } else if (event.key === 'ArrowRight' && this.mediaModalCanGoRight) {
+        event.preventDefault();
+        this.mediaModalNext();
+      } else if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeMediaModal();
       }
     }
   }
@@ -331,5 +522,4 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
       this.router.navigate(['/product-edit', productId]);
     }
   }
-
 }

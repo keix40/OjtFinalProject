@@ -117,19 +117,43 @@
           <div *ngFor="let attrName of attributeNames" class="space-y-3">
             <h3 class="text-lg font-semibold text-gray-900">{{ attrName }}:</h3>
             
-            <div class="flex flex-wrap gap-3">
-              <button
-                *ngFor="let value of getAttributeValues(attrName)"
-                class="px-4 py-2 rounded-full border-2 font-semibold transition-all duration-200 hover:scale-105 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
-                [class.border-blue-500]="selectedAttributes[attrName] === value"
-                [class.bg-blue-50]="selectedAttributes[attrName] === value"
-                [class.text-blue-700]="selectedAttributes[attrName] === value"
-                [class.border-gray-200]="selectedAttributes[attrName] !== value"
-                [class.text-gray-700]="selectedAttributes[attrName] !== value"
-                (click)="toggleAttribute(attrName, value)"
-                [attr.aria-label]="'Select ' + value">
-                {{ value }}
-              </button>
+            <div class="flex flex-wrap items-center gap-3">
+              <ng-container *ngFor="let value of getAttributeValues(attrName)">
+                <div *ngIf="isColorAttribute(attrName); else defaultButton">
+                  <div 
+                    class="w-8 h-8 rounded-full border-2 cursor-pointer transition-all"
+                    [style.backgroundColor]="value"
+                    [title]="value"
+                    (click)="!isAttributeValueDisabled(attrName, value) && toggleAttribute(attrName, value)"
+                    [class.border-blue-500]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.border-gray-200]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                    [class.ring-2]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.ring-blue-500]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.ring-offset-2]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.opacity-50]="isAttributeValueDisabled(attrName, value)"
+                    [class.grayscale]="isAttributeValueDisabled(attrName, value)"
+                    [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
+                    [attr.aria-disabled]="isAttributeValueDisabled(attrName, value) ? true : null">
+                  </div>
+                </div>
+                <ng-template #defaultButton>
+                  <button
+                    class="px-4 py-2 rounded-full border-2 font-semibold transition-all duration-200 hover:scale-105 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    [class.border-blue-500]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.bg-blue-50]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.text-blue-700]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.border-gray-200]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                    [class.text-gray-700]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                    [class.bg-slate-200]="isAttributeValueDisabled(attrName, value)"
+                    [class.text-slate-400]="isAttributeValueDisabled(attrName, value)"
+                    [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
+                    (click)="toggleAttribute(attrName, value)"
+                    [disabled]="isAttributeValueDisabled(attrName, value)"
+                    [attr.aria-label]="'Select ' + value">
+                    {{ value }}
+                  </button>
+                </ng-template>
+              </ng-container>
             </div>
           </div>
         </div>

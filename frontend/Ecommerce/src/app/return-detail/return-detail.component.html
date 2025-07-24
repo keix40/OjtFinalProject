@@ -9,10 +9,24 @@
   <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-10 mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
       <div><span class="font-semibold text-gray-600">Order Code:</span> <span class="text-gray-800">{{ returnDetail?.orderCode }}</span></div>
-      <div><span class="font-semibold text-gray-600">Product:</span> <span class="text-gray-800">{{ returnDetail?.productName }}</span></div>
-      <div><span class="font-semibold text-gray-600">Quantity:</span> <span class="text-gray-800">{{ returnDetail?.quantity }}</span></div>
-      <div><span class="font-semibold text-gray-600">Unit Price:</span> <span class="text-gray-800">{{ returnDetail?.unitPrice }} MMK</span></div>
-      <div><span class="font-semibold text-gray-600">Total:</span> <span class="text-gray-800">{{ returnDetail?.totalAmount }} MMK</span></div>
+      <div class="md:col-span-2">
+        <span class="font-semibold text-gray-600">Products:</span>
+        <div *ngIf="returnDetail && returnDetail.products && returnDetail.products.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div *ngFor="let p of returnDetail.products" class="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
+            <div class="flex items-center gap-2 mb-1">
+              <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+              <span class="font-bold text-slate-800">{{ p.productName }}</span>
+              <span *ngIf="p.sku" class="ml-2 text-xs text-slate-500">SKU: {{ p.sku }}</span>
+            </div>
+            <div class="flex flex-wrap gap-4 text-sm text-slate-700">
+              <div><span class="font-semibold">Qty:</span> {{ p.quantity }}</div>
+              <div><span class="font-semibold">Unit Price:</span> {{ p.unitPrice | number:'1.0-0' }} MMK</div>
+              <div><span class="font-semibold">Total:</span> {{ p.totalAmount | number:'1.0-0' }} MMK</div>
+            </div>
+            <div *ngIf="p.productRemark" class="text-xs text-rose-600 mt-1"><span class="font-semibold">Remark:</span> {{ p.productRemark }}</div>
+          </div>
+        </div>
+      </div>
       <div class="md:col-span-2"><span class="font-semibold text-gray-600">Return Reason:</span> <span class="text-gray-800">{{ returnDetail?.reasonForReturn }}</span></div>
       <div class="md:col-span-2"><span class="font-semibold text-gray-600">Return Details:</span> <span class="text-gray-800">{{ returnDetail?.returnDetail }}</span></div>
     </div>

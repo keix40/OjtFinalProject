@@ -16,7 +16,7 @@ export class ReturnRequestComponent implements OnInit {
   @Input() orderStatusAtCancelRequest?: string;
   orderCode: string = '';
   products: OrderProductDTO[] = [];
-  selectedProduct: OrderProductDTO | null = null;
+  selectedProducts: OrderProductDTO[] = [];
   reason: string = '';
   details: string = '';
   files: File[] = [];
@@ -37,7 +37,10 @@ export class ReturnRequestComponent implements OnInit {
       this.orderService.getOrderById(this.orderId).subscribe({
         next: (order: UserOrderListDTO) => {
           this.orderCode = order.orderCode;
-          this.products = order.products;
+          this.products = order.products.map(p => ({
+            ...p,
+            orderProductId: p.orderProductId // This must be set!
+          }));
           console.log('Loaded products:', this.products);
           this.products.forEach((p, i) => console.log(`Product[${i}]`, p));
         },
@@ -59,21 +62,45 @@ export class ReturnRequestComponent implements OnInit {
     return URL.createObjectURL(file);
   }
 
+  getSelectedProductNames(): string {
+    if (this.selectedProducts && this.selectedProducts.length > 0) {
+      return this.selectedProducts.map(p => p.productName).join(', ');
+    }
+    return '-';
+  }
+
   onSubmit() {
-    if (!this.selectedProduct || !this.reason) {
-      alert('Please complete the form.');
+    if (!this.selectedProducts.length || !this.reason) {
+      alert('Please select at least one product and a reason.');
       return;
     }
-    if (!this.orderId || !this.selectedProduct || this.selectedProduct.productId == null) {
-      alert('Order or product information is missing.');
+    if (!this.orderId) {
+      alert('Order information is missing.');
+      return;
+    }
+    // Defensive: filter out products with null/undefined orderProductId
+    const validSelectedProducts = this.selectedProducts.filter(p => p.orderProductId != null);
+    if (validSelectedProducts.length !== this.selectedProducts.length) {
+      alert('One or more selected products are invalid. Please reselect.');
       return;
     }
     const formData = new FormData();
-    formData.append('orderId', this.orderId.toString());
-    formData.append('productId', this.selectedProduct.productId.toString());
-    formData.append('reason', this.reason);
-    formData.append('returnDetail', this.details);
-    formData.append('orderStatusAtCancelRequest', this.orderStatusAtCancelRequest ?? '');
+    // Build the data object for backend
+    const data = {
+      orderId: this.orderId,
+      orderProductIds: validSelectedProducts.map(p => p.orderProductId),
+      reason: this.reason,
+      returnDetail: this.details,
+      quantities: validSelectedProducts.map(p => p.quantity)
+    };
+    const validOrderProductIds = this.products.map(p => p.orderProductId);
+    const filteredOrderProductIds = validSelectedProducts
+      .map(p => p.orderProductId)
+      .filter(id => validOrderProductIds.includes(id));
+    formData.append('data', new Blob([JSON.stringify({
+      ...data,
+      orderProductIds: filteredOrderProductIds
+    })], { type: 'application/json' }));
     this.files.forEach(file => {
       formData.append('images', file);
     });
@@ -95,7 +122,7 @@ export class ReturnRequestComponent implements OnInit {
         this.activeModal.close();
       }
     });
-    console.log('Submitting form data:', formData);
+    console.log('Submitting form data:', data);
   }
 
   closeModal() {

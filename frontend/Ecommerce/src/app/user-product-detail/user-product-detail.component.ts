@@ -187,8 +187,8 @@ export class UserProductDetailComponent implements OnInit {
         // Set breadcrumbs dynamically
         this.breadcrumbItems = [
           { label: 'Home', link: '/home' },
-          { label: 'Products', link: '/products' },
-          { label: this.product.name || 'Product Detail' }
+          { label: 'Products', link: '/userproductlist' },
+          { label: this.product.productName || 'Product Detail' }
         ];
 
         // Load discounts after product is set
@@ -328,15 +328,73 @@ checkFirstTimeBuyerDiscount(): void {
     return Array.from(values);
   }
 
+  isColorAttribute(attrName: string): boolean {
+    if (!attrName) return false;
+    const name = attrName.toLowerCase().trim();
+    return ['color', 'colors', 'colour', 'colours'].includes(name);
+  }
+
+  // Attribute value disabling logic for user product detail
+  isAttributeValueDisabled(attrName: string, value: string): boolean {
+    const attrNames = this.attributeNames;
+    const attrIndex = attrNames.indexOf(attrName);
+    if (attrIndex === 0) {
+      // First attribute: always enabled
+      return false;
+    }
+    // For second and later attributes, check previous attribute selection
+    const prevAttrName = attrNames[attrIndex - 1];
+    const prevValue = this.selectedAttributes[prevAttrName];
+    if (!prevValue) {
+      // If previous attribute not selected, disable all
+      return true;
+    }
+    // Find all variants with prevAttr=prevValue and this attr=value
+    const connectedVariants = (this.product?.variants || []).filter((variant: any) =>
+      (variant.attributes || []).some((attr: any) => attr.attributeName === prevAttrName && attr.value === prevValue) &&
+      (variant.attributes || []).some((attr: any) => attr.attributeName === attrName && attr.value === value)
+    );
+    // If no connected variants, disable
+    if (connectedVariants.length === 0) return true;
+    // If all connected variants have stock 0, disable
+    if (connectedVariants.every((v: any) => v.stock === 0)) return true;
+    return false;
+  }
+
   toggleAttribute(attrName: string, value: string) {
+    const attrNames = this.attributeNames;
+    const attrIndex = attrNames.indexOf(attrName);
     if (this.selectedAttributes[attrName] === value) {
-      delete this.selectedAttributes[attrName];
+      // Unselect this attribute and all subsequent attributes
+      for (let i = attrIndex; i < attrNames.length; i++) {
+        delete this.selectedAttributes[attrNames[i]];
+      }
       this.selectedVariant = null;
       this.selectedImage = this.product.images[0]?.url;
       this.currentImageIndex = 0;
       return;
     }
+    // Select this value
     this.selectedAttributes[attrName] = value;
+    // For all subsequent attributes, check if their selected value is still connected; if not, unselect
+    for (let i = attrIndex + 1; i < attrNames.length; i++) {
+      const nextAttr = attrNames[i];
+      const selectedNextValue = this.selectedAttributes[nextAttr];
+      if (selectedNextValue) {
+        // Is there a variant with all selected up to this point?
+        const isConnected = (this.product?.variants || []).some((variant: any) =>
+          attrNames.slice(0, i + 1).every((an: string) => {
+            const selVal = this.selectedAttributes[an];
+            if (!selVal) return false;
+            return (variant.attributes || []).some((attr: any) => attr.attributeName === an && attr.value === selVal);
+          })
+        );
+        if (!isConnected) {
+          // Unselect if not connected
+          delete this.selectedAttributes[nextAttr];
+        }
+      }
+    }
     const matchingVariant = this.product.variants.find((variant: any) => {
       return (variant.attributes || []).every((attr: any) => {
         return this.selectedAttributes[attr.attributeName] === attr.value;
