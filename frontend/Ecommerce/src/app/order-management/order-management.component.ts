@@ -7,6 +7,8 @@ import Swal from 'sweetalert2';
 declare var $: any;
 declare var lucide: any;
 import { OrderInvoiceComponent } from '../order-invoice/order-invoice.component';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 // Extended interface to include checked property for selection
 interface OrderWithSelection extends UserOrderListDTO {
@@ -128,8 +130,10 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
   constructor(
     private orderService: OrderService,
     private authService: AuthService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    public permissionService: PermissionService
   ) {}
+  public PermissionConstants = PermissionConstants;
 
   ngOnInit(): void {
     this.loadOrders();

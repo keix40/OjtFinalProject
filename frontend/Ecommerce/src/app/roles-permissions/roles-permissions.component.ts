@@ -835,7 +835,19 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
 
     this.roleService.assignPermissionsToRole(Number(this.selectedRole.id), permissionIds).subscribe({
       next: () => {
-        alert('Permissions updated successfully');
+        // After saving, refresh JWT and permissions
+        this.authService.refreshToken().subscribe((res: any) => {
+          if (res && res.accessToken) {
+            localStorage.setItem('jwtToken', res.accessToken);
+            // Parse permissions from new token (assuming permissions are in payload)
+            const payload = JSON.parse(atob(res.accessToken.split('.')[1]));
+            if (payload.permissions) {
+              this.permissionService.setPermissions(payload.permissions);
+              localStorage.setItem('userPermissions', JSON.stringify(payload.permissions));
+            }
+          }
+          alert('Permissions updated successfully. Your permissions have been refreshed.');
+        });
         
         // Update the master list after a successful save
         const originalRole = this.allRoles.find(r => r.id === this.selectedRole!.id);

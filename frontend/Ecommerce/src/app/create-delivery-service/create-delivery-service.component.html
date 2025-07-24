@@ -79,7 +79,7 @@
           </div>
           <div *ngIf="deliveryServiceForm.get('baseAddress')?.invalid && deliveryServiceForm.get('baseAddress')?.touched" class="text-red-500 text-xs mt-1">Base address is required.</div>
         </div>
-        <button type="submit" [disabled]="deliveryServiceForm.invalid || isSubmitting" class="w-full py-3 bg-slate-600 text-white font-bold rounded-xl hover:bg-slate-700 transition text-lg flex items-center justify-center gap-2 mt-6 shadow disabled:opacity-50 disabled:cursor-not-allowed">
+        <button type="submit" [disabled]="deliveryServiceForm.invalid || isSubmitting || !permissionService.hasPermission(PermissionConstants.DELIVERY_CREATE) " class="w-full py-3 bg-slate-600 text-white font-bold rounded-xl hover:bg-slate-700 transition text-lg flex items-center justify-center gap-2 mt-6 shadow disabled:opacity-50 disabled:cursor-not-allowed">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
           </svg>

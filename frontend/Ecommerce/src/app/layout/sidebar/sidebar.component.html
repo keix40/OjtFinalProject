@@ -151,14 +151,14 @@
 
           <!-- Orders Submenu -->
           <ng-container *ngSwitchCase="'orders'">
-            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ORDERS_MANAGE)">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ORDERS_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/orders'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="clipboard-list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Order Management</span>
               </a>
             </li>
-            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.RETURNS_MANAGE)">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.REFUND_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/return'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>

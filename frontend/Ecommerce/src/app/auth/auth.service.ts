@@ -241,4 +241,9 @@ uploadProfileImage(file: File): Observable<any> { //add for profile avatar updat
     }
   }
 
+  refreshToken(): Observable<any> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    return this.http.post(`${this.baseUrl}/refresh-token`, { refreshToken });
+  }
+
 }

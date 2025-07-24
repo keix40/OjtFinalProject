@@ -5,6 +5,9 @@ import { PermissionCategoryService, PermissionCategory } from '../services/permi
 import { RoleService } from '../services/role.service';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
+import { AuthService } from '../auth/auth.service';
 
 interface Permission {
   key: string;
@@ -74,28 +77,61 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
   autoRefreshInterval: any;
   stompClient: Client | null = null;
   stompSub: any;
+  currentUser: any = {
+    id: null,
+    name: '',
+    role: {
+      id: null,
+      name: '',
+      level: 0
+    }
+  };
 
   constructor(
     public imageService: ImageService,
     private adminUserService: AdminUserService,
     private permissionCategoryService: PermissionCategoryService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    public permissionService: PermissionService,
+    public authService: AuthService
   ) {
+    this.PermissionConstants = PermissionConstants;
+    // Get current user's role level from JWT
+    const decoded = this.authService.getDecodedToken();
+    if (decoded && decoded.roleLevel !== undefined) {
+      this.currentUser.role.level = decoded.roleLevel;
+    }
   }
+  public PermissionConstants = PermissionConstants;
 
   ngOnInit(): void {
+    // Set currentUser from JWT
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || localStorage.getItem('token');
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      this.currentUser = this.currentUser || {};
+      this.currentUser.role = this.currentUser.role || {};
+      this.currentUser.role.level = payload.roleLevel;
+    }
     this.permissionCategoryService.getPermissionCategories().subscribe(categories => {
       this.permissionCategories = categories;
     });
     this.roleService.getAllRoles().subscribe(roles => {
       this.roles = roles;
-    });
-    this.adminUserService.getAdminUsers().subscribe(users => {
-      users.forEach(admin => {
-        (admin as any).role = (admin as any).roleName;
+      this.adminUserService.getAdminUsers().subscribe(users => {
+        users.forEach(admin => {
+          // Find the full role object for this admin
+          const roleObj = roles.find(r => r.name === ((admin as any).roleName || (typeof admin.role === 'string' ? admin.role : (admin.role && 'name' in admin.role ? admin.role.name : ''))));
+          if (roleObj) {
+            (admin as any).role = roleObj;
+          } else {
+            console.warn('No matching role found for admin:', admin);
+            (admin as any).role = { name: 'Unknown', level: 99 };
+          }
+        });
+        this.allAdmins = users;
+        this.applyFilters();
       });
-      this.allAdmins = users;
-      this.applyFilters();
     });
     this.fetchAdminOnlineStatus();
     this.autoRefreshInterval = setInterval(() => {
@@ -485,5 +521,12 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
 
   editAdmin(admin: AdminUser): void {
     this.openEditAdminModal(admin);
+  }
+
+  getRoleLevel(admin: any): number {
+    if (admin && admin.role && typeof admin.role === 'object' && 'level' in admin.role) {
+      return admin.role.level;
+    }
+    return 0;
   }
 }

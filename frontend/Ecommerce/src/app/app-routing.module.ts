@@ -131,9 +131,9 @@ const routes: Routes = [
       { path: 'addsubcategory/:parentId', component: CategoryAddSubcategoryComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Add Subcategory', permission: PermissionConstants.CATEGORIES_CREATE } },
 
       // Orders
-      { path: 'orders', component: OrderManagementComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Orders', permission: PermissionConstants.ORDERS_MANAGE } },
-      { path: 'return', component: ReturnListComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Returns', permission: PermissionConstants.RETURNS_MANAGE } },
-      { path: 'return/:id', component: ReturnDetailComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Return Detail', permission: PermissionConstants.RETURNS_MANAGE } },
+      { path: 'orders', component: OrderManagementComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Orders', permission: PermissionConstants.ORDERS_VIEW } },
+      { path: 'return', component: ReturnListComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Returns', permission: PermissionConstants.REFUND_VIEW } },
+      { path: 'return/:id', component: ReturnDetailComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Return Detail', permission: PermissionConstants.REFUND_VIEW } },
 
       // Discounts
       { path: 'discount-add', component: DiscountInsertComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Add Discount', permission: PermissionConstants.DISCOUNTS_CREATE } },

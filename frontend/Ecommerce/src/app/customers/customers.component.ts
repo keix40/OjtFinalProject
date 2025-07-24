@@ -4,6 +4,8 @@ import { UserService } from '../services/user.service';
 import * as XLSX from 'xlsx'; // For Excel export
 import jsPDF from 'jspdf'; // For PDF export
 import autoTable from 'jspdf-autotable'; // For PDF table export
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 interface Customer {
   id: string;
@@ -41,7 +43,8 @@ export class CustomersComponent implements OnInit, AfterViewChecked {
   selectedCustomerDetails: Customer | null = null;
   openDropdownId: string | null = null;
   showCustomerModal: boolean = false;
-
+  public PermissionConstants = PermissionConstants;
+  public permissionService: PermissionService;
   logDropdownClick(customerId: string) {
     console.log('Dropdown for', customerId);
   }
@@ -261,8 +264,10 @@ export class CustomersComponent implements OnInit, AfterViewChecked {
 
   constructor(
     public imageService: ImageService,
-    private userService: UserService
+    private userService: UserService,
+    permissionService: PermissionService
   ) {
+    this.permissionService = permissionService;
   }
 
   ngOnInit(): void {

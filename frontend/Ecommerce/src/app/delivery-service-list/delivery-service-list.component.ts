@@ -5,6 +5,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AddressService, Address } from '../services/address.service';
 import * as L from 'leaflet';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 @Component({
   selector: 'app-delivery-service-list',
@@ -31,6 +33,8 @@ export class DeliveryServiceListComponent implements OnInit {
   updateLoading = false;
   updateAddressLoading = false;
 
+  public PermissionConstants = PermissionConstants;
+
   ngOnInit(): void {
     this.loadDeliveryServices();
   }
@@ -39,7 +43,8 @@ export class DeliveryServiceListComponent implements OnInit {
     private deliveryServiceService: DeliveryServiceService,
     private modalService: NgbModal,
     private fb: FormBuilder,
-    private addressService: AddressService
+    private addressService: AddressService,
+    public permissionService: PermissionService
   ) {
     this.updateForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],

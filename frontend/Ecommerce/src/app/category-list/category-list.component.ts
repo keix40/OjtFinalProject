@@ -11,6 +11,8 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CategoryUpdateComponent } from '../category-update/category-update.component';
 import Swal from 'sweetalert2';
 import { CategoryAddSubcategoryComponent } from '../category-add-subcategory/category-add-subcategory.component';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 @Component({
   selector: 'app-category-list',
@@ -41,8 +43,10 @@ export class CategoryListComponent implements OnInit {
 
   constructor(
     private categoryService: CategoryService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    public permissionService: PermissionService
   ) {}
+  public PermissionConstants = PermissionConstants;
 
   ngOnInit(): void {
     this.loadCategories();

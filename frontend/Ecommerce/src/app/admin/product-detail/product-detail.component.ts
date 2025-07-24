@@ -6,6 +6,8 @@ import { CommonModule } from '@angular/common';
 import { NgbCarouselModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ReviewService } from '../../services/review.service';
+import { PermissionService } from '../../services/permission.service';
+import { PermissionConstants } from '../../constants/permission.constants';
 
 interface ProductImage {
   id: number;
@@ -66,14 +68,18 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   ratingBreakdown: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   @ViewChild('imagePreviewModal') imagePreviewModalTemplate: any;
   isModalOpen = false;
-
+  public PermissionConstants = PermissionConstants;
+  public permissionService: PermissionService;
   constructor(
     private route: ActivatedRoute,
     private productService: ProductService,
     private modalService: NgbModal,
     private router: Router,
-    private reviewService: ReviewService
-  ) {}
+    private reviewService: ReviewService,
+    permissionService: PermissionService
+  ) {
+    this.permissionService = permissionService;
+  }
 
   ngOnInit(): void {
     const productId = this.route.snapshot.paramMap.get('id');

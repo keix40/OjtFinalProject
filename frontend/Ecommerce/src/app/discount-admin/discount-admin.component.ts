@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DiscountService } from '../services/discount.service';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 @Component({
   selector: 'app-discount-admin',
@@ -14,8 +16,9 @@ export class DiscountAdminComponent implements OnInit {
   isEditMode = false;
   editDiscountId: number | null = null;
   message: string = '';
+  public PermissionConstants = PermissionConstants;
 
-  constructor(private fb: FormBuilder, private discountService: DiscountService) {
+  constructor(private fb: FormBuilder, private discountService: DiscountService, public permissionService: PermissionService) {
     this.discountForm = this.fb.group({
       name: ['', Validators.required],
       code: ['', Validators.required],

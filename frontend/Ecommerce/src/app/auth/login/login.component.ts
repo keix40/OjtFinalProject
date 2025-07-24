@@ -105,6 +105,7 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         return;
       }
       this.auth.saveToken(res.accessToken);
+      localStorage.setItem('refreshToken', res.refreshToken);
 
       // Call backend to check first time buyer eligibility
       this.http.get('/api/notifications/check-first-time-buyer').subscribe();

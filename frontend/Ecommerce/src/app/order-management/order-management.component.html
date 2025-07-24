@@ -208,7 +208,7 @@
                 <i data-lucide="eye" class="w-4 h-4"></i> View
               </button>
               <button class="px-3 py-1 bg-rose-50 text-rose-700 rounded-lg border border-rose-200 hover:bg-rose-100 transition text-xs shadow-sm flex items-center gap-1"
-                      (click)="cancelOrder(order)" [disabled]="order.status === 'DELIVERED' || order.status === 'CANCELLED'">
+                      (click)="cancelOrder(order)" [disabled]="order.status === 'DELIVERED' || order.status === 'CANCELLED' || !permissionService.hasPermission(PermissionConstants.ORDERS_UPDATE)">
                 <i data-lucide="x-circle" class="w-4 h-4"></i> Cancel
               </button>
             </div>
@@ -432,7 +432,7 @@
               <option *ngFor="let status of currentAvailableStatuses" [value]="status.value">{{ status.label }}</option>
             </select>
             <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50"
-                    (click)="changeOrderStatus()" [disabled]="selectedOrder.status === selectedStatusInModal">
+                    (click)="changeOrderStatus()" [disabled]="selectedOrder.status === selectedStatusInModal || !permissionService.hasPermission(PermissionConstants.ORDERS_UPDATE)">
               Update
             </button>
           </div>

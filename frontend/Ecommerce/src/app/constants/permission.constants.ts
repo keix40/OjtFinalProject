@@ -62,6 +62,9 @@ export const PermissionConstants = {
   CUSTOMERS_VIEW: 'customers.view',
   CUSTOMERS_VIEW_VIP: 'customers.view_vip',
   CUSTOMERS_BLACKLIST: 'customers.blacklist',
+  CUSTOMERS_UPDATE: 'customers.update',
+  CUSTOMERS_DELETE: 'customers.delete',
+  
 
    //admin
    ADMIN_USERS_VIEW: 'admin_users.view',
@@ -100,6 +103,12 @@ export const PermissionConstants = {
   ACTIVITY_LOGS_CREATE: 'activity_logs.create',
   ACTIVITY_LOGS_UPDATE: 'activity_logs.update',
   ACTIVITY_LOGS_DELETE: 'activity_logs.delete',
+
+  //Refund
+  REFUND_VIEW: 'refund.view',
+  REFUND_UPDATE: 'refund.update',
+
+  
 
   //permission
 
