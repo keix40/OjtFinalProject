@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Category, CategoryDTO, CategoryTreeDTO, SubCategoryDTO } from '../category';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,13 @@ export class CategoryService {
   constructor(private http: HttpClient) { }
 
   getAllCategory(): Observable<Category[]>{
-    return this.http.get<Category[]>(`${this.baseUrl}/getallcategory`);
+    return this.http.get<any[]>(`${this.baseUrl}/getallcategory`).pipe(
+      map(categories => categories.map(cat => ({
+        ...cat,
+        iconUrl: cat.iconUrl || cat.icon_url,
+        iconClass: cat.iconClass || cat.icon_class
+      })))
+    );
   }
 
   createCategoryWithImage(cateDto: CategoryDTO, imageFile?: File): Observable<any> {

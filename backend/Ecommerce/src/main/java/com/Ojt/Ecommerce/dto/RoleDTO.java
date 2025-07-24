@@ -11,4 +11,5 @@ public class RoleDTO {
     private String name;
     private List<UserDTO> users;
     private List<PermissionDTO> permissions;
+    private Integer level;
 }

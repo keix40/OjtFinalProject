@@ -279,7 +279,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   continueShopping() {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/userproductlist']);
   }
 
   moveToWishlist(productId: number): void {

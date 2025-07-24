@@ -1,5 +1,5 @@
 <div class="p-4 md:p-6">
-  <div class="max-w-7xl mx-auto space-y-6 animate-fade-in">
+  <div class="w-full px-2 space-y-6 animate-fade-in">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
       <div>
@@ -16,7 +16,8 @@
         <button class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-all" (click)="exportRoles()">
           <i data-lucide="download" class="w-4 h-4 text-blue-700"></i> Export
         </button>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-all" (click)="openCreateRoleModal()">
+        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-all" (click)="openCreateRoleModal()"
+          [disabled]="!permissionService.hasPermission(PermissionConstants.ROLES_CREATE)">
           <i data-lucide="plus" class="w-4 h-4 text-white"></i> Create Role
         </button>
       </div>
@@ -70,7 +71,11 @@
           </div>
           <div class="p-0">
             <div class="divide-y divide-gray-100">
-              <div *ngFor="let role of filteredRoles; trackBy: trackByRoleId" class="flex items-center justify-between px-4 py-3 hover:bg-blue-50 cursor-pointer transition-all" [ngClass]="{'bg-blue-100/40': selectedRole?.id === role.id}" (click)="selectRole(role)">
+              <div *ngFor="let role of filteredRoles; trackBy: trackByRoleId"
+                   class="flex items-center justify-between px-4 py-3 hover:bg-blue-50 cursor-pointer transition-all"
+                   [ngClass]="{'bg-blue-100/40': selectedRole?.id === role.id, 'pointer-events-none opacity-50': currentUser.role.level <= role.level}"
+                   (click)="currentUser.role.level > role.level ? selectRole(role) : null"
+                   [title]="currentUser.role.level <= role.level ? 'You cannot view or manage roles with equal or higher level' : ''">
                 <div>
                   <div class="font-semibold text-gray-900">{{ role.name }}</div>
                   <div class="text-xs text-gray-500">{{ role.description }}</div>
@@ -85,20 +90,29 @@
                   </span>
                   <!-- Custom Dropdown for Actions -->
                   <div class="relative" (click)="$event.stopPropagation()">
-                    <button class="rounded-lg border border-gray-200 bg-white px-2 py-1 flex items-center justify-center hover:bg-gray-50 transition-all" (click)="openDropdownId === role.id ? openDropdownId = null : openDropdownId = role.id">
+                    <button class="rounded-lg border border-gray-200 bg-white px-2 py-1 flex items-center justify-center hover:bg-gray-50 transition-all"
+                      (click)="toggleDropdown(role)"
+                      [disabled]="currentUser.role.level <= role.level"
+                      [title]="currentUser.role.level <= role.level ? 'You cannot manage roles with equal or higher level' : ''">
                       <i data-lucide="ellipsis-vertical" class="w-4 h-4 text-gray-600"></i>
                     </button>
                     <div *ngIf="openDropdownId === role.id" class="absolute right-0 top-full mt-2 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-50 transition-opacity transition-transform duration-300 ease-in-out opacity-100 translate-y-0">
-                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="editRole(role); openDropdownId = null">
+                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                        (click)="onEditRole(role)"
+                        [disabled]="currentUser.role.level <= role.level || !permissionService.hasPermission(PermissionConstants.ROLES_UPDATE)"
+                        [title]="currentUser.role.level <= role.level ? 'You cannot edit roles with equal or higher level' : (!permissionService.hasPermission(PermissionConstants.ROLES_UPDATE) ? 'You do not have permission to edit roles' : '')">
                         <i data-lucide="edit" class="w-4 h-4 text-gray-600"></i> Edit Role
                       </button>
-                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="duplicateRole(role); openDropdownId = null">
-                        <i data-lucide="copy" class="w-4 h-4 text-gray-600"></i> Duplicate
-                      </button>
-                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2" (click)="toggleRoleStatus(role); openDropdownId = null">
+                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2"
+                        (click)="onToggleRoleStatus(role)"
+                        [disabled]="currentUser.role.level <= role.level || !permissionService.hasPermission(PermissionConstants.ROLES_UPDATE)"
+                        [title]="currentUser.role.level <= role.level ? 'You cannot change status of roles with equal or higher level' : (!permissionService.hasPermission(PermissionConstants.ROLES_UPDATE) ? 'You do not have permission to change role status' : '')">
                         <i data-lucide="power" class="w-4 h-4 text-gray-600"></i> {{ role.status === 'active' ? 'Deactivate' : 'Activate' }}
                       </button>
-                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-600" (click)="deleteRole(role); openDropdownId = null">
+                      <button class="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-600"
+                        (click)="onDeleteRole(role)"
+                        [disabled]="currentUser.role.level <= role.level || !permissionService.hasPermission(PermissionConstants.ROLES_DELETE)"
+                        [title]="currentUser.role.level <= role.level ? 'You cannot delete roles with equal or higher level' : (!permissionService.hasPermission(PermissionConstants.ROLES_DELETE) ? 'You do not have permission to delete roles' : '')">
                         <i data-lucide="trash" class="w-4 h-4 text-red-600"></i> Delete
                       </button>
                     </div>
@@ -128,7 +142,10 @@
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium" [ngClass]="'level-' + getPermissionLevel(selectedRole)">
                 <i data-lucide="star" class="w-3 h-3 text-yellow-500"></i> {{ getPermissionLevel(selectedRole) | titlecase }}
               </span>
-              <button class="glassmorphism-light px-3 py-1 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all flex items-center gap-1" (click)="editRole(selectedRole)">
+              <button class="glassmorphism-light px-3 py-1 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all flex items-center gap-1"
+                (click)="onEditRole(selectedRole)"
+                [disabled]="!currentUser?.role || !selectedRole || currentUser.role.level <= selectedRole.level"
+                [title]="!currentUser?.role || !selectedRole ? '' : (currentUser.role.level <= selectedRole.level ? 'You cannot edit roles with equal or higher level' : '')">
                 <i data-lucide="edit" class="w-4 h-4 text-gray-600"></i> Edit Role
               </button>
             </div>
@@ -215,7 +232,8 @@
                 <button class="bg-purple-100 hover:bg-purple-200 text-purple-700 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-all" (click)="openTemplatesModal()">
                   <i data-lucide="magic" class="w-4 h-4 text-purple-700"></i> Permission Templates
                 </button>
-                <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg shadow-md text-sm font-bold flex items-center gap-2 transition-all" (click)="savePermissions()">
+                <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg shadow-md text-sm font-bold flex items-center gap-2 transition-all" (click)="savePermissions()"
+                  [disabled]="!permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS)">
                   <i data-lucide="save" class="w-4 h-4 text-white"></i> Save Changes
                 </button>
               </div>
@@ -293,7 +311,8 @@
             </div>
             <h4>Select a Role</h4>
             <p>Choose a role from the list to view and manage its permissions</p>
-            <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1" (click)="openCreateRoleModal()">
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm font-medium flex items-center gap-1" (click)="openCreateRoleModal()"
+              [disabled]="!permissionService.hasPermission(PermissionConstants.ROLES_CREATE)">
               <i data-lucide="plus" class="w-4 h-4 text-white"></i> Create New Role
             </button>
           </div>
@@ -354,7 +373,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold transition-all mr-2" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all" (click)="saveRole()" [disabled]="roleForm.invalid">
+          <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all" (click)="saveRole()" [disabled]="roleForm.invalid || !permissionService.hasPermission(PermissionConstants.ROLES_CREATE)">
             <i data-lucide="save" class="w-4 h-4 text-blue-600"></i>
             {{ editingRole ? 'Update Role' : 'Create Role' }}
           </button>
@@ -365,7 +384,7 @@
 
   <!-- Permission Templates Modal -->
   <div class="modal fade" id="templatesModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-xl" style="margin-top:5vh; margin-bottom:5vh;">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
@@ -375,27 +394,33 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
-          <div class="templates-grid">
-            <div *ngFor="let template of permissionTemplates" class="template-card">
-              <div class="template-header">
-                <h6>{{ template.name }}</h6>
-                <span class="template-level" [ngClass]="'level-' + template.level">
-                  {{ template.level }}
-                </span>
-              </div>
-              <div class="template-description">
-                {{ template.description }}
-              </div>
-              <div class="template-permissions">
-                <strong>{{ template.permissions.length }}</strong> permissions included
-              </div>
-              <div class="template-actions">
-                <button class="btn btn-outline-primary btn-sm" (click)="previewTemplate(template)">
-                  <i data-lucide="eye" class="w-4 h-4 text-gray-600"></i>Preview
-                </button>
-                <button class="btn btn-primary btn-sm" (click)="applyPermissionTemplate(template)">
-                  <i data-lucide="check" class="w-4 h-4 text-blue-600"></i>Apply
-                </button>
+          <div class="flex justify-center">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl w-full mx-auto">
+              <div *ngFor="let template of permissionTemplates" class="bg-white rounded-xl shadow p-5 flex flex-col items-start border border-gray-100 hover:shadow-lg transition-all">
+                <div class="flex items-center w-full justify-between mb-2">
+                  <h6 class="text-lg font-bold text-gray-900 uppercase tracking-wide">{{ template.name }}</h6>
+                  <span class="ml-2 px-2 py-0.5 rounded text-xs font-semibold"
+                    [ngClass]="{
+                      'bg-blue-100 text-blue-700': template.level === 'intermediate',
+                      'bg-green-100 text-green-700': template.level === 'basic',
+                      'bg-yellow-100 text-yellow-700': template.level === 'advanced',
+                      'bg-red-100 text-red-700': template.level === 'critical'
+                    }">
+                    {{ template.level }}
+                  </span>
+                </div>
+                <div class="text-sm text-gray-600 mb-2">{{ template.permissions.length }} permissions included</div>
+                <div class="flex-1 text-xs text-gray-500 mb-4">{{ template.description }}</div>
+                <div class="flex gap-2 w-full mt-auto">
+                  <button class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-all border border-blue-200 w-1/2 justify-center"
+                    (click)="previewTemplate(template)">
+                    <i data-lucide="eye" class="w-4 h-4 text-blue-700"></i> Preview
+                  </button>
+                  <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md text-sm font-bold flex items-center gap-2 transition-all w-1/2 justify-center"
+                    (click)="applyPermissionTemplate(template)">
+                    <i data-lucide="check" class="w-4 h-4 text-white"></i> Apply
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -406,6 +431,53 @@
           <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold shadow-md flex items-center gap-2 transition-all w-full sm:w-auto" (click)="openAssignDialog()">
             <i data-lucide="user-plus" class="w-5 h-5 text-white"></i> Assign More Users
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Template Preview Modal -->
+  <div class="modal fade" id="templatePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl" style="max-width:900px; min-width:600px; width:100%; margin-top:5vh; margin-bottom:5vh;">
+      <div class="modal-content mx-auto" style="max-width:900px; min-width:600px; width:100%;">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i data-lucide="eye" class="w-5 h-5 text-blue-600"></i>
+            Template Preview
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" *ngIf="previewedTemplate" style="background:#f8fafc;">
+          <h4 class="font-bold text-xl mb-2">{{ previewedTemplate.name }}</h4>
+          <p class="text-gray-500 mb-3">{{ previewedTemplate.description }}</p>
+          <div class="mb-3 flex items-center gap-2">
+            <span class="badge bg-primary">{{ previewedTemplate.level | titlecase }}</span>
+            <span class="badge bg-info">{{ previewedTemplate.permissions.length }} permissions</span>
+          </div>
+          <div class="divide-y divide-gray-200 rounded-lg overflow-hidden border border-gray-200 bg-white w-full" style="width:100%;">
+            <ng-container *ngFor="let group of getPreviewedTemplatePermissionsByCategory(); let i = index">
+              <div class="bg-gray-50 px-4 py-2 font-bold text-blue-800 text-base border-b border-gray-200 flex items-center cursor-pointer select-none" (click)="togglePreviewCategory(i)">
+                <span class="mr-2">
+                  <i [ngClass]="expandedPreviewCategories[i] ? 'fa fa-chevron-down' : 'fa fa-chevron-right'"></i>
+                </span>
+                {{ group.category }}
+              </div>
+              <div *ngIf="expandedPreviewCategories[i]">
+                <div *ngFor="let perm of group.permissions" class="pl-8 pr-4 py-3 flex flex-col">
+                  <ng-container *ngIf="isObject(perm); else showKey">
+                    <span class="font-semibold text-base text-gray-900">{{ perm.name }}</span>
+                    <span *ngIf="perm.description" class="text-xs text-gray-500 mt-0.5">{{ perm.description }}</span>
+                  </ng-container>
+                  <ng-template #showKey>
+                    <span class="font-semibold text-base text-gray-900">{{ perm }}</span>
+                  </ng-template>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
       </div>
     </div>

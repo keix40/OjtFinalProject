@@ -4,6 +4,7 @@ import { AuthService } from '../../auth/auth.service';
 import { PermissionService } from '../../services/permission.service';
 import { ImageService } from '../../services/image.service';
 import { AdminUserService } from '../../services/admin-user.service';
+import { PermissionConstants } from '../../constants/permission.constants';
 
 @Component({
   selector: 'app-sidebar',
@@ -12,6 +13,8 @@ import { AdminUserService } from '../../services/admin-user.service';
   styleUrl: './sidebar.component.css'
 })
 export class SidebarComponent implements OnInit, AfterViewInit {
+  // Add PermissionConstants to component for template access
+  protected PermissionConstants = PermissionConstants;
   isProductsOpen = false;
   isUsersOpen: boolean = false;
   isOrdersOpen: boolean = false;

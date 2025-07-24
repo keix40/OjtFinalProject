@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -74,7 +75,7 @@ public class UserController {
 
     //fix to error
     @GetMapping("/all")
-    @RequiresPermission(value = "users.view", level = "basic")
+    @RequiresPermission(value = USERS_VIEW, level = "basic", description = "View all users in the system")
     public ResponseEntity<List<UserDTO>> getAllUsers() {
         List<UserDTO> users = userService.getAllUsers().stream()
                 .map(UserDTO::new)
@@ -83,11 +84,13 @@ public class UserController {
     }
 
     @GetMapping("/customers")
+    @RequiresPermission(value = CUSTOMERS_VIEW, level = "basic", description = "View all customers")
     public List<CustomerSummaryDTO> getAllCustomers() {
         return userService.getAllCustomerSummaries();
     }
 
     @GetMapping("/vip-customers")
+    @RequiresPermission(value = CUSTOMERS_VIEW_VIP, level = "intermediate", description = "View VIP customers")
     public List<CustomerSummaryDTO> getAllVipCustomers() {
         return userService.getAllVipCustomers();
     }
@@ -97,7 +100,7 @@ public class UserController {
     @LogActivity(actionType = "UPDATE", entityType = "USER", description = "Updated user", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/{id}")
     @Transactional
-    @RequiresPermission(value = "users.update", level = "intermediate",route = "/users/update") // add
+    @RequiresPermission(value = USERS_UPDATE, level = "intermediate", description = "Update user information")
     public ResponseEntity<Map<String, Object>>  updateUser(@PathVariable Long id ,@RequestBody RegisterRequest dto,@RequestHeader("Authorization") String token){
         RegisterRequest updatedUser = userService.updateUser(id,dto);
 
@@ -113,7 +116,7 @@ public class UserController {
     }
 
     @PutMapping("/{userId}/assign-role")
-    @RequiresPermission(value = "users.assign_role", level = "intermediate",route = "/users/assign") // add
+    @RequiresPermission(value = USERS_ASSIGN_ROLE, level = "advanced", description = "Assign roles to users")
     public ResponseEntity<String> assignRoleToUser(
             @PathVariable Long userId,
             @RequestParam Long roleId
@@ -123,7 +126,7 @@ public class UserController {
     }
 
     @GetMapping("/roles/{roleId}/users")
-    @RequiresPermission(value = "users.view_by_role", level = "basic") // add
+    @RequiresPermission(value = USERS_VIEW_BY_ROLE, level = "basic", description = "View users by role")
     public ResponseEntity<List<UserDTO>> getUsersByRole(@PathVariable Long roleId) {
         List<User> users = userService.findUsersByRoleId(roleId);
 
@@ -143,7 +146,7 @@ public class UserController {
 
     @LogActivity(actionType = "CREATE", entityType = "USER", description = "Admin created user", severityLevel = "MEDIUM")
     @PostMapping("/createUser")
-    @RequiresPermission(value = "users.create", level = "intermediate", route = "/users/create")
+    @RequiresPermission(value = USERS_CREATE, level = "intermediate", description = "Create new user")
     public ResponseEntity<?> createUserByAdmin(@RequestBody AdminCreateUserRequest request) {
         // 1. Find role by name
         Role role = roleRepository.findByName(request.getRole())
@@ -193,7 +196,7 @@ public class UserController {
 
     @PostMapping("/bulk-create")
     @Transactional
-    @RequiresPermission(value = "users.create", level = "intermediate", route = "/users/bulk-create")
+    @RequiresPermission(value = USERS_CREATE, level = "intermediate", route = "/users/bulk-create")
     public ResponseEntity<?> bulkCreateUsers(@RequestBody List<AdminCreateUserRequest> requests) {
         List<Map<String, Object>> results = new java.util.ArrayList<>();
         for (AdminCreateUserRequest req : requests) {
@@ -212,10 +215,23 @@ public class UserController {
     // Delete user endpoint (for customer management table delete action)
     @LogActivity(actionType = "DELETE", entityType = "USER", description = "Deleted user", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+    @RequiresPermission(value = USERS_DELETE, level = "advanced", description = "Delete user")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
         // Why: JPA cascade only works if you load the entity first. This ensures related entities are deleted as well.
-        User user = userRepository.findById(id).orElseThrow();
-        userRepository.delete(user);
+        User targetUser = userRepository.findById(id).orElseThrow();
+
+        // Get acting user from token
+        String actingUserEmail = jwtTokenProvider.getEmailFromToken(token.replace("Bearer ", ""));
+        User actingUser = userRepository.findByEmail(actingUserEmail).orElseThrow();
+
+        // Role hierarchy check
+        int actingLevel = actingUser.getRole().getLevel();
+        int targetLevel = targetUser.getRole().getLevel();
+        if (actingLevel <= targetLevel) {
+            return ResponseEntity.status(403).body("You cannot delete a user with an equal or higher role.");
+        }
+
+        userRepository.delete(targetUser);
         return ResponseEntity.ok().build();
     }
 

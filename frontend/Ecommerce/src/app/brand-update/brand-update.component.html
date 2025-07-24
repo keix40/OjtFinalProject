@@ -73,7 +73,7 @@
     </div>
     <div class="flex justify-end gap-2 mt-8">
       <button type="button" (click)="activeModal.dismiss()" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition text-sm">Cancel</button>
-      <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition text-sm font-semibold flex items-center gap-2">Update</button>
+      <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition text-sm font-semibold flex items-center gap-2" [disabled]="!permissionService.hasPermission(PermissionConstants.BRANDS_UPDATE)">Update</button>
     </div>
   </form>
   <div *ngIf="loading" class="p-6 text-center text-gray-500">Loading...</div>

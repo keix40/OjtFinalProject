@@ -8,7 +8,8 @@ import { NotifcationService } from '../notifcation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProductService} from '../services/product.service';
 import { ProductDTO } from '../product';
-
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return { required: true };
@@ -81,6 +82,7 @@ export class DiscountEventManagementComponent implements OnInit {
   showProductDetails: boolean = false;
   @ViewChild('productDetailsModal') productDetailsModalRef: any;
 
+  public PermissionConstants = PermissionConstants;
   // Add properties for filter/search UI
   searchTerm: string = '';
   selectedStatus: string = '';
@@ -160,7 +162,8 @@ export class DiscountEventManagementComponent implements OnInit {
     private notificationService: NotificationService,
     private notifcationService: NotifcationService,
     private modalService: NgbModal,
-    private productService: ProductService // <-- Inject ProductService
+    private productService: ProductService, // <-- Inject ProductService
+    public permissionService: PermissionService
   ) {
     this.editForm = this.fb.group({
       name: ['', Validators.required],

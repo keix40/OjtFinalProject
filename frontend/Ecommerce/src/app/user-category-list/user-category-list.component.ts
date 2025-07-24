@@ -5,6 +5,7 @@ import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-user-category-list',
@@ -18,7 +19,7 @@ export class UserCategoryListComponent implements OnInit {
   loading = false;
   error = '';
 
-  constructor(private categoryService: CategoryService, private router: Router) {}
+  constructor(private categoryService: CategoryService, private router: Router, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     this.loading = true;
@@ -38,6 +39,20 @@ export class UserCategoryListComponent implements OnInit {
     if (!cat.image || cat.image.includes('null')) return 'assets/images/default-brand.svg';
     if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
     return `http://localhost:8080${cat.image}`;
+  }
+
+  getSafeIconUrl(cat: Category): SafeUrl | string | undefined {
+    if (cat.iconUrl) {
+      if (cat.iconUrl.startsWith('data:image')) {
+        return this.sanitizer.bypassSecurityTrustUrl(cat.iconUrl);
+      }
+      if (cat.iconUrl.startsWith('http://') || cat.iconUrl.startsWith('https://')) {
+        return cat.iconUrl;
+      }
+      // If it's a relative path (uploaded file)
+      return `http://localhost:8080${cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl}`;
+    }
+    return undefined;
   }
 
   goToCategory(cat: Category) {

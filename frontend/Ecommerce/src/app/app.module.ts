@@ -11,7 +11,6 @@ import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptors/jwt.interceptors.service';
-
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UserOrdersComponent } from './user-profile/user-orders/user-orders.component';
 import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlist.component';
@@ -83,6 +82,7 @@ import { DiscountAdminComponent } from './discount-admin/discount-admin.componen
 import { UserPolicyComponent } from './user-policy/user-policy.component';
 import { AboutUsComponent } from './about-us/about-us.component';
 import { ContactUsComponent } from './contact-us/contact-us.component';
+import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'lucide-angular';
 
 @NgModule({
   declarations: [
@@ -153,22 +153,21 @@ import { ContactUsComponent } from './contact-us/contact-us.component';
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CartSidebarComponent,
-    ProductDetailComponent,
+    CommonModule, // Required for pipes like date, currency, number
+    // Angular Material Modules
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
     MatTableModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    // Quill Editor
     QuillModule.forRoot(),
+    CartSidebarComponent, // Standalone component must be imported here
+   ProductDetailComponent,
+    BrowserAnimationsModule,
     BlacklistComponent,
     TestComponent,
-    //MatInputModule,
-    //MatAutocompleteModule,
-    //MatFormFieldModule,
-    // MatIconModule,
-    //MatButtonModule,
     FooterComponent,
     HeaderComponent,
     BreadcrumbComponent,
@@ -181,7 +180,8 @@ import { ContactUsComponent } from './contact-us/contact-us.component';
       timeOut: 3000,
       positionClass: 'toast-top-right',
       preventDuplicates: true,
-    })
+    }),
+    LucideAngularModule.pick({ Tag, Box, Gift, Heart, ShoppingBag, Star })
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

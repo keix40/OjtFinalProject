@@ -119,28 +119,28 @@
           
           <!-- Products Submenu -->
           <ng-container *ngSwitchCase="'products'">
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.PRODUCTS_CREATE)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/product'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="plus-square" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Add Product</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.PRODUCTS_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/productlist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Product List</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.BRANDS_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/brandlist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="tag" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Brand List</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.CATEGORIES_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/categorylist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="tag" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -151,14 +151,14 @@
 
           <!-- Orders Submenu -->
           <ng-container *ngSwitchCase="'orders'">
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ORDERS_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/orders'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="clipboard-list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Order Management</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.REFUND_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/return'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -169,21 +169,21 @@
 
           <!-- Discounts Submenu -->
           <ng-container *ngSwitchCase="'discounts'">
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/discount-list'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Discount List</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'discount-add'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="plus" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Add Discount</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.COUPONS_MANAGE)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/discount-coupon'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="ticket" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -194,14 +194,14 @@
 
           <!-- Delivery Submenu -->
           <ng-container *ngSwitchCase="'delivery'">
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DELIVERY_CREATE)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/createdeliveryservice'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="plus-square" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Add Delivery</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DELIVERY_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/deliveryservicelist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -216,7 +216,7 @@
             <!-- <li class="mt-2 mb-1">
               <span class="text-xs font-bold text-slate-500 tracking-wider px-4">CUSTOMERS</span>
             </li> -->
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.CUSTOMERS_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/users/customers'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="user" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -224,7 +224,7 @@
                   <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold animate-pulse">{{ totalCustomers }}</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.CUSTOMERS_VIEW_VIP)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/users/vip'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="crown" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -232,7 +232,7 @@
                   <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ vipCount }}</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.BLACKLIST_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/users/blacklist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="ban" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -245,14 +245,14 @@
             <!-- <li class="mt-3 mb-1">
               <span class="text-xs font-bold text-slate-500 tracking-wider px-4">USER CONTROLS</span>
             </li> -->
-            <li *ngIf="permissionService.hasPermission('Users Create')" class="mb-2">
+            <li *ngIf="permissionService.hasPermission(PermissionConstants.USERS_CREATE)" class="mb-2">
               <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                  [routerLink]="'/users/create'" routerLinkActive="bg-green-100 text-green-700 font-bold">
                 <i data-lucide="user-plus" class="w-5 h-5 text-green-400 transition-transform duration-200 hover:scale-110"></i>
                   <span>Create User</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ADMIN_USERS_VIEW)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/users/admins'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="shield" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -260,7 +260,7 @@
                   <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ adminCount }}</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.PERMISSIONS_VIEW)">
               <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                  [routerLink]="'/users/roles'" routerLinkActive="bg-purple-100 text-purple-700 font-bold">
                 <i data-lucide="key-round" class="w-5 h-5 text-purple-400 transition-transform duration-200 hover:scale-110"></i>
@@ -272,7 +272,7 @@
             <!-- <li class="mt-3 mb-1">
               <span class="text-xs font-bold text-slate-500 tracking-wider px-4">SECURITY</span>
             </li> -->
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.SECURITY_VIEW_ATTEMPTS)">
               <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                  [routerLink]="'/users/login-attempts'" routerLinkActive="bg-red-100 text-red-700 font-bold">
                 <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 transition-transform duration-200 hover:scale-110"></i>
@@ -280,7 +280,7 @@
                   <span *ngIf="suspiciousLogins > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold animate-pulse">{{ suspiciousLogins }}</span>
               </a>
             </li>
-            <li class="mb-2">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ACTIVITY_LOGS_VIEW)">
               <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                  [routerLink]="'/users/activity'" routerLinkActive="bg-yellow-100 text-yellow-800 font-bold">
                 <i data-lucide="activity" class="w-5 h-5 text-yellow-400 transition-transform duration-200 hover:scale-110"></i>
@@ -456,7 +456,7 @@
                   <i data-lucide="ban" class="w-5 h-5 text-slate-500"></i>
                 </a>
               </li>
-              <li *ngIf="permissionService.hasPermission('Users Create')" class="flex justify-center mb-2">
+              <li *ngIf="permissionService.hasPermission(PermissionConstants.USERS_CREATE)" class="flex justify-center mb-2">
                 <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-green-50 transition-all duration-200" 
                    [routerLink]="'/users/create'" [attr.title]="'Create User'" (click)="forceReinitializeIcons()">
                   <i data-lucide="user-plus" class="w-5 h-5 text-green-400"></i>

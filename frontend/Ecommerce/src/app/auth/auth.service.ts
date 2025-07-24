@@ -98,6 +98,8 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('token');
+    // Clear permissions
+    localStorage.removeItem('userPermissions');
     // Clear blacklist flags when user logs out
     localStorage.removeItem('blacklisted');
     localStorage.removeItem('blacklistReason');
@@ -237,6 +239,11 @@ uploadProfileImage(file: File): Observable<any> { //add for profile avatar updat
     } catch {
       return null;
     }
+  }
+
+  refreshToken(): Observable<any> {
+    const refreshToken = localStorage.getItem('refreshToken');
+    return this.http.post(`${this.baseUrl}/refresh-token`, { refreshToken });
   }
 
 }

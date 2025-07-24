@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { PermissionConstants } from '../constants/permission.constants';
 
 const API_URL = 'http://localhost:8080/api';
 
@@ -25,12 +26,18 @@ export class PermissionService {
     this.userPermissions = perms ? JSON.parse(perms) : [];
   }
 
-  // ✅ Check from current user permissions
   hasPermission(permissionKey: string): boolean {
     return this.userPermissions.includes(permissionKey);
   }
 
-  // ✅ Optional: Get user permission list (for debug or UI loop)
+  hasAnyPermission(permissions: string[]): boolean {
+    return permissions.some(permission => this.hasPermission(permission));
+  }
+
+  hasAllPermissions(permissions: string[]): boolean {
+    return permissions.every(permission => this.hasPermission(permission));
+  }
+
   getPermissions(): string[] {
     return this.userPermissions;
   }

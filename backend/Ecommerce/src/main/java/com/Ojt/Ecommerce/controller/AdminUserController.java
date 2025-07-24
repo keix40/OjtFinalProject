@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.entity.UserActivity;
 import com.Ojt.Ecommerce.repository.UserActivityRepository;
@@ -19,7 +20,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 
+@PermissionCategoryTag(value = "admin_users", name = "Admin User Management", icon = "fa-user-shield")
 @RestController
 @RequestMapping("/api/admin-users")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -42,6 +46,7 @@ public class AdminUserController {
 
     // Get all admin users (excluding customers, case-insensitive)
     @GetMapping
+    @RequiresPermission(value = ADMIN_USERS_VIEW, level = "basic")
     public List<UserDTO> getAdminUsers() {
         return userRepository.findByRoleNameNotIgnoreCase("customer")
                 .stream()
@@ -60,6 +65,7 @@ public class AdminUserController {
 
     // Create admin user
     @PostMapping
+    @RequiresPermission(value = ADMIN_USERS_CREATE, level = "advanced")
     public ResponseEntity<?> createAdminUser(@RequestBody UserDTO dto) {
         if ("customer".equalsIgnoreCase(dto.getRoleName())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Cannot create customer via this endpoint");
@@ -79,6 +85,7 @@ public class AdminUserController {
 
     // Edit admin user
     @PutMapping("/{id}")
+    @RequiresPermission(value = ADMIN_USERS_UPDATE, level = "advanced")
     public ResponseEntity<?> updateAdminUser(@PathVariable Long id, @RequestBody UserDTO dto) {
         var userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
@@ -101,6 +108,7 @@ public class AdminUserController {
 
     // Update admin status
     @PatchMapping("/{id}/status")
+    @RequiresPermission(value = ADMIN_USERS_UPDATE, level = "advanced")
     public ResponseEntity<?> updateAdminStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
         var userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
@@ -116,6 +124,7 @@ public class AdminUserController {
 
     // Delete admin user
     @DeleteMapping("/{id}")
+    @RequiresPermission(value = ADMIN_USERS_DELETE, level = "critical")
     public ResponseEntity<?> deleteAdminUser(@PathVariable Long id) {
         var userOpt = userRepository.findById(id);
         if (userOpt.isEmpty()) return ResponseEntity.notFound().build();
@@ -129,6 +138,7 @@ public class AdminUserController {
 
     // Update admin permissions (placeholder, assumes permissions are managed via roles)
     @PutMapping("/{id}/permissions")
+    @RequiresPermission(value = ADMIN_USERS_UPDATE, level = "advanced")
     public ResponseEntity<?> updateAdminPermissions(@PathVariable Long id, @RequestBody List<PermissionDTO> permissions) {
         // In a real app, you would update the user's role or assign direct permissions
         // For now, just return not implemented

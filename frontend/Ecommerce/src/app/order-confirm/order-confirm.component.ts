@@ -50,6 +50,6 @@ export class OrderConfirmComponent implements OnInit {
 
   closeAndNavigate() {
     this.activeModal.close();
-    this.router.navigate(['/home']);
+    this.router.navigate(['/userproductlist']);
   }
 }

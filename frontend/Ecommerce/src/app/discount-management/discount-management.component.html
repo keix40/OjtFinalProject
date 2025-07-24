@@ -37,7 +37,7 @@
 
   <!-- Action Row -->
   <div class="bulk-actions" style="margin-bottom: 1rem;">
-    <button class="btn btn-danger" (click)="deleteSelectedDiscounts()" [disabled]="selectedDiscounts.length === 0">Delete</button>
+    <button class="btn btn-danger" (click)="deleteSelectedDiscounts()" [disabled]="selectedDiscounts.length === 0 || !permissionService.hasPermission(PermissionConstants.DISCOUNTS_DELETE)">Delete</button>
   </div>
 
   <!-- Discount Table -->
@@ -287,7 +287,7 @@
         <button class="btn btn-cancel" (click)="closeDeleteConfirmModal()">
           <i class="fas fa-times"></i> Cancel
         </button>
-        <button class="btn btn-delete-confirm" (click)="confirmDelete()">
+        <button class="btn btn-delete-confirm" (click)="confirmDelete()" [disabled]="!permissionService.hasPermission(PermissionConstants.DISCOUNTS_DELETE)">
           <i class="fas fa-trash"></i> Delete
         </button>
     </div>

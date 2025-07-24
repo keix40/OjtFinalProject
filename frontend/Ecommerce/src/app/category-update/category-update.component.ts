@@ -7,6 +7,8 @@ import { NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 @Component({
   selector: 'app-category-update',
@@ -28,8 +30,10 @@ export class CategoryUpdateComponent implements OnInit {
   constructor(
     public activeModal: NgbActiveModal,
     private categoryService: CategoryService,
-    private brandService: BrandService
+    private brandService: BrandService,
+    public permissionService: PermissionService
   ) {}
+  public PermissionConstants = PermissionConstants;
 
   ngOnInit(): void {
     this.loadCategoriesAndSetCategory();

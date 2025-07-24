@@ -13,8 +13,11 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { ImageService } from '../services/image.service';
 import { Router } from '@angular/router';
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 declare var $: any;
 declare var lucide: any;
+
 
 // Update ProductImage type for productImages array to include variantId
 export interface ProductImage {
@@ -66,14 +69,20 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   pageSize: number = 10;
   paginatedProducts: ProductList[] = [];
 
+  public PermissionConstants = PermissionConstants;
+  public permissionService: PermissionService;
   constructor(
     private productService: ProductService,
     private cateService: CategoryService,
     private brandService: BrandService,
     private ngbModel: NgbModal,
     public imageService: ImageService,
-    private router: Router // <-- Added Router injection
-  ) {}
+    private router: Router,
+    permissionService: PermissionService
+  ) {
+    this.PermissionConstants = PermissionConstants;
+    this.permissionService = permissionService;
+  }
 
   ngOnInit(): void {
     this.loadProduct();

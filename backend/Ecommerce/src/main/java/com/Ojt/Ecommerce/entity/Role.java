@@ -25,6 +25,9 @@ public class Role {
     @Column(length = 45, nullable = false)
     private String name;
 
+    @Column(name = "level", nullable = false)
+    private int level;
+
     @OneToMany(mappedBy = "role", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<User> users;
