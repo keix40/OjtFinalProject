@@ -1,8 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
 import { UserPersonalInfoComponent } from './user-personal-info/user-personal-info.component';
 import { OrderService } from '../services/order.service';
+import { FooterComponent } from '../footer/footer.component';
+import { CommonModule } from '@angular/common';
+import { HeaderComponent } from '../header/header.component';
+import { UserNotificationsComponent } from './user-notifications/user-notifications.component';
 import { UserCouponService } from '../services/user-coupon.service';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
@@ -20,9 +24,9 @@ interface UserDetails {
 
 @Component({
   selector: 'app-user-profile',
+  standalone: false,
   templateUrl: './user-profile.component.html',
-  styleUrls: ['./user-profile.component.css'],
-  standalone: false
+  styleUrls: ['./user-profile.component.css']
 })
 export class UserProfileComponent implements OnInit {
   userDetails: UserDetails = {

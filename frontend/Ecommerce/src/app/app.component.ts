@@ -1,10 +1,13 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
 import { NotifcationService } from './notifcation.service';
 import { IpService } from './services/ip.service';
 import { LoginAttemptsService } from './services/login-attempts.service';
-
+import { AuthService } from './auth/auth.service';
+import { BlacklistService } from './services/blacklist.service';
 import { NotificationSidebarService } from './notifcation-sidebar.service';
+import { interval, Subscription } from 'rxjs';
+import { takeWhile } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -12,7 +15,7 @@ import { NotificationSidebarService } from './notifcation-sidebar.service';
   standalone: false,
   styleUrl: './app.component.css'
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   showNotificationSidebar = false;
   title = 'Britium Gallary';
 
@@ -22,17 +25,28 @@ export class AppComponent implements OnInit {
   lastToastNotification: any = null;
   newNotificationCount = 0;
 
+  private blacklistCheckSubscription: Subscription | null = null;
+
+  // Go to Top button properties
+  showGoToTop = false;
+
   constructor(
     private notificationService: NotifcationService,
     private notificationSidebarService: NotificationSidebarService,
     private router: Router,
     private ipService: IpService,
-    private loginAttemptsService: LoginAttemptsService
+    private loginAttemptsService: LoginAttemptsService,
+    private authService: AuthService,
+    private blacklistService: BlacklistService
   ) {}
 
   ngOnInit() {
     const storedCount = localStorage.getItem('newNotificationCount');
-  this.newNotificationCount = storedCount ? parseInt(storedCount, 10) : 0;
+    this.newNotificationCount = storedCount ? parseInt(storedCount, 10) : 0;
+    
+    // Check and clear expired blacklist flags on app initialization
+    this.authService.checkAndClearExpiredBlacklist();
+    
     this.notificationSidebarService.getSidebarState().subscribe(open => {
       this.showNotificationSidebar = open;
     });
@@ -48,13 +62,49 @@ export class AppComponent implements OnInit {
         this.loginAttemptsService.isIPBlocked(ip).subscribe(res => {
           if (res.blocked) {
             this.router.navigate(['/banned'], { queryParams: { until: res.blockedUntil } });
-
-            
           }
         });
       }
     });
-}
+
+    // Start periodic blacklist status checking
+    this.startBlacklistCheck();
+  }
+
+  ngOnDestroy() {
+    if (this.blacklistCheckSubscription) {
+      this.blacklistCheckSubscription.unsubscribe();
+    }
+  }
+
+  private startBlacklistCheck() {
+    this.blacklistCheckSubscription = interval(60000) // Check every minute
+      .pipe(takeWhile(() => this.authService.isLoggedIn()))
+      .subscribe(() => {
+        // Check if user is still blacklisted
+        this.blacklistService.checkCurrentUserBlacklistStatus().subscribe(isBlacklisted => {
+          if (!isBlacklisted && localStorage.getItem('blacklisted') === 'true') {
+            console.log('[AppComponent] User is no longer blacklisted, clearing flags');
+            // Force page refresh to update the UI
+            window.location.reload();
+          }
+        });
+      });
+  }
+
+  // Go to Top button methods
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    // Show button when user scrolls down more than 300px
+    this.showGoToTop = window.pageYOffset > 300;
+  }
+
+  scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }
 
   showToast(message: string, notification: any = null) {
     this.toastMessage = message;

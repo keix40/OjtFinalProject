@@ -13,6 +13,7 @@ import { BrandService } from '../services/brand.service';
 import { Category } from '../category';
 import { BrandListDTO } from '../brand';
 import { UserActivityService } from '../services/user-activity.service';
+import { SessionService } from '../services/session.service';
 import { NavigationEnd } from '@angular/router';
 import { ProductDTO } from '../product';
 import { ProductService } from '../services/product.service';
@@ -79,6 +80,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private categoryService: CategoryService,
     private brandService: BrandService,
     private userActivityService: UserActivityService,
+    private sessionService: SessionService,
     private productServce: ProductService,
     private notificationSidebarService: NotificationSidebarService,
     private notifcationService: NotifcationService,
@@ -152,9 +154,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
       if (event instanceof NavigationEnd) {
         this.isAuthenticated = this.authService.isLoggedIn();
         this.userId = this.authService.getUserId();
+        
+        // Track sessions for ALL users (authenticated and anonymous)
         if (this.isAuthenticated && this.userId) {
           this.userActivityService.logPageView(this.userId);
+          // Start session for authenticated user
+          this.sessionService.startSession(this.userId);
+        } else {
+          // Start session for anonymous user
+          this.sessionService.startSession();
         }
+        
+        // Record page view for session tracking
+        this.sessionService.recordPageView();
       }
     });
     this.startTypewriter();
@@ -176,6 +188,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     if (this.typingInterval) clearInterval(this.typingInterval);
+    // End session when component is destroyed
+    this.sessionService.endSession();
   }
 
   private checkAuthStatus() {
@@ -309,8 +323,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onSearch() {
     const value = this.searchQuery?.trim();
     if (value) {
-      this.router.navigate(['/userproductlist'], { queryParams: { search: value } });
+      // Navigate to user product list with search query (no live parameter)
+      this.router.navigate(['/userproductlist'], { 
+        queryParams: { search: value }
+      });
+      
+      // Clear the search query after navigation
+      this.searchQuery = '';
+      
+      // Close any open dropdowns
+      this.openDropdown = null;
     }
+  }
+
+  // Remove live search functionality - only search on button click
+  onSearchInput() {
+    // Do nothing - search only happens on button click
   }
 
   startTypewriter() {

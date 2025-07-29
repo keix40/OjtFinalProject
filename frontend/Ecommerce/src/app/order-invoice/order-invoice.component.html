@@ -38,7 +38,15 @@
       <tr *ngFor="let product of order?.products">
         <td class="py-2 px-2">{{ product.productName }}</td>
         <td class="py-2 px-2 text-center">{{ product.quantity }}</td>
-        <td class="py-2 px-2 text-right">{{ product.unitPrice}} MMK</td>
+        <td class="py-2 px-2 text-right">
+          <ng-container *ngIf="order?.userDiscountId">
+            <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="line-through text-gray-400 mr-1">{{ product.originalPrice }} MMK</span>
+            <span>{{ product.unitPrice }} MMK</span>
+          </ng-container>
+          <ng-container *ngIf="!order?.userDiscountId">
+            <span>{{ product.unitPrice }} MMK</span>
+          </ng-container>
+        </td>
         <td class="py-2 px-2 text-right">{{ (product.quantity * product.unitPrice)}} MMK</td>
       </tr>
     </tbody>
@@ -53,9 +61,9 @@
         <span class="text-gray-600">Delivery Fee</span>
         <span>{{ order?.deliveryFee}} MMK</span>
       </div>
-      <div class="flex justify-between py-1" *ngIf="order?.discountAmount > 0">
+      <div class="flex justify-between py-1" *ngIf="order?.userDiscountId">
         <span class="text-gray-600">Discount</span>
-        <span>-{{ order?.discountAmount}} MMK</span>
+        <span>-{{ calculatedDiscountAmount }} MMK</span>
       </div>
       <div class="border-t border-gray-200 my-2"></div>
       <div class="flex justify-between py-1 font-bold text-lg">

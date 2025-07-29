@@ -72,3 +72,20 @@
 .notification-entry {
   transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
 }
+
+/* Hidden scrollbar for notifications section */
+.notifications-scroll {
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.notifications-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ensure smooth scrolling */
+.notifications-scroll {
+  scroll-behavior: smooth;
+}

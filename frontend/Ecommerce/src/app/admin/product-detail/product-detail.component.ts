@@ -120,6 +120,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     if (typeof window !== 'undefined' && (window as any).lucide) {
       (window as any).lucide.createIcons();
+    } else if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
     }
   }
 
@@ -184,6 +186,13 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
           this.selectedImage = this.product.images[0].url;
         }
         this.updateDisplayedImages();
+        setTimeout(() => {
+          if (typeof window !== 'undefined' && (window as any).lucide) {
+            (window as any).lucide.createIcons();
+          } else if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+          }
+        }, 0);
       },
       error: (error: any) => console.error('Error loading product details:', error)
     });
@@ -529,3 +538,5 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     }
   }
 }
+
+declare var lucide: any;

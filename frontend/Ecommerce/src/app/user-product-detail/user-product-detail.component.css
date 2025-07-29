@@ -211,6 +211,89 @@
   opacity: 1;
 }
 
+/* Smooth image transitions */
+.main-product-image {
+  transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.main-product-image.fade-out {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.main-product-image.fade-in {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Enhanced thumbnail transitions */
+.thumbnail-transition {
+  transition: all 0.2s ease-in-out;
+}
+
+.thumbnail-transition:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Animation for new elements */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.3s ease-out;
+}
+
+/* Review form transitions */
+.review-form-container {
+  transition: all 0.3s ease-in-out;
+  animation: slideInFromTop 0.4s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Write review button hover effect */
+.write-review-btn {
+  transition: all 0.2s ease-in-out;
+}
+
+.write-review-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
 .image-arrow.small-arrow {
   width: 28px;
   height: 28px;
@@ -659,5 +742,64 @@ body.modal-open {
   color: #6c757d;
   font-size: 0.75rem;
   font-style: italic;
+}
+
+/* Hide scrollbar but keep scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Full Width Layout */
+.product-detail-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+.product-detail-section {
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Related Products Section */
+.related-products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .related-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .related-products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Product Card Hover Effects */
+.product-card-hover {
+  transition: all 0.3s ease-in-out;
+}
+
+.product-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Line Clamp for Product Names */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 

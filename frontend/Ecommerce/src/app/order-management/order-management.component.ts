@@ -349,6 +349,14 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
     const start = (this.currentPage - 1) * this.pageSize;
     const end = start + this.pageSize;
     this.paginatedOrders = this.filteredOrders.slice(start, end);
+    // Re-initialize lucide icons after pagination update
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).lucide) {
+        (window as any).lucide.createIcons();
+      } else if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 0);
   }
 
   changePage(page: number): void {

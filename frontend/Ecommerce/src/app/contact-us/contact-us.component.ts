@@ -1,9 +1,15 @@
 import { Component } from '@angular/core';
 import { ContactService, ContactMessage } from '../services/contact.service';
+import { FooterComponent } from '../footer/footer.component';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { HeaderComponent } from '../header/header.component';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-contact-us',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent, FormsModule],
   templateUrl: './contact-us.component.html',
   styleUrl: './contact-us.component.css'
 })

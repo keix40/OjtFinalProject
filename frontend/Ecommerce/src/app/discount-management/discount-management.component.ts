@@ -10,6 +10,7 @@ import { ProductService} from '../services/product.service';
 import { ProductDTO } from '../product';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+declare var lucide: any;
 import { UserService } from '../services/user.service';
 
 function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErrors | null {
@@ -114,6 +115,13 @@ export class DiscountEventManagementComponent implements OnInit {
   changePage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && (window as any).lucide) {
+          (window as any).lucide.createIcons();
+        } else if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }, 0);
     }
   }
   get showingFrom(): number {

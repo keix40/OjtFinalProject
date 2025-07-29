@@ -432,3 +432,13 @@ body, .tracking-bg {
   background: #0d6efd;
   box-shadow: 0 4px 16px 0 rgba(76, 217, 100, 0.25);
 }
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

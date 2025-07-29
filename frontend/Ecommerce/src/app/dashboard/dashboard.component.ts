@@ -6,8 +6,10 @@ import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../services/dashboard.service';
 import { RevenueTargetService } from '../services/revenue-target.service';
 import { addDays, format, parseISO } from 'date-fns';
+import { getISOWeek } from 'date-fns';
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { UserService } from '../services/user.service';
 
 
 @Component({
@@ -36,9 +38,16 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   orderCount: number = 0;
   activeUserCount: number = 0;
   customersCount: number = 0;
+  sessionCount: number = 0;
+  bounceRate: number = 0;
   previousMetrics: any = {};
   revenueTarget: number = 0;
   onlineAdminCount: number = 0;
+  users: any[] = [];
+  engagementAnalytics: any = {};
+  engagementTrends: any[] = [];
+  customerSegmentation: any[] = [];
+  customerAcquisitionData: any[] = [];
 
   // fetchOnlineAdminCount(): void {
   //   this.adminUserService.getAdminUsersOnlineStatus().subscribe(statusMap => {
@@ -78,19 +87,33 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private dashboardSub: StompSubscription | null = null;
   private wsConnected = false;
 
+  // Chart instances
+  salesChart: any;
+  userGrowthChart: any;
+  customerAcquisitionChart: any;
+  customerDistributionChart: any;
+  profileViewsChart: any;
+
   constructor(
     private dashboardService: DashboardService,
     private revenueTargetService: RevenueTargetService,
+    private userService: UserService,
     // private adminUserService: AdminUserService,
   ) { }
 
   ngOnInit(): void {
     Chart.register(...registerables);
     this.setupWebSocket();
-    this.refreshDashboard();
+    this.userService.getCustomers().subscribe(users => {
+      console.log('Fetched users:', users); // Log users for debugging
+      this.users = users;
+      this.refreshDashboard();
+      this.updateUserMetrics();
+    });
     this.updateInterval = setInterval(() => {
       if (!this.wsConnected) {
         this.refreshDashboard();
+        this.updateUserMetrics();
       }
     }, 30000);
   }
@@ -129,6 +152,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   refreshDashboard(): void {
     this.dashboardService.getTotalSales().subscribe(totalSales => {
       this.dashboardService.getSalesTrend(this.currentTimeFrame).subscribe(trend => {
+        console.log('Sales Trend Data:', trend); // Log the trend data for debugging
         // Map backend 'label' to 'period' for chart compatibility
         this.salesTrendData = trend.map(d => ({ ...d, period: d.label }));
         this.dashboardService.getOrderCount().subscribe(orderCount => {
@@ -144,6 +168,87 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                 this.revenueTargetService.getTarget(this.currentTimeFrame, this.getCurrentPeriodValue()).subscribe(res => {
                   this.revenueTarget = res.targetAmount || 0;
                   this.updateRevenueTargetChart();
+                  
+                  // Fetch session and bounce rate data
+                  this.dashboardService.getSessionStats(this.currentTimeFrame).subscribe({
+                    next: (stats) => {
+                      this.sessionCount = stats.totalSessions || 0;
+                      this.bounceRate = stats.bounceRate || 0;
+                      
+                      // Fetch session trends for charts
+                      this.dashboardService.getSessionTrends(this.currentTimeFrame).subscribe({
+                        next: (trends) => {
+                          this.updateUserMetricsWithTrends(trends);
+                        },
+                        error: (error) => {
+                          console.error('Error fetching session trends:', error);
+                          this.updateUserMetrics();
+                        }
+                      });
+                    },
+                    error: (error) => {
+                      console.error('Error fetching session stats:', error);
+                      this.updateUserMetrics();
+                    }
+                  });
+                  
+                  // Fetch engagement analytics and trends
+                  this.dashboardService.getEngagementAnalytics(this.currentTimeFrame).subscribe({
+                    next: (analytics) => {
+                      this.engagementAnalytics = analytics;
+                    },
+                    error: (error) => {
+                      console.error('Error fetching engagement analytics:', error);
+                    }
+                  });
+                  
+                  this.dashboardService.getEngagementTrends(this.currentTimeFrame).subscribe({
+                    next: (trends) => {
+                      this.engagementTrends = trends;
+                      this.updateEngagementChart();
+                    },
+                    error: (error) => {
+                      console.error('Error fetching engagement trends:', error);
+                      this.updateEngagementChart();
+                    }
+                  });
+
+                  // Fetch VIP tier data
+                  this.dashboardService.getVipTierData(this.currentTimeFrame).subscribe({
+                    next: (vipTierData: any[]) => {
+                      console.log('VIP Tier Data received:', vipTierData);
+                      this.customerSegmentation = vipTierData;
+                      this.segmentationData = vipTierData; // Update the display data
+                      this.totalCustomers = vipTierData.reduce((sum: number, tier: any) => sum + tier.value, 0);
+                      console.log('Total customers:', this.totalCustomers);
+                      console.log('Segmentation data updated:', this.segmentationData);
+                      this.updateCustomerAcqChart();
+                    },
+                    error: (error: any) => {
+                      console.error('Error fetching VIP tier data:', error);
+                      // Set default data on error
+                      this.segmentationData = [
+                        { name: 'Regular', color: '#708090', value: 0 },
+                        { name: 'Silver', color: '#C0C0C0', value: 0 },
+                        { name: 'Gold', color: '#FFD700', value: 0 },
+                        { name: 'Platinum', color: '#E5E4E2', value: 0 }
+                      ];
+                      this.totalCustomers = 0;
+                      this.updateCustomerAcqChart();
+                    }
+                  });
+                  
+                  // Fetch customer acquisition data
+                  this.dashboardService.getCustomerAcquisition(this.currentTimeFrame).subscribe({
+                    next: (acquisition: any[]) => {
+                      console.log('Customer acquisition data received:', acquisition);
+                      this.customerAcquisitionData = acquisition;
+                      this.updateCustomerAcqChart();
+                    },
+                    error: (error: any) => {
+                      console.error('Error fetching customer acquisition:', error);
+                    }
+                  });
                 });
               });
             });
@@ -156,7 +261,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // Replace nested subscriptions with forkJoin
 
-  ngAfterViewInit(): void {}
+  ngAfterViewInit(): void {
+    // Create charts after view is initialized
+    setTimeout(() => {
+      this.createCustomerDistributionPieChart();
+    }, 100);
+  }
 
   ngOnDestroy(): void {
     if (this.updateInterval) {
@@ -175,6 +285,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.currentTimeFrame = frame;
     this.refreshDashboard();
     this.updateSalesTrendChart();
+    this.updateUserMetrics();
   }
 
   updateDashboard(totalSales: number, trend: any[]): void {
@@ -352,9 +463,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.charts[canvasId]) {
       this.charts[canvasId].destroy();
     }
+    // Create a vertical gradient for the area fill
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, color + '80');
-    gradient.addColorStop(1, color + '10');
+    gradient.addColorStop(0, color + '80'); // More opaque at the top
+    gradient.addColorStop(1, color + '10'); // More transparent at the bottom
     // Ensure labels are string[]
     const chartLabels = (labels || data.map((_, i) => i)).map(l => l.toString());
     this.charts[canvasId] = new Chart(ctx, {
@@ -366,9 +478,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           borderColor: color,
           backgroundColor: gradient,
           fill: true,
-          tension: 0.4,
+          tension: 0.5, // Smooth curve
           pointRadius: 0,
-          borderWidth: 2
+          borderWidth: 2,
         }]
       },
       options: {
@@ -383,33 +495,69 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private createEnhancedChart(canvasId: string, data: any[], dataKeys: string[], colors: string[], type = 'line'): void {
+    console.log('createEnhancedChart called with:', { canvasId, data, dataKeys, colors, type });
+    
     const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-    if (!canvas) return;
+    if (!canvas) {
+      console.error(`Canvas element ${canvasId} not found`);
+      return;
+    }
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      console.error(`Could not get 2D context for ${canvasId}`);
+      return;
+    }
+    
+    // Destroy existing chart if it exists
     if (this.charts[canvasId]) {
+      console.log(`Destroying existing chart for ${canvasId}`);
       this.charts[canvasId].destroy();
     }
+    
     const datasets = dataKeys.map((key, index) => {
       const gradient = ctx.createLinearGradient(0, 0, 0, 400);
       gradient.addColorStop(0, colors[index] + '40');
       gradient.addColorStop(1, colors[index] + '05');
-      return {
+      
+      const dataValues = data.map((d: any) => {
+        const value = d[key];
+        console.log(`Data point for ${key}:`, value, typeof value);
+        return value;
+      });
+      
+      const dataset = {
         label: key.charAt(0).toUpperCase() + key.slice(1),
-        data: data.map((d: any) => d[key]),
+        data: dataValues,
         borderColor: colors[index],
         backgroundColor: type === 'area' ? gradient : 'transparent',
-        borderWidth: 3,
+        borderWidth: 3, // Increased back to 3 for better visibility
         fill: type === 'area',
         tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointBackgroundColor: '#fff',
-        pointBorderWidth: 3,
-        pointBorderColor: colors[index],
-        pointStyle: 'point',
+        pointRadius: 0, // Hide points for smooth lines
+        pointHoverRadius: 6, // Only show points on hover
+        pointBackgroundColor: colors[index], // Changed to match border color
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff',
+        pointStyle: 'circle',
+        // Ensure lines are visible
+        borderDash: [],
+        borderDashOffset: 0,
       };
+      
+      console.log(`Created dataset for ${key}:`, dataset);
+      console.log(`Data values for ${key}:`, dataValues);
+      return dataset;
     });
+    
+    console.log('Final datasets:', datasets);
+    console.log('Labels:', data.map((d: any) => d.period));
+    console.log('Data length:', data.length);
+    
+    // Check if we have enough data points for lines
+    if (data.length < 2) {
+      console.warn('Not enough data points for line chart. Need at least 2 points.');
+    }
+    
     this.charts[canvasId] = new Chart(ctx, {
       type: 'line',
       data: {
@@ -421,11 +569,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            display: false,
+            display: true, // Changed from false to true to show legend
+            position: 'top',
             labels: {
               usePointStyle: true,
-              pointStyle: 'point',
-              font: { size: 12, weight: 500 }
+              pointStyle: 'circle',
+              font: { size: 12, weight: 'bold' }
             }
           },
           tooltip: {
@@ -448,23 +597,24 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         scales: {
           x: {
             grid: {
-              display: false,
-              drawTicks: false
+              display: true, // Changed from false to true to show grid
+              color: '#f1f5f9',
+              drawTicks: true
             },
             ticks: {
               color: '#94a3b8',
-              font: { size: 11, weight: 500 },
+              font: { size: 11, weight: 'bold' },
               maxTicksLimit: 8
             }
           },
           y: {
             grid: {
               color: '#f1f5f9',
-              drawTicks: false
+              drawTicks: true
             },
             ticks: {
               color: '#94a3b8',
-              font: { size: 11, weight: 500 },
+              font: { size: 11, weight: 'bold' },
               callback: (value: any) => {
                 return this.formatNumber(value);
               },
@@ -482,6 +632,16 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       }
     });
+    
+    console.log(`Chart created for ${canvasId}:`, this.charts[canvasId]);
+    
+    // Force chart update
+    setTimeout(() => {
+      if (this.charts[canvasId]) {
+        this.charts[canvasId].update();
+        console.log(`Chart updated for ${canvasId}`);
+      }
+    }, 100);
   }
 
   private generateSalesData(timeFrame: string): any[] {
@@ -784,7 +944,75 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   updateUserGrowthChart() {
-    const userData = this.generateUserData(this.currentTimeFrame);
+    // Use real trends for active users and new users
+    const activeUserTrend = this.salesTrendData.map(d => ({ period: d.label || d.period, activeUsers: d.activeUserCount || 0 }));
+    // For new users, use the same trend as in updateUserMetrics
+    let newUserTrend: { period: string, newUsers: number }[] = [];
+    const now = new Date();
+    if (this.currentTimeFrame === 'hour') {
+      for (let h = 0; h < 24; h++) {
+        const label = h.toString().padStart(2, '0') + ':00';
+        const count = this.users.filter(u => {
+          const d = new Date(u.joinDate);
+          return d.getFullYear() === now.getFullYear() &&
+                 d.getMonth() === now.getMonth() &&
+                 d.getDate() === now.getDate() &&
+                 d.getHours() === h;
+        }).length;
+        newUserTrend.push({ period: label, newUsers: count });
+      }
+    } else if (this.currentTimeFrame === 'day') {
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const label = d.toString().padStart(2, '0');
+        const count = this.users.filter(u => {
+          const dateObj = new Date(u.joinDate);
+          return dateObj.getFullYear() === now.getFullYear() &&
+                 dateObj.getMonth() === now.getMonth() &&
+                 dateObj.getDate() === d;
+        }).length;
+        newUserTrend.push({ period: label, newUsers: count });
+      }
+    } else if (this.currentTimeFrame === 'week') {
+      const weeks: { [key: string]: number } = {};
+      this.users.forEach(u => {
+        const d = new Date(u.joinDate);
+        const year = d.getFullYear();
+        const week = getISOWeek(d);
+        const key = `${year}-W${week}`;
+        weeks[key] = (weeks[key] || 0) + 1;
+      });
+      const currentYear = now.getFullYear();
+      const currentWeek = getISOWeek(now);
+      const minWeek = Math.max(1, currentWeek - 7);
+      for (let w = minWeek; w <= currentWeek; w++) {
+        const key = `${currentYear}-W${w}`;
+        const count = weeks[key] || 0;
+        newUserTrend.push({ period: `W${w}`, newUsers: count });
+      }
+    } else if (this.currentTimeFrame === 'month') {
+      for (let m = 0; m < 12; m++) {
+        const label = (m + 1).toString().padStart(2, '0');
+        const count = this.users.filter(u => {
+          const d = new Date(u.joinDate);
+          return d.getFullYear() === now.getFullYear() &&
+                 d.getMonth() === m;
+        }).length;
+        newUserTrend.push({ period: label, newUsers: count });
+      }
+    } else if (this.currentTimeFrame === 'year') {
+      const years = Array.from(new Set(this.users.map(u => new Date(u.joinDate).getFullYear()))).sort();
+      years.forEach(y => {
+        const count = this.users.filter(u => new Date(u.joinDate).getFullYear() === y).length;
+        newUserTrend.push({ period: y.toString(), newUsers: count });
+      });
+    }
+    // Merge trends for chart
+    const mergedTrend = activeUserTrend.map((a, i) => ({
+      period: this.getFormattedLabel(a.period),
+      activeUsers: a.activeUsers,
+      newUsers: newUserTrend[i] ? newUserTrend[i].newUsers : 0
+    }));
     const dataKeys = [];
     const colors = [];
     if (this.showActiveUsers) {
@@ -795,38 +1023,58 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       dataKeys.push('newUsers');
       colors.push('#10b981');
     }
-    this.createEnhancedChart('userGrowthChart', userData, dataKeys, colors, 'area');
+    this.createEnhancedChart('userGrowthChart', mergedTrend, dataKeys, colors, 'area');
   }
 
   updateEngagementChart() {
-    const userData = this.generateUserData(this.currentTimeFrame);
-    const profileViewsData = userData.map((item: any, index: number) => ({
-      period: item.period,
-      views: item.activeUsers * 0.6 + Math.sin(index) * 200,
-      engagement: item.activeUsers * 0.4 + Math.cos(index) * 150
-    }));
-    const dataKeys = [];
-    const colors = [];
-    if (this.showViews) {
-      dataKeys.push('views');
-      colors.push('#8b5cf6');
+    // Use real engagement trends data from backend
+    if (this.engagementTrends.length > 0) {
+      const engagementData = this.engagementTrends.map(trend => ({
+        period: this.getFormattedLabel(trend.period),
+        views: trend.views || 0,
+        engagement: trend.engagement || 0
+      }));
+      
+      const dataKeys = [];
+      const colors = [];
+      if (this.showViews) {
+        dataKeys.push('views');
+        colors.push('#8b5cf6');
+      }
+      if (this.showEngagement) {
+        dataKeys.push('engagement');
+        colors.push('#f59e0b');
+      }
+      this.createEnhancedChart('profileViewsChart', engagementData, dataKeys, colors, 'area');
+    } else {
+      // Fallback to empty chart if no data
+      const emptyData = [{ period: 'No Data', views: 0, engagement: 0 }];
+      this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#8b5cf6', '#f59e0b'], 'area');
     }
-    if (this.showEngagement) {
-      dataKeys.push('engagement');
-      colors.push('#f59e0b');
-    }
-    this.createEnhancedChart('profileViewsChart', profileViewsData, dataKeys, colors, 'area');
   }
 
   updateCustomerAcqChart() {
-    const acquisitionData = Array.from({ length: 12 }, (_, i) => ({
-      period: `Month ${i + 1}`,
-      acquired: 150 + Math.sin(i * 0.5) * 50 + Math.random() * 30,
-      churned: 20 + Math.random() * 15,
-      retained: 130 + Math.cos(i * 0.3) * 40 + Math.random() * 25
-    }));
-    const dataKeys = [];
-    const colors = [];
+    console.log('updateCustomerAcqChart called');
+    console.log('customerAcquisitionData:', this.customerAcquisitionData);
+    
+    // Use real customer acquisition data from backend
+    let acquisitionData;
+    if (this.customerAcquisitionData.length > 0) {
+      acquisitionData = this.customerAcquisitionData.map(d => ({
+        period: this.getFormattedLabel(d.period),
+        acquired: d.acquired || 0,
+        churned: d.churned || 0,
+        retained: d.retained || 0
+      }));
+      console.log('Processed acquisitionData:', acquisitionData);
+    } else {
+      // Fallback to empty data if no real data available
+      acquisitionData = [{ period: 'No Data', acquired: 0, churned: 0, retained: 0 }];
+      console.log('Using fallback data:', acquisitionData);
+    }
+    
+    const dataKeys: string[] = [];
+    const colors: string[] = [];
     if (this.showAcquired) {
       dataKeys.push('acquired');
       colors.push('#10b981');
@@ -839,7 +1087,136 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       dataKeys.push('retained');
       colors.push('#3b82f6');
     }
+    
+    console.log('dataKeys:', dataKeys);
+    console.log('colors:', colors);
+    console.log('showAcquired:', this.showAcquired);
+    console.log('showChurned:', this.showChurned);
+    console.log('showRetained:', this.showRetained);
+    
+    // Check if canvas exists
+    const canvas = document.getElementById('customerAcquisitionChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.error('customerAcquisitionChart canvas not found');
+      return;
+    }
+    
+    // Check if we have any data to show
+    if (dataKeys.length === 0) {
+      console.log('No data keys selected, not creating chart');
+      return;
+    }
+    
+    // Verify data structure
+    console.log('Final data structure:');
+    acquisitionData.forEach((item: any, index) => {
+      console.log(`Item ${index}:`, item);
+      dataKeys.forEach(key => {
+        console.log(`  ${key}:`, item[key], typeof item[key]);
+      });
+    });
+    
     this.createEnhancedChart('customerAcquisitionChart', acquisitionData, dataKeys, colors, 'area');
+    
+    // Create pie chart for customer distribution
+    this.createCustomerDistributionPieChart();
+  }
+  
+  createCustomerDistributionPieChart() {
+    console.log('Creating customer distribution pie chart...');
+    const ctx = document.getElementById('customerDistributionChart') as HTMLCanvasElement;
+    if (!ctx) {
+      console.error('Canvas element not found');
+      return;
+    }
+    
+    // Destroy existing chart if it exists
+    if (this.customerDistributionChart) {
+      this.customerDistributionChart.destroy();
+    }
+    
+    // Prepare data for pie chart
+    const labels = this.segmentationData.map(tier => tier.name);
+    const data = this.segmentationData.map(tier => tier.value);
+    const colors = this.segmentationData.map(tier => tier.color);
+    
+    // Define tier icons
+                  const tierIcons: { [key: string]: string } = {
+                'Regular': '👤',
+                'Silver': '🥈',
+                'Gold': '🥇',
+                'Platinum': '👑',
+                'Diamond': '💎',
+                'Ruby': '💎',
+                'Emerald': '💎',
+                // Default icon for any new tiers
+                'default': '👤'
+              };
+    
+    this.customerDistributionChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+                          labels: labels.map(label => `${tierIcons[label] || tierIcons['default']} ${label}`),
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverBorderColor: '#ffffff',
+          hoverBorderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 20,
+              usePointStyle: true,
+              font: {
+                size: 12,
+                weight: 'bold'
+              },
+              generateLabels: function(chart: any) {
+                const data = chart.data;
+                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
+                  return data.labels.map((label: string, i: number) => {
+                    const dataset = data.datasets[0];
+                    const value = dataset.data[i] as number;
+                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                    
+                    return {
+                      text: `${label} (${value} - ${percentage}%)`,
+                      fillStyle: dataset.backgroundColor[i],
+                      strokeStyle: dataset.backgroundColor[i],
+                      lineWidth: 0,
+                      pointStyle: 'circle',
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${label}: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   // Format label for chart x-axis based on current time frame
@@ -909,5 +1286,181 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  }
+
+  // Add this method to dynamically update userMetricsData for Active Users and New Users
+  private updateUserMetrics(): void {
+    // Use real trend data for active users from salesTrendData
+    const activeUserTrend = this.salesTrendData.map(d => d.activeUserCount || 0);
+    const prevActive = activeUserTrend.length > 1 ? { activeUsers: activeUserTrend[activeUserTrend.length - 2] } : { activeUsers: 0 };
+    // Real new user count for summary card and trend
+    const now = new Date();
+    let newUserCount = 0;
+    let newUserTrend: { value: number, label: string }[] = [];
+    if (this.currentTimeFrame === 'hour') {
+      // 24 hours of today
+      for (let h = 0; h < 24; h++) {
+        const count = this.users.filter(u => {
+          const d = new Date(u.joinDate);
+          return d.getFullYear() === now.getFullYear() &&
+                 d.getMonth() === now.getMonth() &&
+                 d.getDate() === now.getDate() &&
+                 d.getHours() === h;
+        }).length;
+        newUserTrend.push({ value: count, label: h.toString().padStart(2, '0') + ':00' });
+        if (h === now.getHours()) newUserCount = count;
+      }
+      // If current hour is 0, show latest nonzero
+      if (newUserCount === 0) {
+        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
+        if (last) newUserCount = last.value;
+      }
+    } else if (this.currentTimeFrame === 'day') {
+      // Each day of this month
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const count = this.users.filter(u => {
+          const dateObj = new Date(u.joinDate);
+          return dateObj.getFullYear() === now.getFullYear() &&
+                 dateObj.getMonth() === now.getMonth() &&
+                 dateObj.getDate() === d;
+        }).length;
+        newUserTrend.push({ value: count, label: d.toString().padStart(2, '0') });
+        if (d === now.getDate()) newUserCount = count;
+      }
+      // If current day is 0, show latest nonzero
+      if (newUserCount === 0) {
+        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
+        if (last) newUserCount = last.value;
+      }
+    } else if (this.currentTimeFrame === 'week') {
+      // Group by ISO week of the year
+      const weeks: { [key: string]: number } = {};
+      this.users.forEach(u => {
+        const d = new Date(u.joinDate);
+        const year = d.getFullYear();
+        const week = getISOWeek(d);
+        const key = `${year}-W${week}`;
+        weeks[key] = (weeks[key] || 0) + 1;
+      });
+      // Show at least the last 8 weeks of the current year
+      const currentYear = now.getFullYear();
+      const currentWeek = getISOWeek(now);
+      const minWeek = Math.max(1, currentWeek - 7);
+      for (let w = minWeek; w <= currentWeek; w++) {
+        const key = `${currentYear}-W${w}`;
+        const count = weeks[key] || 0;
+        newUserTrend.push({ value: count, label: `W${w}` });
+        if (w === currentWeek) newUserCount = count;
+      }
+      // If current week is 0, show latest nonzero
+      if (newUserCount === 0) {
+        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
+        if (last) newUserCount = last.value;
+      }
+    } else if (this.currentTimeFrame === 'month') {
+      // Each month of this year
+      for (let m = 0; m < 12; m++) {
+        const count = this.users.filter(u => {
+          const d = new Date(u.joinDate);
+          return d.getFullYear() === now.getFullYear() &&
+                 d.getMonth() === m;
+        }).length;
+        newUserTrend.push({ value: count, label: (m + 1).toString().padStart(2, '0') });
+        if (m === now.getMonth()) newUserCount = count;
+      }
+      if (newUserCount === 0) {
+        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
+        if (last) newUserCount = last.value;
+      }
+    } else if (this.currentTimeFrame === 'year') {
+      // Last 5 years (or all years in data)
+      const years = Array.from(new Set(this.users.map(u => new Date(u.joinDate).getFullYear()))).sort();
+      years.forEach(y => {
+        const count = this.users.filter(u => new Date(u.joinDate).getFullYear() === y).length;
+        newUserTrend.push({ value: count, label: y.toString() });
+        if (y === now.getFullYear()) newUserCount = count;
+      });
+      if (newUserCount === 0) {
+        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
+        if (last) newUserCount = last.value;
+      }
+    }
+    this.userMetricsData = [
+      {
+        id: 'active-users',
+        title: 'Active Users',
+        value: this.formatNumber(this.activeUserCount),
+        change: this.getPercentChange(this.activeUserCount, prevActive.activeUsers),
+        isPositive: this.activeUserCount >= prevActive.activeUsers,
+        chartData: activeUserTrend.map(value => ({ value })),
+        chartColor: '#3b82f6'
+      },
+      {
+        id: 'new-users',
+        title: 'New Users',
+        value: this.formatNumber(newUserCount),
+        change: 0, // Could be improved with previous period logic
+        isPositive: true,
+        chartData: newUserTrend,
+        chartColor: '#10b981'
+      },
+      {
+        id: 'sessions',
+        title: 'Sessions',
+        value: this.formatNumber(this.sessionCount),
+        change: 0, // Could be improved with previous period logic
+        isPositive: true,
+        chartData: [], // Will be populated with session trends
+        chartColor: '#f59e0b'
+      },
+      {
+        id: 'bounce-rate',
+        title: 'Bounce Rate',
+        value: this.bounceRate.toFixed(1) + '%',
+        change: 0, // Could be improved with previous period logic
+        isPositive: this.bounceRate < 50, // Lower is better
+        chartData: [], // Will be populated with bounce rate trends
+        chartColor: '#ef4444'
+      }
+    ];
+    this.createUserCharts(this.userMetricsData);
+  }
+
+  private updateUserMetricsWithTrends(sessionTrends: any[]): void {
+    // Update the existing userMetricsData with session trends
+    this.updateUserMetrics();
+    
+    // Find session and bounce rate metrics and update their chart data
+    const sessionMetric = this.userMetricsData.find(m => m.id === 'sessions');
+    const bounceRateMetric = this.userMetricsData.find(m => m.id === 'bounce-rate');
+    
+    console.log('Session Trends:', sessionTrends);
+    
+    if (sessionMetric && sessionTrends.length > 0) {
+      sessionMetric.chartData = sessionTrends.map(trend => ({
+        value: trend.totalSessions || 0,
+        label: trend.period
+      }));
+      console.log('Session Metric ChartData:', sessionMetric.chartData);
+    }
+    
+    if (bounceRateMetric && sessionTrends.length > 0) {
+      bounceRateMetric.chartData = sessionTrends.map(trend => {
+        const totalSessions = trend.totalSessions || 0;
+        const bounceSessions = trend.bounceSessions || 0;
+        const rate = totalSessions > 0 ? (bounceSessions / totalSessions) * 100 : 0;
+        return {
+          value: rate,
+          label: trend.period
+        };
+      });
+      console.log('Bounce Rate Metric ChartData:', bounceRateMetric.chartData);
+    }
+    
+    // Recreate charts with updated data after DOM is ready
+    setTimeout(() => {
+      this.createUserCharts(this.userMetricsData);
+    }, 0);
   }
 }

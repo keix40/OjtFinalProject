@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, TemplateRef, HostListener } from '@angular/core';
 import { ReviewService } from '../../services/review.service';
 import { AuthService } from '../../auth/auth.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import Swal from 'sweetalert2';
 
 interface Review {
@@ -21,17 +22,18 @@ interface Review {
   styleUrl: './user-reviews.component.css'
 })
 export class UserReviewsComponent implements OnInit {
+  @ViewChild('mediaPreviewModal', { static: false }) mediaPreviewModal!: TemplateRef<any>;
+  @ViewChild('editModalTemplate', { static: false }) editModalTemplate!: TemplateRef<any>;
 
   userReviews: Review[] = [];
 
   // Media modal state
-  mediaModalOpen: boolean = false;
   mediaModalCurrentReview: Review | null = null;
   mediaModalCurrentType: 'image' | 'video' = 'image';
   mediaModalCurrentIndex: number = 0;
   mediaModalCurrentUrl: string = '';
+  mediaModalRef: any = null; // Store modal reference for keyboard events
 
-  editModalOpen: boolean = false;
   editingReview: Review | null = null;
   editComment: string = '';
   editRating: number = 5;
@@ -43,10 +45,40 @@ export class UserReviewsComponent implements OnInit {
   removedMedia: string[] = [];
   editMediaList: { type: string; url: string }[] = [];
 
-  constructor(private reviewService: ReviewService, private authService: AuthService) { }
+  constructor(
+    private reviewService: ReviewService, 
+    private authService: AuthService,
+    private modalService: NgbModal
+  ) { }
 
   ngOnInit(): void {
     this.loadUserReviews();
+  }
+
+  // Keyboard event handler for arrow keys
+  @HostListener('document:keydown', ['$event'])
+  handleKeyboardEvent(event: KeyboardEvent) {
+    // Only handle keyboard events when media modal is open
+    if (this.mediaModalCurrentReview && this.mediaModalRef) {
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          if (this.mediaModalCanGoLeft) {
+            this.mediaModalPrev();
+          }
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          if (this.mediaModalCanGoRight) {
+            this.mediaModalNext();
+          }
+          break;
+        case 'Escape':
+          event.preventDefault();
+          this.closeMediaModal();
+          break;
+      }
+    }
   }
 
   // Reviews Methods
@@ -76,20 +108,24 @@ export class UserReviewsComponent implements OnInit {
   }
 
   openMediaModal(review: Review, type: 'image' | 'video', index: number) {
-    this.mediaModalOpen = true;
     this.mediaModalCurrentReview = review;
     this.mediaModalCurrentType = type;
     this.mediaModalCurrentIndex = index;
     this.updateMediaModalUrl();
-    document.body.classList.add('modal-open');
+    this.mediaModalRef = this.modalService.open(this.mediaPreviewModal, { 
+      centered: true, 
+      backdrop: 'static',
+      keyboard: false,
+      size: 'xl'
+    });
   }
 
   closeMediaModal() {
-    this.mediaModalOpen = false;
+    this.modalService.dismissAll();
     this.mediaModalCurrentReview = null;
     this.mediaModalCurrentIndex = 0;
     this.mediaModalCurrentUrl = '';
-    document.body.classList.remove('modal-open');
+    this.mediaModalRef = null;
   }
 
   get mediaModalCanGoLeft(): boolean {
@@ -148,11 +184,16 @@ export class UserReviewsComponent implements OnInit {
     this.newReview = review.comment;
     this.newRating = review.rating;
     this.editMediaList = [...(review.mediaList || [])];
-    this.editModalOpen = true;
+    this.modalService.open(this.editModalTemplate, { 
+      centered: true, 
+      backdrop: 'static',
+      keyboard: false,
+      size: 'lg'
+    });
   }
 
   closeEditModal() {
-    this.editModalOpen = false;
+    this.modalService.dismissAll();
     this.editingReview = null;
     this.editComment = '';
     this.editRating = 5;
@@ -236,7 +277,7 @@ export class UserReviewsComponent implements OnInit {
   }
 
   cancelEdit() {
-    this.editModalOpen = false;
+    this.modalService.dismissAll();
     this.editingReview = null;
     this.newReview = '';
     this.newRating = 5;

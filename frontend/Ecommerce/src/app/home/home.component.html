@@ -1,61 +1,77 @@
 <app-header></app-header>
-<!-- Hero Carousel -->
-<section class="relative h-[80vh] overflow-hidden bg-gradient-to-br from-neutral-50 to-neutral-100">
-    <div class="hero-slide active absolute inset-0 transition-all duration-1000 ease-in-out">
-        <div class="relative h-full bg-gradient-to-br from-blue-600 to-blue-800">
-            <div class="absolute inset-0 bg-black/20"></div>
-            <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1200&h=800&fit=crop" alt="Summer Collection" class="w-full h-full object-cover mix-blend-overlay">
-            <div class="absolute inset-0 flex items-center justify-center text-center text-white">
-                <div class="max-w-4xl px-4">
-                    <h1 class="text-5xl lg:text-7xl font-bold mb-6 animate-slide-up">
-                        Summer Collection 2024
-                    </h1>
-                    <p class="text-xl lg:text-2xl mb-8 animate-slide-up opacity-90" style="animation-delay: 0.2s">
-                        Discover the latest trends in fashion
-                    </p>
-                    <button class="bg-white text-blue-600 hover:bg-neutral-100 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 animate-slide-up shadow-lg" style="animation-delay: 0.4s">
-                        Shop Summer Collection →
-                    </button>
-                </div>
+<!-- Hero Section -->
+<section class="relative h-[74vh] overflow-hidden">
+    <!-- Dynamic Event Slides -->
+    <div *ngFor="let event of events; let i = index">
+      <ng-container *ngIf="i === currentSlide">
+        <div class="hero-slide absolute inset-0 transition-all duration-1000 ease-in-out active">
+          <div class="relative h-full">
+            <!-- Event Image -->
+            <img [src]="getEventImageUrl(event)" 
+                 [alt]="event.name" 
+                 (click)="goToEventProducts(event)"
+                 class="w-full h-full object-cover brightness-110 saturate-125 cursor-pointer">
+            <!-- Dark overlay for better text readability -->
+            <div class="absolute inset-0 bg-black/40"></div>
+            <!-- Centered text and button -->
+            <div class="absolute inset-0 flex items-center justify-center text-center">
+              <div class="max-w-4xl px-4">
+                <h1 class="text-5xl lg:text-7xl font-bold mb-6 animate-slide-up text-white drop-shadow-2xl shadow-black/50" 
+                    style="text-shadow: 2px 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);">
+                  {{ event.name }}
+                </h1>
+                <p class="text-xl lg:text-2xl mb-8 animate-slide-up opacity-95 text-white drop-shadow-lg" 
+                   style="animation-delay: 0.2s; text-shadow: 1px 1px 3px rgba(0,0,0,0.8), 0 0 15px rgba(0,0,0,0.4);">
+                  {{ event.description }}
+                </p>
+                <button (click)="goToEventProducts(event)"
+                        class="hero-btn px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 animate-slide-up shadow-xl"
+                        style="animation-delay: 0.4s; text-shadow: 1px 1px 2px rgba(0,0,0,0.6); box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.1);">
+                  {{ getButtonText(event) }}
+                </button>
+              </div>
             </div>
+          </div>
         </div>
+      </ng-container>
     </div>
-    <div class="hero-slide absolute inset-0 transition-all duration-1000 ease-in-out opacity-0">
-        <div class="relative h-full bg-gradient-to-br from-purple-600 to-purple-800">
-            <div class="absolute inset-0 bg-black/20"></div>
-            <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=800&fit=crop" alt="Tech Innovation" class="w-full h-full object-cover mix-blend-overlay">
-            <div class="absolute inset-0 flex items-center justify-center text-center text-white">
-                <div class="max-w-4xl px-4">
-                    <h1 class="text-5xl lg:text-7xl font-bold mb-6">Tech Innovation Hub</h1>
-                    <p class="text-xl lg:text-2xl mb-8 opacity-90">Cutting-edge electronics for modern life</p>
-                    <button class="bg-white text-purple-600 hover:bg-neutral-100 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
-                        Explore Technology →
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="hero-slide absolute inset-0 transition-all duration-1000 ease-in-out opacity-0">
-        <div class="relative h-full bg-gradient-to-br from-green-600 to-green-800">
-            <div class="absolute inset-0 bg-black/20"></div>
-            <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop" alt="Home & Living" class="w-full h-full object-cover mix-blend-overlay">
-            <div class="absolute inset-0 flex items-center justify-center text-center text-white">
-                <div class="max-w-4xl px-4">
-                    <h1 class="text-5xl lg:text-7xl font-bold mb-6">Home & Living</h1>
-                    <p class="text-xl lg:text-2xl mb-8 opacity-90">Transform your space with style</p>
-                    <button class="bg-white text-green-600 hover:bg-neutral-100 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-lg">
-                        Shop Home Decor →
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+
+    <!-- Navigation Arrows -->
+    <button *ngIf="events.length > 1" 
+            (click)="prevSlide()" 
+            class="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+        </svg>
+    </button>
+    <button *ngIf="events.length > 1" 
+            (click)="nextSlide()" 
+            class="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-3 rounded-full transition-all duration-300 backdrop-blur-sm">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+        </svg>
+    </button>
+
     <!-- Carousel Indicators -->
-    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-3">
-        <button onclick="setSlide(0)" class="indicator active w-3 h-3 rounded-full bg-white transition-all duration-300 hover:scale-125"></button>
-        <button onclick="setSlide(1)" class="indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/75 transition-all duration-300 hover:scale-125"></button>
-        <button onclick="setSlide(2)" class="indicator w-3 h-3 rounded-full bg-white/50 hover:bg-white/75 transition-all duration-300 hover:scale-125"></button>
+    <div *ngIf="events.length > 1" class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-3">
+        <button *ngFor="let event of events; let i = index" 
+                (click)="setSlide(i)" 
+                class="indicator w-3 h-3 rounded-full transition-all duration-300 hover:scale-125 bg-white/50 hover:bg-white/75"
+                [class.bg-white]="i === currentSlide">
+            <span class="hidden">•</span>
+        </button>
     </div>
+
+    <!-- No Events Message -->
+    <!-- <div *ngIf="events.length === 0" class="absolute inset-0 flex items-center justify-center">
+        <div class="text-center text-white">
+            <h1 class="text-5xl lg:text-7xl font-bold mb-6">Welcome to Our Store</h1>
+            <p class="text-xl lg:text-2xl mb-8 opacity-95">Discover amazing products and deals</p>
+            <button class="bg-blue-600 text-white hover:bg-blue-700 px-8 py-4 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105 shadow-xl">
+                Shop Now →
+            </button>
+        </div>
+    </div> -->
 </section>
 
 <!-- Features Bar -->
@@ -106,7 +122,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">
-                Shop by <span class="text-primary-600">Category</span>
+                Shop by <span class="text-blue-600">Category</span>
             </h2>
             <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
                 Discover our wide range of categories, each carefully curated for your lifestyle
@@ -114,8 +130,8 @@
         </div>
         <div *ngIf="loading" class="text-center text-lg">Loading categories...</div>
         <div *ngIf="error" class="text-center text-red-500">{{ error }}</div>
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" *ngIf="!loading && !error">
-            <div *ngFor="let cat of categories | slice:0:4" class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer" (click)="goToCategory(cat)">
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6" *ngIf="!loading && !error">
+            <div *ngFor="let cat of categories | slice:0:5" class="category-card group relative overflow-hidden rounded-2xl bg-white hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer" (click)="goToCategory(cat)">
                 <div class="aspect-square overflow-hidden">
                     <img [src]="getCategoryImageUrl(cat)" [alt]="cat.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                 </div>
@@ -144,21 +160,21 @@
             </div>
         </div>
         <!-- View All Button -->
-        <div class="flex justify-center mt-8" *ngIf="categories.length > 4">
-            <a [routerLink]="getAllCategoriesUrl()" class="bg-primary-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-primary-700 transition-all duration-300 shadow-lg">
+        <div class="flex justify-center mt-8" *ngIf="categories.length > 5">
+            <a [routerLink]="getAllCategoriesUrl()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 shadow-lg">
                 View All Categories
             </a>
         </div>
     </div>
 </section>
 
-<!-- Trending Products -->
+<!-- Trending Products
 <section class="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100" id="trending">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between mb-16">
         <div>
           <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 flex items-center animate-slide-up">
-            <svg class="mr-4 h-10 w-10 text-green-600 animate-bounce-gentle" viewBox="0 0 24 24" fill="none"
+            <svg class="mr-4 h-10 w-10 text-blue-600 animate-bounce-gentle" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2">
               <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
               <polyline points="17,6 23,6 23,12"></polyline>
@@ -174,30 +190,30 @@
           class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer"
           (click)="goToTrendingProductDetail(product)">
   
-          <!-- Image container -->
-          <div class="relative overflow-hidden">
+          Image container -->
+          <!-- <div class="relative overflow-hidden">
             <img
               [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'"
               alt="{{ product.productName }}"
               class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
               width="400" height="192">
   
-            <!-- Hover info overlay -->
+            Hover info overlay
             <div
               class="absolute left-0 bottom-0 w-full h-1/2 translate-y-full group-hover:translate-y-0 transition-transform duration-500 text-white px-6 py-4 flex flex-col justify-between backdrop-blur-lg bg-white/20">
               
-              <!-- Rating -->
+              Rating
               <div class="flex items-center mb-2">
                 <span class="text-yellow-400 text-sm">★★★★★</span>
                 <span class="text-sm text-white ml-2">(4.8)</span>
               </div>
   
-              <!-- Name -->
+              Name
               <h3 class="font-semibold text-black mb-2 group-hover:text-black transition-colors duration-300">
                 {{ product.productName }}
               </h3>
   
-              <!-- Price -->
+              Price
               <div class="flex items-center justify-between">
                 <span class="text-2xl font-bold text-black">
                   {{ product.price }}
@@ -209,15 +225,100 @@
   
         </div>
       </div>
+        </div>
+</section> -->
+
+<!-- Trending Now Section -->
+<section class="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100 trending-header" id="trending">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up flex items-center justify-center">
+              <svg class="mr-4 h-10 w-10 text-blue-600 animate-bounce-gentle" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
+                <polyline points="17,6 23,6 23,12"></polyline>
+              </svg>
+              <span class="text-black">Trending  <span class="text-blue-600">Now</span></span>
+            </h2>
+            <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
+                Most ordered products that our customers love
+            </p>
+        </div>
+        
+        <div class="product-grid">
+            <div *ngFor="let product of trendingProducts" 
+                 class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer product-card"
+                 (click)="goToTrendingProductDetail(product)">
+                
+                <!-- Product Image Container -->
+                <div class="relative overflow-hidden">
+                    <img [src]="getTrendingProductImageUrl(product)" 
+                         [alt]="product.productName"
+                         class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    
+                                        <!-- Event Badge -->
+                    <div *ngIf="product.hasEvent" 
+                         class="absolute top-3 left-3 badge-special text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 badge-pulse">
+                         <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
+                        </svg>
+                        {{ product.eventName }}
+                    </div>
+                    
+                    <!-- Discount Badge -->
+                    <div *ngIf="product.hasDiscount" 
+                         class="absolute top-3 right-3 badge-discount text-white px-2 py-1 rounded-full text-xs font-bold">
+                        {{ getDiscountText(product) }}
+                    </div>
+                    
+                    <!-- Stock Badge -->
+                    <!-- <div *ngIf="product.quantity > 0"
+                         class="absolute bottom-3 left-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-bold">
+                        In Stock
+                    </div> -->
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-4">
+                    <!-- Product Name -->
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
+                        {{ product.productName }}
+                    </h3>
+                    
+                    <!-- Rating -->
+                    <div class="flex items-center mb-2">
+                        <span class="text-yellow-400 text-sm">{{ getStarRating(product.averageRating) }}</span>
+                        <span class="text-sm text-gray-600 ml-2">({{ product.reviewCount }})</span>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="flex items-center justify-between">
+                        <div *ngIf="product.hasDiscount; else originalPrice" class="flex flex-col">
+                            <span class="text-xl font-bold text-red-600">
+                                {{ getDiscountedPrice(product) }} <span class="text-sm font-normal">MMK</span>
+                            </span>
+                            <span class="text-sm font-medium text-gray-400 line-through">
+                                {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                            </span>
+                        </div>
+                        <ng-template #originalPrice>
+                        <span class="text-xl font-bold text-gray-900">
+                            {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                        </span>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </section>
-  
+</section>
+
 <!-- Brands Section -->
 <section class="py-20 bg-white" id="brands">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">
-                Featured <span class="text-primary-600">Brands</span>
+                Featured <span class="text-blue-600">Brands</span>
             </h2>
             <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
                 Shop from the world's most trusted and innovative brands
@@ -229,17 +330,16 @@
       </button>
       <div #brandRow class="flex overflow-x-auto gap-6 scrollbar-hide px-2" style="scroll-behavior: smooth;">
         <div *ngFor="let brand of brands"
-          class="group bg-white rounded-2xl relative min-w-[160px] max-w-[160px] h-40 overflow-hidden border-2 border-primary-200 hover:shadow-xl transition-all duration-500 hover:scale-105 cursor-pointer"
+          class="brand-card-square group cursor-pointer"
           (click)="goToBrand(brand)">
       
           <!-- Brand Image -->
           <img [src]="getBrandImageUrl(brand)"
                [alt]="brand.name"
-               class="w-full h-full object-contain grayscale group-hover:grayscale-0 transition-all duration-300 group-hover:scale-110" />
+               class="brand-image-square" />
       
-          <!-- Hover Blur Overlay -->
-          <div
-            class="absolute left-0 bottom-0 w-full h-1/4 translate-y-full group-hover:translate-y-0 transition-transform duration-500 text-black px-2 py-1 flex items-center justify-center text-sm font-semibold backdrop-blur-lg bg-white/20">
+          <!-- Hover Overlay -->
+          <div class="brand-overlay-square">
             {{ brand.name }}
           </div>
         </div>
@@ -254,90 +354,81 @@
 </section>
 
 <!-- Featured Products -->
-<section class="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100">
+<section class="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100 featured-header" id="featured">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between mb-16">
-            <div>
-                <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">Featured Products</h2>
-                <p class="text-xl text-neutral-600 animate-slide-up" style="animation-delay: 0.1s">Handpicked products that our customers love most</p>
-            </div>
-            <div class="hidden md:flex items-center space-x-4">
-                <div class="flex items-center space-x-2">
-                    <button id="grid-view" class="px-4 py-2 bg-primary-600 text-white rounded-xl text-sm transition-all duration-300 hover:bg-primary-700">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="14" width="7" height="7"></rect>
-                            <rect x="3" y="14" width="7" height="7"></rect>
+        <div class="text-center mb-16">
+            <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">
+                Featured <span class="text-blue-600">Products</span>
+            </h2>
+            <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
+                Latest products added to our collection
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-5 gap-6">
+            <div *ngFor="let product of featuredProducts" 
+                 class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer"
+                 (click)="goToTrendingProductDetail(product)">
+                
+                <!-- Product Image Container -->
+                <div class="relative overflow-hidden">
+                    <img [src]="getTrendingProductImageUrl(product)" 
+                         [alt]="product.productName"
+                         class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    
+                    <!-- Event Badge -->
+                    <div *ngIf="product.hasEvent" 
+                         class="absolute top-3 left-3 badge-special text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 badge-pulse">
+                         <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
                         </svg>
-                    </button>
-                    <button id="list-view" class="px-4 py-2 border border-neutral-300 text-neutral-700 rounded-xl text-sm transition-all duration-300 hover:bg-neutral-100">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="8" y1="6" x2="21" y2="6"></line>
-                            <line x1="8" y1="12" x2="21" y2="12"></line>
-                            <line x1="8" y1="18" x2="21" y2="18"></line>
-                            <line x1="3" y1="6" x2="3.01" y2="6"></line>
-                            <line x1="3" y1="12" x2="3.01" y2="12"></line>
-                            <line x1="3" y1="18" x2="3.01" y2="18"></line>
-                        </svg>
-                    </button>
+                        {{ product.eventName }}
+                    </div>
+                    
+                    <!-- Discount Badge -->
+                    <div *ngIf="product.hasDiscount" 
+                         class="absolute top-3 right-3 badge-discount text-white px-2 py-1 rounded-full text-xs font-bold">
+                        {{ getDiscountText(product) }}
+                    </div>
+                </div>
+                
+                                <!-- Product Info (Always Visible) -->
+                <div class="p-4">
+                    <!-- Product Name -->
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
+                        {{ product.productName }}
+                    </h3>
+                    
+                    <!-- Rating -->
+                    <div class="flex items-center mb-2">
+                        <span class="text-yellow-400 text-sm">{{ getStarRating(product.averageRating) }}</span>
+                        <span class="text-sm text-gray-600 ml-2">({{ product.reviewCount }})</span>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="flex items-center justify-between">
+                        <div *ngIf="product.hasDiscount; else originalPrice" class="flex flex-col">
+                            <span class="text-xl font-bold text-red-600">
+                                {{ getDiscountedPrice(product) }} <span class="text-sm font-normal">MMK</span>
+                            </span>
+                            <span class="text-sm font-medium text-gray-400 line-through">
+                                {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                            </span>
+                        </div>
+                        <ng-template #originalPrice>
+                        <span class="text-xl font-bold text-gray-900">
+                            {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                        </span>
+                        </ng-template>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="products-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div *ngFor="let product of featuredProducts"
-              class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer"
-              (click)="goToProductDetail(product)">
-          
-              <!-- Image -->
-              <div class="relative overflow-hidden">
-                <img [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'"
-                  alt="{{ product.productName }}"
-                  class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
-                  width="400" height="192">
-          
-                <!-- Stock badge -->
-                <div *ngIf="product.quantity > 0"
-                  class="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold animate-pulse-soft">
-                  In Stock
-                </div>
-          
-                <!-- Hover overlay (Glass Blur Panel) -->
-                <div
-                  class="absolute left-0 bottom-0 w-full h-1/2 translate-y-full group-hover:translate-y-0 transition-transform duration-500 text-white px-6 py-4 flex flex-col justify-between backdrop-blur-lg bg-white/20">
-                  
-                  <!-- Rating -->
-                  <div class="flex items-center justify-between mb-2">
-                    <span class="text-yellow-400 text-sm">★★★★★</span>
-                  </div>
-          
-                  <!-- Product Name -->
-                  <h3 class="font-semibold text-black mb-2 group-hover:text-black transition-colors duration-300">
-                    {{ product.productName }}
-                  </h3>
-          
-                  <!-- Price & Stock -->
-                  <div class="flex items-center justify-between">
-                    <span class="text-2xl font-bold text-black">
-                        {{ product.price }} <span class="text-sm font-normal">MMK</span>
-                      </span>
-                      
-                    <span *ngIf="product.quantity > 0"
-                      class="bg-green-200 text-green-800 px-3 py-1 rounded-full text-xs font-medium">In Stock</span>
-                    <span *ngIf="product.quantity <= 0"
-                      class="bg-red-200 text-red-800 px-3 py-1 rounded-full text-xs font-medium">Out of Stock</span>
-                  </div>
-          
-                </div>
-              </div>
-          
-            </div>
-          </div>
-          
+        
         <div class="flex justify-center mt-8">
-            <button class="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold text-lg transition-all duration-300" (click)="goToAllProducts()">
+            <button class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-lg transition-all duration-300" (click)="goToAllProducts()">
                 View All Products
-                    </button>
+            </button>
         </div>
     </div>
 </section>
@@ -347,7 +438,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
             <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 animate-slide-up">
-                What Our <span class="text-primary-600">Customers Say</span>
+                What Our <span class="text-blue-600">Customers Say</span>
             </h2>
             <p class="text-xl text-neutral-600 max-w-2xl mx-auto animate-slide-up" style="animation-delay: 0.1s">
                 Real reviews from real customers who love shopping with us
@@ -381,7 +472,7 @@
 </section>
 
 <!-- Newsletter Section -->
-<section class="py-20 bg-gradient-to-br from-primary-600 to-primary-800">
+<!-- <section class="py-20 bg-gradient-to-br from-primary-600 to-primary-800">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div class="bg-white/10 backdrop-blur-md rounded-3xl p-12 animate-fade-in">
             <div class="text-6xl mb-8 animate-bounce-gentle">📧</div>
@@ -398,6 +489,6 @@
             <p class="text-white/70 text-sm">Join 50,000+ subscribers and get 10% off your first order!</p>
         </div>
     </div>
-</section>
+</section> -->
 
 <app-footer></app-footer>

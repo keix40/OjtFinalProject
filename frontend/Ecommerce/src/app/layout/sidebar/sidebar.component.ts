@@ -5,6 +5,8 @@ import { PermissionService } from '../../services/permission.service';
 import { ImageService } from '../../services/image.service';
 import { AdminUserService } from '../../services/admin-user.service';
 import { PermissionConstants } from '../../constants/permission.constants';
+import { DashboardService } from '../../services/dashboard.service';
+import { UserService } from '../../services/user.service';
 import { AdminInboxService } from '../../services/admin-inbox.service';
 
 @Component({
@@ -31,7 +33,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   suspiciousLogins: number = 0;
   recentSecurityEvents: number = 0;
   sidebarVisible: boolean = window.innerWidth >= 640; // Show sidebar by default on desktop
-  sidebarCollapsed: boolean = false;
+  sidebarCollapsed: boolean = true; // Start with collapsed sidebar
   currentMenu: string | null = null;
   currentSubmenu: string | null = null; // Track which submenu is active
 
@@ -49,6 +51,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   // Fetch these values from your backend
 
   private collapseTimeout: any;
+  private refreshInterval: any;
 
   // Sidebar hover handlers for smooth animation and icon reinit
   onSidebarMouseEnter() {
@@ -68,12 +71,22 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     }, 120); // 120ms delay for smoothness
   }
 
+  onProfileMouseEnter() {
+    this.profileDropdownOpen = true;
+  }
+
+  onProfileMouseLeave() {
+    this.profileDropdownOpen = false;
+  }
+
   constructor(
     private router: Router,
     private authService: AuthService,
     public permissionService: PermissionService,
     private imageService: ImageService,
     private adminUserService: AdminUserService,
+    private dashboardService: DashboardService,
+    private userService: UserService,
     private adminInboxService: AdminInboxService
   ) { }
 
@@ -100,7 +113,14 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     window.addEventListener('resize', this.handleResize.bind(this));
     this.handleResize();
     this.loadUserInfo();
+    this.loadCustomerCount();
+    this.loadVipCount();
     document.addEventListener('click', this.handleDocumentClick.bind(this));
+    
+    // Set up periodic refresh of counts (every 5 minutes)
+    this.refreshInterval = setInterval(() => {
+      this.refreshCounts();
+    }, 5 * 60 * 1000); // 5 minutes
     this.adminUserService.getAdminUsers().subscribe(users => {
       this.adminCount = users.length;
     });
@@ -116,6 +136,9 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
     document.removeEventListener('click', this.handleDocumentClick.bind(this));
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
   }
 
   private initializeIcons(): void {
@@ -139,8 +162,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   }
 
   private handleDocumentClick(event: MouseEvent) {
-    const dropdown = document.querySelector('.sidebar .bg-white.border.border-slate-200.rounded-xl');
-    const button = document.querySelector('.sidebar button[data-lucide="chevron-down"]');
+    const dropdown = document.getElementById('profile-dropdown-menu');
+    const button = document.getElementById('profile-dropdown-btn');
     if (dropdown && button && !dropdown.contains(event.target as Node) && !button.contains(event.target as Node)) {
       this.profileDropdownOpen = false;
     }
@@ -179,6 +202,37 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       this.userEmail = this.userData?.email || null;
       this.userStatus = 'Online'; // Default status
     }
+  }
+
+  private loadCustomerCount() {
+    // Use the same method as the customer management page for consistency
+    this.userService.getCustomers().subscribe({
+      next: (customers) => {
+        this.totalCustomers = customers.length;
+      },
+      error: (error) => {
+        console.error('Failed to load customer count:', error);
+        this.totalCustomers = 0;
+      }
+    });
+  }
+
+  private loadVipCount() {
+    this.userService.getVipCustomers().subscribe({
+      next: (customers) => {
+        this.vipCount = customers.length;
+      },
+      error: (error) => {
+        console.error('Failed to load VIP count:', error);
+        this.vipCount = 0;
+      }
+    });
+  }
+
+  // Method to refresh all counts
+  refreshCounts() {
+    this.loadCustomerCount();
+    this.loadVipCount();
   }
 
   getProfileImageUrl(): string {
@@ -224,6 +278,14 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     const userId = this.authService.getUserId();
     if (userId) {
       this.router.navigate(['/profile', userId], { queryParams: { section: 'personal-info' } });
+    }
+  }
+
+  navigateToAdminProfile() {
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.router.navigate([`/admin/profile/${userId}`]);
+      this.profileDropdownOpen = false;
     }
   }
 
@@ -279,6 +341,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
           { icon: 'list', link: '/discount-list' },
           { icon: 'plus', link: 'discount-add' },
           { icon: 'ticket', link: '/discount-coupon' },
+        ];
+      case 'event':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'circle-check', link: '/admin/event' },
+          { icon: 'list-check', link: '/admin/eventlist' },
         ];
       case 'delivery':
         return [

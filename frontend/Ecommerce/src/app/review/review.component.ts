@@ -407,4 +407,15 @@ export class ReviewComponent implements OnInit, OnDestroy {
     });
     review.showMenu = !review.showMenu;
   }
+
+  // Get user image URL with proper prefix
+  getReviewUserImage(review: any): string {
+    if (!review.userImage) return '';
+    if (review.userImage.startsWith('http://') || review.userImage.startsWith('https://')) {
+      return review.userImage;
+    }
+    // Always ensure a leading slash for local images
+    const path = review.userImage.startsWith('/') ? review.userImage : '/' + review.userImage;
+    return `http://localhost:8080${path}`;
+  }
 }

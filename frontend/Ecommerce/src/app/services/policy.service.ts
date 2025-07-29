@@ -6,7 +6,10 @@ export interface Policy {
   id: number;
   title: string;
   content: string;
+  status?: string | number;
   open?: boolean;
+  checked?: boolean;
+  lastUpdated?: string;
 }
 
 @Injectable({
@@ -25,11 +28,11 @@ export class PolicyService {
     return this.http.get<Policy>(`${this.baseUrl}/${id}`);
   }
 
-  createPolicy(data: { title: string; content: string }): Observable<Policy> {
+  createPolicy(data: { title: string; content: string; status?: number }): Observable<Policy> {
     return this.http.post<Policy>(this.baseUrl, data);
   }
 
-  updatePolicy(id: number, data: { title: string; content: string }): Observable<Policy> {
+  updatePolicy(id: number, data: { title: string; content: string; status?: number }): Observable<Policy> {
     return this.http.put<Policy>(`${this.baseUrl}/${id}`, data);
   }
 

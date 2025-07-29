@@ -48,4 +48,8 @@ export interface ProductDTO {
     imageUrl: string;
     status: number;
   }[];
+  
+  // Rating fields
+  averageRating?: number;
+  reviewCount?: number;
 }

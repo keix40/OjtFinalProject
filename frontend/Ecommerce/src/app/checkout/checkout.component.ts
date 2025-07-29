@@ -862,7 +862,7 @@ getTotalDiscount() {
 
           this.appliedCouponCode = this.couponCode;
           this.isCouponValid = true;
-          this.discountMessage = `✅ Coupon applied! You saved ${Math.round(this.discountAmount).toLocaleString()} MMK.`;
+          this.discountMessage = `✅ Coupon applied! You saved ${Math.round(this.discountAmount).toLocaleString()} USD.`;
           this.updateOrderPreview(); // Refresh preview with coupon
         } else {
           this.discountAmount = 0;

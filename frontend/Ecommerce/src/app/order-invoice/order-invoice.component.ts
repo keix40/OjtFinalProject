@@ -29,4 +29,16 @@ export class OrderInvoiceComponent implements OnInit {
   closeModal() {
     this.activeModal.dismiss();
   }
+
+  // Calculate total discount amount as sum of (originalPrice - unitPrice) * quantity for all products
+  get calculatedDiscountAmount(): number {
+    if (!this.order?.products) return 0;
+    const discount = this.order.products.reduce((sum: number, p: any) => {
+      if (p.originalPrice && p.originalPrice > p.unitPrice) {
+        return sum + (p.originalPrice - p.unitPrice) * p.quantity;
+      }
+      return sum;
+    }, 0);
+    return Math.round(discount);
+  }
 }

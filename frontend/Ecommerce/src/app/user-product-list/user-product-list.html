@@ -1,5 +1,5 @@
 <app-header></app-header>
-<!-- <app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb> -->
+<app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
 <!-- First Time Buyer Discount Minimal Popup (Top Center, Subtle) -->
 <div *ngIf="showFirstTimeBuyerPopup" class="fixed left-1/2 top-20 z-50 transform -translate-x-1/2 w-full max-w-sm">
   <div class="relative flex items-center gap-3 px-5 py-3 rounded-xl shadow-md bg-gray-50 border border-gray-200 text-gray-800 animate-bounce-in">
@@ -22,25 +22,28 @@
     <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
       <div>
         <h2 class="text-3xl font-bold text-gray-900 mb-1">Products</h2>
-        <div *ngIf="selectedCategory" class="text-lg text-primary-600 font-semibold mb-2">
+        <div *ngIf="selectedCategory" class="text-lg text-blue-600 font-semibold mb-2">
           Showing products for category: {{ selectedCategory }}
         </div>
-        <div *ngIf="selectedBrand" class="text-lg text-primary-600 font-semibold mb-2">
+        <div *ngIf="selectedBrand" class="text-lg text-blue-600 font-semibold mb-2">
           Showing products for brand: {{ selectedBrand }}
         </div>
-        <div *ngIf="isAnyFilterActive()" class="text-sm text-gray-500">
+        <div *ngIf="filters.event.length > 0" class="text-lg text-blue-600 font-semibold mb-2">
+          Showing products for event: {{ getEventName(filters.event[0]) }}
+        </div>
+        <!-- <div *ngIf="isAnyFilterActive()" class="text-sm text-gray-500">
           <svg class="inline w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-7 7V21a1 1 0 01-1.447.894l-4-2A1 1 0 017 19v-5.293l-7-7A1 1 0 010 6V4z"/></svg>
           Showing {{ products.length }} of {{ allProducts.length }} products
           <span *ngIf="isPriceFilterActive" class="ml-2">(Price: {{ filters.price[0] }} - {{ filters.price[1] }} MMK)</span>
-        </div>
+        </div> -->
       </div>
       <button class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition" (click)="toggleFilter()">
         <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
         {{ showFilter ? 'Hide Filter' : 'Show Filter' }}
       </button>
     </div>
-    <div *ngIf="searchQuery" class="text-lg text-blue-600 font-semibold mb-4">
-      Search result for: <span class="font-bold">{{ searchQuery }}</span>
+    <div *ngIf="shouldShowSearchResults()" class="text-lg text-blue-600 font-semibold mb-4">
+      {{ getSearchResultText() }}
     </div>
     <div class="flex flex-col md:flex-row gap-8">
       <!-- Sidebar Filters -->
@@ -49,32 +52,64 @@
           <h5 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-7 7V21a1 1 0 01-1.447.894l-4-2A1 1 0 017 19v-5.293l-7-7A1 1 0 010 6V4z"/></svg>
             Filters
+            <span class="text-sm font-normal text-gray-500" *ngIf="expandedFilterCount > 0">({{ expandedFilterCount }}/{{ totalFilterSections }})</span>
+            <span class="text-sm font-normal text-gray-400" *ngIf="expandedFilterCount === 0">(All collapsed)</span>
           </h5>
+          <!-- Expand/Collapse All Buttons -->
+          <div class="filter-control-buttons">
+            <button class="filter-control-button" [ngClass]="toggleAllButtonClass" (click)="toggleAllFilters()">
+              {{ toggleAllButtonText }}
+            </button>
+          </div>
           <div class="space-y-4">
-            <!-- Availability Filter -->
-            <div>
-              <div class="font-semibold text-gray-800 mb-2">Availability</div>
-              <div class="space-y-1">
-                <div *ngFor="let opt of availabilityOptions" class="flex items-center gap-2">
-                  <input #availCheck type="checkbox" class="accent-indigo-500 rounded border-gray-300" [id]="'avail-' + opt" [checked]="filters.availability.includes(opt)" (change)="onFilterCheckboxChange('availability', opt, availCheck.checked)">
-                  <label class="text-gray-700 font-medium" [for]="'avail-' + opt">{{ opt }}</label>
+            <!-- Discount Filter -->
+            <div class="filter-section">
+              <div class="font-semibold text-gray-800 mb-2 flex items-center justify-between cursor-pointer hover:text-indigo-600 transition filter-section-header" (click)="toggleFilterSection('discount')">
+                <span class="flex items-center gap-2">
+                  Discount
+                  <span *ngIf="hasActiveFilters('discount')" class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                </span>
+                <svg class="w-4 h-4 transition-transform filter-chevron" [ngClass]="{'rotate-180': filterSections.discount}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+              <div class="space-y-1 filter-section-content" [ngClass]="{'hidden': !filterSections.discount}">
+                <div *ngFor="let discount of discountOptions" class="flex items-center gap-2">
+                  <input #discountCheck type="checkbox" class="accent-indigo-500 rounded border-gray-300" [id]="'discount-' + discount.id" [checked]="filters.discount.includes(discount.id)" (change)="onFilterCheckboxChange('discount', discount.id, discountCheck.checked)">
+                  <label class="text-gray-700 font-medium" [for]="'discount-' + discount.id">{{ discount.name }}</label>
                 </div>
               </div>
             </div>
-            <!-- Sale Filter -->
-            <div>
-              <div class="font-semibold text-gray-800 mb-2">Sale</div>
-              <div class="space-y-1">
-                <div *ngFor="let opt of saleOptions" class="flex items-center gap-2">
-                  <input #saleCheck type="checkbox" class="accent-indigo-500 rounded border-gray-300" [id]="'sale-' + opt" [checked]="filters.sale.includes(opt)" (change)="onFilterCheckboxChange('sale', opt, saleCheck.checked)">
-                  <label class="text-gray-700 font-medium" [for]="'sale-' + opt">{{ opt }}</label>
+            <!-- Event Filter -->
+            <div class="filter-section">
+              <div class="font-semibold text-gray-800 mb-2 flex items-center justify-between cursor-pointer hover:text-indigo-600 transition filter-section-header" (click)="toggleFilterSection('event')">
+                <span class="flex items-center gap-2">
+                  Event
+                  <span *ngIf="hasActiveFilters('event')" class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                </span>
+                <svg class="w-4 h-4 transition-transform filter-chevron" [ngClass]="{'rotate-180': filterSections.event}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+              <div class="space-y-1 filter-section-content" [ngClass]="{'hidden': !filterSections.event}">
+                <div *ngFor="let event of eventOptions" class="flex items-center gap-2">
+                  <input #eventCheck type="checkbox" class="accent-indigo-500 rounded border-gray-300" [id]="'event-' + event.id" [checked]="filters.event.includes(event.id)" (change)="onFilterCheckboxChange('event', event.id, eventCheck.checked)">
+                  <label class="text-gray-700 font-medium" [for]="'event-' + event.id">{{ event.name }}</label>
                 </div>
               </div>
             </div>
             <!-- Brand Filter -->
-            <div *ngIf="hasBrandData">
-              <div class="font-semibold text-gray-800 mb-2">Brand</div>
-              <div class="space-y-1">
+            <div class="filter-section" *ngIf="hasBrandData">
+              <div class="font-semibold text-gray-800 mb-2 flex items-center justify-between cursor-pointer hover:text-indigo-600 transition filter-section-header" (click)="toggleFilterSection('brand')">
+                <span class="flex items-center gap-2">
+                  Brand
+                  <span *ngIf="hasActiveFilters('brand')" class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                </span>
+                <svg class="w-4 h-4 transition-transform filter-chevron" [ngClass]="{'rotate-180': filterSections.brand}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+              <div class="space-y-1 filter-section-content" [ngClass]="{'hidden': !filterSections.brand}">
                 <div *ngFor="let opt of brandOptions" class="flex items-center gap-2">
                   <input #brandCheck type="checkbox" class="accent-indigo-500 rounded border-gray-300" [id]="'brand-' + opt" [checked]="filters.brand.includes(opt)" (change)="onFilterCheckboxChange('brand', opt, brandCheck.checked)">
                   <label class="text-gray-700 font-medium" [for]="'brand-' + opt">{{ opt }}</label>
@@ -82,9 +117,17 @@
               </div>
             </div>
             <!-- Category Filter -->
-            <div *ngIf="hasCategoryData">
-              <div class="font-semibold text-gray-800 mb-2">Category</div>
-              <div class="space-y-1">
+            <div class="filter-section" *ngIf="hasCategoryData">
+              <div class="font-semibold text-gray-800 mb-2 flex items-center justify-between cursor-pointer hover:text-indigo-600 transition filter-section-header" (click)="toggleFilterSection('category')">
+                <span class="flex items-center gap-2">
+                  Category
+                  <span *ngIf="hasActiveFilters('category')" class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                </span>
+                <svg class="w-4 h-4 transition-transform filter-chevron" [ngClass]="{'rotate-180': filterSections.category}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+              <div class="space-y-1 filter-section-content" [ngClass]="{'hidden': !filterSections.category}">
                 <div *ngFor="let opt of categoryOptions" class="flex items-center gap-2">
                   <input #categoryCheck type="checkbox" class="accent-indigo-500 rounded border-gray-300" [id]="'cat-' + opt" [checked]="filters.category.includes(opt)" (change)="onFilterCheckboxChange('category', opt, categoryCheck.checked)">
                   <label class="text-gray-700 font-medium" [for]="'cat-' + opt">{{ opt }}</label>
@@ -92,17 +135,27 @@
               </div>
             </div>
             <!-- Price Range -->
-            <div>
-              <div class="font-semibold text-gray-800 mb-2">Price Range</div>
-              <div class="flex items-center gap-2 mb-2">
-                <input type="number" class="w-20 px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm" [(ngModel)]="filters.price[0]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onPriceFilterChange()" min="0" [max]="filters.price[1]">
-                <span class="text-gray-500">-</span>
-                <input type="number" class="w-20 px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm" [(ngModel)]="filters.price[1]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onPriceFilterChange()" [min]="filters.price[0]" [max]="maxPriceInProducts">
-                <span class="text-gray-500">MMK</span>
+            <div class="filter-section">
+              <div class="font-semibold text-gray-800 mb-2 flex items-center justify-between cursor-pointer hover:text-indigo-600 transition filter-section-header" (click)="toggleFilterSection('price')">
+                <span class="flex items-center gap-2">
+                  Price Range
+                  <span *ngIf="hasActiveFilters('price')" class="w-2 h-2 bg-indigo-500 rounded-full"></span>
+                </span>
+                <svg class="w-4 h-4 transition-transform filter-chevron" [ngClass]="{'rotate-180': filterSections.price}" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
               </div>
-              <input type="range" class="w-full accent-indigo-500" [min]="filters.price[0]" [max]="maxPriceInProducts" step="10" [(ngModel)]="filters.price[1]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onPriceFilterChange()">
-              <div class="text-xs text-gray-400 mt-1" *ngIf="isPriceFilterActive">
-                Price filter active: {{ filters.price[0] }} - {{ filters.price[1] }} MMK
+              <div class="filter-section-content" [ngClass]="{'hidden': !filterSections.price}">
+                <div class="flex items-center gap-2 mb-2">
+                  <input type="number" class="w-20 px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm" [(ngModel)]="filters.price[0]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onPriceFilterChange()" min="0" [max]="filters.price[1]">
+                  <span class="text-gray-500">-</span>
+                  <input type="number" class="w-20 px-2 py-1 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm" [(ngModel)]="filters.price[1]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onPriceFilterChange()" [min]="filters.price[0]" [max]="maxPriceInProducts">
+                  <span class="text-gray-500">MMK</span>
+                </div>
+                <input type="range" class="w-full accent-indigo-500" [min]="filters.price[0]" [max]="maxPriceInProducts" step="10" [(ngModel)]="filters.price[1]" [ngModelOptions]="{ standalone: true }" (ngModelChange)="onPriceFilterChange()">
+                <div class="text-xs text-gray-400 mt-1" *ngIf="isPriceFilterActive">
+                  Price filter active: {{ filters.price[0] }} - {{ filters.price[1] }} MMK
+                </div>
               </div>
             </div>
             <!-- Clear Filters Button -->
@@ -114,88 +167,144 @@
       </aside>
       <!-- Product Grid -->
       <main class="flex-1">
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          <div *ngFor="let product of paginatedProducts" class="flex">
-            <div class="bg-white rounded-xl border border-gray-100 flex flex-col w-full p-4 relative group transition-all duration-200 hover:border-indigo-400 hover:scale-[1.03] cursor-pointer" (click)="goToProductDetail(product.id)">
-              <!-- Discount Event Name Badge (Top Left) -->
-              <span *ngIf="getProductDiscount(product.id)?.eventName" class="absolute top-2 left-2 z-10 inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold shadow">
-                {{ getProductDiscount(product.id)?.eventName }}
-              </span>
-              <!-- Product Image -->
-              <div class="relative mb-3 h-36 flex items-center justify-center overflow-hidden">
-                <img [src]="imageService.getProductImageUrl(product)" [alt]="product.productName" (error)="imageService.handleImageError($event, 'product')" class="max-h-full max-w-full object-contain">
-                <button (click)="toggleWishlist(product.id); $event.stopPropagation()" class="absolute top-2 right-2 w-9 h-9 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-400 hover:text-indigo-500 hover:bg-gray-50 transition group-focus:ring-2 group-focus:ring-indigo-400 z-10" [ngClass]="wishlist.has(product.id) ? 'text-indigo-500' : 'text-gray-300'" title="Add to Wishlist">
-                  <svg *ngIf="wishlist.has(product.id); else heartOutline" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                  </svg>
-                  <ng-template #heartOutline>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                    </svg>
-                  </ng-template>
-                </button>
-              </div>
-              <div class="flex-1 flex flex-col">
-                <div class="font-semibold text-gray-900 text-lg truncate mb-1">{{ product.productName }}</div>
-                <div class="mb-2">
-                  <span *ngIf="product.quantity <= 5 && product.quantity > 0" class="inline-block px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">Low stock</span>
-                  <span *ngIf="product.quantity === 0" class="inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">Out of stock</span>
-                </div>
-                <!-- Discount Badge -->
-                <div class="mb-2 flex flex-wrap gap-2 items-center">
-                  <!-- Product-based discount badge -->
-                  <span
-                    *ngIf="getProductDiscount(product.id)"
-                    class="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold"
-                  >
-                    {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
-                  </span>
-                  <!-- VIP tier discount badge -->
-                  <span
-                    *ngIf="getVipDiscountPercentForProduct(product)"
-                    class="inline-block px-2 py-1 rounded-full text-xs font-bold"
-                    [ngClass]="getVipBadgeClass(getUserVipTier())"
-                  >
-                    {{ getUserVipTier() | titlecase }} Tier {{ getVipDiscountPercentForProduct(product) }}% OFF
-                  </span>
-                </div>
-                <!-- Price Display -->
-                <div class="mb-2">`
-                  <div *ngIf="getFinalDiscountedPrice(product) !== product.price; else originalPrice" class="flex items-center gap-2">
-                    <span class="discount-price text-xl">{{ formatPrice(getFinalDiscountedPrice(product)) }} MMK</span>
-                    <span class="original-price">{{ formatPrice(product.price) }} MMK</span>
-                  </div>
-                  <ng-template #originalPrice>
-                    <div class="font-bold text-gray-800 text-xl">{{ formatPrice(product.price) }} MMK</div>
-                  </ng-template>
-                </div>
-              </div>
-            </div>
+        <!-- Loading State -->
+        <div *ngIf="isLoading" class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 mb-4">
+            <svg class="w-8 h-8 text-indigo-600 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
           </div>
+          <!-- <h3 class="text-lg font-semibold text-gray-900 mb-2">Loading products...</h3>
+          <p class="text-gray-500">Please wait while we fetch the latest products.</p> -->
+        </div>
+
+        <!-- No Products State -->
+        <div *ngIf="products.length === 0 && !isLoading" class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-2">No products found</h3>
+          <p class="text-gray-500">Try adjusting your filters or search terms.</p>
+        </div>
+
+        <!-- Products Grid -->
+        <div *ngIf="products.length > 0" class="products-grid" [style.grid-template-columns]="getGridTemplateColumns()">
+          <div *ngFor="let product of paginatedProducts" 
+               class="group relative bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer product-card"
+               (click)="goToProductDetail(product.id)">
+                
+                <!-- Product Image Container -->
+                <div class="relative overflow-hidden">
+                    <img [src]="imageService.getProductImageUrl(product)" 
+                         [alt]="product.productName"
+                         class="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-700">
+                    
+                    <!-- Badge (Left Corner) - Show only one badge -->
+                    <div *ngIf="getProductDiscount(product.id)" 
+                         class="absolute top-3 left-3 badge-discount text-white px-2 py-1 rounded-full text-xs font-bold">
+                        {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+                    </div>
+                    <div *ngIf="hasProductDiscountOrEvent(product) && !getProductDiscount(product.id)" 
+                         class="absolute top-3 left-3 badge-special text-white px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 badge-pulse">
+                         <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
+                        </svg>
+                        Special
+                    </div>
+                    
+                    <!-- Wishlist Heart with Hover Visibility -->
+                    <svg 
+                        (click)="toggleWishlist(product.id); $event.stopPropagation()" 
+                        class="absolute top-3 right-3 w-6 h-6 cursor-pointer wishlist-heart z-10 transition-opacity duration-300" 
+                        [ngClass]="getWishlistHeartClasses(product.id)" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        stroke-width="2.5" 
+                        viewBox="0 0 24 24"
+                        title="Add to Wishlist"
+                    >
+                        <path *ngIf="wishlist.has(product.id)" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round" 
+                              fill="currentColor"
+                              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        <path *ngIf="!wishlist.has(product.id)" 
+                              stroke-linecap="round" 
+                              stroke-linejoin="round" 
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                
+                <!-- Product Info -->
+                <div class="p-4">
+                    <!-- Product Name -->
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
+                        {{ product.productName }}
+                    </h3>
+                    
+                    <!-- Rating -->
+                    <div class="flex items-center mb-2">
+                        <div class="flex items-center space-x-1">
+                            <ng-container *ngFor="let star of [1,2,3,4,5]">
+                                <svg class="w-4 h-4" [ngClass]="star <= (product.averageRating || 0) ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                            </ng-container>
+                        </div>
+                        <span class="text-sm text-gray-600 ml-2">({{ product.reviewCount || 0 }})</span>
+                    </div>
+                    
+                    <!-- Price -->
+                    <div class="flex items-center justify-between">
+                        <div *ngIf="getFinalDiscountedPrice(product) !== product.price; else originalPrice" class="flex flex-col">
+                            <span class="text-xl font-bold text-red-600">
+                                {{ formatPrice(getFinalDiscountedPrice(product)) }} <span class="text-sm font-normal">MMK</span>
+                            </span>
+                            <span class="text-sm font-medium text-gray-400 line-through">
+                                {{ formatPrice(product.price) }} <span class="text-sm font-normal">MMK</span>
+                            </span>
+                        </div>
+                        <ng-template #originalPrice>
+                            <span class="text-xl font-bold text-gray-900">
+                                {{ formatPrice(product.price) }} <span class="text-sm font-normal">MMK</span>
+                            </span>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
         </div>
         <!-- Pagination Controls -->
         <nav *ngIf="totalPages > 1" class="mt-8 flex justify-center">
-          <ul class="inline-flex items-center space-x-1">
-            <li *ngIf="currentPage > 1">
-              <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition" (click)="setPage(currentPage - 1)">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
-              </button>
-            </li>
-            <li *ngFor="let page of [].constructor(totalPages); let i = index">
-              <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition" [ngClass]="{'bg-gray-50 text-gray-900 border-gray-400': currentPage === i + 1}" (click)="setPage(i + 1)">{{ i + 1 }}</button>
-            </li>
-            <li *ngIf="currentPage < totalPages">
-              <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition" (click)="setPage(currentPage + 1)">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-              </button>
-            </li>
-          </ul>
+          <div class="flex flex-col items-center">
+            <!-- <div class="text-sm text-gray-500 mb-2">
+              Showing {{ (currentPage - 1) * pageSize + 1 }}-{{ Math.min(currentPage * pageSize, products.length) }} of {{ products.length }} products ({{ pageSize }} per page)
+            </div> -->
+            <ul class="inline-flex items-center space-x-1">
+              <li *ngIf="currentPage > 1">
+                <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition" (click)="setPage(currentPage - 1)">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+              </li>
+              <li *ngFor="let page of [].constructor(totalPages); let i = index">
+                <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition" [ngClass]="{'bg-gray-50 text-gray-900 border-gray-400': currentPage === i + 1}" (click)="setPage(i + 1)">{{ i + 1 }}</button>
+              </li>
+              <li *ngIf="currentPage < totalPages">
+                <button class="w-9 h-9 flex items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 transition" (click)="setPage(currentPage + 1)">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </li>
+            </ul>
+          </div>
         </nav>
-        <div *ngIf="products.length === 0" class="text-center text-gray-400 py-10">
+        <!-- <div *ngIf="products.length === 0" class="text-center text-gray-400 py-10">
           <svg class="mx-auto mb-3 w-10 h-10 text-gray-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
           <p>No products match your filters.</p>
-        </div>
+        </div> -->
       </main>
     </div>
   </div>
 </div>
+<app-footer></app-footer>

@@ -261,7 +261,7 @@
               </div>
             </div> -->
 
-            <!-- Assigned Users Full List (Step 8 အတွက်) -->
+            <!-- Assigned Users Full List (Step 8) -->
             <!-- <div *ngIf="assignedUsersList && assignedUsersList.length > 0" class="assigned-users-list-expanded mt-4">
               <h3>Users assigned to {{ selectedRole.name }}</h3>
               <ul class="list-group">
@@ -276,7 +276,7 @@
             <div class="assigned-users-section mt-4" *ngIf="assignedUsersList.length > 0">
               <div class="section-header">
                 <h6><i data-lucide="users" class="w-4 h-4 text-gray-700"></i>Assigned Users</h6>
-                <button class="glassmorphism-light px-3 py-1 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all flex items-center gap-1" (click)="openAssignedUsersModal(assignedUsersModalContent)">
+                <button (click)="showAssignedUsersModal = true" class="glassmorphism-light px-3 py-1 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all flex items-center gap-1">
                   <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i> View All ({{ assignedUsersList.length }})
                 </button>
               </div>
@@ -321,140 +321,131 @@
     </div>
   </div>
 
-  <!-- Create/Edit Role Modal -->
-  <div class="modal fade" id="roleModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i data-lucide="user-tag" class="w-5 h-5 text-gray-700"></i>
-            {{ editingRole ? 'Edit Role' : 'Create New Role' }}
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <form [formGroup]="roleForm" (ngSubmit)="saveRole()">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="roleName" class="form-label">Role Name *</label>
-                <input type="text" class="form-control" id="roleName" formControlName="name"
-                  placeholder="e.g., Support Agent">
-                <div class="invalid-feedback" *ngIf="roleForm.get('name')?.invalid && roleForm.get('name')?.touched">
-                  Role name is required
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="roleStatus" class="form-label">Status</label>
-                <select class="form-select" id="roleStatus" formControlName="status">
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+  <!-- Create/Edit Role Modal Template -->
+  <ng-template #roleModalTemplate>
+    <div class="fixed inset-0 z-40 flex items-center justify-center">
+      <!-- Modal Backdrop -->
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>  
+    <div *ngIf="showRoleModal" class="fixed inset-0 z-40 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showRoleModal = false">&times;</button>
+        <h5 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <i data-lucide="user-tag" class="w-5 h-5 text-gray-700"></i>
+          {{ editingRole ? 'Edit Role' : 'Create New Role' }}
+        </h5>
+        <form [formGroup]="roleForm" (ngSubmit)="saveRole()">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label for="roleName" class="block text-sm font-medium mb-1">Role Name *</label>
+              <input type="text" class="w-full rounded-lg border border-gray-300 px-3 py-2" id="roleName" formControlName="name" placeholder="e.g., Support Agent">
+              <div class="invalid-feedback text-xs text-red-500 mt-1" *ngIf="roleForm.get('name')?.invalid && roleForm.get('name')?.touched">
+                Role name is required
               </div>
             </div>
-            <div class="mb-3">
-              <label for="roleDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="roleDescription" formControlName="description" rows="3"
-                placeholder="Describe the role's purpose and responsibilities"></textarea>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Permission Template (Optional)</label>
-              <select class="form-select" [(ngModel)]="selectedTemplate" [ngModelOptions]="{standalone: true}">
-                <option value="">Select a template...</option>
-                <option value="admin">Administrator Template</option>
-                <option value="manager">Manager Template</option>
-                <option value="support">Support Agent Template</option>
-                <option value="readonly">Read-Only Template</option>
+            <div>
+              <label for="roleStatus" class="block text-sm font-medium mb-1">Status</label>
+              <select class="w-full rounded-lg border border-gray-300 px-3 py-2" id="roleStatus" formControlName="status">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
-              <small class="form-text text-muted">
-                Templates provide pre-configured permission sets for common roles
-              </small>
             </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold transition-all mr-2" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all" (click)="saveRole()" [disabled]="roleForm.invalid || !permissionService.hasPermission(PermissionConstants.ROLES_CREATE)">
-            <i data-lucide="save" class="w-4 h-4 text-blue-600"></i>
-            {{ editingRole ? 'Update Role' : 'Create Role' }}
-          </button>
-        </div>
+          </div>
+          <div class="mb-3">
+            <label for="roleDescription" class="block text-sm font-medium mb-1">Description</label>
+            <textarea class="w-full rounded-lg border border-gray-300 px-3 py-2" id="roleDescription" formControlName="description" rows="3" placeholder="Describe the role's purpose and responsibilities"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="block text-sm font-medium mb-1">Permission Template (Optional)</label>
+            <select class="w-full rounded-lg border border-gray-300 px-3 py-2" [(ngModel)]="selectedTemplate" [ngModelOptions]="{standalone: true}">
+              <option value="">Select a template...</option>
+              <option *ngFor="let template of permissionTemplates" [value]="template.id">{{ template.name }}</option>
+            </select>
+            <small class="text-xs text-gray-500">Templates provide pre-configured permission sets for common roles</small>
+          </div>
+          <div class="flex justify-end gap-2 mt-4">
+            <button type="button" class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700" (click)="showRoleModal = false">Cancel</button>
+            <button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" [disabled]="roleForm.invalid || !permissionService.hasPermission(PermissionConstants.ROLES_CREATE)">{{ editingRole ? 'Update Role' : 'Create Role' }}</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
+  </ng-template>
 
-  <!-- Permission Templates Modal -->
-  <div class="modal fade" id="templatesModal" tabindex="-1">
-    <div class="modal-dialog modal-xl" style="margin-top:5vh; margin-bottom:5vh;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i data-lucide="magic" class="w-5 h-5 text-purple-600"></i>
-            Permission Templates
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="flex justify-center">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl w-full mx-auto">
-              <div *ngFor="let template of permissionTemplates" class="bg-white rounded-xl shadow p-5 flex flex-col items-start border border-gray-100 hover:shadow-lg transition-all">
-                <div class="flex items-center w-full justify-between mb-2">
-                  <h6 class="text-lg font-bold text-gray-900 uppercase tracking-wide">{{ template.name }}</h6>
-                  <span class="ml-2 px-2 py-0.5 rounded text-xs font-semibold"
-                    [ngClass]="{
-                      'bg-blue-100 text-blue-700': template.level === 'intermediate',
-                      'bg-green-100 text-green-700': template.level === 'basic',
-                      'bg-yellow-100 text-yellow-700': template.level === 'advanced',
-                      'bg-red-100 text-red-700': template.level === 'critical'
-                    }">
-                    {{ template.level }}
-                  </span>
-                </div>
-                <div class="text-sm text-gray-600 mb-2">{{ template.permissions.length }} permissions included</div>
-                <div class="flex-1 text-xs text-gray-500 mb-4">{{ template.description }}</div>
-                <div class="flex gap-2 w-full mt-auto">
-                  <button class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-all border border-blue-200 w-1/2 justify-center"
-                    (click)="previewTemplate(template)">
-                    <i data-lucide="eye" class="w-4 h-4 text-blue-700"></i> Preview
-                  </button>
-                  <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md text-sm font-bold flex items-center gap-2 transition-all w-1/2 justify-center"
-                    (click)="applyPermissionTemplate(template)">
-                    <i data-lucide="check" class="w-4 h-4 text-white"></i> Apply
-                  </button>
-                </div>
+  <!-- Permission Templates Modal Template -->
+  <ng-template #templatesModalTemplate>
+    <div class="fixed inset-0 z-40 flex items-center justify-center">
+      <!-- Modal Backdrop -->
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>  
+    <div *ngIf="showTemplatesModal" class="fixed inset-0 z-40 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white rounded-xl shadow-lg w-full max-w-4xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showTemplatesModal = false">&times;</button>
+        <h5 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <i data-lucide="magic" class="w-5 h-5 text-purple-600"></i>
+          Permission Templates
+        </h5>
+        <div class="flex justify-center">
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl w-full mx-auto">
+            <div *ngFor="let template of permissionTemplates" class="bg-white rounded-xl shadow p-5 flex flex-col items-start border border-gray-100 hover:shadow-lg transition-all">
+              <div class="flex items-center w-full justify-between mb-2">
+                <h6 class="text-lg font-bold text-gray-900 uppercase tracking-wide">{{ template.name }}</h6>
+                <span class="ml-2 px-2 py-0.5 rounded text-xs font-semibold"
+                  [ngClass]="{
+                    'bg-blue-100 text-blue-700': template.level === 'intermediate',
+                    'bg-green-100 text-green-700': template.level === 'basic',
+                    'bg-yellow-100 text-yellow-700': template.level === 'advanced',
+                    'bg-red-100 text-red-700': template.level === 'critical'
+                  }">
+                  {{ template.level }}
+                </span>
+              </div>
+              <div class="text-sm text-gray-600 mb-2">{{ template.permissions.length }} permissions included</div>
+              <div class="flex-1 text-xs text-gray-500 mb-4">{{ template.description }}</div>
+              <div class="flex gap-2 w-full mt-auto">
+                <button class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-all border border-blue-200 w-1/2 justify-center" (click)="previewTemplate(template)">
+                  <i data-lucide="eye" class="w-4 h-4 text-blue-700"></i> Preview
+                </button>
+                <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md text-sm font-bold flex items-center gap-2 transition-all w-1/2 justify-center" (click)="applyPermissionTemplate(template)">
+                  <i data-lucide="check" class="w-4 h-4 text-white"></i> Apply
+                </button>
               </div>
             </div>
           </div>
         </div>
-        <!-- Permission Templates Modal Footer -->
-        <div class="modal-footer flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 bg-gray-50 border-t border-gray-200 rounded-b-lg py-4">
-          <button type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg text-base font-semibold shadow-sm transition-all w-full sm:w-auto" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold shadow-md flex items-center gap-2 transition-all w-full sm:w-auto" (click)="openAssignDialog()">
+        <div class="mt-6 flex justify-end gap-2">
+          <button class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700" (click)="showTemplatesModal = false">Close</button>
+          <button class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white" (click)="openAssignDialog()">
             <i data-lucide="user-plus" class="w-5 h-5 text-white"></i> Assign More Users
           </button>
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </ng-template>
 
-  <!-- Template Preview Modal -->
-  <div class="modal fade" id="templatePreviewModal" tabindex="-1">
-    <div class="modal-dialog modal-xl" style="max-width:900px; min-width:600px; width:100%; margin-top:5vh; margin-bottom:5vh;">
-      <div class="modal-content mx-auto" style="max-width:900px; min-width:600px; width:100%;">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i data-lucide="eye" class="w-5 h-5 text-blue-600"></i>
-            Template Preview
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body" *ngIf="previewedTemplate" style="background:#f8fafc;">
+  <!-- Template Preview Modal Template -->
+  <ng-template #templatePreviewModalTemplate>
+    <div class="fixed inset-0 z-40 flex items-center justify-center">
+      <!-- Modal Backdrop -->
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>  
+    <div *ngIf="showTemplatePreviewModal" class="fixed inset-0 z-40 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white rounded-xl shadow-lg w-full max-w-3xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showTemplatePreviewModal = false">&times;</button>
+        <h5 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <i data-lucide="eye" class="w-5 h-5 text-blue-600"></i>
+          Template Preview
+        </h5>
+        <div *ngIf="previewedTemplate" style="background:#f8fafc;">
           <h4 class="font-bold text-xl mb-2">{{ previewedTemplate.name }}</h4>
           <p class="text-gray-500 mb-3">{{ previewedTemplate.description }}</p>
           <div class="mb-3 flex items-center gap-2">
             <span class="badge bg-primary">{{ previewedTemplate.level | titlecase }}</span>
             <span class="badge bg-info">{{ previewedTemplate.permissions.length }} permissions</span>
           </div>
-          <div class="divide-y divide-gray-200 rounded-lg overflow-hidden border border-gray-200 bg-white w-full" style="width:100%;">
+          <div class="divide-y divide-gray-200 rounded-lg overflow-hidden border border-gray-200 bg-white w-full">
             <ng-container *ngFor="let group of getPreviewedTemplatePermissionsByCategory(); let i = index">
               <div class="bg-gray-50 px-4 py-2 font-bold text-blue-800 text-base border-b border-gray-200 flex items-center cursor-pointer select-none" (click)="togglePreviewCategory(i)">
                 <span class="mr-2">
@@ -476,96 +467,111 @@
             </ng-container>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <div class="mt-6 flex justify-end gap-2">
+          <button class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700" (click)="showTemplatePreviewModal = false">Close</button>
         </div>
       </div>
     </div>
-  </div>
+    </div>
+  </ng-template>
 
   <!-- Assigned Users Modal Template -->
-  <ng-template #assignedUsersModalContent let-modal>
-    <div class="modal-header">
-      <h5 class="modal-title">
-        <i data-lucide="users" class="w-5 h-5 text-gray-700"></i>
-        Users with {{ selectedRole?.name }} Role
-      </h5>
-      <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
-    </div>
-    <div class="modal-body">
-      <div class="assigned-users-list">
-        <div *ngFor="let user of assignedUsersList" class="assigned-user-item">
-          <div class="user-avatar-large">
-            <img [src]="imageService.getAvatarImageUrl(user)" [alt]="user.name" (error)="imageService.handleImageError($event, 'avatar', user.name)">
+  <ng-template #assignedUsersModalTemplate let-modal>
+    <div class="fixed inset-0 z-40 flex items-center justify-center">
+      <!-- Modal Backdrop -->
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>  
+    <div *ngIf="showAssignedUsersModal" class="fixed inset-0 z-40 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showAssignedUsersModal = false">&times;</button>
+        <h5 class="text-xl font-bold mb-4 flex items-center gap-2">
+          <i data-lucide="users" class="w-5 h-5 text-gray-700"></i>
+          Users with {{ selectedRole?.name }} Role
+        </h5>
+        <div class="assigned-users-list">
+          <div *ngFor="let user of assignedUsersList" class="assigned-user-item">
+            <div class="user-avatar-large">
+              <img [src]="imageService.getAvatarImageUrl(user)" [alt]="user.name" (error)="imageService.handleImageError($event, 'avatar', user.name)">
+            </div>
+            <div class="user-details">
+              <div class="user-name">{{ user.name }}</div>
+              <div class="user-email">{{ user.email }}</div>
+              <div class="user-department">{{ user.department | titlecase }}</div>
+            </div>
+            <div class="user-status">
+              <span class="status-badge" [ngClass]="'status-' + user.status">
+                {{ user.status | titlecase }}
+              </span>
+            </div>
+            <div class="user-actions">
+              <button class="btn btn-outline-secondary btn-sm" (click)="removeUserFromRole(user)">
+                <i data-lucide="times" class="w-4 h-4 text-gray-600"></i>Remove
+              </button>
+            </div>
           </div>
-          <div class="user-details">
-            <div class="user-name">{{ user.name }}</div>
-            <div class="user-email">{{ user.email }}</div>
-            <div class="user-department">{{ user.department | titlecase }}</div>
-          </div>
-          <div class="user-status">
-            <span class="status-badge" [ngClass]="'status-' + user.status">
-              {{ user.status | titlecase }}
-            </span>
-          </div>
-          <div class="user-actions">
-            <button class="btn btn-outline-secondary btn-sm" (click)="removeUserFromRole(user)">
-              <i data-lucide="times" class="w-4 h-4 text-gray-600"></i>Remove
-            </button>
-          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700" (click)="showAssignedUsersModal = false">Close</button>
+          <button class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2" (click)="openAssignDialog()">
+            <i data-lucide="user-plus" class="w-5 h-5 text-white"></i> Assign More Users
+          </button>
         </div>
       </div>
     </div>
-    <div class="modal-footer">
-      <button type="button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold transition-all mr-2" (click)="modal.close('Close click')">Close</button>
-      <button type="button" class="border border-blue-500 text-blue-700 hover:bg-blue-50 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all" (click)="openAssignDialog(modal)">
-        <i data-lucide="user-plus" class="w-4 h-4 text-blue-700"></i> Assign More Users
-      </button>
     </div>
   </ng-template>
 
-  <!-- Assign Users to Role Modal -->
-  <ng-template #assignUsersDialog let-modal>
-    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white/90 rounded-t-2xl">
-      <div class="flex items-center gap-2">
-        <i data-lucide="user-check" class="w-6 h-6 text-green-600"></i>
-        <h5 class="text-lg font-bold text-gray-900">Assign Users to {{ selectedRole?.name }}</h5>
-      </div>
-      <button type="button" class="text-gray-400 hover:text-gray-600 transition" (click)="modal.dismiss()">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-      </button>
-    </div>
-    <div class="px-6 py-4 bg-white/80">
-      <!-- Search Input -->
-      <div class="mb-4">
-        <div class="relative">
-          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
-          <input type="text" class="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by name or email..." [(ngModel)]="userAssignmentSearchTerm" (input)="filterAllUsers()">
-        </div>
-      </div>
-      <!-- User List -->
-      <div class="space-y-2 max-h-80 overflow-y-auto">
-        <div *ngFor="let user of filteredAllUsers" class="flex items-center gap-3 p-3 rounded-lg bg-white shadow-sm border border-gray-100">
-          <input class="accent-blue-500 w-4 h-4 rounded border-gray-300 focus:ring-blue-500" type="checkbox" [id]="'user-assign-' + user.id" [checked]="isUserSelectedForAssignment(user.id)" (change)="toggleUserForAssignment(user.id)">
-          <img [src]="imageService.getAvatarImageUrl(user)" [alt]="user.name" class="w-10 h-10 rounded-full object-cover border border-gray-200" (error)="imageService.handleImageError($event, 'avatar', user.name)">
-          <div class="flex-1 min-w-0">
-            <div class="font-semibold text-gray-900 truncate">{{ user.name }}</div>
-            <div class="text-xs text-gray-500 truncate">{{ user.email }}</div>
+  <!-- Assign Users to Role Modal Template -->
+  <ng-template #assignUsersDialogTemplate let-modal>
+    <div class="fixed inset-0 z-40 flex items-center justify-center">
+      <!-- Modal Backdrop -->
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>  
+    <div *ngIf="showAssignUsersDialog" class="fixed inset-0 z-40 flex items-center justify-center">
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+        <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showAssignUsersDialog = false">&times;</button>
+        <h5 class="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+          <i data-lucide="user-check" class="w-6 h-6 text-green-600"></i>
+          Assign Users to {{ selectedRole?.name }}
+        </h5>
+        <div class="mb-4">
+          <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+            <input type="text" class="w-full pl-10 pr-3 py-2 rounded-lg bg-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by name or email..." [(ngModel)]="userAssignmentSearchTerm" (input)="filterAllUsers()">
           </div>
-          <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{{ user.department }}</span>
         </div>
-        <div *ngIf="filteredAllUsers.length === 0" class="flex flex-col items-center justify-center py-8 text-gray-400">
-          <i data-lucide="search" class="w-10 h-10 mb-2"></i>
-          <p class="text-sm">No users found.</p>
+        <div class="space-y-2 max-h-80 overflow-y-auto">
+          <div *ngFor="let user of filteredAllUsers" class="flex items-center gap-3 p-3 rounded-lg bg-white shadow-sm border border-gray-100">
+            <input class="accent-blue-500 w-4 h-4 rounded border-gray-300 focus:ring-blue-500" type="checkbox" [id]="'user-assign-' + user.id" [checked]="isUserSelectedForAssignment(user.id)" (change)="toggleUserForAssignment(user.id)">
+            <img [src]="imageService.getAvatarImageUrl(user)" [alt]="user.name" class="w-10 h-10 rounded-full object-cover border border-gray-200" (error)="imageService.handleImageError($event, 'avatar', user.name)">
+            <div class="flex-1 min-w-0">
+              <div class="font-semibold text-gray-900 truncate">{{ user.name }}</div>
+              <div class="text-xs text-gray-500 truncate">{{ user.email }}</div>
+            </div>
+            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">{{ user.department }}</span>
+          </div>
+          <div *ngIf="filteredAllUsers.length === 0" class="flex flex-col items-center justify-center py-8 text-gray-400">
+            <i data-lucide="search" class="w-10 h-10 mb-2"></i>
+            <p class="text-sm">No users found.</p>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button class="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700" (click)="showAssignUsersDialog = false">Close</button>
+          <button class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2" (click)="saveUserAssignments()">
+            <i data-lucide="user-plus" class="w-5 h-5 text-white"></i> Assign Selected
+          </button>
         </div>
       </div>
     </div>
-    <!-- Modal Footer -->
-    <div class="modal-footer flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4 bg-gray-50 border-t border-gray-200 rounded-b-lg py-4">
-      <button type="button" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg text-base font-semibold shadow-sm transition-all w-full sm:w-auto" data-bs-dismiss="modal">Close</button>
-      <button type="button" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg text-base font-semibold shadow-md flex items-center gap-2 transition-all w-full sm:w-auto" (click)="openAssignDialog()">
-        <i data-lucide="user-plus" class="w-5 h-5 text-white"></i> Assign Selected
-      </button>
     </div>
   </ng-template>
+
+  <!-- Render Modals with ngTemplateOutlet -->
+  <ng-container *ngIf="showRoleModal" [ngTemplateOutlet]="roleModalTemplate" class=""></ng-container>
+  <ng-container *ngIf="showTemplatesModal" [ngTemplateOutlet]="templatesModalTemplate"></ng-container>
+  <ng-container *ngIf="showTemplatePreviewModal" [ngTemplateOutlet]="templatePreviewModalTemplate"></ng-container>
+  <ng-container *ngIf="showAssignedUsersModal" [ngTemplateOutlet]="assignedUsersModalTemplate"></ng-container>
+  <ng-container *ngIf="showAssignUsersDialog" [ngTemplateOutlet]="assignUsersDialogTemplate"></ng-container>
+
+  <!-- Remove old modal HTML (all direct modal divs) -->
 </div>

@@ -1,34 +1,146 @@
-<div class="max-w-3xl mx-auto p-4">
-  <!-- Loading Spinner -->
-  <div *ngIf="loading" class="flex justify-center items-center py-12">
-    <svg class="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-    </svg>
-  </div>
+<app-header></app-header>
 
-  <!-- Error Message -->
-  <div *ngIf="error" class="bg-red-100 text-red-700 p-4 rounded mb-6 shadow">
-    {{ error }}
+<!-- Hero Section -->
+<section class="relative bg-white py-20 overflow-hidden">
+  <div class="absolute inset-0 bg-blue-50"></div>
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center">
+      <h1 class="text-5xl lg:text-6xl font-bold text-black mb-6">
+        Our <span class="text-blue-600">Policies</span>
+      </h1>
+      <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        Learn about our company policies, terms of service, and guidelines to ensure a smooth shopping experience.
+      </p>
+    </div>
   </div>
+</section>
 
-  <!-- Policies Accordion -->
-  <div *ngIf="!loading && !error">
-    <ng-container *ngIf="policies.length; else noPolicies">
-      <div *ngFor="let policy of policies; let i = index" class="mb-6">
-        <button type="button" (click)="policy.open = !policy.open" class="w-full text-left p-4 bg-white rounded shadow flex justify-between items-center focus:outline-none">
-          <span class="text-xl font-semibold">{{ policy.title }}</span>
-          <svg [attr.class]="policy.open ? 'rotate-180 h-5 w-5 transition-transform' : 'h-5 w-5 transition-transform'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+<!-- Loading Section -->
+<section *ngIf="loading" class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-center items-center py-16">
+      <div class="flex flex-col items-center space-y-4">
+        <div class="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <p class="text-gray-600 font-medium">Loading policies...</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Error Section -->
+<section *ngIf="error" class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-8 max-w-2xl mx-auto">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-        </button>
-        <div *ngIf="policy.open" class="p-4 bg-gray-50 border border-t-0 border-gray-200 rounded-b">
-          <div [innerHTML]="policy.content"></div>
+        </div>
+        <div class="ml-4">
+          <h3 class="text-lg font-semibold text-red-800">Error Loading Policies</h3>
+          <p class="text-red-700 mt-1">{{ error }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Policies Section -->
+<section *ngIf="!loading && !error" class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <ng-container *ngIf="getFilteredPolicies().length; else noPolicies">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl font-bold text-black mb-4">Company Policies</h2>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          These policies guide our operations and ensure transparency with our customers.
+        </p>
+      </div>
+      
+      <div class="space-y-8">
+        <div *ngFor="let policy of getFilteredPolicies(); let i = index" 
+             class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          
+          <!-- Policy Header -->
+          <button type="button" 
+                  (click)="policy.open = !policy.open" 
+                  class="w-full text-left p-8 flex justify-between items-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset hover:bg-gray-50 transition-colors duration-200">
+            
+            <div class="flex items-center space-x-6">
+              <!-- Policy Icon -->
+              <div class="flex-shrink-0">
+                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center">
+                  <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                </div>
+              </div>
+              
+              <!-- Policy Title -->
+              <div>
+                <h3 class="text-2xl font-bold text-black mb-2">{{ policy.title }}</h3>
+                <p class="text-gray-600">Click to view full policy details</p>
+              </div>
+            </div>
+            
+            <!-- Expand/Collapse Icon -->
+            <div class="flex-shrink-0">
+              <svg [attr.class]="policy.open ? 'rotate-180 w-8 h-8 text-blue-600 transition-transform duration-200' : 'w-8 h-8 text-gray-400 transition-transform duration-200'" 
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+          </button>
+          
+          <!-- Policy Content -->
+          <div *ngIf="policy.open" 
+               class="border-t border-gray-100 bg-gray-50 px-8 py-8 animate-fadeIn">
+            <div class="prose prose-lg max-w-none">
+              <div [innerHTML]="policy.content" class="text-gray-700 leading-relaxed text-base"></div>
+            </div>
+          </div>
         </div>
       </div>
     </ng-container>
+    
     <ng-template #noPolicies>
-      <div class="text-gray-500 text-center py-8">No policies found.</div>
+      <div class="text-center py-16">
+        <div class="inline-flex items-center justify-center w-24 h-24 bg-gray-100 rounded-full mb-6">
+          <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-black mb-4">No Policies Available</h3>
+        <p class="text-gray-600 text-lg">There are currently no active policies to display.</p>
+      </div>
     </ng-template>
   </div>
-</div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-20 bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-4xl font-bold text-black mb-6">Ready to Get Started?</h2>
+    <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+      Join thousands of satisfied customers who trust us for their shopping needs.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a routerLink="/userproductlist" 
+         class="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+        Shop Now
+      </a>
+      <a routerLink="/contact-us" 
+         class="inline-flex items-center px-8 py-4 bg-white text-black font-semibold rounded-xl shadow-lg border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 transition-all duration-300 transform hover:scale-105">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+        </svg>
+        Contact Us
+      </a>
+    </div>
+  </div>
+</section>
+
+<app-footer></app-footer>

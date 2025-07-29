@@ -18,6 +18,8 @@ import { ProductList } from '../product';
 import { HttpClient } from '@angular/common/http';
 import { VerifyOtpComponent } from '../auth/verify-otp/verify-otp.component';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { EventService } from '../services/event.service';
+import { EventDTO } from '../event-dto';
 
 @Component({
   selector: 'app-home',
@@ -35,12 +37,15 @@ export class HomeComponent implements OnInit {
   reviewsError = '';
   loading = false;
   error = '';
-  featuredProducts: ProductDTO[] = [];
-  trendingProducts: ProductList[] = [];
+  featuredProducts: any[] = [];
+  trendingProducts: any[] = [];
   firstTimeBuyerNotification: any = null;
   showFirstTimeBuyerAlert = false;
   newsletterEmail = '';
   // Removed: showOtpModal, newsletterEmailForOtp
+  events: EventDTO[] = [];
+  currentSlide = 0;
+  private slideInterval: any;
 
   constructor(
     private categoryService: CategoryService,
@@ -52,7 +57,8 @@ export class HomeComponent implements OnInit {
     private notifcationService : NotifcationService,
     private discountService: DiscountService,
     private http: HttpClient, // Inject HttpClient
-       private sanitizer: DomSanitizer
+       private sanitizer: DomSanitizer,
+       private eventService: EventService
   ) {}
 
   ngOnInit(): void {
@@ -63,6 +69,13 @@ export class HomeComponent implements OnInit {
     this.loadFeaturedProducts();
     this.loadTrendingProducts();
     this.checkFirstTimeBuyerNotification();
+    this.loadEvents();
+  }
+
+  ngOnDestroy() {
+    if (this.slideInterval) {
+      clearInterval(this.slideInterval);
+    }
   }
 
   checkFirstTimeBuyerNotification() {
@@ -135,25 +148,130 @@ export class HomeComponent implements OnInit {
   }
 
   loadFeaturedProducts() {
-    this.productService.getLatestProducts().subscribe({
+    // TODO: Get actual user ID from auth service
+    const userId = undefined; // For now, use undefined to get latest products
+    this.productService.getFeaturedProducts(userId).subscribe({
       next: (products) => {
-        this.featuredProducts = products;
+        // Limit to 5 products to ensure they fit in one row
+        this.featuredProducts = products.slice(0, 5);
+        console.log('Featured products loaded:', this.featuredProducts);
+        
+        // Debug discount information
+        this.featuredProducts.forEach((product, index) => {
+          console.log(`Featured Product ${index + 1}:`, {
+            id: product.id,
+            name: product.productName,
+            hasDiscount: product.hasDiscount,
+            discountName: product.discountName,
+            discountValue: product.discountValue,
+            discountType: product.discountType,
+            hasEvent: product.hasEvent,
+            eventName: product.eventName,
+            price: product.price
+          });
+        });
+        
+        // Check if any products have discounts
+        const productsWithDiscounts = this.featuredProducts.filter(p => p.hasDiscount);
+        const productsWithEvents = this.featuredProducts.filter(p => p.hasEvent);
+        console.log(`Products with discounts: ${productsWithDiscounts.length}/${this.featuredProducts.length}`);
+        console.log(`Products with events: ${productsWithEvents.length}/${this.featuredProducts.length}`);
+        
+        if (productsWithDiscounts.length === 0) {
+          console.warn('No products with discounts found in featured products!');
+        }
+        if (productsWithEvents.length === 0) {
+          console.warn('No products with events found in featured products!');
+        }
       },
-      error: () => {
-        // Optionally handle error
+      error: (error) => {
+        console.error('Error loading featured products:', error);
       }
     });
   }
 
   loadTrendingProducts() {
-    this.productService.getTopOrderedProducts().subscribe({
+    this.productService.getTrendingProducts().subscribe({
       next: (products) => {
-        this.trendingProducts = products;
+        // Limit to 5 products to ensure they fit in one row
+        this.trendingProducts = products.slice(0, 5);
+        console.log('Trending products loaded:', this.trendingProducts);
+        // Log each product's event and discount status
+        this.trendingProducts.forEach((product, index) => {
+          console.log(`Trending Product ${index + 1}:`, {
+            id: product.id,
+            name: product.productName,
+            hasEvent: product.hasEvent,
+            eventName: product.eventName,
+            hasDiscount: product.hasDiscount,
+            discountName: product.discountName,
+            discountValue: product.discountValue,
+            discountType: product.discountType,
+            price: product.price
+          });
+        });
+        
+        // Check if any products have discounts or events
+        const productsWithDiscounts = this.trendingProducts.filter(p => p.hasDiscount);
+        const productsWithEvents = this.trendingProducts.filter(p => p.hasEvent);
+        console.log(`Trending products with discounts: ${productsWithDiscounts.length}/${this.trendingProducts.length}`);
+        console.log(`Trending products with events: ${productsWithEvents.length}/${this.trendingProducts.length}`);
+        
+        if (productsWithDiscounts.length === 0) {
+          console.warn('No products with discounts found in trending products!');
+        }
+        if (productsWithEvents.length === 0) {
+          console.warn('No products with events found in trending products!');
+        }
       },
-      error: () => {
-        // Optionally handle error
+      error: (error) => {
+        console.error('Error loading trending products:', error);
       }
     });
+  }
+
+  loadEvents() {
+    this.eventService.getActiveEventsForHero().subscribe({
+      next: (events) => {
+        this.events = Array.isArray(events) ? events.filter(e => !!e) : [];
+        if (this.events.length > 1) {
+          this.startAutoSlide();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading events:', error);
+        this.events = [];
+      }
+    });
+  }
+
+  startAutoSlide() {
+    this.slideInterval = setInterval(() => {
+      this.nextSlide();
+    }, 5000); // Change slide every 5 seconds
+  }
+
+  setSlide(index: number) {
+    this.currentSlide = index;
+    // Reset auto-slide timer
+    if (this.slideInterval) {
+      clearInterval(this.slideInterval);
+    }
+    if (this.events.length > 1) {
+      this.startAutoSlide();
+    }
+  }
+
+  nextSlide() {
+    if (this.events.length > 1) {
+      this.currentSlide = (this.currentSlide + 1) % this.events.length;
+    }
+  }
+
+  prevSlide() {
+    if (this.events.length > 1) {
+      this.currentSlide = this.currentSlide === 0 ? this.events.length - 1 : this.currentSlide - 1;
+    }
   }
 
   scrollBrands(direction: 'left' | 'right') {
@@ -239,8 +357,53 @@ export class HomeComponent implements OnInit {
     this.router.navigate(['/product', product.id]);
   }
 
-  goToTrendingProductDetail(product: ProductList) {
+  goToTrendingProductDetail(product: any) {
     this.router.navigate(['/product', product.id]);
+  }
+
+  getTrendingProductImageUrl(product: any): string {
+    if (product.productImages && product.productImages.length > 0) {
+      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+    }
+    return 'assets/images/default-brand.svg';
+  }
+
+  getStarRating(rating: number): string {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+    
+    return '★'.repeat(fullStars) + (hasHalfStar ? '☆' : '') + '☆'.repeat(emptyStars);
+  }
+
+  getDiscountText(product: any): string {
+    if (!product.hasDiscount || !product.discountValue || !product.discountType) {
+      return '';
+    }
+    
+    if (product.discountType === 'PERCENTAGE') {
+      // Convert decimal to percentage (e.g., 0.1 -> 10%, 0.25 -> 25%)
+      const percentage = Math.round(product.discountValue * 100);
+      return `${percentage}% OFF`;
+    } else {
+      return `${Math.round(product.discountValue)} MMK OFF`;
+    }
+  }
+
+  getDiscountedPrice(product: any): number {
+    if (!product.hasDiscount || !product.discountValue || !product.discountType) {
+      return product.price;
+    }
+    
+    let discountedPrice: number;
+    if (product.discountType === 'PERCENTAGE') {
+      discountedPrice = product.price - (product.price * product.discountValue);
+    } else {
+      discountedPrice = Math.max(0, product.price - product.discountValue);
+    }
+    
+    // Round to whole number (no decimals)
+    return Math.round(discountedPrice);
   }
 
   goToAllProducts() {
@@ -300,4 +463,67 @@ export class HomeComponent implements OnInit {
       });
   }
 
+  getEventImageUrl(event: EventDTO): string {
+    if (!event.eventImage) return '/assets/images/no-image.png';
+    if (event.eventImage.startsWith('http') || event.eventImage.startsWith('data:')) {
+      return event.eventImage;
+    }
+    return 'http://localhost:8080' + event.eventImage;
+  }
+
+  getButtonText(event: EventDTO): string {
+    if (event.discountId) {
+      return 'Shop with Discount →';
+    } else if (event.productIds && Array.isArray(event.productIds) && event.productIds.length > 0) {
+      return 'View Products →';
+    } else {
+      return 'Learn More →';
+    }
+  }
+
+  goToEventProducts(event: EventDTO) {
+    // Navigate to user product list with event ID
+    this.router.navigate(['/userproductlist'], { 
+      queryParams: { 
+        eventId: event.id,
+        eventName: event.name 
+      } 
+    });
+  }
+
+  addToWishlist(product: any) {
+    // TODO: Implement wishlist functionality
+    console.log('Adding to wishlist:', product.productName);
+    // You can add the actual wishlist service call here
+    // this.wishlistService.addToWishlist(product.id).subscribe(...)
+  }
+
+  // Debug method to test discount functionality
+  testDiscountFunctionality() {
+    console.log('=== Testing Discount Functionality ===');
+    
+    // Test trending products
+    this.productService.getTrendingProducts().subscribe({
+      next: (products) => {
+        console.log('Trending products test:', products);
+        const withDiscounts = products.filter(p => p.hasDiscount);
+        console.log('Trending products with discounts:', withDiscounts.length);
+      },
+      error: (error) => {
+        console.error('Error testing trending products:', error);
+      }
+    });
+    
+    // Test featured products
+    this.productService.getFeaturedProducts().subscribe({
+      next: (products) => {
+        console.log('Featured products test:', products);
+        const withDiscounts = products.filter(p => p.hasDiscount);
+        console.log('Featured products with discounts:', withDiscounts.length);
+      },
+      error: (error) => {
+        console.error('Error testing featured products:', error);
+      }
+    });
+  }
 }

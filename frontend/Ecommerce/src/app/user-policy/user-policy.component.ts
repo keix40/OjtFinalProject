@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { PolicyService, Policy } from '../services/policy.service';
+import { FooterComponent } from '../footer/footer.component';
+import { CommonModule } from '@angular/common';
+import { HeaderComponent } from '../header/header.component';
 
 @Component({
   selector: 'app-user-policy',
+  standalone: true,
+  imports: [CommonModule, HeaderComponent, FooterComponent],
   templateUrl: './user-policy.component.html',
-  styleUrls: ['./user-policy.component.css'],
-  standalone: false
+  styleUrls: ['./user-policy.component.css']
 })
 export class UserPolicyComponent implements OnInit {
   policies: Policy[] = [];
@@ -23,8 +27,10 @@ export class UserPolicyComponent implements OnInit {
     this.error = null;
     this.policyService.getAllPolicies().subscribe({
       next: (policies) => {
-        // Add 'open' property to each policy for accordion
-        this.policies = policies.map(p => ({ ...p, open: false }));
+        // Filter policies with status not equal to 2 and add 'open' property for accordion
+        this.policies = policies
+          .filter(p => p.status !== 2)
+          .map(p => ({ ...p, open: false }));
         this.loading = false;
       },
       error: (err) => {
@@ -32,5 +38,9 @@ export class UserPolicyComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  getFilteredPolicies(): Policy[] {
+    return this.policies.filter(p => p.status !== 2);
   }
 }
