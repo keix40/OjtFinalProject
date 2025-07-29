@@ -32,5 +32,6 @@ public class DiscountDTO {
     private String categoryIds;     // optional, for multi-select
     private String brandCategoryId; // optional
     private String brandCategoryIds;
-
+    private Double minimunSpend;
+    private String userIds; // comma-separated user IDs
 }

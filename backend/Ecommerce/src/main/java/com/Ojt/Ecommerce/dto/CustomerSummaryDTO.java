@@ -21,4 +21,5 @@ public class CustomerSummaryDTO {
     private Double totalSpent;
     private String profileImage;
     private String tier;
+    private String dateOfBirth;
 }

@@ -9,4 +9,6 @@ public class CouponApplyRequest {
     private String couponCode;
     private Long userId;
     private List<Long> productIds;
+    private Long vipTierId;
+    private Double total;
 }

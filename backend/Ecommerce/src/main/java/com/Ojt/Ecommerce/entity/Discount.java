@@ -36,6 +36,9 @@ public class Discount {
     private LocalDate startDate;
     private LocalDate endDate;
     private Boolean autoApply;
+    
+    @Column(name = "minimum_spend")
+    private Double minimumSpend;
 
     @ManyToOne
     @JoinColumn(name = "event_id" , nullable = true) // link to DiscountEvent

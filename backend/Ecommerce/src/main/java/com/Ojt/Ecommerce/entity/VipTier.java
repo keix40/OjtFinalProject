@@ -35,4 +35,14 @@ public class VipTier {
 
     @Column(name = "tier_order")
     private Integer order;
+
+    public int getTierLevel(String tierName) {
+        switch (tierName.toUpperCase()) {
+            case "PLATINUM": return 4;
+            case "GOLD": return 3;
+            case "SILVER": return 2;
+            case "REGULAR":
+            default: return 1;
+        }
+    }
 } 

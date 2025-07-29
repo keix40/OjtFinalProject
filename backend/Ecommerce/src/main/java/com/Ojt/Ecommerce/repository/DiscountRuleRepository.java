@@ -39,6 +39,8 @@ public interface DiscountRuleRepository extends JpaRepository <DiscountRule, Lon
     List<DiscountRule> findByUserIdAndCategoryIdAndDiscountStatusTrue(Long userId, Long categoryId);
     List<DiscountRule> findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(Long userId, Long brandId, Long categoryId);
     List<DiscountRule> findByUserIdAndProductIdAndDiscountStatusTrue(Long userId, Long productId);
+    List<DiscountRule> findByVipTierIdAndDiscountStatusTrue(Long vipTierId);
+    List<DiscountRule> findByUserIdAndDiscountStatusTrue(Long userId);
     void deleteByUserIdAndProductId(Long userId, Long productId);
     void deleteByUserIdAndBrandId(Long userId, Long brandId);
     void deleteByUserIdAndCategoryId(Long userId, Long categoryId);

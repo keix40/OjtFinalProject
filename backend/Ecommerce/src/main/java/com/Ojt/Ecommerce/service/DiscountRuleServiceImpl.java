@@ -6,6 +6,7 @@ import com.Ojt.Ecommerce.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -60,6 +61,9 @@ public class DiscountRuleServiceImpl implements DiscountRuleService {
                     createBrandCategoryDiscountRule(dto.getBrandId(), dto.getCategoryId(), discount);
                 }
                 break;
+            case "USER_GLOBAL":
+                createUserGlobalDiscountRules(dto, discount);
+                break;
             case "USER_BRAND":
                 createUserBrandDiscountRules(dto, discount);
                 break;
@@ -80,15 +84,38 @@ public class DiscountRuleServiceImpl implements DiscountRuleService {
         }
     }
 
-    private void createGlobalDiscountRule(Discount discount) {
-        List<Product> allProducts = productRepository.findAll();
-        for (Product product : allProducts) {
+    @Override
+    public void createUserDiscountRules(List<Long> userIds, Discount discount) {
+        for (Long userId : userIds) {
+            User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
             DiscountRule rule = new DiscountRule();
-            rule.setTargetType(DiscountEventEnum.GLOBAL);
             rule.setDiscount(discount);
-            rule.setProduct(product);
+            rule.setUser(user);
+            rule.setTargetType(DiscountEventEnum.USER); // Use your enum for user-specific
             discountRuleRepository.save(rule);
         }
+    }
+
+    @Override
+    public void createVipTierDiscountRules(List<Long> vipTierIds, Discount discount) {
+        for (Long vipTierId : vipTierIds) {
+            VipTier vipTier = vipTierRepository.findById(vipTierId)
+                .orElseThrow(() -> new RuntimeException("VIP Tier not found: " + vipTierId));
+            DiscountRule rule = new DiscountRule();
+            rule.setDiscount(discount);
+            rule.setVipTier(vipTier);
+            rule.setTargetType(DiscountEventEnum.VIP_TIER); // Use your enum for VIP tier
+            discountRuleRepository.save(rule);
+        }
+    }
+
+    @Override
+    public void createGlobalDiscountRule(Discount discount) {
+        DiscountRule rule = new DiscountRule();
+        rule.setDiscount(discount);
+        rule.setTargetType(DiscountEventEnum.GLOBAL); // Use your enum for global
+        discountRuleRepository.save(rule);
     }
 
     private void createBrandDiscountRule(Long brandId, Discount discount) {
@@ -289,14 +316,62 @@ public class DiscountRuleServiceImpl implements DiscountRuleService {
         }
     }
 
+    private void createUserGlobalDiscountRules(DiscountRequestDTO dto, Discount discount) {
+        // Handle multiple user IDs as comma-separated string (new functionality)
+        if (dto.getUserIds() != null && !dto.getUserIds().trim().isEmpty()) {
+            String[] userIdStrings = dto.getUserIds().split(",");
+            for (String userIdStr : userIdStrings) {
+                Long userId = Long.parseLong(userIdStr.trim());
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new RuntimeException("user id not found: " + userId));
+                DiscountRule rule = new DiscountRule();
+                rule.setTargetType(DiscountEventEnum.USER_GLOBAL);
+                rule.setDiscount(discount);
+                rule.setUser(user);
+                discountRuleRepository.save(rule);
+            }
+        }
+        
+        // Handle VIP tier IDs if present
+        if (dto.getVipTierIds() != null && !dto.getVipTierIds().trim().isEmpty()) {
+            String[] vipTierIdStrings = dto.getVipTierIds().split(",");
+            for (String vipTierIdStr : vipTierIdStrings) {
+                Long vipTierId = Long.parseLong(vipTierIdStr.trim());
+                VipTier vipTier = vipTierRepository.findById(vipTierId)
+                    .orElseThrow(() -> new RuntimeException("VIP Tier not found: " + vipTierId));
+                DiscountRule rule = new DiscountRule();
+                rule.setTargetType(DiscountEventEnum.USER_GLOBAL);
+                rule.setDiscount(discount);
+                rule.setVipTier(vipTier);
+                discountRuleRepository.save(rule);
+            }
+        }
+    }
+
     private void createVipTierDiscountRules(DiscountRequestDTO dto, Discount discount) {
-        if (dto.getVipTierId() == null) return;
-        VipTier vipTier = vipTierRepository.findById(Long.parseLong(dto.getVipTierId().toString()))
-            .orElseThrow(() -> new RuntimeException("VipTier not found"));
-        DiscountRule rule = new DiscountRule();
-        rule.setTargetType(DiscountEventEnum.VIP_TIER);
-        rule.setDiscount(discount);
-        rule.setVipTier(vipTier);
-        discountRuleRepository.save(rule);
+        // Handle multiple VIP tier IDs as comma-separated string (new functionality)
+        if (dto.getVipTierIds() != null && !dto.getVipTierIds().trim().isEmpty()) {
+            String[] vipTierIdStrings = dto.getVipTierIds().split(",");
+            for (String vipTierIdStr : vipTierIdStrings) {
+                Long vipTierId = Long.parseLong(vipTierIdStr.trim());
+                VipTier vipTier = vipTierRepository.findById(vipTierId)
+                    .orElseThrow(() -> new RuntimeException("VIP Tier not found: " + vipTierId));
+                DiscountRule rule = new DiscountRule();
+                rule.setTargetType(DiscountEventEnum.VIP_TIER);
+                rule.setDiscount(discount);
+                rule.setVipTier(vipTier);
+                discountRuleRepository.save(rule);
+            }
+        }
+        // Handle single VIP tier ID (backward compatibility)
+        else if (dto.getVipTierId() != null && !dto.getVipTierId().trim().isEmpty()) {
+            VipTier vipTier = vipTierRepository.findById(Long.parseLong(dto.getVipTierId().trim()))
+                .orElseThrow(() -> new RuntimeException("VIP Tier not found: " + dto.getVipTierId()));
+            DiscountRule rule = new DiscountRule();
+            rule.setTargetType(DiscountEventEnum.VIP_TIER);
+            rule.setDiscount(discount);
+            rule.setVipTier(vipTier);
+            discountRuleRepository.save(rule);
+        }
     }
 } 

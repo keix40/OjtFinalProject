@@ -51,6 +51,9 @@ public class User {
     @Column(name = "is_verified")
     private boolean verified = false;
 
+    @Column(name = "phone_verified", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean phoneVerified = false;
+
 //    @Column(name = "is_verified")
 //    private boolean isVerified = false;
 
@@ -101,6 +104,8 @@ public class User {
     protected void onCreate() {
         this.createdDate = LocalDateTime.now();
     }
+    
+
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
@@ -113,5 +118,19 @@ public class User {
         if (totalPoints < 100000) return "Silver";
         if (totalPoints < 1000000) return "Gold";
         return "Platinum";
+    }
+    
+    /**
+     * Safely get phoneVerified status, ensuring it's never null
+     */
+    public boolean isPhoneVerified() {
+        return phoneVerified;
+    }
+    
+    /**
+     * Safely set phoneVerified status
+     */
+    public void setPhoneVerified(boolean phoneVerified) {
+        this.phoneVerified = phoneVerified;
     }
 }

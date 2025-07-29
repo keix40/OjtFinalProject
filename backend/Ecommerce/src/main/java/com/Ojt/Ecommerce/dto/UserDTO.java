@@ -25,6 +25,7 @@ public class UserDTO {
     private LocalDate dateOfBirth;
     private String phoneNumber;
     private boolean verified;
+    private boolean phoneVerified;
     private LocalDateTime createdDate;
     private Integer totalPoints;
     private long roleId;  // Role id for reference
@@ -44,6 +45,7 @@ public class UserDTO {
         this.dateOfBirth = user.getDateOfBirth();
         this.phoneNumber = user.getPhoneNumber();
         this.verified = user.isVerified();
+        this.phoneVerified = user.isPhoneVerified();
         this.createdDate = user.getCreatedDate();
         if (user.getRole() != null) {
             this.roleId = user.getRole().getId();

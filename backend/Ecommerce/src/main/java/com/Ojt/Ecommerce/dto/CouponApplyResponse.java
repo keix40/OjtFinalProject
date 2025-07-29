@@ -9,4 +9,7 @@ public class CouponApplyResponse {
     private boolean valid;
     private String message;
     private Double discountAmount;
+    private String couponName;
+    private String discountType;
+    private Long discountId;
 }

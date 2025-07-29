@@ -43,7 +43,6 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     public ResponseEntity<?> createDiscount(DiscountRequestDTO dto) {
         try {
-            // Only create Discount, no DiscountEvent
             Discount discount = createDiscounts(dto);
             System.out.println("[DiscountService] About to create discount rules.");
             discountRuleService.createDiscountRules(dto, discount);
@@ -55,7 +54,6 @@ public class DiscountServiceImpl implements DiscountService {
         }
     }
 
-    // New method to create discount with conflict resolution
     public ResponseEntity<?> createDiscountWithResolution(DiscountRequestDTO dto, String resolutionChoice) {
         try {
             Discount discount = createDiscounts(dto);
@@ -543,6 +541,15 @@ public class DiscountServiceImpl implements DiscountService {
                         }
                     }
                     break;
+                case "USER_GLOBAL":
+                    if (dto.getUserIds() != null && !dto.getUserIds().trim().isEmpty()) {
+                        String[] userIds = dto.getUserIds().split(",");
+                        for (String userIdStr : userIds) {
+                            Long userId = Long.parseLong(userIdStr.trim());
+                            checkUserGlobalDuplicate(userId, conflicts);
+                        }
+                    }
+                    break;
             }
 
             return ResponseEntity.ok(conflicts);
@@ -555,7 +562,7 @@ public class DiscountServiceImpl implements DiscountService {
         Brand brand = brandRepository.findById(brandId).orElse(null);
         if (brand == null) return;
 
-        // 1. Check for existing brand discounts
+        // 1. General BRAND discount
         List<DiscountRule> existingRules = discountRuleRepository.findByBrandIdAndDiscountStatusTrue(brandId);
         for (DiscountRule rule : existingRules) {
             if (rule.getTargetType() == DiscountEventEnum.BRAND) {
@@ -572,17 +579,17 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
 
-        // 2. Check for existing brand-category discounts that would be affected
-        // Get all categories that this brand is joined with
+        // 2. General BRAND_CATEGORY and CATEGORY discounts for this brand
         List<Category> categoriesJoinedWithBrand = categoryRepository.findAllCategoryByBrandId(brandId);
         for (Category category : categoriesJoinedWithBrand) {
+            // BRAND_CATEGORY
             List<DiscountRule> brandCategoryRules = discountRuleRepository.findByBrandIdAndCategoryIdAndDiscountStatusTrue(brandId, category.getId());
             for (DiscountRule rule : brandCategoryRules) {
                 if (rule.getTargetType() == DiscountEventEnum.BRAND_CATEGORY) {
                     Map<String, Object> conflict = new HashMap<>();
-                    conflict.put("targetType", "BRAND");
-                    conflict.put("targetId", brandId);
-                    conflict.put("targetName", brand.getName());
+                    conflict.put("targetType", "BRAND_CATEGORY");
+                    conflict.put("targetId", brandId + "-" + category.getId());
+                    conflict.put("targetName", brand.getName() + " - " + category.getName());
                     conflict.put("existingDiscountName", rule.getDiscount().getName());
                     conflict.put("existingDiscountId", rule.getDiscount().getId());
                     conflict.put("conflictType", "BRAND_CATEGORY_DISCOUNT");
@@ -593,17 +600,14 @@ public class DiscountServiceImpl implements DiscountService {
                     conflicts.add(conflict);
                 }
             }
-        }
-
-        // 3. Check for existing category discounts that would affect this brand's products
-        for (Category category : categoriesJoinedWithBrand) {
+            // CATEGORY
             List<DiscountRule> categoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(category.getId());
             for (DiscountRule rule : categoryRules) {
                 if (rule.getTargetType() == DiscountEventEnum.CATEGORY) {
                     Map<String, Object> conflict = new HashMap<>();
-                    conflict.put("targetType", "BRAND");
-                    conflict.put("targetId", brandId);
-                    conflict.put("targetName", brand.getName());
+                    conflict.put("targetType", "CATEGORY");
+                    conflict.put("targetId", category.getId());
+                    conflict.put("targetName", category.getName());
                     conflict.put("existingDiscountName", rule.getDiscount().getName());
                     conflict.put("existingDiscountId", rule.getDiscount().getId());
                     conflict.put("conflictType", "CATEGORY_DISCOUNT");
@@ -611,6 +615,70 @@ public class DiscountServiceImpl implements DiscountService {
                     conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                     conflict.put("conflictingCategoryId", category.getId());
                     conflict.put("conflictingCategoryName", category.getName());
+                    conflicts.add(conflict);
+                }
+            }
+        }
+
+        // 3. USER-SPECIFIC DISCOUNTS for this brand
+        List<User> allUsers = userRepository.findAll();
+        for (User user : allUsers) {
+            // USER_BRAND
+            List<DiscountRule> userBrandRules = discountRuleRepository.findByUserIdAndBrandIdAndDiscountStatusTrue(user.getId(), brandId);
+            for (DiscountRule rule : userBrandRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_BRAND) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_BRAND");
+                    conflict.put("targetId", "user-" + user.getId() + "-brand-" + brandId);
+                    conflict.put("userId", user.getId());
+                    conflict.put("userName", user.getName());
+                    conflict.put("brandId", brandId);
+                    conflict.put("brandName", brand.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_BRAND_DISCOUNT");
+                    conflict.put("conflictDescription", "User '" + user.getName() + "' already has a discount for this brand.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
+            }
+            // USER_BRAND_CATEGORY
+            for (Category category : categoriesJoinedWithBrand) {
+                List<DiscountRule> userBrandCategoryRules = discountRuleRepository.findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(user.getId(), brandId, category.getId());
+                for (DiscountRule rule : userBrandCategoryRules) {
+                    if (rule.getTargetType() == DiscountEventEnum.USER_BRAND_CATEGORY) {
+                        Map<String, Object> conflict = new HashMap<>();
+                        conflict.put("targetType", "USER_BRAND_CATEGORY");
+                        conflict.put("targetId", "user-" + user.getId() + "-brand-" + brandId + "-category-" + category.getId());
+                        conflict.put("userId", user.getId());
+                        conflict.put("userName", user.getName());
+                        conflict.put("brandId", brandId);
+                        conflict.put("brandName", brand.getName());
+                        conflict.put("categoryId", category.getId());
+                        conflict.put("categoryName", category.getName());
+                        conflict.put("existingDiscountName", rule.getDiscount().getName());
+                        conflict.put("existingDiscountId", rule.getDiscount().getId());
+                        conflict.put("conflictType", "USER_BRAND_CATEGORY_DISCOUNT");
+                        conflict.put("conflictDescription", "User '" + user.getName() + "' already has a discount for this brand-category.");
+                        conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                        conflicts.add(conflict);
+                    }
+                }
+            }
+            // USER_GLOBAL
+            List<DiscountRule> userGlobalRules = discountRuleRepository.findByUserIdAndDiscountStatusTrue(user.getId());
+            for (DiscountRule rule : userGlobalRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_GLOBAL) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "user-" + user.getId());
+                    conflict.put("userId", user.getId());
+                    conflict.put("userName", user.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_GLOBAL_DISCOUNT");
+                    conflict.put("conflictDescription", "User '" + user.getName() + "' already has a global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                     conflicts.add(conflict);
                 }
             }
@@ -714,13 +782,13 @@ public class DiscountServiceImpl implements DiscountService {
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (user == null || category == null) return;
 
-        // 1. Check for existing user-category discounts
-        List<DiscountRule> existingRules = discountRuleRepository.findByUserIdAndCategoryIdAndDiscountStatusTrue(userId, categoryId);
-        for (DiscountRule rule : existingRules) {
+        // 1. Check for existing USER_CATEGORY discounts
+        List<DiscountRule> userCategoryRules = discountRuleRepository.findByUserIdAndCategoryIdAndDiscountStatusTrue(userId, categoryId);
+        for (DiscountRule rule : userCategoryRules) {
             if (rule.getTargetType() == DiscountEventEnum.USER_CATEGORY) {
                 Map<String, Object> conflict = new HashMap<>();
                 conflict.put("targetType", "USER_CATEGORY");
-                conflict.put("targetId", "user-" + userId + "-category-" + categoryId); // Unique conflict ID
+                conflict.put("targetId", "user-" + userId + "-category-" + categoryId);
                 conflict.put("userId", userId);
                 conflict.put("userName", user.getName());
                 conflict.put("categoryId", categoryId);
@@ -734,13 +802,60 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
         
-        // 2. Check for GENERAL category discount (NON-RECURSIVE)
+        // 2. Check for existing USER_BRAND_CATEGORY discounts that involve this category
+        List<Brand> relatedBrands = brandRepository.findAllBrandByCateId(categoryId);
+        for (Brand brand : relatedBrands) {
+            List<DiscountRule> ubcRules = discountRuleRepository.findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(userId, brand.getId(), categoryId);
+            for (DiscountRule rule : ubcRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_BRAND_CATEGORY) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_CATEGORY");
+                    conflict.put("targetId", "user-" + userId + "-brand-" + brand.getId() + "-category-" + categoryId);
+                    conflict.put("userId", userId);
+                    conflict.put("userName", user.getName());
+                    conflict.put("brandId", brand.getId());
+                    conflict.put("brandName", brand.getName());
+                    conflict.put("categoryId", categoryId);
+                    conflict.put("categoryName", category.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_BRAND_CATEGORY_DISCOUNT");
+                    conflict.put("conflictDescription", "User has a discount for brand '" + brand.getName() + "' in category '" + category.getName() + "'.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
+            }
+        }
+
+        // 3. Check for existing USER_BRAND discounts on brands tied to this category
+        for (Brand brand : relatedBrands) {
+            List<DiscountRule> userBrandRules = discountRuleRepository.findByUserIdAndBrandIdAndDiscountStatusTrue(userId, brand.getId());
+            for (DiscountRule rule : userBrandRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_BRAND) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_CATEGORY");
+                    conflict.put("targetId", "user-" + userId + "-brand-" + brand.getId());
+                    conflict.put("userId", userId);
+                    conflict.put("userName", user.getName());
+                    conflict.put("brandId", brand.getId());
+                    conflict.put("brandName", brand.getName());
+                    conflict.put("categoryId", categoryId);
+                    conflict.put("categoryName", category.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_BRAND_DISCOUNT");
+                    conflict.put("conflictDescription", "User already has a discount for brand '" + brand.getName() + "', which is linked to this category.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
+            }
+        }
+
+        // 4. Check for GENERAL CATEGORY discounts
         List<DiscountRule> generalCategoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(categoryId);
         for (DiscountRule rule : generalCategoryRules) {
             if (rule.getTargetType() == DiscountEventEnum.CATEGORY) {
                 Map<String, Object> conflict = new HashMap<>();
-
-                if(category == null) continue;
                 conflict.put("targetType", "CATEGORY");
                 conflict.put("targetId", categoryId);
                 conflict.put("targetName", category.getName());
@@ -760,13 +875,13 @@ public class DiscountServiceImpl implements DiscountService {
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (user == null || brand == null || category == null) return;
 
-        // 1. Check for existing user-brand-category discounts
-        List<DiscountRule> existingRules = discountRuleRepository.findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(userId, brandId, categoryId);
-        for (DiscountRule rule : existingRules) {
+        // 1. Direct USER_BRAND_CATEGORY check
+        List<DiscountRule> directRules = discountRuleRepository.findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(userId, brandId, categoryId);
+        for (DiscountRule rule : directRules) {
             if (rule.getTargetType() == DiscountEventEnum.USER_BRAND_CATEGORY) {
                 Map<String, Object> conflict = new HashMap<>();
                 conflict.put("targetType", "USER_BRAND_CATEGORY");
-                conflict.put("targetId", "user-" + userId + "-brand-" + brandId + "-category-" + categoryId); // Unique conflict ID
+                conflict.put("targetId", "user-" + userId + "-brand-" + brandId + "-category-" + categoryId);
                 conflict.put("userId", userId);
                 conflict.put("userName", user.getName());
                 conflict.put("brandId", brandId);
@@ -782,12 +897,55 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
         
-        // 2. Check for GENERAL brand-category discount (NON-RECURSIVE)
-        List<DiscountRule> generalBrandCategoryRules = discountRuleRepository.findByBrandIdAndCategoryIdAndDiscountStatusTrue(brandId, categoryId);
-        for (DiscountRule rule : generalBrandCategoryRules) {
+        // 2. USER_BRAND check
+        List<DiscountRule> userBrandRules = discountRuleRepository.findByUserIdAndBrandIdAndDiscountStatusTrue(userId, brandId);
+        for (DiscountRule rule : userBrandRules) {
+            if (rule.getTargetType() == DiscountEventEnum.USER_BRAND) {
+                Map<String, Object> conflict = new HashMap<>();
+                conflict.put("targetType", "USER_BRAND_CATEGORY");
+                conflict.put("targetId", "user-" + userId + "-brand-" + brandId);
+                conflict.put("userId", userId);
+                conflict.put("userName", user.getName());
+                conflict.put("brandId", brandId);
+                conflict.put("brandName", brand.getName());
+                conflict.put("categoryId", categoryId);
+                conflict.put("categoryName", category.getName());
+                conflict.put("existingDiscountName", rule.getDiscount().getName());
+                conflict.put("existingDiscountId", rule.getDiscount().getId());
+                conflict.put("conflictType", "USER_BRAND_DISCOUNT");
+                conflict.put("conflictDescription", "User already has a brand discount that may conflict with this brand-category discount.");
+                conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                conflicts.add(conflict);
+            }
+        }
+
+        // 3. USER_CATEGORY check
+        List<DiscountRule> userCategoryRules = discountRuleRepository.findByUserIdAndCategoryIdAndDiscountStatusTrue(userId, categoryId);
+        for (DiscountRule rule : userCategoryRules) {
+            if (rule.getTargetType() == DiscountEventEnum.USER_CATEGORY) {
+                Map<String, Object> conflict = new HashMap<>();
+                conflict.put("targetType", "USER_BRAND_CATEGORY");
+                conflict.put("targetId", "user-" + userId + "-category-" + categoryId);
+                conflict.put("userId", userId);
+                conflict.put("userName", user.getName());
+                conflict.put("brandId", brandId);
+                conflict.put("brandName", brand.getName());
+                conflict.put("categoryId", categoryId);
+                conflict.put("categoryName", category.getName());
+                conflict.put("existingDiscountName", rule.getDiscount().getName());
+                conflict.put("existingDiscountId", rule.getDiscount().getId());
+                conflict.put("conflictType", "USER_CATEGORY_DISCOUNT");
+                conflict.put("conflictDescription", "User has a category discount that may be overridden by this brand-category discount.");
+                conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                conflicts.add(conflict);
+            }
+        }
+
+        // 4. General BRAND_CATEGORY
+        List<DiscountRule> generalRules = discountRuleRepository.findByBrandIdAndCategoryIdAndDiscountStatusTrue(brandId, categoryId);
+        for (DiscountRule rule : generalRules) {
              if (rule.getTargetType() == DiscountEventEnum.BRAND_CATEGORY) {
                 Map<String, Object> conflict = new HashMap<>();
-                if (brand == null || category == null) continue;
                 conflict.put("targetType", "BRAND_CATEGORY");
                 conflict.put("targetId", brandId + "-" + categoryId);
                 conflict.put("targetName", brand.getName() + " - " + category.getName());
@@ -849,7 +1007,7 @@ public class DiscountServiceImpl implements DiscountService {
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (category == null) return;
 
-        // 1. Check for direct category discounts
+        // 1. General CATEGORY discount
         List<DiscountRule> existingCategoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(categoryId);
         for (DiscountRule rule : existingCategoryRules) {
             if (rule.getTargetType() == DiscountEventEnum.CATEGORY) {
@@ -864,36 +1022,33 @@ public class DiscountServiceImpl implements DiscountService {
                 conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                 conflicts.add(conflict);
             }
-        }
-
-        // 2. Check for brand-category discounts that include this category
-        for (DiscountRule rule : existingCategoryRules) {
+            // BRAND_CATEGORY
             if (rule.getTargetType() == DiscountEventEnum.BRAND_CATEGORY && rule.getBrand() != null) {
                 Map<String, Object> conflict = new HashMap<>();
-                conflict.put("targetType", "CATEGORY");
-                conflict.put("targetId", categoryId);
-                conflict.put("targetName", category.getName());
+                conflict.put("targetType", "BRAND_CATEGORY");
+                conflict.put("targetId", rule.getBrand().getId() + "-" + categoryId);
+                conflict.put("targetName", rule.getBrand().getName() + " - " + category.getName());
                 conflict.put("existingDiscountName", rule.getDiscount().getName());
                 conflict.put("existingDiscountId", rule.getDiscount().getId());
                 conflict.put("conflictType", "BRAND_CATEGORY_DISCOUNT");
                 conflict.put("conflictDescription", "Category is already discounted in brand: " + rule.getBrand().getName());
                 conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                conflict.put("conflictingBrandId", rule.getBrand().getId());
+                conflict.put("conflictingBrandName", rule.getBrand().getName());
                 conflicts.add(conflict);
             }
         }
 
-        // 3. Check for brand discounts ONLY if the category is actually joined with those brands
-        // Get all brands that are joined with this category
+        // 2. BRAND discounts for brands joined with this category
         List<Brand> brandsJoinedWithCategory = brandRepository.findAllBrandByCateId(categoryId);
-
         for (Brand brand : brandsJoinedWithCategory) {
             List<DiscountRule> brandRules = discountRuleRepository.findByBrandIdAndDiscountStatusTrue(brand.getId());
             for (DiscountRule rule : brandRules) {
                 if (rule.getTargetType() == DiscountEventEnum.BRAND) {
                     Map<String, Object> conflict = new HashMap<>();
-                    conflict.put("targetType", "CATEGORY");
-                    conflict.put("targetId", categoryId);
-                    conflict.put("targetName", category.getName());
+                    conflict.put("targetType", "BRAND");
+                    conflict.put("targetId", brand.getId());
+                    conflict.put("targetName", brand.getName());
                     conflict.put("existingDiscountName", rule.getDiscount().getName());
                     conflict.put("existingDiscountId", rule.getDiscount().getId());
                     conflict.put("conflictType", "BRAND_DISCOUNT");
@@ -901,6 +1056,70 @@ public class DiscountServiceImpl implements DiscountService {
                     conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                     conflict.put("conflictingBrandId", brand.getId());
                     conflict.put("conflictingBrandName", brand.getName());
+                    conflicts.add(conflict);
+                }
+            }
+        }
+
+        // 3. USER-SPECIFIC DISCOUNTS for this category
+        List<User> allUsers = userRepository.findAll();
+        for (User user : allUsers) {
+            // USER_CATEGORY
+            List<DiscountRule> userCategoryRules = discountRuleRepository.findByUserIdAndCategoryIdAndDiscountStatusTrue(user.getId(), categoryId);
+            for (DiscountRule rule : userCategoryRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_CATEGORY) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_CATEGORY");
+                    conflict.put("targetId", "user-" + user.getId() + "-category-" + categoryId);
+                    conflict.put("userId", user.getId());
+                    conflict.put("userName", user.getName());
+                    conflict.put("categoryId", categoryId);
+                    conflict.put("categoryName", category.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_CATEGORY_DISCOUNT");
+                    conflict.put("conflictDescription", "User '" + user.getName() + "' already has a discount for this category.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
+            }
+            // USER_BRAND_CATEGORY
+            for (Brand brand : brandsJoinedWithCategory) {
+                List<DiscountRule> userBrandCategoryRules = discountRuleRepository.findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(user.getId(), brand.getId(), categoryId);
+                for (DiscountRule rule : userBrandCategoryRules) {
+                    if (rule.getTargetType() == DiscountEventEnum.USER_BRAND_CATEGORY) {
+                        Map<String, Object> conflict = new HashMap<>();
+                        conflict.put("targetType", "USER_BRAND_CATEGORY");
+                        conflict.put("targetId", "user-" + user.getId() + "-brand-" + brand.getId() + "-category-" + categoryId);
+                        conflict.put("userId", user.getId());
+                        conflict.put("userName", user.getName());
+                        conflict.put("brandId", brand.getId());
+                        conflict.put("brandName", brand.getName());
+                        conflict.put("categoryId", categoryId);
+                        conflict.put("categoryName", category.getName());
+                        conflict.put("existingDiscountName", rule.getDiscount().getName());
+                        conflict.put("existingDiscountId", rule.getDiscount().getId());
+                        conflict.put("conflictType", "USER_BRAND_CATEGORY_DISCOUNT");
+                        conflict.put("conflictDescription", "User '" + user.getName() + "' already has a discount for this brand-category.");
+                        conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                        conflicts.add(conflict);
+                    }
+                }
+            }
+            // USER_GLOBAL
+            List<DiscountRule> userGlobalRules = discountRuleRepository.findByUserIdAndDiscountStatusTrue(user.getId());
+            for (DiscountRule rule : userGlobalRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_GLOBAL) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "user-" + user.getId());
+                    conflict.put("userId", user.getId());
+                    conflict.put("userName", user.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_GLOBAL_DISCOUNT");
+                    conflict.put("conflictDescription", "User '" + user.getName() + "' already has a global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                     conflicts.add(conflict);
                 }
             }
@@ -944,29 +1163,31 @@ public class DiscountServiceImpl implements DiscountService {
         Category category = categoryRepository.findById(categoryId).orElse(null);
         if (brand == null || category == null) return;
 
-        // 1. Check for existing brand-category discounts
+        // 1. General BRAND_CATEGORY discount
         List<DiscountRule> existingRules = discountRuleRepository.findByBrandIdAndCategoryIdAndDiscountStatusTrue(brandId, categoryId);
         for (DiscountRule rule : existingRules) {
-            Map<String, Object> conflict = new HashMap<>();
-            conflict.put("targetType", "BRAND_CATEGORY");
-            conflict.put("targetId", brandId + "-" + categoryId);
-            conflict.put("targetName", brand.getName() + " - " + category.getName());
-            conflict.put("existingDiscountName", rule.getDiscount().getName());
-            conflict.put("existingDiscountId", rule.getDiscount().getId());
-            conflict.put("conflictType", "BRAND_CATEGORY_DISCOUNT");
-            conflict.put("conflictDescription", "Brand-Category combination already has a discount");
-            conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
-            conflicts.add(conflict);
-        }
-
-        // 2. Check for existing brand discounts that would affect the same products
-        List<DiscountRule> existingBrandRules = discountRuleRepository.findByBrandIdAndDiscountStatusTrue(brandId);
-        for (DiscountRule rule : existingBrandRules) {
-            if (rule.getTargetType() == DiscountEventEnum.BRAND) {
+            if (rule.getTargetType() == DiscountEventEnum.BRAND_CATEGORY) {
                 Map<String, Object> conflict = new HashMap<>();
                 conflict.put("targetType", "BRAND_CATEGORY");
                 conflict.put("targetId", brandId + "-" + categoryId);
                 conflict.put("targetName", brand.getName() + " - " + category.getName());
+                conflict.put("existingDiscountName", rule.getDiscount().getName());
+                conflict.put("existingDiscountId", rule.getDiscount().getId());
+                conflict.put("conflictType", "BRAND_CATEGORY_DISCOUNT");
+                conflict.put("conflictDescription", "Brand-Category combination already has a discount");
+                conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                conflicts.add(conflict);
+            }
+        }
+
+        // 2. BRAND and CATEGORY discounts for this brand-category
+        List<DiscountRule> existingBrandRules = discountRuleRepository.findByBrandIdAndDiscountStatusTrue(brandId);
+        for (DiscountRule rule : existingBrandRules) {
+            if (rule.getTargetType() == DiscountEventEnum.BRAND) {
+                Map<String, Object> conflict = new HashMap<>();
+                conflict.put("targetType", "BRAND");
+                conflict.put("targetId", brandId);
+                conflict.put("targetName", brand.getName());
                 conflict.put("existingDiscountName", rule.getDiscount().getName());
                 conflict.put("existingDiscountId", rule.getDiscount().getId());
                 conflict.put("conflictType", "BRAND_DISCOUNT");
@@ -975,21 +1196,197 @@ public class DiscountServiceImpl implements DiscountService {
                 conflicts.add(conflict);
             }
         }
-
-        // 3. Check for existing category discounts that would affect the same products
         List<DiscountRule> existingCategoryRules = discountRuleRepository.findByCategoryIdAndDiscountStatusTrue(categoryId);
         for (DiscountRule rule : existingCategoryRules) {
             if (rule.getTargetType() == DiscountEventEnum.CATEGORY) {
                 Map<String, Object> conflict = new HashMap<>();
-                conflict.put("targetType", "BRAND_CATEGORY");
-                conflict.put("targetId", brandId + "-" + categoryId);
-                conflict.put("targetName", brand.getName() + " - " + category.getName());
+                conflict.put("targetType", "CATEGORY");
+                conflict.put("targetId", categoryId);
+                conflict.put("targetName", category.getName());
                 conflict.put("existingDiscountName", rule.getDiscount().getName());
                 conflict.put("existingDiscountId", rule.getDiscount().getId());
                 conflict.put("conflictType", "CATEGORY_DISCOUNT");
                 conflict.put("conflictDescription", "Category '" + category.getName() + "' already has a discount that affects all its products including those from brand '" + brand.getName() + "'");
                 conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
                 conflicts.add(conflict);
+            }
+        }
+
+        // 3. USER-SPECIFIC DISCOUNTS for this brand-category
+        List<User> allUsers = userRepository.findAll();
+        for (User user : allUsers) {
+            // USER_BRAND_CATEGORY
+            List<DiscountRule> userBrandCategoryRules = discountRuleRepository.findByUserIdAndBrandIdAndCategoryIdAndDiscountStatusTrue(user.getId(), brandId, categoryId);
+            for (DiscountRule rule : userBrandCategoryRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_BRAND_CATEGORY) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_BRAND_CATEGORY");
+                    conflict.put("targetId", "user-" + user.getId() + "-brand-" + brandId + "-category-" + categoryId);
+                    conflict.put("userId", user.getId());
+                    conflict.put("userName", user.getName());
+                    conflict.put("brandId", brandId);
+                    conflict.put("brandName", brand.getName());
+                    conflict.put("categoryId", categoryId);
+                    conflict.put("categoryName", category.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_BRAND_CATEGORY_DISCOUNT");
+                    conflict.put("conflictDescription", "User '" + user.getName() + "' already has a discount for this brand-category.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
+            }
+            // USER_GLOBAL
+            List<DiscountRule> userGlobalRules = discountRuleRepository.findByUserIdAndDiscountStatusTrue(user.getId());
+            for (DiscountRule rule : userGlobalRules) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_GLOBAL) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "user-" + user.getId());
+                    conflict.put("userId", user.getId());
+                    conflict.put("userName", user.getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_GLOBAL_DISCOUNT");
+                    conflict.put("conflictDescription", "User '" + user.getName() + "' already has a global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
+            }
+        }
+    }
+
+    private void checkUserGlobalDuplicate(Long userId, List<Map<String, Object>> conflicts) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) return;
+
+        // Check for existing USER_GLOBAL discounts
+        List<DiscountRule> existingRules = discountRuleRepository.findByUserIdAndDiscountStatusTrue(userId);
+        for (DiscountRule rule : existingRules) {
+            if (rule.getTargetType() == DiscountEventEnum.USER_GLOBAL) {
+                Map<String, Object> conflict = new HashMap<>();
+                conflict.put("targetType", "USER_GLOBAL");
+                conflict.put("targetId", "user-" + userId); // Unique conflict ID
+                conflict.put("userId", userId);
+                conflict.put("userName", user.getName());
+                conflict.put("existingDiscountName", rule.getDiscount().getName());
+                conflict.put("existingDiscountId", rule.getDiscount().getId());
+                conflict.put("conflictType", "USER_GLOBAL_DISCOUNT");
+                conflict.put("conflictDescription", "This user already has a global discount.");
+                conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                conflicts.add(conflict);
+            }
+        }
+
+        // Check for existing USER_PRODUCT, USER_BRAND, USER_CATEGORY, USER_BRAND_CATEGORY discounts
+        // Get all discount rules and filter for user-specific conflicts
+        List<DiscountRule> allRules = discountRuleRepository.findAll();
+        for (DiscountRule rule : allRules) {
+            if (rule.getUser() != null && rule.getUser().getId() == userId && rule.getDiscount().isStatus()) {
+                if (rule.getTargetType() == DiscountEventEnum.USER_PRODUCT && rule.getProduct() != null) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "user-" + userId + "-product-" + rule.getProduct().getId());
+                    conflict.put("userId", userId);
+                    conflict.put("userName", user.getName());
+                    conflict.put("productId", rule.getProduct().getId());
+                    conflict.put("productName", rule.getProduct().getProductName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_PRODUCT_DISCOUNT");
+                    conflict.put("conflictDescription", "User has a product-specific discount that would be overridden by global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                } else if (rule.getTargetType() == DiscountEventEnum.USER_BRAND && rule.getBrand() != null) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "user-" + userId + "-brand-" + rule.getBrand().getId());
+                    conflict.put("userId", userId);
+                    conflict.put("userName", user.getName());
+                    conflict.put("brandId", rule.getBrand().getId());
+                    conflict.put("brandName", rule.getBrand().getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_BRAND_DISCOUNT");
+                    conflict.put("conflictDescription", "User has a brand-specific discount that would be overridden by global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                } else if (rule.getTargetType() == DiscountEventEnum.USER_CATEGORY && rule.getCategory() != null) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "user-" + userId + "-category-" + rule.getCategory().getId());
+                    conflict.put("userId", userId);
+                    conflict.put("userName", user.getName());
+                    conflict.put("categoryId", rule.getCategory().getId());
+                    conflict.put("categoryName", rule.getCategory().getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_CATEGORY_DISCOUNT");
+                    conflict.put("conflictDescription", "User has a category-specific discount that would be overridden by global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                } else if (rule.getTargetType() == DiscountEventEnum.USER_BRAND_CATEGORY && rule.getBrand() != null && rule.getCategory() != null) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "user-" + userId + "-brand-" + rule.getBrand().getId() + "-category-" + rule.getCategory().getId());
+                    conflict.put("userId", userId);
+                    conflict.put("userName", user.getName());
+                    conflict.put("brandId", rule.getBrand().getId());
+                    conflict.put("brandName", rule.getBrand().getName());
+                    conflict.put("categoryId", rule.getCategory().getId());
+                    conflict.put("categoryName", rule.getCategory().getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "USER_BRAND_CATEGORY_DISCOUNT");
+                    conflict.put("conflictDescription", "User has a brand-category-specific discount that would be overridden by global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
+            }
+        }
+
+        // Check for existing general BRAND, CATEGORY, BRAND_CATEGORY discounts
+        for (DiscountRule rule : allRules) {
+            if (rule.getUser() == null && rule.getDiscount().isStatus()) {
+                if (rule.getTargetType() == DiscountEventEnum.BRAND && rule.getBrand() != null) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "brand-" + rule.getBrand().getId());
+                    conflict.put("brandId", rule.getBrand().getId());
+                    conflict.put("brandName", rule.getBrand().getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "BRAND_DISCOUNT");
+                    conflict.put("conflictDescription", "Brand has a general discount that would be overridden by user global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                } else if (rule.getTargetType() == DiscountEventEnum.CATEGORY && rule.getCategory() != null) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "category-" + rule.getCategory().getId());
+                    conflict.put("categoryId", rule.getCategory().getId());
+                    conflict.put("categoryName", rule.getCategory().getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "CATEGORY_DISCOUNT");
+                    conflict.put("conflictDescription", "Category has a general discount that would be overridden by user global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                } else if (rule.getTargetType() == DiscountEventEnum.BRAND_CATEGORY && rule.getBrand() != null && rule.getCategory() != null) {
+                    Map<String, Object> conflict = new HashMap<>();
+                    conflict.put("targetType", "USER_GLOBAL");
+                    conflict.put("targetId", "brand-" + rule.getBrand().getId() + "-category-" + rule.getCategory().getId());
+                    conflict.put("brandId", rule.getBrand().getId());
+                    conflict.put("brandName", rule.getBrand().getName());
+                    conflict.put("categoryId", rule.getCategory().getId());
+                    conflict.put("categoryName", rule.getCategory().getName());
+                    conflict.put("existingDiscountName", rule.getDiscount().getName());
+                    conflict.put("existingDiscountId", rule.getDiscount().getId());
+                    conflict.put("conflictType", "BRAND_CATEGORY_DISCOUNT");
+                    conflict.put("conflictDescription", "Brand-Category combination has a general discount that would be overridden by user global discount.");
+                    conflict.put("resolutionOptions", Arrays.asList("SKIP", "OVERWRITE"));
+                    conflicts.add(conflict);
+                }
             }
         }
     }
@@ -1010,7 +1407,7 @@ public class DiscountServiceImpl implements DiscountService {
             // Fixed amount remains unchanged
             discount.setDiscountValue(dto.getDiscount_amount());
         }
-        
+        discount.setMinimumSpend(dto.getMinimumSpend());
         discount.setDescription(dto.getDescription());
         discount.setStartDate(dto.getStartDate().toLocalDate());
         discount.setEndDate(dto.getEndDate().toLocalDate());
@@ -1022,6 +1419,7 @@ public class DiscountServiceImpl implements DiscountService {
             discount.setStatus(false); // Inactive
         }
         discount.setAutoApply(true);
+        System.out.println("minimum spend amount :"+dto.getMinimumSpend());
         return discountRepository.save(discount);
     }
 
@@ -1036,15 +1434,24 @@ public class DiscountServiceImpl implements DiscountService {
                 d.setAutoApply(d.getCode() == null || d.getCode().trim().isEmpty());
                 discountRepository.save(d);
             }
-
             DiscountDTO dto = new DiscountDTO();
             dto.setId(d.getId());
             dto.setName(d.getName());
             dto.setDescription(d.getDescription());
             dto.setDiscountType(d.getDiscountType());
-            dto.setDiscountValue(d.getDiscountValue());
+            
+            // Convert stored decimal percentage back to percentage format for display
+            if (d.getDiscountType() == DiscountType.PERCENTAGE) {
+                double percentageValue = d.getDiscountValue() * 100.0;
+                dto.setDiscountValue(percentageValue);
+            } else {
+                dto.setDiscountValue(d.getDiscountValue());
+            }
+            
             dto.setStartDate(d.getStartDate());
             dto.setEndDate(d.getEndDate());
+            dto.setMinimunSpend(d.getMinimumSpend());
+
             LocalDate today = LocalDate.now();
             boolean isActive = d.isStatus() && today.isAfter(d.getStartDate().minusDays(1))
                     && today.isBefore(d.getEndDate().plusDays(1));
@@ -1056,6 +1463,7 @@ public class DiscountServiceImpl implements DiscountService {
             Set<Long> brandIds = new HashSet<>();
             Set<Long> categoryIds = new HashSet<>();
             Set<String> brandCategoryIds = new HashSet<>();
+            Set<Long> userIds = new HashSet<>();
 
             for (DiscountRule rule : rules) {
                 if (rule.getProduct() != null) productIds.add(rule.getProduct().getId());
@@ -1064,13 +1472,14 @@ public class DiscountServiceImpl implements DiscountService {
                 if (rule.getBrand() != null && rule.getCategory() != null) {
                     brandCategoryIds.add(rule.getBrand().getId() + "-" + rule.getCategory().getId());
                 }
+                if (rule.getUser() != null) userIds.add(rule.getUser().getId());
             }
-
             // Set as comma-separated strings (or as List<Long> if your DTO supports it)
             dto.setProductIds(productIds.isEmpty() ? null : productIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
             dto.setBrandIds(brandIds.isEmpty() ? null : brandIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
             dto.setCategoryIds(categoryIds.isEmpty() ? null : categoryIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
             dto.setBrandCategoryIds(brandCategoryIds.isEmpty() ? null : String.join(",", brandCategoryIds));
+            dto.setUserIds(userIds.isEmpty() ? null : userIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
             dtos.add(dto);
         }
         return dtos;
@@ -1106,6 +1515,7 @@ public class DiscountServiceImpl implements DiscountService {
                 discountInfo.put("startDate", discount.getStartDate());
                 discountInfo.put("endDate", discount.getEndDate());
                 discountInfo.put("status", isActive);
+                discountInfo.put("minimumSpend", discount.getMinimumSpend());
 
                 // Get discount rules
                 List<Map<String, Object>> rules = new ArrayList<>();
@@ -1176,6 +1586,16 @@ public class DiscountServiceImpl implements DiscountService {
                                 ruleInfo.put("vipTierName", rule.getVipTier().getName());
                             }
                             break;
+                        case USER_GLOBAL:
+                            if (rule.getUser() != null) {
+                                ruleInfo.put("userId", rule.getUser().getId());
+                                ruleInfo.put("userName", rule.getUser().getName());
+                            }
+                            if (rule.getVipTier() != null) {
+                                ruleInfo.put("vipTierId", rule.getVipTier().getId());
+                                ruleInfo.put("vipTierName", rule.getVipTier().getName());
+                            }
+                            break;
                     }
                     rules.add(ruleInfo);
                 }
@@ -1237,6 +1657,16 @@ public class DiscountServiceImpl implements DiscountService {
                                         rule.getBrand().getId(), rule.getCategory().getId());
                                 userBrandCategoryProducts.forEach(product -> affectedProductIds.add(product.getId()));
                             }
+                            break;
+                        case USER_GLOBAL:
+                            // For USER_GLOBAL, all products are affected
+                            List<Product> allProducts = productRepository.findAll();
+                            allProducts.forEach(product -> affectedProductIds.add(product.getId()));
+                            break;
+                        case VIP_TIER:
+                            // For VIP_TIER, all products are affected
+                            List<Product> allVipProducts = productRepository.findAll();
+                            allVipProducts.forEach(product -> affectedProductIds.add(product.getId()));
                             break;
                     }
                 }
@@ -1514,12 +1944,10 @@ public class DiscountServiceImpl implements DiscountService {
                     }
                     break;
                 default:
-                    // For other types, do nothing
                     break;
             }
         } catch (Exception e) {
             System.err.println("[Discount] Failed to remove conflict for targetType: " + targetType + ", targetId: " + targetId + ". Error: " + e.getMessage());
         }
     }
-
 }
