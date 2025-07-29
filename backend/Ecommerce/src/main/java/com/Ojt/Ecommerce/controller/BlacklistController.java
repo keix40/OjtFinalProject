@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/blacklist")
@@ -169,10 +171,29 @@ public class BlacklistController {
                 .body(content);
     }
 
-    @GetMapping("/entries/{id}/incidents")
     @RequiresPermission(value = BLACKLIST_VIEW, level = "basic")
+    @GetMapping("/entries/{id}/incident-history")
     public ResponseEntity<List<Map<String, Object>>> getIncidentHistory(@PathVariable String id) {
-        return ResponseEntity.ok(blacklistService.getIncidentHistory(id));
+        try {
+            List<Map<String, Object>> history = blacklistService.getIncidentHistory(id);
+            return ResponseEntity.ok(history);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
+    }
+
+    @GetMapping("/related-accounts")
+    public ResponseEntity<List<Map<String, Object>>> findRelatedAccounts(
+            @RequestParam String targetType,
+            @RequestParam String targetValue) {
+        try {
+            List<Map<String, Object>> relatedAccounts = blacklistService.findRelatedAccounts(targetType, targetValue);
+            return ResponseEntity.ok(relatedAccounts);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.emptyList());
+        }
     }
 
     @GetMapping("/auto-rules")

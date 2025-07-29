@@ -34,6 +34,7 @@ public class PolicyService {
         Policy policy = new Policy();
         policy.setTitle(dto.getTitle());
         policy.setContent(dto.getContent());
+        policy.setStatus(dto.getStatus() != null ? dto.getStatus() : 1); // Default to Active (1)
         policy.setLastUpdated(LocalDateTime.now());
         return toDTO(policyRepository.save(policy));
     }
@@ -43,12 +44,16 @@ public class PolicyService {
                 .orElseThrow(() -> new RuntimeException("Policy not found"));
         policy.setTitle(dto.getTitle());
         policy.setContent(dto.getContent());
+        policy.setStatus(dto.getStatus() != null ? dto.getStatus() : 1); // Default to Active (1)
         policy.setLastUpdated(LocalDateTime.now());
         return toDTO(policyRepository.save(policy));
     }
 
     public void delete(Long id) {
-        policyRepository.deleteById(id);
+        Policy policy = policyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Policy not found"));
+        policy.setStatus(2); // Set to Deleted (2) instead of actually deleting
+        policyRepository.save(policy);
     }
 
     private PolicyResponseDTO toDTO(Policy policy) {
@@ -56,6 +61,7 @@ public class PolicyService {
         dto.setId(policy.getId());
         dto.setTitle(policy.getTitle());
         dto.setContent(policy.getContent());
+        dto.setStatus(policy.getStatus() != null ? policy.getStatus() : 1);
         dto.setLastUpdated(policy.getLastUpdated());
         return dto;
     }

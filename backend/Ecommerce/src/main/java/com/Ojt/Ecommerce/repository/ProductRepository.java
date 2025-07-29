@@ -1,14 +1,15 @@
 package com.Ojt.Ecommerce.repository;
 
-import com.Ojt.Ecommerce.entity.Product;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
+import com.Ojt.Ecommerce.entity.Product;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     public boolean existsByProductCode(String productCode);
@@ -106,14 +107,33 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.status = 1 ORDER BY p.createDate DESC")
     List<Product> findTop4ByOrderByCreateDateDesc();
 
+    @Query("SELECT p FROM Product p WHERE p.status = 1 ORDER BY p.createDate DESC LIMIT 5")
+    List<Product> findTop5ByOrderByCreateDateDesc();
+
+    @Query("SELECT p FROM Product p WHERE p.status = 1 ORDER BY p.createDate DESC LIMIT 10")
+    List<Product> findTop10ByOrderByCreateDateDesc();
+
+    @Query(value = """
+        SELECT DISTINCT p.* FROM products p 
+        LEFT JOIN product_has_category pc ON p.id = pc.product_id 
+        WHERE p.status = 1 
+        AND p.id NOT IN (:excludeProductIds) 
+        AND (pc.category_id IN (:categoryIds) OR p.brand_id IN (:brandIds)) 
+        ORDER BY RAND() 
+        LIMIT 10
+        """, nativeQuery = true)
+    List<Product> findRelatedProducts(@Param("categoryIds") List<Long> categoryIds, 
+                                     @Param("brandIds") List<Long> brandIds, 
+                                     @Param("excludeProductIds") List<Long> excludeProductIds);
+
     @Query(value = """
     SELECT p.* FROM products p
     JOIN user_order_has_product uohp ON p.id = uohp.product_id
     GROUP BY p.id
     ORDER BY COUNT(uohp.id) DESC
-    LIMIT 4
+    LIMIT 5
     """, nativeQuery = true)
-    List<Product> findTop4OrderedProductsNative();
+    List<Product> findTop5OrderedProductsNative();
 
     @Query("""
     SELECT p FROM Product p
@@ -128,5 +148,48 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     )
 """)
     List<Product> searchProducts(@Param("keyword") String keyword);
+
+    @Query("""
+    SELECT DISTINCT p FROM Product p
+    JOIN p.productCategories pc
+    LEFT JOIN pc.category c
+    LEFT JOIN p.brand b
+    WHERE p.status = 1 AND (
+        LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        LOWER(p.productCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        CAST(p.price AS string) LIKE CONCAT('%', :keyword, '%') OR
+        LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+    ORDER BY 
+        CASE 
+            WHEN LOWER(p.productName) LIKE LOWER(CONCAT(:keyword, '%')) THEN 1
+            WHEN LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) THEN 2
+            WHEN LOWER(c.name) LIKE LOWER(CONCAT(:keyword, '%')) THEN 3
+            WHEN LOWER(b.name) LIKE LOWER(CONCAT(:keyword, '%')) THEN 4
+            ELSE 5
+        END,
+        p.createDate DESC
+""")
+    List<Product> searchProductsComprehensive(@Param("keyword") String keyword);
+
+    @Query("""
+    SELECT DISTINCT p FROM Product p
+    JOIN p.productCategories pc
+    LEFT JOIN pc.category c
+    LEFT JOIN p.brand b
+    WHERE p.status = 1 AND (
+        LOWER(p.productName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        LOWER(p.productCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        CAST(p.price AS string) LIKE CONCAT('%', :keyword, '%') OR
+        LOWER(c.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+        LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+    )
+    ORDER BY p.createDate DESC
+    LIMIT 20
+""")
+    List<Product> liveSearch(@Param("keyword") String keyword);
 }
 

@@ -40,7 +40,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:4200")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                .allowedHeaders("*")
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", 
+                               "Access-Control-Request-Method", "Access-Control-Request-Headers",
+                               "x-forwarded-for", "x-forwarded-proto", "x-forwarded-host", 
+                               "x-client-ip", "X-Client-IP", "X-Forwarded-For", "X-Forwarded-Proto", "X-Forwarded-Host")
                 .exposedHeaders("Authorization", "Content-Type")
                 .allowCredentials(true)
                 .maxAge(3600); // Cache preflight requests for 1 hour
@@ -53,6 +56,7 @@ public class WebConfig implements WebMvcConfigurer {
         String reviewPath = Paths.get("review").toAbsolutePath().toString();
         String returnImagePath = Paths.get("return_images").toAbsolutePath().toString(); // ✅ Add this line
         String brandNCategoryPath = Paths.get("brand_and_category_image").toAbsolutePath().toString(); // ✅ Add this line
+        String eventPath = Paths.get("event").toAbsolutePath().toString(); // ✅ Add this line
 
 
         System.out.println("Product image path: " + productImagePath);
@@ -60,6 +64,7 @@ public class WebConfig implements WebMvcConfigurer {
         System.out.println("Review path: " + reviewPath);
         System.out.println("Return image path: " + returnImagePath);
         System.out.println("Brand & Category path: " + brandNCategoryPath); // ✅ Optional debug print
+        System.out.println("Event path: " + eventPath); // ✅ Optional debug print
 
 
         registry.addResourceHandler("/product_image/**")
@@ -76,6 +81,9 @@ public class WebConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/brand_and_category_image/**")
                 .addResourceLocations("file:" + brandNCategoryPath + "/");
+
+        registry.addResourceHandler("/event/**")
+                .addResourceLocations("file:" + eventPath + "/");
 
     }
 }

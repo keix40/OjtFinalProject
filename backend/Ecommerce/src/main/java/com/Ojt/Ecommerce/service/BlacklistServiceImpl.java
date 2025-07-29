@@ -1,7 +1,9 @@
 package com.Ojt.Ecommerce.service;
 
 import com.Ojt.Ecommerce.entity.BlacklistEntry;
+import com.Ojt.Ecommerce.entity.LoginAttempt;
 import com.Ojt.Ecommerce.repository.BlacklistRepository;
+import com.Ojt.Ecommerce.repository.LoginAttemptRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
@@ -21,6 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class BlacklistServiceImpl implements BlacklistService {
     private final BlacklistRepository blacklistRepository;
+    private final LoginAttemptRepository loginAttemptRepository;
     private final Map<String, Boolean> autoRules = new HashMap<>();
 
     @Override
@@ -104,28 +107,33 @@ public class BlacklistServiceImpl implements BlacklistService {
         Map<String, Object> stats = new HashMap<>();
         LocalDateTime weekAgo = LocalDateTime.now().minusWeeks(1);
         
+        // Auto-update expired blacklist entries
+        updateExpiredBlacklistEntries();
+        
         stats.put("totalActive", blacklistRepository.countActiveEntries());
         stats.put("newThisWeek", blacklistRepository.countEntriesAddedAfter(weekAgo));
         stats.put("fraudPrevented", blacklistRepository.getTotalIncidents());
-        stats.put("estimatedSavings", calculateEstimatedSavings());
+        // Remove estimatedSavings calculation - too complex for current project
         stats.put("pendingAppeals", blacklistRepository.countPendingAppeals());
         stats.put("avgAppealTime", 24); // Mock value for now
         
         return stats;
     }
 
-    private double calculateEstimatedSavings() {
-        List<BlacklistEntry> entries = blacklistRepository.findAll();
-        return entries.stream()
-                .mapToDouble(entry -> {
-                    double avgLoss = switch (entry.getRiskLevel()) {
-                        case CRITICAL -> 500;
-                        case HIGH -> 200;
-                        default -> 100;
-                    };
-                    return entry.getIncidentCount() * avgLoss;
-                })
-                .sum();
+    // Method to automatically update expired blacklist entries
+    @Transactional
+    public void updateExpiredBlacklistEntries() {
+        LocalDateTime now = LocalDateTime.now();
+        List<BlacklistEntry> expiredEntries = blacklistRepository.findActiveEntriesWithExpiryBefore(now);
+        
+        for (BlacklistEntry entry : expiredEntries) {
+            entry.setStatus(BlacklistEntry.Status.LIFTED);
+            blacklistRepository.save(entry);
+        }
+        
+        if (!expiredEntries.isEmpty()) {
+            System.out.println("Auto-updated " + expiredEntries.size() + " expired blacklist entries to LIFTED status");
+        }
     }
 
     @Override
@@ -267,9 +275,61 @@ public class BlacklistServiceImpl implements BlacklistService {
         return new HashMap<>(autoRules);
     }
 
+    // Method to get active blacklist entry by email
     public BlacklistEntry getActiveBlacklistByEmail(String email) {
-        return blacklistRepository.findActiveByTargetTypeAndTargetValue(
-            BlacklistEntry.TargetType.EMAIL, email.toLowerCase()
-        );
+        try {
+            return blacklistRepository.findActiveByTargetTypeAndTargetValue(
+                BlacklistEntry.TargetType.EMAIL, 
+                email.toLowerCase()
+            );
+        } catch (Exception e) {
+            // If no entry found or any other error, return null
+            return null;
+        }
+    }
+
+    // Method to get blacklist entry by email and status
+    @Override
+    public BlacklistEntry getBlacklistByEmailAndStatus(String email, BlacklistEntry.Status status) {
+        try {
+            return blacklistRepository.findByTargetTypeAndTargetValueAndStatus(
+                BlacklistEntry.TargetType.EMAIL, 
+                email.toLowerCase(),
+                status
+            );
+        } catch (Exception e) {
+            // If no entry found or any other error, return null
+            return null;
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> findRelatedAccounts(String targetType, String targetValue) {
+        List<Map<String, Object>> relatedAccounts = new ArrayList<>();
+        
+        try {
+            if ("EMAIL".equalsIgnoreCase(targetType)) {
+                // Find accounts that used the most frequently used IP of the blacklisted email
+                List<String> relatedUsernames = loginAttemptRepository.findRelatedUsernames(targetValue);
+                
+                for (String username : relatedUsernames) {
+                    Map<String, Object> account = new HashMap<>();
+                    account.put("email", username);
+                    account.put("similarity", "Used most frequently used IP of blacklisted account");
+                    account.put("source", "login_attempts");
+                    relatedAccounts.add(account);
+                }
+                
+            } else if ("IP".equalsIgnoreCase(targetType)) {
+                // For IP type, we can't use the same logic, so return empty for now
+                // Or implement a different logic if needed
+                System.out.println("IP-based related accounts not implemented yet");
+            }
+        } catch (Exception e) {
+            // Log error and return empty list
+            System.err.println("Error finding related accounts: " + e.getMessage());
+        }
+        
+        return relatedAccounts;
     }
 } 

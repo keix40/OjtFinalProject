@@ -45,6 +45,7 @@ import com.Ojt.Ecommerce.entity.DiscountType;
 import com.Ojt.Ecommerce.entity.VipTier;
 import com.Ojt.Ecommerce.repository.VipTierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -426,33 +427,61 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<CustomerSummaryDTO> getAllVipCustomers() {
         List<User> users = userRepository.findByRole_Name("customer");
-        return users.stream().map(user -> {
-            int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
-            double totalSpent = 0.0;
-            if (user.getOrders() != null) {
-                for (var order : user.getOrders()) {
-                    if (order.getOrderProducts() != null) {
-                        for (var op : order.getOrderProducts()) {
-                            if (op.getUnitPrice() != null && op.getQuantity() != null) {
-                                totalSpent += op.getUnitPrice() * op.getQuantity();
+        
+        // Get all VIP tiers to determine the lowest tier
+        List<VipTier> allTiers = vipTierRepository.findAll();
+        if (allTiers.isEmpty()) {
+            return new ArrayList<>(); // No tiers defined, return empty list
+        }
+        
+        // Find the minimum minPoints among all tiers (this is the lowest tier)
+        int minMinPoints = allTiers.stream()
+                .mapToInt(VipTier::getMinPoints)
+                .min()
+                .orElse(0);
+        
+        return users.stream()
+                .filter(user -> {
+                    // Only include users whose totalPoints is greater than the minimum minPoints
+                    // This excludes users in the lowest tier (e.g., "Regular" tier)
+                    if (user.getTotalPoints() == null) return false;
+                    
+                    return user.getTotalPoints() > minMinPoints;
+                })
+                .map(user -> {
+                    int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
+                    double totalSpent = 0.0;
+                    if (user.getOrders() != null) {
+                        for (var order : user.getOrders()) {
+                            if (order.getOrderProducts() != null) {
+                                for (var op : order.getOrderProducts()) {
+                                    if (op.getUnitPrice() != null && op.getQuantity() != null) {
+                                        totalSpent += op.getUnitPrice() * op.getQuantity();
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
-            CustomerSummaryDTO dto = new CustomerSummaryDTO();
-            dto.setUserId(user.getId());
-            dto.setName(user.getName());
-            dto.setEmail(user.getEmail());
-            dto.setPhoneNumber(user.getPhoneNumber());
-            dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
-            dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
-            dto.setJoinDate(user.getCreatedDate());
-            dto.setTotalOrders(totalOrders);
-            dto.setTotalSpent(totalSpent);
-            dto.setProfileImage(user.getProfileImage());
-            dto.setTier(user.getTier());
-            return dto;
-        }).toList();
+                    CustomerSummaryDTO dto = new CustomerSummaryDTO();
+                    dto.setUserId(user.getId());
+                    dto.setName(user.getName());
+                    dto.setEmail(user.getEmail());
+                    dto.setPhoneNumber(user.getPhoneNumber());
+                    dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
+                    dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
+                    dto.setJoinDate(user.getCreatedDate());
+                    dto.setTotalOrders(totalOrders);
+                    dto.setTotalSpent(totalSpent);
+                    dto.setProfileImage(user.getProfileImage());
+                    dto.setTier(user.getTier());
+                    
+                    // Add spending trend data
+                    dto.setSpendingTrend(user.getSpendingTrend());
+                    dto.setSpendingChange(user.getSpendingChangePercentage());
+                    dto.setCurrentPeriodSpent(user.getCurrentPeriodSpent());
+                    dto.setPreviousPeriodSpent(user.getPreviousPeriodSpent());
+                    
+                    return dto;
+                }).toList();
     }
 }

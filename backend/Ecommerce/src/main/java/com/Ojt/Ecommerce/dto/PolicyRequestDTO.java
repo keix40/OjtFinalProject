@@ -8,4 +8,5 @@ import lombok.Setter;
 public class PolicyRequestDTO {
     private String title;
     private String content;
+    private Integer status;
 }

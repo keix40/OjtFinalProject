@@ -213,9 +213,110 @@ public class ActivityLogServiceImpl implements ActivityLogService {
 
     @Override
     public byte[] exportActivityLogs(ActivityLogFilterDto filterDto, String format) {
-        // Implementation for export functionality
-        // This would generate CSV, JSON, or PDF based on format
-        return new byte[0]; // Placeholder
+        try {
+            // Get all logs based on filter (no pagination for export)
+            ActivityLogFilterDto exportFilter = new ActivityLogFilterDto();
+            exportFilter.setDateFrom(filterDto.getDateFrom());
+            exportFilter.setDateTo(filterDto.getDateTo());
+            exportFilter.setUserId(filterDto.getUserId());
+            exportFilter.setActionTypes(filterDto.getActionTypes());
+            exportFilter.setSeverityLevels(filterDto.getSeverityLevels());
+            exportFilter.setIpAddress(filterDto.getIpAddress());
+            exportFilter.setSearchTerm(filterDto.getSearchTerm());
+            exportFilter.setEntityType(filterDto.getEntityType());
+            exportFilter.setPage(0);
+            exportFilter.setSize(Integer.MAX_VALUE); // Get all records
+
+            ActivityLogResponseDto response = getActivityLogs(exportFilter);
+            List<ActivityLogDto> logs = response.getLogs();
+
+            switch (format.toLowerCase()) {
+                case "csv":
+                    return generateCsvExport(logs);
+                case "json":
+                    return generateJsonExport(logs);
+                case "pdf":
+                    return generatePdfExport(logs);
+                default:
+                    throw new IllegalArgumentException("Unsupported format: " + format);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Error exporting activity logs: " + e.getMessage(), e);
+        }
+    }
+
+    private byte[] generateCsvExport(List<ActivityLogDto> logs) {
+        StringBuilder csv = new StringBuilder();
+        
+        // CSV Header
+        csv.append("ID,Timestamp,User Name,User Role,Action Type,Entity Type,Entity ID,Description,Severity Level,IP Address,User Agent,Status,Error Message\n");
+        
+        // CSV Data
+        for (ActivityLogDto log : logs) {
+            csv.append(String.format("\"%s\",", log.getId()));
+            csv.append(String.format("\"%s\",", log.getTimestamp()));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getUserName())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getUserRole())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getActionType())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getEntityType())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getEntityId())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getDescription())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getSeverityLevel())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getIpAddress())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getUserAgent())));
+            csv.append(String.format("\"%s\",", escapeCsvField(log.getStatus())));
+            csv.append(String.format("\"%s\"\n", escapeCsvField(log.getErrorMessage())));
+        }
+        
+        return csv.toString().getBytes();
+    }
+
+    private byte[] generateJsonExport(List<ActivityLogDto> logs) {
+        try {
+            Map<String, Object> exportData = new HashMap<>();
+            exportData.put("exportDate", LocalDateTime.now().toString());
+            exportData.put("totalRecords", logs.size());
+            exportData.put("logs", logs);
+            
+            return objectMapper.writeValueAsBytes(exportData);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error generating JSON export: " + e.getMessage(), e);
+        }
+    }
+
+    private byte[] generatePdfExport(List<ActivityLogDto> logs) {
+        try {
+            // Simple text-based PDF generation
+            StringBuilder pdfContent = new StringBuilder();
+            pdfContent.append("Activity Logs Export\n");
+            pdfContent.append("Generated: ").append(LocalDateTime.now()).append("\n");
+            pdfContent.append("Total Records: ").append(logs.size()).append("\n\n");
+            
+            for (ActivityLogDto log : logs) {
+                pdfContent.append("ID: ").append(log.getId()).append("\n");
+                pdfContent.append("Timestamp: ").append(log.getTimestamp()).append("\n");
+                pdfContent.append("User: ").append(log.getUserName()).append(" (").append(log.getUserRole()).append(")\n");
+                pdfContent.append("Action: ").append(log.getActionType()).append("\n");
+                pdfContent.append("Entity: ").append(log.getEntityType()).append(" - ").append(log.getEntityId()).append("\n");
+                pdfContent.append("Description: ").append(log.getDescription()).append("\n");
+                pdfContent.append("Severity: ").append(log.getSeverityLevel()).append("\n");
+                pdfContent.append("IP: ").append(log.getIpAddress()).append("\n");
+                pdfContent.append("Status: ").append(log.getStatus()).append("\n");
+                if (log.getErrorMessage() != null && !log.getErrorMessage().isEmpty()) {
+                    pdfContent.append("Error: ").append(log.getErrorMessage()).append("\n");
+                }
+                pdfContent.append("-".repeat(50)).append("\n\n");
+            }
+            
+            return pdfContent.toString().getBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating PDF export: " + e.getMessage(), e);
+        }
+    }
+
+    private String escapeCsvField(String field) {
+        if (field == null) return "";
+        return field.replace("\"", "\"\"").replace("\n", " ").replace("\r", " ");
     }
 
     @Override
