@@ -4,6 +4,7 @@ import { AdminUserService } from '../services/admin-user.service';
 import { AuthService } from '../auth/auth.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { SidebarComponent } from './sidebar/sidebar.component';
+import { AdminInboxComponent } from '../admin-inbox/admin-inbox.component';
 
 @Component({
   selector: 'app-layout',
@@ -13,6 +14,7 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 })
 export class LayoutComponent implements OnInit, OnDestroy {
   @ViewChild(SidebarComponent) sidebarComponent!: SidebarComponent;
+  @ViewChild(AdminInboxComponent) adminInboxComponent!: AdminInboxComponent;
   
   sidebarCollapsed: boolean = false;
   private lastActivityLog = 0;

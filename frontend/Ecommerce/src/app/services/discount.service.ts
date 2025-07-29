@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { map } from 'rxjs/operators';
 
 export interface DiscountRequestDTO {
   name: string;
@@ -25,7 +26,9 @@ export interface DiscountRequestDTO {
   brandCategoryIds?: string; // comma-separated brand-category IDs for multi-selection
   // --- Added fields ---
   userIds?: string;
-  vipTierId?: number;
+  vipTierIds?: string; // comma-separated VIP tier IDs
+  vipTierIdsforCoupon?: number[]; // Keep for backward compatibility if needed
+  minimumSpend?: number;
 }
 
 export interface DiscountEventResponseDTO {
@@ -38,6 +41,20 @@ export interface DiscountEventResponseDTO {
   status: boolean;
   affectedProductIds?: number[];
   discounts?: DiscountDTO[];
+  rules?: DiscountRuleDTO[];
+}
+
+export interface DiscountRuleDTO {
+  targetType: string;
+  productId?: number;
+  brandId?: number;
+  categoryId?: number;
+  brandCategoryId?: string;
+  brandCategoryIds?: string;
+  userIds?: string;
+  vipTierIds?: string;
+  vipTierIdsforCoupon?: number[];
+  minimumSpend?: number;
 }
 
 export interface DiscountDTO {
@@ -115,6 +132,11 @@ export class DiscountService {
 
   getDiscountsByProduct(productId: number): Observable<any[]> {
     return this.http.get<any[]>(`${API_URL}/product/${productId}`);
+  }
+
+  getCouponMinimumSpend(code: string): Observable<number | null> {
+    return this.http.get<{minSpend: number}>(`http://localhost:8080/api/coupons/min-spend?couponCode=${encodeURIComponent(code)}`)
+      .pipe(map(res => res.minSpend));
   }
   
   // Optionally, add methods for brands, categories, products if needed

@@ -5,6 +5,7 @@ import { PermissionService } from '../../services/permission.service';
 import { ImageService } from '../../services/image.service';
 import { AdminUserService } from '../../services/admin-user.service';
 import { PermissionConstants } from '../../constants/permission.constants';
+import { AdminInboxService } from '../../services/admin-inbox.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -43,6 +44,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   userEmail: string | null = null;
   userStatus: string = 'Online';
   userData: any = null; // Store complete user data
+  unreadMessages: number = 0; // For inbox notification count
 
   // Fetch these values from your backend
 
@@ -71,7 +73,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     private authService: AuthService,
     public permissionService: PermissionService,
     private imageService: ImageService,
-    private adminUserService: AdminUserService
+    private adminUserService: AdminUserService,
+    private adminInboxService: AdminInboxService
   ) { }
 
   toggleSidebar() {
@@ -146,8 +149,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   toggleProfileDropdown(event: MouseEvent) {
     event.stopPropagation();
     this.profileDropdownOpen = !this.profileDropdownOpen;
-    // Reinitialize icons after dropdown toggle
-    setTimeout(() => this.initializeIcons(), 100);
+    // Reinitialize icons immediately after dropdown toggle for real-time icon update
+    this.forceReinitializeIcons();
   }
 
   private loadUserInfo() {
@@ -222,6 +225,17 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     if (userId) {
       this.router.navigate(['/profile', userId], { queryParams: { section: 'personal-info' } });
     }
+  }
+
+  navigateToSettings() {
+    // Placeholder for settings navigation
+    console.log('Navigate to settings');
+    // this.router.navigate(['/settings']);
+  }
+
+  openAdminInbox() {
+    this.profileDropdownOpen = false;
+    this.adminInboxService.openModal();
   }
 
   logout() {

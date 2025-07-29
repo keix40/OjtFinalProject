@@ -83,6 +83,7 @@ import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
 import { UserPolicyComponent } from './user-policy/user-policy.component';
 import { AboutUsComponent } from './about-us/about-us.component';
 import { ContactUsComponent } from './contact-us/contact-us.component';
+import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
 
 
 const routes: Routes = [
@@ -110,6 +111,7 @@ const routes: Routes = [
   { path: 'return-request', component: ReturnRequestComponent, canActivate: [AuthGuard] },
   { path: 'usercategorylist', component: UserCategoryListComponent, canActivate: [AuthGuard] },
   { path: 'userbrandlist', component: UserBrandListComponent, canActivate: [AuthGuard] },
+  { path: 'user-coupons', component: UserCouponListComponent, canActivate: [AuthGuard], data: { breadcrumb: 'My Coupons' } },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Order Tracking' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
 
@@ -138,7 +140,7 @@ const routes: Routes = [
       // Discounts
       { path: 'discount-add', component: DiscountInsertComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Add Discount', permission: PermissionConstants.DISCOUNTS_CREATE } },
       { path: 'discount-list', component: DiscountEventManagementComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Discount List', permission: PermissionConstants.DISCOUNTS_VIEW } },
-      { path: 'discount-coupon', component: DiscountCouponComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Discount Coupons', permission: PermissionConstants.COUPONS_MANAGE } },
+      { path: 'discount-coupon', component: DiscountCouponComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Discount Coupons', permission: PermissionConstants.DISCOUNTS_CREATE } },
 
       // Delivery
       { path: 'createdeliveryservice', component: CreateDeliveryServiceComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Create Delivery Service', permission: PermissionConstants.DELIVERY_CREATE } },

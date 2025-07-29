@@ -58,7 +58,7 @@ export class DiscountInsertComponent implements OnInit {
   
   // For VIP tier selection
   vipTiers: VipTier[] = [];
-  selectedVipTierName: string | null = null;
+  selectedVipTierNames: string[] = [];
   usersByVipTier: any[] = [];
   isLoadingVipTiers = false;
   isLoadingUsersByTier = false;
@@ -69,8 +69,7 @@ export class DiscountInsertComponent implements OnInit {
   allUsers: any[] = [];
   tempSelectedUserIds: number[] = [];
   filteredAllUsers: any[] = [];
-  selectedVipTierNames: string[] = [];
-  selectedUserRadio: string | null = null;
+  userCheckboxSelected: boolean = false;
 
   // State for user-only (global) warning modal
   showUserGlobalWarning = false;
@@ -138,6 +137,7 @@ export class DiscountInsertComponent implements OnInit {
       name: ['', Validators.required],
       discountType: ['PERCENTAGE', Validators.required],
       discountValue: [null, [Validators.required, this.discountValueValidator()]],
+      minimumSpend: [0, [Validators.required, Validators.min(0)]],
       description: ['', Validators.required],
       targetType: ['PRODUCT', Validators.required],
       productId: [null],
@@ -256,7 +256,7 @@ export class DiscountInsertComponent implements OnInit {
   }
 
   onVipTierChange(tier: VipTier) {
-    this.selectedVipTierName = tier.name;
+    this.selectedVipTierNames.push(tier.name);
     this.fetchUsersByVipTier(tier.name);
   }
 
@@ -377,14 +377,34 @@ export class DiscountInsertComponent implements OnInit {
   loadExistingDiscounts() {
     this.discountService.getActiveDiscount().subscribe({
       next: (discounts) => {
-        // Populate discountedProducts with existing discount info
+        this.discountedProducts = {}; // Clear previous
         discounts.forEach(discount => {
-          if (discount.affectedProductIds && discount.affectedProductIds.length > 0) {
-            discount.affectedProductIds.forEach(productId => {
-              this.discountedProducts[productId] = {
-                discount_percent: discount.discount_percent,
-                event_name: discount.name
-              };
+          if (discount.rules && discount.rules.length > 0) {
+            discount.rules.forEach((rule: any) => {
+              // Only consider general discounts
+              if (
+                ['PRODUCT', 'BRAND', 'CATEGORY', 'BRAND_CATEGORY'].includes(rule.targetType)
+              ) {
+                // For product-level, use the productId directly
+                if (rule.targetType === 'PRODUCT' && rule.productId) {
+                  this.discountedProducts[rule.productId] = {
+                    discount_percent: discount.discount_percent,
+                    event_name: discount.name
+                  };
+                }
+                // For brand/category/brand_category, add all affectedProductIds
+                if (
+                  ['BRAND', 'CATEGORY', 'BRAND_CATEGORY'].includes(rule.targetType) &&
+                  discount.affectedProductIds
+                ) {
+                  discount.affectedProductIds.forEach(productId => {
+                    this.discountedProducts[productId] = {
+                      discount_percent: discount.discount_percent,
+                      event_name: discount.name
+                    };
+                  });
+                }
+              }
             });
           }
         });
@@ -458,7 +478,7 @@ export class DiscountInsertComponent implements OnInit {
       selectedCategoryIds: this.selectedCategoryIds,
       selectedBrandCategoryIds: this.selectedBrandCategoryIds,
       selectedUserIds: this.selectedUserIds,
-      selectedVipTierName: this.selectedVipTierName
+      selectedVipTierNames: this.selectedVipTierNames
     });
     
     // Check if any target is selected
@@ -466,8 +486,8 @@ export class DiscountInsertComponent implements OnInit {
     const brandSelected = this.selectedBrandIds.length > 0;
     const categorySelected = this.selectedCategoryIds.length > 0;
     const brandCategorySelected = this.selectedBrandCategoryIds.length > 0;
-    const userSelected = this.selectedUserRadio === 'user' && this.selectedUserIds.length > 0;
-    const vipTierSelected = this.selectedUserRadio !== null && this.selectedUserRadio !== 'user' && this.selectedVipTierName !== null;
+    const userSelected = this.userCheckboxSelected && this.selectedUserIds.length > 0;
+    const vipTierSelected = this.selectedVipTierNames.length > 0;
     
     switch (targetType) {
       case 'NONE':
@@ -710,21 +730,17 @@ export class DiscountInsertComponent implements OnInit {
       this.selectedBrandIds.length > 0 ||
       this.selectedCategoryIds.length > 0 ||
       this.selectedBrandCategoryIds.length > 0;
-    const userSelected = this.selectedUserRadio === 'user' && this.selectedUserIds.length > 0;
-    const vipTierSelected = this.selectedUserRadio !== null && this.selectedUserRadio !== 'user' && this.selectedVipTierName !== null;
-    const anyUserSelected = userSelected || vipTierSelected;
-    
+    const anyUserSelected = this.userCheckboxSelected && this.selectedUserIds.length > 0;
+    const anyVipTierSelected = this.selectedVipTierNames.length > 0;
     // Check if at least one selection is made
-    if (!anyTargetSelected && !anyUserSelected) {
+    if (!anyTargetSelected && !anyUserSelected && !anyVipTierSelected) {
       this.showProductOrUserError = true;
       this.isSubmitting = false;
       return;
     }
-    
-    // --- User global warning logic (when only users are selected with no targets) ---
-    const userOnlyGlobal = anyUserSelected && !anyTargetSelected;
+    // --- User global warning logic (when only users or VIP tiers are selected with no targets) ---
+    const userOnlyGlobal = (anyUserSelected || anyVipTierSelected) && !anyTargetSelected;
     if (userOnlyGlobal && !this.userGlobalWarningConfirmed) {
-      console.log('Showing user global warning modal');
       this.showUserGlobalWarning = true;
       this.isSubmitting = false;
       return;
@@ -745,14 +761,12 @@ export class DiscountInsertComponent implements OnInit {
     const brandCategorySelected = this.selectedBrandCategoryIds.length > 0;
     
     // Determine target type based on selections
-    if (vipTierSelected) {
-      // VIP tier only
+    if (anyVipTierSelected && !anyUserSelected && !anyTargetSelected) {
       targetType = 'VIP_TIER';
-      // For VIP tier, we need to get the tier ID, not the name
-      const selectedTier = this.vipTiers.find(tier => tier.name === this.selectedVipTierName);
-      targetId = selectedTier?.id || 0;
-    } else if (userSelected) {
-      // User selected - check what else is selected (priority: product > brand_category > category > brand)
+    } else if (anyUserSelected && !anyVipTierSelected && !anyTargetSelected) {
+      targetType = 'USER_GLOBAL';
+    } else if (anyUserSelected || anyVipTierSelected) {
+      // If both users and VIP tiers are selected, or either with targets
       if (productSelected) {
         targetType = 'USER_PRODUCT';
       } else if (brandCategorySelected) {
@@ -760,13 +774,11 @@ export class DiscountInsertComponent implements OnInit {
       } else if (categorySelected) {
         targetType = 'USER_CATEGORY';
       } else if (brandSelected) {
-        targetType = 'USER_BRAND'; // <-- Ensure this is set for user-specific brand discount
+        targetType = 'USER_BRAND';
       } else {
-        // User only - no other targets
         targetType = 'USER_GLOBAL';
       }
     } else {
-      // No users selected - check individual targets
       if (productSelected) {
         targetType = 'PRODUCT';
       } else if (brandSelected) {
@@ -776,23 +788,15 @@ export class DiscountInsertComponent implements OnInit {
       } else if (brandCategorySelected) {
         targetType = 'BRAND_CATEGORY';
       } else {
-        // No targets selected - this should not happen due to validation
-        // Set a default target type to prevent null
         targetType = 'PRODUCT';
       }
     }
     
-    console.log('Target type determination:', {
-      userSelected,
-      vipTierSelected,
-      productSelected,
-      brandSelected,
-      categorySelected,
-      brandCategorySelected,
-      selectedVipTierName: this.selectedVipTierName,
-      finalTargetType: targetType,
-      targetId
-    });
+    // Map selected VIP tier names to IDs
+    const vipTierIds = this.vipTiers
+      .filter(tier => this.selectedVipTierNames.includes(tier.name))
+      .map(tier => tier.id)
+      .filter((id): id is number => id !== undefined);
 
     const dto: DiscountRequestDTO = {
       name: form.name,
@@ -813,8 +817,9 @@ export class DiscountInsertComponent implements OnInit {
       brandCategoryId: undefined,
       targetId: targetId,
       isEvent: form.isEvent,
-      userIds: userSelected ? this.selectedUserIds.join(',') : undefined,
-      vipTierId: vipTierSelected ? targetId : undefined
+      userIds: anyUserSelected ? this.selectedUserIds.join(',') : undefined,
+      vipTierIds: anyVipTierSelected ? vipTierIds.join(',') : undefined,
+      minimumSpend: form.minimumSpend !== null && form.minimumSpend !== undefined ? form.minimumSpend : undefined
     };
     
     console.log('Submitting DTO:', dto);
@@ -1282,34 +1287,29 @@ export class DiscountInsertComponent implements OnInit {
     this.selectedUserIds = this.selectedUserIds.filter(id => id !== userId);
   }
   getSelectedUsersCount(): number {
-    // Count individual users
-    const individualUserCount = this.selectedUserIds.length;
-    
-    // Count VIP tier selection (if a VIP tier is selected, count it as 1)
-    const vipTierCount = (this.selectedUserRadio !== null && 
-                         this.selectedUserRadio !== 'user' && 
-                         this.selectedVipTierName !== null) ? 1 : 0;
-    
-    return individualUserCount + vipTierCount;
+    return this.selectedUserIds.length;
   }
 
   // VIP tier multi-select logic
-  onVipTierRadioChange(name: string) {
-    console.log('VIP tier selected:', name);
-    this.selectedUserRadio = name;
-    this.selectedVipTierName = name;
-    // Clear user selection if switching from user
-    this.selectedUserIds = [];
+  isVipTierSelected(name: string): boolean {
+    return this.selectedVipTierNames.includes(name);
   }
-  onUserRadioChange() {
-    this.selectedUserRadio = 'user';
-    this.selectedVipTierName = null;
+  toggleVipTierSelection(name: string) {
+    const idx = this.selectedVipTierNames.indexOf(name);
+    if (idx > -1) {
+      this.selectedVipTierNames.splice(idx, 1);
+    } else {
+      this.selectedVipTierNames.push(name);
+    }
+  }
+  toggleUserCheckbox() {
+    this.userCheckboxSelected = !this.userCheckboxSelected;
+    if (!this.userCheckboxSelected) {
+      this.selectedUserIds = [];
+    }
   }
   removeVipTierSelection(name: string) {
-    if (this.selectedVipTierName === name) {
-      this.selectedVipTierName = null;
-      this.selectedUserRadio = null;
-    }
+    this.selectedVipTierNames = this.selectedVipTierNames.filter(n => n !== name);
   }
 
   getUserNameById(userId: number): string {
@@ -1326,5 +1326,41 @@ export class DiscountInsertComponent implements OnInit {
   }
   onUserImageError(event: any) {
     event.target.src = '/assets/project_img/fashion_store.jpg';
+  }
+
+  // Add these methods to support the new conflict popup UI
+  getConflictIcon(conflict: any): string {
+    switch (conflict.targetType) {
+      case 'USER_BRAND': return 'fas fa-user-tag text-blue-500';
+      case 'USER_CATEGORY': return 'fas fa-user-list text-purple-500';
+      case 'USER_BRAND_CATEGORY': return 'fas fa-user-cog text-green-500';
+      case 'USER_GLOBAL': return 'fas fa-user-shield text-yellow-500';
+      case 'VIP_TIER': return 'fas fa-crown text-yellow-500';
+      case 'BRAND': return 'fas fa-tag text-green-500';
+      case 'CATEGORY': return 'fas fa-list text-purple-500';
+      case 'BRAND_CATEGORY': return 'fas fa-tags text-indigo-500';
+      default: return 'fas fa-exclamation-triangle text-red-500';
+    }
+  }
+  getConflictTypeLabel(conflict: any): string {
+    switch (conflict.targetType) {
+      case 'USER_BRAND': return 'User Brand Discount';
+      case 'USER_CATEGORY': return 'User Category Discount';
+      case 'USER_BRAND_CATEGORY': return 'User Brand-Category Discount';
+      case 'USER_GLOBAL': return 'User Global Discount';
+      case 'VIP_TIER': return 'VIP Tier Discount';
+      case 'BRAND': return 'Brand Discount';
+      case 'CATEGORY': return 'Category Discount';
+      case 'BRAND_CATEGORY': return 'Brand-Category Discount';
+      default: return 'Discount Conflict';
+    }
+  }
+  getConflictSummaryLabel(conflict: any): string {
+    if (conflict.userName) return `${conflict.userName} (${this.getConflictTypeLabel(conflict)})`;
+    if (conflict.vipTierName) return `${conflict.vipTierName} (VIP Tier)`;
+    if (conflict.brandName && conflict.categoryName) return `${conflict.brandName} - ${conflict.categoryName}`;
+    if (conflict.brandName) return conflict.brandName;
+    if (conflict.categoryName) return conflict.categoryName;
+    return conflict.targetType;
   }
 }

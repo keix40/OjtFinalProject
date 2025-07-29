@@ -1,0 +1,206 @@
+/* Admin Inbox Modal Styles - Modern Dashboard Style */
+.modal-overlay {
+  backdrop-filter: blur(8px);
+}
+
+/* Animation for modal appearance */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-content {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Message list styling */
+.message-item {
+  transition: all 0.2s ease;
+}
+
+.message-item:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+  transform: translateX(2px);
+}
+
+.message-item.selected {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 4px solid #3b82f6;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Priority badge colors */
+.priority-high {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.priority-medium {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.priority-low {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+/* Unread indicator */
+.unread-dot {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+/* Button hover effects */
+.btn-modern:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Input focus effects */
+.input-modern:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+}
+
+/* Scrollbar styling */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Filter button group */
+.filter-group {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 1px solid #e2e8f0;
+}
+
+.filter-button {
+  transition: all 0.2s ease;
+}
+
+.filter-button.active {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+/* Modal header gradient */
+.modal-header-icon {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Empty state styling */
+.empty-state-icon {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Message content area */
+.message-content {
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .modal-panel {
+    max-width: 95vw;
+    margin: 1rem;
+  }
+  
+  .message-list {
+    width: 100%;
+  }
+  
+  .message-details {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-panel {
+    max-width: 100vw;
+    margin: 0.5rem;
+    border-radius: 1rem;
+  }
+  
+  .modal-header {
+    padding: 1rem;
+  }
+  
+  .modal-body {
+    height: 70vh;
+  }
+}
+
+/* Focus states for accessibility */
+button:focus,
+input:focus,
+select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 0.5rem;
+}
+
+/* Loading state */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Glass morphism effect for overlay */
+.backdrop-blur {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Card shadows */
+.card-shadow {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card-shadow-hover:hover {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}

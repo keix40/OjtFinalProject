@@ -250,7 +250,21 @@ export class UserProductDetailComponent implements OnInit {
 }
 
   getProductDiscount(): any {
-    return this.productDiscounts.get(this.product?.id);
+    if (this.isFirstTimeBuyerDiscount) return null;
+    
+    const discount = this.productDiscounts.get(this.product?.id);
+    if (!discount) return null;
+    
+    // Check minimum spend requirement
+    if (discount.minimumSpend && discount.minimumSpend > 0) {
+      const productPrice = this.selectedVariant?.price || this.product?.price || 0;
+      if (productPrice < discount.minimumSpend) {
+        // Product price is lower than minimum spend, don't show discount
+        return null;
+      }
+    }
+    
+    return discount;
   }
 
   getFinalDiscountedPrice(): number {
@@ -1028,7 +1042,12 @@ checkFirstTimeBuyerDiscount(): void {
       for (const discount of this.activeDiscounts) {
         for (const rule of discount.rules || []) {
           if (rule.targetType === 'USER_PRODUCT' && rule.userId === userId && rule.productId === product.id) {
-            return { ...discount, ...rule, eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule, 
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
         }
       }
@@ -1044,7 +1063,12 @@ checkFirstTimeBuyerDiscount(): void {
               rule.brandId === pair.brandId &&
               rule.categoryId === pair.categoryId
             ) {
-              return { ...discount, ...rule, eventName: discount.name };
+              return { 
+                ...discount, 
+                ...rule, 
+                eventName: discount.name,
+                minimumSpend: discount.minimumSpend 
+              };
             }
           }
         }
@@ -1062,7 +1086,12 @@ checkFirstTimeBuyerDiscount(): void {
               rule.targetType === 'BRAND' &&
               rule.brandId === pair.brandId
             ) {
-              return { ...discount, ...rule, eventName: discount.name };
+              return { 
+                ...discount, 
+                ...rule, 
+                eventName: discount.name,
+                minimumSpend: discount.minimumSpend 
+              };
             }
           }
         }

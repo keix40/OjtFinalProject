@@ -13,6 +13,8 @@ export interface UserOrder {
         variantId?: number | null;
     }[];
     cardId?: number;
+   couponName?: string;
+   couponDiscount?: number;
 }
 
 export interface OrderProductDTO {

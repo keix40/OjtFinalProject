@@ -10,6 +10,7 @@ import { ProductService} from '../services/product.service';
 import { ProductDTO } from '../product';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { UserService } from '../services/user.service';
 
 function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return { required: true };
@@ -81,6 +82,8 @@ export class DiscountEventManagementComponent implements OnInit {
   discountProducts: ProductDTO[] = [];
   showProductDetails: boolean = false;
   @ViewChild('productDetailsModal') productDetailsModalRef: any;
+  discountUsers: any[] = []; // Add this for user list
+  @ViewChild('userDetailsModal') userDetailsModalRef: any;
 
   public PermissionConstants = PermissionConstants;
   // Add properties for filter/search UI
@@ -163,7 +166,8 @@ export class DiscountEventManagementComponent implements OnInit {
     private notifcationService: NotifcationService,
     private modalService: NgbModal,
     private productService: ProductService, // <-- Inject ProductService
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private userService: UserService
   ) {
     this.editForm = this.fb.group({
       name: ['', Validators.required],
@@ -421,9 +425,35 @@ onDiscountTypeChange() {
       status: discount.status
     });
     this.updateCodeFieldValidators();
+    // Ensure form is disabled initially
+    this.detailsForm.disable();
+    // Re-disable code field if it's auto-apply discount
+    if (this.detailsDiscount && this.detailsDiscount.autoApply) {
+      this.detailsForm.get('code')?.disable();
+    }
     // Fetch products by productIds, brandId, or categoryId
     this.discountProducts = [];
+    this.discountUsers = []; // Reset user list
     const d: any = discount;
+    
+    // Fetch users if userIds exist
+    if (d.userIds) {
+      const userIds = d.userIds.split(',').map((id: string) => Number(id)).filter((id: number) => !isNaN(id));
+      if (userIds.length > 0) {
+        // Fetch user details for each user ID
+        userIds.forEach((userId: number) => {
+          this.userService.getUserById(userId.toString()).subscribe({
+            next: (user) => {
+              this.discountUsers.push(user);
+            },
+            error: () => {
+              console.error(`Failed to fetch user with ID: ${userId}`);
+            }
+          });
+        });
+      }
+    }
+    
     if (d.productIds) {
       const ids = d.productIds.split(',').map((id: string) => Number(id)).filter((id: number) => !isNaN(id));
       if (ids.length > 0) {
@@ -480,9 +510,17 @@ onDiscountTypeChange() {
           status: this.detailsDiscount.status
         });
       }
+      // Disable form controls
+      this.detailsForm.disable();
     } else {
       // Enter edit mode
       this.isDetailsEditMode = true;
+      // Enable form controls
+      this.detailsForm.enable();
+      // Re-disable code field if it's auto-apply discount
+      if (this.detailsDiscount && this.detailsDiscount.autoApply) {
+        this.detailsForm.get('code')?.disable();
+      }
     }
   }
 
@@ -631,6 +669,18 @@ onDiscountTypeChange() {
 
   openProductDetailsModal() {
     this.modalService.open(this.productDetailsModalRef, { size: 'xl', centered: true, backdrop: 'static' });
+  }
+
+  getUserProfileImage(user: any): string {
+    if (user.profileImage && user.profileImage !== '/upload/defaultProfile.png') {
+      if (user.profileImage.startsWith('http')) return user.profileImage;
+      return 'http://localhost:8080' + user.profileImage;
+    }
+    return '/assets/project_img/fashion_store.jpg';
+  }
+
+  openUserDetailsModal() {
+    this.modalService.open(this.userDetailsModalRef, { size: 'xl', centered: true, backdrop: 'static' });
   }
 
     

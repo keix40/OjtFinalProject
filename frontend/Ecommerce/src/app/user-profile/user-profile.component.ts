@@ -3,6 +3,7 @@ import { AuthService } from '../auth/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UserPersonalInfoComponent } from './user-personal-info/user-personal-info.component';
 import { OrderService } from '../services/order.service';
+import { UserCouponService } from '../services/user-coupon.service';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
 interface UserDetails {
@@ -37,6 +38,7 @@ export class UserProfileComponent implements OnInit {
 
   activeSection: string = 'orders';
   orderCount: number = 0; // <-- Add this
+  couponCount: number = 0; // <-- Add this
 
   breadcrumbItems = [
     { label: 'Home', link: '/home' },
@@ -47,12 +49,14 @@ export class UserProfileComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    private orderService: OrderService // <-- Inject OrderService
+    private orderService: OrderService, // <-- Inject OrderService
+    private userCouponService: UserCouponService // <-- Inject UserCouponService
   ) { }
 
   ngOnInit(): void {
     this.loadUserDetails();
     this.loadOrderCount(); // <-- Load order count on init
+    this.loadCouponCount(); // <-- Load coupon count on init
     // Get section from query params
     this.route.queryParams.subscribe(params => {
       if (params['section']) {
@@ -92,6 +96,23 @@ const fullImageUrl = backendBaseUrl + rawImagePath;
       },
       error: () => {
         this.orderCount = 0;
+      }
+    });
+  }
+
+  loadCouponCount() {
+    const user = this.authService.getDecodedToken();
+    const userId = user ? user.id : null;
+    if (!userId) {
+      this.couponCount = 0;
+      return;
+    }
+    this.userCouponService.getUserCoupons(userId).subscribe({
+      next: (coupons) => {
+        this.couponCount = Array.isArray(coupons) ? coupons.length : 0;
+      },
+      error: () => {
+        this.couponCount = 0;
       }
     });
   }

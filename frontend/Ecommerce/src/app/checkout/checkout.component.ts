@@ -38,6 +38,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   discountMessage: string = '';
   isCouponValid: boolean = false;
   appliedCouponCode: string = '';
+  
+  // Coupon properties for cart page integration
+  promoSuccess: boolean = false;
+  couponDiscount: number = 0;
+  couponDiscountType: string = '';
+  appliedCouponName: string = '';
 
   // Customer info
   customer = {
@@ -134,6 +140,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
       })
     );
 
+    // Load coupon from localStorage (applied in cart page)
+    this.loadCouponFromStorage();
+
     // Fetch delivery services dynamically
     this.deliveryServiceService.getAll().subscribe(services => {
       this.deliveryOptions = services || [];
@@ -176,6 +185,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.productDetails.set(product.id, product);
       });
       this.calculateProductDiscounts();
+      
+      // Update coupon discount amount when product details are loaded
+      if (this.promoSuccess && this.couponDiscount) {
+        this.discountAmount = this.getCouponDiscountAmount();
+        this.discountMessage = `✅ Coupon applied! You saved ${Math.round(this.discountAmount).toLocaleString()} MMK.`;
+      }
     });
   }
 
@@ -207,7 +222,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             discount_amount: discount.discount_amount,
             discountType: discount.discountType,
             targetType: rule.targetType,
-            eventName: discount.name
+            eventName: discount.name,
+            minimumSpend: discount.minimumSpend
           };
         }
       }
@@ -235,7 +251,23 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   getProductDiscount(productId: number): any {
     if (this.isFirstTimeBuyerDiscount) return null;
-    return this.productDiscounts.get(productId);
+    
+    const discount = this.productDiscounts.get(productId);
+    if (!discount) return null;
+    
+    // Get the product to check its price
+    const product = this.productDetails.get(productId);
+    if (!product) return null;
+    
+    // Check minimum spend requirement
+    if (discount.minimumSpend && discount.minimumSpend > 0) {
+      if (product.price < discount.minimumSpend) {
+        // Product price is lower than minimum spend, don't show discount
+        return null;
+      }
+    }
+    
+    return discount;
   }
 
     getDiscountedPrice(product: ProductDTO): number {
@@ -369,6 +401,20 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
+  // Method to clear coupon after successful order placement
+  clearAppliedCoupon(): void {
+    if (this.promoSuccess) {
+      localStorage.removeItem('appliedCoupon');
+      this.promoSuccess = false;
+      this.couponDiscount = 0;
+      this.couponDiscountType = '';
+      this.appliedCouponName = '';
+      this.discountAmount = 0;
+      this.isCouponValid = false;
+      this.discountMessage = '';
+    }
+  }
+
   // Step navigation
   setActiveStep(step: number) {
     if (step === 1 || this.stepCompleted[step - 1]) {
@@ -458,7 +504,10 @@ getTotalDiscount() {
     if (this.isFirstTimeBuyerDiscount && this.orderPreview?.discountAmount > 0) {
       return this.orderPreview.discountAmount;
     }
+    
     let discount = 0;
+    
+    // Add product discounts
     for (const item of this.cartItems) {
       const product = this.productDetails.get(item.productId || item.id);
       if (product) {
@@ -468,6 +517,12 @@ getTotalDiscount() {
         }
       }
     }
+    
+    // Add coupon discount from localStorage (applied in cart page)
+    if (this.promoSuccess && this.couponDiscount) {
+      discount += this.getCouponDiscountAmount();
+    }
+    
     return discount;
   }
 
@@ -835,5 +890,61 @@ getTotalDiscount() {
       const product = this.productDetails.get(item.productId || item.id);
       return product && this.getProductDiscount(product.id);
     });
+  }
+
+  // Load coupon data from localStorage (applied in cart page)
+  private loadCouponFromStorage(): void {
+    const savedCoupon = localStorage.getItem('appliedCoupon');
+    if (savedCoupon) {
+      try {
+        const couponData = JSON.parse(savedCoupon);
+        this.promoSuccess = couponData.promoSuccess || false;
+        this.couponDiscount = couponData.couponDiscount || 0;
+        this.couponDiscountType = couponData.couponDiscountType || '';
+        this.appliedCouponName = couponData.appliedCouponName || '';
+        
+        // Set the discount amount and mark as valid if coupon is loaded
+        if (this.promoSuccess && this.couponDiscount) {
+          this.discountAmount = this.getCouponDiscountAmount();
+          this.isCouponValid = true;
+          this.appliedCouponCode = couponData.promoCode || '';
+          this.discountMessage = `✅ Coupon applied! You saved ${Math.round(this.discountAmount).toLocaleString()} MMK.`;
+        }
+      } catch (error) {
+        console.error('Error loading coupon from localStorage:', error);
+        localStorage.removeItem('appliedCoupon');
+      }
+    }
+  }
+
+  // Calculate coupon discount amount
+  getCouponDiscountAmount(): number {
+    if (!this.promoSuccess || !this.couponDiscount) return 0;
+    
+    // Only apply coupon to products without a product discount
+    let eligibleTotal = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product && !this.getProductDiscount(product.id)) {
+        eligibleTotal += product.price * item.quantity;
+      }
+    }
+    
+    if (this.couponDiscountType === 'PERCENTAGE') {
+      return Math.round(eligibleTotal * this.couponDiscount / 100);
+    } else {
+      return this.couponDiscount;
+    }
+  }
+
+  // Get coupon name for display
+  getCouponName(): string {
+    if (!this.promoSuccess || !this.couponDiscount) return '';
+    return this.appliedCouponName || this.appliedCouponCode;
+  }
+
+  // Check if there's a coupon applied from cart page
+  hasCartPageCoupon(): boolean {
+    return this.promoSuccess && this.couponDiscount > 0;
   }
 }

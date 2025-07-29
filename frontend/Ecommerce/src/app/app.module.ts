@@ -83,6 +83,8 @@ import { UserPolicyComponent } from './user-policy/user-policy.component';
 import { AboutUsComponent } from './about-us/about-us.component';
 import { ContactUsComponent } from './contact-us/contact-us.component';
 import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'lucide-angular';
+import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
+import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
 
 @NgModule({
   declarations: [
@@ -140,6 +142,8 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
     UserPolicyComponent,
     AboutUsComponent,
     ContactUsComponent,
+    UserCouponListComponent,
+    AdminInboxComponent,
 
   ],
   imports: [
