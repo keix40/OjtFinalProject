@@ -1,5 +1,7 @@
 import { Component, OnInit, ViewChild, TemplateRef, AfterViewInit, AfterViewChecked } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RoleService } from '../services/role.service';
 import { PermissionService } from '../services/permission.service';
 import { AuthService } from '../auth/auth.service';

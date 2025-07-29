@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ElementRef, HostListener } from '@angular/core';
 import { ActivityLogService, ActivityLogFilter, ActivityLogResponse, ActivityStatistics } from '../services/activity-log.service';
 
 declare var lucide: any;
@@ -63,6 +63,8 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
   viewMode: 'detailed' | 'compact' = 'detailed';
   selectedDateRange = '';
   showExportDropdown = false;
+  showExportSuccess = false;
+  exportSuccessMessage = '';
 
   // Pagination
   currentPage = 1;
@@ -107,7 +109,10 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
     { value: 'CRITICAL', label: 'Critical', icon: 'x-circle' }
   ];
 
-  constructor(private activityLogService: ActivityLogService) {}
+  constructor(
+    private activityLogService: ActivityLogService,
+    private elementRef: ElementRef
+  ) {}
 
   ngOnInit(): void {
     this.loadActivityLogs();
@@ -355,6 +360,24 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
     this.showExportDropdown = !this.showExportDropdown;
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    if (this.showExportDropdown) {
+      const exportDropdown = this.elementRef.nativeElement.querySelector('#exportDropdown');
+      if (exportDropdown && !exportDropdown.contains(event.target as Node)) {
+        this.showExportDropdown = false;
+      }
+    }
+  }
+
+  // Close export dropdown when pressing Escape key
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.showExportDropdown) {
+      this.showExportDropdown = false;
+    }
+  }
+
   closeLogDetails(): void {
     this.selectedLog = null;
   }
@@ -480,6 +503,12 @@ IP Address: ${log.ipAddress}
 
   // Export methods
   exportLogs(format: 'csv' | 'json' | 'pdf'): void {
+    // Close the export dropdown
+    this.showExportDropdown = false;
+    
+    // Show loading state
+    this.isLoading = true;
+    
     const filter: ActivityLogFilter = {
       dateFrom: this.filters.dateFrom,
       dateTo: this.filters.dateTo,
@@ -492,16 +521,43 @@ IP Address: ${log.ipAddress}
 
     this.activityLogService.exportActivityLogs(filter, format).subscribe({
       next: (blob: Blob) => {
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
+        this.isLoading = false;
+        
+        // Check if blob is empty
+        if (blob.size === 0) {
+          alert('No data available for export. Please check your filters.');
+          return;
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
         link.download = `activity-logs-${new Date().toISOString().split('T')[0]}.${format}`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+        link.click();
+        window.URL.revokeObjectURL(url);
+        
+        // Show success message
+        this.showExportSuccess = true;
+        this.exportSuccessMessage = `Activity logs exported successfully as ${format.toUpperCase()}`;
+        setTimeout(() => {
+          this.showExportSuccess = false;
+          this.exportSuccessMessage = '';
+        }, 3000);
       },
       error: (error) => {
+        this.isLoading = false;
         console.error('Error exporting logs:', error);
-        alert('Error exporting logs');
+        
+        // More specific error messages
+        if (error.status === 403) {
+          alert('You do not have permission to export activity logs.');
+        } else if (error.status === 404) {
+          alert('Export service not found. Please contact administrator.');
+        } else if (error.status === 500) {
+          alert('Server error occurred while exporting. Please try again later.');
+        } else {
+          alert('Error exporting logs. Please try again.');
+        }
       }
     });
   }

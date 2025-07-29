@@ -10,6 +10,7 @@ import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptors/jwt.interceptors.service';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UserOrdersComponent } from './user-profile/user-orders/user-orders.component';
 import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlist.component';
@@ -86,6 +87,7 @@ import { TestComponent } from './test/test.component';
 import { AboutUsComponent } from './about-us/about-us.component';
 import { ContactUsComponent } from './contact-us/contact-us.component';
 import { FooterComponent } from './footer/footer.component';
+import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
 
 @NgModule({
   declarations: [
@@ -131,11 +133,14 @@ import { FooterComponent } from './footer/footer.component';
     DeliveryServiceListComponent,
     OrderInvoiceComponent,
     AdminPolicyComponent,
-    AdminPolicyEditComponent,
-          DashboardComponent,
-      DiscountAdminComponent,
-      AdminProfileComponent,
-      UserProfileComponent,
+    AdminPolicyEditComponent, 
+    DashboardComponent,
+    DiscountAdminComponent,
+    AdminProfileComponent,
+    UserProfileComponent, 
+    CreateDeliveryServiceComponent,
+    DeliveryServiceListComponent,
+
   ],
   imports: [
     BrowserModule,
@@ -160,7 +165,6 @@ import { FooterComponent } from './footer/footer.component';
     // Standalone components
     CartSidebarComponent,
     ProductDetailComponent,
-    BlacklistComponent,
     VerifyOtpComponent,
     NotificationComponent,
     BreadcrumbComponent,
@@ -184,6 +188,7 @@ import { FooterComponent } from './footer/footer.component';
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     AuthService,
     AddressService,
     NotifcationService,

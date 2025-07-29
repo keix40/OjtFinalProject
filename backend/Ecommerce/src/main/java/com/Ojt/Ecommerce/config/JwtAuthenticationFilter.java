@@ -3,7 +3,7 @@ package com.Ojt.Ecommerce.config;
 import com.Ojt.Ecommerce.dto.UserDTO;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
-import com.Ojt.Ecommerce.service.TokenBlacklistService;
+import com.Ojt.Ecommerce.service.BlacklistService;
 import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.Ojt.Ecommerce.entity.BlacklistEntry;
+import com.Ojt.Ecommerce.service.BlacklistService;
+import com.Ojt.Ecommerce.service.TokenBlacklistService;
 
 @Component
 @RequiredArgsConstructor
@@ -34,6 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsServiceImpl userDetailsService;
     private final TokenBlacklistService tokenBlacklistService;
+    private final BlacklistService blacklistService;
     private final UserRepository userRepository;
 
     @Override
@@ -41,6 +45,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
+
+        String requestURI = request.getRequestURI();
+        String method = request.getMethod();
+        
+        // Completely skip JWT authentication for appeal endpoints
+        if (requestURI.equals("/api/appeals/submit") && "POST".equals(method)) {
+            logger.info("Skipping JWT authentication for appeal submission: {} {}", method, requestURI);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String header = request.getHeader("Authorization");
 
@@ -80,6 +94,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             .collect(Collectors.toList());
                     authorities.addAll(permissionAuthorities);
                 }
+
+                // Blacklist check: block blacklisted users from accessing any protected endpoints
+                try {
+                    String userEmail = jwtTokenProvider.getEmailFromToken(token);
+                    BlacklistEntry blacklistEntry = blacklistService.getActiveBlacklistByEmail(userEmail);
+                    
+                    // Also check for APPEALED status - user should still be blocked while appeal is pending
+                    if (blacklistEntry == null) {
+                        blacklistEntry = blacklistService.getBlacklistByEmailAndStatus(userEmail, BlacklistEntry.Status.APPEALED);
+                    }
+                    
+                    if (blacklistEntry != null) {
+                        logger.warn("Blacklisted/Appealed user attempting to access protected endpoint: {}", userEmail);
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        
+                        // Create response with proper format
+                        String banType = blacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary";
+                        String status = blacklistEntry.getStatus().toString();
+                        String responseBody = String.format(
+                            "{\"blocked\":true,\"reason\":\"%s\",\"expiryDate\":%s,\"banType\":\"%s\",\"isPermanent\":%s,\"status\":\"%s\"}",
+                            blacklistEntry.getReason(),
+                            blacklistEntry.getExpiryDate() != null ? "\"" + blacklistEntry.getExpiryDate().toString() + "\"" : "null",
+                            banType,
+                            blacklistEntry.getExpiryDate() == null ? "true" : "false",
+                            status
+                        );
+                        
+                        response.getWriter().write(responseBody);
+                        return;  // Stop further processing
+                    }
+                } catch (Exception e) {
+                    logger.error("Error checking blacklist status: {}", e.getMessage());
+                    // Continue processing if blacklist check fails
+                }
+
                 // Load UserDetails instead of UserDTO for Spring Security compatibility
                 var userDetails = userDetailsService.loadUserByUsername(email); 
 

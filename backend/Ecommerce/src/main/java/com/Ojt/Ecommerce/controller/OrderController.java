@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
 import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
@@ -33,6 +34,24 @@ import com.Ojt.Ecommerce.entity.UserOrder;
 import com.Ojt.Ecommerce.service.DeliveryService;
 import com.Ojt.Ecommerce.service.OrderService;
 import com.Ojt.Ecommerce.service.UserActivityService;
+import com.Ojt.Ecommerce.service.SessionService;
+import com.Ojt.Ecommerce.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.Objects;
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -48,6 +67,12 @@ public class OrderController {
 
     @Autowired
     private UserActivityService userActivityService;
+
+    @Autowired
+    private SessionService sessionService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/getdeliveryservices")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
@@ -370,10 +395,6 @@ public class OrderController {
         return ResponseEntity.ok(result);
     }
 
-    /**
-     * Update order status. If refundId is provided and refund type is REPLACEMENT, it will be linked to the order status.
-     * Request body: { "status": "SHIPPED", "refundId": 123 }
-     */
     @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId", logChanges = true)
     @PutMapping("/updatestatus/{orderId}")
     @RequiresPermission(value = ORDERS_UPDATE, level = "basic", description = "Update order status")
@@ -457,13 +478,8 @@ public class OrderController {
     @GetMapping("/customers-count")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Integer> getCustomersCount() {
-        List<UserOrderListDTO> orders = service.getAllOrders();
-        long count = orders.stream()
-            .map(o -> o.getUser() != null ? o.getUser().getId() : null)
-            .filter(Objects::nonNull)
-            .distinct()
-            .count();
-        return ResponseEntity.ok((int) count);
+        List<CustomerSummaryDTO> customers = userService.getAllCustomerSummaries();
+        return ResponseEntity.ok(customers.size());
     }
 
     @GetMapping("/previous-metrics")
@@ -512,5 +528,78 @@ public class OrderController {
         result.put("orders", prevOrderCount);
         result.put("avgOrder", prevAvgOrder);
         return ResponseEntity.ok(result);
+    }
+
+    // Session and Bounce Rate endpoints
+    @GetMapping("/session-count")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<Integer> getSessionCount(@RequestParam(defaultValue = "day") String timeFrame) {
+        int count = sessionService.getTotalSessionsCount(timeFrame);
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/active-sessions")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<Integer> getActiveSessions(@RequestParam(defaultValue = "day") String timeFrame) {
+        int count = sessionService.getActiveSessionsCount(timeFrame);
+        return ResponseEntity.ok(count);
+    }
+
+    @GetMapping("/bounce-rate")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<Double> getBounceRate(@RequestParam(defaultValue = "day") String timeFrame) {
+        double bounceRate = sessionService.getBounceRate(timeFrame);
+        return ResponseEntity.ok(bounceRate);
+    }
+
+    @GetMapping("/session-stats")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<Map<String, Object>> getSessionStats(@RequestParam(defaultValue = "day") String timeFrame) {
+        Map<String, Object> stats = sessionService.getSessionStats(timeFrame);
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/session-trends")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<Map<String, Object>>> getSessionTrends(@RequestParam(defaultValue = "day") String timeFrame) {
+        List<Map<String, Object>> trends = sessionService.getSessionTrends(timeFrame);
+        return ResponseEntity.ok(trends);
+    }
+
+    // Engagement Analytics endpoints
+    @GetMapping("/engagement-analytics")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<Map<String, Object>> getEngagementAnalytics(@RequestParam(defaultValue = "day") String timeFrame) {
+        Map<String, Object> analytics = sessionService.getEngagementAnalytics(timeFrame);
+        return ResponseEntity.ok(analytics);
+    }
+
+    @GetMapping("/engagement-trends")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<Map<String, Object>>> getEngagementTrends(@RequestParam(defaultValue = "day") String timeFrame) {
+        List<Map<String, Object>> trends = sessionService.getEngagementTrends(timeFrame);
+        return ResponseEntity.ok(trends);
+    }
+
+    // Customer Segmentation endpoints
+    @GetMapping("/customer-segmentation")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<Map<String, Object>>> getCustomerSegmentation(@RequestParam(defaultValue = "day") String timeFrame) {
+        List<Map<String, Object>> segmentation = sessionService.getCustomerSegmentation(timeFrame);
+        return ResponseEntity.ok(segmentation);
+    }
+
+    @GetMapping("/vip-tier-data")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<Map<String, Object>>> getVipTierData(@RequestParam(defaultValue = "day") String timeFrame) {
+        List<Map<String, Object>> vipTierData = sessionService.getCustomerSegmentation(timeFrame);
+        return ResponseEntity.ok(vipTierData);
+    }
+
+    @GetMapping("/customer-acquisition")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<Map<String, Object>>> getCustomerAcquisition(@RequestParam(defaultValue = "day") String timeFrame) {
+        List<Map<String, Object>> acquisition = sessionService.getCustomerAcquisition(timeFrame);
+        return ResponseEntity.ok(acquisition);
     }
 }

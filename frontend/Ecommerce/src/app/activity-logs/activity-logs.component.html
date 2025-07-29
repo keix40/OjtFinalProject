@@ -9,29 +9,36 @@
       <p class="text-gray-600 text-lg">Monitor and audit all system activities for security and compliance</p>
     </div>
 
+    <!-- Success Notification -->
+    <div *ngIf="showExportSuccess" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
+      <i data-lucide="check-circle" class="w-5 h-5"></i>
+      <span>{{ exportSuccessMessage }}</span>
+    </div>
+
     <!-- Action Buttons -->
     <div class="flex justify-center items-center space-x-4 mb-8">
       <button class="flex items-center space-x-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg border-2 border-slate-300 text-slate-700 hover:bg-white hover:shadow-md transition-all duration-200" (click)="refreshLogs()">
         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
         <span class="font-medium">Refresh</span>
       </button>
-      <div class="relative">
-        <button class="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200" (click)="toggleExportDropdown()">
-          <i data-lucide="download" class="w-4 h-4"></i>
-          <span>Export</span>
-          <i data-lucide="chevron-down" class="w-4 h-4"></i>
+      <div class="relative" #exportDropdown id="exportDropdown">
+        <button class="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200" (click)="toggleExportDropdown()" [disabled]="isLoading">
+          <i *ngIf="!isLoading" data-lucide="download" class="w-4 h-4"></i>
+          <div *ngIf="isLoading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          <span>{{ isLoading ? 'Exporting...' : 'Export' }}</span>
+          <i *ngIf="!isLoading" data-lucide="chevron-down" class="w-4 h-4"></i>
         </button>
-        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border-2 border-slate-200 z-10" *ngIf="showExportDropdown">
+        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border-2 border-slate-200 z-10" *ngIf="showExportDropdown && !isLoading">
           <div class="py-1">
-            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('csv')">
+            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('csv')" [disabled]="isLoading">
               <i data-lucide="file-text" class="w-4 h-4 text-indigo-500"></i>
               <span>Export as CSV</span>
             </button>
-            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('json')">
+            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('json')" [disabled]="isLoading">
               <i data-lucide="code" class="w-4 h-4 text-purple-500"></i>
               <span>Export as JSON</span>
             </button>
-            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('pdf')">
+            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('pdf')" [disabled]="isLoading">
               <i data-lucide="file-text" class="w-4 h-4 text-teal-500"></i>
               <span>Export as PDF</span>
             </button>

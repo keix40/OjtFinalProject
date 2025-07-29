@@ -40,7 +40,10 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/**")
                 .allowedOrigins("http://localhost:4200")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
-                .allowedHeaders("*")
+                .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", 
+                               "Access-Control-Request-Method", "Access-Control-Request-Headers",
+                               "x-forwarded-for", "x-forwarded-proto", "x-forwarded-host", 
+                               "x-client-ip", "X-Client-IP", "X-Forwarded-For", "X-Forwarded-Proto", "X-Forwarded-Host")
                 .exposedHeaders("Authorization", "Content-Type")
                 .allowCredentials(true)
                 .maxAge(3600); // Cache preflight requests for 1 hour

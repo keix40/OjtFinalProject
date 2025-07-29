@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, retry, tap } from 'rxjs/operators';
+import { catchError, retry, tap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface BlacklistEntry {
   id: string;
-  targetType: 'email' | 'ip' | 'device' | 'phone' | 'user_id';
+  targetType: 'EMAIL' | 'IP' | 'DEVICE' | 'PHONE' | 'USER_ID';
   targetValue: string;
-  category: 'fraud' | 'spam' | 'abuse' | 'chargeback' | 'fake_account' | 'policy_violation';
-  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  category: 'FRAUD' | 'SPAM' | 'ABUSE' | 'CHARGEBACK' | 'FAKE_ACCOUNT' | 'POLICY_VIOLATION';
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
   reason: string;
   addedDate: Date;
   addedBy: string;
-  status: 'active' | 'appealed' | 'expired' | 'lifted';
+  status: 'ACTIVE' | 'APPEALED' | 'EXPIRED' | 'LIFTED';
   expiryDate?: Date;
   associatedEmail?: string;
   deviceFingerprint?: string;
@@ -56,6 +56,20 @@ export interface IncidentHistory {
   details: string;
   severity: 'low' | 'medium' | 'high';
   resolved: boolean;
+}
+
+export interface Appeal {
+  id: string;
+  blacklistEntryId?: string;
+  userEmail: string;
+  appealReason: 'WRONGFUL_BAN' | 'MISTAKEN_IDENTITY' | 'ACCOUNT_COMPROMISED' | 'TECHNICAL_ERROR' | 'OTHER';
+  appealDetails: string;
+  contactEmail: string;
+  submittedAt: Date;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  adminNotes?: string;
+  reviewedAt?: Date;
+  reviewedBy?: string;
 }
 
 @Injectable({
@@ -165,12 +179,113 @@ getEntries(filters: BlacklistFilters): Observable<{
 
   // Lift ban
   liftBan(id: string, reason?: string): Observable<BlacklistEntry> {
+    console.log('[BlacklistService] liftBan called with ID:', id, 'reason:', reason);
+    console.log('[BlacklistService] API URL:', `${this.apiUrl}/entries/${id}/lift`);
+    
     return this.http.post<BlacklistEntry>(
       `${this.apiUrl}/entries/${id}/lift`,
       { reason },
       { withCredentials: true }
     ).pipe(
+      tap(response => {
+        console.log('[BlacklistService] Lift ban response:', response);
+        // Clear blacklist flags from localStorage if this is the current user
+        const currentUserEmail = this.getCurrentUserEmail();
+        if (currentUserEmail && response.targetValue === currentUserEmail) {
+          console.log('[BlacklistService] Clearing blacklist flags for current user');
+          localStorage.removeItem('blacklisted');
+          localStorage.removeItem('blacklistReason');
+          localStorage.removeItem('blacklistExpiryDate');
+          localStorage.removeItem('banType');
+          localStorage.removeItem('isPermanent');
+          
+          // Force page refresh to update the UI immediately
+          console.log('[BlacklistService] Forcing page refresh for current user');
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000); // Wait 1 second for the success message to show
+        }
+      }),
+      catchError(error => {
+        console.error('[BlacklistService] Lift ban error:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  private getCurrentUserEmail(): string | null {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.email || payload.sub;
+      }
+    } catch (error) {
+      console.error('[BlacklistService] Error parsing token:', error);
+    }
+    return null;
+  }
+
+  // Method to check if current user is still blacklisted
+  checkCurrentUserBlacklistStatus(): Observable<boolean> {
+    const currentUserEmail = this.getCurrentUserEmail();
+    if (!currentUserEmail) {
+      return of(false);
+    }
+
+    return this.http.get<any>(`${environment.apiUrl}/auth/check-blacklist-status`, { withCredentials: true })
+      .pipe(
+        map(response => {
+          const isBlacklisted = response.blacklisted || false;
+          console.log('[BlacklistService] Current user blacklist status:', isBlacklisted);
+          
+          // If user is not blacklisted, clear localStorage flags
+          if (!isBlacklisted) {
+            console.log('[BlacklistService] User is not blacklisted, clearing flags');
+            localStorage.removeItem('blacklisted');
+            localStorage.removeItem('blacklistReason');
+            localStorage.removeItem('blacklistExpiryDate');
+            localStorage.removeItem('banType');
+            localStorage.removeItem('isPermanent');
+          }
+          
+          return isBlacklisted;
+        }),
+        catchError(error => {
+          console.error('[BlacklistService] Error checking blacklist status:', error);
+          return of(false);
+        })
+      );
+  }
+
+  // Method to find related accounts
+  findRelatedAccounts(targetType: string, targetValue: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/related-accounts`, {
+      params: { targetType, targetValue }
+    }).pipe(
       catchError(this.handleError)
+    );
+  }
+
+  submitAppeal(appealData: any): Observable<any> {
+    console.log('[BlacklistService] Submitting appeal with data:', appealData);
+    return this.http.post<any>(`${environment.apiUrl}/appeals/submit`, appealData, {
+      withCredentials: true
+    }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        console.error('[BlacklistService] Appeal submission error:', error);
+        console.error('[BlacklistService] Error status:', error.status);
+        console.error('[BlacklistService] Error message:', error.message);
+        console.error('[BlacklistService] Error body:', error.error);
+        
+        // Don't redirect to login for appeal submission errors
+        if (error.status === 401 || error.status === 403) {
+          // Return a specific error message instead of throwing
+          return throwError(() => new Error(`Appeal submission failed (${error.status}): ${error.error?.message || error.message}`));
+        }
+        
+        return throwError(() => new Error(error.error?.message || 'Failed to submit appeal'));
+      })
     );
   }
 
@@ -285,6 +400,62 @@ getEntries(filters: BlacklistFilters): Observable<{
       { withCredentials: true }
     ).pipe(
       catchError(this.handleError)
+    );
+  }
+
+  getAppealStats(): Observable<Map<string, Object>> {
+    console.log('Fetching appeal stats...');
+    return this.http.get<Map<string, Object>>(`${environment.apiUrl}/appeals/stats`, { withCredentials: true }).pipe(
+      tap(response => console.log('Appeal stats received:', response)),
+      catchError(error => {
+        console.error('Error fetching appeal stats:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  // Appeal management methods
+  getAppeals(): Observable<Appeal[]> {
+    console.log('Fetching all appeals...');
+    return this.http.get<Appeal[]>(`${environment.apiUrl}/appeals`, { withCredentials: true }).pipe(
+      tap(response => console.log('Appeals received:', response)),
+      catchError(error => {
+        console.error('Error fetching appeals:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  getPendingAppeals(): Observable<Appeal[]> {
+    console.log('Fetching pending appeals...');
+    return this.http.get<Appeal[]>(`${environment.apiUrl}/appeals/pending`, { withCredentials: true }).pipe(
+      tap(response => console.log('Pending appeals received:', response)),
+      catchError(error => {
+        console.error('Error fetching pending appeals:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  getAppealById(id: string): Observable<Appeal> {
+    console.log('Fetching appeal by ID:', id);
+    return this.http.get<Appeal>(`${environment.apiUrl}/appeals/${id}`, { withCredentials: true }).pipe(
+      tap(response => console.log('Appeal by ID received:', response)),
+      catchError(error => {
+        console.error('Error fetching appeal by ID:', error);
+        return this.handleError(error);
+      })
+    );
+  }
+
+  reviewAppeal(id: string, reviewData: any): Observable<Appeal> {
+    console.log('Reviewing appeal:', id, 'with data:', reviewData);
+    return this.http.post<Appeal>(`${environment.apiUrl}/appeals/${id}/review`, reviewData, { withCredentials: true }).pipe(
+      tap(response => console.log('Appeal review response:', response)),
+      catchError(error => {
+        console.error('Error reviewing appeal:', error);
+        return this.handleError(error);
+      })
     );
   }
 

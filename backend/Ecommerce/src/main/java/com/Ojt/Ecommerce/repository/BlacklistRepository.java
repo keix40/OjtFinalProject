@@ -39,4 +39,10 @@ public interface BlacklistRepository extends JpaRepository<BlacklistEntry, Strin
 
     @Query("SELECT b FROM BlacklistEntry b WHERE b.targetType = :targetType AND b.targetValue = :targetValue AND b.status = 'ACTIVE' AND (b.expiryDate IS NULL OR b.expiryDate > CURRENT_TIMESTAMP)")
     BlacklistEntry findActiveByTargetTypeAndTargetValue(BlacklistEntry.TargetType targetType, String targetValue);
+    
+    @Query("SELECT b FROM BlacklistEntry b WHERE b.targetType = :targetType AND b.targetValue = :targetValue AND b.status = :status")
+    BlacklistEntry findByTargetTypeAndTargetValueAndStatus(BlacklistEntry.TargetType targetType, String targetValue, BlacklistEntry.Status status);
+    
+    @Query("SELECT b FROM BlacklistEntry b WHERE b.status = 'ACTIVE' AND b.expiryDate IS NOT NULL AND b.expiryDate <= :date")
+    List<BlacklistEntry> findActiveEntriesWithExpiryBefore(LocalDateTime date);
 } 

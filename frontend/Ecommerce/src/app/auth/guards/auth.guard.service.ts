@@ -3,7 +3,6 @@ import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTr
 import { Observable } from 'rxjs';
 import { AuthService } from '../auth.service';
 import { RoutePermissionMap } from '../../permission-map';
-import Swal from 'sweetalert2';
 
 @Injectable({ providedIn: 'root' })
 export class AuthGuard implements CanActivate {
@@ -13,69 +12,108 @@ export class AuthGuard implements CanActivate {
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): Observable<boolean | UrlTree> | Promise<boolean | UrlTree> | boolean | UrlTree {
-    // Blacklist enforcement: block navigation if blacklisted
+    console.log('[AuthGuard] Checking route:', state.url);
+    
+    // First, check and clear expired blacklist flags
+    this.auth.checkAndClearExpiredBlacklist();
+    
+    // Priority 1: Check localStorage first (for immediate response)
     if (localStorage.getItem('blacklisted') === 'true') {
-      // Check with backend if user is still blacklisted
+      console.log('[AuthGuard] User is blacklisted in localStorage, redirecting to blacklist-blocked');
+      return this.router.createUrlTree(['/blacklist-blocked'], { 
+        queryParams: {
+          reason: localStorage.getItem('blacklistReason') || '',
+          expiryDate: localStorage.getItem('blacklistExpiryDate') || '',
+          banType: localStorage.getItem('banType') || 'Temporary',
+          isPermanent: localStorage.getItem('isPermanent') || 'false'
+        }
+      });
+    }
+    
+    // Check if user is logged in
+    const isLoggedIn = this.auth.isLoggedIn();
+    console.log('[AuthGuard] isLoggedIn:', isLoggedIn);
+    if (!isLoggedIn) {
+      console.log('[AuthGuard] User not logged in, redirecting to login');
+      return this.router.createUrlTree(['/login']);
+    }
+    
+    // Priority 2: For logged-in users without localStorage flag, check with backend
+    console.log('[AuthGuard] User is logged in, checking with backend...');
+    return new Promise<boolean | UrlTree>((resolve) => {
       this.auth.checkBlacklistStatus().subscribe({
         next: (response) => {
-          // If user is no longer blacklisted, clear the flags
-          if (!response.blacklisted) {
+          console.log('[AuthGuard] Backend response:', response);
+          if (response.blacklisted) {
+            console.log('[AuthGuard] User is blacklisted by backend, setting flags and redirecting');
+            // User is blacklisted, set flags and redirect
+            localStorage.setItem('blacklisted', 'true');
+            localStorage.setItem('blacklistReason', response.reason || '');
+            localStorage.setItem('blacklistExpiryDate', response.expiryDate || '');
+            localStorage.setItem('banType', response.banType || 'Temporary');
+            localStorage.setItem('isPermanent', response.isPermanent ? 'true' : 'false');
+            
+            resolve(this.router.createUrlTree(['/blacklist-blocked'], { 
+              queryParams: {
+                reason: response.reason || '',
+                expiryDate: response.expiryDate || '',
+                banType: response.banType || 'Temporary',
+                isPermanent: response.isPermanent || false
+              }
+            }));
+          } else {
+            console.log('[AuthGuard] User is not blacklisted, continuing with normal auth check');
+            // User is not blacklisted, clear any existing flags and continue
             this.auth.clearBlacklistFlags();
+            resolve(this.performNormalAuthCheck(route));
           }
         },
         error: (error) => {
-          // If API call fails, keep the current blacklist status
-          console.error('Failed to check blacklist status:', error);
+          console.error('[AuthGuard] Failed to check blacklist status:', error);
+          // If blacklist check fails, continue with normal auth check
+          resolve(this.performNormalAuthCheck(route));
         }
       });
-
-      return this.router.createUrlTree(['/blacklist-blocked'], { queryParams: {
-        reason: localStorage.getItem('blacklistReason') || '',
-        expiryDate: localStorage.getItem('blacklistExpiryDate') || ''
-      }});
+    });
+  }
+  
+  private performNormalAuthCheck(route: ActivatedRouteSnapshot): boolean | UrlTree {
+    const decoded = this.auth.getDecodedToken();
+    let userRole = (decoded?.roles || decoded?.role || decoded?.roleName || '').toUpperCase();
+    // Remove ROLE_ prefix if present
+    if (userRole.startsWith('ROLE_')) {
+      userRole = userRole.replace('ROLE_', '');
     }
-
-    if (!this.auth.isLoggedIn()) {
-      this.router.navigate(['/login']);
+    // Walk up the route tree to find required role
+    let requiredRole = route.data['role'];
+    let parent = route.parent;
+    while (!requiredRole && parent) {
+      requiredRole = parent.data['role'];
+      parent = parent.parent;
+    }
+    if (requiredRole === 'customer' && userRole !== 'CUSTOMER') {
+      console.log('[AuthGuard] User does not have permission for route:', route.url);
+      // Silent redirect without showing any alert
+      this.router.navigate(['/dashboard']);
       return false;
     }
-  
-    // ✅ Get permission from route data (not path map)
+    if (requiredRole === 'admin' && userRole === 'CUSTOMER') {
+      console.log('[AuthGuard] User does not have permission for route:', route.url);
+      // Silent redirect without showing any alert
+      this.router.navigate(['/home']);
+      return false;
+    }
+    // Permission check for admin routes
     const requiredPermission = route.data['permission'];
-  
-    if (requiredPermission) {
+    if (requiredRole === 'admin' && requiredPermission) {
       const userPermissions = this.auth.getPermissions();
-      const hasPermission = userPermissions.includes(requiredPermission);
-      if (!hasPermission) {
-        // Get user roles (assume getRoles returns array of roles)
-        const roles = this.auth.getRoles();
-        const isCustomer = roles.map(r => r.toLowerCase()).includes('customer');
-        if (!isCustomer) {
-          // Show SweetAlert for non-customers
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: 'Access Denied',
-            text: 'You do not have permission to access this page.',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-            customClass: {
-              popup: 'swal2-toast'
-            }
-          });
-          setTimeout(() => {
-            window.history.back();
-          }, 2000);
-        } else {
-          // For customers, just go back
-          window.history.back();
-        }
+      if (!userPermissions.includes(requiredPermission)) {
+        console.log('[AuthGuard] User does not have permission for route:', route.url);
+        // Silent redirect without showing any alert
+        this.router.navigate(['/dashboard']);
         return false;
       }
     }
-  
     return true;
   }
   

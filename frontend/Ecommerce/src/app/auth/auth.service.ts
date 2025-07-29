@@ -98,12 +98,13 @@ export class AuthService {
 
   logout() {
     localStorage.removeItem('token');
-    // Clear permissions
+    localStorage.removeItem('jwtToken');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('userPermissions');
-    // Clear blacklist flags when user logs out
-    localStorage.removeItem('blacklisted');
-    localStorage.removeItem('blacklistReason');
-    localStorage.removeItem('blacklistExpiryDate');
+    localStorage.removeItem('email');
+    localStorage.removeItem('newNotificationCount');
+    // Remove any other session or user-related keys as needed
   }
 
   // Method to clear blacklist flags (can be called when user is removed from blacklist)
@@ -126,7 +127,31 @@ export class AuthService {
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.get(`${this.baseUrl}/check-blacklist-status`, { headers });
+    return this.http.get<any>('http://localhost:8080/api/auth/check-blacklist-status', { headers });
+  }
+
+  // Method to automatically check and clear expired blacklist flags
+  checkAndClearExpiredBlacklist(): void {
+    const blacklisted = localStorage.getItem('blacklisted');
+    const expiryDate = localStorage.getItem('blacklistExpiryDate');
+    const isPermanent = localStorage.getItem('isPermanent') === 'true';
+    
+    // Don't clear permanent bans automatically
+    if (blacklisted === 'true' && isPermanent) {
+      console.log('[Auth] User has permanent ban - not clearing automatically');
+      return;
+    }
+    
+    if (blacklisted === 'true' && expiryDate) {
+      const expiry = new Date(expiryDate);
+      const now = new Date();
+      
+      // If expiry date has passed, clear the blacklist flags
+      if (expiry <= now) {
+        console.log('[Auth] Blacklist expired, clearing flags');
+        this.clearBlacklistFlags();
+      }
+    }
   }
 
   getUsername(): string | null {

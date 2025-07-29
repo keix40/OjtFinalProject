@@ -3,12 +3,13 @@ import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ReactiveFormsModule } from "@angular/forms";
-import { BlacklistService, BlacklistEntry, BlacklistStats, AutoRules } from "../services/blacklist.service";
-import { Subject, forkJoin, of } from 'rxjs';
-import { takeUntil, catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { BlacklistService, BlacklistEntry, BlacklistStats, AutoRules, Appeal } from "../services/blacklist.service";
+import { Subject, forkJoin, of, Observable } from 'rxjs';
+import { takeUntil, catchError, debounceTime, distinctUntilChanged, timeout } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+
 declare var lucide: any;
 
 @Component({
@@ -30,6 +31,7 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   showEditModal = false;
   showIncidentHistoryModal = false;
   incidentHistory: any[] = [];
+  relatedAccounts: any[] = [];
 
   // Filter properties
   searchTerm = "";
@@ -56,11 +58,31 @@ export class BlacklistComponent implements OnInit, OnDestroy {
 
   // Add missing properties for template binding
   fraudPrevented: number = 0;
-  estimatedSavings: number = 0;
   pendingAppeals: number = 0;
   avgAppealTime: number = 0;
   activeTab: string = 'overview';
   Math = Math;
+
+  // Appeal management properties
+  appeals: Appeal[] = [];
+  selectedAppeal: Appeal | null = null;
+  showAppealModal = false;
+  showAppealManagementModal = false;
+  appealReviewForm: FormGroup;
+  loadingAppeals = false;
+  loadingAppealReview = false;
+  appealStatusFilter = '';
+  filteredAppeals: Appeal[] = [];
+  isEditMode = false;
+
+  // Computed properties for appeal counts
+  get approvedAppealsCount(): number {
+    return this.appeals.filter(a => a.status === 'APPROVED').length;
+  }
+
+  get rejectedAppealsCount(): number {
+    return this.appeals.filter(a => a.status === 'REJECTED').length;
+  }
 
   // Form
   blacklistForm: FormGroup;
@@ -86,16 +108,26 @@ export class BlacklistComponent implements OnInit, OnDestroy {
       notifyTeam: [true],
       blockRelated: [false],
     });
+
+    // Initialize appeal review form
+    this.appealReviewForm = this.fb.group({
+      decision: ['', [Validators.required]],
+      adminNotes: ['', [Validators.required, Validators.minLength(10)]]
+    });
+
+    // Add form validation listeners
+    this.appealReviewForm.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.cdr.detectChanges();
+    });
   }
 
   ngOnInit(): void {
     this.loadData();
     this.loadAutoRules();
-    // Demo/mock values for dashboard stats
-    this.fraudPrevented = 42; // Replace with real value if available
-    this.estimatedSavings = 1200; // Replace with real value if available
-    this.pendingAppeals = 3; // Replace with real value if available
-    this.avgAppealTime = 12; // Replace with real value if available
+    this.loadAppeals(); // Load appeals for the appeals tab
+    // Remove static mock values - these will come from backend stats
     // Setup debounced search
     this.blacklistForm.get('searchTerm')?.valueChanges
       .pipe(
@@ -109,6 +141,8 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    // Ensure body scroll is restored
+    this.enableBodyScroll();
   }
 
   ngAfterViewInit() {
@@ -143,6 +177,13 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     .subscribe({
       next: ([stats, entriesResponse]) => {
         this.stats = stats;
+        
+        // Set dashboard stats from backend response
+        if (stats) {
+          this.fraudPrevented = stats.fraudPrevented || 0;
+          this.pendingAppeals = stats.pendingAppeals || 0;
+          this.avgAppealTime = stats.avgAppealTime || 0;
+        }
         
         if (entriesResponse) {
           this.filteredEntries = entriesResponse.entries;
@@ -266,8 +307,9 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   addToBlacklist(): void {
     if (this.blacklistForm.valid) {
       const formValue = this.blacklistForm.value;
-      // Ensure enums are sent in uppercase as required by backend
-      this.blacklistService.addEntry({
+      
+      // Create the main blacklist entry
+      const mainEntry = {
         targetType: formValue.targetType ? formValue.targetType.toUpperCase() : undefined,
         targetValue: formValue.targetValue,
         category: formValue.category ? formValue.category.toUpperCase() : undefined,
@@ -277,15 +319,25 @@ export class BlacklistComponent implements OnInit, OnDestroy {
         associatedEmail: formValue.associatedEmail,
         notes: formValue.notes,
         addedBy: 'System' // Default value; replace with actual user if available
-      })
+      };
+
+      // Add the main entry first
+      this.blacklistService.addEntry(mainEntry)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: () => {
+          next: (mainResponse) => {
+            console.log('[BlacklistComponent] Main entry added:', mainResponse);
+            
+            // If "Block related accounts" is checked, find and block related accounts
+            if (formValue.blockRelated) {
+              this.blockRelatedAccounts(formValue.targetType?.toUpperCase(), formValue.targetValue, formValue.reason);
+            } else {
           this.toastr.success('Entry added to blacklist successfully');
           this.loadData();
           this.blacklistForm.reset();
           this.showEditModal = false;
           this.cdr.markForCheck();
+            }
         },
         error: (error) => {
           this.toastr.error('Failed to add entry to blacklist');
@@ -295,22 +347,106 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     }
   }
 
+  private blockRelatedAccounts(targetType: string, targetValue: string, reason: string): void {
+    console.log('[BlacklistComponent] Blocking related accounts for:', targetType, targetValue);
+    
+    // Find related accounts based on target type
+    this.findRelatedAccounts(targetType, targetValue).subscribe({
+      next: (relatedAccounts) => {
+        if (relatedAccounts.length > 0) {
+          console.log('[BlacklistComponent] Found related accounts:', relatedAccounts);
+          
+          // Add related accounts to blacklist
+          const relatedEntries = relatedAccounts.map(account => ({
+            targetType: 'EMAIL' as const, // Use uppercase to match backend enum
+            targetValue: account.email,
+            category: 'POLICY_VIOLATION' as const, // Use uppercase to match backend enum
+            riskLevel: 'MEDIUM' as const, // Use uppercase to match backend enum
+            reason: `Related account to ${targetValue}: ${reason}`,
+            expiryDate: undefined, // Same expiry as main entry
+            associatedEmail: targetValue,
+            notes: `Automatically blocked due to relationship with ${targetValue}`,
+            addedBy: 'System'
+          }));
+
+          // Add all related entries
+          let completed = 0;
+          relatedEntries.forEach(entry => {
+            this.blacklistService.addEntry(entry)
+              .pipe(takeUntil(this.destroy$))
+              .subscribe({
+                next: () => {
+                  completed++;
+                  if (completed === relatedEntries.length) {
+                    this.toastr.success(`Entry and ${relatedEntries.length} related accounts added to blacklist`);
+                    this.loadData();
+                    this.blacklistForm.reset();
+                    this.showEditModal = false;
+                    this.cdr.markForCheck();
+                  }
+                },
+                error: (error) => {
+                  console.error('[BlacklistComponent] Error adding related entry:', error);
+                  completed++;
+                  if (completed === relatedEntries.length) {
+                    this.toastr.warning('Main entry added, but some related accounts failed to block');
+                    this.loadData();
+                    this.blacklistForm.reset();
+                    this.showEditModal = false;
+                    this.cdr.markForCheck();
+                  }
+                }
+              });
+          });
+        } else {
+          this.toastr.success('Entry added to blacklist successfully (no related accounts found)');
+          this.loadData();
+          this.blacklistForm.reset();
+          this.showEditModal = false;
+          this.cdr.markForCheck();
+        }
+      },
+      error: (error) => {
+        console.error('[BlacklistComponent] Error finding related accounts:', error);
+        this.toastr.warning('Main entry added, but failed to check for related accounts');
+        this.loadData();
+        this.blacklistForm.reset();
+        this.showEditModal = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private findRelatedAccounts(targetType: string, targetValue: string): Observable<any[]> {
+    // Call backend API to find related accounts
+    return this.blacklistService.findRelatedAccounts(targetType, targetValue);
+  }
+
   // Similar updates for other methods that modify state
   liftBan(entry: BlacklistEntry): void {
+    console.log('[BlacklistComponent] liftBan called for entry:', entry);
+    console.log('[BlacklistComponent] Entry ID:', entry.id);
+    console.log('[BlacklistComponent] Entry targetValue:', entry.targetValue);
+    
     if (confirm(`Lift ban for ${entry.targetValue}?`)) {
+      console.log('[BlacklistComponent] User confirmed lift ban');
       this.blacklistService.liftBan(entry.id)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
-          next: () => {
+          next: (response) => {
+            console.log('[BlacklistComponent] Lift ban successful:', response);
             this.toastr.success('Ban lifted successfully');
             this.loadData();
             this.cdr.markForCheck();
           },
           error: (error) => {
+            console.error('[BlacklistComponent] Lift ban error:', error);
             this.toastr.error('Failed to lift ban');
             console.error('Error lifting ban:', error);
           }
         });
+    } else {
+      console.log('[BlacklistComponent] User cancelled lift ban');
     }
   }
 
@@ -455,8 +591,44 @@ export class BlacklistComponent implements OnInit, OnDestroy {
 
   // Form helpers
   onTargetTypeChange(): void {
-    const targetType = this.blacklistForm.get("targetType")?.value;
-    this.blacklistForm.get("targetValue")?.setValue("");
+    // Reset target value when target type changes
+    this.blacklistForm.patchValue({ targetValue: '' });
+  }
+
+  loadRelatedAccounts(): void {
+    const targetValue = this.blacklistForm.get('targetValue')?.value;
+    const targetType = this.blacklistForm.get('targetType')?.value;
+    const blockRelated = this.blacklistForm.get('blockRelated')?.value;
+
+    if (targetValue && targetType && blockRelated) {
+      console.log('[BlacklistComponent] Loading related accounts for:', targetType, targetValue);
+      
+      this.blacklistService.findRelatedAccounts(targetType, targetValue)
+        .pipe(
+          takeUntil(this.destroy$),
+          timeout(5000), // 5 seconds timeout
+          catchError(error => {
+            console.error('[BlacklistComponent] Error loading related accounts:', error);
+            this.relatedAccounts = [];
+            return of([]); // Return empty array to continue
+          })
+        )
+        .subscribe({
+          next: (accounts) => {
+            console.log('[BlacklistComponent] Related accounts found:', accounts);
+            this.relatedAccounts = accounts || [];
+            this.cdr.markForCheck();
+          },
+          error: (error) => {
+            console.error('[BlacklistComponent] Error loading related accounts:', error);
+            this.relatedAccounts = [];
+            this.cdr.markForCheck();
+          }
+        });
+    } else {
+      this.relatedAccounts = [];
+      this.cdr.markForCheck();
+    }
   }
 
   getTargetPlaceholder(): string {
@@ -496,56 +668,101 @@ export class BlacklistComponent implements OnInit, OnDestroy {
 
   getCategoryIconName(category: string): string {
     switch (category) {
-      case 'fraud': return 'alert-triangle';
-      case 'spam': return 'message-circle';
-      case 'abuse': return 'slash';
-      case 'chargeback': return 'credit-card';
-      case 'fake_account': return 'user-x';
-      case 'policy_violation': return 'file-warning';
+      case 'FRAUD': return 'alert-triangle';
+      case 'SPAM': return 'message-circle';
+      case 'ABUSE': return 'slash';
+      case 'CHARGEBACK': return 'credit-card';
+      case 'FAKE_ACCOUNT': return 'user-x';
+      case 'POLICY_VIOLATION': return 'file-warning';
       default: return 'alert-circle';
     }
   }
 
   getCategoryLabel(category: string): string {
     const labels = {
-      fraud: "Fraud",
-      spam: "Spam",
-      abuse: "Abuse",
-      chargeback: "Chargeback",
-      fake_account: "Fake Account",
-      policy_violation: "Policy Violation",
+      FRAUD: "Fraud",
+      SPAM: "Spam",
+      ABUSE: "Abuse",
+      CHARGEBACK: "Chargeback",
+      FAKE_ACCOUNT: "Fake Account",
+      POLICY_VIOLATION: "Policy Violation",
     };
     return labels[category as keyof typeof labels] || category;
   }
 
   getRiskIconName(riskLevel: string): string {
     switch (riskLevel) {
-      case 'critical': return 'flame';
-      case 'high': return 'trending-up';
-      case 'medium': return 'activity';
-      case 'low': return 'shield';
+      case 'CRITICAL': return 'flame';
+      case 'HIGH': return 'trending-up';
+      case 'MEDIUM': return 'activity';
+      case 'LOW': return 'shield';
       default: return 'help-circle';
     }
   }
 
   getStatusIconName(status: string): string {
     switch (status) {
-      case 'active': return 'lock';
-      case 'appealed': return 'clock';
-      case 'expired': return 'calendar-x';
-      case 'lifted': return 'unlock';
+      case 'ACTIVE': return 'lock';
+      case 'APPEALED': return 'clock';
+      case 'EXPIRED': return 'calendar-x';
+      case 'LIFTED': return 'unlock';
       default: return 'help-circle';
     }
   }
 
   getStatusLabel(status: string): string {
-    const labels = {
-      active: "Active",
-      appealed: "Under Appeal",
-      expired: "Expired",
-      lifted: "Lifted",
+    const statuses: { [key: string]: string } = {
+      'ACTIVE': 'Active',
+      'active': 'Active',
+      'EXPIRED': 'Expired',
+      'expired': 'Expired',
+      'LIFTED': 'Lifted',
+      'lifted': 'Lifted',
+      'APPEALED': 'Under Appeal',
+      'appealed': 'Under Appeal',
+      'PENDING': 'Pending',
+      'pending': 'Pending',
+      'APPROVED': 'Approved',
+      'approved': 'Approved',
+      'REJECTED': 'Rejected',
+      'rejected': 'Rejected'
     };
-    return labels[status as keyof typeof labels] || status;
+    return statuses[status] || status;
+  }
+
+  getStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      'ACTIVE': 'red',
+      'active': 'red',
+      'EXPIRED': 'gray',
+      'expired': 'gray',
+      'LIFTED': 'green',
+      'lifted': 'green',
+      'APPEALED': 'orange',
+      'appealed': 'orange',
+      'PENDING': 'yellow',
+      'pending': 'yellow',
+      'APPROVED': 'green',
+      'approved': 'green',
+      'REJECTED': 'red',
+      'rejected': 'red'
+    };
+    return colors[status] || 'gray';
+  }
+
+  // Helper method to normalize status values
+  normalizeStatus(status: string): string {
+    return status.toUpperCase();
+  }
+
+  // Check if entry has appeals
+  hasAppeals(entry: BlacklistEntry): boolean {
+    return this.appeals.some(appeal => appeal.blacklistEntryId === entry.id);
+  }
+
+  // Get appeals for specific entry
+  getEntryAppeals(entry: BlacklistEntry): Appeal[] {
+    return this.appeals.filter(appeal => appeal.blacklistEntryId === entry.id);
   }
 
   getTimeAgo(date: Date): string {
@@ -563,11 +780,6 @@ export class BlacklistComponent implements OnInit, OnDestroy {
 
   getBlockedAttempts(entry: BlacklistEntry): number {
     return entry.incidentCount;
-  }
-
-  getEstimatedLoss(entry: BlacklistEntry): number {
-    const avgLoss = entry.riskLevel === "critical" ? 500 : entry.riskLevel === "high" ? 200 : 100;
-    return entry.incidentCount * avgLoss;
   }
 
   getLastIncidentDays(entry: BlacklistEntry): number {
@@ -650,48 +862,214 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     const targetValue = this.blacklistForm.get('targetValue')?.value;
     if (!targetValue) return 0;
 
-    // In a real implementation, this would make an API call to check impact
-    // For now, return a mock value based on target type
-    const targetType = this.blacklistForm.get('targetType')?.value;
-    switch (targetType) {
-      case 'ip':
-        return Math.floor(Math.random() * 5) + 2; // 2-6 accounts
-      case 'device':
-        return Math.floor(Math.random() * 3) + 1; // 1-3 accounts
-      default:
-        return 1;
-    }
+    // Simple static values for demo purposes
+    // In a real project, this would be calculated based on actual data
+    return 1; // Most blacklist entries affect 1 account
   }
 
   getRelatedEntries(): number {
-    const targetValue = this.blacklistForm.get('targetValue')?.value;
-    if (!targetValue) return 0;
-
-    // In a real implementation, this would make an API call to find related entries
-    // For now, return a mock value
-    return Math.floor(Math.random() * 3);
+    return this.relatedAccounts.length;
   }
 
-  getRiskScore(): number {
-    const riskLevel = this.blacklistForm.get('riskLevel')?.value;
-    const scores = { 
-      low: 25, 
-      medium: 50, 
-      high: 75, 
-      critical: 95 
-    };
-    return scores[riskLevel as keyof typeof scores] || 50;
+  // Appeal management methods
+  loadAppeals(): void {
+    this.loadingAppeals = true;
+    console.log('Loading appeals...');
+    
+    this.blacklistService.getAppeals().pipe(
+      takeUntil(this.destroy$),
+      catchError(error => {
+        console.error('Error loading appeals:', error);
+        // Show user-friendly error message
+        const errorMessage = error.error?.message || error.message || 'Failed to load appeals';
+        this.toastr.error(errorMessage, 'Load Failed');
+        this.loadingAppeals = false;
+        this.cdr.detectChanges();
+        return of([]);
+      })
+    ).subscribe({
+      next: (appeals) => {
+        console.log('Appeals loaded successfully:', appeals);
+        this.appeals = appeals;
+        this.pendingAppeals = appeals.filter(a => a.status === 'PENDING').length;
+        this.filteredAppeals = appeals; // Initialize filtered appeals
+        this.loadingAppeals = false;
+        this.cdr.detectChanges();
+      },
+      error: (error) => {
+        console.error('Unexpected error in loadAppeals:', error);
+        this.loadingAppeals = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
-  previewBlacklist(): void {
-    if (this.blacklistForm.valid) {
-      const formValue = this.blacklistForm.value;
-      this.toastr.info(`Impact preview for ${formValue.targetValue}:
-        - Affected Accounts: ${this.getAffectedAccounts()}
-        - Related Entries: ${this.getRelatedEntries()}
-        - Risk Score: ${this.getRiskScore()}%`);
+  viewAppeal(appeal: Appeal): void {
+    this.selectedAppeal = appeal;
+    this.showAppealModal = true;
+    this.isEditMode = false;
+    this.showAppealManagementModal = false; // Hide management modal when opening review
+    // Patch form with current values
+    this.appealReviewForm.patchValue({
+      decision: appeal.status === 'PENDING' ? '' : appeal.status,
+      adminNotes: appeal.adminNotes || ''
+    });
+    this.cdr.detectChanges();
+  }
+
+  closeAppealModal(): void {
+    this.selectedAppeal = null;
+    this.showAppealModal = false;
+    this.isEditMode = false;
+    this.appealReviewForm.reset();
+    this.showAppealManagementModal = true; // Optionally re-open management modal
+    this.cdr.detectChanges();
+  }
+
+  enableEditMode(): void {
+    this.isEditMode = true;
+    this.cdr.detectChanges();
+  }
+
+  reviewAppeal(): void {
+    console.log('Reviewing appeal, form valid:', this.appealReviewForm.valid);
+    console.log('Selected appeal:', this.selectedAppeal);
+    
+    if (this.appealReviewForm.valid && this.selectedAppeal) {
+      this.loadingAppealReview = true;
+      const reviewData = this.appealReviewForm.value;
+      
+      console.log('Reviewing appeal:', this.selectedAppeal.id);
+      console.log('Review data:', reviewData);
+      
+      this.blacklistService.reviewAppeal(this.selectedAppeal.id, reviewData).pipe(
+        takeUntil(this.destroy$),
+        catchError(error => {
+          console.error('Error reviewing appeal:', error);
+          // Show user-friendly error message
+          const errorMessage = error.error?.message || error.message || 'Failed to review appeal';
+          this.toastr.error(errorMessage, 'Review Failed');
+          this.loadingAppealReview = false;
+          this.cdr.detectChanges();
+          return of(null);
+        })
+      ).subscribe({
+        next: (result) => {
+          console.log('Appeal review result:', result);
+          if (result) {
+            this.toastr.success('Appeal reviewed successfully');
+            // Update selectedAppeal with new data and lock again
+            this.selectedAppeal = result;
+            this.isEditMode = false;
+            this.appealReviewForm.patchValue({
+              decision: result.status,
+              adminNotes: result.adminNotes || ''
+            });
+            this.loadAppeals();
+            this.loadData(); // Refresh blacklist data
+          }
+          this.loadingAppealReview = false;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error('Unexpected error in reviewAppeal:', error);
+          this.loadingAppealReview = false;
+          this.cdr.detectChanges();
+        }
+      });
     } else {
-      this.toastr.warning('Please fill in required fields first');
+      console.log('Form is invalid or no appeal selected');
+      if (!this.appealReviewForm.valid) {
+        console.log('Form errors:', this.appealReviewForm.errors);
+        console.log('Decision field errors:', this.appealReviewForm.get('decision')?.errors);
+        console.log('Admin notes field errors:', this.appealReviewForm.get('adminNotes')?.errors);
+        this.toastr.error('Please fill in all required fields', 'Form Error');
+      }
     }
+  }
+
+  getAppealReasonLabel(reason: string): string {
+    const reasons: { [key: string]: string } = {
+      'WRONGFUL_BAN': 'Wrongful Ban',
+      'MISTAKEN_IDENTITY': 'Mistaken Identity',
+      'ACCOUNT_COMPROMISED': 'Account Compromised',
+      'TECHNICAL_ERROR': 'Technical Error',
+      'OTHER': 'Other'
+    };
+    return reasons[reason] || reason;
+  }
+
+  getAppealStatusLabel(status: string): string {
+    const statuses: { [key: string]: string } = {
+      'PENDING': 'Pending',
+      'APPROVED': 'Approved',
+      'REJECTED': 'Rejected'
+    };
+    return statuses[status] || status;
+  }
+
+  getAppealStatusColor(status: string): string {
+    const colors: { [key: string]: string } = {
+      'PENDING': 'yellow',
+      'APPROVED': 'green',
+      'REJECTED': 'red'
+    };
+    return colors[status] || 'gray';
+  }
+
+  // Helper method to get user email from appeal
+  getAppealUserEmail(appeal: Appeal): string {
+    return appeal.userEmail || 'Unknown';
+  }
+
+  // Helper method to get appeal details
+  getAppealDetails(appeal: Appeal): string {
+    return appeal.appealDetails || 'No details provided';
+  }
+
+  // Method to view all appeals
+  viewAllAppeals(): void {
+    // Set active tab to appeals if in entry details view
+    this.activeTab = 'appeals';
+    // Load appeals if not already loaded
+    if (this.appeals.length === 0) {
+      this.loadAppeals();
+    }
+  }
+
+  // Appeal management modal methods
+  openAppealManagementModal(): void {
+    console.log('Opening appeal management modal');
+    this.showAppealManagementModal = true;
+    this.loadAppeals();
+    this.disableBodyScroll();
+    this.cdr.detectChanges();
+  }
+
+  closeAppealManagementModal(): void {
+    console.log('Closing appeal management modal');
+    this.showAppealManagementModal = false;
+    this.appealStatusFilter = '';
+    this.filteredAppeals = [];
+    this.enableBodyScroll();
+    this.cdr.detectChanges();
+  }
+
+  filterAppeals(): void {
+    if (!this.appealStatusFilter) {
+      this.filteredAppeals = this.appeals;
+    } else {
+      this.filteredAppeals = this.appeals.filter(appeal => appeal.status === this.appealStatusFilter);
+    }
+    this.cdr.detectChanges();
+  }
+
+  // Helper methods for body scroll management
+  private disableBodyScroll(): void {
+    document.body.classList.add('modal-open');
+  }
+
+  private enableBodyScroll(): void {
+    document.body.classList.remove('modal-open');
   }
 }

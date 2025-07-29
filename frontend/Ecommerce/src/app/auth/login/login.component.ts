@@ -91,6 +91,9 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
 
   if (this.loginForm.invalid) return;
 
+  // Check and clear expired blacklist flags before login attempt
+  this.auth.checkAndClearExpiredBlacklist();
+
   this.auth.login(this.loginForm.value).subscribe({
     next: (res) => {
       // Redirect to OTP page if required
@@ -147,10 +150,15 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         localStorage.setItem('blacklisted', 'true');
         localStorage.setItem('blacklistReason', err.error.reason || '');
         localStorage.setItem('blacklistExpiryDate', err.error.expiryDate || '');
+        localStorage.setItem('banType', err.error.banType || 'Temporary');
+        localStorage.setItem('isPermanent', err.error.isPermanent ? 'true' : 'false');
+        
         this.router.navigate(['/blacklist-blocked'], {
           queryParams: {
             reason: err.error.reason,
-            expiryDate: err.error.expiryDate
+            expiryDate: err.error.expiryDate,
+            banType: err.error.banType,
+            isPermanent: err.error.isPermanent
           }
         });
         return;

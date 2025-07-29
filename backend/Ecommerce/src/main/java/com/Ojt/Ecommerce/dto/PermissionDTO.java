@@ -5,8 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 @Data
-@NoArgsConstructor  // Jackson ရဲ့ serialization/deserialization အတွက် လိုတယ်
-@AllArgsConstructor // အပေါ် constructor ကို အလိုအလျောက် generate
+@NoArgsConstructor  // Required for Jackson serialization/deserialization
+@AllArgsConstructor // Auto-generates constructor above
 public class PermissionDTO {
     private Long id;
     private String key;

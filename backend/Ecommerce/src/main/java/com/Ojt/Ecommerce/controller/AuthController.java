@@ -43,6 +43,7 @@ import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.service.ActivityLogService;
 import com.Ojt.Ecommerce.util.IpLocationUtil;
 import com.Ojt.Ecommerce.service.BlacklistServiceImpl;
+import com.Ojt.Ecommerce.entity.BlacklistEntry;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -134,13 +135,30 @@ public class AuthController {
         boolean requireOtpCaptcha = loginAttemptService.isOtpCaptchaRequired(ip);
 
         // Blacklist enforcement: check if user is blacklisted by email
-        BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
-        if (blacklistEntry != null) {
-            return ResponseEntity.status(403).body(Map.of(
-                "blocked", true,
-                "reason", blacklistEntry.getReason(),
-                "expiryDate", blacklistEntry.getExpiryDate()
-            ));
+        try {
+            System.out.println("[Blacklist Check] Checking email: " + email);
+            BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
+            if (blacklistEntry != null) {
+                System.out.println("[Blacklist Check] User is blacklisted: " + email);
+                
+                // Handle permanent ban (null expiry date) vs temporary ban
+                String banType = blacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary";
+                System.out.println("[Blacklist Check] Ban type: " + banType);
+                
+                return ResponseEntity.status(403).body(Map.of(
+                    "blocked", true,
+                    "reason", blacklistEntry.getReason(),
+                    "expiryDate", blacklistEntry.getExpiryDate(),
+                    "banType", banType,
+                    "isPermanent", blacklistEntry.getExpiryDate() == null
+                ));
+            } else {
+                System.out.println("[Blacklist Check] User is not blacklisted: " + email);
+            }
+        } catch (Exception e) {
+            System.err.println("[Blacklist Check] Error checking blacklist: " + e.getMessage());
+            e.printStackTrace();
+            // Don't block login if blacklist check fails, just log the error
         }
 
         try {
@@ -264,6 +282,7 @@ public class AuthController {
                 "accessToken", accessToken,
                 "refreshToken", refreshToken.getToken()
             ));
+        
         } catch (Exception ex) {
             // Save failed attempt
             LoginAttemptDTO failDTO = LoginAttemptDTO.builder()

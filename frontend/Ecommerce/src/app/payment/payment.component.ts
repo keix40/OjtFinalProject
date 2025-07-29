@@ -475,16 +475,19 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
       addressId: this.addressId!,
       discountId: this.discountId || null,
       deliveryServiceId: this.deliveryServiceId!,
-      deliveryFee: this.deliveryFee,
-      totalAmount: this.getTotal(),
+      deliveryFee: typeof this.deliveryFee === 'number' ? this.deliveryFee : Number(this.deliveryFee),
+      totalAmount: typeof this.getTotal() === 'number' ? this.getTotal() : Number(this.getTotal()),
       cartItem: this.cartItems.map(item => ({
         productId: item.productId ?? item.id,
-        quantity: item.quantity,
-        price: item.price,
+        quantity: typeof item.quantity === 'number' ? item.quantity : Number(item.quantity),
+        price: typeof item.price === 'number' ? item.price : Number(item.price),
         variantId: item.variantId ?? null
       })),
       cardId
     };
+
+    // Debug: log the payload to ensure all numbers are correct
+    console.log('Submitting userOrder payload:', JSON.stringify(userOrder));
 
     this.orderService.createOrder(userOrder).subscribe({
       next: (response: any) => {
