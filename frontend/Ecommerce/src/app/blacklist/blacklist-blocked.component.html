@@ -7,18 +7,107 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9l6 6m0-6l-6 6" />
         </svg>
       </div>
-      <h1 class="text-3xl font-bold text-rose-700 mb-2 drop-shadow">Your Account is Blacklisted</h1>
+      <h1 class="text-3xl font-bold text-rose-700 mb-2 drop-shadow">
+        {{ isPermanent ? 'Your Account is Permanently Banned' : 'Your Account is Blacklisted' }}
+      </h1>
       <p class="text-lg text-slate-700 text-center max-w-xl mb-4">
-        For your security and the safety of our platform, your account has been temporarily restricted.<br/>
+        For your security and the safety of our platform, your account has been {{ isPermanent ? 'permanently restricted' : 'temporarily restricted' }}.<br/>
         <span class="font-semibold text-rose-600">Reason:</span> <span class="font-medium" data-testid="blacklist-reason">{{ reason }}</span>
       </p>
-      <div class="bg-rose-50 border border-rose-200 rounded-lg px-6 py-4 flex flex-col items-center mb-4">
+      
+      <!-- Show countdown only for temporary bans -->
+      <div class="bg-rose-50 border border-rose-200 rounded-lg px-6 py-4 flex flex-col items-center mb-4" *ngIf="!isPermanent && expiryDate">
         <span class="text-slate-600 text-base">Blacklist will end on:</span>
         <span class="text-2xl font-bold text-rose-700 mt-1" data-testid="blacklist-expiry">{{ expiryDate | date:'MMM dd, yyyy HH:mm' }}</span>
         <span class="mt-2 text-lg font-semibold text-rose-600" *ngIf="countdown">⏳ {{ countdown }}</span>
       </div>
+      
+      <!-- Show permanent ban message -->
+      <div class="bg-red-50 border border-red-200 rounded-lg px-6 py-4 flex flex-col items-center mb-4" *ngIf="isPermanent">
+        <span class="text-red-600 text-lg font-semibold">🚫 PERMANENT BAN</span>
+        <span class="text-red-700 text-base mt-1">This ban has no expiration date</span>
+      </div>
+      
       <div class="mt-2 text-center">
-        <p class="text-slate-500">If you believe this is a mistake, please contact our support team for further assistance.</p>
+        <p class="text-slate-500">
+          {{ isPermanent ? 
+            'This is a permanent ban. If you believe this is a mistake, you can appeal below or contact our support team for review.' : 
+            'If you believe this is a mistake, you can appeal below or contact our support team for further assistance.' 
+          }}
+        </p>
+        
+        <!-- Appeal Button -->
+        <div class="flex justify-center mt-4">
+          <button 
+            (click)="showAppealForm = true" 
+            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Appeal This Ban
+          </button>
+        </div>
+      </div>
+      
+      <!-- Appeal Form Modal -->
+      <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" *ngIf="showAppealForm">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Appeal Your Ban</h3>
+            <button (click)="showAppealForm = false" class="text-gray-400 hover:text-gray-600">
+              <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
+          <form [formGroup]="appealForm" (ngSubmit)="submitAppeal()">
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Appeal</label>
+              <select formControlName="appealReason" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">Select a reason</option>
+                <option value="WRONGFUL_BAN">I was wrongfully banned</option>
+                <option value="MISTAKEN_IDENTITY">Mistaken identity</option>
+                <option value="ACCOUNT_COMPROMISED">My account was compromised</option>
+                <option value="TECHNICAL_ERROR">Technical error or glitch</option>
+                <option value="OTHER">Other reason</option>
+              </select>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Additional Details</label>
+              <textarea 
+                formControlName="appealDetails" 
+                rows="4" 
+                placeholder="Please provide additional details about your appeal..."
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+            
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
+              <input 
+                type="email" 
+                formControlName="contactEmail" 
+                placeholder="your-email@example.com"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            
+            <div class="flex gap-3">
+              <button 
+                type="button" 
+                (click)="showAppealForm = false"
+                class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-semibold py-2 px-4 rounded-md transition-colors duration-200">
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                [disabled]="!appealForm.valid || submittingAppeal"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-2 px-4 rounded-md transition-colors duration-200">
+                {{ submittingAppeal ? 'Submitting...' : 'Submit Appeal' }}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

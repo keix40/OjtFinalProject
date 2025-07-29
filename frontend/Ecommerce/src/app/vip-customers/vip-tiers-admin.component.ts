@@ -16,7 +16,7 @@ import { ReactiveFormsModule } from '@angular/forms';
         <input formControlName="minPoints" type="number" placeholder="Min Points" class="input input-bordered w-32" required />
         <input formControlName="icon" placeholder="Icon (lucide name)" class="input input-bordered w-32" />
         <input formControlName="color" placeholder="Color (e.g. text-blue-500)" class="input input-bordered w-32" />
-        <input formControlName="benefits" placeholder="Benefits (comma separated)" class="input input-bordered" />
+
         <input formControlName="order" type="number" placeholder="Order" class="input input-bordered w-20" />
         <button type="submit" class="btn btn-primary">{{ editId ? 'Update' : 'Add' }} Tier</button>
         <button *ngIf="editId" type="button" (click)="resetForm()" class="btn btn-secondary ml-2">Cancel</button>
@@ -31,7 +31,7 @@ import { ReactiveFormsModule } from '@angular/forms';
             <th class="px-4 py-2">Min Points</th>
             <th class="px-4 py-2">Icon</th>
             <th class="px-4 py-2">Color</th>
-            <th class="px-4 py-2">Benefits</th>
+
             <th class="px-4 py-2">Actions</th>
           </tr>
         </thead>
@@ -42,7 +42,7 @@ import { ReactiveFormsModule } from '@angular/forms';
             <td class="px-4 py-2">{{ tier.minPoints }}</td>
             <td class="px-4 py-2"><i [attr.data-lucide]="tier.icon" class="w-5 h-5" [ngClass]="tier.color"></i></td>
             <td class="px-4 py-2"><span [ngClass]="tier.color">{{ tier.color }}</span></td>
-            <td class="px-4 py-2">{{ tier.benefits }}</td>
+
             <td class="px-4 py-2 flex gap-2">
               <button class="btn btn-xs btn-info" (click)="editTier(tier)">Edit</button>
               <button class="btn btn-xs btn-error" (click)="deleteTier(tier.id)">Delete</button>
@@ -69,7 +69,7 @@ export class VipTiersAdminComponent implements OnInit {
       minPoints: [0],
       icon: [''],
       color: [''],
-      benefits: [''],
+
       order: [0]
     });
   }

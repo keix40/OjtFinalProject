@@ -183,7 +183,7 @@
                   <span>Add Discount</span>
               </a>
             </li>
-            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.COUPONS_MANAGE)">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/discount-coupon'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
                 <i data-lucide="ticket" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
@@ -493,7 +493,7 @@
     </ul>
     <!-- Profile Section -->
     <div class="p-4 border-t border-white/30 bg-gradient-to-t from-white/70 to-white/40 flex flex-col items-center justify-end">
-      <div *ngIf="!sidebarCollapsed" class="flex items-center gap-3 mb-3 p-3 rounded-xl bg-white/60 border border-white/30 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 w-full">
+      <div *ngIf="!sidebarCollapsed" class="flex items-center gap-3 mb-3 p-3 rounded-xl bg-white/60 border border-white/30 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 w-full relative">
         <div class="flex justify-center items-center w-12 h-12">
           <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-12 h-12 rounded-full object-cover mx-auto border-2 border-slate-300 shadow" (error)="onImageError($event)">
         </div>
@@ -501,9 +501,35 @@
           <h6 class="text-slate-900 font-bold text-sm truncate">{{ getUserDisplayName() }}</h6>
           <p class="text-slate-500 text-xs truncate">{{ getUserRolesDisplay() }}</p>
         </div>
-        <button (click)="toggleProfileDropdown($event)" class="flex items-center justify-center w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 shadow transition-all duration-200 transform hover:scale-110">
+        <button id="profile-dropdown-btn" (click)="toggleProfileDropdown($event)" class="flex items-center justify-center w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 shadow transition-all duration-200 transform hover:scale-110">
           <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" [ngClass]="profileDropdownOpen ? 'rotate-180' : ''"></i>
         </button>
+        <div *ngIf="profileDropdownOpen" id="profile-dropdown-menu" class="absolute left-0 right-0 mx-auto bottom-full mb-3 z-50 max-w-xs w-full bg-white border border-slate-200 rounded-xl shadow-lg animate-slide-down p-0 sm:p-0" style="animation-duration: 0.3s;" (click)="$event.stopPropagation()">
+          <div class="p-3 border-b border-slate-100">
+            <ng-container *ngIf="isLoggedIn; else notAuthenticatedHeader">
+              <h6 class="mb-1 text-slate-900 font-bold text-sm">Welcome, <span class="text-slate-700">{{ getUserDisplayName() }}</span></h6>
+              <p class="mb-0 text-slate-400 text-xs">{{ getUserRolesDisplay() }}</p>
+            </ng-container>
+            <ng-template #notAuthenticatedHeader>
+              <h6 class="mb-1 text-slate-900 font-bold text-sm">Welcome to <span class="text-slate-700">Britium Gallery</span></h6>
+              <p class="mb-0 text-slate-400 text-xs">Please login to access your account</p>
+            </ng-template>
+          </div>
+          <div class="p-2 flex flex-col gap-1">
+            <button class="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold text-sm transform hover:scale-105" (click)="navigateToProfile()">
+              <i data-lucide="user" class="w-4 h-4 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>My Profile</span>
+            </button>
+            <button class="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold text-sm transform hover:scale-105">
+              <i data-lucide="settings" class="w-4 h-4 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Settings</span>
+            </button>
+            <button class="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 font-semibold text-sm transform hover:scale-105" (click)="logout()">
+              <i data-lucide="log-out" class="w-4 h-4 transition-transform duration-200 hover:scale-110"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
       </div>
       <div *ngIf="sidebarCollapsed" class="flex flex-col items-center mb-3">
         <div class="flex justify-center items-center w-10 h-10">

@@ -114,4 +114,67 @@ public class User {
         if (totalPoints < 1000000) return "Gold";
         return "Platinum";
     }
+
+    // Calculate current period spending (last 30 days)
+    public double getCurrentPeriodSpent() {
+        if (orders == null || orders.isEmpty()) {
+            return 0.0;
+        }
+        
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        return orders.stream()
+                .filter(order -> order.getOrderDate() != null && 
+                               order.getOrderDate().isAfter(thirtyDaysAgo))
+                .mapToDouble(order -> {
+                    if (order.getOrderProducts() != null) {
+                        return order.getOrderProducts().stream()
+                                .mapToDouble(product -> product.getUnitPrice() * product.getQuantity())
+                                .sum();
+                    }
+                    return 0.0;
+                })
+                .sum();
+    }
+
+    // Calculate previous period spending (30-60 days ago)
+    public double getPreviousPeriodSpent() {
+        if (orders == null || orders.isEmpty()) {
+            return 0.0;
+        }
+        
+        LocalDateTime sixtyDaysAgo = LocalDateTime.now().minusDays(60);
+        LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
+        
+        return orders.stream()
+                .filter(order -> order.getOrderDate() != null && 
+                               order.getOrderDate().isAfter(sixtyDaysAgo) && 
+                               order.getOrderDate().isBefore(thirtyDaysAgo))
+                .mapToDouble(order -> {
+                    if (order.getOrderProducts() != null) {
+                        return order.getOrderProducts().stream()
+                                .mapToDouble(product -> product.getUnitPrice() * product.getQuantity())
+                                .sum();
+                    }
+                    return 0.0;
+                })
+                .sum();
+    }
+
+    // Calculate spending change percentage
+    public double getSpendingChangePercentage() {
+        double currentPeriod = getCurrentPeriodSpent();
+        double previousPeriod = getPreviousPeriodSpent();
+        
+        if (previousPeriod == 0) {
+            return currentPeriod > 0 ? 100.0 : 0.0; // If no previous spending but current spending, show 100% growth
+        }
+        
+        return ((currentPeriod - previousPeriod) / previousPeriod) * 100;
+    }
+
+    // Get spending trend (up/down)
+    public String getSpendingTrend() {
+        double change = getSpendingChangePercentage();
+        return change >= 0 ? "up" : "down";
+    }
 }

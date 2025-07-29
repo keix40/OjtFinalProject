@@ -18,6 +18,7 @@ import com.Ojt.Ecommerce.security.JwtTokenProvider;
 import com.Ojt.Ecommerce.service.AddressService;
 import com.Ojt.Ecommerce.service.UserService;
 import com.Ojt.Ecommerce.service.UserActivityService;
+import com.Ojt.Ecommerce.service.SessionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -54,6 +55,9 @@ public class UserController {
     private final RoleRepository roleRepository;
     @Autowired
     private UserActivityService userActivityService;
+
+    @Autowired
+    private SessionService sessionService;
 
     @GetMapping("/hello")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -274,6 +278,38 @@ public class UserController {
         Long userId = Long.valueOf(payload.get("userId").toString());
         String type = payload.get("type").toString();
         userActivityService.logActivity(userId, type);
+        return ResponseEntity.ok().build();
+    }
+
+    // Session management endpoints
+    @PostMapping("/session/start")
+    public ResponseEntity<?> startSession(@RequestBody Map<String, Object> payload) {
+        Long userId = Long.valueOf(payload.get("userId").toString());
+        String sessionId = payload.get("sessionId").toString();
+        String userAgent = payload.get("userAgent").toString();
+        String ipAddress = payload.get("ipAddress").toString();
+        
+        // Handle anonymous users (userId = 0)
+        if (userId == 0) {
+            // For anonymous users, we can use a special identifier or null
+            sessionService.startSession(null, sessionId, userAgent, ipAddress);
+        } else {
+            sessionService.startSession(userId, sessionId, userAgent, ipAddress);
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/session/page-view")
+    public ResponseEntity<?> recordPageView(@RequestBody Map<String, Object> payload) {
+        String sessionId = payload.get("sessionId").toString();
+        sessionService.recordPageView(sessionId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/session/end")
+    public ResponseEntity<?> endSession(@RequestBody Map<String, Object> payload) {
+        String sessionId = payload.get("sessionId").toString();
+        sessionService.endSession(sessionId);
         return ResponseEntity.ok().build();
     }
     // --- End customer management actions ---

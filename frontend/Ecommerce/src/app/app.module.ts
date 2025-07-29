@@ -11,6 +11,7 @@ import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptors/jwt.interceptors.service';
+import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { UserOrdersComponent } from './user-profile/user-orders/user-orders.component';
 import { UserWishlistComponent } from './user-profile/user-wishlist/user-wishlist.component';
@@ -166,7 +167,6 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
     CartSidebarComponent, // Standalone component must be imported here
    ProductDetailComponent,
     BrowserAnimationsModule,
-    BlacklistComponent,
     TestComponent,
     FooterComponent,
     HeaderComponent,
@@ -185,6 +185,7 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     AuthService,
     AddressService,
     NotifcationService,

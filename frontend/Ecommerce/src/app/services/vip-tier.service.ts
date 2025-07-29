@@ -9,8 +9,8 @@ export interface VipTier {
   minPoints: number;
   icon: string;
   color: string;
-  benefits: string;
   order: number;
+  weight: number;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -40,14 +40,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(withDefaults())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // ✅ Enable CORS here
-
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
 
+                        .requestMatchers(HttpMethod.POST, "/api/appeals/submit").permitAll() // Allow blacklisted users to submit appeals - MUST BE FIRST
                         .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
                         .requestMatchers("/product/**").permitAll()
                         .requestMatchers("/ws-review/**", "/ws-review/info/**").permitAll()
@@ -96,15 +95,44 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // Specific origin instead of *
+        
+        // Use specific origins instead of wildcard
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:4200", "http://localhost:3000"));
+        
+        // Set allowed methods
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        
+        // Set allowed headers - include all necessary headers
+        configuration.setAllowedHeaders(List.of(
+            "Authorization", 
+            "Content-Type", 
+            "X-Requested-With", 
+            "Accept", 
+            "Origin", 
+            "Access-Control-Request-Method", 
+            "Access-Control-Request-Headers",
+            "x-forwarded-for",
+            "x-forwarded-proto",
+            "x-forwarded-host",
+            "Sec-WebSocket-Protocol",
+            "Sec-WebSocket-Key",
+            "Sec-WebSocket-Version",
+            "Sec-WebSocket-Extensions"
+        ));
+        
+        // Allow credentials
         configuration.setAllowCredentials(true);
+        
+        // Set exposed headers
         configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
-        configuration.setMaxAge(3600L); // Cache preflight requests for 1 hour
+        
+        // Cache preflight requests for 1 hour
+        configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/ws/**", configuration);
+        source.registerCorsConfiguration("/ws-review/**", configuration);
         return source;
     }
 

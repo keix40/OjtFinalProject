@@ -41,4 +41,12 @@ public interface BlacklistService {
     Map<String, Boolean> getAutoRules();
     
     Map<String, Boolean> updateAutoRules(Map<String, Boolean> rules);
+    
+    // Method to get active blacklist entry by email
+    BlacklistEntry getActiveBlacklistByEmail(String email);
+    
+    // Method to get blacklist entry by email and status
+    BlacklistEntry getBlacklistByEmailAndStatus(String email, BlacklistEntry.Status status);
+    
+    List<Map<String, Object>> findRelatedAccounts(String targetType, String targetValue);
 } 

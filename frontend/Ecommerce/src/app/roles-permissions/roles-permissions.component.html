@@ -261,7 +261,7 @@
               </div>
             </div> -->
 
-            <!-- Assigned Users Full List (Step 8 အတွက်) -->
+            <!-- Assigned Users Full List (Step 8) -->
             <!-- <div *ngIf="assignedUsersList && assignedUsersList.length > 0" class="assigned-users-list-expanded mt-4">
               <h3>Users assigned to {{ selectedRole.name }}</h3>
               <ul class="list-group">
@@ -406,20 +406,20 @@
                       'bg-yellow-100 text-yellow-700': template.level === 'advanced',
                       'bg-red-100 text-red-700': template.level === 'critical'
                     }">
-                    {{ template.level }}
-                  </span>
-                </div>
+                  {{ template.level }}
+                </span>
+              </div>
                 <div class="text-sm text-gray-600 mb-2">{{ template.permissions.length }} permissions included</div>
                 <div class="flex-1 text-xs text-gray-500 mb-4">{{ template.description }}</div>
                 <div class="flex gap-2 w-full mt-auto">
                   <button class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-lg shadow-sm text-sm font-semibold flex items-center gap-2 transition-all border border-blue-200 w-1/2 justify-center"
                     (click)="previewTemplate(template)">
                     <i data-lucide="eye" class="w-4 h-4 text-blue-700"></i> Preview
-                  </button>
+                </button>
                   <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-md text-sm font-bold flex items-center gap-2 transition-all w-1/2 justify-center"
                     (click)="applyPermissionTemplate(template)">
                     <i data-lucide="check" class="w-4 h-4 text-white"></i> Apply
-                  </button>
+                </button>
                 </div>
               </div>
             </div>

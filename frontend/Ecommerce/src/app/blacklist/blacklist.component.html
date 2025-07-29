@@ -1,6 +1,6 @@
-<div class="blacklist-container w-full min-h-screen bg-white py-8 px-2 sm:px-6">
+<div class="w-full min-h-screen bg-white py-8 px-0">
   <!-- Header Section -->
-  <div class="w-full max-w-7xl mx-auto mb-6">
+  <div class="w-full mb-6">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
       <div>
         <h1 class="text-3xl font-bold flex items-center gap-3 text-slate-800 drop-shadow-sm">
@@ -27,68 +27,48 @@
   </div>
 
   <!-- Security Statistics -->
-  <div class="w-full max-w-7xl mx-auto mb-8">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <!-- Stats Cards: Ensure icon is always present and centered in colored box -->
-      <div class="rounded-2xl p-5 flex items-center gap-4 shadow-md border border-rose-100 bg-white">
-        <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-rose-200">
-          <i data-lucide="ban" class="w-8 h-8 text-rose-600"></i>
+  <div class="w-full mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
+        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-100 mb-4">
+          <i data-lucide="ban" class="w-9 h-9 text-rose-600"></i>
         </div>
-        <div>
-          <h3 class="text-2xl font-bold text-rose-700">{{ stats?.totalActive || 0 }}</h3>
-          <p class="text-slate-600 text-sm">Total Blacklisted</p>
-          <div class="flex items-center gap-1 text-xs text-rose-600 mt-1">
-            <i data-lucide="trending-up" class="w-4 h-4 text-rose-600"></i>
-            <span>+{{ stats?.newThisWeek || 0 }} this week</span>
-          </div>
+        <h3 class="text-4xl font-extrabold text-rose-700 mb-1">{{ stats?.totalActive || 0 }}</h3>
+        <p class="text-slate-700 text-lg font-medium">Total Blacklisted</p>
+        <div class="flex items-center gap-1 text-sm text-rose-600 mt-2">
+          <i data-lucide="trending-up" class="w-4 h-4"></i>
+          <span>+{{ stats?.newThisWeek || 0 }} this week</span>
         </div>
       </div>
-      <div class="rounded-2xl p-5 flex items-center gap-4 shadow-md border border-blue-100 bg-white">
-        <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-blue-200">
-          <i data-lucide="shield" class="w-8 h-8 text-blue-600"></i>
+      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
+        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 mb-4">
+          <i data-lucide="shield" class="w-9 h-9 text-blue-600"></i>
         </div>
-        <div>
-          <h3 class="text-2xl font-bold text-blue-700">{{ fraudPrevented }}</h3>
-          <p class="text-slate-600 text-sm">Fraud Attempts Blocked</p>
-          <div class="flex items-center gap-1 text-xs text-blue-600 mt-1">
-            <i data-lucide="trending-down" class="w-4 h-4 text-blue-600"></i>
-            <span>-15% vs last month</span>
-          </div>
+        <h3 class="text-4xl font-extrabold text-blue-700 mb-1">{{ fraudPrevented }}</h3>
+        <p class="text-slate-700 text-lg font-medium">Fraud Attempts Blocked</p>
+        <div class="flex items-center gap-1 text-sm text-blue-600 mt-2">
+          <i data-lucide="trending-down" class="w-4 h-4"></i>
+          <span>-15% vs last month</span>
         </div>
       </div>
-      <div class="rounded-2xl p-5 flex items-center gap-4 shadow-md border border-green-100 bg-white">
-        <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-green-200">
-          <i data-lucide="dollar-sign" class="w-8 h-8 text-green-600"></i>
+      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
+        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-yellow-100 mb-4">
+          <i data-lucide="gavel" class="w-9 h-9 text-yellow-600"></i>
         </div>
-        <div>
-          <h3 class="text-2xl font-bold text-green-700">${{ estimatedSavings | number:'1.0-0' }}</h3>
-          <p class="text-slate-600 text-sm">Estimated Savings</p>
-          <div class="flex items-center gap-1 text-xs text-green-600 mt-1">
-            <i data-lucide="trending-up" class="w-4 h-4 text-green-600"></i>
-            <span>+22% protection rate</span>
-          </div>
-        </div>
-      </div>
-      <div class="rounded-2xl p-5 flex items-center gap-4 shadow-md border border-yellow-100 bg-white">
-        <div class="flex items-center justify-center w-14 h-14 rounded-xl bg-yellow-200">
-          <i data-lucide="gavel" class="w-8 h-8 text-yellow-600"></i>
-        </div>
-        <div>
-          <h3 class="text-2xl font-bold text-yellow-700">{{ pendingAppeals }}</h3>
-          <p class="text-slate-600 text-sm">Pending Appeals</p>
-          <div class="flex items-center gap-1 text-xs text-yellow-600 mt-1">
-            <i data-lucide="clock" class="w-4 h-4 text-yellow-600"></i>
-            <span>{{ avgAppealTime }}h avg response</span>
-          </div>
+        <h3 class="text-4xl font-extrabold text-yellow-700 mb-1">{{ pendingAppeals }}</h3>
+        <p class="text-slate-700 text-lg font-medium">Pending Appeals</p>
+        <div class="flex items-center gap-1 text-sm text-yellow-600 mt-2">
+          <i data-lucide="clock" class="w-4 h-4"></i>
+          <span>{{ avgAppealTime }}h avg response</span>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Filters & Auto-Block Rules -->
-  <div class="w-full max-w-7xl mx-auto mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2">
-      <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
+  <div class="w-full mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="col-span-1 lg:col-span-3">
+      <div class="rounded-2xl shadow-md border border-slate-200 bg-white w-full">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
           <i data-lucide="filter" class="w-5 h-5 text-slate-600"></i>
           <h5 class="text-lg font-semibold text-slate-700">Search & Filter Blacklist</h5>
@@ -152,7 +132,7 @@
       </div>
     </div>
     <div>
-      <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
+      <!-- <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
         <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
           <i data-lucide="bot" class="w-5 h-5 text-slate-600"></i>
           <h5 class="text-lg font-semibold text-slate-700">Auto-Block Rules</h5>
@@ -190,12 +170,12 @@
             Manage Rules
           </button>
         </div>
-      </div>
+      </div> -->
     </div>
   </div>
 
   <!-- Blacklist Entries -->
-  <div class="w-full max-w-7xl mx-auto">
+  <div class="w-full">
     <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
       <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
         <h5 class="text-lg font-semibold text-slate-700"><i data-lucide="list" class="w-5 h-5 mr-2 text-slate-600"></i>Blacklist Entries ({{ (filteredEntries && filteredEntries.length) || 0 }})</h5>
@@ -280,7 +260,10 @@
                 <tr 
                   *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId"
                   [class.table-row-selected]="selectedEntries.includes(entry.id)"
-                  [class.table-row-critical]="entry.riskLevel === 'critical'"
+                  [class.table-row-low]="entry.riskLevel === 'LOW'"
+                  [class.table-row-medium]="entry.riskLevel === 'MEDIUM'"
+                  [class.table-row-high]="entry.riskLevel === 'HIGH'"
+                  [class.table-row-critical]="entry.riskLevel === 'CRITICAL'"
                 >
                   <td>
                     <input 
@@ -311,17 +294,13 @@
                       </div>
                     </div>
                   </td>
-                  <td>
-                    <div class="category-badge" [ngClass]="'category-' + entry.category">
-                      <i [attr.data-lucide]="getCategoryIconName(entry.category)" class="w-5 h-5 text-blue-600"></i>
-                      {{ getCategoryLabel(entry.category) }}
-                    </div>
+                  <td class="px-4 py-3 whitespace-nowrap text-gray-800">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-blue-500 inline-block"></i>
+                    <span class="ml-1 font-semibold text-gray-800">{{ getCategoryLabel(entry.category) }}</span>
                   </td>
-                  <td>
-                    <div class="risk-badge" [ngClass]="'risk-' + entry.riskLevel">
-                      <i [attr.data-lucide]="getRiskIconName(entry.riskLevel)" class="w-5 h-5 text-yellow-600"></i>
-                      {{ entry.riskLevel | titlecase }}
-                    </div>
+                  <td class="px-4 py-3 whitespace-nowrap text-gray-800">
+                    <i data-lucide="activity" class="w-5 h-5 text-yellow-500 inline-block"></i>
+                    <span class="ml-1 font-semibold text-gray-800">{{ entry.riskLevel }}</span>
                   </td>
                   <td>
                     <div class="reason-info">
@@ -339,13 +318,21 @@
                   </td>
                   <td>
                     <div class="status-info">
-                      <div class="status-badge" [ngClass]="'status-' + entry.status">
-                        <i [attr.data-lucide]="getStatusIconName(entry.status)" class="w-5 h-5 text-green-600"></i>
+                      <div class="status-badge" 
+                           [ngClass]="'bg-' + getStatusColor(entry.status) + '-100 text-' + getStatusColor(entry.status) + '-700'">
+                        <i [attr.data-lucide]="getStatusIconName(entry.status)" 
+                           [ngClass]="'w-5 h-5 text-' + getStatusColor(entry.status) + '-600'"></i>
                         {{ getStatusLabel(entry.status) }}
                       </div>
-                      <div class="expiry-info" *ngIf="entry.expiryDate && entry.status === 'active'">
+                      <div class="expiry-info" *ngIf="entry.expiryDate && normalizeStatus(entry.status) === 'ACTIVE'">
                         <small class="text-muted">
                           Expires: {{ entry.expiryDate | date:'MMM dd' }}
+                        </small>
+                      </div>
+                      <div class="appeal-indicator" *ngIf="hasAppeals(entry)">
+                        <small class="text-orange-600 font-medium">
+                          <i data-lucide="gavel" class="w-3 h-3 inline-block mr-1"></i>
+                          {{ getEntryAppeals(entry).length }} Appeal(s)
                         </small>
                       </div>
                     </div>
@@ -395,7 +382,7 @@
               >
                 <div class="blacklist-entry-card" 
                      [class.selected]="selectedEntries.includes(entry.id)"
-                     [class.critical-entry]="entry.riskLevel === 'critical'">
+                     [class.critical-entry]="entry.riskLevel === 'CRITICAL'">
                   <div class="card-header">
                     <div class="entry-header">
                       <div class="form-check">
@@ -424,8 +411,12 @@
                         <i [attr.data-lucide]="getCategoryIconName(entry.category)" class="w-5 h-5 text-blue-600"></i>
                         {{ getCategoryLabel(entry.category) }}
                       </div>
-                      <div class="status-badge-card" [ngClass]="'status-' + entry.status">
+                      <div class="status-badge-card" 
+                           [ngClass]="'bg-' + getStatusColor(entry.status) + '-100 text-' + getStatusColor(entry.status) + '-700'">
                         {{ getStatusLabel(entry.status) }}
+                        <span *ngIf="hasAppeals(entry)" class="ml-1 text-orange-600">
+                          <i data-lucide="gavel" class="w-3 h-3 inline-block"></i>
+                        </span>
                       </div>
                     </div>
                     <div class="entry-details">
@@ -552,23 +543,50 @@
         <form [formGroup]="blacklistForm">
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label class="form-label">Target Type</label>
-                <select class="form-select" formControlName="targetType" (change)="onTargetTypeChange()">
+                <label class="form-label">
+                  Target Type 
+                  <span class="text-red-500">*</span>
+                </label>
+                <select class="form-select" 
+                        formControlName="targetType" 
+                        (change)="onTargetTypeChange()"
+                        [class.border-red-500]="blacklistForm.get('targetType')?.invalid && blacklistForm.get('targetType')?.touched">
+                  <option value="">Select Target Type</option>
                   <option value="email">Email Address</option>
                   <option value="ip">IP Address</option>
-                  <option value="device">Device Fingerprint</option>
                   <option value="phone">Phone Number</option>
-                  <option value="user_id">User ID</option>
+                
                 </select>
+                <div *ngIf="blacklistForm.get('targetType')?.invalid && blacklistForm.get('targetType')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Target Type is required
+                </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Target Value</label>
-                <input type="text" class="form-control" formControlName="targetValue" 
-                       [placeholder]="getTargetPlaceholder()">
+                <label class="form-label">
+                  Target Value 
+                  <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       formControlName="targetValue" 
+                       [placeholder]="getTargetPlaceholder()"
+                       [class.border-red-500]="blacklistForm.get('targetValue')?.invalid && blacklistForm.get('targetValue')?.touched"
+                       (input)="loadRelatedAccounts()">
+                <div *ngIf="blacklistForm.get('targetValue')?.invalid && blacklistForm.get('targetValue')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Target Value is required
+                </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Category</label>
-                <select class="form-select" formControlName="category">
+                <label class="form-label">
+                  Category 
+                  <span class="text-red-500">*</span>
+                </label>
+                <select class="form-select" 
+                        formControlName="category"
+                        [class.border-red-500]="blacklistForm.get('category')?.invalid && blacklistForm.get('category')?.touched">
+                  <option value="">Select Category</option>
                   <option value="fraud">Fraud</option>
                   <option value="spam">Spam</option>
                   <option value="abuse">Abuse</option>
@@ -576,20 +594,44 @@
                   <option value="fake_account">Fake Account</option>
                   <option value="policy_violation">Policy Violation</option>
                 </select>
+                <div *ngIf="blacklistForm.get('category')?.invalid && blacklistForm.get('category')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Category is required
+                </div>
               </div>
               <div class="col-md-6 mb-3">
-                <label class="form-label">Risk Level</label>
-                <select class="form-select" formControlName="riskLevel">
+                <label class="form-label">
+                  Risk Level 
+                  <span class="text-red-500">*</span>
+                </label>
+                <select class="form-select" 
+                        formControlName="riskLevel"
+                        [class.border-red-500]="blacklistForm.get('riskLevel')?.invalid && blacklistForm.get('riskLevel')?.touched">
+                  <option value="">Select Risk Level</option>
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
                   <option value="critical">Critical</option>
                 </select>
+                <div *ngIf="blacklistForm.get('riskLevel')?.invalid && blacklistForm.get('riskLevel')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Risk Level is required
+                </div>
               </div>
               <div class="col-md-12 mb-3">
-                <label class="form-label">Reason</label>
-                <input type="text" class="form-control" formControlName="reason" 
-                       placeholder="Brief description of the violation">
+                <label class="form-label">
+                  Reason 
+                  <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       formControlName="reason" 
+                       placeholder="Brief description of the violation"
+                       [class.border-red-500]="blacklistForm.get('reason')?.invalid && blacklistForm.get('reason')?.touched">
+                <div *ngIf="blacklistForm.get('reason')?.invalid && blacklistForm.get('reason')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Reason is required
+                </div>
               </div>
               <div class="col-md-6 mb-3">
                 <label class="form-label">Expiry Date (Optional)</label>
@@ -607,44 +649,80 @@
                           placeholder="Detailed notes about this blacklist entry..."></textarea>
               </div>
               <div class="col-md-12 mb-3">
-                <div class="form-check">
+                <!-- <div class="form-check">
                   <input class="form-check-input" type="checkbox" formControlName="notifyTeam">
                   <label class="form-check-label">Notify security team</label>
-                </div>
+                </div> -->
                 <div class="form-check">
-                  <input class="form-check-input" type="checkbox" formControlName="blockRelated">
-                  <label class="form-check-label">Block related accounts (same IP/device)</label>
+                  <input class="form-check-input" type="checkbox" formControlName="blockRelated" (change)="loadRelatedAccounts()">
+                  <label class="form-check-label">Block related accounts (most used IP)</label>
                 </div>
               </div>
             </div>
           </form>
           <div class="impact-preview mt-6" *ngIf="blacklistForm.get('targetValue')?.value">
-            <h6 class="text-lg font-semibold mb-4">Impact Preview</h6>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div class="bg-white rounded-lg p-4 border border-gray-200">
-                <div class="text-2xl font-bold">{{ getAffectedAccounts() }}</div>
-                <div class="text-gray-600">Accounts Affected</div>
+            <h6 class="text-lg font-semibold mb-4 flex items-center">
+              <i data-lucide="info" class="w-5 h-5 text-blue-600 mr-2"></i>
+              Impact Information
+            </h6>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-blue-600">{{ getAffectedAccounts() }}</div>
+                  <div class="text-gray-600 text-sm">Account(s) Will Be Blocked</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-orange-600">{{ getRelatedEntries() }}</div>
+                  <div class="text-gray-600 text-sm">Related Entries Found</div>
+                </div>
               </div>
-              <div class="bg-white rounded-lg p-4 border border-gray-200">
-                <div class="text-2xl font-bold">{{ getRelatedEntries() }}</div>
-                <div class="text-gray-600">Related Entries</div>
+              <div class="mt-3 text-sm text-gray-600 text-center">
+                <i data-lucide="alert-triangle" class="w-4 h-4 inline-block mr-1 text-orange-500"></i>
+                This action will prevent <strong>{{ blacklistForm.get('targetValue')?.value }}</strong> from accessing the system.
               </div>
-              <div class="bg-white rounded-lg p-4 border border-gray-200">
-                <div class="text-2xl font-bold">{{ getRiskScore() }}%</div>
-                <div class="text-gray-600">Risk Score</div>
+            </div>
+          </div>
+
+          <!-- Related Accounts Preview -->
+          <div class="related-accounts-preview mt-4" *ngIf="blacklistForm.get('targetValue')?.value && blacklistForm.get('blockRelated')?.value">
+            <h6 class="text-lg font-semibold mb-4 flex items-center">
+              <i data-lucide="users" class="w-5 h-5 text-orange-600 mr-2"></i>
+              Related Accounts That Will Be Blocked
+            </h6>
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div *ngIf="relatedAccounts.length > 0" class="space-y-2">
+                <div *ngFor="let account of relatedAccounts" class="flex items-center justify-between p-2 bg-white rounded border">
+                  <div class="flex items-center">
+                    <i data-lucide="user" class="w-4 h-4 text-gray-500 mr-2"></i>
+                    <span class="font-medium">{{ account.email }}</span>
+                  </div>
+                  <div class="text-xs text-gray-500 text-right">
+                    <div>{{ account.similarity }}</div>
+                    <div *ngIf="account.ip" class="text-gray-400">IP: {{ account.ip }}</div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="relatedAccounts.length === 0" class="text-center text-gray-500 py-4">
+                <i data-lucide="search" class="w-8 h-8 mx-auto mb-2 text-gray-400"></i>
+                <p>No related accounts found</p>
+                <p class="text-xs">Checking for accounts with same IP address...</p>
+              </div>
+              <div class="mt-3 text-xs text-gray-600 text-center">
+                <i data-lucide="info" class="w-3 h-3 inline-block mr-1"></i>
+                These accounts will be automatically blocked if "Block related accounts" is checked.
+                <br>
+                <span class="text-gray-500">(Based on most frequently used IP address)</span>
               </div>
             </div>
           </div>
         </div>
         <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
-          <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg" (click)="closeEditModal()">
-            Cancel
+          <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" (click)="closeEditModal()">
+            <i data-lucide="x" class="w-4 h-4 inline-block mr-1"></i>Cancel
           </button>
-          <button class="px-4 py-2 text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded-lg" (click)="previewBlacklist()">
-            <i data-lucide="eye" class="w-4 h-4 inline-block mr-1"></i>Preview Impact
-          </button>
-          <button class="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg" (click)="addToBlacklist()">
-            <i data-lucide="ban" class="w-4 h-4 inline-block mr-1"></i>Add to Blacklist
+          <button class="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors flex items-center" (click)="addToBlacklist()">
+            <i data-lucide="ban" class="w-4 h-4 inline-block mr-1"></i>
+            <span>Add to Blacklist</span>
           </button>
         </div>
       </div>
@@ -739,8 +817,8 @@
                   <div class="text-sm text-gray-500">Blocked</div>
                 </div>
                 <div class="p-3 bg-gray-50 rounded-lg">
-                  <div class="text-2xl font-bold">${{ getEstimatedLoss(selectedEntryDetails) }}</div>
-                  <div class="text-sm text-gray-500">Saved</div>
+                  <div class="text-2xl font-bold">{{ getLastIncidentDays(selectedEntryDetails) }}</div>
+                  <div class="text-sm text-gray-500">Days Since Last</div>
                 </div>
               </div>
             </div>
@@ -841,10 +919,6 @@
                       <div class="text-sm text-gray-500">Blocked Attempts</div>
                     </div>
                     <div class="p-4 bg-gray-50 rounded-lg text-center">
-                      <div class="text-2xl font-bold">${{ getEstimatedLoss(selectedEntryDetails) }}</div>
-                      <div class="text-sm text-gray-500">Prevented Loss</div>
-                    </div>
-                    <div class="p-4 bg-gray-50 rounded-lg text-center">
                       <div class="text-2xl font-bold">{{ getLastIncidentDays(selectedEntryDetails) }}</div>
                       <div class="text-sm text-gray-500">Days Since Last</div>
                     </div>
@@ -877,8 +951,63 @@
 
                 <!-- Appeals Tab -->
                 <div *ngIf="activeTab === 'appeals'" class="space-y-6">
-                  <div class="text-center text-gray-500 py-8">
-                    Appeal history and management coming soon
+                  <div class="flex justify-between items-center mb-4">
+                    <h6 class="text-lg font-semibold text-gray-800">Appeal Management</h6>
+                    <button class="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700" 
+                            (click)="loadAppeals()">
+                      <i data-lucide="refresh-cw" class="w-4 h-4 inline-block mr-1"></i>
+                      Refresh Appeals
+                    </button>
+                  </div>
+
+                  <!-- Appeal Statistics -->
+                  <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="p-4 bg-yellow-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold text-yellow-700">{{ pendingAppeals }}</div>
+                      <div class="text-sm text-yellow-600">Pending Appeals</div>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold text-green-700">{{ approvedAppealsCount }}</div>
+                      <div class="text-sm text-green-600">Approved</div>
+                    </div>
+                    <div class="p-4 bg-red-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold text-red-700">{{ rejectedAppealsCount }}</div>
+                      <div class="text-sm text-red-600">Rejected</div>
+                    </div>
+                  </div>
+
+                  <!-- Appeals List -->
+                  <div class="space-y-4">
+                    <div *ngFor="let appeal of appeals" 
+                         class="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                         (click)="viewAppeal(appeal)">
+                      <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                          <div class="flex items-center gap-3 mb-2">
+                            <span class="px-2 py-1 rounded text-sm font-medium"
+                                  [ngClass]="'bg-' + getAppealStatusColor(appeal.status) + '-100 text-' + getAppealStatusColor(appeal.status) + '-700'">
+                              {{ getAppealStatusLabel(appeal.status) }}
+                            </span>
+                            <span class="text-sm text-gray-500">{{ appeal.submittedAt | date:'MMM dd, yyyy HH:mm' }}</span>
+                          </div>
+                          <div class="font-medium text-gray-800">{{ getAppealUserEmail(appeal) }}</div>
+                          <div class="text-sm text-gray-600 mt-1">{{ getAppealReasonLabel(appeal.appealReason) }}</div>
+                          <div class="text-sm text-gray-500 mt-1 line-clamp-2">{{ getAppealDetails(appeal) }}</div>
+                        </div>
+                        <div class="text-right">
+                          <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="appeals.length === 0" class="text-center text-gray-500 py-8">
+                      <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                      <p>No appeals found</p>
+                      <button class="mt-2 px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg"
+                              (click)="loadAppeals()">
+                        Load Appeals
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -901,6 +1030,206 @@
           <i data-lucide="unlock" class="w-4 h-4 inline-block mr-1"></i>
           Lift Ban
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appeal Review Modal -->
+  <div *ngIf="showAppealModal && selectedAppeal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-4xl flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-2xl font-bold text-gray-800">Review Appeal</h2>
+        <button (click)="closeAppealModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <i data-lucide="x" class="w-7 h-7"></i>
+        </button>
+      </div>
+
+      <!-- Appeal Info -->
+      <div class="px-6 py-4">
+        <div class="uppercase text-xs text-gray-400 font-semibold tracking-wider mb-2">Appeal Information</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <div class="text-xs text-gray-500">User Email</div>
+            <div class="font-semibold text-gray-800">{{ selectedAppeal?.userEmail }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Contact Email</div>
+            <div class="font-semibold text-gray-800">{{ selectedAppeal?.contactEmail }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Appeal Reason</div>
+            <div class="font-semibold text-gray-800">{{ getAppealReasonLabel(selectedAppeal?.appealReason!) }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Submitted</div>
+            <div class="font-semibold text-gray-800">{{ selectedAppeal?.submittedAt | date:'MMM dd, yyyy HH:mm' }}</div>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <div class="text-xs text-gray-500 mb-1">Appeal Details</div>
+          <div class="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 max-h-32 overflow-y-auto border border-gray-100">
+            {{ getAppealDetails(selectedAppeal!) }}
+          </div>
+        </div>
+
+        <!-- Decision/Admin Notes (Read-only or Edit) -->
+        <ng-container *ngIf="!isEditMode && selectedAppeal?.status !== 'PENDING'; else editForm">
+          <div class="mb-4">
+            <div class="text-xs text-gray-500 mb-1">Decision</div>
+            <span class="inline-block px-4 py-2 rounded-full bg-blue-50 text-blue-700 font-semibold">
+              {{ getAppealStatusLabel(selectedAppeal?.status!) }}
+            </span>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Admin Notes</div>
+            <div class="bg-gray-100 rounded-lg p-3 text-gray-700 whitespace-pre-line">
+              {{ selectedAppeal?.adminNotes || '—' }}
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button" class="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" (click)="closeAppealModal()">Cancel</button>
+            <button type="button" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow" (click)="enableEditMode()">Edit</button>
+          </div>
+        </ng-container>
+
+        <!-- Edit Mode Form -->
+        <ng-template #editForm>
+          <form [formGroup]="appealReviewForm" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Decision</label>
+              <select formControlName="decision"
+                class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800">
+                <option value="">Select decision...</option>
+                <option value="APPROVE">Approve Appeal</option>
+                <option value="REJECT">Reject Appeal</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Admin Notes</label>
+              <textarea formControlName="adminNotes"
+                rows="4"
+                class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800"
+                placeholder="Provide detailed explanation for your decision..."></textarea>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+              <button type="button" class="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" (click)="closeAppealModal()">Cancel</button>
+              <button type="submit"
+                class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow flex items-center gap-2"
+                [disabled]="!appealReviewForm.valid || loadingAppealReview"
+                (click)="reviewAppeal()">
+                <i *ngIf="loadingAppealReview" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                <span>{{ loadingAppealReview ? 'Submitting...' : 'Submit Review' }}</span>
+              </button>
+            </div>
+          </form>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appeal Management Modal -->
+  <div *ngIf="showAppealManagementModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-4xl flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <i data-lucide="gavel" class="w-6 h-6 text-orange-600"></i>
+          <h3 class="text-xl font-bold text-gray-800">Appeal Management</h3>
+          <span class="px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full">{{ pendingAppeals }} Pending</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- Modern circular refresh button -->
+          <button (click)="loadAppeals()" aria-label="Refresh"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+          </button>
+          <!-- Modern circular exit button -->
+          <button (click)="closeAppealManagementModal()" aria-label="Close"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition focus:outline-none focus:ring-2 focus:ring-red-300">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="px-6 py-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="p-4 bg-yellow-50 rounded-xl text-center border border-yellow-100">
+            <div class="text-2xl md:text-3xl font-bold text-yellow-700 mb-2">{{ pendingAppeals }}</div>
+            <div class="text-sm text-yellow-600 font-medium">Pending Appeals</div>
+            <div class="text-xs text-yellow-500 mt-1">Awaiting review</div>
+          </div>
+          <div class="p-4 bg-green-50 rounded-xl text-center border border-green-100">
+            <div class="text-2xl md:text-3xl font-bold text-green-700 mb-2">{{ approvedAppealsCount }}</div>
+            <div class="text-sm text-green-600 font-medium">Approved</div>
+            <div class="text-xs text-green-500 mt-1">Ban lifted</div>
+          </div>
+          <div class="p-4 bg-red-50 rounded-xl text-center border border-red-100">
+            <div class="text-2xl md:text-3xl font-bold text-red-700 mb-2">{{ rejectedAppealsCount }}</div>
+            <div class="text-sm text-red-600 font-medium">Rejected</div>
+            <div class="text-xs text-red-500 mt-1">Ban maintained</div>
+          </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h4 class="text-lg font-semibold text-gray-800">All Appeals</h4>
+          <div class="flex items-center gap-2">
+            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm" [(ngModel)]="appealStatusFilter" (change)="filterAppeals()">
+              <option value="">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Appeals List -->
+        <div class="space-y-3">
+          <!-- Loading state -->
+          <div *ngIf="loadingAppeals" class="text-center text-gray-500 py-8">
+            <i data-lucide="loader-2" class="w-12 h-12 mx-auto mb-4 text-gray-300 animate-spin"></i>
+            <p class="text-lg font-medium">Loading appeals...</p>
+          </div>
+
+          <!-- Appeals list -->
+          <div *ngIf="!loadingAppeals">
+            <div *ngFor="let appeal of filteredAppeals"
+                 class="p-4 bg-gray-50 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                 (click)="viewAppeal(appeal)">
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span class="px-3 py-1 rounded-full text-xs font-semibold"
+                        [ngClass]="{
+                          'bg-yellow-100 text-yellow-700': appeal.status === 'PENDING',
+                          'bg-green-100 text-green-700': appeal.status === 'APPROVED',
+                          'bg-red-100 text-red-700': appeal.status === 'REJECTED'
+                        }">
+                    {{ getAppealStatusLabel(appeal.status) }}
+                  </span>
+                  <span class="text-xs text-gray-400 whitespace-nowrap">{{ appeal.submittedAt | date:'MMM dd, yyyy HH:mm' }}</span>
+                </div>
+                <div class="font-medium text-gray-800 truncate">{{ getAppealUserEmail(appeal) }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ getAppealReasonLabel(appeal.appealReason) }}</div>
+                <div class="text-xs text-gray-400 mt-1 line-clamp-2 break-words">{{ getAppealDetails(appeal) }}</div>
+              </div>
+              <div class="flex-shrink-0 flex items-center gap-2">
+                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+              </div>
+            </div>
+
+            <div *ngIf="filteredAppeals.length === 0" class="text-center text-gray-500 py-8">
+              <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+              <p class="text-lg font-medium">No appeals found</p>
+              <p class="text-sm text-gray-400 mt-1">No appeals match your current filter</p>
+              <button class="mt-4 px-4 py-2 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg" (click)="loadAppeals()">
+                Load Appeals
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
