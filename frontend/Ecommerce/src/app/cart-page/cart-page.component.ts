@@ -24,6 +24,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   selectedItems: number = 0;
   private subscriptions: Subscription[] = [];
   wishlist = new Set<number>();
+  relatedProducts: any[] = [];
 
   userId: number | null = null;
   activeDiscounts: any[] = [];
@@ -55,6 +56,13 @@ export class CartPageComponent implements OnInit, OnDestroy {
         this.selectedItems = items.length;
         this.loadProductDetails();
         this.loadMaxQuantities(); // fetch max quantities
+        
+        // If there's only one item in cart, load related products for that specific item
+        if (items.length === 1) {
+          this.loadCartItemRelatedProducts(items[0].id);
+        } else {
+          this.loadRelatedProducts();
+        }
       }),
       this.cartService.getCartTotal().subscribe(total => {
         this.cartTotal = total;
@@ -81,6 +89,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         this.productDetails.set(product.id, product);
       });
       this.calculateProductDiscounts();
+      this.loadRelatedProducts(); // Load related products after product details are loaded
     });
   }
 
@@ -275,11 +284,17 @@ export class CartPageComponent implements OnInit, OnDestroy {
   updateQuantity(itemId: number, newQuantity: number) {
     if (newQuantity > 0) {
       this.cartService.updateQuantity(itemId, newQuantity);
+      // Load related products for this specific cart item when quantity is updated
+      this.loadCartItemRelatedProducts(itemId);
     }
   }
 
   continueShopping() {
     this.router.navigate(['/userproductlist']);
+  }
+
+  goToProductDetail(productId: number) {
+    this.router.navigate(['/product', productId]);
   }
 
   moveToWishlist(productId: number): void {
@@ -473,5 +488,299 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   proceedToCheckout() {
     this.goToCheckout();
+  }
+
+  loadRelatedProducts() {
+    if (this.cartItems.length === 0) {
+      this.relatedProducts = [];
+      return;
+    }
+
+    // Collect all category IDs and brand IDs from cart items
+    const categoryIds: number[] = [];
+    const brandIds: number[] = [];
+    const excludeProductIds: number[] = [];
+
+    this.cartItems.forEach(item => {
+      excludeProductIds.push(item.productId || item.id);
+      
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product && product.categoryBrandArray) {
+        product.categoryBrandArray.forEach(pair => {
+          if (pair.categoryId) {
+            categoryIds.push(pair.categoryId);
+          }
+          if (pair.brandId) {
+            brandIds.push(pair.brandId);
+          }
+        });
+      }
+    });
+
+    // Remove duplicates
+    const uniqueCategoryIds = [...new Set(categoryIds)];
+    const uniqueBrandIds = [...new Set(brandIds)];
+    const uniqueExcludeProductIds = [...new Set(excludeProductIds)];
+
+    if (uniqueCategoryIds.length === 0 && uniqueBrandIds.length === 0) {
+      this.relatedProducts = [];
+      return;
+    }
+
+    this.productService.getRelatedProducts(uniqueCategoryIds, uniqueBrandIds, 0, uniqueExcludeProductIds)
+      .subscribe({
+        next: (products) => {
+          // Randomly select 4 products
+          this.relatedProducts = this.shuffleArray(products).slice(0, 4);
+        },
+        error: (error) => {
+          console.error('Error loading related products:', error);
+          this.relatedProducts = [];
+        }
+      });
+  }
+
+  // Separate method for cart item related products
+  loadCartItemRelatedProducts(cartItemId: number) {
+    const cartItem = this.cartItems.find(item => item.id === cartItemId);
+    if (!cartItem) {
+      console.log('Cart item not found:', cartItemId);
+      return;
+    }
+
+    const product = this.productDetails.get(cartItem.productId || cartItem.id);
+    if (!product || !product.categoryBrandArray) {
+      console.log('Product details not found for cart item:', cartItemId);
+      return;
+    }
+
+    // Collect category IDs and brand IDs from this specific product
+    const categoryIds: number[] = [];
+    const brandIds: number[] = [];
+    const excludeProductIds: number[] = [cartItem.productId || cartItem.id];
+
+    product.categoryBrandArray.forEach(pair => {
+      if (pair.categoryId) {
+        categoryIds.push(pair.categoryId);
+      }
+      if (pair.brandId) {
+        brandIds.push(pair.brandId);
+      }
+    });
+
+    // Remove duplicates
+    const uniqueCategoryIds = [...new Set(categoryIds)];
+    const uniqueBrandIds = [...new Set(brandIds)];
+
+    if (uniqueCategoryIds.length === 0 && uniqueBrandIds.length === 0) {
+      console.log('No category or brand IDs found for cart item:', cartItemId);
+      return;
+    }
+
+    console.log('Loading related products for cart item:', cartItemId);
+    console.log('Category IDs:', uniqueCategoryIds);
+    console.log('Brand IDs:', uniqueBrandIds);
+    console.log('Exclude product IDs:', excludeProductIds);
+
+    this.productService.getRelatedProducts(uniqueCategoryIds, uniqueBrandIds, 0, excludeProductIds)
+      .subscribe({
+        next: (products) => {
+          console.log('Backend returned related products for cart item:', products?.length || 0);
+          if (products && products.length > 0) {
+            // Randomly select 4 products
+            this.relatedProducts = this.shuffleArray(products).slice(0, 4);
+            console.log('Related products loaded for cart item:', this.relatedProducts.length);
+          } else {
+            console.log('No related products found from backend for cart item');
+            this.relatedProducts = [];
+          }
+        },
+        error: (error) => {
+          console.error('Failed to load related products for cart item:', error);
+          this.relatedProducts = [];
+        }
+      });
+  }
+
+  // Helper method to shuffle array
+  shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  // Method to handle when a new item is added to cart
+  onCartItemAdded(cartItemId: number) {
+    console.log('New cart item added:', cartItemId);
+    // Load related products for this specific cart item
+    this.loadCartItemRelatedProducts(cartItemId);
+  }
+
+  // Helper methods for related products discount display
+  getRelatedProductDiscount(product: any): any {
+    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+      return null;
+    }
+    
+    for (const discount of this.activeDiscounts) {
+      const rules = discount.rules || [];
+      for (const rule of rules) {
+        if (this.isRelatedProductAffectedByRule(product, rule)) {
+          return {
+            id: discount.id,
+            name: discount.name,
+            discount_percent: discount.discount_percent,
+            discount_amount: discount.discount_amount,
+            discountType: discount.discountType,
+            targetType: rule.targetType,
+            eventName: discount.name
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  isRelatedProductAffectedByRule(product: any, rule: any): boolean {
+    switch (rule.targetType) {
+      case 'PRODUCT':
+        return rule.productId === product.id;
+      case 'BRAND':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some((pair: any) => pair.brandId === rule.brandId);
+      case 'CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some((pair: any) => pair.categoryId === rule.categoryId);
+      case 'BRAND_CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some((pair: any) => pair.brandId === rule.brandId && pair.categoryId === rule.categoryId);
+      default:
+        return false;
+    }
+  }
+
+  getRelatedProductDiscountText(product: any): string {
+    const discount = this.getRelatedProductDiscount(product);
+    if (!discount) return '';
+    
+    if (discount.discountType === 'PERCENTAGE') {
+      return `${discount.discount_percent}% OFF`;
+    } else {
+      return `Save ${discount.discount_amount} MMK`;
+    }
+  }
+
+  getRelatedProductFinalPrice(product: any): number {
+    let price = product.price;
+    const productDiscount = this.getRelatedProductDiscount(product);
+
+    // Apply product-based discount (if any)
+    if (productDiscount) {
+      if (productDiscount.discountType === 'PERCENTAGE') {
+        price = price - (price * productDiscount.discount_percent / 100);
+      } else {
+        price = price - productDiscount.discount_amount;
+      }
+    }
+
+    // Apply VIP tier discount (if any)
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
+      const vipDiscount = this.activeDiscounts.find(d =>
+        (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+      );
+      if (vipDiscount) {
+        price = price - (price * vipDiscount.discount_percent / 100);
+      }
+    }
+    return Math.round(price);
+  }
+
+  // VIP discount display for related products
+  getRelatedProductVipDiscount(product: any): string {
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (!userVipTier) return '';
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    if (vipDiscount && vipDiscount.discount_percent) {
+      return `${userVipTier.charAt(0).toUpperCase() + userVipTier.slice(1)} ${vipDiscount.discount_percent}% OFF`;
+    }
+    return '';
+  }
+
+  // Wishlist methods for related products
+  isRelatedProductInWishlist(productId: number): boolean {
+    return this.wishlist.has(productId);
+  }
+
+  toggleRelatedProductWishlist(productId: number, event: Event) {
+    event.stopPropagation();
+    this.moveToWishlist(productId);
+  }
+
+  // Add related product to cart
+  addRelatedProductToCart(product: any, event: Event) {
+    event.stopPropagation();
+    this.addToCart(product);
+  }
+
+  // Add product to cart method
+  addToCart(product: any): void {
+    if (!this.userId) {
+      alert("You must be logged in to add items to cart.");
+      return;
+    }
+
+    const cartItem: CartItem = {
+      id: Date.now(), // Generate temporary ID
+      productId: product.id,
+      title: product.productName,
+      price: product.price,
+      quantity: 1,
+      image: this.imageService.getProductImageUrl(product),
+      color: product.color || null,
+      size: product.size || null,
+      variantId: product.variantId || null,
+      variantAttributes: product.variantAttributes || null
+    };
+
+    this.cartService.addToCart(cartItem);
+    
+    // Show success message
+    Swal.fire({
+      toast: true,
+      position: 'top-end',
+      icon: 'success',
+      title: 'Added to cart',
+      showConfirmButton: false,
+      timer: 1200,
+      timerProgressBar: true,
+      customClass: { popup: 'swal2-toast' }
+    });
+  }
+
+  // Get rating for related products
+  getRelatedProductRating(product: any): number {
+    if (!product || !product.averageRating) {
+      return 0;
+    }
+    // Return rounded rating for display purposes
+    return Math.round(product.averageRating * 10) / 10;
   }
 }

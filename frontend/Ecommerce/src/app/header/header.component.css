@@ -11,6 +11,103 @@
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Modern Search Box Styles */
+.search-container {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+    transform: scale(1.01);
+}
+
+.search-input {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.search-input:focus {
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+}
+
+.search-button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.search-button:hover {
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.search-button:active {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Search Suggestions Animation */
+.search-suggestions {
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Search Icon Animation */
+.search-icon {
+    transition: color 0.3s ease;
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.search-container:focus-within .search-icon {
+    color: #3b82f6;
+}
+
+/* Pulse animation for search button */
+@keyframes searchPulse {
+    0% {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    }
+    100% {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+}
+
+.search-button:hover {
+    /* Removed animation to prevent movement */
+}
+
+/* Glassmorphism effect for search container */
+.search-glass {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.search-glass:focus-within {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
 .main-header {
     background: linear-gradient(90deg, #fff 80%, #f7e9c7 100%);
     box-shadow: var(--shadow-md);

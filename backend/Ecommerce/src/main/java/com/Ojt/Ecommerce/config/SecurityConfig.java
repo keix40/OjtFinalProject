@@ -80,6 +80,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/contact/**").permitAll()
                         .requestMatchers("/api/notification/**").permitAll()
                         .requestMatchers("/api/newsletter/**").permitAll()
+                        .requestMatchers("/events/**").permitAll()
+                        .requestMatchers("/event/**").permitAll()
 
                         .anyRequest().authenticated()
 

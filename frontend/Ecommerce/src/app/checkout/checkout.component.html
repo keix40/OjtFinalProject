@@ -129,41 +129,7 @@
           <div class="space-y-4 mb-8">
             <div *ngFor="let item of cartItems" class="flex items-center space-x-3 group transition-transform duration-200 hover:scale-[1.02]">
               <img [src]="item.image" alt="{{item.title}}" class="w-14 h-14 object-cover rounded-xl border border-gray-200 group-hover:shadow-sm transition-shadow duration-200">
-              
-
-
-
-              <!--start -->
-              <div class="flex-1 min-w-0">
-                <!-- Product name -->
-                <div class="font-bold text-neutral-900 text-base leading-tight truncate">{{item.title}}</div>
-                <!-- Quantity -->
-                <div class="text-xs text-gray-500 mb-1">Quantity: {{item.quantity}}</div>
-                <!-- Price row: right-aligned, all in one line -->
-                <ng-container *ngIf="productDetails.get(item.productId || item.id) as product">
-                  <div class="flex items-center justify-end gap-1 mb-1">
-                    <!-- Original price -->
-                    <span *ngIf="getProductDiscount(product.id)" class="text-xs text-gray-400 line-through mr-1">
-                      {{ product.price }} MMK
-                    </span>
-                    <!-- Product discount badge -->
-                    <span *ngIf="getDiscountDisplayText(getProductDiscount(product.id))"
-                          class="px-1 py-0 rounded bg-red-50 text-red-600 text-[10px] font-semibold border border-red-100 rounded-full mr-1">
-                      {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
-                    </span>
-                    <!-- VIP Tier Badge -->
-                    <span *ngIf="getVipDiscountDisplay(product)"
-                          class="px-1 py-0 rounded bg-yellow-50 text-yellow-700 text-[10px] font-semibold border border-yellow-100 rounded-full mr-1">
-                      {{ getVipDiscountDisplay(product) }}
-                    </span>
-                   
-                  </div>
-                </ng-container>
-                <!-- end -->
-
-
-
-               <!-- start -->
+              <!-- Remove the first start/end block, keep only the detailed product display below -->
               <div class="flex-1">
                 <div class="font-semibold text-gray-900 text-sm">{{item.title}}</div>
                 <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-gray-500 text-xs">
@@ -185,9 +151,22 @@
                 <div *ngIf="getProductDiscount(item.productId || item.id)" class="text-green-600 text-xs font-medium">
                   <span *ngIf="getProductDiscount(item.productId || item.id)?.eventName">{{ getProductDiscount(item.productId || item.id)?.eventName }} </span>({{ getDiscountDisplayText(getProductDiscount(item.productId || item.id)) }})
                 </div>
+                <ng-container *ngIf="productDetails.get(item.productId || item.id) as product">
+                  <div class="flex items-center justify-end gap-1 mb-1">
+                    <span *ngIf="getProductDiscount(product.id)" class="text-xs text-gray-400 line-through mr-1">
+                      {{ product.price }} MMK
+                    </span>
+                    <span *ngIf="getDiscountDisplayText(getProductDiscount(product.id))"
+                          class="px-1 py-0 rounded bg-red-50 text-red-600 text-[10px] font-semibold border border-red-100 rounded-full mr-1">
+                      {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
+                    </span>
+                    <span *ngIf="getVipDiscountDisplay(product)"
+                          class="px-1 py-0 rounded bg-yellow-50 text-yellow-700 text-[10px] font-semibold border border-yellow-100 rounded-full mr-1">
+                      {{ getVipDiscountDisplay(product) }}
+                    </span>
+                  </div>
+                </ng-container>
               </div>
-
-              <!-- end 2-->
               <div class="text-right min-w-[90px]">
                 <div *ngIf="productDetails.get(item.productId || item.id) as product">
                   <div class="font-bold text-blue-700 text-lg">

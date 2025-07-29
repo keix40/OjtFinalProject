@@ -82,6 +82,10 @@ public class Product {
     @JsonIgnore
     private List<Review> reviews = new ArrayList<>();
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<EventProduct> eventProduct;
+
     @PrePersist
     public void prePersist() {
         if (status == null) {

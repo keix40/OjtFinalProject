@@ -340,11 +340,12 @@
 
 
 <!-- Customer Details Modal -->
-<div *ngIf="showCustomerModal" class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/30">
-  <div class="bg-white/70 backdrop-blur-lg border border-white/40 shadow-xl ring-1 ring-black/10 rounded-2xl p-8 w-full max-w-lg relative">
-    <button (click)="closeCustomerModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700">
-      <i data-lucide="x" class="w-6 h-6"></i>
-    </button>
+<div *ngIf="showCustomerModal" class="fixed inset-0 z-40 flex items-center justify-center">
+  <!-- Modal Backdrop -->
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <!-- Modal Content -->
+  <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <button (click)="closeCustomerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
     <div *ngIf="selectedCustomerDetails">
       <div class="flex items-center gap-4 mb-4 pb-4 border-b border-gray-200">
         <img [src]="imageService.getAvatarImageUrl(selectedCustomerDetails)" [alt]="selectedCustomerDetails.name" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow">
@@ -435,11 +436,10 @@
 </div>
 
 <!-- Add/Edit VIP Tier Modal -->
-<div *ngIf="showAddTierModal" class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/30">
-  <div class="bg-white/80 rounded-2xl shadow-xl p-0 w-full max-w-lg relative flex flex-col overflow-hidden">
-    <button (click)="closeAddTierModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 z-10">
-      <i data-lucide="x" class="w-6 h-6"></i>
-    </button>
+<div *ngIf="showAddTierModal" class="fixed inset-0 z-40 flex items-center justify-center">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-xl shadow-lg w-full max-w-lg mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <button (click)="closeAddTierModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
     <div class="p-8 flex flex-col bg-white/90">
       <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
         <i data-lucide="plus-circle" class="w-5 h-5 text-blue-500"></i>
@@ -484,11 +484,10 @@
 </div>
 
 <!-- VIP Tier List Modal -->
-<div *ngIf="showTierListModal" class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/30">
-  <div class="bg-white/80 rounded-2xl shadow-xl p-0 w-full max-w-5xl relative flex flex-col overflow-hidden">
-    <button (click)="closeTierListModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 z-10">
-      <i data-lucide="x" class="w-6 h-6"></i>
-    </button>
+<div *ngIf="showTierListModal" class="fixed inset-0 z-40 flex items-center justify-center">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-xl shadow-lg w-full max-w-lg mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <button (click)="closeTierListModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
     <div class="p-8 bg-white/90 flex flex-col">
       <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
         <i data-lucide="list" class="w-5 h-5 text-blue-500"></i>

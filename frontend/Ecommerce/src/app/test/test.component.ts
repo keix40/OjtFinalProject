@@ -1,8 +1,11 @@
 import { Component } from '@angular/core';
 import { NotificationService } from '../services/notification.service';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-test',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './test.component.html',
   styleUrls: ['./test.component.css']
 })

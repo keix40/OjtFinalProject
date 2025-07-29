@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import ExcelJS from 'exceljs';
 declare var $: any;
+declare var lucide: any;
 
 interface RefundRequest {
   returnRequestId: number;
@@ -78,21 +79,49 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   changePage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && (window as any).lucide) {
+          (window as any).lucide.createIcons();
+        } else if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }, 0);
     }
   }
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && (window as any).lucide) {
+          (window as any).lucide.createIcons();
+        } else if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }, 0);
     }
   }
   nextPage() {
     if (this.currentPage < this.totalPages) {
       this.currentPage++;
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && (window as any).lucide) {
+          (window as any).lucide.createIcons();
+        } else if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }, 0);
     }
   }
   prevPage() {
     if (this.currentPage > 1) {
       this.currentPage--;
+      setTimeout(() => {
+        if (typeof window !== 'undefined' && (window as any).lucide) {
+          (window as any).lucide.createIcons();
+        } else if (typeof lucide !== 'undefined') {
+          lucide.createIcons();
+        }
+      }, 0);
     }
   }
 

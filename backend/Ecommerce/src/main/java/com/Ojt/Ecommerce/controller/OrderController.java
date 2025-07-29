@@ -1,7 +1,11 @@
 package com.Ojt.Ecommerce.controller;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.ORDERS_CREATE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.ORDERS_UPDATE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.ORDERS_VIEW;
 import com.Ojt.Ecommerce.dto.DiscountDTO;
 import com.Ojt.Ecommerce.dto.UserOrderDTO;
 import com.Ojt.Ecommerce.dto.UserOrderListDTO;
@@ -23,22 +33,6 @@ import com.Ojt.Ecommerce.entity.UserOrder;
 import com.Ojt.Ecommerce.service.DeliveryService;
 import com.Ojt.Ecommerce.service.OrderService;
 import com.Ojt.Ecommerce.service.UserActivityService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.Objects;
-import com.Ojt.Ecommerce.annotations.LogActivity;
-import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
-import com.Ojt.Ecommerce.annotations.RequiresPermission;
-import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -376,14 +370,29 @@ public class OrderController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Update order status. If refundId is provided and refund type is REPLACEMENT, it will be linked to the order status.
+     * Request body: { "status": "SHIPPED", "refundId": 123 }
+     */
     @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId", logChanges = true)
     @PutMapping("/updatestatus/{orderId}")
     @RequiresPermission(value = ORDERS_UPDATE, level = "basic", description = "Update order status")
     public ResponseEntity<String> updateOrderStatus(
             @PathVariable Long orderId,
-            @RequestBody Map<String, String> request) {
-        String status = request.get("status");
-        boolean updated = service.updateOrderStatus(orderId, status);
+            @RequestBody Map<String, Object> request) {
+        String status = (String) request.get("status");
+        Long refundId = null;
+        if (request.containsKey("refundId")) {
+            Object refundIdObj = request.get("refundId");
+            if (refundIdObj instanceof Number) {
+                refundId = ((Number) refundIdObj).longValue();
+            } else if (refundIdObj instanceof String) {
+                try {
+                    refundId = Long.parseLong((String) refundIdObj);
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        boolean updated = service.updateOrderStatus(orderId, status, refundId);
 
         if (updated) {
             return ResponseEntity.ok("Order status updated successfully.");

@@ -58,6 +58,7 @@ import com.Ojt.Ecommerce.repository.UserCouponUsageRepository;
 import com.Ojt.Ecommerce.repository.UserOrderHasProductRepository;
 import com.Ojt.Ecommerce.repository.UserPointHistoryRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
+import com.Ojt.Ecommerce.repository.RefundRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -115,6 +116,9 @@ public class OrderService {
 
     @Autowired
     private DashboardBroadcastService dashboardBroadcastService;
+
+    @Autowired
+    private RefundRepository refundRepository;
 
     // Method to ensure "First Time Buyer" discount exists
     private void ensureFirstTimeBuyerDiscountExists() {
@@ -483,7 +487,7 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-    public boolean updateOrderStatus(Long orderId, String statusStr) {
+    public boolean updateOrderStatus(Long orderId, String statusStr, Long refundId) {
         Optional<UserOrder> optionalOrder = repo.findById(orderId);
         if (optionalOrder.isEmpty()) return false;
 
@@ -493,12 +497,21 @@ public class OrderService {
         Status status = statusRepository.findByName(type)
                 .orElseThrow(() -> new RuntimeException("Status not found"));
 
-        OrderStatus orderStatus = OrderStatus.builder()
+        OrderStatus.OrderStatusBuilder orderStatusBuilder = OrderStatus.builder()
                 .userOrder(order)
                 .status(status)
-                .statusDate(LocalDateTime.now())
-                .build();
+                .statusDate(LocalDateTime.now());
 
+        // If refundId is provided and refund type is REPLACEMENT, set refund in OrderStatus
+        if (refundId != null) {
+            Refund refund = refundRepository.findById(refundId)
+                    .orElseThrow(() -> new RuntimeException("Refund not found with ID: " + refundId));
+            if (refund.getRefundType() != null && refund.getRefundType().toString().equals("REPLACEMENT")) {
+                orderStatusBuilder.Refund(refund);
+            }
+        }
+
+        OrderStatus orderStatus = orderStatusBuilder.build();
         orderStatusRepository.save(orderStatus);
 
         order.setUpdatedDate(LocalDateTime.now());
@@ -676,7 +689,7 @@ public class OrderService {
             }).toList();
             rrdto.setProducts(rrProductDTOs);
             // Refund mapping
-            if (rr.getRefund() != null) {
+            if (rr.getRefund() != null && rr.getRefund().getRefundType() != null) {
                 Refund refund = rr.getRefund();
                 rrdto.setRefundId(refund.getId());
                 rrdto.setRefundAmount(refund.getRefundAmount());
@@ -684,7 +697,7 @@ public class OrderService {
                 rrdto.setInitiatedAt(refund.getInitiatedAt());
                 rrdto.setCompletedAt(refund.getCompletedAt());
                 rrdto.setRefundStatus(refund.getStatus() != null ? refund.getStatus().toString() : null);
-                rrdto.setRefundType(refund.getRefundType() != null ? refund.getRefundType().toString() : null);
+                rrdto.setRefundType(refund.getRefundType().toString());
             }
             return rrdto;
         }).collect(Collectors.toList());

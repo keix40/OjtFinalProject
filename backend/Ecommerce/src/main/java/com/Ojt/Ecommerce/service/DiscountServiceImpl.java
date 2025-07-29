@@ -1077,6 +1077,63 @@ public class DiscountServiceImpl implements DiscountService {
     }
 
     @Override
+    public List<DiscountDTO> getActiveAliveDiscounts() {
+        List<Discount> allDiscounts = discountRepository.findAll();
+        List<DiscountDTO> dtos = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        
+        for(Discount d : allDiscounts){
+            // Only include discounts with status = 1 and end date is alive (not expired)
+            if (d.isStatus() && today.isBefore(d.getEndDate().plusDays(1))) {
+                // Update autoApply field if it's null
+                if (d.getAutoApply() == null) {
+                    // If discount has a code, it's a coupon (autoApply = false)
+                    // If discount has no code, it's a discount event (autoApply = true)
+                    d.setAutoApply(d.getCode() == null || d.getCode().trim().isEmpty());
+                    discountRepository.save(d);
+                }
+
+                DiscountDTO dto = new DiscountDTO();
+                dto.setId(d.getId());
+                dto.setName(d.getName());
+                dto.setDescription(d.getDescription());
+                dto.setDiscountType(d.getDiscountType());
+                dto.setDiscountValue(d.getDiscountValue());
+                dto.setStartDate(d.getStartDate());
+                dto.setEndDate(d.getEndDate());
+                boolean isActive = today.isAfter(d.getStartDate().minusDays(1))
+                        && today.isBefore(d.getEndDate().plusDays(1));
+                dto.setStatus(isActive);
+                dto.setAutoApply(d.getAutoApply());
+                
+                // --- Aggregate from DiscountRule ---
+                List<DiscountRule> rules = discountRuleRepository.findByDiscount_Id(d.getId());
+                Set<Long> productIds = new HashSet<>();
+                Set<Long> brandIds = new HashSet<>();
+                Set<Long> categoryIds = new HashSet<>();
+                Set<String> brandCategoryIds = new HashSet<>();
+
+                for (DiscountRule rule : rules) {
+                    if (rule.getProduct() != null) productIds.add(rule.getProduct().getId());
+                    if (rule.getBrand() != null) brandIds.add(rule.getBrand().getId());
+                    if (rule.getCategory() != null) categoryIds.add(rule.getCategory().getId());
+                    if (rule.getBrand() != null && rule.getCategory() != null) {
+                        brandCategoryIds.add(rule.getBrand().getId() + "-" + rule.getCategory().getId());
+                    }
+                }
+
+                // Set as comma-separated strings (or as List<Long> if your DTO supports it)
+                dto.setProductIds(productIds.isEmpty() ? null : productIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+                dto.setBrandIds(brandIds.isEmpty() ? null : brandIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+                dto.setCategoryIds(categoryIds.isEmpty() ? null : categoryIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+                dto.setBrandCategoryIds(brandCategoryIds.isEmpty() ? null : String.join(",", brandCategoryIds));
+                dtos.add(dto);
+            }
+        }
+        return dtos;
+    }
+
+    @Override
     public ResponseEntity<?> getActiveDiscounts() {
         try {
             List<Map<String, Object>> activeDiscounts = new ArrayList<>();

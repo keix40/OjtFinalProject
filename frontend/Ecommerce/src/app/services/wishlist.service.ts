@@ -27,6 +27,10 @@ export class WishlistService {
     return this.http.get(`${this.baseUrl}/getwishlist/${userId}`);
   }
 
+  getWishlistWithDiscounts(userId: number): Observable<any> {
+    return this.http.get(`${this.baseUrl}/getwishlistwithdiscounts/${userId}`);
+  }
+
   notifyWishlistUpdated() {
     this.wishlistUpdated$.next();
   }

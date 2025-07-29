@@ -1,8 +1,8 @@
 <div class="p-4 bg-slate-50 min-h-screen font-poppins">
   <!-- Header Section -->
   <div class="text-center mb-8">
-    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
-      <i data-lucide="percent" class="w-8 h-8 text-white"></i>
+    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+      <i data-lucide="percent" class="w-8 h-8 text-indigo-500"></i>
     </div>
     <h1 class="text-3xl font-bold text-gray-900 mb-2">Discount Management</h1>
     <p class="text-gray-600 text-lg">Manage and track all discount codes, status, and validity</p>
@@ -91,7 +91,7 @@
           </td>
           <td class="px-4 py-3">
             <button (click)="openDetailsModal(discount, discountDetailsModal)" class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1" title="View Details">
-              <i class="fas fa-eye"></i> View
+              <i data-lucide="eye" class="w-4 h-4"></i> View
             </button>
           </td>
         </tr>
@@ -148,7 +148,8 @@
     <!-- Modal Backdrop -->
     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
     <!-- Modal Content -->
-    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="modal.dismiss()">&times;</button>
       <!-- Modal Header -->
       <div class="flex items-center justify-between mb-4 md:mb-6">
         <div class="flex items-center gap-4">
@@ -168,7 +169,6 @@
           <button *ngIf="!isDetailsEditMode" (click)="startDetailsEdit()" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition" title="Edit">
             <i class="fas fa-edit text-lg"></i>
             </button>
-          <button (click)="modal.dismiss()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none ml-2">&times;</button>
         </div>
       </div>
       <!-- Modal Body -->
@@ -323,8 +323,8 @@
               </td>
               <td class="px-3 py-2 font-bold text-gray-900 truncate max-w-xs" title="{{ product.productName }}">{{ product.productName }}</td>
               <td class="px-3 py-2 text-gray-700 truncate max-w-[120px]" title="{{ product.productCode }}">{{ product.productCode }}</td>
-              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0]?.brandName || '-' }}</td>
-              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0]?.cateName || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].brandName || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].cateName || '-' }}</td>
               <td class="px-3 py-2 text-blue-700 font-semibold text-right">{{ product.price | number:'1.0-0' }}</td>
               <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
             </tr>

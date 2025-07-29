@@ -55,3 +55,298 @@
             100% { opacity: 0; transform: translateX(100%); }
           }
 
+/* Hero Section Animations */
+.hero-slide {
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.hero-slide.active {
+  opacity: 1;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Navigation arrows hover effects */
+.hero-slide button:hover {
+  transform: scale(1.1);
+}
+
+/* Indicator dots */
+.indicator {
+  transition: all 0.3s ease;
+}
+
+.indicator:hover {
+  transform: scale(1.25);
+}
+
+/* Text shadow for better readability */
+.text-shadow-lg {
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.text-shadow-2xl {
+  text-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.hero-btn {
+  background: transparent;
+  border: 3px solid #fff;
+  color: #fff;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 20px rgba(255,255,255,0.1);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+.hero-btn:hover, .hero-btn:focus {
+  background: #2563eb; /* Tailwind blue-600 */
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Badge animations */
+.badge-pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Product card hover effects */
+.product-card {
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Badge styling */
+.badge-special {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+.badge-discount {
+  background: linear-gradient(135deg, #ec4899, #be185d);
+  box-shadow: 0 2px 8px rgba(236, 72, 153, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  z-index: 10;
+}
+
+/* Responsive grid for product sections */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+/* Responsive grid for featured products */
+.grid.grid-cols-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .product-grid,
+  .grid.grid-cols-5 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .product-grid,
+  .grid.grid-cols-5 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .product-grid,
+  .grid.grid-cols-5 {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+/* Trending icon animation */
+.trending-icon {
+  animation: trending-glow 3s ease-in-out infinite;
+}
+
+@keyframes trending-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.6));
+  }
+}
+
+/* Section header styling */
+.trending-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Brand section styling */
+.brand-card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.brand-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.brand-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.brand-card:hover .brand-image {
+  transform: scale(1.05);
+}
+
+.brand-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.5));
+  color: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.brand-card:hover .brand-overlay {
+  transform: translateY(0);
+}
+
+/* Square brand cards with full image coverage */
+.brand-card-square {
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+  width: 125px;
+  height: 125px;
+  min-width: 125px;
+  max-width: 125px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-card-square:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px) scale(1.05);
+}
+
+.brand-image-square {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+.brand-card-square:hover .brand-image-square {
+  transform: scale(1.1);
+}
+
+.brand-overlay-square {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6));
+  color: white;
+  padding: 0.75rem;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.brand-card-square:hover .brand-overlay-square {
+  transform: translateY(0);
+}
+
+/* Responsive design for square brand cards */
+@media (max-width: 768px) {
+  .brand-card-square {
+    width: 120px;
+    height: 120px;
+    min-width: 120px;
+    max-width: 120px;
+  }
+  
+  .brand-overlay-square {
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-card-square {
+    width: 100px;
+    height: 100px;
+    min-width: 100px;
+    max-width: 100px;
+  }
+  
+  .brand-overlay-square {
+    font-size: 0.7rem;
+    padding: 0.4rem;
+  }
+}
+

@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -15,7 +16,9 @@ import { ActivatedRoute } from '@angular/router';
     .banned-container { text-align: center; margin-top: 100px; }
     h1 { color: #d32f2f; }
     p { font-size: 1.2em; }
-  `]
+  `],
+  standalone: true,
+  imports: [CommonModule]
 })
 export class BannedPageComponent implements OnInit {
   blockedUntil: string = '';

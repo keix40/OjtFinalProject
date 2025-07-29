@@ -30,7 +30,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   suspiciousLogins: number = 0;
   recentSecurityEvents: number = 0;
   sidebarVisible: boolean = window.innerWidth >= 640; // Show sidebar by default on desktop
-  sidebarCollapsed: boolean = false;
+  sidebarCollapsed: boolean = true; // Start with collapsed sidebar
   currentMenu: string | null = null;
   currentSubmenu: string | null = null; // Track which submenu is active
 
@@ -64,6 +64,14 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       // Reduced delay for smoother transition
       setTimeout(() => this.initializeIcons(), 50);
     }, 120); // 120ms delay for smoothness
+  }
+
+  onProfileMouseEnter() {
+    this.profileDropdownOpen = true;
+  }
+
+  onProfileMouseLeave() {
+    this.profileDropdownOpen = false;
   }
 
   constructor(
@@ -143,13 +151,6 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     }
   }
 
-  toggleProfileDropdown(event: MouseEvent) {
-    event.stopPropagation();
-    this.profileDropdownOpen = !this.profileDropdownOpen;
-    // Reinitialize icons after dropdown toggle
-    setTimeout(() => this.initializeIcons(), 100);
-  }
-
   private loadUserInfo() {
     this.isLoggedIn = this.authService.isLoggedIn();
     if (this.isLoggedIn) {
@@ -224,6 +225,14 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     }
   }
 
+  navigateToAdminProfile() {
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.router.navigate([`/admin/profile/${userId}`]);
+      this.profileDropdownOpen = false;
+    }
+  }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
@@ -265,6 +274,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
           { icon: 'list', link: '/discount-list' },
           { icon: 'plus', link: 'discount-add' },
           { icon: 'ticket', link: '/discount-coupon' },
+        ];
+      case 'event':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'circle-check', link: '/admin/event' },
+          { icon: 'list-check', link: '/admin/eventlist' },
         ];
       case 'delivery':
         return [

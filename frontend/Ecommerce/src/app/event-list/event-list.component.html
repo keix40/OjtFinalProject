@@ -1,0 +1,177 @@
+<div class="p-4 bg-slate-50 min-h-screen">
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+      <i data-lucide="circle-check" class="w-8 h-8 text-indigo-500"></i>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Event Management</h1>
+    <p class="text-gray-600 text-lg">View and manage all events</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="relative flex-1 max-w-md">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+        <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Search event name or description..." class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+      </div>
+      
+      <div class="flex items-center gap-2 text-sm text-gray-600">
+        <span class="font-medium">{{ filteredEvents.length }}</span>
+        <span>Events found</span>
+      </div>
+      <div>
+        <button 
+          (click)="addEvent()"
+          class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+          </svg>
+          Add Event
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto rounded-2xl shadow-lg bg-white">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Image</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Description</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Start Date</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">End Date</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let event of paginatedEvents" class="hover:bg-slate-50">
+          <td class="px-4 py-3">
+            <img [src]="getEventImageUrl(event)" alt="Event Image" class="w-16 h-16 object-cover rounded-lg border" />
+          </td>
+          <td class="px-4 py-3 font-medium text-slate-800">{{ event.name }}</td>
+          <td class="px-4 py-3 text-slate-700">{{ event.description }}</td>
+          <td class="px-4 py-3 text-slate-700">{{ event.startDate | date:'medium' }}</td>
+          <td class="px-4 py-3 text-slate-700">{{ event.endDate | date:'medium' }}</td>
+          <td class="px-4 py-3">
+            <div class="flex flex-col gap-1">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                    [ngClass]="{
+                      'bg-emerald-100 text-emerald-800': event.status === 1,
+                      'bg-rose-100 text-rose-800': event.status !== 1
+                    }">
+                {{ event.status === 1 ? 'Active' : 'Inactive' }}
+              </span>
+              <span *ngIf="event.isDefault === 1" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                Default
+              </span>
+            </div>
+          </td>
+          <td class="px-4 py-3 whitespace-nowrap">
+            <div class="flex gap-2">
+              <button (click)="editEvent(event)" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Edit
+              </button>
+              <button (click)="deleteEvent(event)" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors ml-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="filteredEvents.length === 0" class="flex flex-col items-center justify-center py-16">
+      <div class="bg-white rounded-xl p-8 flex flex-col items-center shadow-sm border border-slate-200 max-w-md w-full">
+        <div class="text-5xl text-slate-300 mb-4">📅</div>
+        <h4 class="text-lg font-semibold text-slate-800 mb-2">{{ searchTerm ? 'No Events Found' : 'No Events Available' }}</h4>
+        <p class="text-slate-500 mb-4 text-center">{{ searchTerm ? 'No events match your current search.' : 'No events have been created yet.' }}</p>
+      </div>
+    </div>
+    <!-- Pagination -->
+    <div *ngIf="totalPages > 1" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} results
+        </div>
+        <div class="flex items-center gap-2">
+          <button 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Previous
+          </button>
+          
+          <div class="flex items-center gap-1">
+            <button 
+              *ngFor="let page of getPageNumbers()"
+              (click)="onPageChange(page)"
+              [class]="page === currentPage ? 
+                'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
+                'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
+              {{ page }}
+            </button>
+          </div>
+          
+          <button 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Next
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Preview Hero Section Order (Sortable List) -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-xl font-bold text-slate-800">Preview Hero Section Order</h2>
+    <button *ngIf="!isSorting" (click)="startSorting()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Sort Events</button>
+  </div>
+  <div *ngIf="isSorting" class="mb-4 flex gap-2 justify-end">
+    <button (click)="saveSorting()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">Save Order</button>
+    <button (click)="cancelSorting()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">Cancel</button>
+  </div>
+  <div class="overflow-x-auto">
+    <div cdkDropList 
+         (cdkDropListDropped)="dropEvent($event)"
+         cdkDropListOrientation="horizontal"
+         [cdkDropListSortingDisabled]="!isSorting"
+         class="flex gap-4 py-4">
+      <div *ngFor="let event of sortedEvents; let i = index" 
+           cdkDrag
+           class="relative flex flex-col items-center bg-white border border-slate-200 rounded-xl shadow w-[300px] h-[100px] aspect-[3/1] min-w-[200px] max-w-[300px]"
+           [class.cursor-move]="isSorting"
+           [style.pointer-events]="isSorting ? 'auto' : 'none'">
+        <img [src]="getEventImageUrl(event)" alt="Event Image" class="absolute left-0 top-0 w-full h-full object-cover rounded-xl opacity-60" />
+        <div class="absolute left-0 top-0 w-full h-full rounded-xl bg-black/10"></div>
+        <div class="relative z-10 flex flex-col items-center justify-center h-full w-full">
+          <div class="font-bold text-white text-lg drop-shadow" style="text-shadow: 1px 1px 4px #000;">{{ event.name }}</div>
+        </div>
+        <button (click)="editEventFromList(event)" class="absolute top-2 right-2 z-20 bg-white/80 hover:bg-blue-600 hover:text-white text-blue-600 rounded-full p-1 shadow transition"><i class="lucide lucide-pencil w-4 h-4"></i></button>
+        <div *ngIf="isSorting" class="absolute right-2 bottom-2 z-20 cursor-move"><i class="lucide lucide-move w-5 h-5 text-slate-500"></i></div>
+        <div class="absolute left-2 top-2 z-20 bg-white/80 text-xs font-bold rounded px-2 py-1 shadow">{{ i + 1 }}</div>
+        <ng-template cdkDragPlaceholder>
+          <div class="w-[300px] h-[100px] aspect-[3/1] min-w-[200px] max-w-[300px] bg-blue-100 border-2 border-blue-400 rounded-xl opacity-50"></div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,16 +1,25 @@
 package com.Ojt.Ecommerce.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.dto.DiscountDTO;
 import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
 import com.Ojt.Ecommerce.repository.DiscountRepository;
 import com.Ojt.Ecommerce.service.DiscountService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/discounts")
@@ -77,6 +86,11 @@ public class DiscountController {
     @GetMapping
     public List<DiscountDTO> getAllDiscounts(){
         return discountService.getAllDiscounts();
+    }
+
+    @GetMapping("/active-alive")
+    public List<DiscountDTO> getActiveAliveDiscounts(){
+        return discountService.getActiveAliveDiscounts();
     }
 
     @GetMapping("/active")

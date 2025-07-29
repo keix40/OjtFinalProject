@@ -81,6 +81,10 @@ export class DiscountService {
     return this.http.get<DiscountDTO[]>(API_URL);
   }
 
+  getActiveAliveDiscount(): Observable<DiscountDTO[]> {
+    return this.http.get<DiscountDTO[]>(`${API_URL}/active-alive`);
+  }
+
   getActiveDiscount(): Observable<DiscountEventResponseDTO[]> {
     return this.http.get<DiscountEventResponseDTO[]>(`${API_URL}/active`);
   }

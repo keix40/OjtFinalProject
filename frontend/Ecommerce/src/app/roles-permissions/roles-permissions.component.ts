@@ -150,6 +150,13 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     this.expandAllPreviewCategories();
   }
 
+  // Modal state variables
+  showRoleModal = false;
+  showTemplatesModal = false;
+  showTemplatePreviewModal = false;
+  showAssignedUsersModal = false;
+  showAssignUsersDialog = false;
+
   constructor(
     private fb: FormBuilder,
     private roleService: RoleService,
@@ -577,13 +584,11 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     this.editingRole = null;
     this.roleForm.reset({ status: 'active' });
     this.selectedTemplate = '';
-    setTimeout(() => {
-      const modal = document.getElementById('roleModal');
-      if (modal && (window as any).bootstrap) {
-        const bsModal = new (window as any).bootstrap.Modal(modal);
-        bsModal.show();
-      }
-    });
+    this.showRoleModal = true;
+  }
+
+  closeCreateRoleModal(): void {
+    this.showRoleModal = false;
   }
 
   editRole(role: Role): void {
@@ -594,13 +599,11 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
       description: role.description,
       status: role.status
     });
-    setTimeout(() => {
-      const modal = document.getElementById('roleModal');
-      if (modal && (window as any).bootstrap) {
-        const bsModal = new (window as any).bootstrap.Modal(modal);
-        bsModal.show();
-      }
-    });
+    this.showRoleModal = true;
+  }
+
+  closeEditRoleModal(): void {
+    this.showRoleModal = false;
   }
 
   saveRole(): void {
@@ -640,6 +643,7 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
 
       this.filterRoles();
       // Close modal and show success message
+      this.closeCreateRoleModal();
     }
   }
 
@@ -787,13 +791,11 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
 
   previewTemplate(template: PermissionTemplate): void {
     this.previewedTemplate = template;
-    setTimeout(() => {
-      const modal = document.getElementById('templatePreviewModal');
-      if (modal && (window as any).bootstrap) {
-        const bsModal = new (window as any).bootstrap.Modal(modal);
-        bsModal.show();
-      }
-    });
+    this.showTemplatePreviewModal = true;
+  }
+
+  closePreviewTemplateModal(): void {
+    this.showTemplatePreviewModal = false;
   }
 
   private getPermissionIdsFromKeys(keys: string[]): number[] {
@@ -931,6 +933,11 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
 
   viewAssignedUsers(): void {
     // Modal would be triggered via Bootstrap JS or Angular CDK
+    this.showAssignedUsersModal = true;
+  }
+
+  closeAssignedUsersModal(): void {
+    this.showAssignedUsersModal = false;
   }
 
   removeUserFromRole(user: User): void {
@@ -1007,13 +1014,11 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   openTemplatesModal(): void {
-    setTimeout(() => {
-      const modal = document.getElementById('templatesModal');
-      if (modal && (window as any).bootstrap) {
-        const bsModal = new (window as any).bootstrap.Modal(modal);
-        bsModal.show();
-      }
-    });
+    this.showTemplatesModal = true;
+  }
+
+  closeTemplatesModal(): void {
+    this.showTemplatesModal = false;
   }
 
   openAssignedUsersModal(content: any): void {
@@ -1026,7 +1031,11 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     }
     this.userAssignmentSearchTerm = '';
     this.filterAllUsers();
-    this.modalService.open(this.assignUsersDialog, { size: 'lg' });
+    this.showAssignUsersDialog = true;
+  }
+
+  closeAssignDialog(): void {
+    this.showAssignUsersDialog = false;
   }
 
   filterAllUsers(): void {
@@ -1078,6 +1087,7 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
         alert('An error occurred while assigning users.');
       }
     });
+    this.closeAssignDialog();
   }
 
   getRolePermissionCount(role: Role): number {

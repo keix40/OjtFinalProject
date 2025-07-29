@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.Collections;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,15 +30,22 @@ import com.Ojt.Ecommerce.dto.ProductDTO;
 import com.Ojt.Ecommerce.dto.ProductImageDTO;
 import com.Ojt.Ecommerce.dto.VariantAttributeDTO;
 import com.Ojt.Ecommerce.dto.VariantDTO;
+import com.Ojt.Ecommerce.dto.TrendingProductDTO;
 import com.Ojt.Ecommerce.entity.AttributeValue;
 import com.Ojt.Ecommerce.entity.Brand;
 import com.Ojt.Ecommerce.entity.Category;
 import com.Ojt.Ecommerce.entity.Product;
 import com.Ojt.Ecommerce.entity.ProductHasCategory;
+import com.Ojt.Ecommerce.entity.EventProduct;
+import com.Ojt.Ecommerce.entity.Events;
+import com.Ojt.Ecommerce.entity.ProductDiscount;
+import com.Ojt.Ecommerce.entity.Discount;
 import com.Ojt.Ecommerce.entity.ProductImage;
 import com.Ojt.Ecommerce.entity.ProductVariant;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.entity.VariantAttributeValue;
+import com.Ojt.Ecommerce.entity.Review;
+import com.Ojt.Ecommerce.entity.DiscountRule;
 import com.Ojt.Ecommerce.repository.AttributeValueRepository;
 import com.Ojt.Ecommerce.repository.BrandRepository;
 import com.Ojt.Ecommerce.repository.CategoryRepository;
@@ -44,7 +53,11 @@ import com.Ojt.Ecommerce.repository.ProductHasCategoryRepository;
 import com.Ojt.Ecommerce.repository.ProductImageRepository;
 import com.Ojt.Ecommerce.repository.ProductRepository;
 import com.Ojt.Ecommerce.repository.ProductVariantRepository;
+import com.Ojt.Ecommerce.repository.ReviewRepository;
 import com.Ojt.Ecommerce.repository.VariantAttributeValueRepository;
+import com.Ojt.Ecommerce.repository.EventProductRepository;
+import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
+import com.Ojt.Ecommerce.repository.DiscountRepository;
 import com.Ojt.Ecommerce.util.ProductCodeGeneratorUtil;
 import com.Ojt.Ecommerce.service.EmailService;
 import com.Ojt.Ecommerce.service.UserService;
@@ -85,6 +98,18 @@ public class ProductService {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ReviewRepository reviewRepo;
+
+    @Autowired
+    private EventProductRepository eventProductRepo;
+
+    @Autowired
+    private DiscountRuleRepository discountRuleRepo;
+
+    @Autowired
+    private DiscountRepository discountRepo;
 
     @Transactional
 //    public Product saveProductWithImages(ProductDTO dto, MultipartFile[] files,Map<String, List<MultipartFile>> variantImageMap) throws IOException {
@@ -685,6 +710,48 @@ public class ProductService {
         return products.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+    public List<ProductDTO> getRelatedProducts(List<Long> categoryIds, List<Long> brandIds, Long currentProductId, List<Long> excludeProductIds) {
+        // Ensure we have valid lists
+        categoryIds = categoryIds != null ? categoryIds : new ArrayList<>();
+        brandIds = brandIds != null ? brandIds : new ArrayList<>();
+        excludeProductIds = excludeProductIds != null ? excludeProductIds : new ArrayList<>();
+        
+        // If excludeProductIds is empty, add a dummy value to avoid SQL issues
+        if (excludeProductIds.isEmpty()) {
+            excludeProductIds.add(-1L); // Use -1 as a dummy ID that won't exist
+        }
+        
+        // Add current product to exclude list
+        if (currentProductId != null) {
+            excludeProductIds.add(currentProductId);
+        }
+        
+        // Check if we have any category or brand IDs to search by
+        if (categoryIds.isEmpty() && brandIds.isEmpty()) {
+            System.out.println("No category or brand IDs provided for related products search");
+            return new ArrayList<>();
+        }
+        
+        System.out.println("Searching related products with categoryIds: " + categoryIds + ", brandIds: " + brandIds);
+        System.out.println("Excluding product IDs: " + excludeProductIds);
+        
+        try {
+            List<Product> products = proRepo.findRelatedProducts(categoryIds, brandIds, excludeProductIds);
+            
+            System.out.println("Found " + products.size() + " related products");
+            
+            // Limit to 5 products and convert to DTOs
+            return products.stream()
+                    .limit(5)
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.err.println("Error finding related products: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
     private ProductDTO convertToDTO(Product product) {
         ProductDTO dto = mapper.map(product, ProductDTO.class);
 
@@ -755,6 +822,20 @@ public class ProductService {
         dto.setVariants(variantDTOs);
         dto.setHasVariant(!variantDTOs.isEmpty());
 
+        // Calculate and set rating information
+        List<Review> reviews = reviewRepo.findByProductIdOrderByTimestampDesc(product.getId());
+        if (reviews != null && !reviews.isEmpty()) {
+            double averageRating = reviews.stream()
+                    .mapToInt(Review::getRating)
+                    .average()
+                    .orElse(0.0);
+            dto.setAverageRating(Math.round(averageRating * 10.0) / 10.0); // Round to 1 decimal place
+            dto.setReviewCount(reviews.size());
+        } else {
+            dto.setAverageRating(0.0);
+            dto.setReviewCount(0);
+        }
+
         return dto;
     }
 
@@ -773,7 +854,7 @@ public class ProductService {
         proRepo.activeProduct(id);
     }
 
-    public ProductDTO getProductDetailById(Long productId) {
+    public ProductDTO getProductDetailById(Long productId, Long userId) {
         Optional<Product> optionalProduct = proRepo.findById(productId);
         if (optionalProduct.isEmpty()) return null;
 
@@ -845,7 +926,18 @@ public class ProductService {
         dto.setVariants(variantDTOs);
         dto.setHasVariant(!variantDTOs.isEmpty());
 
-        // You can build attributes for filters from variant attributes similarly if needed
+        // Add discount information
+        dto.setHasDiscount(hasActiveDiscount(product));
+        if (hasActiveDiscount(product) && userId != null) {
+            // Find the applicable discount for this user and product
+            DiscountRule discountRule = discountRuleRepo.findActiveProductDiscountRule(productId, userId);
+            if (discountRule != null) {
+                Discount discount = discountRule.getDiscount();
+                dto.setDiscountType(discount.getDiscountType().toString());
+                dto.setDiscountValue(discount.getDiscountValue());
+                dto.setDiscountName(discount.getName());
+            }
+        }
 
         return dto;
     }
@@ -862,13 +954,577 @@ public class ProductService {
         return proRepo.findTop4ByOrderByCreateDateDesc().stream().limit(4).toList();
     }
 
-    public List<Product> getTop4OrderedProducts() {
-        return proRepo.findTop4OrderedProductsNative();
+    public List<Product> getTop5OrderedProducts() {
+        return proRepo.findTop5OrderedProductsNative();
+    }
+
+    public List<TrendingProductDTO> getTrendingProductsWithReviews() {
+        List<Product> topProducts = proRepo.findTop5OrderedProductsNative();
+        return topProducts.stream().map(this::convertToTrendingDTO).collect(Collectors.toList());
+    }
+
+    public List<TrendingProductDTO> getPersonalizedFeaturedProducts(Long userId) {
+        List<Product> featuredProducts;
+        
+        System.out.println("=== Getting Personalized Featured Products ===");
+        System.out.println("User ID: " + userId);
+        
+        if (userId == null) {
+            // For non-logged in users, get latest products by creation date
+            List<Product> latestProducts = proRepo.findTop10ByOrderByCreateDateDesc();
+            System.out.println("Latest products by creation date: " + latestProducts.size());
+            
+            // Check which of these latest products have discounts
+            List<Product> productsWithDiscounts = latestProducts.stream()
+                .filter(product -> hasActiveDiscount(product))
+                    .collect(Collectors.toList());
+                
+            System.out.println("Latest products with discounts: " + productsWithDiscounts.size());
+            
+            // Take first 5 products (prioritizing by creation date, with discounts shown as badges)
+            featuredProducts = latestProducts.stream()
+                .limit(5)
+                .collect(Collectors.toList());
+                
+            System.out.println("Final featured products (latest by creation date): " + featuredProducts.size());
+        } else {
+            // For logged-in users, still prioritize by creation date but consider user preferences
+            List<Long> wishlistProductIds = getWishlistProductIds(userId);
+            List<Long> orderProductIds = getOrderProductIds(userId);
+            
+            if (wishlistProductIds.isEmpty() && orderProductIds.isEmpty()) {
+                // If user has no history, get latest products by creation date
+                List<Product> latestProducts = proRepo.findTop10ByOrderByCreateDateDesc();
+                featuredProducts = latestProducts.stream()
+                    .limit(5)
+                    .collect(Collectors.toList());
+                System.out.println("User has no history, using latest products by creation date: " + featuredProducts.size());
+                } else {
+                // Get user's preferred categories and brands
+                Set<Long> categoryIds = getCategoryIdsFromProducts(wishlistProductIds, orderProductIds);
+                Set<Long> brandIds = getBrandIdsFromProducts(wishlistProductIds, orderProductIds);
+                
+                // Get products from user's preferred categories/brands, ordered by creation date
+                List<Product> personalizedProducts = getProductsByCategoriesAndBrandsOrderedByDate(categoryIds, brandIds, 10);
+                
+                if (personalizedProducts.size() >= 5) {
+                    featuredProducts = personalizedProducts.stream()
+                        .limit(5)
+                        .collect(Collectors.toList());
+                } else {
+                    // If not enough personalized products, fill with latest products
+                    List<Product> latestProducts = proRepo.findTop10ByOrderByCreateDateDesc();
+                    Set<Long> personalizedProductIds = personalizedProducts.stream()
+                        .map(Product::getId)
+                        .collect(Collectors.toSet());
+                    
+                    List<Product> additionalProducts = latestProducts.stream()
+                        .filter(p -> !personalizedProductIds.contains(p.getId()))
+                        .limit(5 - personalizedProducts.size())
+                        .collect(Collectors.toList());
+                    
+                    featuredProducts = new ArrayList<>();
+                    featuredProducts.addAll(personalizedProducts);
+                    featuredProducts.addAll(additionalProducts);
+                }
+                
+                System.out.println("Using personalized products ordered by creation date: " + featuredProducts.size());
+            }
+        }
+        
+        System.out.println("Final featured products count: " + featuredProducts.size());
+        List<TrendingProductDTO> result = featuredProducts.stream().map(this::convertToTrendingDTO).collect(Collectors.toList());
+        
+        // Debug: Check how many have discounts in final result
+        long productsWithDiscounts = result.stream().filter(p -> p.getHasDiscount()).count();
+        System.out.println("Final result - products with discounts: " + productsWithDiscounts + "/" + result.size());
+        
+        return result;
+    }
+
+    private List<Long> getWishlistProductIds(Long userId) {
+        // TODO: Implement wishlist repository call
+        // For now, return empty list
+        return new ArrayList<>();
+    }
+
+    private List<Long> getOrderProductIds(Long userId) {
+        // TODO: Implement order repository call
+        // For now, return empty list
+        return new ArrayList<>();
+    }
+
+    private Set<Long> getCategoryIdsFromProducts(List<Long> productIds) {
+        if (productIds.isEmpty()) return new HashSet<>();
+        
+        List<Product> products = proRepo.findAllById(productIds);
+        Set<Long> categoryIds = new HashSet<>();
+        
+        for (Product product : products) {
+            if (product.getProductCategories() != null) {
+                for (ProductHasCategory phc : product.getProductCategories()) {
+                    if (phc.getCategory() != null) {
+                        categoryIds.add(phc.getCategory().getId());
+                    }
+                }
+            }
+        }
+        
+        return categoryIds;
+    }
+
+    private Set<Long> getBrandIdsFromProducts(List<Long> productIds) {
+        if (productIds.isEmpty()) return new HashSet<>();
+        
+        List<Product> products = proRepo.findAllById(productIds);
+        Set<Long> brandIds = new HashSet<>();
+        
+        for (Product product : products) {
+            if (product.getBrand() != null) {
+                brandIds.add(product.getBrand().getId());
+            }
+            if (product.getProductCategories() != null) {
+                for (ProductHasCategory phc : product.getProductCategories()) {
+                    if (phc.getBrand() != null) {
+                        brandIds.add(phc.getBrand().getId());
+                    }
+                }
+            }
+        }
+        
+        return brandIds;
+    }
+
+    private Set<Long> getCategoryIdsFromProducts(List<Long> wishlistProductIds, List<Long> orderProductIds) {
+        Set<Long> allCategoryIds = new HashSet<>();
+        allCategoryIds.addAll(getCategoryIdsFromProducts(wishlistProductIds));
+        allCategoryIds.addAll(getCategoryIdsFromProducts(orderProductIds));
+        return allCategoryIds;
+    }
+
+    private Set<Long> getBrandIdsFromProducts(List<Long> wishlistProductIds, List<Long> orderProductIds) {
+        Set<Long> allBrandIds = new HashSet<>();
+        allBrandIds.addAll(getBrandIdsFromProducts(wishlistProductIds));
+        allBrandIds.addAll(getBrandIdsFromProducts(orderProductIds));
+        return allBrandIds;
+    }
+
+    private List<Product> getProductsWithActiveDiscounts(int limit) {
+        LocalDate today = LocalDate.now();
+        List<Product> productsWithDiscounts = new ArrayList<>();
+        
+        System.out.println("=== Getting Products with Active Discounts ===");
+        System.out.println("Today's date: " + today);
+        
+        // Get all active products with their discounts
+        List<Product> allProducts = proRepo.findAll().stream()
+                .filter(p -> p.getStatus() != null && p.getStatus() == 1)
+                .collect(Collectors.toList());
+        System.out.println("Total active products found: " + allProducts.size());
+        
+        for (Product product : allProducts) {
+            System.out.println("Checking product: " + product.getId() + " - " + product.getProductName());
+            
+            // Check for product-specific discount rules
+            List<DiscountRule> productDiscountRules = discountRuleRepo.findByProductIdAndDiscountStatusTrue(product.getId());
+            System.out.println("Product " + product.getId() + " has " + (productDiscountRules != null ? productDiscountRules.size() : 0) + " product discount rules");
+            
+            boolean hasActiveDiscount = false;
+            
+            // Check product-specific discounts
+            if (productDiscountRules != null && !productDiscountRules.isEmpty()) {
+                for (DiscountRule discountRule : productDiscountRules) {
+                    Discount discount = discountRule.getDiscount();
+                    System.out.println("Product Discount: " + (discount != null ? discount.getName() + " (status: " + discount.isStatus() + ")" : "null"));
+                    
+                    if (discount != null && discount.isStatus()) {
+                        LocalDate startDate = discount.getStartDate();
+                        LocalDate endDate = discount.getEndDate();
+                        
+                        System.out.println("Discount dates - Start: " + startDate + ", End: " + endDate);
+                        
+                        if (startDate != null && endDate != null && 
+                            today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                            System.out.println("✓ Found active product discount for product " + product.getId());
+                            hasActiveDiscount = true;
+                            break;
+                        } else {
+                            System.out.println("✗ Product discount not within valid date range");
+                        }
+                    }
+                }
+            }
+            
+            // If no product-specific discount, check brand and category discounts
+            if (!hasActiveDiscount) {
+                // Check brand discounts
+                if (product.getBrand() != null) {
+                    List<DiscountRule> brandDiscountRules = discountRuleRepo.findByBrandIdAndDiscountStatusTrue(product.getBrand().getId());
+                    for (DiscountRule discountRule : brandDiscountRules) {
+                        Discount discount = discountRule.getDiscount();
+                        if (discount != null && discount.isStatus()) {
+                            LocalDate startDate = discount.getStartDate();
+                            LocalDate endDate = discount.getEndDate();
+                            
+                            if (startDate != null && endDate != null && 
+                                today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                                System.out.println("✓ Found active brand discount for product " + product.getId());
+                                hasActiveDiscount = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Check category discounts
+                if (!hasActiveDiscount && product.getProductCategories() != null) {
+                    for (ProductHasCategory phc : product.getProductCategories()) {
+                        if (phc.getCategory() != null) {
+                            List<DiscountRule> categoryDiscountRules = discountRuleRepo.findByCategoryIdAndDiscountStatusTrue(phc.getCategory().getId());
+                            for (DiscountRule discountRule : categoryDiscountRules) {
+                                Discount discount = discountRule.getDiscount();
+                                if (discount != null && discount.isStatus()) {
+                                    LocalDate startDate = discount.getStartDate();
+                                    LocalDate endDate = discount.getEndDate();
+                                    
+                                    if (startDate != null && endDate != null && 
+                                        today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                                        System.out.println("✓ Found active category discount for product " + product.getId());
+                                        hasActiveDiscount = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (hasActiveDiscount) break;
+                        }
+                    }
+                }
+            }
+            
+            if (hasActiveDiscount) {
+                productsWithDiscounts.add(product);
+            }
+            
+            if (productsWithDiscounts.size() >= limit) {
+                System.out.println("Reached limit of " + limit + " products with discounts");
+                break; // We have enough products with discounts
+            }
+        }
+        
+        System.out.println("Final result: " + productsWithDiscounts.size() + " products with active discounts");
+        return productsWithDiscounts;
+    }
+
+    private List<Product> getRandomProductsByCategoriesAndBrands(Set<Long> categoryIds, Set<Long> brandIds, int limit) {
+        if (categoryIds.isEmpty() && brandIds.isEmpty()) {
+            return proRepo.findTop5ByOrderByCreateDateDesc();
+        }
+        
+        List<Product> products = new ArrayList<>();
+        
+        // Get products by categories
+        if (!categoryIds.isEmpty()) {
+            for (Long categoryId : categoryIds) {
+                List<Product> categoryProducts = proRepo.findByCategoryId(categoryId);
+                products.addAll(categoryProducts);
+            }
+        }
+        
+        // Get products by brands
+        if (!brandIds.isEmpty()) {
+            for (Long brandId : brandIds) {
+                List<Product> brandProducts = proRepo.findByBrandId(brandId);
+                products.addAll(brandProducts);
+            }
+        }
+        
+        // Remove duplicates and filter active products
+        products = products.stream()
+                .distinct()
+                .filter(p -> p.getStatus() != null && p.getStatus() == 1)
+                .collect(Collectors.toList());
+        
+        // Shuffle and limit to requested number
+        Collections.shuffle(products);
+        return products.stream().limit(limit).collect(Collectors.toList());
+    }
+
+    private boolean hasActiveDiscount(Product product) {
+        LocalDate today = LocalDate.now();
+        
+        // Check product-specific discount rules
+        List<DiscountRule> productDiscountRules = discountRuleRepo.findByProductIdAndDiscountStatusTrue(product.getId());
+        if (productDiscountRules != null && !productDiscountRules.isEmpty()) {
+            for (DiscountRule discountRule : productDiscountRules) {
+                Discount discount = discountRule.getDiscount();
+                if (discount != null && discount.isStatus()) {
+                    LocalDate startDate = discount.getStartDate();
+                    LocalDate endDate = discount.getEndDate();
+                    
+                    if (startDate != null && endDate != null && 
+                        today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Check brand discounts
+        if (product.getBrand() != null) {
+            List<DiscountRule> brandDiscountRules = discountRuleRepo.findByBrandIdAndDiscountStatusTrue(product.getBrand().getId());
+            for (DiscountRule discountRule : brandDiscountRules) {
+                Discount discount = discountRule.getDiscount();
+                if (discount != null && discount.isStatus()) {
+                    LocalDate startDate = discount.getStartDate();
+                    LocalDate endDate = discount.getEndDate();
+                    
+                    if (startDate != null && endDate != null && 
+                        today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        // Check category discounts
+        if (product.getProductCategories() != null) {
+            for (ProductHasCategory phc : product.getProductCategories()) {
+                if (phc.getCategory() != null) {
+                    List<DiscountRule> categoryDiscountRules = discountRuleRepo.findByCategoryIdAndDiscountStatusTrue(phc.getCategory().getId());
+                    for (DiscountRule discountRule : categoryDiscountRules) {
+                        Discount discount = discountRule.getDiscount();
+                        if (discount != null && discount.isStatus()) {
+                            LocalDate startDate = discount.getStartDate();
+                            LocalDate endDate = discount.getEndDate();
+                            
+                            if (startDate != null && endDate != null && 
+                                today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    private List<Product> getProductsByCategoriesAndBrandsOrderedByDate(Set<Long> categoryIds, Set<Long> brandIds, int limit) {
+        if (categoryIds.isEmpty() && brandIds.isEmpty()) {
+            // If no categories or brands, return latest products
+            return proRepo.findTop10ByOrderByCreateDateDesc();
+        }
+
+        List<Product> products = new ArrayList<>();
+
+        // Get products by categories
+        if (!categoryIds.isEmpty()) {
+            for (Long categoryId : categoryIds) {
+                List<Product> categoryProducts = proRepo.findByCategoryId(categoryId);
+                products.addAll(categoryProducts);
+            }
+        }
+
+        // Get products by brands
+        if (!brandIds.isEmpty()) {
+            for (Long brandId : brandIds) {
+                List<Product> brandProducts = proRepo.findByBrandId(brandId);
+                products.addAll(brandProducts);
+            }
+        }
+
+        // Remove duplicates and filter active products, then order by creation date
+        products = products.stream()
+            .filter(p -> p.getStatus() != null && p.getStatus() == 1)
+            .distinct()
+            .sorted((p1, p2) -> {
+                if (p1.getCreateDate() == null && p2.getCreateDate() == null) return 0;
+                if (p1.getCreateDate() == null) return 1;
+                if (p2.getCreateDate() == null) return -1;
+                return p2.getCreateDate().compareTo(p1.getCreateDate()); // Descending order (newest first)
+            })
+            .collect(Collectors.toList());
+
+        return products.stream().limit(limit).collect(Collectors.toList());
+    }
+
+    private TrendingProductDTO convertToTrendingDTO(Product product) {
+        // Get review data
+        Double avgRating = reviewRepo.getAverageRatingByProductId(product.getId());
+        Long reviewCount = reviewRepo.getReviewCountByProductId(product.getId());
+        
+        // Check for events and discounts
+        Boolean hasEvent = false;
+        Boolean hasDiscount = false;
+        String eventName = null;
+        String discountName = null;
+        Double discountValue = null;
+        String discountType = null;
+        
+        // Check if product has events
+        List<EventProduct> eventProducts = eventProductRepo.findByProduct(product);
+        System.out.println("Product " + product.getId() + " event products: " + (eventProducts != null ? eventProducts.size() : 0));
+        if (eventProducts != null && !eventProducts.isEmpty()) {
+            // Find active events
+            for (EventProduct eventProduct : eventProducts) {
+                Events event = eventProduct.getEvents();
+                System.out.println("Event: " + (event != null ? event.getName() + " status: " + event.getStatus() : "null"));
+                if (event != null && event.getStatus() != null && event.getStatus() == 1) {
+                    hasEvent = true;
+                    eventName = "Special"; // Always show "Special" for events
+                    System.out.println("Found active event: " + event.getName() + ", showing as: " + eventName);
+                    break; // Use the first active event
+                }
+            }
+        }
+        
+        // Check if product has discounts using discount rules
+            LocalDate today = LocalDate.now();
+        boolean discountFound = false;
+        
+        // Check product-specific discount rules
+        List<DiscountRule> productDiscountRules = discountRuleRepo.findByProductIdAndDiscountStatusTrue(product.getId());
+        System.out.println("Product " + product.getId() + " product discount rules: " + (productDiscountRules != null ? productDiscountRules.size() : 0));
+        
+        if (productDiscountRules != null && !productDiscountRules.isEmpty()) {
+            for (DiscountRule discountRule : productDiscountRules) {
+                Discount discount = discountRule.getDiscount();
+                System.out.println("Product Discount: " + (discount != null ? discount.getName() + " status: " + discount.isStatus() : "null"));
+                if (discount != null && discount.isStatus()) {
+                    LocalDate startDate = discount.getStartDate();
+                    LocalDate endDate = discount.getEndDate();
+                    
+                    System.out.println("Discount dates - Start: " + startDate + ", End: " + endDate + ", Today: " + today);
+                    
+                    if (startDate != null && endDate != null && 
+                        today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                        hasDiscount = true;
+                        discountName = discount.getName();
+                        discountValue = discount.getDiscountValue();
+                        discountType = discount.getDiscountType() != null ? discount.getDiscountType().toString() : null;
+                        discountFound = true;
+                        System.out.println("✓ Found active product discount: " + discountName + " value: " + discountValue + " type: " + discountType);
+                        break;
+                    } else {
+                        System.out.println("✗ Product discount " + discount.getName() + " is not within valid date range");
+                    }
+                }
+            }
+        }
+        
+        // If no product-specific discount, check brand discounts
+        if (!discountFound && product.getBrand() != null) {
+            List<DiscountRule> brandDiscountRules = discountRuleRepo.findByBrandIdAndDiscountStatusTrue(product.getBrand().getId());
+            for (DiscountRule discountRule : brandDiscountRules) {
+                Discount discount = discountRule.getDiscount();
+                if (discount != null && discount.isStatus()) {
+                    LocalDate startDate = discount.getStartDate();
+                    LocalDate endDate = discount.getEndDate();
+                    
+                    if (startDate != null && endDate != null && 
+                        today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                        hasDiscount = true;
+                        discountName = discount.getName();
+                        discountValue = discount.getDiscountValue();
+                        discountType = discount.getDiscountType() != null ? discount.getDiscountType().toString() : null;
+                        discountFound = true;
+                        System.out.println("✓ Found active brand discount: " + discountName + " value: " + discountValue + " type: " + discountType);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // If no brand discount, check category discounts
+        if (!discountFound && product.getProductCategories() != null) {
+            for (ProductHasCategory phc : product.getProductCategories()) {
+                if (phc.getCategory() != null) {
+                    List<DiscountRule> categoryDiscountRules = discountRuleRepo.findByCategoryIdAndDiscountStatusTrue(phc.getCategory().getId());
+                    for (DiscountRule discountRule : categoryDiscountRules) {
+                        Discount discount = discountRule.getDiscount();
+                        if (discount != null && discount.isStatus()) {
+                            LocalDate startDate = discount.getStartDate();
+                            LocalDate endDate = discount.getEndDate();
+                            
+                            if (startDate != null && endDate != null && 
+                                today.isAfter(startDate.minusDays(1)) && today.isBefore(endDate.plusDays(1))) {
+                                hasDiscount = true;
+                                discountName = discount.getName();
+                                discountValue = discount.getDiscountValue();
+                                discountType = discount.getDiscountType() != null ? discount.getDiscountType().toString() : null;
+                                discountFound = true;
+                                System.out.println("✓ Found active category discount: " + discountName + " value: " + discountValue + " type: " + discountType);
+                                break;
+                            }
+                        }
+                    }
+                    if (discountFound) break;
+                }
+            }
+        }
+        
+        if (!discountFound) {
+            System.out.println("✗ No active discounts found for product " + product.getId());
+        }
+        
+        TrendingProductDTO result = TrendingProductDTO.builder()
+                .id(product.getId())
+                .productName(product.getProductName())
+                .productCode(product.getProductCode())
+                .price(product.getPrice() != null ? product.getPrice() : 0.0)
+                .quantity(product.getQuantity())
+                .description(product.getDescription())
+                .status(product.getStatus() != null ? product.getStatus().longValue() : null)
+                .productImages(product.getProductImages().stream()
+                        .map(img -> {
+                            ProductImageDTO pidto = new ProductImageDTO();
+                            pidto.setId(img.getId());
+                            pidto.setImageUrl(img.getImageUrl());
+                            pidto.setStatus(img.getStatus());
+                            pidto.setVariantId(img.getProductVariant() != null ? img.getProductVariant().getId().longValue() : null);
+                            return pidto;
+                        }).collect(Collectors.toList()))
+                .categoryBrandPairs(product.getProductCategories().stream()
+                        .map(pc -> new CategoryBrandPair(
+                                pc.getCategory().getId(),
+                                pc.getCategory().getName(),
+                                pc.getBrand() != null ? pc.getBrand().getId() : null,
+                                pc.getBrand() != null ? pc.getBrand().getName() : null
+                        ))
+                        .distinct()
+                        .collect(Collectors.toList()))
+                .averageRating(avgRating != null ? avgRating : 0.0)
+                .reviewCount(reviewCount != null ? reviewCount : 0L)
+                .hasEvent(hasEvent)
+                .hasDiscount(hasDiscount)
+                .eventName(eventName)
+                .discountName(discountName)
+                .discountValue(discountValue)
+                .discountType(discountType)
+                .build();
+        
+        System.out.println("Final result for product " + product.getId() + ": hasEvent=" + hasEvent + ", hasDiscount=" + hasDiscount + ", eventName=" + eventName + ", discountName=" + discountName);
+        return result;
     }
 
     public List<ProductDTO> searchProducts(String keyword) {
         List<Product> products = proRepo.searchProducts(keyword);
         return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    public List<ProductDTO> searchProductsComprehensive(String keyword) {
+        List<Product> products = proRepo.searchProductsComprehensive(keyword);
+        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    public List<ProductDTO> liveSearch(String keyword) {
+        List<Product> products = proRepo.liveSearch(keyword);
+        return products.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+    
+    public List<Discount> getAllDiscounts() {
+        return discountRepo.findAll();
     }
 
 }
