@@ -78,7 +78,7 @@ isSuccess: boolean = false;
     }, { validators: [this.discountValueValidator()] });
     this.loadDiscounts();
     this.userService.getCustomers().subscribe(users => this.users = users);
-    this.vipTierService.getAll().subscribe(tiers => this.vipTiers = tiers);
+    this.vipTierService.getAllVipTiers().subscribe(tiers => this.vipTiers = tiers);
 
     // Clear discountValue when discountType changes
     this.discountForm.get('discountType')?.valueChanges.subscribe(() => {

@@ -1,7 +1,6 @@
 import { Component, OnInit, HostListener } from '@angular/core';
-import { NotifcationService } from '../../notifcation.service';
+import { NotificationService } from '../../services/notification.service';
 import { Router } from '@angular/router';
-
 
 @Component({
   selector: 'app-user-notifications',
@@ -15,8 +14,8 @@ export class UserNotificationsComponent implements OnInit {
   selectedIds: Set<number> = new Set<number>();
 
   constructor(
-    private notificationService: NotifcationService,
-    private router: Router // Inject Router
+    private notificationService: NotificationService,
+    private router: Router
   ) {}
 
   @HostListener('document:click', ['$event'])
@@ -27,9 +26,10 @@ export class UserNotificationsComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.notificationService.getStoredNotifications().subscribe({
-      next: (stored) => {
-        this.notifications = (stored || [])
+    // Use the new role-based notification system
+    this.notificationService.getCurrentUserNotifications().subscribe({
+      next: (notifications) => {
+        this.notifications = (notifications || [])
           .map(n => ({
             ...n,
             formattedTimestamp: this.formatTimestamp(n.timestamp),
@@ -38,14 +38,16 @@ export class UserNotificationsComponent implements OnInit {
           .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       },
       error: (err) => {
-        console.error('Failed to fetch stored notifications:', err);
+        console.error('Failed to fetch notifications:', err);
       }
     });
 
+    // Keep WebSocket subscription for real-time notifications
     this.notificationService.notifications$.subscribe(notif => {
       const newNotif = {
         ...notif,
-        formattedTimestamp: this.formatTimestamp(notif.timestamp),
+        timestamp: notif.timestamp || new Date().toISOString(), // Use provided timestamp or current time
+        formattedTimestamp: this.formatTimestamp(notif.timestamp || new Date().toISOString()),
         showMenu: false
       };
       this.notifications.unshift(newNotif);

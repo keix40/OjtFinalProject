@@ -211,7 +211,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.isLoadingCustomers = true;
     
     // Load tiers and customers in parallel since backend handles filtering
-    this.vipTierService.getAll()
+    this.vipTierService.getAllVipTiers()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: tiers => {
@@ -869,7 +869,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.showTierListModal = false;
   }
   loadTiers() {
-    this.vipTierService.getAll().subscribe(tiers => {
+    this.vipTierService.getAllVipTiers().subscribe(tiers => {
       this.tiers = tiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       
       // Filter out the lowest tier for VIP Tiers Overview display

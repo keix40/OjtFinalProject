@@ -59,7 +59,8 @@ export class AdminInboxComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    this.loadMockMessages();
+    // Remove mock messages from admin inbox - only show role-based notifications
+    // this.loadMockMessages(); // Commented out - admin inbox should only show role notifications
     this.loadAdminLoginNotifications();
     this.applyFilters();
     
@@ -275,7 +276,8 @@ export class AdminInboxComponent implements OnInit, OnDestroy {
   }
 
   updateUnifiedMessages(): void {
-    this.unifiedMessages = [...this.dynamicNotifications, ...this.messages].sort(
+    // Only use role-based notifications for admin inbox - remove mock messages
+    this.unifiedMessages = [...this.dynamicNotifications].sort(
       (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
     );
     this.applyFilters();
@@ -342,7 +344,7 @@ export class AdminInboxComponent implements OnInit, OnDestroy {
   }
 
   deleteMessage(message: InboxMessage): void {
-    this.messages = this.messages.filter(m => m.id !== message.id);
+    // Only handle dynamic notifications since mock messages are not shown in admin inbox
     this.dynamicNotifications = this.dynamicNotifications.filter(m => m.id !== message.id);
     if (this.selectedMessage?.id === message.id) {
       this.selectedMessage = null;

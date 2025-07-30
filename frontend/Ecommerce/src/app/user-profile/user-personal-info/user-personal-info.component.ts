@@ -5,6 +5,7 @@ import { AuthService } from '../../auth/auth.service';
 import { Router } from '@angular/router';
 import { UserDetails } from '../user-details';
 import { HttpClient } from '@angular/common/http';
+import { VipTierInfo } from '../../services/vip-tier.service';
 
 declare var bootstrap: any;
 @Component({
@@ -15,6 +16,7 @@ declare var bootstrap: any;
 })
 export class UserPersonalInfoComponent implements OnInit, OnChanges {
   @Input() userDetails: UserDetails | null = null;
+  @Input() vipTierInfo: VipTierInfo | null = null;
 
   personalInfoForm!: FormGroup;
   otpForm!: FormGroup;
@@ -398,5 +400,53 @@ isPhoneNumberChanged(): boolean {
   const currentPhone = this.personalInfoForm.get('phoneNumber')?.value;
   const originalPhone = this.originalDetails?.phoneNumber;
   return currentPhone && originalPhone && currentPhone !== originalPhone;
+}
+
+getProgressPercentage(): number {
+  if (!this.vipTierInfo?.currentTier || !this.vipTierInfo?.nextTier) {
+    return 0;
+  }
+  
+  const currentPoints = this.vipTierInfo?.currentPoints || 0;
+  const currentTierMinPoints = this.vipTierInfo?.currentTier?.minPoints || 0;
+  const nextTierMinPoints = this.vipTierInfo?.nextTier?.minPoints || 0;
+  
+  const totalRange = nextTierMinPoints - currentTierMinPoints;
+  const userProgress = currentPoints - currentTierMinPoints;
+  
+  if (totalRange <= 0) return 100;
+  
+  return Math.min(100, Math.max(0, (userProgress / totalRange) * 100));
+}
+
+getVipTierClass(): string {
+  if (!this.vipTierInfo?.currentTier?.color) {
+    return 'text-gray-800';
+  }
+  
+  // Use the color directly from the database if it's already a Tailwind class
+  const color = this.vipTierInfo.currentTier.color;
+  
+  // If it's already a Tailwind class (starts with 'text-'), use it directly
+  if (color.startsWith('text-')) {
+    return color;
+  }
+  
+  // Otherwise, map color names to Tailwind classes
+  const colorMap: { [key: string]: string } = {
+    'blue': 'text-blue-600',
+    'green': 'text-green-600',
+    'yellow': 'text-yellow-600',
+    'red': 'text-red-600',
+    'purple': 'text-purple-600',
+    'pink': 'text-pink-600',
+    'indigo': 'text-indigo-600',
+    'gray': 'text-gray-600',
+    'silver': 'text-gray-600',
+    'gold': 'text-yellow-600',
+    'platinum': 'text-gray-800'
+  };
+  
+  return colorMap[color.toLowerCase()] || 'text-gray-800';
 }
 }

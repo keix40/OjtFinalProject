@@ -8,6 +8,8 @@ import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
 import { UserNotificationsComponent } from './user-notifications/user-notifications.component';
 import { UserCouponService } from '../services/user-coupon.service';
+import { VipTierService, VipTierInfo } from '../services/vip-tier.service';
+import { HttpClient } from '@angular/common/http';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
 interface UserDetails {
@@ -20,6 +22,7 @@ interface UserDetails {
   password?: string | null;
   roles?: string[];
   profileImage?: string|null;
+  totalPoints?: number;
 }
 
 @Component({
@@ -43,6 +46,7 @@ export class UserProfileComponent implements OnInit {
   activeSection: string = 'orders';
   orderCount: number = 0; // <-- Add this
   couponCount: number = 0; // <-- Add this
+  vipTierInfo: VipTierInfo | null = null;
 
   breadcrumbItems = [
     { label: 'Home', link: '/home' },
@@ -54,13 +58,15 @@ export class UserProfileComponent implements OnInit {
     private router: Router,
     private route: ActivatedRoute,
     private orderService: OrderService, // <-- Inject OrderService
-    private userCouponService: UserCouponService // <-- Inject UserCouponService
+    private userCouponService: UserCouponService, // <-- Inject UserCouponService
+    private vipTierService: VipTierService, // <-- Inject VipTierService
   ) { }
 
   ngOnInit(): void {
     this.loadUserDetails();
     this.loadOrderCount(); // <-- Load order count on init
     this.loadCouponCount(); // <-- Load coupon count on init
+    this.loadVipTierInfo(); // <-- Load VIP tier info on init
     // Get section from query params
     this.route.queryParams.subscribe(params => {
       if (params['section']) {
@@ -83,7 +89,8 @@ const fullImageUrl = backendBaseUrl + rawImagePath;
       dateOfBirth: decodedToken?.dateofbirth || null, // Get dateofbirth from token (using token key name)
       phoneNumber: decodedToken?.phoneNumber || null, // Get phoneNumber from token
       profileImage: fullImageUrl,
-      roles: this.authService.getRoles()
+      roles: this.authService.getRoles(),
+      totalPoints: decodedToken?.totalPoints || 0
     };
   }
 
@@ -117,6 +124,33 @@ const fullImageUrl = backendBaseUrl + rawImagePath;
       },
       error: () => {
         this.couponCount = 0;
+      }
+    });
+  }
+
+  loadVipTierInfo() {
+    const user = this.authService.getDecodedToken();
+    const userId = user ? user.id : null;
+    const totalPoints = user ? (user.totalPoints || 0) : 0;
+    
+    console.log('Loading VIP tier info for user:', userId, 'with points:', totalPoints);
+    console.log('Full user token:', user);
+    
+    if (!userId) {
+      this.vipTierInfo = null;
+      return;
+    }
+
+    // First get all VIP tiers, then calculate the user's tier info
+    this.vipTierService.getAllVipTiers().subscribe({
+      next: (allTiers) => {
+        console.log('Loaded VIP tiers:', allTiers);
+        this.vipTierInfo = this.vipTierService.calculateVipTierInfo(totalPoints, allTiers);
+        console.log('Calculated VIP tier info:', this.vipTierInfo);
+      },
+      error: (error) => {
+        console.error('Error loading VIP tiers:', error);
+        this.vipTierInfo = null;
       }
     });
   }

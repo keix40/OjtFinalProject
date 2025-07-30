@@ -7,6 +7,7 @@ export interface NotificationData {
   message: string;
   link?: string;
   type?: 'success' | 'error' | 'info' | 'warning';
+  timestamp?: string;
 }
 
 export interface Notification {
@@ -19,6 +20,8 @@ export interface Notification {
   read: boolean;
   timestamp: string;
   link?: string;
+  userType?: string; // Now expects string like "ADMIN", "MANAGER", etc.
+  userEmail?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,23 +38,27 @@ export class NotificationService {
   }
 
   show(notification: NotificationData) {
-    this.notificationSubject.next(notification);
+    const notificationWithTimestamp = {
+      ...notification,
+      timestamp: notification.timestamp || new Date().toISOString()
+    };
+    this.notificationSubject.next(notificationWithTimestamp);
   }
 
   showSuccess(message: string, link?: string) {
-    this.show({ message, type: 'success', link });
+    this.show({ message, type: 'success', link, timestamp: new Date().toISOString() });
   }
 
   showError(message: string, link?: string) {
-    this.show({ message, type: 'error', link });
+    this.show({ message, type: 'error', link, timestamp: new Date().toISOString() });
   }
 
   showInfo(message: string, link?: string) {
-    this.show({ message, type: 'info', link });
+    this.show({ message, type: 'info', link, timestamp: new Date().toISOString() });
   }
 
   showWarning(message: string, link?: string) {
-    this.show({ message, type: 'warning', link });
+    this.show({ message, type: 'warning', link, timestamp: new Date().toISOString() });
   }
 
 
@@ -206,6 +213,21 @@ export class NotificationService {
   // Create sample notifications for testing
   createSampleNotifications(): Observable<any> {
     return this.http.post<any>('/api/notifications/test/create-sample', {});
+  }
+
+  // Delete notification
+  deleteNotification(id: number): Observable<any> {
+    return this.http.delete<any>(`/api/notifications/${id}`);
+  }
+
+  // Mark notification as read
+  markAsRead(id: number): Observable<any> {
+    return this.http.post<any>(`/api/notifications/${id}/read`, {});
+  }
+
+  // Mark notification as unread
+  markAsUnread(id: number): Observable<any> {
+    return this.http.post<any>(`/api/notifications/${id}/unread`, {});
   }
 
 } 

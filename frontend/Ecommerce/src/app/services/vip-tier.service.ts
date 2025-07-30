@@ -1,26 +1,36 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface VipTier {
-  id?: number;
+  id: number;
   name: string;
   description: string;
   minPoints: number;
+  weight: number;
   icon: string;
   color: string;
   order: number;
-  weight: number;
 }
 
-@Injectable({ providedIn: 'root' })
+export interface VipTierInfo {
+  currentTier: VipTier | null;
+  nextTier: VipTier | null;
+  pointsToNextTier: number;
+  currentPoints: number;
+}
+
+@Injectable({
+  providedIn: 'root'
+})
 export class VipTierService {
-    private apiUrl = 'http://localhost:8080/api/vip-tiers';
+  private apiUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  getAll(): Observable<VipTier[]> {
-    return this.http.get<VipTier[]>(this.apiUrl);
+  getAllVipTiers(): Observable<VipTier[]> {
+    return this.http.get<VipTier[]>(`${this.apiUrl}/vip-tiers`);
   }
 
   getById(id: number): Observable<VipTier> {
@@ -37,5 +47,38 @@ export class VipTierService {
 
   delete(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
+  }
+
+  calculateVipTierInfo(totalPoints: number, allTiers: VipTier[]): VipTierInfo {
+    // Sort tiers by minPoints in ascending order
+    const sortedTiers = allTiers.sort((a, b) => a.minPoints - b.minPoints);
+    
+    let currentTier: VipTier | null = null;
+    let nextTier: VipTier | null = null;
+    
+    // Find current tier (highest tier where user's points >= minPoints)
+    for (let i = sortedTiers.length - 1; i >= 0; i--) {
+      if (totalPoints >= sortedTiers[i].minPoints) {
+        currentTier = sortedTiers[i];
+        break;
+      }
+    }
+    
+    // Find next tier (lowest tier where user's points < minPoints)
+    for (const tier of sortedTiers) {
+      if (totalPoints < tier.minPoints) {
+        nextTier = tier;
+        break;
+      }
+    }
+    
+    const pointsToNextTier = nextTier ? nextTier.minPoints - totalPoints : 0;
+    
+    return {
+      currentTier,
+      nextTier,
+      pointsToNextTier,
+      currentPoints: totalPoints
+    };
   }
 } 

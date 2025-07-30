@@ -9,4 +9,5 @@ export interface UserDetails {
   roles?: string[];
   profileImage?: string | null;
   phoneVerified?: boolean;
+  totalPoints?: number;
 }

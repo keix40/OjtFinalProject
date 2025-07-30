@@ -78,13 +78,36 @@
             <div class="space-y-4">
               <div class="flex items-center justify-center space-x-6">
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-gray-800">Active</div>
-                  <div class="text-xs text-gray-500">Status</div>
+                  <div class="flex items-center justify-center mb-2">
+                    <i *ngIf="vipTierInfo?.currentTier?.icon" 
+                       class="text-2xl mr-2" 
+                       [ngClass]="getVipTierClass()"
+                       [class]="'bi bi-' + vipTierInfo?.currentTier?.icon"></i>
+                    <div class="text-2xl font-bold" [ngClass]="getVipTierClass()">
+                      {{ vipTierInfo?.currentTier?.name || 'Regular' }}
+                    </div>
+                  </div>
+                  <div class="text-xs text-gray-500">VIP Tier</div>
                 </div>
                 <div class="w-px h-8 bg-gray-200"></div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-gray-800">Member</div>
-                  <div class="text-xs text-gray-500">Type</div>
+                  <div class="text-lg font-bold text-gray-800">
+                    {{ vipTierInfo?.currentPoints || 0 }}
+                  </div>
+                  <div class="text-xs text-gray-500">Points</div>
+                </div>
+              </div>
+              
+              <!-- Next Tier Progress -->
+              <div *ngIf="vipTierInfo?.nextTier" class="mt-4">
+                <div class="text-center mb-2">
+                  <div class="text-sm font-semibold text-gray-700">
+                    {{ vipTierInfo?.pointsToNextTier || 0 }} points to {{ vipTierInfo?.nextTier?.name || 'Next Tier' }}
+                  </div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                  <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
+                       [style.width.%]="getProgressPercentage()"></div>
                 </div>
               </div>
 

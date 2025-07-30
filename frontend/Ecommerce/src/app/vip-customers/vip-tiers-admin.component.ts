@@ -79,10 +79,11 @@ export class VipTiersAdminComponent implements OnInit {
   }
 
   loadTiers() {
-    this.vipTierService.getAll().subscribe(tiers => {
-      this.tiers = tiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    this.vipTierService.getAllVipTiers().subscribe((tiers: VipTier[]) => {
+      this.tiers = tiers.sort((a: VipTier, b: VipTier) => (a.order ?? 0) - (b.order ?? 0));
     });
   }
+  
 
   onSubmit() {
     const tier: VipTier = this.tierForm.value;
