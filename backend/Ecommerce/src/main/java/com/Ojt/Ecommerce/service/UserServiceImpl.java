@@ -46,6 +46,8 @@ import com.Ojt.Ecommerce.entity.VipTier;
 import com.Ojt.Ecommerce.repository.VipTierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -405,7 +407,6 @@ public class UserServiceImpl implements UserService {
             dto.setPhoneNumber(user.getPhoneNumber());
             dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
             dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
-            dto.setDateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null);
             dto.setJoinDate(user.getCreatedDate());
             dto.setTotalOrders(totalOrders);
             dto.setTotalSpent(totalSpent);

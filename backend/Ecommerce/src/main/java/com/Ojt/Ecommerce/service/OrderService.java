@@ -834,4 +834,34 @@ public class OrderService {
             return "ERROR: " + e.getMessage();
         }
     }
+
+    // Analytics methods for pie charts
+    public List<Object[]> getBrandSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getBrandSalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getCategorySalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getCategorySalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getProductSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getProductSalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getDeliveryServiceData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getDeliveryServiceData(startDate, endDate);
+    }
+
+    // Debug methods
+    public long getTotalOrderCount() {
+        return repo.count();
+    }
+
+    public long getDeliveredOrderCount() {
+        return repo.countDeliveredOrders();
+    }
+
+    public long getBrandCount() {
+        return repo.countBrands();
+    }
 }

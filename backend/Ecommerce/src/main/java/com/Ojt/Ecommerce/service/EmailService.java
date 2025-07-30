@@ -19,13 +19,19 @@ public class EmailService {
     private NewsLetterService newsLetterService;
 
     public void sendEmail(String toEmail, String subject, String body) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(toEmail);
-        message.setSubject(subject);
-        message.setText(body);
-        message.setFrom("Pyaehtookyaw65@gmail.com");
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(toEmail);
+            message.setSubject(subject);
+            message.setText(body);
+            message.setFrom("Pyaehtookyaw65@gmail.com");
 
-        mailSender.send(message);
+            mailSender.send(message);
+            
+        } catch (Exception e) {
+            System.err.println("Failed to send email to " + toEmail + ": " + e.getMessage());
+            throw e; // Re-throw to handle in calling method
+        }
     }
 
     public void sendHtmlEmailWithImage(String toEmail, String subject, String htmlBody, String imagePath, String imageCid) throws MessagingException {

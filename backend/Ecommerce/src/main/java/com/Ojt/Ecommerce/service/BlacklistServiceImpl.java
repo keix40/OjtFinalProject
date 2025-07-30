@@ -2,14 +2,20 @@ package com.Ojt.Ecommerce.service;
 
 import com.Ojt.Ecommerce.entity.BlacklistEntry;
 import com.Ojt.Ecommerce.entity.LoginAttempt;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.entity.Appeal;
 import com.Ojt.Ecommerce.repository.BlacklistRepository;
 import com.Ojt.Ecommerce.repository.LoginAttemptRepository;
+import com.Ojt.Ecommerce.repository.UserRepository;
+import com.Ojt.Ecommerce.repository.AppealRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +30,9 @@ import java.util.*;
 public class BlacklistServiceImpl implements BlacklistService {
     private final BlacklistRepository blacklistRepository;
     private final LoginAttemptRepository loginAttemptRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final AppealRepository appealRepository;
     private final Map<String, Boolean> autoRules = new HashMap<>();
 
     @Override
@@ -33,7 +42,43 @@ public class BlacklistServiceImpl implements BlacklistService {
         entry.setStatus(BlacklistEntry.Status.ACTIVE);
         entry.setLastIncidentDate(LocalDateTime.now());
         entry.setIncidentCount(1);
-        return blacklistRepository.save(entry);
+        
+        // Set addedBy to current authenticated user's name or "System" if no user
+        String currentUserName = getCurrentUserName();
+        entry.setAddedBy(currentUserName != null ? currentUserName : "System");
+        
+        BlacklistEntry savedEntry = blacklistRepository.save(entry);
+        
+        // Send email notification if target type is EMAIL
+        if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL) {
+            sendBanNotification(entry);
+        }
+        
+        return savedEntry;
+    }
+
+    /**
+     * Get the current authenticated user's name
+     */
+    private String getCurrentUserName() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication != null && authentication.isAuthenticated() && 
+                !"anonymousUser".equals(authentication.getName())) {
+                
+                // Get user email from authentication
+                String userEmail = authentication.getName();
+                
+                // Find user by email to get their name
+                Optional<User> user = userRepository.findByEmail(userEmail);
+                if (user.isPresent()) {
+                    return user.get().getName();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error getting current user name: " + e.getMessage());
+        }
+        return null;
     }
 
     @Override
@@ -113,9 +158,15 @@ public class BlacklistServiceImpl implements BlacklistService {
         stats.put("totalActive", blacklistRepository.countActiveEntries());
         stats.put("newThisWeek", blacklistRepository.countEntriesAddedAfter(weekAgo));
         stats.put("fraudPrevented", blacklistRepository.getTotalIncidents());
-        // Remove estimatedSavings calculation - too complex for current project
         stats.put("pendingAppeals", blacklistRepository.countPendingAppeals());
-        stats.put("avgAppealTime", 24); // Mock value for now
+        
+        // Calculate average appeal response time dynamically
+        double avgAppealTime = calculateAverageAppealTime();
+        stats.put("avgAppealTime", avgAppealTime);
+        
+        // Calculate trend indicators
+        Map<String, Object> trends = calculateTrends();
+        stats.put("trends", trends);
         
         return stats;
     }
@@ -141,13 +192,29 @@ public class BlacklistServiceImpl implements BlacklistService {
     public BlacklistEntry liftBan(String id) {
         BlacklistEntry entry = getEntry(id);
         entry.setStatus(BlacklistEntry.Status.LIFTED);
-        return blacklistRepository.save(entry);
+        BlacklistEntry savedEntry = blacklistRepository.save(entry);
+        
+        // Send email notification if target type is EMAIL
+        if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL) {
+            sendBanLiftedNotification(entry);
+        }
+        
+        return savedEntry;
     }
 
     @Override
     @Transactional
     public void bulkLiftBan(List<String> ids) {
-        ids.forEach(this::liftBan);
+        for (String id : ids) {
+            BlacklistEntry entry = getEntry(id);
+            entry.setStatus(BlacklistEntry.Status.LIFTED);
+            blacklistRepository.save(entry);
+            
+            // Send email notification if target type is EMAIL
+            if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL) {
+                sendBanLiftedNotification(entry);
+            }
+        }
     }
 
     @Override
@@ -171,14 +238,32 @@ public class BlacklistServiceImpl implements BlacklistService {
     @Transactional
     public BlacklistEntry extendBan(String id, LocalDateTime newExpiryDate) {
         BlacklistEntry entry = getEntry(id);
+        LocalDateTime oldExpiryDate = entry.getExpiryDate();
         entry.setExpiryDate(newExpiryDate);
-        return blacklistRepository.save(entry);
+        BlacklistEntry savedEntry = blacklistRepository.save(entry);
+        
+        // Send email notification if target type is EMAIL
+        if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL) {
+            sendBanExtendedNotification(entry, oldExpiryDate);
+        }
+        
+        return savedEntry;
     }
 
     @Override
     @Transactional
     public void bulkExtendBan(List<String> ids, LocalDateTime newExpiryDate) {
-        ids.forEach(id -> extendBan(id, newExpiryDate));
+        for (String id : ids) {
+            BlacklistEntry entry = getEntry(id);
+            LocalDateTime oldExpiryDate = entry.getExpiryDate();
+            entry.setExpiryDate(newExpiryDate);
+            blacklistRepository.save(entry);
+            
+            // Send email notification if target type is EMAIL
+            if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL) {
+                sendBanExtendedNotification(entry, oldExpiryDate);
+            }
+        }
     }
 
     @Override
@@ -331,5 +416,202 @@ public class BlacklistServiceImpl implements BlacklistService {
         }
         
         return relatedAccounts;
+    }
+
+    // Method to send email notification for new blacklist entries
+    private void sendBanNotification(BlacklistEntry entry) {
+        String email = entry.getTargetValue(); // Use target value for EMAIL type
+        if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL && email != null && !email.isEmpty()) {
+            String subject = "Account Security Alert - Your Account Has Been Restricted";
+            String banType = entry.getExpiryDate() == null ? "Permanent" : "Temporary";
+            String expiryInfo = entry.getExpiryDate() == null ? 
+                "This restriction is permanent." : 
+                "This restriction will expire on: " + entry.getExpiryDate().toString();
+            
+            String message = String.format(
+                "Dear User,\n\n" +
+                "Your account has been restricted due to security concerns.\n\n" +
+                "Details:\n" +
+                "- Email: %s\n" +
+                "- Restriction Type: %s\n" +
+                "- Category: %s\n" +
+                "- Risk Level: %s\n" +
+                "- Reason: %s\n" +
+                "- %s\n\n" +
+                "If you believe this restriction was applied in error, you may submit an appeal through our support system.\n\n" +
+                "Best regards,\nSecurity Team",
+                email,
+                banType,
+                entry.getCategory(),
+                entry.getRiskLevel(),
+                entry.getReason(),
+                expiryInfo
+            );
+            
+            try {
+                emailService.sendEmail(email, subject, message);
+                System.out.println("Ban notification email sent to: " + email);
+            } catch (Exception e) {
+                System.err.println("Failed to send ban notification email to " + email + ": " + e.getMessage());
+            }
+        }
+    }
+
+    // Method to send email notification when a ban is lifted
+    private void sendBanLiftedNotification(BlacklistEntry entry) {
+        String email = entry.getTargetValue(); // Use target value for EMAIL type
+        if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL && email != null && !email.isEmpty()) {
+            String subject = "Account Security Alert - Your Account Restriction Has Been Lifted";
+            String message = String.format(
+                "Dear User,\n\n" +
+                "Your account restriction has been lifted. You are now free to use our services.\n\n" +
+                "Details:\n" +
+                "- Email: %s\n" +
+                "- Restriction Type: %s\n" +
+                "- Category: %s\n" +
+                "- Risk Level: %s\n" +
+                "- Reason: %s\n" +
+                "- %s\n\n" +
+                "Best regards,\nSecurity Team",
+                email,
+                entry.getTargetType() == BlacklistEntry.TargetType.EMAIL ? "Email" : "IP",
+                entry.getCategory(),
+                entry.getRiskLevel(),
+                entry.getReason(),
+                entry.getExpiryDate() == null ? "This restriction is permanent." : "This restriction will expire on: " + entry.getExpiryDate().toString()
+            );
+
+            try {
+                emailService.sendEmail(email, subject, message);
+                System.out.println("Ban lifted notification email sent to: " + email);
+            } catch (Exception e) {
+                System.err.println("Failed to send ban lifted notification email to " + email + ": " + e.getMessage());
+            }
+        }
+    }
+
+    // Method to send email notification when a ban is extended
+    private void sendBanExtendedNotification(BlacklistEntry entry, LocalDateTime oldExpiryDate) {
+        String email = entry.getTargetValue(); // Use target value for EMAIL type
+        if (entry.getTargetType() == BlacklistEntry.TargetType.EMAIL && email != null && !email.isEmpty()) {
+            String subject = "Account Security Alert - Your Account Ban Has Been Extended";
+            String banType = entry.getExpiryDate() == null ? "Permanent" : "Temporary";
+            String oldExpiryInfo = oldExpiryDate == null ? "This restriction is permanent." : "This restriction was set to expire on: " + oldExpiryDate.toString();
+            String newExpiryInfo = entry.getExpiryDate() == null ? "This restriction is permanent." : "This restriction will expire on: " + entry.getExpiryDate().toString();
+            
+            String message = String.format(
+                "Dear User,\n\n" +
+                "Your account ban has been extended.\n\n" +
+                "Details:\n" +
+                "- Email: %s\n" +
+                "- Restriction Type: %s\n" +
+                "- Category: %s\n" +
+                "- Risk Level: %s\n" +
+                "- Reason: %s\n" +
+                "- %s\n" +
+                "- %s\n\n" +
+                "Best regards,\nSecurity Team",
+                email,
+                entry.getTargetType() == BlacklistEntry.TargetType.EMAIL ? "Email" : "IP",
+                entry.getCategory(),
+                entry.getRiskLevel(),
+                entry.getReason(),
+                oldExpiryInfo,
+                newExpiryInfo
+            );
+
+            try {
+                emailService.sendEmail(email, subject, message);
+                System.out.println("Ban extended notification email sent to: " + email);
+            } catch (Exception e) {
+                System.err.println("Failed to send ban extended notification email to " + email + ": " + e.getMessage());
+            }
+        }
+    }
+    
+    // Calculate average appeal response time dynamically
+    private double calculateAverageAppealTime() {
+        try {
+            // Get all appeals that have been reviewed (approved or rejected)
+            List<Appeal> reviewedAppeals = appealRepository.findByStatusIn(
+                Arrays.asList(Appeal.AppealStatus.APPROVED, Appeal.AppealStatus.REJECTED)
+            );
+            
+            if (reviewedAppeals.isEmpty()) {
+                return 24.0; // Default value if no appeals have been reviewed
+            }
+            
+            long totalHours = 0;
+            int validAppeals = 0;
+            
+            for (Appeal appeal : reviewedAppeals) {
+                if (appeal.getSubmittedAt() != null && appeal.getReviewedAt() != null) {
+                    long hours = java.time.Duration.between(appeal.getSubmittedAt(), appeal.getReviewedAt()).toHours();
+                    totalHours += hours;
+                    validAppeals++;
+                }
+            }
+            
+            if (validAppeals == 0) {
+                return 24.0; // Default value if no valid appeals
+            }
+            
+            return Math.round((double) totalHours / validAppeals * 10.0) / 10.0; // Round to 1 decimal place
+        } catch (Exception e) {
+            System.err.println("Error calculating average appeal time: " + e.getMessage());
+            return 24.0; // Default value on error
+        }
+    }
+    
+    // Calculate trend indicators
+    private Map<String, Object> calculateTrends() {
+        Map<String, Object> trends = new HashMap<>();
+        
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime lastMonth = now.minusMonths(1);
+            LocalDateTime twoMonthsAgo = now.minusMonths(2);
+            
+            // Calculate fraud attempts trend
+            long currentMonthFraud = blacklistRepository.countEntriesAddedAfter(lastMonth);
+            long previousMonthFraud = blacklistRepository.countEntriesAddedBetween(twoMonthsAgo, lastMonth);
+            
+            double fraudTrend = 0.0;
+            if (previousMonthFraud == 0 && currentMonthFraud > 0) {
+                fraudTrend = 100.0; // +100% when going from 0 to any positive number
+            } else if (previousMonthFraud > 0) {
+                fraudTrend = ((double) (currentMonthFraud - previousMonthFraud) / previousMonthFraud) * 100;
+            } else if (previousMonthFraud == 0 && currentMonthFraud == 0) {
+                fraudTrend = 0.0; // No change when both are 0
+            }
+            
+            trends.put("fraudTrend", Math.round(fraudTrend * 10.0) / 10.0); // Round to 1 decimal place
+            trends.put("fraudTrendDirection", fraudTrend > 0 ? "up" : fraudTrend < 0 ? "down" : "stable");
+            
+            // Calculate blacklist entries trend
+            long currentMonthEntries = blacklistRepository.countEntriesAddedAfter(lastMonth);
+            long previousMonthEntries = blacklistRepository.countEntriesAddedBetween(twoMonthsAgo, lastMonth);
+            
+            double entriesTrend = 0.0;
+            if (previousMonthEntries == 0 && currentMonthEntries > 0) {
+                entriesTrend = 100.0; // +100% when going from 0 to any positive number
+            } else if (previousMonthEntries > 0) {
+                entriesTrend = ((double) (currentMonthEntries - previousMonthEntries) / previousMonthEntries) * 100;
+            } else if (previousMonthEntries == 0 && currentMonthEntries == 0) {
+                entriesTrend = 0.0; // No change when both are 0
+            }
+            
+            trends.put("entriesTrend", Math.round(entriesTrend * 10.0) / 10.0);
+            trends.put("entriesTrendDirection", entriesTrend > 0 ? "up" : entriesTrend < 0 ? "down" : "stable");
+            
+        } catch (Exception e) {
+            System.err.println("Error calculating trends: " + e.getMessage());
+            trends.put("fraudTrend", 0.0);
+            trends.put("fraudTrendDirection", "stable");
+            trends.put("entriesTrend", 0.0);
+            trends.put("entriesTrendDirection", "stable");
+        }
+        
+        return trends;
     }
 } 
