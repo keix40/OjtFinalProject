@@ -53,7 +53,15 @@ public class Address {
     @Column(name = "update_date")
     private LocalDateTime updateDate;
 
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
 
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }
 
 

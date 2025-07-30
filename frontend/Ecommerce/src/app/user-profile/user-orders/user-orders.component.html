@@ -1,147 +1,319 @@
-<div class="orders-section">
-  <div class="container-fluid p-0">
-    <div class="card rounded-4 shadow-sm border-0 bg-white p-2 p-sm-3 p-md-4 p-lg-5 mb-4 mx-auto" style="max-width: 1100px;">
-      <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-4">
-        <h3 class="fw-bold fs-2 mb-0 text-primary"><i class="bi bi-box-seam me-2"></i> Orders</h3>
-        <div class="d-flex flex-column flex-sm-row flex-wrap gap-2 w-100 w-md-auto">
-          <select class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition mb-2 mb-sm-0">
-            <option value="">Select status</option>
-            <option value="all">All Orders</option>
-            <option value="pending">Pending</option>
-            <option value="processing">Processing</option>
-            <option value="delivered">Delivered</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-          <select class="form-select rounded-pill shadow-sm fs-6 w-100 w-md-auto transition">
-            <option value="">For all time</option>
-            <option value="last30">Last 30 days</option>
-            <option value="last90">Last 90 days</option>
-            <option value="lastyear">Last year</option>
-          </select>
+<div class="min-h-screen bg-gray-50 py-6">
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Compact Header Section -->
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full shadow-lg border border-white/20 mb-3">
+        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">My Orders</h1>
+      <p class="text-gray-600 text-sm">Track and manage your purchases</p>
+    </div>
+
+    <!-- Compact Main Content Card -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+      <!-- Compact Filter Section -->
+      <div class="bg-gray-50 p-6 border-b border-gray-200">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="relative">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"/>
+                </svg>
+              </div>
+              <select
+                class="appearance-none bg-white border border-gray-300 text-gray-900 rounded-lg pl-10 pr-8 py-2.5 w-full sm:w-56 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 cursor-pointer hover:border-blue-400"
+                [(ngModel)]="selectedStatus"
+                (change)="onStatusFilterChange($event)">
+                <option value="" class="bg-white text-gray-900">All Orders</option>
+                <option *ngFor="let status of statusOptions" [value]="status" class="bg-white text-gray-900">
+                  {{ formatStatus(status) }}
+                </option>
+              </select>
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 text-gray-500">
+              <div class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+              <span class="text-sm">{{ filteredOrders().length }} orders</span>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-lg">
+              <div class="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping"></div>
+              <span class="text-gray-700 text-sm font-medium">Live</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="table-responsive">
-        <table class="table align-middle table-hover rounded-4 overflow-hidden shadow-sm bg-white">
-          <thead class="table-light">
-            <tr>
-              <th>Order #</th>
-              <th>Order date <i class="bi bi-arrow-down-up"></i></th>
-              <th>Status</th>
-              <th>Total <i class="bi bi-arrow-down-up"></i></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let order of userOrders">
-              <tr class="transition" (click)="toggleOrderDetails(order.id)" [ngClass]="{'table-primary': expandedOrderId === order.id, 'cursor-pointer': true}">
-                <td>
-                  <div class="fw-bold">{{order.orderNumber}}</div>
-                  <div class="d-flex align-items-center gap-1 mt-1">
-                    <img *ngFor="let product of order.items.slice(0, 3)" [src]="product.image" [alt]="product.title" class="rounded-circle shadow-sm border border-2" style="width: 32px; height: 32px; object-fit: cover;">
-                    <span *ngIf="order.items.length > 3" class="badge bg-secondary ms-1">+{{order.items.length - 3}}</span>
+
+      <!-- Compact Loading State -->
+      <div *ngIf="isLoading" class="flex flex-col items-center justify-center py-16">
+        <div class="relative">
+          <div class="w-12 h-12 border-3 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+        </div>
+        <p class="text-gray-500 mt-4 text-sm">Loading orders...</p>
+      </div>
+
+      <!-- Compact Error State -->
+      <div *ngIf="error" class="flex items-center justify-between bg-red-50 border border-red-200 text-red-700 rounded-lg mx-6 my-4 p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <span class="text-sm">{{ error }}</span>
+        </div>
+        <button class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-300" (click)="loadUserOrders()">
+          Retry
+        </button>
+      </div>
+
+      <!-- Compact Orders List -->
+      <div *ngIf="!isLoading && !error && userOrders.length > 0" class="p-6">
+        <div class="space-y-4">
+          <div *ngFor="let order of paginatedOrders()" [attr.id]="'order-' + order.orderId"
+          [class.highlighted]="isOrderExpanded(order)"
+          [ngClass]="{'border border-gray-200': !isOrderExpanded(order)}"
+          class="group">
+            <!-- Compact Order Card -->
+            <div class="bg-white border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all duration-300 cursor-pointer" (click)="toggleOrderDetails(order.orderId)">
+              <div class="flex items-center justify-between">
+                <!-- Order Info -->
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <h3 class="text-lg font-bold text-gray-900">{{order.orderCode}}</h3>
                   </div>
-                </td>
-                <td class="text-nowrap">{{order.orderDate | date:'MM/dd/yyyy'}}</td>
-                <td><span class="badge rounded-pill px-3 py-2 bg-info text-dark fs-6">{{order.status}}</span></td>
-                <td class="fw-semibold">{{order.total | currency}}</td>
-                <td>
-                  <i class="bi transition fs-4" [class.bi-chevron-down]="expandedOrderId !== order.id" [class.bi-chevron-up]="expandedOrderId === order.id"></i>
-                </td>
-              </tr>
-              <tr *ngIf="expandedOrderId === order.id">
-                <td colspan="5" class="p-0">
-                  <div class="card rounded-4 shadow-lg my-3 p-4 animate__animated animate__fadeIn">
-                    <h4 class="fw-bold mb-3 fs-5">Order Details</h4>
-                    <div class="row g-3 mb-3">
-                      <div class="col-md-6">
-                        <div class="mb-2"><span class="fw-semibold">Order Date:</span> {{order.orderDate | date:'MM/dd/yyyy'}}</div>
-                      </div>
-                      <div class="col-md-6">
-                        <div class="mb-2"><span class="fw-semibold">Payment Method:</span> {{order.paymentMethod}}</div>
-                      </div>
-                    </div>
-                    <div class="order-items-list mb-4">
-                      <div class="d-flex flex-column gap-3">
-                        <div class="card shadow-sm rounded-3 p-3 d-flex flex-row align-items-center gap-3 flex-wrap flex-md-nowrap" *ngFor="let item of order.items">
-                          <img [src]="item.image" [alt]="item.title" class="rounded-3 border border-2 flex-shrink-0" style="width: 48px; height: 48px; object-fit: cover;">
-                          <div class="flex-grow-1 min-w-0">
-                            <h5 class="mb-1 fs-6 text-truncate">{{item.title}}</h5>
-                            <p class="mb-0 text-muted small text-truncate">SKU: {{item.sku}} | Qty: {{item.quantity}}</p>
-                          </div>
-                          <div class="fw-semibold text-end ms-auto">{{item.price * item.quantity | currency}}</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="order-totals mb-4">
-                      <div class="row g-3">
-                        <div class="col-md-6">
-                          <div class="d-flex justify-content-between py-1">
-                            <span class="fw-semibold">Subtotal:</span>
-                            <span>{{order.subtotal | currency}}</span>
-                          </div>
-                          <div class="d-flex justify-content-between py-1">
-                            <span class="fw-semibold">Shipping:</span>
-                            <span>{{order.shippingCost | currency}}</span>
-                          </div>
-                        </div>
-                        <div class="col-md-6">
-                          <div class="d-flex justify-content-between py-1">
-                            <span class="fw-semibold">Tax:</span>
-                            <span>{{order.tax | currency}}</span>
-                          </div>
-                          <div class="d-flex justify-content-between py-2 border-top mt-2">
-                            <span class="fw-bold fs-5">Total:</span>
-                            <span class="fw-bold fs-5">{{order.total | currency}}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="d-flex justify-content-between py-1">
-                        <span class="fw-semibold">Shipping:</span>
-                        <span>{{order.shippingCost | currency}}</span>
-                      </div>
-                      <div class="d-flex justify-content-between py-1">
-                        <span class="fw-semibold">Tax:</span>
-                        <span>{{order.tax | currency}}</span>
-                      </div>
-                      <div class="d-flex justify-content-between py-2 border-top mt-2">
-                        <span class="fw-bold fs-5">Total:</span>
-                        <span class="fw-bold fs-5">{{order.total | currency}}</span>
-                      </div>
-                    </div>
-                    <div class="row g-4">
-                      <div class="col-md-6">
-                        <h6 class="fw-bold mb-2">Shipping Address</h6>
-                        <div class="mb-1">{{order.shippingAddress.street}}</div>
-                        <div class="mb-1">{{order.shippingAddress.apt}}</div>
-                        <div class="mb-1">{{order.shippingAddress.city}}, {{order.shippingAddress.state}} {{order.shippingAddress.zip}}</div>
-                        <div class="mb-1">{{order.shippingAddress.country}}</div>
-                      </div>
-                      <div class="col-md-6">
-                        <h6 class="fw-bold mb-2">Shipping Method</h6>
-                        <div>{{order.shippingMethod}}</div>
-                      </div>
+                  <div class="flex items-center gap-4 text-gray-500 text-sm">
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                      </svg>
+                      {{formatOrderDate(order.orderDate) | date:'MMM dd'}}
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <svg class="w-3 h-3 text-green-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                      </svg>
+                      {{ getTotalItems(order) }} items
+                    </span>
+                  </div>
+                </div>
+                
+                <!-- Status & Actions -->
+                <div class="flex items-center gap-3">
+                  <!-- Compact Status Badge -->
+                  <div class="px-3 py-1 rounded-full text-xs font-bold"
+                    [ngClass]="{
+                      'bg-yellow-100 text-yellow-800': order.status === 'PENDING',
+                      'bg-blue-100 text-blue-800': order.status === 'PROCESSING' || order.status === 'PAID',
+                      'bg-green-100 text-green-800': order.status === 'DELIVERED',
+                      'bg-red-100 text-red-800': order.status === 'CANCELLED' || order.status === 'RETURNED',
+                      'bg-purple-100 text-purple-800': order.status === 'SHIPPED'
+                    }">
+                    <div class="flex items-center gap-1">
+                      <div class="w-1 h-1 rounded-full"
+                        [ngClass]="{
+                          'bg-yellow-500': order.status === 'PENDING',
+                          'bg-blue-500': order.status === 'PROCESSING' || order.status === 'PAID',
+                          'bg-green-500': order.status === 'DELIVERED',
+                          'bg-red-500': order.status === 'CANCELLED' || order.status === 'RETURNED',
+                          'bg-purple-500': order.status === 'SHIPPED'
+                        }"></div>
+                      <ng-container *ngIf="hasMoneyRefund(order) && !isReplacementRefund(order)">
+                        <span class="text-green-800 font-bold">
+                          {{ formatRefundType(getMoneyRefund(order)?.refundType) }}
+                        </span>
+                      </ng-container>
+                      <ng-container *ngIf="isReplacementRefund(order)">
+                        <span class="text-orange-800 font-bold">
+                          {{ formatRefundType(getReplacement(order)?.refundType) }} : 
+                        </span>
+                      </ng-container>
+                      <ng-container *ngIf="!hasMoneyRefund(order)">
+                        {{ order.status }}
+                      </ng-container>
                     </div>
                   </div>
-                </td>
-              </tr>
-            </ng-container>
-            <tr *ngIf="userOrders.length === 0">
-              <td colspan="5" class="text-center py-5">
-                <p class="text-muted">No orders found.</p>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  
+                  <!-- Total Amount -->
+                  <div class="text-right">
+                    <div class="text-lg font-bold text-gray-900">{{ order.total | number:'1.2-2' }}</div>
+                    <div class="text-gray-400 text-xs">MMK</div>
+                  </div>
+                  
+                  <!-- Action Buttons -->
+                  <div class="flex items-center gap-2">
+                    <button class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-1.5 rounded-lg transition-all duration-300 flex items-center gap-1" (click)="$event.stopPropagation(); goToTracking(order.orderId)">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m-6 3l6-3"/>
+                      </svg>
+                      Track
+                    </button>
+                    
+                    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-2 py-1.5 rounded-lg transition-all duration-300" (click)="toggleOrderDetails(order.orderId)">
+                      <svg *ngIf="!isOrderExpanded(order)" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                      </svg>
+                      <svg *ngIf="isOrderExpanded(order)" class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Compact Expanded Order Details -->
+            <div *ngIf="isOrderExpanded(order)" class="mt-3 bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Order Summary -->
+                <div class="space-y-3">
+                  <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Order Summary
+                  </h4>
+                  
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between py-1 border-b border-gray-200">
+                      <span class="text-gray-600">Order Date</span>
+                      <span class="text-gray-900 font-medium">{{formatOrderDate(order.orderDate) | date:'MMM dd, yyyy'}}</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-gray-200">
+                      <span class="text-gray-600">Delivery Service</span>
+                      <span class="text-gray-900 font-medium">{{order.deliveryService}}</span>
+                    </div>
+                    <div *ngIf="order.discountCode" class="flex justify-between py-1 border-b border-gray-200">
+                      <span class="text-gray-600">Discount ({{ order.discountCode }})</span>
+                      <span class="text-green-600 font-bold">-{{ order.discountAmount | number:'1.2-2' }} MMK</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="space-y-3">
+                  <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                    </svg>
+                    Price Breakdown
+                  </h4>
+                  
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between py-1">
+                      <span class="text-gray-600">Subtotal</span>
+                      <span class="text-gray-900 font-medium">{{ order.subtotal | number:'1.2-2' }} MMK</span>
+                    </div>
+                    <div class="flex justify-between py-1">
+                      <span class="text-gray-600">Shipping</span>
+                      <span class="text-gray-900 font-medium">{{order.deliveryFee | number :'1.0-0'}} MMK</span>
+                    </div>
+                    <div class="flex justify-between py-2 border-t border-gray-300 text-base font-bold">
+                      <span class="text-gray-900">Total</span>
+                      <span class="text-blue-600">{{order.total | number:'1.2-2' }} MMK</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Items -->
+              <div class="mt-6">
+                <h4 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                  </svg>
+                  Order Items
+                </h4>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div *ngFor="let item of order.products" class="bg-white border border-gray-200 rounded-lg p-3 hover:border-blue-300 transition-all duration-300">
+                    <div class="flex items-center justify-between">
+                      <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-gray-900 truncate text-sm">{{item.productName}}</div>
+                        <div class="text-gray-500 text-xs">Qty: {{item.quantity}}</div>
+                      </div>
+                      <div class="text-right">
+                        <div *ngIf="hasDiscount(order)" class="line-through text-gray-400 mr-2">{{item.originalPrice}} MMK</div>
+                        <div class="font-bold text-blue-600 text-sm">{{item.unitPrice}} MMK</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Refund Info for Return Requests -->
+                <div *ngIf="order.returnRequests && order.returnRequests.length > 0" class="mt-4">
+                  <div *ngFor="let ret of order.returnRequests">
+                    <div *ngIf="ret.refundId && ret.refundType === 'MONEY_REFUND'" class="mt-2 p-3 rounded-lg border border-green-200 bg-green-50">
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                        <span class="font-semibold text-green-700">Refund Status:</span>
+                        <span class="text-green-800">{{ ret.refundStatus }}</span>
+                        <span class="ml-4 font-semibold text-green-700">Type:</span>
+                        <span class="text-green-800">{{ ret.refundType }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact No Orders State -->
+      <div *ngIf="!isLoading && userOrders.length === 0" class="flex flex-col items-center justify-center py-16">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2">No Orders Yet</h3>
+        <p class="text-gray-500 text-center max-w-sm text-sm">Start shopping to see your orders here!</p>
       </div>
     </div>
-    <!-- Pagination Placeholder -->
-    <div class="d-flex justify-content-center mt-4">
-      <nav aria-label="Orders pagination">
-        <ul class="pagination pagination-rounded mb-0 gap-2">
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item"><a class="page-link" href="#">2</a></li>
-          <li class="page-item"><a class="page-link" href="#">3</a></li>
-        </ul>
+
+    <!-- Compact Pagination -->
+    <div class="flex justify-center mt-8" *ngIf="userOrders.length > 0 && totalPages > 1">
+      <nav class="flex items-center gap-1 bg-white rounded-lg shadow-sm border border-gray-200 p-1">
+        <button class="w-8 h-8 bg-white border border-gray-200 text-gray-500 rounded-md hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" 
+          [disabled]="currentPage === 1" 
+          (click)="onPageChange(currentPage - 1)">
+          <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        
+        <div class="flex items-center gap-1">
+          <button *ngFor="let page of getPageNumbers()" 
+            class="w-8 h-8 rounded-md font-medium text-sm transition-all duration-300"
+            [ngClass]="{
+              'bg-blue-600 text-white shadow-sm': page === currentPage,
+              'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50': page !== currentPage
+            }"
+            (click)="onPageChange(page)">
+            {{ page }}
+          </button>
+        </div>
+        
+        <button class="w-8 h-8 bg-white border border-gray-200 text-gray-500 rounded-md hover:bg-gray-50 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" 
+          [disabled]="currentPage === totalPages" 
+          (click)="onPageChange(currentPage + 1)">
+          <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
       </nav>
     </div>
   </div>

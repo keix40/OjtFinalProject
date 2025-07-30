@@ -1,30 +1,12 @@
 import { Component, type OnInit, type OnDestroy } from "@angular/core"
 import { interval, type Subscription } from "rxjs"
-
-interface LoginAttempt {
-  id: string
-  timestamp: Date
-  username: string
-  ipAddress: string
-  location: string
-  countryCode: string
-  status: "successful" | "failed" | "blocked"
-  threatLevel: "low" | "medium" | "high" | "critical"
-  attemptCount: number
-  timeframe: string
-  userAgent: string
-  isp: string
-  isVPN: boolean
-  isProxy: boolean
-  sessionId: string
-  threatScore: number
-  userRole?: string
-  isBlocked: boolean
-}
+import { LoginAttemptsService, LoginAttempt } from '../services/login-attempts.service';
+import { HttpClient } from '@angular/common/http';
+import { NotifcationService } from '../notifcation.service';
 
 interface ActivityFeedItem {
   id: string
-  timestamp: Date
+  timestamp: string
   type: "success" | "warning" | "danger"
   message: string
 }
@@ -47,6 +29,7 @@ interface Statistics {
   styleUrls: ["./login-attempts.component.css"],
 })
 export class LoginAttemptsComponent implements OnInit, OnDestroy {
+
   // Data properties
   loginAttempts: LoginAttempt[] = []
   filteredAttempts: LoginAttempt[] = []
@@ -55,6 +38,12 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   selectedAttemptDetails: LoginAttempt | null = null
   realtimeActivities: ActivityFeedItem[] = []
   criticalAlerts: string[] = []
+  securityPolicy: any[] = [];
+  showPolicyExpanded: boolean = false;
+
+  // Dual view state
+  viewMode: 'summary' | 'detailed' = 'summary';
+  summaryAttempts: any[] = [];
 
   // Statistics
   statistics: Statistics = {
@@ -81,8 +70,19 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   totalPages = 1
 
   // UI state properties
-  isRealTimeActive = true
+  isRealTimeActive = true;
+  intervalId: any;
   isLoading = false
+
+  // Add state for session activity modal
+  sessionActivityAttempts: LoginAttempt[] = [];
+  showSessionActivityModal: boolean = false;
+  sessionActivitySessionId: string | null = null;
+
+  // Modal state for per-row detailed log
+  showDetailedLogModal: boolean = false;
+  detailedLogContext: LoginAttempt | null = null;
+  filteredDetailedLog: LoginAttempt[] = [];
 
   // Subscriptions
   private realTimeSubscription?: Subscription
@@ -106,218 +106,141 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     NL: "🇳🇱",
   }
 
+  editingRuleId: number | null = null;
+  editedRule: any = {};
+  isSavingRule: boolean = false;
+  isDeletingRule: boolean = false;
+  saveRule(rule: any) {
+    this.isSavingRule = true;
+    this.http.put<any>(`http://localhost:8080/api/login-attempts/security-policy/${rule.id}`, rule).subscribe({
+      next: (data) => {
+        this.isSavingRule = false;
+        this.editingRuleId = null;
+        this.fetchSecurityPolicy();
+      },
+      error: (err) => {
+        this.isSavingRule = false;
+        alert('Failed to save rule.');
+      }
+    });
+  }
+  editRule(rule: any) {
+    this.editingRuleId = rule.id;
+    this.editedRule = { ...rule };
+  }
+  cancelEdit() {
+    this.editingRuleId = null;
+    this.editedRule = {};
+  }
+  deleteRule(rule: any) {
+    if (!confirm('Are you sure you want to delete this rule?')) return;
+    this.isDeletingRule = true;
+    this.http.delete<any>(`http://localhost:8080/api/login-attempts/security-policy/${rule.id}`).subscribe({
+      next: () => {
+        this.isDeletingRule = false;
+        this.fetchSecurityPolicy();
+      },
+      error: (err) => {
+        this.isDeletingRule = false;
+        alert('Failed to delete rule.');
+      }
+    });
+  }
+
+  constructor(private loginAttemptsService: LoginAttemptsService, private http: HttpClient, private notificationService: NotifcationService) {}
+
   ngOnInit(): void {
-    this.generateMockData()
-    this.calculateStatistics()
-    this.applyFilters()
-    this.startRealTimeMonitoring()
-    this.checkForCriticalAlerts()
+    this.loadLoginAttempts();
+    this.startPolling();
+    this.checkForCriticalAlerts();
+    this.fetchSecurityPolicy();
+    // Subscribe to real-time activity feed events
+    this.notificationService.notifications$.subscribe((event: any) => {
+      if (event && event.type && event.message && event.timestamp) {
+        this.realtimeActivities.unshift({
+          id: this.generateId(),
+          timestamp: event.timestamp,
+          type: event.type,
+          message: event.message,
+        });
+        if (this.realtimeActivities.length > 20) {
+          this.realtimeActivities = this.realtimeActivities.slice(0, 20);
+        }
+      }
+    });
+  }
+
+  loadLoginAttempts(): void {
+    this.isLoading = true;
+    this.loginAttemptsService.getAll().subscribe({
+      next: (data) => {
+        this.loginAttempts = data;
+        this.calculateStatistics();
+        this.applyFilters();
+        this.buildSummaryView();
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load login attempts:', err);
+        this.isLoading = false;
+      }
+    });
+  }
+
+  buildSummaryView(): void {
+    // Aggregate by username, IP, location
+    const map = new Map<string, { count: number, last: LoginAttempt }>();
+    for (const attempt of this.loginAttempts) {
+      const key = `${attempt.username}|${attempt.ipAddress}|${attempt.location}`;
+      if (!map.has(key)) {
+        map.set(key, { count: 1, last: attempt });
+      } else {
+        const entry = map.get(key)!;
+        entry.count += 1;
+        // Update last if this attempt is newer
+        if (new Date(attempt.timestamp) > new Date(entry.last.timestamp)) {
+          entry.last = attempt;
+        }
+      }
+    }
+    this.summaryAttempts = Array.from(map.values()).map(({ count, last }) => ({
+      ...last,
+      attemptCount: count
+    }));
+  }
+
+  setViewMode(mode: 'summary' | 'detailed') {
+    this.viewMode = mode;
   }
 
   ngOnDestroy(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+    }
     if (this.realTimeSubscription) {
-      this.realTimeSubscription.unsubscribe()
+      this.realTimeSubscription.unsubscribe();
     }
   }
 
-  // Data generation and management
-  private generateMockData(): void {
-    const usernames = ["admin", "user123", "john.doe", "alice.smith", "bob.wilson", "hacker123", "test.user", "manager"]
-    const locations = [
-      { city: "New York, US", code: "US" },
-      { city: "Moscow, RU", code: "RU" },
-      { city: "Beijing, CN", code: "CN" },
-      { city: "Berlin, DE", code: "DE" },
-      { city: "London, GB", code: "GB" },
-      { city: "Paris, FR", code: "FR" },
-      { city: "Tokyo, JP", code: "JP" },
-      { city: "Seoul, KR", code: "KR" },
-    ]
-    const isps = ["Comcast", "Verizon", "AT&T", "Deutsche Telekom", "China Telecom", "NTT", "Orange", "Vodafone"]
-    const userAgents = [
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1 like Mac OS X)",
-    ]
-
-    this.loginAttempts = []
-
-    for (let i = 0; i < 500; i++) {
-      const location = locations[Math.floor(Math.random() * locations.length)]
-      const isSuccessful = Math.random() > 0.3
-      const isSuspicious = Math.random() > 0.8
-      const attemptCount = isSuspicious ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 5) + 1
-
-      const attempt: LoginAttempt = {
-        id: this.generateId(),
-        timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-        username: usernames[Math.floor(Math.random() * usernames.length)],
-        ipAddress: this.generateRandomIP(),
-        location: location.city,
-        countryCode: location.code,
-        status: isSuccessful ? "successful" : Math.random() > 0.8 ? "blocked" : "failed",
-        threatLevel: this.calculateThreatLevel(attemptCount, isSuspicious),
-        attemptCount: attemptCount,
-        timeframe: this.generateTimeframe(attemptCount),
-        userAgent: userAgents[Math.floor(Math.random() * userAgents.length)],
-        isp: isps[Math.floor(Math.random() * isps.length)],
-        isVPN: Math.random() > 0.9,
-        isProxy: Math.random() > 0.95,
-        sessionId: this.generateSessionId(),
-        threatScore: Math.floor(Math.random() * 100),
-        userRole: Math.random() > 0.7 ? ["Admin", "Manager", "User"][Math.floor(Math.random() * 3)] : undefined,
-        isBlocked: Math.random() > 0.9,
-      }
-
-      this.loginAttempts.push(attempt)
-    }
-
-    // Sort by timestamp (newest first)
-    this.loginAttempts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+  startPolling(): void {
+    this.intervalId = setInterval(() => {
+      this.refreshData();
+    }, 5000);
   }
 
-  private generateId(): string {
-    return Math.random().toString(36).substr(2, 9)
-  }
-
-  private generateRandomIP(): string {
-    return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
-  }
-
-  private generateSessionId(): string {
-    return "sess_" + Math.random().toString(36).substr(2, 16)
-  }
-
-  private calculateThreatLevel(attemptCount: number, isSuspicious: boolean): "low" | "medium" | "high" | "critical" {
-    if (attemptCount > 30 || isSuspicious) return "critical"
-    if (attemptCount > 15) return "high"
-    if (attemptCount > 5) return "medium"
-    return "low"
-  }
-
-  private generateTimeframe(attemptCount: number): string {
-    if (attemptCount > 20) return "5 min"
-    if (attemptCount > 10) return "15 min"
-    if (attemptCount > 5) return "1 hour"
-    return "24 hours"
-  }
-
-  private calculateStatistics(): void {
-    const now = new Date()
-    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000)
-    const last48h = new Date(now.getTime() - 48 * 60 * 60 * 1000)
-
-    const recent = this.loginAttempts.filter((a) => a.timestamp >= last24h)
-    const previous = this.loginAttempts.filter((a) => a.timestamp >= last48h && a.timestamp < last24h)
-
-    this.statistics = {
-      successfulLogins: recent.filter((a) => a.status === "successful").length,
-      failedLogins: recent.filter((a) => a.status === "failed").length,
-      blockedIPs: new Set(recent.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
-      lockedAccounts: recent.filter((a) => a.status === "blocked").length,
-      successfulLoginsChange: this.calculatePercentageChange(
-        recent.filter((a) => a.status === "successful").length,
-        previous.filter((a) => a.status === "successful").length,
-      ),
-      failedLoginsChange: this.calculatePercentageChange(
-        recent.filter((a) => a.status === "failed").length,
-        previous.filter((a) => a.status === "failed").length,
-      ),
-      blockedIPsChange: this.calculatePercentageChange(
-        new Set(recent.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
-        new Set(previous.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
-      ),
-      lockedAccountsChange: this.calculatePercentageChange(
-        recent.filter((a) => a.status === "blocked").length,
-        previous.filter((a) => a.status === "blocked").length,
-      ),
+  stopPolling(): void {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
     }
   }
 
-  private calculatePercentageChange(current: number, previous: number): number {
-    if (previous === 0) return current > 0 ? 100 : 0
-    return Math.round(((current - previous) / previous) * 100)
-  }
-
-  // Real-time monitoring
-  private startRealTimeMonitoring(): void {
-    if (this.realTimeSubscription) {
-      this.realTimeSubscription.unsubscribe()
+  toggleRealTimeMonitoring(): void {
+    this.isRealTimeActive = !this.isRealTimeActive;
+    if (this.isRealTimeActive) {
+      this.startPolling();
+    } else {
+      this.stopPolling();
     }
-
-    this.realTimeSubscription = interval(5000).subscribe(() => {
-      if (this.isRealTimeActive) {
-        this.simulateRealTimeActivity()
-      }
-    })
-  }
-
-  private simulateRealTimeActivity(): void {
-    if (Math.random() > 0.7) {
-      const activities = [
-        { type: "success", message: "User successfully logged in from New York, US" },
-        { type: "warning", message: "5 failed login attempts detected from suspicious IP" },
-        { type: "danger", message: "Critical: 25 failed attempts from Moscow, RU - IP blocked" },
-        { type: "warning", message: "VPN connection detected from Germany" },
-        { type: "success", message: "Admin user authenticated successfully" },
-      ]
-
-      const activity = activities[Math.floor(Math.random() * activities.length)]
-
-      this.realtimeActivities.unshift({
-        id: this.generateId(),
-        timestamp: new Date(),
-        type: activity.type as "success" | "warning" | "danger",
-        message: activity.message,
-      })
-
-      // Keep only last 20 activities
-      if (this.realtimeActivities.length > 20) {
-        this.realtimeActivities = this.realtimeActivities.slice(0, 20)
-      }
-
-      // Add new login attempt occasionally
-      if (Math.random() > 0.8) {
-        this.addNewLoginAttempt()
-      }
-    }
-  }
-
-  private addNewLoginAttempt(): void {
-    const newAttempt: LoginAttempt = {
-      id: this.generateId(),
-      timestamp: new Date(),
-      username: ["admin", "user123", "hacker"][Math.floor(Math.random() * 3)],
-      ipAddress: this.generateRandomIP(),
-      location: "Moscow, RU",
-      countryCode: "RU",
-      status: Math.random() > 0.7 ? "failed" : "successful",
-      threatLevel: Math.random() > 0.5 ? "high" : "medium",
-      attemptCount: Math.floor(Math.random() * 20) + 5,
-      timeframe: "5 min",
-      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      isp: "Unknown ISP",
-      isVPN: Math.random() > 0.8,
-      isProxy: Math.random() > 0.9,
-      sessionId: this.generateSessionId(),
-      threatScore: Math.floor(Math.random() * 100),
-      isBlocked: Math.random() > 0.8,
-    }
-
-    this.loginAttempts.unshift(newAttempt)
-    this.applyFilters()
-    this.calculateStatistics()
-  }
-
-  private checkForCriticalAlerts(): void {
-    const criticalAttempts = this.loginAttempts.filter(
-      (a) => a.threatLevel === "critical" && a.timestamp > new Date(Date.now() - 60 * 60 * 1000), // Last hour
-    )
-
-    this.criticalAlerts = criticalAttempts.map(
-      (a) => `Critical threat detected: ${a.attemptCount} attempts from ${a.location}`,
-    )
   }
 
   // Filtering and searching
@@ -345,7 +268,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
         timeLimit = new Date(0)
     }
 
-    filtered = filtered.filter((attempt) => attempt.timestamp >= timeLimit)
+    filtered = filtered.filter((attempt) => new Date(attempt.timestamp) >= timeLimit)
 
     // Status filter
     if (this.selectedStatus !== "all") {
@@ -356,15 +279,16 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       }
     }
 
-    // Search filter
+    // Search filter (add sessionId)
     if (this.searchTerm) {
-      const term = this.searchTerm.toLowerCase()
+      const term = this.searchTerm.toLowerCase();
       filtered = filtered.filter(
-        (attempt) =>
-          attempt.username.toLowerCase().includes(term) ||
-          attempt.ipAddress.includes(term) ||
-          attempt.location.toLowerCase().includes(term),
-      )
+        (a) =>
+          a.username.toLowerCase().includes(term) ||
+          a.ipAddress.toLowerCase().includes(term) ||
+          (a.location && a.location.toLowerCase().includes(term)) ||
+          (a.sessionId && a.sessionId.toLowerCase().includes(term))
+      );
     }
 
     this.filteredAttempts = filtered
@@ -483,23 +407,37 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
   // Actions
   viewDetails(attempt: LoginAttempt): void {
-    this.selectedAttemptDetails = attempt
-    // In a real app, you would open a modal here
-    console.log("View details for:", attempt)
+    this.selectedAttemptDetails = attempt;
+    setTimeout(() => {
+      const modalEl = document.getElementById('detailsModal');
+      if (modalEl && (window as any).bootstrap) {
+        const modal = new (window as any).bootstrap.Modal(modalEl);
+        modal.show();
+      }
+    }, 0);
   }
 
   blockIP(attempt: LoginAttempt): void {
-    attempt.isBlocked = true
-    attempt.status = "blocked"
+    console.log('Blocking IP:', attempt.ipAddress);
+    this.loginAttemptsService.blockIP(attempt.ipAddress).subscribe({
+      next: (res) => {
+        console.log('Block IP response:', res);
+        attempt.isBlocked = true
+        attempt.status = "blocked"
 
-    this.realtimeActivities.unshift({
-      id: this.generateId(),
-      timestamp: new Date(),
-      type: "warning",
-      message: `IP ${attempt.ipAddress} has been blocked`,
-    })
+        this.realtimeActivities.unshift({
+          id: this.generateId(),
+          timestamp: new Date().toISOString(),
+          type: "warning",
+          message: `IP ${attempt.ipAddress} has been blocked`,
+        })
 
-    console.log("Blocked IP:", attempt.ipAddress)
+        console.log("Blocked IP:", attempt.ipAddress)
+      },
+      error: (err) => {
+        console.error('Block IP error:', err);
+      }
+    });
   }
 
   whitelistIP(attempt: LoginAttempt): void {
@@ -508,7 +446,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
     this.realtimeActivities.unshift({
       id: this.generateId(),
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       type: "success",
       message: `IP ${attempt.ipAddress} has been whitelisted`,
     })
@@ -524,7 +462,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
     this.realtimeActivities.unshift({
       id: this.generateId(),
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(),
       type: "warning",
       message: `${this.selectedAttempts.length} IPs have been blocked`,
     })
@@ -558,7 +496,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     ]
 
     const rows = this.filteredAttempts.map((attempt) => [
-      attempt.timestamp.toISOString(),
+      attempt.timestamp,
       attempt.username,
       attempt.ipAddress,
       attempt.location,
@@ -566,7 +504,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       attempt.threatLevel,
       attempt.attemptCount.toString(),
       attempt.userAgent,
-      attempt.isp,
+      "Unknown ISP",
     ])
 
     return [headers, ...rows].map((row) => row.map((field) => `"${field}"`).join(",")).join("\n")
@@ -576,20 +514,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     this.isLoading = true
 
     setTimeout(() => {
-      this.generateMockData()
-      this.calculateStatistics()
-      this.applyFilters()
+      this.loadLoginAttempts()
       this.checkForCriticalAlerts()
       this.isLoading = false
     }, 1000)
-  }
-
-  toggleRealTimeMonitoring(): void {
-    this.isRealTimeActive = !this.isRealTimeActive
-
-    if (this.isRealTimeActive) {
-      this.startRealTimeMonitoring()
-    }
   }
 
   viewAlerts(): void {
@@ -599,6 +527,27 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
 
   clearActivityFeed(): void {
     this.realtimeActivities = []
+  }
+
+  copyToClipboard(value: string): void {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(value);
+    } else {
+      // fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+  }
+
+  /**
+   * Expose encodeURIComponent for use in the template
+   */
+  encodeURIComponent(value: string): string {
+    return encodeURIComponent(value);
   }
 
   // Utility methods
@@ -646,9 +595,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     return this.countryFlags[countryCode] || "🏳️"
   }
 
-  getRelativeTime(timestamp: Date): string {
+  getRelativeTime(timestamp: string): string {
     const now = new Date()
-    const diff = now.getTime() - timestamp.getTime()
+    const timestampDate = new Date(timestamp)
+    const diff = now.getTime() - timestampDate.getTime()
     const minutes = Math.floor(diff / 60000)
     const hours = Math.floor(minutes / 60)
     const days = Math.floor(hours / 24)
@@ -659,11 +609,152 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     return "Just now"
   }
 
-  trackByAttempt(index: number, attempt: LoginAttempt): string {
+  trackByAttempt(index: number, attempt: LoginAttempt): number {
     return attempt.id
   }
 
   trackByActivity(index: number, activity: ActivityFeedItem): string {
     return activity.id
+  }
+
+  private generateId(): string {
+    return Math.random().toString(36).substr(2, 9)
+  }
+
+  private startRealTimeMonitoring(): void {
+    if (this.realTimeSubscription) {
+      this.realTimeSubscription.unsubscribe()
+    }
+
+    this.realTimeSubscription = interval(5000).subscribe(() => {
+      if (this.isRealTimeActive) {
+        // This method is no longer needed as notifications are handled by the service
+      }
+    })
+  }
+
+  private checkForCriticalAlerts(): void {
+    const criticalAttempts = this.loginAttempts.filter(
+      (a) => a.threatLevel === "critical" && new Date(a.timestamp) > new Date(Date.now() - 60 * 60 * 1000),
+    )
+
+    this.criticalAlerts = criticalAttempts.map(
+      (a) => `Critical threat detected: ${a.attemptCount} attempts from ${a.location}`,
+    )
+  }
+
+  private calculateStatistics(): void {
+    const now = new Date()
+    const last24h = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const last48h = new Date(now.getTime() - 48 * 60 * 60 * 1000)
+
+    const recent = this.loginAttempts.filter((a) => new Date(a.timestamp) >= last24h)
+    const previous = this.loginAttempts.filter((a) => new Date(a.timestamp) >= last48h && new Date(a.timestamp) < last24h)
+
+    this.statistics = {
+      successfulLogins: recent.filter((a) => a.status === "successful").length,
+      failedLogins: recent.filter((a) => a.status === "failed").length,
+      blockedIPs: new Set(recent.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
+      lockedAccounts: recent.filter((a) => a.status === "blocked").length,
+      successfulLoginsChange: this.calculatePercentageChange(
+        recent.filter((a) => a.status === "successful").length,
+        previous.filter((a) => a.status === "successful").length,
+      ),
+      failedLoginsChange: this.calculatePercentageChange(
+        recent.filter((a) => a.status === "failed").length,
+        previous.filter((a) => a.status === "failed").length,
+      ),
+      blockedIPsChange: this.calculatePercentageChange(
+        new Set(recent.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
+        new Set(previous.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
+      ),
+      lockedAccountsChange: this.calculatePercentageChange(
+        recent.filter((a) => a.status === "blocked").length,
+        previous.filter((a) => a.status === "blocked").length,
+      ),
+    }
+  }
+
+  private calculatePercentageChange(current: number, previous: number): number {
+    if (previous === 0) return current > 0 ? 100 : 0
+    return Math.round(((current - previous) / previous) * 100)
+  }
+
+  private generateRandomIP(): string {
+    return `${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
+  }
+
+  private generateSessionId(): string {
+    return "sess_" + Math.random().toString(36).substr(2, 16)
+  }
+
+  // Session activity log modal logic
+  openSessionActivity(sessionId: string) {
+    this.sessionActivitySessionId = sessionId;
+    this.loginAttemptsService.getBySessionId(sessionId).subscribe((attempts) => {
+      this.sessionActivityAttempts = attempts;
+      this.showSessionActivityModal = true;
+      setTimeout(() => {
+        const modalEl = document.getElementById('sessionActivityModal');
+        if (modalEl && (window as any).bootstrap) {
+          const modal = new (window as any).bootstrap.Modal(modalEl);
+          modal.show();
+        }
+      }, 0);
+    });
+  }
+  closeSessionActivity() {
+    this.showSessionActivityModal = false;
+    this.sessionActivitySessionId = null;
+    this.sessionActivityAttempts = [];
+  }
+  blockSession(sessionId: string) {
+    this.loginAttemptsService.blockSession(sessionId).subscribe(() => {
+      this.loadLoginAttempts();
+      if (this.showSessionActivityModal) this.openSessionActivity(sessionId);
+    });
+  }
+  whitelistSession(sessionId: string) {
+    this.loginAttemptsService.whitelistSession(sessionId).subscribe(() => {
+      this.loadLoginAttempts();
+      if (this.showSessionActivityModal) this.openSessionActivity(sessionId);
+    });
+  }
+
+  fetchSecurityPolicy() {
+    this.http.get<any[]>('http://localhost:8080/api/login-attempts/security-policy').subscribe({
+      next: (data) => {
+        this.securityPolicy = data;
+      },
+      error: (err) => {
+        console.error('Failed to fetch security policy:', err);
+      }
+    });
+  }
+
+  /**
+   * Opens the detailed log modal for a specific attempt (by username & IP)
+   */
+  openDetailedLogModal(attempt: LoginAttempt): void {
+    this.detailedLogContext = attempt;
+    // Case-insensitive, trimmed filter for username and IP
+    this.filteredDetailedLog = this.loginAttempts.filter(a =>
+      a.username && attempt.username &&
+      a.username.trim().toLowerCase() === attempt.username.trim().toLowerCase() &&
+      a.ipAddress && attempt.ipAddress &&
+      a.ipAddress.trim() === attempt.ipAddress.trim()
+    ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    console.log('loginAttempts:', this.loginAttempts);
+    console.log('filteredDetailedLog:', this.filteredDetailedLog);
+    this.showDetailedLogModal = true;
+  }
+
+  /**
+   * Closes the detailed log modal
+   */
+  closeDetailedLogModal(): void {
+    this.showDetailedLogModal = false;
+    this.detailedLogContext = null;
+    this.filteredDetailedLog = [];
   }
 }

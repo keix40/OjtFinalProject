@@ -1,0 +1,578 @@
+<div class="w-full px-12 space-y-8">
+  <!-- Header -->
+  <div class="text-center">
+    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+      <i data-lucide="crown" class="w-8 h-8 text-amber-500"></i>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">VIP Customers</h1>
+    <p class="text-gray-600">Manage high-value customers and build lasting loyalty relationships</p>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="glassmorphism rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 text-center">
+      <div class="w-12 h-12 bg-amber-100/80 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="crown" class="w-6 h-6 text-amber-600"></i>
+      </div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">{{ customersGrowth?.currentMonth ?? totalVipCustomers }}</div>
+      <div class="text-sm text-gray-600 mb-2">Total VIP Customers</div>
+      <div class="flex items-center justify-center gap-1 text-xs" [ngClass]="{'text-green-600': customersGrowth?.growthPercent >= 0, 'text-red-600': customersGrowth?.growthPercent < 0}">
+        <i data-lucide="trending-up" class="w-3 h-3" *ngIf="customersGrowth?.growthPercent >= 0"></i>
+        <i data-lucide="trending-down" class="w-3 h-3" *ngIf="customersGrowth?.growthPercent < 0"></i>
+        <ng-container *ngIf="customersGrowth; else noCustomerGrowth">
+          {{ customersGrowth.growthPercent >= 0 ? '+' : '' }}{{ customersGrowth.growthPercent }}% this month
+        </ng-container>
+        <ng-template #noCustomerGrowth>-</ng-template>
+      </div>
+    </div>
+    <div class="glassmorphism rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 text-center">
+      <div class="w-12 h-12 bg-green-100/80 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="dollar-sign" class="w-6 h-6 text-green-600"></i>
+      </div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">${{ revenueGrowth?.thisYear ?? (totalVipRevenue | number:'1.0-0') }}</div>
+      <div class="text-sm text-gray-600 mb-2">VIP Revenue (YTD)</div>
+      <div class="flex items-center justify-center gap-1 text-xs" [ngClass]="{'text-green-600': revenueGrowth?.growthPercent >= 0, 'text-red-600': revenueGrowth?.growthPercent < 0}">
+        <i data-lucide="trending-up" class="w-3 h-3" *ngIf="revenueGrowth?.growthPercent >= 0"></i>
+        <i data-lucide="trending-down" class="w-3 h-3" *ngIf="revenueGrowth?.growthPercent < 0"></i>
+        <ng-container *ngIf="revenueGrowth; else noRevenueGrowth">
+          {{ revenueGrowth.growthPercent >= 0 ? '+' : '' }}{{ revenueGrowth.growthPercent }}% vs last year
+        </ng-container>
+        <ng-template #noRevenueGrowth>-</ng-template>
+      </div>
+    </div>
+    <div class="glassmorphism rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 text-center">
+      <div class="w-12 h-12 bg-blue-100/80 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="shopping-bag" class="w-6 h-6 text-blue-600"></i>
+      </div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">${{ avgOrderValueComparison?.vipAvg ?? (averageOrderValue | number:'1.0-0') }}</div>
+      <div class="text-sm text-gray-600 mb-2">Avg Order Value</div>
+      <div class="flex items-center justify-center gap-1 text-xs" [ngClass]="{'text-green-600': avgOrderValueComparison?.diffPercent >= 0, 'text-red-600': avgOrderValueComparison?.diffPercent < 0}">
+        <i data-lucide="trending-up" class="w-3 h-3" *ngIf="avgOrderValueComparison?.diffPercent >= 0"></i>
+        <i data-lucide="trending-down" class="w-3 h-3" *ngIf="avgOrderValueComparison?.diffPercent < 0"></i>
+        <ng-container *ngIf="avgOrderValueComparison; else noOrderValueGrowth">
+          {{ avgOrderValueComparison.diffPercent >= 0 ? '+' : '' }}{{ avgOrderValueComparison.diffPercent }}% vs regular
+        </ng-container>
+        <ng-template #noOrderValueGrowth>-</ng-template>
+      </div>
+    </div>
+    <div class="glassmorphism rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 text-center relative cursor-pointer" 
+         (mouseenter)="showLoyaltyTooltip = true" 
+         (mouseleave)="showLoyaltyTooltip = false"
+         (click)="toggleLoyaltyTooltip()">
+      <div class="w-12 h-12 bg-pink-100/80 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <i data-lucide="heart" class="w-6 h-6 text-pink-600"></i>
+      </div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">{{ loyaltyScore }}%</div>
+      <div class="text-sm text-gray-600 mb-2">Loyalty Score</div>
+      <div class="flex items-center justify-center gap-1 text-xs text-green-600">
+        <i data-lucide="trending-up" class="w-3 h-3"></i>
+        <ng-container *ngIf="loyaltyScoreGrowth !== null; else noGrowth">
+          <span [ngClass]="{'text-green-600': loyaltyScoreGrowth >= 0, 'text-red-600': loyaltyScoreGrowth < 0}">
+            {{ loyaltyScoreGrowth >= 0 ? '+' : ''}}{{ loyaltyScoreGrowth }}% this quarter
+          </span>
+        </ng-container>
+        <ng-template #noGrowth>-</ng-template>
+      </div>
+      
+      <!-- Tooltip with breakdown -->
+      <div *ngIf="showLoyaltyTooltip" 
+           class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 z-50 animate-fade-in">
+        <div class="bg-gray-900 text-white text-xs rounded-lg p-3 w-72 shadow-xl border border-gray-700">
+          <div class="font-semibold mb-2 text-sm">Loyalty Score Breakdown:</div>
+          <div *ngIf="loyaltyScoreBreakdown" class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                Active Customers:
+              </span>
+              <span class="text-green-400 font-semibold">{{ activeCustomerScore }}/{{ maxActiveCustomerScore }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                VIP Tiers:
+              </span>
+              <span class="text-blue-400 font-semibold">{{ loyaltyScoreBreakdown.tierDistribution.score }}/{{ loyaltyScoreBreakdown.tierDistribution.weight }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                Order Value:
+              </span>
+              <span class="text-yellow-400 font-semibold">{{ loyaltyScoreBreakdown.averageOrderValue.score }}/{{ loyaltyScoreBreakdown.averageOrderValue.weight }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
+                Retention:
+              </span>
+              <span class="text-purple-400 font-semibold">{{ loyaltyScoreBreakdown.customerRetention.score }}/{{ loyaltyScoreBreakdown.customerRetention.weight }}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-orange-400 rounded-full"></div>
+                Recent Activity:
+              </span>
+              <span class="text-orange-400 font-semibold">{{ loyaltyScoreBreakdown.recentActivity.score }}/{{ loyaltyScoreBreakdown.recentActivity.weight }}</span>
+            </div>
+          </div>
+          <div class="mt-3 pt-2 border-t border-gray-700 text-xs text-gray-300">
+            <i data-lucide="info" class="w-3 h-3 inline mr-1"></i>
+            Based on real customer data
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIP Tiers Overview -->
+  <div class="glassmorphism rounded-xl shadow-lg">
+    <div class="p-6 border-b border-white/20">
+      <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+        <i data-lucide="award" class="w-5 h-5 text-blue-500"></i>
+        VIP Tiers Overview
+      </h2>
+    </div>
+    <div class="p-6">
+      <!-- Loading state for tiers -->
+      <div *ngIf="isLoadingTiers" class="flex items-center justify-center py-12">
+        <div class="flex items-center gap-3 text-gray-600">
+          <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
+          <span>Loading VIP tiers...</span>
+        </div>
+      </div>
+      
+      <!-- Tiers content -->
+      <div *ngIf="!isLoadingTiers" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div *ngFor="let tier of vipTiersForOverview; trackBy: trackByTierId" class="flex flex-col items-center justify-between bg-white rounded-xl shadow p-6 h-full">
+          <div class="flex items-center justify-center w-14 h-14 rounded-xl mb-3" [ngClass]="tier.color + ' bg-gray-100/50'">
+            <i [attr.data-lucide]="tier.icon" class="w-7 h-7"></i>
+          </div>
+          <h3 class="font-bold text-lg text-center mb-1">{{ tier.name }}</h3>
+          <p class="text-xs text-gray-600 text-center mb-2">{{ tier.description }}</p>
+          <div class="text-xs text-gray-500 mb-2">Min: {{ tier.minPoints }} pts</div>
+          <div class="text-xs text-green-600 text-center mt-auto">
+            <i data-lucide="check-circle" class="w-3 h-3 inline mr-1"></i>
+            <!-- Removed benefits display -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIP Tier Management Actions (Dropdown Menu) -->
+  <div class="glassmorphism rounded-xl shadow-lg px-6 py-4 my-6 flex justify-start w-full relative">
+    <div class="relative" (mouseleave)="showTierDropdown = false">
+      <button type="button"
+        class="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold shadow-md bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white transition-all duration-150 glassmorphism focus:outline-none focus:ring-2 focus:ring-blue-300 text-base"
+        (click)="showTierDropdown = !showTierDropdown" [disabled]="isLoadingTiers">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span>Manage VIP Tiers</span>
+        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </button>
+      <div *ngIf="showTierDropdown" class="absolute left-0 mt-2 w-48 bg-white/80 glassmorphism rounded-lg shadow-lg border border-gray-200 z-50 animate-fade-in">
+        <button (click)="openAddTierModal(); showTierDropdown = false" class="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-2 rounded-t-lg" [disabled]="isSubmittingTier">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i>
+          Add VIP Tier
+        </button>
+        <button (click)="openTierListModal(); showTierDropdown = false" class="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-2 rounded-b-lg" [disabled]="isSubmittingTier">
+          <i data-lucide="list" class="w-5 h-5 text-gray-700"></i>
+          VIP Tier List
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Datatable (keep inside the main container for alignment) -->
+    <!-- Filters -->
+    <div class="glassmorphism rounded-xl shadow-lg p-6">
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div class="md:col-span-2">
+        <div class="relative">
+            <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+            <input type="text" [formControl]="searchControl" placeholder="Search customers..." class="w-full pl-10 pr-3 py-2 glassmorphism-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [disabled]="isLoadingCustomers" />
+          </div>
+        </div>
+        <select [(ngModel)]="tierFilter" (change)="applyFilters()" class="glassmorphism-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [disabled]="isLoadingTiers">
+          <option value="">All Tiers</option>
+          <option *ngFor="let tier of tiers" [value]="tier.name.toLowerCase()">{{ tier.name }}</option>
+        </select>
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="glassmorphism-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [disabled]="isLoadingCustomers">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <div class="flex rounded-lg glassmorphism-light p-1">
+          <button type="button" class="flex-1 px-3 py-1 rounded text-sm font-medium" [ngClass]="{'bg-blue-500 text-white': viewMode === 'cards', 'text-gray-700 hover:bg-white/50': viewMode !== 'cards'}" (click)="setViewMode('cards')" [disabled]="isLoadingCustomers">
+            <i data-lucide="grid" class="w-4 h-4 mx-auto"></i>
+          </button>
+          <button type="button" class="flex-1 px-3 py-1 rounded text-sm font-medium" [ngClass]="{'bg-blue-500 text-white': viewMode === 'table', 'text-gray-700 hover:bg-white/50': viewMode !== 'table'}" (click)="setViewMode('table')" [disabled]="isLoadingCustomers">
+            <i data-lucide="list" class="w-4 h-4 mx-auto"></i>
+          </button>
+        </div>
+        <button type="button" class="glassmorphism-light rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="clearFilters()" [disabled]="isLoadingCustomers">
+          Clear Filters
+        </button>
+    </div>
+  </div>
+
+    <!-- Customer List -->
+    <div class="glassmorphism rounded-xl shadow-lg">
+      <div class="p-6 border-b border-white/20">
+        <div class="flex justify-between items-center">
+          <h2 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <i data-lucide="users" class="w-5 h-5"></i>
+            VIP Customers (<span>{{ filteredCustomers.length }}</span>)
+          </h2>
+          <div class="flex gap-2">
+            <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="refreshData()" [disabled]="isRefreshingData">
+              <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 inline" [class.animate-spin]="isRefreshingData"></i>
+              {{ isRefreshingData ? 'Refreshing...' : 'Refresh' }}
+            </button>
+            
+          </div>
+        </div>
+      </div>
+      <div class="p-6">
+        <!-- Loading state for customers -->
+        <div *ngIf="isLoadingCustomers" class="flex items-center justify-center py-12">
+          <div class="flex items-center gap-3 text-gray-600">
+            <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
+            <span>Loading VIP customers...</span>
+          </div>
+        </div>
+        
+        <!-- Cards View -->
+        <div *ngIf="!isLoadingCustomers && viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div *ngFor="let customer of paginatedCustomers; trackBy: trackByCustomerId" class="glassmorphism-light rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <img [src]="imageService.getAvatarImageUrl(customer)" [alt]="customer.name" class="w-12 h-12 rounded-full object-cover" (error)="imageService.handleImageError($event, 'avatar', customer.name)">
+                  <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-white"
+                    [ngClass]="getVipIconColor(customer.tier).replace('text-', 'bg-').replace('-700', '-100/80')">
+                    <i [attr.data-lucide]="getLucideIconName(customer.tier)" [ngClass]="getVipIconColor(customer.tier) + ' w-3 h-3'"></i>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="font-semibold text-gray-900">{{ customer.name }}</h3>
+                  <p class="text-sm text-gray-600 flex items-center gap-1">
+                    <i data-lucide="mail" class="w-3 h-3 text-gray-700"></i>
+                    {{ customer.email }}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" 
+                     [ngClass]="getVipIconColor(customer.tier).replace('text-', 'bg-').replace('-700', '-100/80') + ' ' + getVipIconColor(customer.tier) + ' border border-' + getVipIconColor(customer.tier).replace('text-', '').replace('-700', '-200')">
+                  <i [attr.data-lucide]="getLucideIconName(customer.tier)" [ngClass]="getVipIconColor(customer.tier) + ' w-3 h-3 mr-1 inline'"></i>
+                  {{ customer.tier }}
+                </span>
+                <span *ngIf="customer.status === 'active'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100/80 text-green-700 border border-green-200">Active</span>
+                <span *ngIf="customer.status === 'inactive'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100/80 text-red-700 border border-red-200">Inactive</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="glassmorphism-light rounded-lg p-2">
+                  <div class="text-lg font-bold text-gray-900">${{ customer.totalSpent | number:'1.0-0' }}</div>
+                  <div class="text-xs text-gray-600">Total Spent</div>
+                  <div class="text-xs flex items-center justify-center gap-1" [ngClass]="customer.spendingTrend === 'up' ? 'text-green-600' : 'text-red-600'">
+                    <i [attr.data-lucide]="customer.spendingTrend === 'up' ? 'trending-up' : 'trending-down'" [ngClass]="customer.spendingTrend === 'up' ? 'w-3 h-3 text-green-600' : 'w-3 h-3 text-red-600'"></i>
+                    {{ customer.spendingChange }}%
+                  </div>
+                </div>
+                <div class="glassmorphism-light rounded-lg p-2">
+                  <div class="text-lg font-bold text-gray-900">{{ customer.totalOrders }}</div>
+                  <div class="text-xs text-gray-600">Orders</div>
+                  <div class="text-xs text-gray-500">Avg: ${{ customer.avgOrderValue | number:'1.0-0' }}</div>
+                </div>
+                <div class="glassmorphism-light rounded-lg p-2">
+                  <div class="text-lg font-bold text-gray-900">{{ customer.lastOrderDate | date:'MMM dd' }}</div>
+                  <div class="text-xs text-gray-600">Last Order</div>
+                  <div class="text-xs text-gray-500">${{ customer.lastOrderAmount | number:'1.0-0' }}</div>
+                </div>
+              </div>
+
+            </div>
+            <div class="flex gap-2 mt-4 pt-4 border-t border-white/20">
+              <button type="button" (click)="viewCustomerDetails(customer)" class="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center justify-center gap-1 text-gray-700 hover:bg-gray-50 transition-all">
+                <i data-lucide="eye" class="w-4 h-4 mr-1 inline text-gray-700"></i>
+                View
+              </button>
+              
+            </div>
+          </div>
+        </div>
+        <!-- Table View -->
+        <div *ngIf="!isLoadingCustomers && viewMode === 'table'" class="overflow-x-auto">
+          <!-- Bulk Actions and Export -->
+          <div class="flex flex-wrap items-center justify-between mb-4 gap-2">
+            <div class="flex gap-2">
+              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length || isLoadingCustomers" (click)="bulkDelete()">
+                <i data-lucide="trash" class="w-4 h-4 mr-1 inline text-red-600"></i>
+                Delete Selected
+              </button>
+              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length || isLoadingCustomers" (click)="bulkChangeStatus()">
+                <i data-lucide="power" class="w-4 h-4 mr-1 inline"></i>
+                Toggle Status
+        </button>
+      </div>
+            <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="exportVipCustomers()" [disabled]="isLoadingCustomers">
+              <i data-lucide="download" class="w-4 h-4 mr-1 inline"></i>
+              Export CSV
+            </button>
+          </div>
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th class="px-4 py-3">
+                  <input type="checkbox" [checked]="selectedCustomers.length === paginatedCustomers.length && paginatedCustomers.length > 0" (change)="selectAll($event)" class="accent-blue-500 w-4 h-4 rounded border-gray-300 focus:ring-blue-500">
+                </th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">VIP Tier</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Spent</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let customer of paginatedCustomers; trackBy: trackByCustomerId" class="bg-white even:bg-gray-50">
+                <td class="px-4 py-4">
+                  <input type="checkbox" [checked]="selectedCustomers.includes(customer.userId.toString())" (change)="toggleCustomerSelection(customer.userId.toString(), $event)" class="accent-blue-500 w-4 h-4 rounded border-gray-300 focus:ring-blue-500">
+                </td>
+                <!-- Profile with avatar, tier icon, name, email, location -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center gap-3">
+                <div class="relative">
+                      <img [src]="imageService.getAvatarImageUrl(customer)" [alt]="customer.name" class="w-10 h-10 rounded-full object-cover" (error)="imageService.handleImageError($event, 'avatar', customer.name)">
+                      <div class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center border-2 border-white"
+                        [ngClass]="getVipIconColor(customer.tier).replace('text-', 'bg-').replace('-700', '-100/80')">
+                        <i [attr.data-lucide]="getLucideIconName(customer.tier)"
+                          [ngClass]="getVipIconColor(customer.tier) + ' w-4 h-4'"></i>
+                      </div>
+                    </div>
+                    <div>
+                      <div class="font-semibold text-gray-900">{{ customer.name }}</div>
+                      <div class="text-xs text-gray-600">{{ customer.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <!-- VIP Tier column -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium" 
+                       [ngClass]="getVipIconColor(customer.tier).replace('text-', 'bg-').replace('-700', '-100/80') + ' ' + getVipIconColor(customer.tier) + ' border border-' + getVipIconColor(customer.tier).replace('text-', '').replace('-700', '-200')">
+                    <i [attr.data-lucide]="getLucideIconName(customer.tier)" [ngClass]="getVipIconColor(customer.tier) + ' w-4 h-4'"></i> {{ customer.tier }}
+                  </span>
+                </td>
+                <!-- Total Spent with trend -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="font-semibold text-gray-900">${{ customer.totalSpent | number:'1.0-0' }}</div>
+                  <div class="text-xs flex items-center gap-1" [ngClass]="customer.spendingTrend === 'up' ? 'text-green-600' : 'text-red-600'">
+                    <i [attr.data-lucide]="customer.spendingTrend === 'up' ? 'trending-up' : 'trending-down'" [ngClass]="customer.spendingTrend === 'up' ? 'w-3 h-3 text-green-600' : 'w-3 h-3 text-red-600'"></i>
+                    {{ customer.spendingChange }}%
+                  </div>
+                </td>
+                <!-- Orders and avg order value -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="font-semibold text-gray-900">{{ customer.totalOrders }}</div>
+                  <div class="text-xs text-gray-500">Avg: ${{ customer.avgOrderValue | number:'1.0-0' }}</div>
+                </td>
+                <!-- Status column -->
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span *ngIf="customer.status === 'active'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100/80 text-green-700 border border-green-200">Active</span>
+                  <span *ngIf="customer.status === 'inactive'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100/80 text-red-700 border border-red-200">Inactive</span>
+                  <span *ngIf="!customer.status" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100/80 text-gray-500 border border-gray-200">Unknown</span>
+                </td>
+                <!-- Actions column: Fix View button -->
+                <td class="px-6 py-4 whitespace-nowrap flex gap-2">
+                  <button (click)="viewCustomerDetails(customer)" class="rounded-lg border border-gray-200 bg-white px-3 py-2 flex items-center gap-1 text-gray-700 hover:bg-gray-50 transition-all">
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                  </button>
+                  
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Pagination, modals, and other icons should use the same Lucide approach -->
+      </div>
+    </div>
+  </div>
+
+
+<!-- Customer Details Modal -->
+<div *ngIf="showCustomerModal" class="fixed inset-0 z-40 flex items-center justify-center">
+  <!-- Modal Backdrop -->
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <!-- Modal Content -->
+  <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <button (click)="closeCustomerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+    <div *ngIf="selectedCustomerDetails">
+      <div class="flex items-center gap-4 mb-4 pb-4 border-b border-gray-200">
+        <img [src]="imageService.getAvatarImageUrl(selectedCustomerDetails)" [alt]="selectedCustomerDetails.name" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow">
+        <div>
+          <h2 class="text-2xl font-extrabold text-gray-900 flex items-center gap-2">
+            {{ selectedCustomerDetails.name }}
+            <i data-lucide="user" class="w-5 h-5 text-blue-400"></i>
+          </h2>
+          <p class="text-gray-500 text-sm">{{ selectedCustomerDetails.email }}</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- VIP Tier row: use correct icon for each tier -->
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i [attr.data-lucide]="getLucideIconName(selectedCustomerDetails.tier)" class="w-5 h-5" [ngClass]="getVipIconColor(selectedCustomerDetails.tier).replace('-700', '-500')"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">VIP Tier</div>
+            <div class="text-base font-bold text-gray-900">{{ selectedCustomerDetails.tier }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i data-lucide="user-check" class="w-5 h-5 text-green-500"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">Status</div>
+            <div class="text-base font-bold text-gray-900 capitalize">{{ selectedCustomerDetails.status }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i data-lucide="dollar-sign" class="w-5 h-5 text-amber-500"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">Total Spent</div>
+            <div class="text-base font-bold text-gray-900">${{ selectedCustomerDetails.totalSpent | number:'1.0-0' }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i data-lucide="shopping-bag" class="w-5 h-5 text-blue-500"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">Total Orders</div>
+            <div class="text-base font-bold text-gray-900">{{ selectedCustomerDetails.totalOrders }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i data-lucide="calculator" class="w-5 h-5 text-pink-500"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">Avg Order Value</div>
+            <div class="text-base font-bold text-gray-900">${{ selectedCustomerDetails.avgOrderValue | number:'1.0-0' }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i data-lucide="phone" class="w-5 h-5 text-gray-500"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">Phone</div>
+            <div class="text-base font-bold text-gray-900">{{ selectedCustomerDetails.phoneNumber || '-' }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i data-lucide="calendar" class="w-5 h-5 text-indigo-500"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">Join Date</div>
+            <div class="text-base font-bold text-gray-900">{{ selectedCustomerDetails.joinDate | date:'mediumDate' }}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-white/80 rounded-lg p-3 border border-gray-100 shadow-sm">
+          <i data-lucide="map-pin" class="w-5 h-5 text-red-400"></i>
+          <div>
+            <div class="text-xs font-semibold text-gray-500 uppercase">Location</div>
+            <div class="text-base font-bold text-gray-900">{{ selectedCustomerDetails.location || '-' }}</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit VIP Tier Modal -->
+<div *ngIf="showAddTierModal" class="fixed inset-0 z-40 flex items-center justify-center">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-xl shadow-lg w-full max-w-lg mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <button (click)="closeAddTierModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+    <div class="p-8 flex flex-col bg-white/90">
+      <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+        <i data-lucide="plus-circle" class="w-5 h-5 text-blue-500"></i>
+        Add / Edit VIP Tier
+      </h3>
+      <form [formGroup]="tierForm" (ngSubmit)="onTierSubmit()" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="col-span-1 flex flex-col gap-1 border border-gray-200 rounded-lg bg-white/60 p-3">
+          <label class="font-semibold text-sm text-gray-700 mb-1">Name</label>
+          <input formControlName="name" placeholder="Name" class="input input-bordered" required />
+        </div>
+        <div class="col-span-1 flex flex-col gap-1 border border-gray-200 rounded-lg bg-white/60 p-3">
+          <label class="font-semibold text-sm text-gray-700 mb-1">Description</label>
+          <input formControlName="description" placeholder="Description" class="input input-bordered" />
+        </div>
+        <div class="col-span-1 flex flex-col gap-1 border border-gray-200 rounded-lg bg-white/60 p-3">
+          <label class="font-semibold text-sm text-gray-700 mb-1">Min Points</label>
+          <input formControlName="minPoints" type="number" placeholder="Min Points" class="input input-bordered" required />
+        </div>
+        <div class="col-span-1 flex flex-col gap-1 border border-gray-200 rounded-lg bg-white/60 p-3">
+          <label class="font-semibold text-sm text-gray-700 mb-1">Icon (lucide name)</label>
+          <input formControlName="icon" placeholder="Icon (lucide name)" class="input input-bordered" />
+        </div>
+        <div class="col-span-1 flex flex-col gap-1 border border-gray-200 rounded-lg bg-white/60 p-3">
+          <label class="font-semibold text-sm text-gray-700 mb-1">Color (e.g. text-blue-500)</label>
+          <input formControlName="color" placeholder="Color (e.g. text-blue-500)" class="input input-bordered" />
+        </div>
+        <div class="col-span-1 flex flex-col gap-1 border border-gray-200 rounded-lg bg-white/60 p-3">
+          <label class="font-semibold text-sm text-gray-700 mb-1">Weight</label>
+          <input formControlName="weight" type="number" placeholder="Weight (importance)" class="input input-bordered" required />
+        </div>
+        <div class="col-span-1 flex flex-col gap-1 border border-gray-200 rounded-lg bg-white/60 p-3">
+          <label class="font-semibold text-sm text-gray-700 mb-1">Order</label>
+          <input formControlName="order" type="number" placeholder="Order" class="input input-bordered" />
+        </div>
+        <div class="col-span-1 md:col-span-2 flex gap-2 mt-2 justify-end">
+          <button type="submit" class="btn btn-primary flex-1">{{ editTierId ? 'Update' : 'Add' }} Tier</button>
+          <button *ngIf="editTierId" type="button" (click)="resetTierForm()" class="btn btn-secondary flex-1">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- VIP Tier List Modal -->
+<div *ngIf="showTierListModal" class="fixed inset-0 z-40 flex items-center justify-center">
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="relative bg-white rounded-xl shadow-lg w-full max-w-lg mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <button (click)="closeTierListModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+    <div class="p-8 bg-white/90 flex flex-col">
+      <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+        <i data-lucide="list" class="w-5 h-5 text-blue-500"></i>
+        VIP Tier List
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white rounded shadow text-sm">
+          <thead>
+            <tr>
+              <th class="px-6 py-2">Order</th>
+              <th class="px-6 py-2">Name</th>
+              <th class="px-6 py-2">Min Points</th>
+              <th class="px-6 py-2">Icon</th>
+              <th class="px-6 py-2">Color</th>
+              <th class="px-6 py-2">Weight</th>
+              <th class="px-6 py-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let tier of tiers; trackBy: trackByTierId">
+              <td class="px-6 py-2">{{ tier.order }}</td>
+              <td class="px-6 py-2 font-bold">{{ tier.name }}</td>
+              <td class="px-6 py-2">{{ tier.minPoints }}</td>
+              <td class="px-6 py-2"><i [attr.data-lucide]="tier.icon" class="w-5 h-5" [ngClass]="tier.color"></i></td>
+              <td class="px-6 py-2"><span [ngClass]="tier.color">{{ tier.color }}</span></td>
+              <td class="px-6 py-2">{{ tier.weight }}</td>
+              <td class="px-6 py-2 flex gap-2">
+                <button class="btn btn-xs btn-info" (click)="editTier(tier); closeTierListModal(); openAddTierModal()">Edit</button>
+                <button class="btn btn-xs btn-error" (click)="deleteTier(tier.id)">Delete</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+  

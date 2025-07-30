@@ -1,6 +1,8 @@
 package com.Ojt.Ecommerce.security;
 
 import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.entity.VipTier;
+import com.Ojt.Ecommerce.repository.VipTierRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 public class JwtTokenProvider implements InitializingBean {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
+
+    private final VipTierRepository vipTierRepository;
 
     @Value("${app.jwt.secret}")
     private String jwtSecret;
@@ -42,19 +46,32 @@ public class JwtTokenProvider implements InitializingBean {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
-        // Create roles string: ROLE_ADMIN,ROLE_USER etc.
         String roles = "ROLE_" + user.getRole().getName();
+        String permissions = user.getRole().getRolePermissions().stream()
+                .map(rolePermission -> rolePermission.getPermission().getKey())
+                .collect(Collectors.joining(","));
 
+        // --- VIP Tier logic ---
+        VipTier vipTier = vipTierRepository.findTopByMinPointsLessThanEqualOrderByMinPointsDesc(
+                user.getTotalPoints() != null ? user.getTotalPoints() : 0
+        ).orElse(null);
+        String vipTierName = vipTier != null ? vipTier.getName() : "Regular";
 
         return Jwts.builder()
                 .setSubject(user.getEmail())
-                .claim("id",user.getId())
+                .claim("id", user.getId())
                 .claim("roles", roles)
+                .claim("permissions", permissions)
                 .claim("name", user.getName())
                 .claim("gender", user.getGender())
-                .claim("phNumber", user.getPhoneNumber())
-                .claim("dateofbirth", user.getDateOfBirth().toString()) // 👈 convert LocalDate to String
+                .claim("phoneNumber", user.getPhoneNumber())
+                .claim("dateofbirth", user.getDateOfBirth().toString())
+                .claim("createda.te", user.getCreatedDate().toString())
                 .claim("createdate", user.getCreatedDate().toString())
+                .claim("profileImage", user.getProfileImage())
+                .claim("orderCount", user.getOrderCount())
+                .claim("vipTier", vipTierName) // <-- Add this line
+                .claim("roleLevel", user.getRole().getLevel())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(secretKey, SignatureAlgorithm.HS512)
@@ -95,7 +112,7 @@ public class JwtTokenProvider implements InitializingBean {
     }
 
     // Helper method to parse claims with unified exception handling
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) { //change private to pubile
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
                 .build()

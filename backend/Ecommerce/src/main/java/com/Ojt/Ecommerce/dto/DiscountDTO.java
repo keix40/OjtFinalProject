@@ -1,0 +1,37 @@
+package com.Ojt.Ecommerce.dto;
+
+import com.Ojt.Ecommerce.entity.DiscountType;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDate;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Data
+public class DiscountDTO {
+
+    private Long id;
+    private String name;
+    private String code;
+    private String description;
+    private DiscountType discountType;
+    private Double discountValue;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private boolean status;
+    private boolean canUse;
+    private Boolean autoApply; // true = discount event, false = coupon
+    private String productIds;      // comma-separated product IDs
+    private Integer brandId;
+    private Integer categoryId;
+    private String brandIds;        // optional, for multi-select
+    private String categoryIds;     // optional, for multi-select
+    private String brandCategoryId; // optional
+    private String brandCategoryIds;
+    private Double minimunSpend;
+    private String userIds; // comma-separated user IDs
+}

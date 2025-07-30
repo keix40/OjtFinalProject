@@ -1343,3 +1343,78 @@
     }
   }
   
+/* Modal overlay styles */
+.modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  z-index: 50 !important;
+  padding: 1rem !important;
+}
+
+/* Specific z-index for modals */
+.appeal-review-modal {
+  z-index: 60 !important;
+}
+
+.appeal-management-modal {
+  z-index: 50 !important;
+}
+
+/* Prevent body scroll when modal is open */
+body.modal-open {
+  overflow: hidden !important;
+}
+
+/* Table container styles to prevent dropdown clipping */
+.table-responsive {
+  overflow: visible !important;
+}
+
+.overflow-x-auto {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+/* Ensure table cells don't clip dropdowns */
+td {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+/* Table container */
+.w-full.bg-white.border.border-gray-200.rounded-lg.shadow-sm {
+  overflow: visible !important;
+}
+
+/* Table body */
+.bg-white.divide-y.divide-gray-200 {
+  overflow: visible !important;
+}
+
+/* Dropdown menu - ensure no scrolling */
+.fixed.z-\[9999\] {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Bulk actions dropdown */
+.bulk-actions {
+  position: relative;
+}
+
+.bulk-actions .relative {
+  position: relative;
+}
+
+.bulk-actions .absolute {
+  position: absolute;
+  z-index: 9999;
+}
+  

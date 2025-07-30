@@ -1,0 +1,123 @@
+<app-header></app-header>
+
+<!-- Hero Section -->
+<section class="relative bg-white py-20 overflow-hidden">
+  <div class="absolute inset-0 bg-blue-50"></div>
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center">
+      <h1 class="text-5xl lg:text-6xl font-bold text-black mb-6">
+        Browse <span class="text-blue-600">Categories</span>
+      </h1>
+      <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        Discover our wide range of product categories. Find exactly what you're looking for with our organized collection.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Categories Section -->
+<section class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-20">
+      <div class="inline-flex items-center px-6 py-3 bg-blue-100 text-blue-800 rounded-full text-lg font-medium">
+        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        Loading categories...
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error" class="text-center py-20">
+      <div class="inline-flex items-center px-6 py-3 bg-red-100 text-red-800 rounded-full text-lg font-medium">
+        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        {{ error }}
+      </div>
+    </div>
+
+         <!-- Categories Grid -->
+     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" *ngIf="!loading && !error">
+      <div 
+        *ngFor="let cat of categories" 
+        class="group bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-200 cursor-pointer overflow-hidden"
+        (click)="goToCategory(cat)"
+      >
+                 <!-- Category Image -->
+         <div class="relative aspect-square overflow-hidden">
+           <img 
+             [src]="getCategoryImageUrl(cat)" 
+             [alt]="cat.name" 
+             class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+           >
+           
+           <!-- Icon Badge -->
+           <div class="absolute top-2 left-2 w-8 h-8 rounded-md flex items-center justify-center bg-gray-800/80 backdrop-blur-sm border border-white/30 shadow-lg">
+             <ng-container *ngIf="cat.iconUrl; else checkIconClass">
+               <img [src]="getSafeIconUrl(cat)" alt="icon" class="w-5 h-5 object-contain" />
+             </ng-container>
+             <ng-template #checkIconClass>
+               <ng-container *ngIf="cat.iconClass; else fallbackInitial">
+                 <i [class]="cat.iconClass" class="text-white" style="font-size: 1rem;"></i>
+               </ng-container>
+             </ng-template>
+             <ng-template #fallbackInitial>
+               <div class="w-5 h-5 bg-white-600 rounded-sm flex items-center justify-center text-white font-bold text-xs">
+                 {{ cat.name ? cat.name[0] : '?' }}
+               </div>
+             </ng-template>
+           </div>
+
+           <!-- Subcategory Badge -->
+           <div *ngIf="cat.parentId" class="absolute top-2 right-2">
+             <span class="inline-block bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+               Sub
+             </span>
+           </div>
+           
+           <!-- Category Name Overlay at Bottom -->
+           <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3">
+             <h3 class="text-white font-semibold text-sm text-center truncate">
+               {{ cat.name }}
+             </h3>
+           </div>
+         </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && categories.length === 0" class="text-center py-20">
+      <div class="inline-flex flex-col items-center">
+        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+          <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-black mb-2">No Categories Found</h3>
+        <p class="text-gray-600">We're working on adding more categories. Please check back later.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action Section -->
+<!-- <section class="py-20 bg-blue-50">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-3xl font-bold text-black mb-4">Can't Find What You're Looking For?</h2>
+    <p class="text-xl text-gray-600 mb-8">Our customer support team is here to help you find the perfect products.</p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <button class="px-8 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
+        Contact Support
+      </button>
+      <button class="px-8 py-3 bg-white text-blue-600 font-semibold rounded-xl border-2 border-blue-600 hover:bg-blue-600 hover:text-white transition-all duration-300 transform hover:scale-105">
+        Browse All Products
+      </button>
+    </div>
+  </div>
+</section> -->
+
+<app-footer></app-footer>

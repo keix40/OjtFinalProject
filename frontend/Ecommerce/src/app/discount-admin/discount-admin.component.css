@@ -1,0 +1,37 @@
+/* Admin Discount Form & Table Styles */
+.container {
+  max-width: 1100px;
+}
+h2, h3 {
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+form .form-label {
+  font-weight: 500;
+}
+form .form-control.ng-invalid.ng-touched {
+  border-color: #dc3545;
+}
+.alert-info {
+  font-size: 1rem;
+}
+.table th, .table td {
+  vertical-align: middle;
+}
+.table-hover tbody tr:hover {
+  background-color: #f8f9fa;
+}
+button.btn {
+  min-width: 80px;
+}
+
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

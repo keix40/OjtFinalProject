@@ -12,4 +12,6 @@ public class CategoryDTO {
     private Long brandId;
     private String brandName;
     private Long parentId;
+    private String iconUrl;
+    private String iconClass;
 }

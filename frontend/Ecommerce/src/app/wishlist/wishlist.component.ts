@@ -9,6 +9,9 @@ import { RouterModule } from '@angular/router';
 import { Wishlist } from '../wishlist';
 import { CartService } from '../services/cart.service';
 import Swal from 'sweetalert2';
+import { ImageService } from '../services/image.service';
+import { FooterComponent } from '../footer/footer.component';
+import { HeaderComponent } from '../header/header.component';
 
 interface WishlistItem {
   id: number;
@@ -18,11 +21,18 @@ interface WishlistItem {
   oldPrice?: number;
   addedOn?: string;
   wishlistDate?: string;
+  originalPrice?: number;
+  discountedPrice?: number;
+  hasDiscount?: boolean;
+  discountType?: string;
+  discountValue?: number;
+  discountName?: string;
 }
 
 @Component({
   selector: 'app-wishlist',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent],
   templateUrl: './wishlist.component.html',
   styleUrls: ['./wishlist.component.css']
 })
@@ -37,7 +47,8 @@ export class WishlistComponent implements OnInit {
     private authService: AuthService,
     private productService: ProductService,
     private router: Router,
-    private cartService: CartService
+    private cartService: CartService,
+    public imageService: ImageService
   ) { }
 
   ngOnInit(): void {
@@ -66,17 +77,20 @@ export class WishlistComponent implements OnInit {
   private loadWishlistItems() {
     if (!this.userId) return;
 
-    this.wishlistService.getWishlistByUserId(this.userId).subscribe({
-      next: (wishlistArr: Wishlist[]) => {
-        this.wishlistItems = wishlistArr.map(entry => ({
-          id: entry.product.id,
-          title: entry.product.productName,
-          price: entry.product.price,
-          image: entry.product.productImages && entry.product.productImages.length > 0
-            ? 'http://localhost:8080' + entry.product.productImages[0].imageUrl
-            : '/assets/project_img/fashion_store.jpg',
-          oldPrice: (entry.product as any).oldPrice,
-          wishlistDate: entry.wishlistDate
+    this.wishlistService.getWishlistWithDiscounts(this.userId).subscribe({
+      next: (wishlistItems: any[]) => {
+        this.wishlistItems = wishlistItems.map(item => ({
+          id: item.id,
+          title: item.productName,
+          price: item.discountedPrice || item.originalPrice,
+          originalPrice: item.originalPrice,
+          discountedPrice: item.discountedPrice,
+          image: this.imageService.getFullImageUrl(item.imageUrl),
+          hasDiscount: item.hasDiscount,
+          discountType: item.discountType,
+          discountValue: item.discountValue,
+          discountName: item.discountName,
+          wishlistDate: item.wishlistDate
         }));
         this.isLoading = false;
       },
@@ -88,7 +102,13 @@ export class WishlistComponent implements OnInit {
   }
 
   addToCart(item: WishlistItem) {
+    if (!this.userId) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.cartService.addToCart({
+      userId: this.userId,
       id: item.id,
       title: item.title,
       price: item.price,
@@ -122,4 +142,19 @@ export class WishlistComponent implements OnInit {
       }
     });
   }
+
+ goToProductDetail(productId: number): void {
+  console.log('Navigating to product:', productId);
+  this.router.navigate(['/product', productId]);
+}
+
+ getDiscountText(item: WishlistItem): string {
+  if (!item.hasDiscount || !item.discountValue) return '';
+  
+  if (item.discountType === 'PERCENTAGE') {
+    return `${Math.round(item.discountValue * 100)}% OFF`;
+  } else {
+    return `${item.discountValue} MMK OFF`;
+  }
+}
 } 

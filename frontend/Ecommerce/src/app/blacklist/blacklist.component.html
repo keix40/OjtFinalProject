@@ -1,863 +1,1303 @@
-<div class="blacklist-container">
-    <!-- Header Section -->
-    <div class="page-header">
-      <div class="container-fluid">
-        <div class="row align-items-center">
-          <div class="col-md-8">
-            <div class="header-content">
-              <h1 class="page-title">
-                <i class="fas fa-shield-alt"></i>
-                Security Blacklist
-              </h1>
-              <p class="page-description">Protect your platform from fraudulent accounts, scammers, and abusive users</p>
+<div class="w-full min-h-screen bg-white py-8 px-0">
+  <!-- Header Section -->
+  <div class="w-full mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold flex items-center gap-3 text-slate-800 drop-shadow-sm">
+          <i data-lucide="shield-ban" class="w-8 h-8 text-rose-600"></i>
+          Security Blacklist
+        </h1>
+        <p class="text-slate-500 mt-1 text-base">Protect your platform from fraudulent accounts, scammers, and abusive users</p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <button class="bg-white border border-slate-200 shadow-md hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all" (click)="refreshData()">
+          <i data-lucide="refresh-ccw" class="w-5 h-5 text-slate-600"></i>
+          Refresh
+        </button>
+        <button class="bg-yellow-50 border border-yellow-200 shadow-md hover:bg-yellow-100 text-yellow-800 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all" (click)="exportBlacklist()">
+          <i data-lucide="download" class="w-5 h-5 text-yellow-600"></i>
+          Export
+        </button>
+        <button class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-lg transition-all" (click)="openAddBlacklistModal()" data-bs-toggle="modal" data-bs-target="#addBlacklistModal" [disabled]="!permissionService.hasPermission(PermissionConstants.BLACKLIST_CREATE)">
+          <i data-lucide="ban" class="w-5 h-5 text-white bg-rose-600 rounded"></i>
+          Add to Blacklist
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Security Statistics -->
+  <div class="w-full mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
+        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-100 mb-4">
+          <i data-lucide="ban" class="w-9 h-9 text-rose-600"></i>
+        </div>
+        <h3 class="text-4xl font-extrabold text-rose-700 mb-1">{{ stats?.totalActive || 0 }}</h3>
+        <p class="text-slate-700 text-lg font-medium">Total Blacklisted</p>
+        <div class="flex items-center gap-1 text-sm" [ngClass]="{
+          'text-rose-600': stats?.trends?.entriesTrendDirection === 'up',
+          'text-green-600': stats?.trends?.entriesTrendDirection === 'down',
+          'text-gray-600': stats?.trends?.entriesTrendDirection === 'stable'
+        }">
+          <i [attr.data-lucide]="getTrendIcon(stats?.trends?.entriesTrendDirection)" class="w-4 h-4"></i>
+          <span>{{ (stats?.trends?.entriesTrend || 0) > 0 ? '+' : '' }}{{ stats?.trends?.entriesTrend || 0 }}% vs last month</span>
+        </div>
+       
+      </div>
+      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
+        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 mb-4">
+          <i data-lucide="shield" class="w-9 h-9 text-blue-600"></i>
+        </div>
+        <h3 class="text-4xl font-extrabold text-blue-700 mb-1">{{ fraudPrevented }}</h3>
+        <p class="text-slate-700 text-lg font-medium">Fraud Attempts Blocked</p>
+        <div class="flex items-center gap-1 text-sm" [ngClass]="{
+          'text-blue-600': stats?.trends?.fraudTrendDirection === 'up',
+          'text-green-600': stats?.trends?.fraudTrendDirection === 'down',
+          'text-gray-600': stats?.trends?.fraudTrendDirection === 'stable'
+        }">
+          <i [attr.data-lucide]="getTrendIcon(stats?.trends?.fraudTrendDirection)" class="w-4 h-4"></i>
+          <span>{{ (stats?.trends?.fraudTrend || 0) > 0 ? '+' : '' }}{{ stats?.trends?.fraudTrend || 0 }}% vs last month</span>
+        </div>
+      </div>
+      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4 cursor-pointer hover:shadow-lg transition" (click)="openAppealManagementModal()">
+        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-yellow-100 mb-4">
+          <i data-lucide="gavel" class="w-9 h-9 text-yellow-600"></i>
+        </div>
+        <h3 class="text-4xl font-extrabold text-yellow-700 mb-1">{{ pendingAppeals }}</h3>
+        <p class="text-slate-700 text-lg font-medium">Pending Appeals</p>
+        <div class="flex items-center gap-1 text-sm text-yellow-600 mt-2">
+          <i data-lucide="clock" class="w-4 h-4"></i>
+          <span>{{ avgAppealTime }}h avg response</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters & Auto-Block Rules -->
+  <div class="w-full mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="col-span-1 lg:col-span-3">
+      <div class="rounded-2xl shadow-md border border-slate-200 bg-white w-full">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+          <i data-lucide="filter" class="w-5 h-5 text-slate-600"></i>
+          <h5 class="text-lg font-semibold text-slate-700">Search & Filter Blacklist</h5>
+        </div>
+        <div class="px-6 py-4">
+          <div class="flex flex-col md:flex-row md:items-end gap-4">
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-slate-600 mb-1">Search</label>
+              <div class="relative">
+                <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
+                <input 
+                  type="text" 
+                  class="pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" 
+                  placeholder="Email, IP, device ID..."
+                  [(ngModel)]="searchTerm"
+                  (input)="applyFilters()"
+                >
+              </div>
             </div>
-          </div>
-          <div class="col-md-4 text-md-end">
-            <div class="header-actions">
-              <button class="btn btn-outline-secondary me-2" (click)="refreshData()">
-                <i class="fas fa-sync-alt me-1"></i>
-                Refresh
-              </button>
-              <button class="btn btn-outline-warning me-2" (click)="exportBlacklist()">
-                <i class="fas fa-download me-1"></i>
-                Export
-              </button>
-              <button class="btn btn-danger" (click)="openAddBlacklistModal()" data-bs-toggle="modal" data-bs-target="#addBlacklistModal">
-                <i class="fas fa-ban me-1"></i>
-                Add to Blacklist
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Category</label>
+              <select class="rounded-lg border border-slate-200 bg-white text-slate-800 px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" [(ngModel)]="categoryFilter" (change)="applyFilters()">
+                <option value="">All Categories</option>
+                <option value="fraud">Fraud</option>
+                <option value="spam">Spam</option>
+                <option value="abuse">Abuse</option>
+                <option value="chargeback">Chargeback</option>
+                <option value="fake_account">Fake Account</option>
+                <option value="policy_violation">Policy Violation</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Status</label>
+              <select class="rounded-lg border border-slate-200 bg-white text-slate-800 px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" [(ngModel)]="statusFilter" (change)="applyFilters()">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="appealed">Under Appeal</option>
+                <option value="expired">Expired</option>
+                <option value="lifted">Lifted</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-600 mb-1">Risk Level</label>
+              <select class="rounded-lg border border-slate-200 bg-white text-slate-800 px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" [(ngModel)]="riskFilter" (change)="applyFilters()">
+                <option value="">All Levels</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="block text-sm font-medium text-slate-600 mb-1">Actions</label>
+              <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="clearFilters()">
+                <i data-lucide="x" class="w-4 h-4 text-slate-600"></i>
+                Clear
               </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  
-    <div class="container-fluid">
-      <div class="row">
-        <!-- Security Statistics -->
-        <div class="col-12 mb-4">
-          <div class="row">
-            <div class="col-xl-3 col-md-6 mb-3">
-              <div class="stats-card security-blocked">
-                <div class="stats-icon">
-                  <i class="fas fa-ban"></i>
-                </div>
-                <div class="stats-content">
-                  <h3>{{ totalBlacklisted }}</h3>
-                  <p>Total Blacklisted</p>
-                  <div class="stats-trend">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+{{ newThisWeek }} this week</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-3">
-              <div class="stats-card security-prevented">
-                <div class="stats-icon">
-                  <i class="fas fa-shield-alt"></i>
-                </div>
-                <div class="stats-content">
-                  <h3>{{ fraudPrevented }}</h3>
-                  <p>Fraud Attempts Blocked</p>
-                  <div class="stats-trend">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>-15% vs last month</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-3">
-              <div class="stats-card security-savings">
-                <div class="stats-icon">
-                  <i class="fas fa-dollar-sign"></i>
-                </div>
-                <div class="stats-content">
-                  <h3>${{ estimatedSavings | number:'1.0-0' }}</h3>
-                  <p>Estimated Savings</p>
-                  <div class="stats-trend">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>+22% protection rate</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="col-xl-3 col-md-6 mb-3">
-              <div class="stats-card security-appeals">
-                <div class="stats-icon">
-                  <i class="fas fa-gavel"></i>
-                </div>
-                <div class="stats-content">
-                  <h3>{{ pendingAppeals }}</h3>
-                  <p>Pending Appeals</p>
-                  <div class="stats-trend">
-                    <i class="fas fa-clock"></i>
-                    <span>{{ avgAppealTime }}h avg response</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div>
+      <!-- <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
+        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+          <i data-lucide="bot" class="w-5 h-5 text-slate-600"></i>
+          <h5 class="text-lg font-semibold text-slate-700">Auto-Block Rules</h5>
         </div>
-  
-        <!-- Automated Rules & Filters -->
-        <div class="col-12 mb-4">
-          <div class="row">
-            <div class="col-lg-8">
-              <div class="filters-card">
-                <div class="card-header">
-                  <h5><i class="fas fa-filter me-2"></i>Search & Filter Blacklist</h5>
-                </div>
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col-lg-4 col-md-6 mb-3">
-                      <label class="form-label">Search</label>
-                      <div class="search-box">
-                        <i class="fas fa-search search-icon"></i>
-                        <input 
-                          type="text" 
-                          class="form-control ps-4" 
-                          placeholder="Email, IP, device ID..."
-                          [(ngModel)]="searchTerm"
-                          (input)="applyFilters()"
-                        >
-                      </div>
-                    </div>
-                    <div class="col-lg-2 col-md-6 mb-3">
-                      <label class="form-label">Category</label>
-                      <select class="form-select" [(ngModel)]="categoryFilter" (change)="applyFilters()">
-                        <option value="">All Categories</option>
-                        <option value="fraud">Fraud</option>
-                        <option value="spam">Spam</option>
-                        <option value="abuse">Abuse</option>
-                        <option value="chargeback">Chargeback</option>
-                        <option value="fake_account">Fake Account</option>
-                        <option value="policy_violation">Policy Violation</option>
-                      </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6 mb-3">
-                      <label class="form-label">Status</label>
-                      <select class="form-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
-                        <option value="">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="appealed">Under Appeal</option>
-                        <option value="expired">Expired</option>
-                        <option value="lifted">Lifted</option>
-                      </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6 mb-3">
-                      <label class="form-label">Risk Level</label>
-                      <select class="form-select" [(ngModel)]="riskFilter" (change)="applyFilters()">
-                        <option value="">All Levels</option>
-                        <option value="critical">Critical</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                      </select>
-                    </div>
-                    <div class="col-lg-2 col-md-12 mb-3">
-                      <label class="form-label">Actions</label>
-                      <div class="d-flex gap-2">
-                        <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
-                          <i class="fas fa-times me-1"></i>
-                          Clear
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div class="px-6 py-4 flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-semibold text-slate-700">Failed Payments</span>
+              <span class="block text-xs text-slate-400">3+ failed payments in 24h</span>
             </div>
-            <div class="col-lg-4">
-              <div class="auto-rules-card">
-                <div class="card-header">
-                  <h5><i class="fas fa-robot me-2"></i>Auto-Block Rules</h5>
-                </div>
-                <div class="card-body">
-                  <div class="rule-item">
-                    <div class="rule-info">
-                      <strong>Failed Payments</strong>
-                      <small class="d-block text-muted">3+ failed payments in 24h</small>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" [(ngModel)]="autoRules.failedPayments" (change)="updateAutoRule('failedPayments')">
-                    </div>
-                  </div>
-                  <div class="rule-item">
-                    <div class="rule-info">
-                      <strong>Chargeback Pattern</strong>
-                      <small class="d-block text-muted">2+ chargebacks in 30 days</small>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" [(ngModel)]="autoRules.chargebacks" (change)="updateAutoRule('chargebacks')">
-                    </div>
-                  </div>
-                  <div class="rule-item">
-                    <div class="rule-info">
-                      <strong>Suspicious Activity</strong>
-                      <small class="d-block text-muted">Multiple accounts from same IP</small>
-                    </div>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" [(ngModel)]="autoRules.suspiciousActivity" (change)="updateAutoRule('suspiciousActivity')">
-                    </div>
-                  </div>
-                  <button class="btn btn-outline-primary btn-sm w-100 mt-2" (click)="manageAutoRules()">
-                    <i class="fas fa-cog me-1"></i>
-                    Manage Rules
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="form-checkbox accent-rose-600 w-5 h-5" [(ngModel)]="autoRules.failedPayments" (change)="updateAutoRule('failedPayments')">
+            </label>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-semibold text-slate-700">Chargeback Pattern</span>
+              <span class="block text-xs text-slate-400">2+ chargebacks in 30 days</span>
+            </div>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="form-checkbox accent-yellow-600 w-5 h-5" [(ngModel)]="autoRules.chargebacks" (change)="updateAutoRule('chargebacks')">
+            </label>
+          </div>
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="font-semibold text-slate-700">Suspicious Activity</span>
+              <span class="block text-xs text-slate-400">Multiple accounts from same IP</span>
+            </div>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" class="form-checkbox accent-blue-600 w-5 h-5" [(ngModel)]="autoRules.suspiciousActivity" (change)="updateAutoRule('suspiciousActivity')">
+            </label>
+          </div>
+          <button class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all mt-2 w-full" (click)="manageAutoRules()">
+            <i data-lucide="settings" class="w-4 h-4 text-blue-600"></i>
+            Manage Rules
+          </button>
+        </div>
+      </div> -->
+    </div>
+  </div>
+
+  <!-- Blacklist Entries -->
+  <div class="w-full">
+    <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h5 class="text-lg font-semibold text-slate-700"><i data-lucide="list" class="w-5 h-5 mr-2 text-slate-600"></i>Blacklist Entries ({{ (filteredEntries && filteredEntries.length) || 0 }})</h5>
+        <div class="flex items-center gap-2">
+          <div class="bulk-actions me-3" *ngIf="selectedEntries.length > 0">
+            <span class="selected-count text-sm text-gray-600 mr-2">{{ selectedEntries.length }} selected</span>
+            <div class="relative inline-block text-left">
+              <button 
+                class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all"
+                type="button"
+                (click)="toggleBulkActionsDropdown()"
+              >
+                <i data-lucide="cog" class="w-4 h-4"></i>
+                Bulk Actions
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
+              </button>
+              <div 
+                *ngIf="showBulkActionsDropdown"
+                class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                role="menu"
+              >
+                <div class="py-1" role="none">
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkLiftBan(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="unlock" class="w-4 h-4 mr-2 text-green-600"></i>
+                    Lift Ban
+                  </button>
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkExtendBan(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="clock" class="w-4 h-4 mr-2 text-yellow-600"></i>
+                    Extend Ban
+                  </button>
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkUpdateCategory(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="tag" class="w-4 h-4 mr-2 text-blue-600"></i>
+                    Update Category
+                  </button>
+                  <hr class="my-1">
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkExport(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="download" class="w-4 h-4 mr-2 text-slate-600"></i>
+                    Export Selected
                   </button>
                 </div>
               </div>
             </div>
           </div>
+          <div class="view-toggle">
+            <button 
+              class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all" 
+              [class.bg-slate-200]="viewMode === 'table'"
+              [class.bg-slate-100]="viewMode !== 'table'"
+              (click)="setViewMode('table')"
+            >
+              <i data-lucide="table" class="w-4 h-4 text-slate-600"></i>
+            </button>
+            <button 
+              class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all" 
+              [class.bg-slate-200]="viewMode === 'cards'"
+              [class.bg-slate-100]="viewMode !== 'cards'"
+              (click)="setViewMode('cards')"
+            >
+              <i data-lucide="layout-grid" class="w-4 h-4 text-slate-600"></i>
+            </button>
+          </div>
         </div>
-  
-        <!-- Blacklist Entries -->
-        <div class="col-12">
-          <div class="blacklist-card">
-            <div class="card-header">
-              <div class="row align-items-center">
-                <div class="col-md-6">
-                  <h5><i class="fas fa-list me-2"></i>Blacklist Entries ({{ filteredEntries.length }})</h5>
-                </div>
-                <div class="col-md-6 text-md-end">
-                  <div class="table-controls">
-                    <div class="bulk-actions me-3" *ngIf="selectedEntries.length > 0">
-                      <span class="selected-count">{{ selectedEntries.length }} selected</span>
-                      <div class="dropdown">
-                        <button class="btn btn-outline-danger btn-sm dropdown-toggle ms-2" type="button" data-bs-toggle="dropdown">
-                          <i class="fas fa-cog me-1"></i>
-                          Bulk Actions
-                        </button>
-                        <ul class="dropdown-menu">
-                          <li><a class="dropdown-item" (click)="bulkLiftBan()">
-                            <i class="fas fa-unlock me-2"></i>Lift Ban
-                          </a></li>
-                          <li><a class="dropdown-item" (click)="bulkExtendBan()">
-                            <i class="fas fa-clock me-2"></i>Extend Ban
-                          </a></li>
-                          <li><a class="dropdown-item" (click)="bulkUpdateCategory()">
-                            <i class="fas fa-tags me-2"></i>Update Category
-                          </a></li>
-                          <li><hr class="dropdown-divider"></li>
-                          <li><a class="dropdown-item" (click)="bulkExport()">
-                            <i class="fas fa-download me-2"></i>Export Selected
-                          </a></li>
-                        </ul>
+      </div>
+      <div class="p-6">
+        <!-- Loading State -->
+        <div *ngIf="loading" class="text-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-rose-600 mx-auto"></div>
+          <p class="mt-2 text-slate-600">Loading entries...</p>
+        </div>
+
+        <!-- Content when not loading -->
+        <ng-container *ngIf="!loading">
+          <!-- Table View -->
+          <div *ngIf="viewMode === 'table'" class="overflow-x-auto">
+            <table class="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+              <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
+                    <input 
+                      type="checkbox" 
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      (change)="selectAll($event)"
+                      [checked]="selectedEntries.length === paginatedEntries.length && paginatedEntries.length > 0"
+                    >
+                  </th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target Information</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added Date</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added By</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr 
+                  *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId"
+                  class="hover:bg-gray-50 transition-colors duration-200"
+                  [class.bg-blue-50]="selectedEntries.includes(entry.id)"
+                >
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <input 
+                      type="checkbox" 
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      [checked]="selectedEntries.includes(entry.id)"
+                      (change)="toggleEntrySelection(entry.id, $event)"
+                    >
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i [attr.data-lucide]="getTargetIconName(entry.targetType)" class="w-5 h-5 text-gray-600 mr-2"></i>
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ entry.targetValue }}</div>
+                        <div class="text-sm text-gray-500">{{ getTargetTypeLabel(entry.targetType) }}</div>
+                        <div *ngIf="entry.associatedEmail" class="text-xs text-blue-600 flex items-center">
+                          <i data-lucide="link" class="w-3 h-3 mr-1"></i>
+                          {{ entry.associatedEmail }}
+                        </div>
                       </div>
                     </div>
-                    <div class="view-toggle">
-                      <button 
-                        class="btn btn-sm" 
-                        [class.btn-danger]="viewMode === 'table'"
-                        [class.btn-outline-secondary]="viewMode !== 'table'"
-                        (click)="setViewMode('table')"
-                      >
-                        <i class="fas fa-table"></i>
-                      </button>
-                      <button 
-                        class="btn btn-sm" 
-                        [class.btn-danger]="viewMode === 'cards'"
-                        [class.btn-outline-secondary]="viewMode !== 'cards'"
-                        (click)="setViewMode('cards')"
-                      >
-                        <i class="fas fa-th-large"></i>
-                      </button>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i data-lucide="alert-triangle" class="w-5 h-5 text-blue-500 mr-2"></i>
+                      <span class="text-sm font-medium text-gray-900">{{ getCategoryLabel(entry.category) }}</span>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="card-body p-0">
-              <!-- Table View -->
-              <div *ngIf="viewMode === 'table'" class="table-responsive">
-                <table class="table table-hover mb-0">
-                  <thead class="table-header">
-                    <tr>
-                      <th width="50">
-                        <input 
-                          type="checkbox" 
-                          class="form-check-input"
-                          (change)="selectAll($event)"
-                          [checked]="selectedEntries.length === paginatedEntries.length && paginatedEntries.length > 0"
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i data-lucide="activity" class="w-5 h-5 text-yellow-500 mr-2"></i>
+                      <span class="text-sm font-medium text-gray-900">{{ entry.riskLevel }}</span>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="text-sm text-gray-900">{{ entry.reason }}</div>
+                    <div *ngIf="entry.incidentCount > 1" class="text-xs text-gray-500">{{ entry.incidentCount }} incidents</div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ entry.addedDate | date:'MMM dd, yyyy' }}</div>
+                    <div class="text-xs text-gray-500">{{ getTimeAgo(entry.addedDate) }}</div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            [ngClass]="{
+                              'bg-red-100 text-red-800': normalizeStatus(entry.status) === 'ACTIVE',
+                              'bg-yellow-100 text-yellow-800': normalizeStatus(entry.status) === 'APPEALED',
+                              'bg-green-100 text-green-800': normalizeStatus(entry.status) === 'LIFTED',
+                              'bg-gray-100 text-gray-800': normalizeStatus(entry.status) === 'EXPIRED'
+                            }">
+                        <i [attr.data-lucide]="getStatusIconName(entry.status)" class="w-3 h-3 mr-1"></i>
+                        {{ getStatusLabel(entry.status) }}
+                      </span>
+                    </div>
+                    <div *ngIf="hasAppeals(entry)" class="text-xs text-orange-600 mt-1">
+                      <i data-lucide="gavel" class="w-3 h-3 inline-block mr-1"></i>
+                      {{ getEntryAppeals(entry).length }} Appeal(s)
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i data-lucide="user" class="w-4 h-4 text-gray-600 mr-2"></i>
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ entry.addedBy }}</div>
+                        <div class="text-xs text-gray-500 flex items-center">
+                          <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-3 h-3 mr-1"></i>
+                          {{ entry.isAutomatic ? 'Auto' : 'Manual' }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center space-x-2">
+                      <button 
+                        class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        (click)="viewEntryDetails(entry)" 
+                        title="View Details"
+                      >
+                        <i data-lucide="eye" class="w-3 h-3"></i>
+                      </button>
+                      <button 
+                        class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                        (click)="editEntry(entry)" 
+                        title="Edit Entry"
+                      >
+                        <i data-lucide="edit" class="w-3 h-3"></i>
+                      </button>
+                      <div class="relative inline-block text-left">
+                        <button 
+                          type="button"
+                          class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                          (click)="toggleMenu(entry.id)"
+                          id="menu-button-{{entry.id}}"
                         >
-                      </th>
-                      <th>Target Information</th>
-                      <th>Category</th>
-                      <th>Risk Level</th>
-                      <th>Reason</th>
-                      <th>Added Date</th>
-                      <th>Status</th>
-                      <th>Added By</th>
-                      <th width="120">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr 
-                      *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId"
-                      [class.table-row-selected]="selectedEntries.includes(entry.id)"
-                      [class.table-row-critical]="entry.riskLevel === 'critical'"
-                    >
-                      <td>
+                          <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                        </button>
+                        <div 
+                          *ngIf="openMenuId === entry.id"
+                          class="fixed z-[9999] w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                          [style.top.px]="dropdownPosition.y"
+                          [style.left.px]="dropdownPosition.x"
+                          role="menu"
+                        >
+                          <div class="py-1" role="none">
+                            <button 
+                              class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              (click)="viewIncidentHistory(entry)"
+                            >
+                              <i data-lucide="history" class="w-4 h-4 inline-block mr-2"></i>
+                              Incident History
+                            </button>
+                            <button 
+                              class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              (click)="addNote(entry)"
+                            >
+                              <i data-lucide="sticky-note" class="w-4 h-4 inline-block mr-2"></i>
+                              Add Note
+                            </button>
+                            <button 
+                              class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              (click)="extendBan(entry)"
+                            >
+                              <i data-lucide="clock" class="w-4 h-4 inline-block mr-2"></i>
+                              Extend Ban
+                            </button>
+                            <hr class="my-1">
+                            <button 
+                              class="text-green-700 block w-full text-left px-4 py-2 text-sm hover:bg-green-50"
+                              (click)="liftBan(entry)"
+                            >
+                              <i data-lucide="unlock" class="w-4 h-4 inline-block mr-2"></i>
+                              Lift Ban
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Cards View -->
+          <div *ngIf="viewMode === 'cards'" class="cards-container">
+            <div class="row">
+              <div 
+                *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId" 
+                class="col-xl-4 col-lg-6 col-md-6 mb-4"
+              >
+                <div class="blacklist-entry-card" 
+                     [class.selected]="selectedEntries.includes(entry.id)"
+                     [class.critical-entry]="entry.riskLevel === 'CRITICAL'">
+                  <div class="card-header">
+                    <div class="entry-header">
+                      <div class="form-check">
                         <input 
                           type="checkbox" 
                           class="form-check-input"
                           [checked]="selectedEntries.includes(entry.id)"
                           (change)="toggleEntrySelection(entry.id, $event)"
                         >
-                      </td>
-                      <td>
-                        <div class="target-info">
-                          <div class="target-primary">
-                            <i [class]="getTargetIcon(entry.targetType)" class="me-2"></i>
-                            <strong>{{ entry.targetValue }}</strong>
-                          </div>
-                          <div class="target-details">
-                            <span class="target-type">{{ getTargetTypeLabel(entry.targetType) }}</span>
-                            <span *ngIf="entry.associatedEmail" class="associated-info">
-                              <i class="fas fa-link me-1"></i>
-                              {{ entry.associatedEmail }}
-                            </span>
-                          </div>
-                          <div class="fingerprint-info" *ngIf="entry.deviceFingerprint">
-                            <small class="text-muted">
-                              <i class="fas fa-fingerprint me-1"></i>
-                              Device: {{ entry.deviceFingerprint.substring(0, 12) }}...
-                            </small>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="category-badge" [ngClass]="'category-' + entry.category">
-                          <i [class]="getCategoryIcon(entry.category)"></i>
-                          {{ getCategoryLabel(entry.category) }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="risk-badge" [ngClass]="'risk-' + entry.riskLevel">
-                          <i [class]="getRiskIcon(entry.riskLevel)"></i>
-                          {{ entry.riskLevel | titlecase }}
-                        </div>
-                      </td>
-                      <td>
-                        <div class="reason-info">
-                          <div class="reason-primary">{{ entry.reason }}</div>
-                          <div class="incident-count" *ngIf="entry.incidentCount > 1">
-                            <small class="text-muted">{{ entry.incidentCount }} incidents</small>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="date-info">
-                          <div>{{ entry.addedDate | date:'MMM dd, yyyy' }}</div>
-                          <small class="text-muted">{{ getTimeAgo(entry.addedDate) }}</small>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="status-info">
-                          <div class="status-badge" [ngClass]="'status-' + entry.status">
-                            <i [class]="getStatusIcon(entry.status)"></i>
-                            {{ getStatusLabel(entry.status) }}
-                          </div>
-                          <div class="expiry-info" *ngIf="entry.expiryDate && entry.status === 'active'">
-                            <small class="text-muted">
-                              Expires: {{ entry.expiryDate | date:'MMM dd' }}
-                            </small>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="added-by-info">
-                          <div class="staff-name">{{ entry.addedBy }}</div>
-                          <div class="add-method">
-                            <small class="text-muted">
-                              <i [class]="entry.isAutomatic ? 'fas fa-robot' : 'fas fa-user'"></i>
-                              {{ entry.isAutomatic ? 'Auto' : 'Manual' }}
-                            </small>
-                          </div>
-                        </div>
-                      </td>
-                      <td>
-                        <div class="action-buttons">
-                          <button class="btn btn-outline-info btn-sm" (click)="viewEntryDetails(entry)" title="View Details" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
-                            <i class="fas fa-eye"></i>
-                          </button>
-                          <button class="btn btn-outline-warning btn-sm" (click)="editEntry(entry)" title="Edit Entry">
-                            <i class="fas fa-edit"></i>
-                          </button>
-                          <div class="dropdown">
-                            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                              <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                            <ul class="dropdown-menu">
-                              <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)">
-                                <i class="fas fa-history me-2"></i>Incident History
-                              </a></li>
-                              <li><a class="dropdown-item" (click)="addNote(entry)">
-                                <i class="fas fa-sticky-note me-2"></i>Add Note
-                              </a></li>
-                              <li><a class="dropdown-item" (click)="extendBan(entry)">
-                                <i class="fas fa-clock me-2"></i>Extend Ban
-                              </a></li>
-                              <li><hr class="dropdown-divider"></li>
-                              <li><a class="dropdown-item text-success" (click)="liftBan(entry)">
-                                <i class="fas fa-unlock me-2"></i>Lift Ban
-                              </a></li>
-                            </ul>
-                          </div>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-  
-              <!-- Cards View -->
-              <div *ngIf="viewMode === 'cards'" class="cards-container">
-                <div class="row">
-                  <div 
-                    *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId" 
-                    class="col-xl-4 col-lg-6 col-md-6 mb-4"
-                  >
-                    <div class="blacklist-entry-card" 
-                         [class.selected]="selectedEntries.includes(entry.id)"
-                         [class.critical-entry]="entry.riskLevel === 'critical'">
-                      <div class="card-header">
-                        <div class="entry-header">
-                          <div class="form-check">
-                            <input 
-                              type="checkbox" 
-                              class="form-check-input"
-                              [checked]="selectedEntries.includes(entry.id)"
-                              (change)="toggleEntrySelection(entry.id, $event)"
-                            >
-                          </div>
-                          <div class="entry-info">
-                            <div class="target-value">
-                              <i [class]="getTargetIcon(entry.targetType)" class="me-2"></i>
-                              {{ entry.targetValue }}
-                            </div>
-                            <div class="target-type-label">{{ getTargetTypeLabel(entry.targetType) }}</div>
-                          </div>
-                          <div class="risk-indicator" [ngClass]="'risk-' + entry.riskLevel">
-                            <i [class]="getRiskIcon(entry.riskLevel)"></i>
-                          </div>
-                        </div>
                       </div>
-                      <div class="card-body">
-                        <div class="entry-badges">
-                          <div class="category-badge-card" [ngClass]="'category-' + entry.category">
-                            <i [class]="getCategoryIcon(entry.category)"></i>
-                            {{ getCategoryLabel(entry.category) }}
-                          </div>
-                          <div class="status-badge-card" [ngClass]="'status-' + entry.status">
-                            {{ getStatusLabel(entry.status) }}
-                          </div>
+                      <div class="entry-info">
+                        <div class="target-value">
+                          <i [attr.data-lucide]="getTargetIconName(entry.targetType)" class="w-5 h-5 text-slate-600 me-2"></i>
+                          {{ entry.targetValue }}
                         </div>
-                        <div class="entry-details">
-                          <div class="detail-item">
-                            <span class="detail-label">Reason:</span>
-                            <span class="detail-value">{{ entry.reason }}</span>
-                          </div>
-                          <div class="detail-item">
-                            <span class="detail-label">Added:</span>
-                            <span class="detail-value">{{ entry.addedDate | date:'MMM dd, yyyy' }}</span>
-                          </div>
-                          <div class="detail-item">
-                            <span class="detail-label">Added by:</span>
-                            <span class="detail-value">
-                              {{ entry.addedBy }}
-                              <i [class]="entry.isAutomatic ? 'fas fa-robot' : 'fas fa-user'" class="ms-1"></i>
-                            </span>
-                          </div>
-                          <div class="detail-item" *ngIf="entry.incidentCount > 1">
-                            <span class="detail-label">Incidents:</span>
-                            <span class="detail-value">{{ entry.incidentCount }} total</span>
-                          </div>
-                        </div>
-                        <div class="entry-notes" *ngIf="entry.notes">
-                          <div class="notes-preview">
-                            <i class="fas fa-sticky-note me-1"></i>
-                            {{ entry.notes.substring(0, 100) }}{{ entry.notes.length > 100 ? '...' : '' }}
-                          </div>
-                        </div>
+                        <div class="target-type-label">{{ getTargetTypeLabel(entry.targetType) }}</div>
                       </div>
-                      <div class="card-footer">
-                        <button class="btn btn-outline-info btn-sm" (click)="viewEntryDetails(entry)" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
-                          <i class="fas fa-eye me-1"></i>
-                          Details
-                        </button>
-                        <button class="btn btn-outline-success btn-sm" (click)="liftBan(entry)">
-                          <i class="fas fa-unlock me-1"></i>
-                          Lift Ban
-                        </button>
-                        <div class="dropdown">
-                          <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-ellipsis-v"></i>
-                          </button>
-                          <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" (click)="editEntry(entry)">Edit</a></li>
-                            <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)">History</a></li>
-                            <li><a class="dropdown-item" (click)="addNote(entry)">Add Note</a></li>
-                          </ul>
-                        </div>
+                      <div class="risk-indicator" [ngClass]="'risk-' + entry.riskLevel">
+                        <i [attr.data-lucide]="getRiskIconName(entry.riskLevel)" class="w-5 h-5 text-yellow-600"></i>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-  
-              <!-- Empty State -->
-              <div *ngIf="filteredEntries.length === 0" class="empty-state">
-                <div class="empty-icon">
-                  <i class="fas fa-shield-alt"></i>
-                </div>
-                <h4>No Blacklist Entries Found</h4>
-                <p>No entries match your current filters. Your security measures are working well!</p>
-                <button class="btn btn-outline-secondary" (click)="clearFilters()">
-                  <i class="fas fa-filter me-1"></i>
-                  Clear Filters
-                </button>
-              </div>
-  
-              <!-- Pagination -->
-              <div *ngIf="filteredEntries.length > 0" class="table-pagination">
-                <div class="row align-items-center">
-                  <div class="col-md-6">
-                    <div class="pagination-info">
-                      Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
-                      {{ Math.min(currentPage * itemsPerPage, filteredEntries.length) }} 
-                      of {{ filteredEntries.length }} blacklist entries
+                  <div class="card-body">
+                    <div class="entry-badges">
+                      <div class="category-badge-card" [ngClass]="'category-' + entry.category">
+                        <i [attr.data-lucide]="getCategoryIconName(entry.category)" class="w-5 h-5 text-blue-600"></i>
+                        {{ getCategoryLabel(entry.category) }}
+                      </div>
+                      <div class="status-badge-card" 
+                           [ngClass]="'bg-' + getStatusColor(entry.status) + '-100 text-' + getStatusColor(entry.status) + '-700'">
+                        {{ getStatusLabel(entry.status) }}
+                        <span *ngIf="hasAppeals(entry)" class="ml-1 text-orange-600">
+                          <i data-lucide="gavel" class="w-3 h-3 inline-block"></i>
+                        </span>
+                      </div>
+                    </div>
+                    <div class="entry-details">
+                      <div class="detail-item">
+                        <span class="detail-label">Reason:</span>
+                        <span class="detail-value">{{ entry.reason }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Added:</span>
+                        <span class="detail-value">{{ entry.addedDate | date:'MMM dd, yyyy' }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">Added by:</span>
+                        <span class="detail-value">
+                          {{ entry.addedBy }}
+                          <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-4 h-4 ms-1 text-slate-600"></i>
+                        </span>
+                      </div>
+                      <div class="detail-item" *ngIf="entry.incidentCount > 1">
+                        <span class="detail-label">Incidents:</span>
+                        <span class="detail-value">{{ entry.incidentCount }} total</span>
+                      </div>
+                    </div>
+                    <div class="entry-notes" *ngIf="entry.notes">
+                      <div class="notes-preview">
+                        <i data-lucide="sticky-note" class="w-3 h-3 mr-1 text-yellow-600"></i>
+                        {{ entry.notes.substring(0, 100) }}{{ entry.notes.length > 100 ? '...' : '' }}
+                      </div>
                     </div>
                   </div>
-                  <div class="col-md-6">
-                    <nav class="d-flex justify-content-md-end">
-                      <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item" [class.disabled]="currentPage === 1">
-                          <a class="page-link" (click)="goToPage(currentPage - 1)">
-                            <i class="fas fa-chevron-left"></i>
-                          </a>
-                        </li>
-                        <li 
-                          *ngFor="let page of getPageNumbers()" 
-                          class="page-item"
-                          [class.active]="page === currentPage"
-                        >
-                          <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
-                        </li>
-                        <li class="page-item" [class.disabled]="currentPage === totalPages">
-                          <a class="page-link" (click)="goToPage(currentPage + 1)">
-                            <i class="fas fa-chevron-right"></i>
-                          </a>
-                        </li>
+                  <div class="card-footer">
+                    <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="viewEntryDetails(entry)" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
+                      <i data-lucide="eye" class="w-4 h-4 mr-1 text-blue-600"></i>
+                      Details
+                    </button>
+                    <button class="bg-green-50 hover:bg-green-100 text-green-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="liftBan(entry)">
+                      <i data-lucide="unlock" class="w-4 h-4 mr-1 text-green-600"></i>
+                      Lift Ban
+                    </button>
+                    <div class="dropdown">
+                      <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i data-lucide="more-horizontal" class="w-4 h-4 text-slate-600"></i>
+                      </button>
+                      <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" (click)="editEntry(entry)">Edit</a></li>
+                        <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)">History</a></li>
+                        <li><a class="dropdown-item" (click)="addNote(entry)">Add Note</a></li>
                       </ul>
-                    </nav>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Add to Blacklist Modal -->
-    <div class="modal fade" id="addBlacklistModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fas fa-ban me-2"></i>
-              Add to Blacklist
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form [formGroup]="blacklistForm">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Target Type</label>
-                  <select class="form-select" formControlName="targetType" (change)="onTargetTypeChange()">
-                    <option value="email">Email Address</option>
-                    <option value="ip">IP Address</option>
-                    <option value="device">Device Fingerprint</option>
-                    <option value="phone">Phone Number</option>
-                    <option value="user_id">User ID</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Target Value</label>
-                  <input type="text" class="form-control" formControlName="targetValue" 
-                         [placeholder]="getTargetPlaceholder()">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Category</label>
-                  <select class="form-select" formControlName="category">
-                    <option value="fraud">Fraud</option>
-                    <option value="spam">Spam</option>
-                    <option value="abuse">Abuse</option>
-                    <option value="chargeback">Chargeback</option>
-                    <option value="fake_account">Fake Account</option>
-                    <option value="policy_violation">Policy Violation</option>
-                  </select>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Risk Level</label>
-                  <select class="form-select" formControlName="riskLevel">
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                  </select>
-                </div>
-                <div class="col-md-12 mb-3">
-                  <label class="form-label">Reason</label>
-                  <input type="text" class="form-control" formControlName="reason" 
-                         placeholder="Brief description of the violation">
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Expiry Date (Optional)</label>
-                  <input type="date" class="form-control" formControlName="expiryDate">
-                  <small class="form-text text-muted">Leave empty for permanent ban</small>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label class="form-label">Associated Email (Optional)</label>
-                  <input type="email" class="form-control" formControlName="associatedEmail" 
-                         placeholder="Related email address">
-                </div>
-                <div class="col-md-12 mb-3">
-                  <label class="form-label">Notes</label>
-                  <textarea class="form-control" rows="3" formControlName="notes" 
-                            placeholder="Detailed notes about this blacklist entry..."></textarea>
-                </div>
-                <div class="col-md-12 mb-3">
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" formControlName="notifyTeam">
-                    <label class="form-check-label">Notify security team</label>
-                  </div>
-                  <div class="form-check">
-                    <input class="form-check-input" type="checkbox" formControlName="blockRelated">
-                    <label class="form-check-label">Block related accounts (same IP/device)</label>
-                  </div>
-                </div>
-              </div>
-            </form>
-            <div class="impact-preview" *ngIf="blacklistForm.get('targetValue')?.value">
-              <h6>Impact Preview</h6>
-              <div class="row">
-                <div class="col-md-4">
-                  <div class="impact-stat">
-                    <div class="stat-number">{{ getAffectedAccounts() }}</div>
-                    <div class="stat-label">Accounts Affected</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="impact-stat">
-                    <div class="stat-number">{{ getRelatedEntries() }}</div>
-                    <div class="stat-label">Related Entries</div>
-                  </div>
-                </div>
-                <div class="col-md-4">
-                  <div class="impact-stat">
-                    <div class="stat-number">{{ getRiskScore() }}%</div>
-                    <div class="stat-label">Risk Score</div>
-                  </div>
-                </div>
-              </div>
+
+          <!-- Empty State -->
+          <div *ngIf="!loading && (!filteredEntries || filteredEntries.length === 0)" class="empty-state">
+            <div class="empty-icon">
+              <i data-lucide="shield" class="w-16 h-16 text-slate-400"></i>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="button" class="btn btn-outline-warning" (click)="previewBlacklist()">
-              <i class="fas fa-eye me-1"></i>Preview Impact
-            </button>
-            <button type="button" class="btn btn-danger" (click)="addToBlacklist()" data-bs-dismiss="modal">
-              <i class="fas fa-ban me-1"></i>Add to Blacklist
+            <h4 class="text-2xl font-bold text-slate-700">No Blacklist Entries Found</h4>
+            <p class="text-slate-500">No entries match your current filters. Your security measures are working well!</p>
+            <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="clearFilters()">
+              <i data-lucide="filter" class="w-4 h-4 text-slate-600"></i>
+              Clear Filters
             </button>
           </div>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Entry Details Modal -->
-    <div class="modal fade" id="entryDetailsModal" tabindex="-1" *ngIf="selectedEntryDetails">
-      <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fas fa-shield-alt me-2"></i>
-              Blacklist Entry Details
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <div class="col-md-4">
-                <div class="entry-profile-card">
-                  <div class="profile-header">
-                    <div class="target-icon-large" [ngClass]="'risk-' + selectedEntryDetails.riskLevel">
-                      <i [class]="getTargetIcon(selectedEntryDetails.targetType)"></i>
-                    </div>
-                    <div class="target-value-large">{{ selectedEntryDetails.targetValue }}</div>
-                    <div class="target-type-large">{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</div>
-                  </div>
-                  <div class="profile-badges">
-                    <div class="category-badge-large" [ngClass]="'category-' + selectedEntryDetails.category">
-                      <i [class]="getCategoryIcon(selectedEntryDetails.category)"></i>
-                      {{ getCategoryLabel(selectedEntryDetails.category) }}
-                    </div>
-                    <div class="risk-badge-large" [ngClass]="'risk-' + selectedEntryDetails.riskLevel">
-                      <i [class]="getRiskIcon(selectedEntryDetails.riskLevel)"></i>
-                      {{ selectedEntryDetails.riskLevel | titlecase }}
-                    </div>
-                  </div>
-                  <div class="profile-stats">
-                    <div class="profile-stat">
-                      <strong>{{ selectedEntryDetails.incidentCount }}</strong>
-                      <span>Total Incidents</span>
-                    </div>
-                    <div class="profile-stat">
-                      <strong>{{ getBlockedAttempts(selectedEntryDetails) }}</strong>
-                      <span>Blocked Attempts</span>
-                    </div>
-                    <div class="profile-stat">
-                      <strong>${{ getEstimatedLoss(selectedEntryDetails) }}</strong>
-                      <span>Prevented Loss</span>
-                    </div>
-                  </div>
+
+          <!-- Pagination -->
+          <div *ngIf="!loading && filteredEntries && filteredEntries.length > 0" class="table-pagination">
+            <div class="row align-items-center">
+              <div class="col-md-6">
+                <div class="pagination-info">
+                  Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to 
+                  {{ Math.min(currentPage * itemsPerPage, filteredEntries.length) }} 
+                  of {{ filteredEntries.length }} blacklist entries
                 </div>
               </div>
-              <div class="col-md-8">
-                <div class="entry-details-tabs">
-                  <ul class="nav nav-tabs" role="tablist">
-                    <li class="nav-item">
-                      <a class="nav-link active" data-bs-toggle="tab" href="#overview">Overview</a>
+              <div class="col-md-6">
+                <nav class="d-flex justify-content-md-end">
+                  <ul class="pagination pagination-sm mb-0 flex gap-2 justify-center">
+                    <li class="page-item" [class.disabled]="currentPage === 1">
+                      <a class="page-link" (click)="goToPage(currentPage - 1)">
+                        <i data-lucide="chevron-left" class="w-4 h-4 text-slate-600"></i>
+                      </a>
                     </li>
-                    <li class="nav-item">
-                      <a class="nav-link" data-bs-toggle="tab" href="#incidents">Incidents</a>
+                    <li 
+                      *ngFor="let page of getPageNumbers()" 
+                      class="page-item"
+                      [class.active]="page === currentPage"
+                    >
+                      <a class="page-link" (click)="goToPage(page)">{{ page }}</a>
                     </li>
-                    <li class="nav-item">
-                      <a class="nav-link" data-bs-toggle="tab" href="#notes">Notes</a>
-                    </li>
-                    <li class="nav-item">
-                      <a class="nav-link" data-bs-toggle="tab" href="#appeals">Appeals</a>
+                    <li class="page-item" [class.disabled]="currentPage === totalPages">
+                      <a class="page-link" (click)="goToPage(currentPage + 1)">
+                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600"></i>
+                      </a>
                     </li>
                   </ul>
-                  <div class="tab-content">
-                    <div class="tab-pane fade show active" id="overview">
-                      <div class="overview-content">
-                        <div class="row">
-                          <div class="col-md-6">
-                            <div class="info-section">
-                              <h6>Entry Information</h6>
-                              <div class="info-item">
-                                <label>Target:</label>
-                                <span>{{ selectedEntryDetails.targetValue }}</span>
-                              </div>
-                              <div class="info-item">
-                                <label>Type:</label>
-                                <span>{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</span>
-                              </div>
-                              <div class="info-item">
-                                <label>Reason:</label>
-                                <span>{{ selectedEntryDetails.reason }}</span>
-                              </div>
-                              <div class="info-item" *ngIf="selectedEntryDetails.associatedEmail">
-                                <label>Associated Email:</label>
-                                <span>{{ selectedEntryDetails.associatedEmail }}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div class="col-md-6">
-                            <div class="info-section">
-                              <h6>Status & Timing</h6>
-                              <div class="info-item">
-                                <label>Status:</label>
-                                <span class="status-badge" [ngClass]="'status-' + selectedEntryDetails.status">
-                                  {{ getStatusLabel(selectedEntryDetails.status) }}
-                                </span>
-                              </div>
-                              <div class="info-item">
-                                <label>Added Date:</label>
-                                <span>{{ selectedEntryDetails.addedDate | date:'MMM dd, yyyy HH:mm' }}</span>
-                              </div>
-                              <div class="info-item">
-                                <label>Added By:</label>
-                                <span>{{ selectedEntryDetails.addedBy }}</span>
-                              </div>
-                              <div class="info-item" *ngIf="selectedEntryDetails.expiryDate">
-                                <label>Expires:</label>
-                                <span>{{ selectedEntryDetails.expiryDate | date:'MMM dd, yyyy' }}</span>
-                              </div>
-                            </div>
-                          </div>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add to Blacklist Modal -->
+  <div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h5 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="ban" class="w-5 h-5 text-rose-600"></i>
+            Add to Blacklist
+          </h5>
+          <button class="text-gray-400 hover:text-gray-600" (click)="closeEditModal()">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-6">
+        <form [formGroup]="blacklistForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Target Type 
+                  <span class="text-red-500">*</span>
+                </label>
+                <select class="form-select" 
+                        formControlName="targetType" 
+                        (change)="onTargetTypeChange()"
+                        [class.border-red-500]="blacklistForm.get('targetType')?.invalid && blacklistForm.get('targetType')?.touched">
+                  <option value="">Select Target Type</option>
+                  <option value="email">Email Address</option>
+                  <option value="ip">IP Address</option>
+                  <option value="phone">Phone Number</option>
+                
+                </select>
+                <div *ngIf="blacklistForm.get('targetType')?.invalid && blacklistForm.get('targetType')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Target Type is required
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Target Value 
+                  <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       formControlName="targetValue" 
+                       [placeholder]="getTargetPlaceholder()"
+                       [class.border-red-500]="blacklistForm.get('targetValue')?.invalid && blacklistForm.get('targetValue')?.touched"
+                       (input)="loadRelatedAccounts()">
+                <div *ngIf="blacklistForm.get('targetValue')?.invalid && blacklistForm.get('targetValue')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Target Value is required
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Category 
+                  <span class="text-red-500">*</span>
+                </label>
+                <select class="form-select" 
+                        formControlName="category"
+                        [class.border-red-500]="blacklistForm.get('category')?.invalid && blacklistForm.get('category')?.touched">
+                  <option value="">Select Category</option>
+                  <option value="fraud">Fraud</option>
+                  <option value="spam">Spam</option>
+                  <option value="abuse">Abuse</option>
+                  <option value="chargeback">Chargeback</option>
+                  <option value="fake_account">Fake Account</option>
+                  <option value="policy_violation">Policy Violation</option>
+                </select>
+                <div *ngIf="blacklistForm.get('category')?.invalid && blacklistForm.get('category')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Category is required
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">
+                  Risk Level 
+                  <span class="text-red-500">*</span>
+                </label>
+                <select class="form-select" 
+                        formControlName="riskLevel"
+                        [class.border-red-500]="blacklistForm.get('riskLevel')?.invalid && blacklistForm.get('riskLevel')?.touched">
+                  <option value="">Select Risk Level</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+                <div *ngIf="blacklistForm.get('riskLevel')?.invalid && blacklistForm.get('riskLevel')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Risk Level is required
+                </div>
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label">
+                  Reason 
+                  <span class="text-red-500">*</span>
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       formControlName="reason" 
+                       placeholder="Brief description of the violation"
+                       [class.border-red-500]="blacklistForm.get('reason')?.invalid && blacklistForm.get('reason')?.touched">
+                <div *ngIf="blacklistForm.get('reason')?.invalid && blacklistForm.get('reason')?.touched" 
+                     class="text-red-500 text-sm mt-1">
+                  Reason is required
+                </div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Expiry Date (Optional)</label>
+                <input type="date" class="form-control" formControlName="expiryDate">
+                <small class="form-text text-muted">Leave empty for permanent ban</small>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Associated Email (Optional)</label>
+                <input type="email" class="form-control" formControlName="associatedEmail" 
+                       placeholder="Related email address">
+              </div>
+              <div class="col-md-12 mb-3">
+                <label class="form-label">Notes</label>
+                <textarea class="form-control" rows="3" formControlName="notes" 
+                          placeholder="Detailed notes about this blacklist entry..."></textarea>
+              </div>
+              <div class="col-md-12 mb-3">
+                <!-- <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="notifyTeam">
+                  <label class="form-check-label">Notify security team</label>
+                </div> -->
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" formControlName="blockRelated" (change)="loadRelatedAccounts()">
+                  <label class="form-check-label">Block related accounts (most used IP)</label>
+                </div>
+              </div>
+            </div>
+          </form>
+          <div class="impact-preview mt-6" *ngIf="blacklistForm.get('targetValue')?.value">
+            <h6 class="text-lg font-semibold mb-4 flex items-center">
+              <i data-lucide="info" class="w-5 h-5 text-blue-600 mr-2"></i>
+              Impact Information
+            </h6>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-blue-600">{{ getAffectedAccounts() }}</div>
+                  <div class="text-gray-600 text-sm">Account(s) Will Be Blocked</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-2xl font-bold text-orange-600">{{ getRelatedEntries() }}</div>
+                  <div class="text-gray-600 text-sm">Related Entries Found</div>
+                </div>
+              </div>
+              <div class="mt-3 text-sm text-gray-600 text-center">
+                <i data-lucide="alert-triangle" class="w-4 h-4 inline-block mr-1 text-orange-500"></i>
+                This action will prevent <strong>{{ blacklistForm.get('targetValue')?.value }}</strong> from accessing the system.
+              </div>
+            </div>
+          </div>
+
+          <!-- Related Accounts Preview -->
+          <div class="related-accounts-preview mt-4" *ngIf="blacklistForm.get('targetValue')?.value && blacklistForm.get('blockRelated')?.value">
+            <h6 class="text-lg font-semibold mb-4 flex items-center">
+              <i data-lucide="users" class="w-5 h-5 text-orange-600 mr-2"></i>
+              Related Accounts That Will Be Blocked
+            </h6>
+            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+              <div *ngIf="relatedAccounts.length > 0" class="space-y-2">
+                <div *ngFor="let account of relatedAccounts" class="flex items-center justify-between p-2 bg-white rounded border">
+                  <div class="flex items-center">
+                    <i data-lucide="user" class="w-4 h-4 text-gray-500 mr-2"></i>
+                    <span class="font-medium">{{ account.email }}</span>
+                  </div>
+                  <div class="text-xs text-gray-500 text-right">
+                    <div>{{ account.similarity }}</div>
+                    <div *ngIf="account.ip" class="text-gray-400">IP: {{ account.ip }}</div>
+                  </div>
+                </div>
+              </div>
+              <div *ngIf="relatedAccounts.length === 0" class="text-center text-gray-500 py-4">
+                <i data-lucide="search" class="w-8 h-8 mx-auto mb-2 text-gray-400"></i>
+                <p>No related accounts found</p>
+                <p class="text-xs">Checking for accounts with same IP address...</p>
+              </div>
+              <div class="mt-3 text-xs text-gray-600 text-center">
+                <i data-lucide="info" class="w-3 h-3 inline-block mr-1"></i>
+                These accounts will be automatically blocked if "Block related accounts" is checked.
+                <br>
+                <span class="text-gray-500">(Based on most frequently used IP address)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+          <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" (click)="closeEditModal()">
+            <i data-lucide="x" class="w-4 h-4 inline-block mr-1"></i>Cancel
+          </button>
+          <button class="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors flex items-center" (click)="addToBlacklist()">
+            <i data-lucide="ban" class="w-4 h-4 inline-block mr-1"></i>
+            <span>Add to Blacklist</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incident History Modal -->
+  <div *ngIf="showIncidentHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl mx-4">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h5 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="history" class="w-5 h-5 text-blue-600"></i>
+            Incident History
+          </h5>
+          <button class="text-gray-400 hover:text-gray-600" (click)="closeIncidentHistoryModal()">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="space-y-4">
+          <div *ngFor="let incident of incidentHistory" class="bg-white rounded-lg p-4 border border-gray-200">
+            <div class="flex items-center justify-between">
+              <div class="text-gray-900 font-semibold">{{ incident.type }}</div>
+              <div class="text-gray-500 text-sm">{{ incident.date | date:'medium' }}</div>
+            </div>
+            <div class="text-gray-600 mt-2">{{ incident.details }}</div>
+          </div>
+          <div *ngIf="incidentHistory.length === 0" class="text-center text-gray-500 py-8">
+            No incident history available
+          </div>
+        </div>
+      </div>
+      <div class="p-6 border-t border-gray-200 flex justify-end">
+        <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg" (click)="closeIncidentHistoryModal()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Entry Details Modal -->
+  <div *ngIf="selectedEntryDetails" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-7xl mx-4">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+          <h5 class="text-xl font-semibold flex items-center gap-2">
+            <i data-lucide="shield" class="w-5 h-5 text-blue-600"></i>
+            Blacklist Entry Details
+          </h5>
+          <button class="text-gray-400 hover:text-gray-600" (click)="selectedEntryDetails = null">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div class="md:col-span-4">
+            <div class="bg-white rounded-lg p-6 border border-gray-200">
+              <div class="text-center">
+                <div class="w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4"
+                     [ngClass]="'bg-' + selectedEntryDetails.riskLevel.toLowerCase() + '-100'">
+                  <i [attr.data-lucide]="getTargetIconName(selectedEntryDetails.targetType)" 
+                     class="w-10 h-10" 
+                     [ngClass]="'text-' + selectedEntryDetails.riskLevel.toLowerCase() + '-600'"></i>
+                </div>
+                <div class="text-xl font-bold mb-1">{{ selectedEntryDetails.targetValue }}</div>
+                <div class="text-gray-500">{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</div>
+              </div>
+              <div class="mt-6 space-y-3">
+                <div class="flex items-center justify-center gap-2">
+                  <span class="px-3 py-1 rounded-full text-sm font-medium"
+                        [ngClass]="'bg-' + selectedEntryDetails.category.toLowerCase() + '-100 text-' + selectedEntryDetails.category.toLowerCase() + '-700'">
+                    <i [attr.data-lucide]="getCategoryIconName(selectedEntryDetails.category)" class="w-4 h-4 inline-block mr-1"></i>
+                    {{ getCategoryLabel(selectedEntryDetails.category) }}
+                  </span>
+                  <span class="px-3 py-1 rounded-full text-sm font-medium"
+                        [ngClass]="'bg-' + selectedEntryDetails.riskLevel.toLowerCase() + '-100 text-' + selectedEntryDetails.riskLevel.toLowerCase() + '-700'">
+                    <i [attr.data-lucide]="getRiskIconName(selectedEntryDetails.riskLevel)" class="w-4 h-4 inline-block mr-1"></i>
+                    {{ selectedEntryDetails.riskLevel | titlecase }}
+                  </span>
+                </div>
+              </div>
+              <div class="mt-6 grid grid-cols-3 gap-4 text-center">
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <div class="text-2xl font-bold">{{ selectedEntryDetails.incidentCount }}</div>
+                  <div class="text-sm text-gray-500">Incidents</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <div class="text-2xl font-bold">{{ getBlockedAttempts(selectedEntryDetails) }}</div>
+                  <div class="text-sm text-gray-500">Blocked</div>
+                </div>
+                <div class="p-3 bg-gray-50 rounded-lg">
+                  <div class="text-2xl font-bold">{{ getLastIncidentDays(selectedEntryDetails) }}</div>
+                  <div class="text-sm text-gray-500">Days Since Last</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="md:col-span-8">
+            <div class="bg-white rounded-lg border border-gray-200">
+              <div class="border-b border-gray-200">
+                <nav class="flex">
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'overview'"
+                          [class.border-blue-600]="activeTab === 'overview'"
+                          (click)="activeTab = 'overview'">
+                    Overview
+                  </button>
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'incidents'"
+                          [class.border-blue-600]="activeTab === 'incidents'"
+                          (click)="activeTab = 'incidents'">
+                    Incidents
+                  </button>
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'notes'"
+                          [class.border-blue-600]="activeTab === 'notes'"
+                          (click)="activeTab = 'notes'">
+                    Notes
+                  </button>
+                  <button class="px-6 py-3 text-gray-600 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300"
+                          [class.text-blue-600]="activeTab === 'appeals'"
+                          [class.border-blue-600]="activeTab === 'appeals'"
+                          (click)="activeTab = 'appeals'">
+                    Appeals
+                  </button>
+                </nav>
+              </div>
+              <div class="p-6">
+                <!-- Overview Tab -->
+                <div *ngIf="activeTab === 'overview'" class="space-y-6">
+                  <div class="grid grid-cols-2 gap-6">
+                    <div>
+                      <h6 class="text-sm font-medium text-gray-600 mb-4">Entry Information</h6>
+                      <div class="space-y-3">
+                        <div>
+                          <label class="text-sm text-gray-500">Target</label>
+                          <div class="font-medium">{{ selectedEntryDetails.targetValue }}</div>
+                        </div>
+                        <div>
+                          <label class="text-sm text-gray-500">Type</label>
+                          <div class="font-medium">{{ getTargetTypeLabel(selectedEntryDetails.targetType) }}</div>
+                        </div>
+                        <div>
+                          <label class="text-sm text-gray-500">Reason</label>
+                          <div class="font-medium">{{ selectedEntryDetails.reason }}</div>
+                        </div>
+                        <div *ngIf="selectedEntryDetails.associatedEmail">
+                          <label class="text-sm text-gray-500">Associated Email</label>
+                          <div class="font-medium">{{ selectedEntryDetails.associatedEmail }}</div>
                         </div>
                       </div>
                     </div>
-                    <div class="tab-pane fade" id="incidents">
-                      <div class="incidents-history">
-                        <div class="incidents-summary">
-                          <div class="row">
-                            <div class="col-md-3">
-                              <div class="summary-stat">
-                                <strong>{{ selectedEntryDetails.incidentCount }}</strong>
-                                <span>Total Incidents</span>
-                              </div>
-                            </div>
-                            <div class="col-md-3">
-                              <div class="summary-stat">
-                                <strong>{{ getBlockedAttempts(selectedEntryDetails) }}</strong>
-                                <span>Blocked Attempts</span>
-                              </div>
-                            </div>
-                            <div class="col-md-3">
-                              <div class="summary-stat">
-                                <strong>${{ getEstimatedLoss(selectedEntryDetails) }}</strong>
-                                <span>Prevented Loss</span>
-                              </div>
-                            </div>
-                            <div class="col-md-3">
-                              <div class="summary-stat">
-                                <strong>{{ getLastIncidentDays(selectedEntryDetails) }}</strong>
-                                <span>Days Since Last</span>
-                              </div>
-                            </div>
+                    <div>
+                      <h6 class="text-sm font-medium text-gray-600 mb-4">Status & Timing</h6>
+                      <div class="space-y-3">
+                        <div>
+                          <label class="text-sm text-gray-500">Status</label>
+                          <div class="font-medium">
+                            <span class="px-2 py-1 rounded text-sm"
+                                  [ngClass]="'bg-' + selectedEntryDetails.status.toLowerCase() + '-100 text-' + selectedEntryDetails.status.toLowerCase() + '-700'">
+                              {{ getStatusLabel(selectedEntryDetails.status) }}
+                            </span>
                           </div>
                         </div>
-                        <!-- Recent incidents would be listed here -->
-                      </div>
-                    </div>
-                    <div class="tab-pane fade" id="notes">
-                      <div class="notes-section">
-                        <div class="notes-content">
-                          <p>{{ selectedEntryDetails.notes || 'No notes available for this entry.' }}</p>
+                        <div>
+                          <label class="text-sm text-gray-500">Added Date</label>
+                          <div class="font-medium">{{ selectedEntryDetails.addedDate | date:'MMM dd, yyyy HH:mm' }}</div>
                         </div>
-                        <button class="btn btn-outline-primary" (click)="addNote(selectedEntryDetails)">
-                          <i class="fas fa-plus me-1"></i>Add Note
-                        </button>
+                        <div>
+                          <label class="text-sm text-gray-500">Added By</label>
+                          <div class="font-medium">{{ selectedEntryDetails.addedBy }}</div>
+                        </div>
+                        <div *ngIf="selectedEntryDetails.expiryDate">
+                          <label class="text-sm text-gray-500">Expires</label>
+                          <div class="font-medium">{{ selectedEntryDetails.expiryDate | date:'MMM dd, yyyy' }}</div>
+                        </div>
                       </div>
                     </div>
-                    <div class="tab-pane fade" id="appeals">
-                      <div class="appeals-section">
-                        <p>Appeal history and management for this blacklist entry.</p>
-                        <!-- Appeals list would be here -->
+                  </div>
+                </div>
+
+                <!-- Incidents Tab -->
+                <div *ngIf="activeTab === 'incidents'" class="space-y-6">
+                  <div class="grid grid-cols-4 gap-4">
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold">{{ selectedEntryDetails.incidentCount }}</div>
+                      <div class="text-sm text-gray-500">Total Incidents</div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold">{{ getBlockedAttempts(selectedEntryDetails) }}</div>
+                      <div class="text-sm text-gray-500">Blocked Attempts</div>
+                    </div>
+                    <div class="p-4 bg-gray-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold">{{ getLastIncidentDays(selectedEntryDetails) }}</div>
+                      <div class="text-sm text-gray-500">Days Since Last</div>
+                    </div>
+                  </div>
+                  <div class="space-y-4">
+                    <div *ngFor="let incident of incidentHistory" class="p-4 bg-white border border-gray-200 rounded-lg">
+                      <div class="flex items-center justify-between">
+                        <div class="font-medium">{{ incident.type }}</div>
+                        <div class="text-sm text-gray-500">{{ incident.date | date:'medium' }}</div>
                       </div>
+                      <div class="mt-2 text-gray-600">{{ incident.details }}</div>
+                    </div>
+                    <div *ngIf="incidentHistory.length === 0" class="text-center text-gray-500 py-8">
+                      No incident history available
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notes Tab -->
+                <div *ngIf="activeTab === 'notes'" class="space-y-6">
+                  <div class="bg-gray-50 p-4 rounded-lg">
+                    <p class="whitespace-pre-line">{{ selectedEntryDetails.notes || 'No notes available for this entry.' }}</p>
+                  </div>
+                  <button class="px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg flex items-center gap-2"
+                          (click)="addNote(selectedEntryDetails)">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    Add Note
+                  </button>
+                </div>
+
+                <!-- Appeals Tab -->
+                <div *ngIf="activeTab === 'appeals'" class="space-y-6">
+                  <div class="flex justify-between items-center mb-4">
+                    <h6 class="text-lg font-semibold text-gray-800">Appeal Management</h6>
+                    <button class="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700" 
+                            (click)="loadAppeals()">
+                      <i data-lucide="refresh-cw" class="w-4 h-4 inline-block mr-1"></i>
+                      Refresh Appeals
+                    </button>
+                  </div>
+
+                  <!-- Appeal Statistics -->
+                  <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="p-4 bg-yellow-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold text-yellow-700">{{ pendingAppeals }}</div>
+                      <div class="text-sm text-yellow-600">Pending Appeals</div>
+                    </div>
+                    <div class="p-4 bg-green-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold text-green-700">{{ approvedAppealsCount }}</div>
+                      <div class="text-sm text-green-600">Approved</div>
+                    </div>
+                    <div class="p-4 bg-red-50 rounded-lg text-center">
+                      <div class="text-2xl font-bold text-red-700">{{ rejectedAppealsCount }}</div>
+                      <div class="text-sm text-red-600">Rejected</div>
+                    </div>
+                  </div>
+
+                  <!-- Appeals List -->
+                  <div class="space-y-4">
+                    <div *ngFor="let appeal of appeals" 
+                         class="p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
+                         (click)="viewAppeal(appeal)">
+                      <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                          <div class="flex items-center gap-3 mb-2">
+                            <span class="px-2 py-1 rounded text-sm font-medium"
+                                  [ngClass]="'bg-' + getAppealStatusColor(appeal.status) + '-100 text-' + getAppealStatusColor(appeal.status) + '-700'">
+                              {{ getAppealStatusLabel(appeal.status) }}
+                            </span>
+                            <span class="text-sm text-gray-500">{{ appeal.submittedAt | date:'MMM dd, yyyy HH:mm' }}</span>
+                          </div>
+                          <div class="font-medium text-gray-800">{{ getAppealUserEmail(appeal) }}</div>
+                          <div class="text-sm text-gray-600 mt-1">{{ getAppealReasonLabel(appeal.appealReason) }}</div>
+                          <div class="text-sm text-gray-500 mt-1 line-clamp-2">{{ getAppealDetails(appeal) }}</div>
+                        </div>
+                        <div class="text-right">
+                          <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div *ngIf="appeals.length === 0" class="text-center text-gray-500 py-8">
+                      <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+                      <p>No appeals found</p>
+                      <button class="mt-2 px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg"
+                              (click)="loadAppeals()">
+                        Load Appeals
+                      </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-outline-warning" (click)="editEntry(selectedEntryDetails)">
-              <i class="fas fa-edit me-1"></i>Edit Entry
-            </button>
-            <button type="button" class="btn btn-success" (click)="liftBan(selectedEntryDetails)" data-bs-dismiss="modal">
-              <i class="fas fa-unlock me-1"></i>Lift Ban
-            </button>
+        </div>
+      </div>
+      <div class="p-6 border-t border-gray-200 flex justify-end gap-3">
+        <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg" 
+                (click)="selectedEntryDetails = null">
+          Close
+        </button>
+        <button class="px-4 py-2 text-yellow-700 bg-yellow-100 hover:bg-yellow-200 rounded-lg"
+                (click)="editEntry(selectedEntryDetails)">
+          <i data-lucide="edit" class="w-4 h-4 inline-block mr-1"></i>
+          Edit Entry
+        </button>
+        <button class="px-4 py-2 text-green-700 bg-green-100 hover:bg-green-200 rounded-lg"
+                (click)="liftBan(selectedEntryDetails)">
+          <i data-lucide="unlock" class="w-4 h-4 inline-block mr-1"></i>
+          Lift Ban
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appeal Review Modal -->
+  <div *ngIf="showAppealModal && selectedAppeal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-4xl flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h2 class="text-2xl font-bold text-gray-800">Review Appeal</h2>
+        <button (click)="closeAppealModal()" class="text-gray-400 hover:text-gray-600 transition">
+          <i data-lucide="x" class="w-7 h-7"></i>
+        </button>
+      </div>
+
+      <!-- Appeal Info -->
+      <div class="px-6 py-4">
+        <div class="uppercase text-xs text-gray-400 font-semibold tracking-wider mb-2">Appeal Information</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <div class="text-xs text-gray-500">User Email</div>
+            <div class="font-semibold text-gray-800">{{ selectedAppeal?.userEmail }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Contact Email</div>
+            <div class="font-semibold text-gray-800">{{ selectedAppeal?.contactEmail }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Appeal Reason</div>
+            <div class="font-semibold text-gray-800">{{ getAppealReasonLabel(selectedAppeal?.appealReason!) }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500">Submitted</div>
+            <div class="font-semibold text-gray-800">{{ selectedAppeal?.submittedAt | date:'MMM dd, yyyy HH:mm' }}</div>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <div class="text-xs text-gray-500 mb-1">Appeal Details</div>
+          <div class="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 max-h-32 overflow-y-auto border border-gray-100">
+            {{ getAppealDetails(selectedAppeal!) }}
+          </div>
+        </div>
+
+        <!-- Decision/Admin Notes (Read-only or Edit) -->
+        <ng-container *ngIf="!isEditMode && selectedAppeal?.status !== 'PENDING'; else editForm">
+          <div class="mb-4">
+            <div class="text-xs text-gray-500 mb-1">Decision</div>
+            <span class="inline-block px-4 py-2 rounded-full bg-blue-50 text-blue-700 font-semibold">
+              {{ getAppealStatusLabel(selectedAppeal?.status!) }}
+            </span>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1">Admin Notes</div>
+            <div class="bg-gray-100 rounded-lg p-3 text-gray-700 whitespace-pre-line">
+              {{ selectedAppeal?.adminNotes || '—' }}
+            </div>
+          </div>
+          <div class="flex justify-end gap-3 mt-6">
+            <button type="button" class="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" (click)="closeAppealModal()">Cancel</button>
+            <button type="button" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow" (click)="enableEditMode()">Edit</button>
+          </div>
+        </ng-container>
+
+        <!-- Edit Mode Form -->
+        <ng-template #editForm>
+          <form [formGroup]="appealReviewForm" class="space-y-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Decision</label>
+              <select formControlName="decision"
+                class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800">
+                <option value="">Select decision...</option>
+                <option value="APPROVE">Approve Appeal</option>
+                <option value="REJECT">Reject Appeal</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Admin Notes</label>
+              <textarea formControlName="adminNotes"
+                rows="4"
+                class="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-800"
+                placeholder="Provide detailed explanation for your decision..."></textarea>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+              <button type="button" class="px-5 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200" (click)="closeAppealModal()">Cancel</button>
+              <button type="submit"
+                class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow flex items-center gap-2"
+                [disabled]="!appealReviewForm.valid || loadingAppealReview"
+                (click)="reviewAppeal()">
+                <i *ngIf="loadingAppealReview" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+                <span>{{ loadingAppealReview ? 'Submitting...' : 'Submit Review' }}</span>
+              </button>
+            </div>
+          </form>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Appeal Management Modal -->
+  <div *ngIf="showAppealManagementModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-4xl flex flex-col">
+      <!-- Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <i data-lucide="gavel" class="w-6 h-6 text-orange-600"></i>
+          <h3 class="text-xl font-bold text-gray-800">Appeal Management</h3>
+          <span class="px-3 py-1 bg-orange-100 text-orange-700 text-sm font-medium rounded-full">{{ pendingAppeals }} Pending</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <!-- Modern circular refresh button -->
+          <button (click)="loadAppeals()" aria-label="Refresh"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-blue-100 text-blue-600 hover:text-blue-800 transition focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <i data-lucide="refresh-cw" class="w-6 h-6"></i>
+          </button>
+          <!-- Modern circular exit button -->
+          <button (click)="closeAppealManagementModal()" aria-label="Close"
+            class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition focus:outline-none focus:ring-2 focus:ring-red-300">
+            <i data-lucide="x" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="px-6 py-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="p-4 bg-yellow-50 rounded-xl text-center border border-yellow-100">
+            <div class="text-2xl md:text-3xl font-bold text-yellow-700 mb-2">{{ pendingAppeals }}</div>
+            <div class="text-sm text-yellow-600 font-medium">Pending Appeals</div>
+            <div class="text-xs text-yellow-500 mt-1">Awaiting review</div>
+          </div>
+          <div class="p-4 bg-green-50 rounded-xl text-center border border-green-100">
+            <div class="text-2xl md:text-3xl font-bold text-green-700 mb-2">{{ approvedAppealsCount }}</div>
+            <div class="text-sm text-green-600 font-medium">Approved</div>
+            <div class="text-xs text-green-500 mt-1">Ban lifted</div>
+          </div>
+          <div class="p-4 bg-red-50 rounded-xl text-center border border-red-100">
+            <div class="text-2xl md:text-3xl font-bold text-red-700 mb-2">{{ rejectedAppealsCount }}</div>
+            <div class="text-sm text-red-600 font-medium">Rejected</div>
+            <div class="text-xs text-red-500 mt-1">Ban maintained</div>
+          </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h4 class="text-lg font-semibold text-gray-800">All Appeals</h4>
+          <div class="flex items-center gap-2">
+            <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm" [(ngModel)]="appealStatusFilter" (change)="filterAppeals()">
+              <option value="">All Status</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Appeals List -->
+        <div class="space-y-3">
+          <!-- Loading state -->
+          <div *ngIf="loadingAppeals" class="text-center text-gray-500 py-8">
+            <i data-lucide="loader-2" class="w-12 h-12 mx-auto mb-4 text-gray-300 animate-spin"></i>
+            <p class="text-lg font-medium">Loading appeals...</p>
+          </div>
+
+          <!-- Appeals list -->
+          <div *ngIf="!loadingAppeals">
+            <div *ngFor="let appeal of filteredAppeals"
+                 class="p-4 bg-gray-50 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+                 (click)="viewAppeal(appeal)">
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-2">
+                  <span class="px-3 py-1 rounded-full text-xs font-semibold"
+                        [ngClass]="{
+                          'bg-yellow-100 text-yellow-700': appeal.status === 'PENDING',
+                          'bg-green-100 text-green-700': appeal.status === 'APPROVED',
+                          'bg-red-100 text-red-700': appeal.status === 'REJECTED'
+                        }">
+                    {{ getAppealStatusLabel(appeal.status) }}
+                  </span>
+                  <span class="text-xs text-gray-400 whitespace-nowrap">{{ appeal.submittedAt | date:'MMM dd, yyyy HH:mm' }}</span>
+                </div>
+                <div class="font-medium text-gray-800 truncate">{{ getAppealUserEmail(appeal) }}</div>
+                <div class="text-xs text-gray-500 mt-1">{{ getAppealReasonLabel(appeal.appealReason) }}</div>
+                <div class="text-xs text-gray-400 mt-1 line-clamp-2 break-words">{{ getAppealDetails(appeal) }}</div>
+              </div>
+              <div class="flex-shrink-0 flex items-center gap-2">
+                <i data-lucide="chevron-right" class="w-5 h-5 text-gray-400"></i>
+              </div>
+            </div>
+
+            <div *ngIf="filteredAppeals.length === 0" class="text-center text-gray-500 py-8">
+              <i data-lucide="file-text" class="w-12 h-12 mx-auto mb-4 text-gray-300"></i>
+              <p class="text-lg font-medium">No appeals found</p>
+              <p class="text-sm text-gray-400 mt-1">No appeals match your current filter</p>
+              <button class="mt-4 px-4 py-2 text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg" (click)="loadAppeals()">
+                Load Appeals
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  

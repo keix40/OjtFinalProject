@@ -1,0 +1,89 @@
+<ng-container *ngIf="showNotificationSidebar">
+  <!-- Overlay -->
+  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1050]" (click)="onClose()"></div>
+
+  <!-- Sidebar -->
+  <div class="fixed top-0 right-0 h-screen w-full max-w-[28rem] bg-white shadow-2xl  z-[1051] flex flex-col transition-transform duration-300 ease-in-out">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center p-4 border-b bg-gradient-to-br from-gray-50 to-white rounded-tl-xl">
+      <div class="flex items-center gap-3">
+        <div class="bg-blue-100 rounded-xl p-2">
+          <i class="bi bi-bell text-blue-600 text-lg"></i>
+        </div>
+        <div>
+          <h4 class="text-lg font-bold text-gray-900 mb-0">Notifications</h4>
+          <small class="text-gray-500">{{ notifications.length }} new</small>
+        </div>
+      </div>
+      <button class="rounded-md p-2 bg-black/5 hover:bg-black/10 transition" (click)="onClose()">
+        <i class="bi bi-x-lg text-gray-700 text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center justify-between px-4 py-2 bg-white border-b">
+      <button (click)="markAllAsRead()" class="text-sm text-blue-600 font-medium hover:underline">Mark all as read</button>
+      <button (click)="clearAll()" class="text-sm text-red-500 font-medium hover:underline">Clear all</button>
+    </div>
+
+    <!-- Notifications -->
+    <div class="px-4 py-4 bg-gray-50 space-y-3 notifications-scroll flex-1 overflow-y-auto">
+      <ng-container *ngIf="notifications.length > 0; else emptyState">
+        <div [ngClass]="{ 'fade-out': isClearing }">
+          <div *ngFor="let notification of notifications; let i = index"
+               class="flex items-start border border-gray-200 shadow-sm rounded-xl p-4 gap-3 hover:bg-blue-50/50 transition notification-entry cursor-pointer outline-none"
+               [ngClass]="{
+                 'unread': !notification.read,
+                 'bg-blue-50': !notification.read,
+                 'bg-white': notification.read
+               }"
+               (click)="onNotificationClick(notification)"
+               tabindex="0">
+            <!-- Accent bar for unread -->
+            <span class="w-1.5 h-8 rounded-full mr-2 mt-1 block"
+                  [ngClass]="notification.read ? 'bg-gray-200' : (notification.type === 'discount' ? 'bg-yellow-400 glow-bar' : (notification.type === 'order' ? 'bg-green-400 glow-bar' : (notification.type === 'user' ? 'bg-blue-400 glow-bar' : 'bg-blue-500 glow-bar')))"
+            ></span>
+            <!-- Icon based on type -->
+            <span class="flex items-center justify-center w-6 h-6 rounded-full mr-2"
+                  [ngClass]="notification.read ? 'bg-gray-200' : (notification.type === 'discount' ? 'bg-yellow-100' : (notification.type === 'order' ? 'bg-green-100' : (notification.type === 'user' ? 'bg-blue-100' : 'bg-blue-100')))">
+              <ng-container [ngSwitch]="notification.type">
+                <i *ngSwitchCase="'discount'" class="bi bi-percent text-yellow-500 text-lg"></i>
+                <i *ngSwitchCase="'order'" class="bi bi-bag-check text-green-500 text-lg"></i>
+                <i *ngSwitchCase="'user'" class="bi bi-person-circle text-blue-500 text-lg"></i>
+                <i *ngSwitchDefault class="bi bi-bell text-blue-500 text-lg"></i>
+              </ng-container>
+            </span>
+            <div class="flex-1">
+              <div class="font-semibold text-gray-900 flex items-center">
+                <ng-container *ngIf="notification.type === 'discount'; else defaultSidebarIcon">
+                  <span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded mr-2">Discount</span>
+                </ng-container>
+                <ng-template #defaultSidebarIcon></ng-template>
+                {{ notification.title }}
+              </div>
+              <div class="text-sm text-gray-600">{{ notification.message }}</div>
+              <div class="text-xs text-gray-500 mt-1">{{ notification.time }}</div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #emptyState>
+        <div class="flex flex-col items-center justify-center text-center py-12 empty-state">
+          <div class="w-24 h-24 rounded-full bg-gray-300 flex items-center justify-center mb-4">
+            <i class="bi bi-bell-slash text-white text-3xl"></i>
+          </div>
+          <h5 class="text-lg font-semibold text-gray-800 mb-1">No notifications</h5>
+          <p class="text-gray-500 text-sm">You're all caught up</p>
+        </div>
+      </ng-template>
+    </div>
+
+    <!-- Footer -->
+    <div class="border-t px-4 py-4 bg-white rounded-bl-xl">
+      <button (click)="goToNotifications()" class="w-full py-3 rounded-xl bg-blue-100 text-blue-700 font-semibold hover:bg-blue-200 transition">
+        Show more
+      </button>
+    </div>
+  </div>
+</ng-container>

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForm } from '@angular/forms';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Brand, BrandDTO } from '../brand';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { BrandDTO } from '../brand';
 import { BrandService } from '../services/brand.service';
 import { CategoryService } from '../services/category.service';
 import { Category } from '../category';
@@ -11,9 +11,9 @@ import { Router } from '@angular/router';
   selector: 'app-create-brand',
   standalone: false,
   templateUrl: './create-brand.component.html',
-  styleUrl: './create-brand.component.css'
+  styleUrls: ['./create-brand.component.css']
 })
-export class CreateBrandComponent {
+export class CreateBrandComponent implements OnInit {
   brand: BrandDTO = {
     brandName: '',
     categoryIds: [],
@@ -21,11 +21,12 @@ export class CreateBrandComponent {
   };
 
   categories: Category[] = [];
-  brands: Brand[] = [];
-
   categoryOption: 'old' | 'new' = 'old';
-  selectedCategoryIds: number[] = [];  // <-- MULTI SELECT ARRAY
+  selectedCategoryIds: number[] = [];
   newCategoryName: string = '';
+
+  selectedImageFile?: File;
+  imagePreview?: string;
 
   constructor(
     public activeModal: NgbActiveModal,
@@ -35,30 +36,36 @@ export class CreateBrandComponent {
   ) {}
 
   ngOnInit(): void {
-    this.loadCategory();
+    this.loadCategories();
   }
 
-  loadCategory() {
+  loadCategories() {
     this.cateService.getAllCategory().subscribe({
-      next: (data) => {
-        this.categories = data;
-      },
-      error: (err) => {
-        console.log('Category load error:', err);
-      }
+      next: (data) => (this.categories = data),
+      error: (err) => console.error('Category load error:', err)
     });
   }
 
-   loadBrand() {
-    this.brandService.getAllBrand().subscribe({
-      next: (data) => {
-        this.brands = data;
-        console.log('Brand Success');
-      },
-      error: (err) => {
-        console.log('Brand Fail', err.status, err.message, err.error);
-      }
-    });
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedImageFile = input.files[0];
+
+      // Preview
+      const reader = new FileReader();
+      reader.onload = e => this.imagePreview = reader.result as string;
+      reader.readAsDataURL(this.selectedImageFile);
+    }
+  }
+
+  removeImage() {
+    this.selectedImageFile = undefined;
+    this.imagePreview = undefined;
+    // Reset the file input
+    const fileInput = document.getElementById('imageInput') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   }
 
   createBrand(form: NgForm) {
@@ -66,19 +73,23 @@ export class CreateBrandComponent {
 
     if (this.categoryOption === 'old') {
       this.brand.categoryIds = [...this.selectedCategoryIds];
-      this.brand.categoryName = ''; 
+      this.brand.categoryName = '';
     } else {
       this.brand.categoryIds = [];
       this.brand.categoryName = this.newCategoryName.trim();
     }
 
-    this.brandService.createBrand(this.brand).subscribe({
-      next: (data) => {
-        console.log('Brand created:', data);
-        this.activeModal.close(data);
-        this.router.navigate(['/product']);
+    this.brandService.createBrandWithImage(this.brand, this.selectedImageFile).subscribe({
+      next: () => {
+        this.activeModal.close('success');
+        if (this.router.url !== '/brandlist') {
+          this.router.navigate(['/product']);
+        }
+        else{
+          this.router.navigate(['/brandlist']);
+        }
       },
-      error: (err) => {
+      error: err => {
         console.error('Brand create error:', err);
       }
     });

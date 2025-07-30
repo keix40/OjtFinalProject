@@ -1,268 +1,710 @@
-<div class="sidebar bg-dark text-white p-3 h-100 shadow-sm custom-sidebar">
-  <div class="sidebar-content d-flex flex-column h-100">
-    <div class="sidebar-header mb-4">
-      <h5 class="text-center text-light mb-0 fw-bold">
-        <i class="bi bi-shield-lock text-primary me-2"></i>
-        Admin Panel
-      </h5>
+<div class="fixed sm:static top-0 left-0 h-full z-40"
+     [class.hidden]="!sidebarVisible && isMobile()"
+     (mouseenter)="onSidebarMouseEnter()"
+     (mouseleave)="onSidebarMouseLeave()">
+  <aside [ngClass]="sidebarCollapsed ? 'w-20' : 'w-72'" class="sidebar sticky top-0 bg-white/60 backdrop-blur-lg max-w-full min-h-screen flex flex-col shadow-xl border border-white/30 transition-all duration-300 ease-in-out transition-width overflow-y-auto animate-fade-in font-sans hover:shadow-2xl scrollbar-hide" style="max-height:90vh;">
+    <!-- Header with Logo -->
+    <div class="relative p-4 border-b border-gray-200/50 flex items-center transition-all duration-300"
+      [class.justify-start]="!sidebarCollapsed">
+      <div class="flex items-center gap-2">
+        <img src="./assets/images/britium-logo.png" alt="Britium Logo" [ngClass]="sidebarCollapsed ? 'w-12 h-12' : 'w-10 h-10'" class="object-contain" />
+        <div class="transition-all duration-300 overflow-hidden"
+          [class.opacity-0]="sidebarCollapsed" [class.w-0]="sidebarCollapsed"
+          [class.opacity-100]="!sidebarCollapsed" [class.w-auto]="!sidebarCollapsed">
+          <div class="flex flex-col leading-tight items-start">
+            <span class="text-lg font-semibold text-slate-800">Britium</span>
+            <span class="text-sm font-medium text-slate-800">Gallery</span>
+          </div>
+        </div>
+      </div>
     </div>
-    
-    <ul class="nav flex-column">
-      <!-- Dashboard -->
-      <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
-          [routerLink]="'/dashboard'"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: true }">
-          <i class="fa fa-tachometer-alt me-3 text-primary"></i>
-          <span>Dashboard</span>
-        </a>
-      </li>
+    <!-- Navigation Menu -->
+    <ul class="flex-1 py-4 px-2 space-y-1">
+      <!-- Main Menu (when no submenu is active) -->
+      <ng-container *ngIf="!currentSubmenu && !sidebarCollapsed">
+        <!-- Dashboard -->
+        <li class="mb-2">
+            <a class="flex items-center gap-3 transition-all duration-200 font-semibold font-sans transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-200 h-16 hover:bg-white/60 hover:shadow-sm rounded-xl"
+               [ngClass]="sidebarCollapsed ? 'justify-center p-2 rounded-lg w-12 h-12 mx-auto hover:bg-white/40' : 'px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 w-full'"
+               [routerLink]="'/dashboard'" routerLinkActive="bg-white/60 text-slate-900 font-bold" [routerLinkActiveOptions]="{ exact: true }"
+               [attr.title]="sidebarCollapsed ? 'Dashboard' : null">
+            <i data-lucide="home" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span *ngIf="!sidebarCollapsed">Dashboard</span>
+          </a>
+        </li>
+        
+        <!-- Products -->
+        <li class="mb-2">
+            <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                    (click)="navigateToSubmenu('products')">
+            <span class="flex items-center gap-3">
+              <i data-lucide="package" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span *ngIf="!sidebarCollapsed">Products</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
+          </button>
+        </li>
 
-      <!-- Products with expandable submenu -->
-      <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
-          href="#"
-          (click)="isProductsOpen = !isProductsOpen; $event.preventDefault()">
-          <span>
-            <i class="fa fa-box me-3 text-primary"></i>
-            <span>Products</span>
-          </span>
-          <i class="fa text-primary" [ngClass]="isProductsOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-        </a>
+        <!-- Orders -->
+        <li class="mb-2">
+            <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                    (click)="navigateToSubmenu('orders')">
+            <span class="flex items-center gap-3">
+              <i data-lucide="shopping-cart" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span *ngIf="!sidebarCollapsed">Order</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
+          </button>
+        </li>
+        
+        <!-- Discounts -->
+        <li class="mb-2">
+          <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                  (click)="navigateToSubmenu('discounts')">
+            <span class="flex items-center gap-3">
+              <i data-lucide="percent" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span *ngIf="!sidebarCollapsed">Discounts</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
+          </button>
+        </li>
+        <!-- Event Management (same design as other menu items) -->
+        <li class="mb-2">
+          <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                  (click)="navigateToSubmenu('event')">
+            <span class="flex items-center gap-3">
+              <i data-lucide="circle-check" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span *ngIf="!sidebarCollapsed">Event Management</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
+          </button>
+        </li>
 
-        <ul class="list-unstyled ms-4 mt-2" *ngIf="isProductsOpen">
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/product'" 
-               routerLinkActive="active">
-              <i class="fa fa-plus-circle me-3 text-primary"></i>
-              <span>Add Product</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/productlist'" 
-               routerLinkActive="active">
-              <i class="fa fa-list me-3 text-primary"></i>
-              <span>Product List</span>
-            </a>
-          </li>
-        </ul>
-      </li>
+        <!-- Delivery Service -->
+        <li class="mb-2">
+            <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                    (click)="navigateToSubmenu('delivery')">
+            <span class="flex items-center gap-3">
+              <i data-lucide="truck" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span *ngIf="!sidebarCollapsed">Delivery Service</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
+          </button>
+        </li>
 
-      <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
-          href="#"
-          (click)="isUsersOpen = !isUsersOpen; $event.preventDefault()">
-          <span>
-            <i class="fa fa-users me-3 text-primary"></i>
-            <span>User Management</span>
-          </span>
-          <i class="fa text-primary" [ngClass]="isUsersOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-        </a>
-      
-        <ul class="list-unstyled ms-4 mt-2" *ngIf="isUsersOpen">
-          <!-- ========== CUSTOMER MANAGEMENT ========== -->
-          <li class="mb-3 mt-2">
-            <small class="text-muted fw-bold">CUSTOMERS</small>
-          </li>
-          
-          <!-- Customer List -->
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/customers'" 
-               routerLinkActive="active">
-              <i class="fa fa-user me-3 text-primary"></i>
-              <span>All Customers</span>
-              <span class="badge bg-primary ms-auto">{{ totalCustomers }}</span>
-            </a>
-          </li>
-          
-          <!-- VIP Customers -->
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/vip'" 
-               routerLinkActive="active">
-              <i class="fas fa-crown me-3 text-warning"></i>
-              <span>VIP Customers</span>
-              <span class="badge bg-warning ms-auto">{{ vipCount }}</span>
-            </a>
-          </li>
-          
-          <!-- Blacklist -->
-          <li class="mb-3">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/blacklist'" 
-               routerLinkActive="active">
-              <i class="fas fa-ban me-3 text-danger"></i>
-              <span>Blacklisted Users</span>
-              <span *ngIf="blacklistCount > 0" class="badge bg-danger ms-auto">{{ blacklistCount }}</span>
-            </a>
-          </li>
-      
-          <!-- ========== USER MANAGEMENT ========== -->
-          <li class="mb-3 mt-2">
-            <small class="text-muted fw-bold">USER CONTROLS</small>
-          </li>
-          
-          <!-- Create User -->
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/create'" 
-               routerLinkActive="active">
-              <i class="fa fa-user-plus me-3 text-success"></i>
-              <span>Create User</span>
-            </a>
-          </li>
-          
-          <!-- Admin Users -->
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/admins'" 
-               routerLinkActive="active">
-              <i class="fa fa-user-shield me-3 text-info"></i>
-              <span>Admin Users</span>
-              <span class="badge bg-info ms-auto">{{ adminCount }}</span>
-            </a>
-          </li>
-          
-          <!-- Roles & Permissions -->
-          <li class="mb-3">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/roles'" 
-               routerLinkActive="active">
-              <i class="fa fa-key me-3 text-purple"></i>
-              <span>Roles & Permissions</span>
-            </a>
-          </li>
-      
-          <!-- ========== SECURITY ========== -->
-          <li class="mb-3 mt-2">
-            <small class="text-muted fw-bold">SECURITY</small>
-          </li>
-          
-          <!-- Login Attempts -->
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/login-attempts'" 
-               routerLinkActive="active">
-              <i class="fas fa-user-lock me-3" [ngClass]="{'text-primary': suspiciousLogins === 0, 'text-danger': suspiciousLogins > 0}"></i>
-              <span>Login Attempts</span>
-              <span *ngIf="suspiciousLogins > 0" class="badge bg-danger ms-auto">{{ suspiciousLogins }}</span>
-            </a>
-          </li>
-          
-          <!-- Activity Logs -->
-          <li>
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/users/activity'" 
-               routerLinkActive="active">
-              <i class="fa fa-history me-3" [ngClass]="{'text-primary': recentSecurityEvents === 0, 'text-warning': recentSecurityEvents > 0}"></i>
-              <span>Activity Logs</span>
-              <span *ngIf="recentSecurityEvents > 0" class="badge bg-warning ms-auto">!</span>
-            </a>
-          </li>
-        </ul>
-      </li>
-      <!-- Expanded User Management -->
-      
+        <!-- User Management -->
+        <li class="mb-2">
+            <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                    (click)="navigateToSubmenu('users')">
+            <span class="flex items-center gap-3">
+              <i data-lucide="users" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span *ngIf="!sidebarCollapsed">User Management</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
+          </button>
+        </li>
 
-      <!-- Orders Management -->
-      <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
-          href="#"
-          (click)="isOrdersOpen = !isOrdersOpen; $event.preventDefault()">
-          <span>
-            <i class="fa fa-shopping-cart me-3 text-primary"></i>
-            <span>Orders</span>
-          </span>
-          <i class="fa text-primary" [ngClass]="isOrdersOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-        </a>
+        <!-- Revenue Target Admin -->
+        <li class="mb-2">
+            <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 font-sans h-16 hover:shadow-sm" 
+               [routerLink]="'/revenue-target-admin'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+            <i data-lucide="target" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span *ngIf="!sidebarCollapsed">Revenue Target</span>
+          </a>
+        </li>
 
-        <ul class="list-unstyled ms-4 mt-2" *ngIf="isOrdersOpen">
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/orders/list'" 
-               routerLinkActive="active">
-              <i class="fa fa-list me-3 text-primary"></i>
-              <span>All Orders</span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/orders/returns'" 
-               routerLinkActive="active">
-              <i class="fa fa-exchange-alt me-3 text-primary"></i>
-              <span>Returns & Refunds</span>
-            </a>
-          </li>
-        </ul>
-      </li>
+        <!-- Policy Management -->
+        <li class="mb-2">
+            <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 font-sans h-16 hover:shadow-sm" 
+               [routerLink]="'/admin/policies'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+            <i data-lucide="file-text" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span *ngIf="!sidebarCollapsed">Policy Management</span>
+          </a>
+        </li>
+      </ng-container>
 
-      <!-- Analytics -->
-      <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2"
-          [routerLink]="'/analytics'"
-          routerLinkActive="active">
-          <i class="fa fa-chart-line me-3 text-primary"></i>
-          <span>Analytics</span>
-        </a>
-      </li>
+      <!-- Submenu (when a submenu is active) -->
+      <ng-container *ngIf="currentSubmenu && !sidebarCollapsed">
+        <!-- Back Button -->
+        <li class="mb-4">
+            <button class="flex items-center gap-3 w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                    (click)="goBackToMainMenu()">
+            <i data-lucide="chevron-left" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Back to Menu</span>
+          </button>
+        </li>
 
-      <!-- Content Management -->
-      <li class="nav-item mb-2">
-        <a
-          class="nav-link text-white d-flex justify-content-between align-items-center rounded-3 px-3 py-2"
-          href="#"
-          (click)="isContentOpen = !isContentOpen; $event.preventDefault()">
-          <span>
-            <i class="fa fa-file-alt me-3 text-primary"></i>
-            <span>Content</span>
-          </span>
-          <i class="fa text-primary" [ngClass]="isContentOpen ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-        </a>
+        <!-- Submenu Items -->
+        <ng-container [ngSwitch]="currentSubmenu">
+          
+          <!-- Products Submenu -->
+          <ng-container *ngSwitchCase="'products'">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.PRODUCTS_CREATE)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/product'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="plus-square" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Add Product</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.PRODUCTS_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/productlist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Product List</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.BRANDS_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/brandlist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="tag" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Brand List</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.CATEGORIES_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/categorylist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="tag" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Category List</span>
+              </a>
+            </li>
+          </ng-container>
 
-        <ul class="list-unstyled ms-4 mt-2" *ngIf="isContentOpen">
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/content/pages'" 
-               routerLinkActive="active">
-              <i class="fa fa-file me-3 text-primary"></i>
-              <span>Pages</span>
+          <!-- Orders Submenu -->
+          <ng-container *ngSwitchCase="'orders'">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ORDERS_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/orders'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="clipboard-list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Order Management</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.REFUND_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/return'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Refund Management</span>
+              </a>
+            </li>
+          </ng-container>
+
+          <!-- Discounts Submenu -->
+          <ng-container *ngSwitchCase="'discounts'">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/discount-list'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Discount List</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'discount-add'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="plus" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Add Discount</span>
+              </a>
+            </li>
+
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/discount-coupon'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="ticket" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Coupon List</span>
+              </a>
+            </li>
+          </ng-container>
+
+          <!-- Delivery Submenu -->
+          <ng-container *ngSwitchCase="'delivery'">
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DELIVERY_CREATE)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/createdeliveryservice'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="truck" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Add Delivery</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DELIVERY_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/deliveryservicelist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="list" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Delivery Service List</span>
+              </a>
+            </li>
+          </ng-container>
+
+          <!-- Users Submenu -->
+          <ng-container *ngSwitchCase="'users'">
+            <!-- Customers Section -->
+            <!-- <li class="mt-2 mb-1">
+              <span class="text-xs font-bold text-slate-500 tracking-wider px-4">CUSTOMERS</span>
+            </li> -->
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.CUSTOMERS_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/users/customers'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="user" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>All Customers</span>
+                  <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold animate-pulse">{{ totalCustomers }}</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.CUSTOMERS_VIEW_VIP)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/users/vip'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="crown" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>VIP Customers</span>
+                  <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ vipCount }}</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.BLACKLIST_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/users/blacklist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="ban" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Blacklisted Users</span>
+                  <span *ngIf="blacklistCount > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ blacklistCount }}</span>
+              </a>
+            </li>
+            
+            <!-- User Controls Section -->
+            <!-- <li class="mt-3 mb-1">
+              <span class="text-xs font-bold text-slate-500 tracking-wider px-4">USER CONTROLS</span>
+            </li> -->
+            <li *ngIf="permissionService.hasPermission(PermissionConstants.USERS_CREATE)" class="mb-2">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-green-50 hover:text-green-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                 [routerLink]="'/users/create'" routerLinkActive="bg-green-100 text-green-700 font-bold">
+                <i data-lucide="user-plus" class="w-5 h-5 text-green-400 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Create User</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ADMIN_USERS_VIEW)">
+                <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                   [routerLink]="'/users/admins'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="shield" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Admin Users</span>
+                  <span class="ml-auto inline-block px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold animate-pulse">{{ adminCount }}</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.PERMISSIONS_VIEW)">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                 [routerLink]="'/users/roles'" routerLinkActive="bg-purple-100 text-purple-700 font-bold">
+                <i data-lucide="key-round" class="w-5 h-5 text-purple-400 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Roles & Permissions</span>
+              </a>
+            </li>
+            
+            <!-- Security Section -->
+            <!-- <li class="mt-3 mb-1">
+              <span class="text-xs font-bold text-slate-500 tracking-wider px-4">SECURITY</span>
+            </li> -->
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.SECURITY_VIEW_ATTEMPTS)">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-red-50 hover:text-red-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                 [routerLink]="'/users/login-attempts'" routerLinkActive="bg-red-100 text-red-700 font-bold">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Login Attempts</span>
+                  <span *ngIf="suspiciousLogins > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold animate-pulse">{{ suspiciousLogins }}</span>
+              </a>
+            </li>
+            <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.ACTIVITY_LOGS_VIEW)">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-yellow-50 hover:text-yellow-700 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
+                 [routerLink]="'/users/activity'" routerLinkActive="bg-yellow-100 text-yellow-800 font-bold">
+                <i data-lucide="activity" class="w-5 h-5 text-yellow-400 transition-transform duration-200 hover:scale-110"></i>
+                  <span>Activity Logs</span>
+              </a>
+            </li>
+          </ng-container>
+
+          <!-- Event Management Submenu (same design as other submenus) -->
+          <ng-container *ngSwitchCase="'event'">
+            <li class="mb-2">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                 [routerLink]="'/admin/event'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="circle-check" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span>Add Event</span>
+              </a>
+            </li>
+            <li class="mb-2">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                 [routerLink]="'/admin/eventlist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="list-check" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span>Event List</span>
+              </a>
+            </li>
+          </ng-container>
+        </ng-container>
+      </ng-container>
+
+      <!-- Collapsed Sidebar (when sidebar is collapsed) -->
+      <ng-container *ngIf="sidebarCollapsed">
+        <!-- Main Menu (when no submenu is active) -->
+        <ng-container *ngIf="!currentSubmenu">
+          <li class="flex justify-center mb-2">
+            <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+               [routerLink]="'/dashboard'" routerLinkActive="bg-white/60 text-slate-900 font-bold border-slate-400 shadow-md" 
+               [attr.title]="'Dashboard'" (click)="forceReinitializeIcons()">
+              <i data-lucide="home" class="w-5 h-5 text-slate-500"></i>
             </a>
           </li>
-          <li class="mb-2">
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/content/blog'" 
-               routerLinkActive="active">
-              <i class="fa fa-blog me-3 text-primary"></i>
-              <span>Blog</span>
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="navigateToSubmenu('products'); forceReinitializeIcons()" [attr.title]="'Products'">
+              <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="navigateToSubmenu('orders'); forceReinitializeIcons()" [attr.title]="'Orders'">
+              <i data-lucide="shopping-cart" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="navigateToSubmenu('discounts'); forceReinitializeIcons()" [attr.title]="'Discounts'">
+              <i data-lucide="percent" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="navigateToSubmenu('event'); forceReinitializeIcons()" [attr.title]="'Event Management'">
+              <i data-lucide="circle-check" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="navigateToSubmenu('delivery'); forceReinitializeIcons()" [attr.title]="'Delivery Service'">
+              <i data-lucide="truck" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="navigateToSubmenu('users'); forceReinitializeIcons()" [attr.title]="'User Management'">
+              <i data-lucide="users" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+          <li class="flex justify-center mb-2">
+            <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+               [routerLink]="'/revenue-target-admin'" routerLinkActive="bg-white/60 text-slate-900 font-bold border-slate-400 shadow-md" 
+               [attr.title]="'Revenue Target Admin'" (click)="forceReinitializeIcons()">
+              <i data-lucide="target" class="w-5 h-5 text-slate-500"></i>
             </a>
           </li>
-          <li>
-            <a class="nav-link text-white d-flex align-items-center rounded-3 px-3 py-2" 
-               [routerLink]="'/content/banners'" 
-               routerLinkActive="active">
-              <i class="fa fa-image me-3 text-primary"></i>
-              <span>Banners</span>
+          <li class="flex justify-center mb-2">
+            <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+               [routerLink]="'/admin/policies'" routerLinkActive="bg-white/60 text-slate-900 font-bold border-slate-400 shadow-md" 
+               [attr.title]="'Policy Management'" (click)="forceReinitializeIcons()">
+              <i data-lucide="file-text" class="w-5 h-5 text-slate-500"></i>
             </a>
           </li>
-        </ul>
-      </li>
+        </ng-container>
+
+        <!-- Submenu (when a submenu is active) -->
+        <ng-container *ngIf="currentSubmenu">
+          <!-- Back Button -->
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="goBackToMainMenu(); forceReinitializeIcons()" [attr.title]="'Back to Menu'">
+              <i data-lucide="chevron-left" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+
+          <!-- Submenu Items -->
+          <ng-container [ngSwitch]="currentSubmenu">
+            
+            <!-- Products Submenu -->
+            <ng-container *ngSwitchCase="'products'">
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/product'" [attr.title]="'Add Product'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="plus-square" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/productlist'" [attr.title]="'Product List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="list" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/brandlist'" [attr.title]="'Brand List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="tag" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/categorylist'" [attr.title]="'Category List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="tag" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+            </ng-container>
+
+            <!-- Orders Submenu -->
+            <ng-container *ngSwitchCase="'orders'">
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/orders'" [attr.title]="'Order Management'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="clipboard-list" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/return'" [attr.title]="'Refund Management'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="rotate-ccw" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+            </ng-container>
+
+            <!-- Discounts Submenu -->
+            <ng-container *ngSwitchCase="'discounts'">
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/discount-list'" [attr.title]="'Discount List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="list" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'discount-add'" [attr.title]="'Add Discount'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="plus" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/discount-coupon'" [attr.title]="'Coupon List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="ticket" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+            </ng-container>
+
+            <!-- Delivery Submenu -->
+            <ng-container *ngSwitchCase="'delivery'">
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/createdeliveryservice'" [attr.title]="'Add Delivery'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="truck" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/deliveryservicelist'" [attr.title]="'Delivery Service List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="list" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+            </ng-container>
+
+            <!-- Users Submenu -->
+            <ng-container *ngSwitchCase="'users'">
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/users/customers'" [attr.title]="'All Customers'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="user" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/users/vip'" [attr.title]="'VIP Customers'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="crown" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/users/blacklist'" [attr.title]="'Blacklisted Users'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="ban" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li *ngIf="permissionService.hasPermission(PermissionConstants.USERS_CREATE)" class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-green-50 transition-all duration-200" 
+                   [routerLink]="'/users/create'" [attr.title]="'Create User'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="user-plus" class="w-5 h-5 text-green-400"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/users/admins'" [attr.title]="'Admin Users'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="shield" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-purple-50 transition-all duration-200" 
+                   [routerLink]="'/users/roles'" [attr.title]="'Roles & Permissions'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="key-round" class="w-5 h-5 text-purple-400"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-red-50 transition-all duration-200" 
+                   [routerLink]="'/users/login-attempts'" [attr.title]="'Login Attempts'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="alert-triangle" class="w-5 h-5 text-red-400"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-yellow-50 transition-all duration-200" 
+                   [routerLink]="'/users/activity'" [attr.title]="'Activity Logs'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="activity" class="w-5 h-5 text-yellow-400"></i>
+                </a>
+              </li>
+            </ng-container>
+
+            <!-- Event Management Submenu (collapsed, same design as others) -->
+            <ng-container *ngSwitchCase="'event'">
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/admin/event'" [attr.title]="'Add Event'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="circle-check" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/admin/eventlist'" [attr.title]="'Event List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="list-check" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+            </ng-container>
+          </ng-container>
+        </ng-container>
+      </ng-container>
     </ul>
+    <!-- Profile Section -->
+    <div class="p-4 border-t border-white/30 bg-gradient-to-t from-white/70 to-white/40 flex flex-col items-center justify-end"
+      (mouseenter)="onProfileMouseEnter()" (mouseleave)="onProfileMouseLeave()">
+      <div *ngIf="!sidebarCollapsed" class="flex items-center gap-3 mb-3 p-3 rounded-xl bg-white/60 border border-white/30 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 w-full relative">
+        <div class="flex justify-center items-center w-12 h-12 cursor-pointer">
+          <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-12 h-12 rounded-full object-cover mx-auto border-2 border-slate-300 shadow" (error)="onImageError($event)">
+        </div>
+        <div class="flex-1 min-w-0">
+          <h6 class="text-slate-900 font-bold text-sm truncate">{{ getUserDisplayName() }}</h6>
+          <p class="text-slate-500 text-xs truncate">{{ getUserRolesDisplay() }}</p>
+        </div>
+        <button class="flex items-center justify-center w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 shadow transition-all duration-200 transform hover:scale-110">
+          <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" [ngClass]="profileDropdownOpen ? 'rotate-180' : ''"></i>
+        </button>
+        <div *ngIf="profileDropdownOpen" id="profile-dropdown-menu" class="absolute left-0 right-0 mx-auto bottom-full mb-3 z-50 max-w-xs w-full bg-white border border-slate-200 rounded-xl shadow-lg animate-slide-down p-0 sm:p-0" style="animation-duration: 0.3s;" (click)="$event.stopPropagation()">
+          <div class="p-3 border-b border-slate-100">
+            <ng-container *ngIf="isLoggedIn; else notAuthenticatedHeader">
+              <h6 class="mb-1 text-slate-900 font-bold text-sm">Welcome, <span class="text-slate-700">{{ getUserDisplayName() }}</span></h6>
+              <p class="mb-0 text-slate-400 text-xs">{{ getUserRolesDisplay() }}</p>
+            </ng-container>
+            <ng-template #notAuthenticatedHeader>
+              <h6 class="mb-1 text-slate-900 font-bold text-sm">Welcome to <span class="text-slate-700">Britium Gallery</span></h6>
+              <p class="mb-0 text-slate-400 text-xs">Please login to access your account</p>
+            </ng-template>
+          </div>
+          <div class="p-2 flex flex-col gap-1">
+            <button class="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold text-sm transform hover:scale-105" (click)="navigateToAdminProfile()">
+              <i data-lucide="user" class="w-4 h-4 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>My Profile</span>
+            </button>
+            <!-- <button class="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-all duration-200 font-semibold text-sm transform hover:scale-105">
+              <i data-lucide="settings" class="w-4 h-4 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span>Settings</span>
+            </button> -->
+            <button class="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 font-semibold text-sm transform hover:scale-105" (click)="logout()">
+              <i data-lucide="log-out" class="w-4 h-4 transition-transform duration-200 hover:scale-110"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="sidebarCollapsed" class="flex flex-col items-center mb-3 relative">
+        <div class="flex justify-center items-center w-10 h-10 cursor-pointer">
+          <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-10 h-10 rounded-full object-cover mx-auto border-2 border-slate-300 shadow" (error)="onImageError($event)">
+        </div>
+        <!-- Dropdown for collapsed -->
+        <div *ngIf="profileDropdownOpen" class="absolute right-0 bottom-20 translate-y-full mb-2 w-44 bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-fade-in"
+          (mouseenter)="onProfileMouseEnter()" (mouseleave)="onProfileMouseLeave()">
+          <button class="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50 transition-colors duration-200" (click)="navigateToProfile()">
+            <i data-lucide="user" class="w-4 h-4"></i> My Profile
+          </button>
+          <button class="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-200" (click)="logout()">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+          </button>
+        </div>
+      </div>
 
-    <!-- Logout Button -->
-    <div class="sidebar-footer mt-4">
-      <button class="btn btn-logout w-100 d-flex align-items-center justify-content-center gap-2" (click)="logout()">
-        <i class="fa fa-sign-out-alt text-danger"></i>
-        <span>Logout</span>
-      </button>
+      <!-- Profile Dropdown Menu -->
+      <div *ngIf="profileDropdownOpen && !sidebarCollapsed" 
+           class="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50 animate-fade-in">
+        <div class="py-2">
+          <!-- Profile Info -->
+          <div class="px-4 py-3 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200">
+              <div class="flex-1 min-w-0">
+                <h6 class="text-slate-900 font-semibold text-sm truncate">{{ getUserDisplayName() }}</h6>
+                <p class="text-slate-500 text-xs truncate">{{ userEmail }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Menu Items -->
+          <div class="py-1">
+            <!-- Inbox Button -->
+            <button (click)="openAdminInbox()" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="inbox" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Inbox</span>
+              <span *ngIf="unreadMessages > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold animate-pulse">{{ unreadMessages }}</span>
+            </button>
+            
+            <!-- Profile Button -->
+            <button (click)="navigateToProfile(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="user" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Profile</span>
+            </button>
+            
+            <!-- Divider -->
+            <div class="border-t border-slate-100 my-1"></div>
+            
+            <!-- Logout Button -->
+            <button (click)="logout(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group">
+              <i data-lucide="log-out" class="w-4 h-4 text-red-500 group-hover:text-red-600 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Dropdown Menu -->
+      <div *ngIf="profileDropdownOpen && !sidebarCollapsed" 
+           class="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50 animate-fade-in">
+        <div class="py-2">
+          <!-- Profile Info -->
+          <div class="px-4 py-3 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200">
+              <div class="flex-1 min-w-0">
+                <h6 class="text-slate-900 font-semibold text-sm truncate">{{ getUserDisplayName() }}</h6>
+                <p class="text-slate-500 text-xs truncate">{{ userEmail }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Menu Items -->
+          <div class="py-1">
+            <!-- Inbox Button -->
+            <button (click)="openAdminInbox()" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="inbox" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Inbox</span>
+              <span *ngIf="unreadMessages > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold animate-pulse">{{ unreadMessages }}</span>
+            </button>
+            
+            <!-- Profile Button -->
+            <button (click)="navigateToProfile(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="user" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Profile</span>
+            </button>
+            
+            <!-- Divider -->
+            <div class="border-t border-slate-100 my-1"></div>
+            
+            <!-- Logout Button -->
+            <button (click)="logout(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group">
+              <i data-lucide="log-out" class="w-4 h-4 text-red-500 group-hover:text-red-600 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
+  </aside>
 </div>

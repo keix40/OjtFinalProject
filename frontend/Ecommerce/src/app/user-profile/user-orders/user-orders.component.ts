@@ -1,118 +1,276 @@
-import { Component, OnInit } from '@angular/core';
-import { DatePipe, CurrencyPipe } from '@angular/common'; // Import common modules
-
-interface OrderItem {
-  id: number;
-  title: string;
-  sku: string;
-  quantity: number;
-  price: number;
-  image: string;
-}
-
-interface ShippingAddress {
-  street: string;
-  apt: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
-}
-
-interface Order {
-  id: number;
-  orderNumber: string;
-  orderDate: Date;
-  status: string;
-  total: number;
-  subtotal: number;
-  shippingCost: number;
-  tax: number;
-  paymentMethod: string;
-  shippingMethod: string;
-  shippingAddress: ShippingAddress;
-  items: OrderItem[];
-}
+import { Component, ElementRef, OnInit, QueryList, ViewChildren,AfterViewChecked } from '@angular/core';
+import { DatePipe, CurrencyPipe } from '@angular/common';
+import { OrderService } from '../../services/order.service';
+import { UserOrderListDTO } from '../../user-order';
+import { AuthService } from '../../auth/auth.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-orders',
   standalone: false,
   templateUrl: './user-orders.component.html',
   styleUrl: './user-orders.component.css',
-  providers: [DatePipe, CurrencyPipe] // Provide pipes if used in this component's template
+  providers: [DatePipe, CurrencyPipe]
 })
-export class UserOrdersComponent implements OnInit {
+export class UserOrdersComponent implements OnInit, AfterViewChecked {
+  @ViewChildren('orderRow') orderRows!: QueryList<ElementRef>;
+  private hasScrolled = false;
 
-  userOrders: Order[] = [];
+
+  userOrders: UserOrderListDTO[] = [];
   expandedOrderId: number | null = null;
+  isLoading: boolean = false;
+  error: string | null = null;
 
-  constructor() { }
+  // Pagination
+  currentPage: number = 1;
+  itemsPerPage: number = 5;
+  totalPages: number = 1;
+
+  // Filter
+  selectedStatus: string = '';
+
+  statusOptions: string[] = [
+    'PENDING',
+    'PAID',
+    'PROCESSING',
+    'SHIPPED',
+    'DELIVERED',
+    'CANCELLED',
+    'RETURNED',
+  ];
+
+  constructor(
+    private orderService: OrderService,
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
 
   ngOnInit(): void {
-    this.loadUserOrders(); // Load orders on init
+    this.route.queryParams.subscribe(params => {
+      this.expandedOrderId = params['orderId'] ? Number(params['orderId']) : null;
+      this.hasScrolled = false;
+      setTimeout(() => this.scrollToExpandedOrder(), 300);
+    });
+    this.loadUserOrders();
   }
 
-  // Orders Methods
-  private loadUserOrders() {
-    // TODO: Implement API call to load user orders
-    // Placeholder data matching the Order interface
-    this.userOrders = [
-      {
-        id: 1,
-        orderNumber: '78A6431D409',
-        orderDate: new Date('2025-02-15'),
-        status: 'In progress',
-        total: 2105.90,
-        subtotal: 1929.93,
-        shippingCost: 15.99,
-        tax: 159.98,
-        paymentMethod: 'Credit Card (**** 4589)',
-        shippingMethod: 'Express Delivery (2-3 business days)',
-        shippingAddress: {
-          street: '123 Main Street',
-          apt: 'Apt 4B',
-          city: 'New York',
-          state: 'NY',
-          zip: '10001',
-          country: 'United States'
-        },
-        items: [
-          { id: 101, title: 'Lorem ipsum dolor sit amet', sku: 'PRD-001', quantity: 1, price: 899.99, image: 'assets/images/test.jpg' },
-          { id: 102, title: 'Consectetur adipiscing elit', sku: 'PRD-002', quantity: 2, price: 299.98, image: 'assets/images/test.jpg' },
-          { id: 103, title: 'Sed do eiusmod tempor', sku: 'PRD-003', quantity: 1, price: 129.99, image: 'assets/images/test.jpg' }
-        ]
-      },
-       {
-        id: 2,
-        orderNumber: '47H76G09F33',
-        orderDate: new Date('2024-12-10'),
-        status: 'Delivered',
-        total: 360.75,
-        subtotal: 320.00,
-        shippingCost: 10.75,
-        tax: 30.00,
-        paymentMethod: 'PayPal',
-        shippingMethod: 'Standard Shipping',
-        shippingAddress: {
-          street: '456 Oak Avenue',
-          apt: '',
-          city: 'Los Angeles',
-          state: 'CA',
-          zip: '90001',
-          country: 'United States'
-        },
-        items: [
-          { id: 201, title: 'Another Product', sku: 'PRD-004', quantity: 1, price: 320.00, image: 'assets/images/test.jpg' }
-        ]
+  ngAfterViewChecked() {
+    if (this.expandedOrderId !== null && !this.hasScrolled) {
+      const el = document.getElementById('order-' + this.expandedOrderId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        this.hasScrolled = true;
       }
-    ];
+    }
   }
 
-  toggleOrderDetails(orderId: number) {
-    if (this.expandedOrderId === orderId) {
-      this.expandedOrderId = null; // Collapse if already expanded
-    } else {
-      this.expandedOrderId = orderId; // Expand the clicked order
+  loadUserOrders(): void {
+    this.isLoading = true;
+    const user = this.authService.getDecodedToken();
+    const userId = user ? user.id : null;
+
+    if (!userId) {
+      this.error = 'User not authenticated. Please login again.';
+      this.isLoading = false;
+      return;
+    }
+
+    this.orderService.getOrderByUserId(userId).subscribe({
+      next: (orders) => {
+        console.log('Orders:', orders);
+        // Sort orders by orderDate descending
+        this.userOrders = orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        this.updatePagination();
+         
+        //for going to page that order exist and scroll by pmk july 18
+        if (this.expandedOrderId !== null) {
+          const index = this.filteredOrders().findIndex(order => order.orderId === this.expandedOrderId);
+          if (index !== -1) {
+            this.currentPage = Math.floor(index / this.itemsPerPage) + 1;
+          }
+          setTimeout(() => this.scrollToExpandedOrder(), 300);
+        }
+
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error fetching orders:', err);
+        this.error = 'Failed to load orders. Please try again later.';
+        this.isLoading = false;
+      },
+    });
+  }
+
+  updatePagination(): void {
+    const filtered = this.filteredOrders();
+    this.totalPages = Math.ceil(filtered.length / this.itemsPerPage);
+    this.currentPage = Math.min(this.currentPage, this.totalPages || 1);
+  }
+
+  filteredOrders(): UserOrderListDTO[] {
+    return this.selectedStatus
+      ? this.userOrders.filter(
+          (order) =>
+            this.getLatestStatus(order)?.toUpperCase() ===
+            this.selectedStatus.toUpperCase()
+        )
+      : this.userOrders;
+  }
+
+  paginatedOrders(): UserOrderListDTO[] {
+    const start = (this.currentPage - 1) * this.itemsPerPage;
+    return this.filteredOrders().slice(start, start + this.itemsPerPage);
+  }
+
+  onStatusFilterChange(event: any): void {
+    this.selectedStatus = event.target.value;
+    this.updatePagination();
+  }
+
+  onPageChange(page: number): void {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisible = 5;
+    let start = Math.max(1, this.currentPage - 2);
+    let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+    if (end === this.totalPages) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    return pages;
+  }
+
+  toggleOrderDetails(orderId: number): void {
+    this.expandedOrderId = this.expandedOrderId === orderId ? null : orderId;
+  }
+
+  isOrderExpanded(order: UserOrderListDTO): boolean {
+    return this.expandedOrderId === order.orderId;
+  }
+
+  getTotalItems(order: UserOrderListDTO): number {
+    return order.products.reduce((total, p) => total + p.quantity, 0);
+  }
+
+  /**
+   * Get the latest status from statusHistory or fallback to order.status
+   */
+  getLatestStatus(order: UserOrderListDTO): string {
+    if (order.statusHistory && order.statusHistory.length > 0) {
+      const latest = [...order.statusHistory].sort(
+        (a, b) => new Date(b.statusDate).getTime() - new Date(a.statusDate).getTime()
+      )[0];
+      return latest.status;
+    }
+    return order.status ?? 'UNKNOWN';
+  }  
+  
+  getLatestStatusDate(order: UserOrderListDTO): Date | null {
+    if (order.statusHistory && order.statusHistory.length > 0) {
+      const latest = [...order.statusHistory].sort(
+        (a, b) => new Date(b.statusDate).getTime() - new Date(a.statusDate).getTime()
+      )[0];
+      return new Date(latest.statusDate);
+    }
+    return null;
+  }
+  
+  getStatusBadgeClass(status: string | null | undefined): string {
+    if (!status) {
+      return 'bg-secondary';
+    }
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'bg-warning text-dark';
+      case 'paid':
+        return 'bg-primary text-white';
+      case 'processing':
+        return 'bg-info text-dark';
+      case 'shipped':
+        return 'bg-secondary text-white';
+      case 'delivered':
+        return 'bg-success';
+      case 'cancelled':
+      case 'returned':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
+    }
+  }
+
+  formatOrderDate(dateString: string): Date {
+    return new Date(dateString);
+  }
+
+  formatStatus(status: string): string {
+    if (!status) return '';
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  }
+
+  goToTracking(orderId: number): void {
+    this.router.navigate(['/ordertracking', orderId]);
+  }
+
+  // Returns the total of originalPrice * quantity for all products (before any discount)
+  getBeforeDiscountProductTotal(order: UserOrderListDTO): number {
+    if (!order.products) return 0;
+    return order.products.reduce((sum, p) => sum + ((p.originalPrice || p.unitPrice) * p.quantity), 0);
+  }
+
+  // Returns the total of unitPrice * quantity for all products (after discount)
+  getAfterDiscountProductTotal(order: UserOrderListDTO): number {
+    if (!order.products) return 0;
+    return order.products.reduce((sum, p) => sum + (p.unitPrice * p.quantity), 0);
+  }
+
+  // Returns true if the order used a discount
+  hasDiscount(order: UserOrderListDTO): boolean {
+    return !!(order.discountAmount > 0 || order.userDiscountId);
+  }
+
+  // Helper: Does this order have a MONEY_REFUND?
+  hasMoneyRefund(order: UserOrderListDTO): boolean {
+    return !!(order.returnRequests && order.returnRequests.some(r => r.refundId && r.refundType === 'MONEY_REFUND'));
+  }
+
+  // Helper: Get the first MONEY_REFUND return request for this order
+  getMoneyRefund(order: UserOrderListDTO) {
+    return order.returnRequests?.find(r => r.refundId && r.refundType === 'MONEY_REFUND');
+  }
+
+  // Helper: Format refund type for display (remove underscores, capitalize)
+  formatRefundType(refundType: string | undefined | null): string {
+    if (!refundType) return '';
+    return refundType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // Helper: Is the refund type REPLACEMENT?
+  isReplacementRefund(order: UserOrderListDTO): boolean {
+    return !!(order.returnRequests && order.returnRequests.some(r => r.refundId && r.refundType === 'REPLACEMENT'));
+  }
+
+  getReplacement(order: UserOrderListDTO) {
+    return order.returnRequests?.find(r => r.refundId && r.refundType === 'REPLACEMENT');
+  }
+
+  scrollToExpandedOrder() {
+    if (this.expandedOrderId !== null) {
+      const el = document.getElementById('order-' + this.expandedOrderId);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   }
 

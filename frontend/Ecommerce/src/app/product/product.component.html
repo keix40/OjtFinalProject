@@ -1,273 +1,408 @@
-<!-- Main Container -->
-<div class="product-form-container">
-  <div class="product-form-card">
-    <div class="form-header">
-      <h2>Add New Product</h2>
-      <p class="subtitle">Fill in the details to create your product listing</p>
+<!-- Modern Product Form Container -->
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header Section -->
+    <div class="text-center mb-8">
+      <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+        <i data-lucide="package-plus" class="w-8 h-8 text-indigo-500"></i>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ editMode ? 'Edit Product' : 'Create New Product' }}</h1>
+      <p class="text-gray-600 text-lg">{{ editMode ? 'Update product information below' : 'Add a new product to your inventory' }}</p>
     </div>
 
-    <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form">
+    <!-- Main Form -->
+    <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-8">
+      
+      <!-- Basic Information Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="info" class="w-5 h-5 text-slate-500"></i>
+          <h2 class="text-xl font-semibold text-slate-800">Basic Information</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Product Name -->
-      <div class="form-group">
-        <label class="form-label">Product Name</label>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-slate-700">
+              <i data-lucide="tag" class="w-4 h-4 inline mr-2"></i>
+              Product Name
+            </label>
         <input 
           type="text" 
-          class="form-control" 
+              class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" 
           formControlName="productName"
-          placeholder="Enter Product Name">
-        <div *ngIf="productForm.get('productName')?.invalid && productForm.get('productName')?.touched" class="error-message">
-          <div *ngIf="productForm.get('productName')?.errors?.['required']">Product name is required</div>
-          <div *ngIf="productForm.get('productName')?.errors?.['minlength']">Product name must be at least 3 characters</div>
+              placeholder="Enter product name">
+            <div *ngIf="productForm.get('productName')?.invalid && productForm.get('productName')?.touched" class="text-red-500 text-sm flex items-center gap-1">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i>
+              <span *ngIf="productForm.get('productName')?.errors?.['required']">Product name is required</span>
+              <span *ngIf="productForm.get('productName')?.errors?.['minlength']">Product name must be at least 3 characters</span>
         </div>
       </div>
 
-      <!-- Description -->
-      <div class="form-group">
-        <label class="form-label">Description</label>
-        <textarea 
-          class="form-control" 
-          rows="3" 
-          formControlName="description"
-          placeholder="Enter product description..."></textarea>
-        <div *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched" class="error-message">
-          <div *ngIf="productForm.get('description')?.errors?.['required']">Description is required</div>
-          <div *ngIf="productForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters</div>
+          <!-- Price -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-slate-700">
+              <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-2"></i>
+              Price
+            </label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">$</span>
+              <input 
+                type="number" 
+                class="w-full pl-8 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" 
+                formControlName="price"
+                min="0.01" 
+                placeholder="0.00">
+            </div>
+            <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="text-red-500 text-sm flex items-center gap-1">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i>
+              <span *ngIf="productForm.get('price')?.errors?.['required']">Price is required</span>
+              <span *ngIf="productForm.get('price')?.errors?.['min']">Price must be greater than 0</span>
         </div>
       </div>
 
-      <!-- Price and Quantity Row -->
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Price</label>
-          <div class="input-with-icon">
-            <span class="currency-icon">$</span>
+          <!-- Quantity -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-slate-700">
+              <i data-lucide="package" class="w-4 h-4 inline mr-2"></i>
+              Quantity
+            </label>
             <input 
               type="number" 
-              class="form-control" 
-              formControlName="price"
-              min="0.01" 
-              placeholder="0.00">
-          </div>
-          <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="error-message">
-            <div *ngIf="productForm.get('price')?.errors?.['required']">Price is required</div>
-            <div *ngIf="productForm.get('price')?.errors?.['min']">Price must be greater than 0</div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Quantity</label>
-          <input 
-            type="number" 
-            class="form-control" 
-            formControlName="quantity"
-            min="0" 
-            placeholder="Enter Quantity">
-          <div *ngIf="productForm.get('quantity')?.invalid && productForm.get('quantity')?.touched" class="error-message">
-            <div *ngIf="productForm.get('quantity')?.errors?.['required']">Quantity is required</div>
-            <div *ngIf="productForm.get('quantity')?.errors?.['min']">Quantity must be 0 or greater</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Category and Brand Card -->
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">Categories & Brands</h5>
-        </div>
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-6">
-              <label class="form-label">Categories</label>
-              <div formArrayName="categories">
-                <div *ngFor="let ctrl of categoriesArray.controls; let i = index" class="input-group mb-2">
-                  <select class="form-select" [formControlName]="i" (change)="onCategorySelectChange($event, i)">
-                    <option [ngValue]="null" disabled>Select Category</option>
-                    <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
-                    <option value="create-new">+ Create New Category</option>
-                  </select>
-                  <button type="button" class="btn btn-outline-danger" (click)="removeCategorySelect(i)" [disabled]="categoriesArray.length === 1">&times;</button>
-                </div>
-              </div>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Brands</label>
-              <div formArrayName="brands">
-                <div *ngFor="let ctrl of brandsArray.controls; let i = index" class="input-group mb-2">
-                  <select class="form-select" [formControlName]="i" (change)="onBrandSelectChange($event, i)">
-                    <option [ngValue]="null" disabled>Select Brand</option>
-                    <option *ngFor="let brand of brands" [ngValue]="brand.id">{{ brand.name }}</option>
-                    <option value="create-new">+ Create New Brand</option>
-                  </select>
-                  <button type="button" class="btn btn-outline-danger" (click)="removeBrandSelect(i)" [disabled]="brandsArray.length === 1">&times;</button>
-                </div>
-              </div>
+              class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" 
+              formControlName="quantity"
+              min="0" 
+              placeholder="Enter quantity">
+            <div *ngIf="productForm.get('quantity')?.invalid && productForm.get('quantity')?.touched" class="text-red-500 text-sm flex items-center gap-1">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i>
+              <span *ngIf="productForm.get('quantity')?.errors?.['required']">Quantity is required</span>
+              <span *ngIf="productForm.get('quantity')?.errors?.['min']">Quantity must be 0 or greater</span>
             </div>
           </div>
+
+          <!-- Status -->
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-slate-700">
+              <i data-lucide="toggle-left" class="w-4 h-4 inline mr-2"></i>
+              Status
+            </label>
+            <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" formControlName="status">
+              <option value=1>Active</option>
+              <option value=0>Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mt-6 space-y-2">
+          <label class="block text-sm font-medium text-slate-700">
+            <i data-lucide="file-text" class="w-4 h-4 inline mr-2"></i>
+            Description
+          </label>
+          <textarea 
+            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 resize-none" 
+            rows="4" 
+            formControlName="description"
+            placeholder="Enter product description..."></textarea>
+          <div *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched" class="text-red-500 text-sm flex items-center gap-1">
+            <i data-lucide="alert-circle" class="w-4 h-4"></i>
+            <span *ngIf="productForm.get('description')?.errors?.['required']">Description is required</span>
+            <span *ngIf="productForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters</span>
+          </div>
         </div>
       </div>
 
-      <!-- Status -->
-      <div class="form-group">
-        <label class="form-label">Status</label>
-        <select class="form-select" formControlName="status">
-          <option value=1>Active</option>
-          <option value=2>Draft</option>
-          <option value=3>Archived</option>
-        </select>
+      <!-- Categories & Brands Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="layers" class="w-5 h-5 text-slate-500"></i>
+          <h2 class="text-xl font-semibold text-slate-800">Categories & Brands</h2>
+        </div>
+        
+        <div formArrayName="categoryBrandArray" class="space-y-4">
+          <div *ngFor="let group of categoryBrandArray.controls; let i = index" [formGroupName]="i" class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
+            <div class="flex-1">
+              <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" formControlName="categoryId" (change)="onCategoryChange(i)">
+                  <option [ngValue]="null" disabled>Select Category</option>
+                  <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                  <option [ngValue]="'add_new_category'">+ Add New Category</option>
+                </select>
+              </div>
+            <div class="flex-1">
+              <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" formControlName="brandId" (change)="onBrandChange(i)">
+                  <option [ngValue]="null">No Brand</option>
+                  <option *ngFor="let brand of group.value.availableBrands" [ngValue]="brand.id">{{ brand.name }}</option>
+                  <option [ngValue]="'add_new_brand'">+ Add New Brand</option>
+                </select>
+              </div>
+            <div class="flex items-center gap-2">
+              <button type="button" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200" (click)="removeCategoryBrandPair(i)" [disabled]="categoryBrandArray.length === 1">
+                <i data-lucide="trash-2" class="w-5 h-5"></i>
+              </button>
+              <button type="button" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-200" (click)="addCategoryBrandPair()" *ngIf="i === categoryBrandArray.length - 1">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Image Upload Section -->
-      <div class="image-upload-section">
-        <label class="form-label">Product Images</label>
+      <!-- Image Upload Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="image" class="w-5 h-5 text-slate-500"></i>
+          <h2 class="text-xl font-semibold text-slate-800">Product Images</h2>
+      </div>
+
         <div class="upload-area" 
              (click)="fileInput.click()"
              (dragover)="onDragOver($event)"
              (dragleave)="onDragLeave($event)"
              (drop)="onDrop($event)"
-             [class.dragging]="isDragging">
-          <i class="fas fa-cloud-upload-alt"></i>
-          <p>Click to upload images</p>
-          <span class="upload-hint">or drag and drop</span>
-          <span class="upload-requirements">Supported formats: JPG, PNG, GIF, WebP (max 5MB)</span>
+             [class.dragging]="isDragging"
+             class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-slate-400 transition-all duration-200 cursor-pointer">
+          <i data-lucide="upload-cloud" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+          <p class="text-lg font-medium text-slate-700 mb-2">Click to upload images</p>
+          <span class="text-slate-500">or drag and drop</span>
+          <p class="text-sm text-slate-400 mt-2">Supported formats: JPG, PNG, GIF, WebP (max 5MB)</p>
         </div>
-        <input type="file" #fileInput (change)="onImageSelect($event)" multiple accept="image/jpeg,image/png,image/gif,image/webp" class="d-none">
+        <input type="file" #fileInput (change)="onImageSelect($event)" multiple accept="image/jpeg,image/png,image/gif,image/webp" class="hidden">
 
-        <div *ngIf="uploadError" class="error-message">
+        <div *ngIf="uploadError" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-5 h-5"></i>
           {{ uploadError }}
         </div>
 
-        <div *ngIf="submitted && selectedImages.length === 0" class="error-message">
+        <div *ngIf="submitted && selectedImages.length === 0" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-5 h-5"></i>
           At least one image is required
         </div>
 
         <!-- Image Previews -->
-        <div class="image-previews" *ngIf="selectedImagesPreview.length > 0">
-          <div class="preview-item" *ngFor="let image of selectedImagesPreview; let i = index">
-            <img [src]="image" alt="Preview" />
-            <button type="button" class="remove-image-btn" (click)="removeImage(i)">
-              <i class="fas fa-times"></i>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
+          <!-- Existing images -->
+          <div *ngFor="let image of existingImages; let existingIdx = index; trackBy: trackByExistingImage" class="relative group">
+            <img [src]="image.imageUrl" alt="Preview" class="w-full h-24 object-cover rounded-lg" />
+            <button type="button" class="absolute -top-2 -right-2 w-6 h-6 text-red-400 rounded-full flex items-center justify-center transition-all duration-200" (click)="$event.stopPropagation(); removeImage(existingIdx, true)">
+              <i data-lucide="trash-2" class="w-5 h-5"></i>
+            </button>
+          </div>
+          <!-- New images -->
+          <div *ngFor="let image of selectedImagesPreview; let newIdx = index; trackBy: trackByNewImage" class="relative group">
+            <img [src]="image" alt="Preview" class="w-full h-24 object-cover rounded-lg" />
+            <button type="button" class="absolute -top-2 -right-2 w-6 h-6 text-red-400 rounded-full flex items-center justify-center transition-all duration-200" (click)="$event.stopPropagation(); removeImage(newIdx, false)">
+              <i data-lucide="trash-2" class="w-5 h-5"></i>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Variation Section -->
-      <div class="variation-section">
-        <div class="form-group">
-          <label class="form-label">Product Variation</label>
-          <div class="form-check form-switch">
+      <!-- Variations Card -->
+      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
+        <div class="flex items-center gap-3 mb-6">
+          <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
+          <h2 class="text-xl font-semibold text-slate-800">Product Variations</h2>
+        </div>
+        
+        <div class="flex items-center gap-3 mb-6">
             <input 
-              class="form-check-input" 
               type="checkbox" 
               id="hasVariant" 
-              formControlName="hasVariant">
-            <label class="form-check-label" for="hasVariant">
+            formControlName="hasVariant"
+            class="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500"
+            [attr.title]="!canEnableVariants ? 'Enter valid product name, price, and quantity first' : null">
+          <label for="hasVariant" class="text-slate-700">
               This product has variants (size, color, etc.)
             </label>
-          </div>
+        </div>
+        <div *ngIf="!canEnableVariants" class="text-xs text-red-500 mb-4 ml-1">
+          Please enter a valid product name, price, and quantity before enabling variants.
         </div>
 
         <!-- Product Attributes Section -->
-        <div class="product-attributes-section" *ngIf="productForm.get('hasVariant')?.value">
-          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-            <h3 class="mb-0">Product Attributes</h3>
-            <button type="button" class="btn btn-outline-primary mb-2 mb-md-0" (click)="openNewAttributeModal()">
-              <i class="fas fa-plus me-1"></i> Add New Attribute
+        <div *ngIf="productForm.get('hasVariant')?.value" class="space-y-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-slate-800">Product Attributes</h3>
+            <button type="button" class="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="openNewAttributeModal()">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+              Add New Attribute
             </button>
           </div>
+          
           <!-- Existing Attributes -->
-          <div class="row g-3">
-            <div *ngFor="let attr of productAttributes; let i = index" class="col-12">
-              <div class="attribute-card shadow-sm rounded-3 bg-white mb-3 p-3">
-                <span class="fw-bold fs-5 me-2">{{ attr.attributeName }}</span>
-                <!-- REPLACED ATTRIBUTE VALUE DISPLAY -->
-                <div class="d-flex flex-wrap gap-2">
-                  <ng-container *ngFor="let value of attr.allowedValues; let j = index">
+          <div class="space-y-4">
+            <div *ngFor="let attr of productAttributes; let i = index" class="p-6 bg-slate-50 rounded-xl border border-slate-200">
+              <div class="flex items-center gap-3 mb-4">
+                <i data-lucide="tag" class="w-5 h-5 text-slate-500"></i>
+                <span class="font-semibold text-slate-800">{{ attr.attributeName }}</span>
+                <button type="button" class="ml-auto p-1 text-red-400 hover:text-red-600 rounded-full transition-all duration-200" (click)="removeProductAttribute(i)">
+                  <i data-lucide="trash-2" class="w-5 h-5"></i>
+                </button>
+              </div>
+              
+              <div class="flex flex-wrap items-center gap-2 mb-4">
+                <ng-container *ngFor="let value of attr.allowedValues; let j = index">
+                  <ng-container *ngIf="['color', 'colors', 'colour', 'colours'].includes((attr.attributeName || '').toLowerCase()) && value.value.startsWith('#'); else defaultPill">
+                    <div 
+                      class="w-8 h-8 rounded-full border-2 cursor-pointer transition-all"
+                      [style.backgroundColor]="value.value"
+                      [title]="value.value"
+                      (click)="toggleAttributeValue(i, j)"
+                      [class.border-slate-600]="value.selected"
+                      [class.border-slate-200]="!value.selected"
+                      [class.ring-2]="value.selected"
+                      [class.ring-slate-500]="value.selected"
+                      [class.ring-offset-2]="value.selected">
+                    </div>
+                  </ng-container>
+                  <ng-template #defaultPill>
                     <button type="button"
-                            class="btn btn-sm px-3 py-1 rounded-pill"
-                            [class.btn-primary]="value.selected"
-                            [class.btn-outline-secondary]="!value.selected"
-                            (click)="toggleAttributeValue(i, j)">
+                        class="px-3 py-1 rounded-full text-sm font-medium transition-all duration-200"
+                        [class.bg-slate-600]="value.selected"
+                        [class.text-white]="value.selected"
+                        [class.bg-slate-200]="!value.selected"
+                        [class.text-slate-700]="!value.selected"
+                        [class.hover:bg-slate-300]="!value.selected"
+                        (click)="toggleAttributeValue(i, j)">
                       {{ value.value }}
                     </button>
-                  </ng-container>
-                </div>
-                <!-- END REPLACED ATTRIBUTE VALUE DISPLAY -->
-                <div class="input-group mt-3" style="max-width: 300px;">
-                  <input type="text" class="form-control" placeholder="Add new value" #newValueInput>
-                  <button type="button" class="btn btn-outline-primary" (click)="addNewAttributeValueToAttribute(i, newValueInput.value, true); newValueInput.value=''">Add</button>
-                </div>
+                  </ng-template>
+                </ng-container>
+              </div>
+              
+              <div class="flex gap-2 max-w-md">
+                <ng-container *ngIf="isColorAttribute(attr)">
+                  <input type="color" [(ngModel)]="newAttributeValueInputs[i]" [name]="'newColorValue' + i" class="w-12 h-12 p-1 border border-slate-400 rounded-lg cursor-pointer" (change)="onColorPickerChange(i, $event)" [ngModelOptions]="{standalone: true}" />
+                </ng-container>
+                <input type="text" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" placeholder="Add new value" [(ngModel)]="newAttributeValueInputs[i]" [name]="'newValue' + i" [readonly]="false" [ngModelOptions]="{standalone: true}" />
+                <button *ngIf="isColorAttribute(attr)" type="button" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="addNewColorValueToAttribute(i)">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
+                <button *ngIf="!isColorAttribute(attr)" type="button" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="addNewAttributeValueToAttribute(i, newAttributeValueInputs[i], true); newAttributeValueInputs[i]=''">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                </button>
               </div>
             </div>
           </div>
-          <!-- Add Attribute Section -->
-          <div class="card p-3 mt-4 shadow-sm bg-light border-0">
-            <label class="mb-2 fw-semibold">Add existing attribute:</label>
-            <div class="input-group flex-nowrap" style="max-width: 400px;">
-              <select class="form-select" name="attributeSelect" [(ngModel)]="selectedAttributeId" [ngModelOptions]="{standalone: true}">
+          
+          <!-- Add Existing Attribute -->
+          <div class="p-6 bg-slate-50 rounded-xl border border-slate-200">
+            <label class="block text-sm font-medium text-slate-700 mb-3">Add existing attribute:</label>
+            <div class="flex gap-2 max-w-md">
+              <select class="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" name="attributeSelect" [(ngModel)]="selectedAttributeId" [ngModelOptions]="{standalone: true}">
                 <option [ngValue]="null">Select attribute</option>
                 <option *ngFor="let attr of availableAttributes" [ngValue]="attr.id" [disabled]="isAttributeDisabled(attr.id)">{{ attr.name }}</option>
               </select>
-              <button type="button" class="btn btn-primary" (click)="addProductAttribute()" [disabled]="!selectedAttributeId">
-                <i class="fas fa-plus"></i> Add Attribute
+              <button type="button" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200 disabled:opacity-50" (click)="addProductAttribute()" [disabled]="!selectedAttributeId">
+                <i data-lucide="plus" class="w-4 h-4"></i>
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Product Variants Section -->
-        <div *ngIf="productForm.get('hasVariant')?.value && variants.length > 0" class="generated-variants-section mt-4">
-          <h4>Product Variants ({{variants.length}})</h4>
-          <div class="row">
-            <div class="col-12 mb-4" *ngFor="let variant of variantFormGroups; let i = index" [formGroup]="variant">
-              <div class="variant-card p-3 shadow-sm rounded-3 bg-white">
-                <div class="variant-header mb-3">
-                  <span class="badge bg-primary me-2">Variant {{i+1}}</span>
-                  <span class="text-muted">{{variant.get('sku')?.value}}</span>
+        <!-- Generated Variants Section -->
+        <div *ngIf="productForm.get('hasVariant')?.value && variants.length > 0" class="mt-8">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-800">Generated Variants</h3>
+            <span class="text-sm text-slate-500 ml-4">{{ variants.length }} variant(s) generated</span>
+          </div>
+          <div formArrayName="variants">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div *ngFor="let variant of variantFormGroups; let variantIndex = index" [formGroupName]="variantIndex" class="bg-slate-50 rounded-xl p-6 border border-slate-200">
+                <!-- Variant Header -->
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-2">
+                    <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
+                    <h4 class="font-semibold text-slate-800">Variant {{ variantIndex + 1 }}</h4>
+                  </div>
+                  <span class="text-sm text-slate-500">{{ variant.get('sku')?.value }}</span>
+                  <button type="button" class="ml-2 p-1 text-red-400 hover:text-red-600 rounded-full transition-all duration-200" (click)="removeVariantCard(variantIndex)">
+                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                  </button>
                 </div>
-                
-                <!-- Attribute display -->
-                <div class="mb-3">
-                  <div *ngFor="let attr of variant.get('attributes')?.value" class="attribute-badge">
-                    <strong>{{attr.attributeName}}:</strong> {{attr.value}}
+
+                <!-- Variant Attributes -->
+                <div class="mb-4">
+                  <div class="flex flex-wrap gap-2">
+                    <ng-container *ngFor="let attr of variant.get('attributes')?.value">
+                      <ng-container *ngIf="isColorAttribute(attr); else defaultAttr">
+                        <span class="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full text-sm">
+                          <span class="w-5 h-5 rounded-full border border-slate-300 inline-block" [style.backgroundColor]="attr.value"></span>
+                          Color
+                        </span>
+                      </ng-container>
+                      <ng-template #defaultAttr>
+                        <span class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-sm">
+                          {{ attr.attributeName }}: {{ attr.value }}
+                        </span>
+                      </ng-template>
+                    </ng-container>
                   </div>
                 </div>
-                
-                <!-- Price/Stock inputs -->
-                <div class="row g-3">
-                  <div class="col-md-4">
-                    <label>Price</label>
-                    <input type="number" class="form-control" formControlName="price" min="0.01" step="0.01">
+
+                <!-- Variant Details -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Price</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">$</span>
+                      <input 
+                        type="number" 
+                        class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" 
+                        formControlName="price"
+                        min="0.01" 
+                        step="0.01">
+                    </div>
                   </div>
-                  <div class="col-md-4">
-                    <label>Stock</label>
-                    <input type="number" class="form-control" formControlName="stock" min="0">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Stock</label>
+                    <input 
+                      type="number" 
+                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" 
+                      formControlName="stock"
+                      min="0">
                   </div>
-                  <div class="col-md-4">
-                    <label>Images</label>
-                    <button class="btn btn-outline-secondary btn-sm w-100" 
-                            type="button" 
-                            (click)="onVariantImageSelect(i)">
-                      <i class="fas fa-image me-2"></i>Add Images
+                </div>
+
+                <!-- Variant Images -->
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-slate-700 mb-2">Variant Images</label>
+                  <div class="flex items-center gap-2">
+                    <button 
+                      type="button" 
+                      class="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200"
+                      (click)="onVariantImageSelect(variantIndex)">
+                      <i data-lucide="image" class="w-4 h-4"></i>
+                      Add Images
                     </button>
-                    <input
-                      type="file"
-                      id="variantImageInput{{i}}"
-                      (change)="onVariantImageChange($event, i)"
-                      multiple
-                      accept="image/jpeg,image/png,image/gif,image/webp"
-                      style="display: none;"
-                    >
+                    <input 
+                      type="file" 
+                      [id]="'variantImageInput' + variantIndex"
+                      (change)="onVariantImageChange($event, variantIndex)"
+                      multiple 
+                      accept="image/jpeg,image/png,image/gif,image/webp" 
+                      class="hidden">
                   </div>
-                </div>
-                
-                <!-- Image previews -->
-                <div *ngIf="variant.get('images')?.value?.length > 0" class="mt-3">
-                  <div class="image-thumbnails d-flex flex-row flex-wrap gap-2">
-                    <div *ngFor="let img of variant.get('images')?.value; let imgIdx = index" class="thumbnail p-0 m-0" style="width: 40px; height: 40px;">
-                      <img [src]="img.preview" class="variant-image-thumb" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid #eee;">
-                      <button class="remove-thumbnail" (click)="removeVariantImage(i, imgIdx)" style="top: -8px; right: -8px; width: 20px; height: 20px; font-size: 0.8em;">
-                        <i class="fas fa-times"></i>
+                  <!-- Variant Image Previews -->
+                  <div class="grid grid-cols-4 gap-2 mt-3">
+                    <!-- Existing images -->
+                    <div class="relative group" *ngFor="let image of existingVariantImages[variantIndex]; let imageIndex = index; trackBy: trackByExistingImage">
+                      <img [src]="image.imageUrl" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
+                      <button 
+                        type="button" 
+                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-100 transition-all duration-200" 
+                        (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, true)">
+                        <i data-lucide="x" class="w-3 h-3"></i>
+                      </button>
+                    </div>
+                    <!-- New images -->
+                    <div class="relative group" *ngFor="let image of newVariantImagesPreview[variantIndex]; let imageIndex = index; trackBy: trackByNewImage">
+                      <img [src]="image" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
+                      <button 
+                        type="button" 
+                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-100 transition-all duration-200" 
+                        (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, false)">
+                        <i data-lucide="x" class="w-3 h-3"></i>
                       </button>
                     </div>
                   </div>
@@ -279,45 +414,56 @@
       </div>
 
       <!-- Submit Button -->
-      <button
-        type="submit"
-        class="submit-btn"
-        [disabled]="productForm.invalid || selectedImages.length === 0">
-        <i class="fas fa-plus"></i> Add Product
-      </button>
+      <div class="flex flex-col items-center">
+        <button
+          type="submit"
+          class="flex items-center gap-3 px-8 py-4 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!canSubmitProduct"
+        >
+          <i data-lucide="plus" class="w-5 h-5"></i>
+          {{ editMode ? 'Update Product' : 'Create Product' }}
+        </button>
+        <div *ngIf="productForm.get('hasVariant')?.value && !canSubmitProduct" class="text-xs text-red-500 mt-2">
+          Total variant stock must equal product quantity.
+        </div>
+      </div>
     </form>
   </div>
 </div>
 
 <!-- New Attribute Modal -->
-<div *ngIf="showNewAttributeModal" class="modal-backdrop show" style="z-index: 1050;"></div>
-<div *ngIf="showNewAttributeModal" class="modal d-block" tabindex="-1" style="z-index: 1060;">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Create New Attribute</h5>
-        <button type="button" class="btn-close" (click)="closeNewAttributeModal()"></button>
+<div *ngIf="showNewAttributeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-semibold text-slate-800">Create New Attribute</h3>
+      <button type="button" class="p-2 hover:bg-slate-100 rounded-lg transition-all duration-200" (click)="closeNewAttributeModal()">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+    </div>
+    
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">Attribute Name *</label>
+        <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" [(ngModel)]="newAttributeName">
       </div>
-      <div class="modal-body">
-        <div class="mb-3">
-          <label>Attribute Name *</label>
-          <input type="text" class="form-control" [(ngModel)]="newAttributeName">
+      
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-2">Attribute Values *</label>
+        <div class="flex gap-2 mb-3">
+          <input type="text" class="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" [(ngModel)]="newAttributeValueInput" (keyup.enter)="addNewAttributeValue()">
+          <button type="button" class="px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="addNewAttributeValue()">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+          </button>
         </div>
-        <div class="mb-3">
-          <label>Attribute Values *</label>
-          <div class="input-group mb-2">
-            <input type="text" class="form-control" [(ngModel)]="newAttributeValueInput" (keyup.enter)="addNewAttributeValue()">
-            <button type="button" class="btn btn-outline-secondary" (click)="addNewAttributeValue()">Add Value</button>
-          </div>
-          <div>
-            <span *ngFor="let val of newAttributeValues" class="badge bg-secondary me-1">{{ val }}</span>
-          </div>
+        <div class="flex flex-wrap gap-2">
+          <span *ngFor="let val of newAttributeValues" class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-sm">{{ val }}</span>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="closeNewAttributeModal()">Cancel</button>
-        <button type="button" class="btn btn-primary" (click)="saveNewAttribute()" [disabled]="!newAttributeName || newAttributeValues.length === 0">Save Attribute</button>
       </div>
+    
+    <div class="flex gap-3 mt-6">
+      <button type="button" class="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-all duration-200" (click)="closeNewAttributeModal()">Cancel</button>
+      <button type="button" class="flex-1 px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200 disabled:opacity-50" (click)="saveNewAttribute()" [disabled]="!newAttributeName || newAttributeValues.length === 0">Save Attribute</button>
     </div>
   </div>
 </div>

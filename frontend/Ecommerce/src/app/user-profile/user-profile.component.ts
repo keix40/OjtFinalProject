@@ -1,6 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterModule } from '@angular/router';
+import { UserPersonalInfoComponent } from './user-personal-info/user-personal-info.component';
+import { OrderService } from '../services/order.service';
+import { FooterComponent } from '../footer/footer.component';
+import { CommonModule } from '@angular/common';
+import { HeaderComponent } from '../header/header.component';
+import { UserNotificationsComponent } from './user-notifications/user-notifications.component';
+import { UserCouponService } from '../services/user-coupon.service';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
 interface UserDetails {
@@ -12,13 +19,14 @@ interface UserDetails {
   phoneNumber: string | null;
   password?: string | null;
   roles?: string[];
+  profileImage?: string|null;
 }
 
 @Component({
   selector: 'app-user-profile',
+  standalone: false,
   templateUrl: './user-profile.component.html',
-  styleUrls: ['./user-profile.component.css'],
-  standalone: false
+  styleUrls: ['./user-profile.component.css']
 })
 export class UserProfileComponent implements OnInit {
   userDetails: UserDetails = {
@@ -28,19 +36,31 @@ export class UserProfileComponent implements OnInit {
     gender: null, // Added gender
     dateOfBirth: null, // Added dateOfBirth (renamed from dateofbirth)
     phoneNumber: null, // Added missing property
-    roles: []
+    roles: [],
+    profileImage: null,
   };
 
   activeSection: string = 'orders';
+  orderCount: number = 0; // <-- Add this
+  couponCount: number = 0; // <-- Add this
+
+  breadcrumbItems = [
+    { label: 'Home', link: '/home' },
+    { label: 'Profile' }
+  ];
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private orderService: OrderService, // <-- Inject OrderService
+    private userCouponService: UserCouponService // <-- Inject UserCouponService
   ) { }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadUserDetails();
+    this.loadOrderCount(); // <-- Load order count on init
+    this.loadCouponCount(); // <-- Load coupon count on init
     // Get section from query params
     this.route.queryParams.subscribe(params => {
       if (params['section']) {
@@ -51,6 +71,9 @@ export class UserProfileComponent implements OnInit {
 
   private loadUserDetails() {
     const decodedToken = this.authService.getDecodedToken();
+    const backendBaseUrl = 'http://localhost:8080';                     //add For profile by PMK (June 11)
+const rawImagePath = decodedToken?.profileImage || '/upload/defaultProfile.png';
+const fullImageUrl = backendBaseUrl + rawImagePath;
 
     this.userDetails = {
       id: decodedToken?.id || null, // Changed from userId to id
@@ -59,8 +82,43 @@ export class UserProfileComponent implements OnInit {
       gender: decodedToken?.gender || null, // Get gender from token
       dateOfBirth: decodedToken?.dateofbirth || null, // Get dateofbirth from token (using token key name)
       phoneNumber: decodedToken?.phoneNumber || null, // Get phoneNumber from token
+      profileImage: fullImageUrl,
       roles: this.authService.getRoles()
     };
+  }
+
+  loadOrderCount() {
+    const user = this.authService.getDecodedToken();
+    const userId = user ? user.id : null;
+    if (!userId) {
+      this.orderCount = 0;
+      return;
+    }
+    this.orderService.getOrderByUserId(userId).subscribe({
+      next: (orders) => {
+        this.orderCount = Array.isArray(orders) ? orders.length : 0;
+      },
+      error: () => {
+        this.orderCount = 0;
+      }
+    });
+  }
+
+  loadCouponCount() {
+    const user = this.authService.getDecodedToken();
+    const userId = user ? user.id : null;
+    if (!userId) {
+      this.couponCount = 0;
+      return;
+    }
+    this.userCouponService.getUserCoupons(userId).subscribe({
+      next: (coupons) => {
+        this.couponCount = Array.isArray(coupons) ? coupons.length : 0;
+      },
+      error: () => {
+        this.couponCount = 0;
+      }
+    });
   }
 
   selectSection(section: string) {
@@ -77,4 +135,4 @@ export class UserProfileComponent implements OnInit {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
-} 
+}

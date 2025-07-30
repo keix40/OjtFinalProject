@@ -1,18 +1,19 @@
 package com.Ojt.Ecommerce.service;
 
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.Ojt.Ecommerce.dto.AddressDTO;
 import com.Ojt.Ecommerce.entity.Address;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.repository.AddressRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -24,7 +25,7 @@ public class AddressServiceImpl implements AddressService{
 
     //add service (Kei_
     @Override
-    public String addNewAddress(AddressDTO dto){
+    public Long addNewAddress(AddressDTO dto){
 
         User user = userRepository.findById(dto.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -43,8 +44,7 @@ public class AddressServiceImpl implements AddressService{
                 .build();
 
         addressRepository.save(address);
-        return "Address saved successfully.";
-
+        return address.getId();
     }
 
     @Override
@@ -53,8 +53,7 @@ public class AddressServiceImpl implements AddressService{
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-
-        List<Address> addressList = addressRepository.findByUser(user);
+        List<Address> addressList = addressRepository.findByUserAndStatus(user, 1);
         return addressList
                 .stream().map(this::convertToDTO).collect(Collectors.toList());
     }
@@ -77,4 +76,37 @@ public class AddressServiceImpl implements AddressService{
         return dto;
     }
 
+    @Override
+    public Long updateAddress(Long id, AddressDTO dto) {
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+
+        // Optionally, check if userId matches the address's user
+        if (dto.getUserId() != null && address.getUser() != null && !dto.getUserId().equals(address.getUser().getId())) {
+            User user = userRepository.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            address.setUser(user);
+        }
+
+        address.setAddress(dto.getAddress());
+        address.setCity(dto.getCity());
+        address.setState(dto.getState());
+        address.setPostalCode(dto.getPostalCode());
+        address.setCountry(dto.getCountry());
+        address.setLatitude(dto.getLatitude());
+        address.setLongitude(dto.getLongitude());
+        address.setType(dto.getType());
+        address.setUpdateDate(LocalDateTime.now());
+
+        addressRepository.save(address);
+        return address.getId();
+    }
+
+    @Override
+    public void deleteAddress(Long id) {
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Address not found"));
+        address.setStatus(0);
+        addressRepository.save(address);
+    }
 }

@@ -1,0 +1,884 @@
+package com.Ojt.Ecommerce.service;
+
+import com.Ojt.Ecommerce.entity.UserSession;
+import com.Ojt.Ecommerce.repository.UserSessionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoField;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+public class SessionService {
+    
+    @Autowired
+    private UserSessionRepository userSessionRepository;
+    
+    private static final int SESSION_TIMEOUT_MINUTES = 30; // 30 minutes of inactivity
+    
+    /**
+     * Start a new session for a user
+     */
+    public UserSession startSession(Long userId, String sessionId, String userAgent, String ipAddress) {
+        // Handle anonymous users
+        Long sessionUserId = userId;
+        if (userId == null || userId == 0) {
+            sessionUserId = -1L; // Use -1 for anonymous users
+        }
+        
+        // End any existing active sessions for this user
+        endUserSessions(sessionUserId);
+        
+        UserSession session = new UserSession(sessionUserId, sessionId, userAgent, ipAddress);
+        return userSessionRepository.save(session);
+    }
+    
+    /**
+     * Record a page view for an existing session
+     */
+    public void recordPageView(String sessionId) {
+        Optional<UserSession> sessionOpt = userSessionRepository.findBySessionIdAndEndTimeIsNull(sessionId);
+        if (sessionOpt.isPresent()) {
+            UserSession session = sessionOpt.get();
+            session.incrementPageCount();
+            userSessionRepository.save(session);
+        }
+    }
+    
+    /**
+     * End a session
+     */
+    public void endSession(String sessionId) {
+        Optional<UserSession> sessionOpt = userSessionRepository.findBySessionIdAndEndTimeIsNull(sessionId);
+        if (sessionOpt.isPresent()) {
+            UserSession session = sessionOpt.get();
+            session.endSession();
+            userSessionRepository.save(session);
+        }
+    }
+    
+    /**
+     * End all active sessions for a user
+     */
+    public void endUserSessions(Long userId) {
+        List<UserSession> activeSessions = userSessionRepository.findByUserIdAndEndTimeIsNull(userId);
+        for (UserSession session : activeSessions) {
+            session.endSession();
+        }
+        userSessionRepository.saveAll(activeSessions);
+    }
+    
+    /**
+     * Get active sessions count for a time period
+     */
+    public int getActiveSessionsCount(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        return userSessionRepository.countActiveSessions(start, now);
+    }
+    
+    /**
+     * Get total sessions count for a time period
+     */
+    public int getTotalSessionsCount(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        return userSessionRepository.countTotalSessions(start, now);
+    }
+    
+    /**
+     * Calculate bounce rate for a time period
+     */
+    public double getBounceRate(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        
+        int totalSessions = userSessionRepository.countTotalSessions(start, now);
+        if (totalSessions == 0) return 0.0;
+        
+        int bounceSessions = userSessionRepository.countBounceSessions(start, now);
+        return (double) bounceSessions / totalSessions * 100.0;
+    }
+    
+    /**
+     * Get session trends for dashboard
+     */
+    public List<Map<String, Object>> getSessionTrends(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        
+        List<Object[]> results;
+        switch (timeFrame) {
+            case "hour":
+                results = userSessionRepository.getSessionStatsByHour(start, now);
+                return processHourlyResults(results);
+            case "week":
+                results = userSessionRepository.getSessionStatsByWeek(start, now);
+                return processWeeklyResults(results);
+            case "month":
+                results = userSessionRepository.getSessionStatsByMonth(start, now);
+                return processMonthlyResults(results);
+            case "year":
+                results = userSessionRepository.getSessionStatsByMonth(start, now);
+                return processYearlyResults(results);
+            default: // day
+                results = userSessionRepository.getSessionStatsByDate(start, now);
+                return processDailyResults(results);
+        }
+    }
+    
+    /**
+     * Get session statistics for dashboard metrics
+     */
+    public Map<String, Object> getSessionStats(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        
+        int totalSessions = userSessionRepository.countTotalSessions(start, now);
+        int bounceSessions = userSessionRepository.countBounceSessions(start, now);
+        int activeSessions = userSessionRepository.countActiveSessions(start, now);
+        
+        double bounceRate = totalSessions > 0 ? (double) bounceSessions / totalSessions * 100.0 : 0.0;
+        
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalSessions", totalSessions);
+        stats.put("activeSessions", activeSessions);
+        stats.put("bounceSessions", bounceSessions);
+        stats.put("bounceRate", Math.round(bounceRate * 100.0) / 100.0); // Round to 2 decimal places
+        
+        return stats;
+    }
+    
+    /**
+     * Get engagement analytics for dashboard
+     */
+    public Map<String, Object> getEngagementAnalytics(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        
+        // Get total page views and engagement metrics
+        int totalPageViews = userSessionRepository.countTotalPageViews(start, now);
+        int totalSessions = userSessionRepository.countTotalSessions(start, now);
+        double avgPageViewsPerSession = totalSessions > 0 ? (double) totalPageViews / totalSessions : 0.0;
+        
+        // Calculate engagement score (based on page views and session duration)
+        double engagementScore = calculateEngagementScore(start, now);
+        
+        Map<String, Object> analytics = new HashMap<>();
+        analytics.put("totalPageViews", totalPageViews);
+        analytics.put("avgPageViewsPerSession", Math.round(avgPageViewsPerSession * 100.0) / 100.0);
+        analytics.put("engagementScore", Math.round(engagementScore * 100.0) / 100.0);
+        analytics.put("totalSessions", totalSessions);
+        
+        return analytics;
+    }
+    
+    /**
+     * Get engagement trends for dashboard chart
+     */
+    public List<Map<String, Object>> getEngagementTrends(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        
+        List<Object[]> results;
+        switch (timeFrame) {
+            case "hour":
+                results = userSessionRepository.getEngagementStatsByHour(start, now);
+                return processEngagementHourlyResults(results);
+            case "week":
+                results = userSessionRepository.getEngagementStatsByWeek(start, now);
+                return processEngagementWeeklyResults(results);
+            case "month":
+                results = userSessionRepository.getEngagementStatsByMonth(start, now);
+                return processEngagementMonthlyResults(results);
+            case "year":
+                results = userSessionRepository.getEngagementStatsByMonth(start, now);
+                return processEngagementYearlyResults(results);
+            default: // day
+                results = userSessionRepository.getEngagementStatsByDate(start, now);
+                return processEngagementDailyResults(results);
+        }
+    }
+    
+    /**
+     * Calculate engagement score based on page views and session duration
+     */
+    private double calculateEngagementScore(LocalDateTime start, LocalDateTime end) {
+        List<UserSession> sessions = userSessionRepository.findByStartTimeBetween(start, end);
+        
+        if (sessions.isEmpty()) return 0.0;
+        
+        double totalScore = 0.0;
+        for (UserSession session : sessions) {
+            // Score based on page views (higher = more engaged)
+            double pageViewScore = Math.min(session.getPageCount() * 10.0, 50.0);
+            
+            // Score based on session duration (if available)
+            double durationScore = 0.0;
+            if (session.getEndTime() != null) {
+                long durationMinutes = java.time.Duration.between(session.getStartTime(), session.getEndTime()).toMinutes();
+                durationScore = Math.min(durationMinutes * 2.0, 30.0);
+            }
+            
+            totalScore += pageViewScore + durationScore;
+        }
+        
+        return totalScore / sessions.size();
+    }
+    
+    /**
+     * Clean up old sessions (can be called by a scheduled task)
+     */
+    public void cleanupOldSessions() {
+        LocalDateTime cutoffDate = LocalDateTime.now().minusDays(30); // Keep 30 days of data
+        userSessionRepository.deleteOldSessions(cutoffDate);
+    }
+    
+    /**
+     * Get customer segmentation for dashboard
+     */
+    public List<Map<String, Object>> getCustomerSegmentation(String timeFrame) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime start = getStartTime(now, timeFrame);
+            
+            // Check user stats first
+            List<Object[]> userStats = userSessionRepository.getUserStats();
+            if (!userStats.isEmpty()) {
+                Object[] stats = userStats.get(0);
+                System.out.println("User Stats - Total: " + stats[0] + ", With Points: " + stats[1] + ", Min Points: " + stats[2] + ", Max Points: " + stats[3]);
+            }
+            
+            // Get VIP tier data from database - use correct method that matches VIP customer page
+            List<Object[]> results = userSessionRepository.getCorrectVipTierStats();
+            System.out.println("Correct VIP Tier Results: " + results.size() + " rows");
+            for (Object[] row : results) {
+                System.out.println("Tier: " + row[0] + ", Count: " + row[1]);
+            }
+            
+            List<Map<String, Object>> segmentation = new ArrayList<>();
+            
+            // Define VIP tier colors - dynamic based on tier names
+            Map<String, String> tierColors = new HashMap<>();
+            tierColors.put("Regular", "#708090"); // Gray
+            tierColors.put("Silver", "#C0C0C0"); // Silver
+            tierColors.put("Gold", "#FFD700");   // Gold
+            tierColors.put("Platinum", "#E5E4E2"); // Platinum
+            tierColors.put("Diamond", "#B9F2FF"); // Diamond
+            tierColors.put("Ruby", "#E0115F");   // Ruby
+            tierColors.put("Emerald", "#50C878"); // Emerald
+            // Add more colors for future tiers as needed
+            
+            // Process results and create tier data
+            for (Object[] row : results) {
+                String tierName = row[0].toString();
+                int userCount = ((Number) row[1]).intValue();
+                
+                Map<String, Object> tier = new HashMap<>();
+                tier.put("name", tierName);
+                tier.put("color", tierColors.getOrDefault(tierName, "#708090"));
+                tier.put("value", userCount);
+                
+                segmentation.add(tier);
+            }
+            
+            // Always ensure all tiers from vip_tiers table are present
+            Map<String, Integer> tierCounts = new HashMap<>();
+            for (Map<String, Object> tier : segmentation) {
+                tierCounts.put((String) tier.get("name"), (Integer) tier.get("value"));
+            }
+            
+            // Get all tiers from vip_tiers table to ensure completeness
+            List<Object[]> allTiers = userSessionRepository.getAllVipTiers();
+            List<Map<String, Object>> completeSegmentation = new ArrayList<>();
+            
+            for (Object[] tierRow : allTiers) {
+                String tierName = tierRow[0].toString();
+                completeSegmentation.add(createTier(tierName, tierColors.getOrDefault(tierName, "#708090"), 
+                    tierCounts.getOrDefault(tierName, 0)));
+            }
+            
+            return completeSegmentation;
+        } catch (Exception e) {
+            // Log the error and return default data
+            System.err.println("Error getting customer segmentation: " + e.getMessage());
+            e.printStackTrace();
+            
+            List<Map<String, Object>> defaultSegmentation = new ArrayList<>();
+            defaultSegmentation.add(createTier("Regular", "#708090", 0));
+            defaultSegmentation.add(createTier("Silver", "#C0C0C0", 0));
+            defaultSegmentation.add(createTier("Gold", "#FFD700", 0));
+            defaultSegmentation.add(createTier("Platinum", "#E5E4E2", 0));
+            
+            return defaultSegmentation;
+        }
+    }
+    
+    private Map<String, Object> createTier(String name, String color, int value) {
+        Map<String, Object> tier = new HashMap<>();
+        tier.put("name", name);
+        tier.put("color", color);
+        tier.put("value", value);
+        return tier;
+    }
+    
+    /**
+     * Get customer acquisition data for the specified time frame
+     */
+    public List<Map<String, Object>> getCustomerAcquisition(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = getStartTime(now, timeFrame);
+        
+        System.out.println("Getting customer acquisition data for timeFrame: " + timeFrame);
+        System.out.println("Start time: " + start);
+        System.out.println("End time: " + now);
+        
+        List<Object[]> results;
+        switch (timeFrame) {
+            case "hour":
+                results = userSessionRepository.getCustomerAcquisitionStatsByHour(start, now);
+                break;
+            case "week":
+                results = userSessionRepository.getCustomerAcquisitionStatsByWeek(start, now);
+                break;
+            case "month":
+                results = userSessionRepository.getCustomerAcquisitionStatsByMonth(start, now);
+                break;
+            case "year":
+                results = userSessionRepository.getCustomerAcquisitionStatsByMonth(start, now); // Use monthly for yearly
+                break;
+            case "day":
+            default:
+                results = userSessionRepository.getCustomerAcquisitionStats(start, now);
+                break;
+        }
+        
+        System.out.println("Raw results from database: " + results.size() + " rows");
+        for (Object[] row : results) {
+            System.out.println("Row: " + Arrays.toString(row));
+        }
+        
+        // Process results based on time frame to fill in missing periods
+        List<Map<String, Object>> processedResults;
+        switch (timeFrame) {
+            case "hour":
+                processedResults = processCustomerAcquisitionHourlyResults(results);
+                break;
+            case "day":
+                processedResults = processCustomerAcquisitionDailyResults(results);
+                break;
+            case "week":
+                processedResults = processCustomerAcquisitionWeeklyResults(results);
+                break;
+            case "month":
+                processedResults = processCustomerAcquisitionMonthlyResults(results);
+                break;
+            case "year":
+                processedResults = processCustomerAcquisitionYearlyResults(results);
+                break;
+            default:
+                processedResults = processCustomerAcquisitionDailyResults(results);
+                break;
+        }
+        
+        System.out.println("Processed results: " + processedResults.size() + " rows");
+        for (Map<String, Object> result : processedResults) {
+            System.out.println("Processed: " + result);
+        }
+        
+        return processedResults;
+    }
+    
+    // Helper methods
+    private LocalDateTime getStartTime(LocalDateTime now, String timeFrame) {
+        switch (timeFrame) {
+            case "hour": return now.minusHours(24); // Last 24 hours for hourly data
+            case "week": return now.minusWeeks(1);
+            case "month": return now.minusMonths(1);
+            case "year": return now.minusYears(1);
+            case "day":
+            default: return now.minusDays(7); // Last 7 days for daily data to match processing
+        }
+    }
+    
+    private List<Map<String, Object>> processDailyResults(List<Object[]> results) {
+        // Build a map from date string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            resultMap.put(row[0].toString(), row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(6); // last 7 days
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusDays(1)) {
+            String dateStr = date.toString();
+            Object[] row = resultMap.get(dateStr);
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", dateStr);
+            if (row != null) {
+                map.put("totalSessions", ((Number) row[1]).intValue());
+                map.put("bounceSessions", ((Number) row[2]).intValue());
+                map.put("uniqueUsers", ((Number) row[3]).intValue());
+            } else {
+                map.put("totalSessions", 0);
+                map.put("bounceSessions", 0);
+                map.put("uniqueUsers", 0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processHourlyResults(List<Object[]> results) {
+        // Build a map from date+hour string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            String date = row[0].toString();
+            int hour = ((Number) row[1]).intValue();
+            String key = date + "_" + hour;
+            resultMap.put(key, row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = now.minusHours(23); // last 24 hours
+
+        for (LocalDateTime time = start; !time.isAfter(now); time = time.plusHours(1)) {
+            String date = time.toLocalDate().toString();
+            int hour = time.getHour();
+            String key = date + "_" + hour;
+            Object[] row = resultMap.get(key);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", date + " " + String.format("%02d:00", hour));
+            if (row != null) {
+                map.put("totalSessions", ((Number) row[2]).intValue());
+                map.put("bounceSessions", ((Number) row[3]).intValue());
+            } else {
+                map.put("totalSessions", 0);
+                map.put("bounceSessions", 0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processWeeklyResults(List<Object[]> results) {
+        // Build a map from week string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            resultMap.put(row[0].toString(), row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusWeeks(7); // last 8 weeks
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusWeeks(1)) {
+            int week = date.get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+            String weekKey = String.valueOf(week);
+            Object[] row = resultMap.get(weekKey);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", "Week " + weekKey);
+            if (row != null) {
+                map.put("totalSessions", ((Number) row[1]).intValue());
+                map.put("bounceSessions", ((Number) row[2]).intValue());
+            } else {
+                map.put("totalSessions", 0);
+                map.put("bounceSessions", 0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processMonthlyResults(List<Object[]> results) {
+        // Build a map from year_month string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            String key = year + "_" + month;
+            resultMap.put(key, row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusMonths(11); // last 12 months
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusMonths(1)) {
+            int year = date.getYear();
+            int month = date.getMonthValue();
+            String key = year + "_" + month;
+            Object[] row = resultMap.get(key);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", year + "-" + String.format("%02d", month));
+            if (row != null) {
+                map.put("totalSessions", ((Number) row[2]).intValue());
+                map.put("bounceSessions", ((Number) row[3]).intValue());
+            } else {
+                map.put("totalSessions", 0);
+                map.put("bounceSessions", 0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processYearlyResults(List<Object[]> results) {
+        return results.stream().map(row -> {
+            Map<String, Object> map = new HashMap<>();
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            map.put("period", String.format("%d-%02d", year, month));
+            map.put("totalSessions", ((Number) row[2]).intValue());
+            map.put("bounceSessions", ((Number) row[3]).intValue());
+            return map;
+        }).collect(Collectors.toList());
+    }
+    
+    // Engagement processing methods
+    private List<Map<String, Object>> processEngagementDailyResults(List<Object[]> results) {
+        // Build a map from date string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            resultMap.put(row[0].toString(), row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(6); // last 7 days
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusDays(1)) {
+            String dateStr = date.toString();
+            Object[] row = resultMap.get(dateStr);
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", dateStr);
+            if (row != null) {
+                map.put("views", ((Number) row[1]).intValue()); // totalPageViews
+                map.put("engagement", ((Number) row[3]).doubleValue()); // avgPageViews
+            } else {
+                map.put("views", 0);
+                map.put("engagement", 0.0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processEngagementHourlyResults(List<Object[]> results) {
+        // Build a map from date+hour string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            String date = row[0].toString();
+            int hour = ((Number) row[1]).intValue();
+            String key = date + "_" + hour;
+            resultMap.put(key, row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = now.minusHours(23); // last 24 hours
+
+        for (LocalDateTime time = start; !time.isAfter(now); time = time.plusHours(1)) {
+            String date = time.toLocalDate().toString();
+            int hour = time.getHour();
+            String key = date + "_" + hour;
+            Object[] row = resultMap.get(key);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", date + " " + String.format("%02d:00", hour));
+            if (row != null) {
+                map.put("views", ((Number) row[2]).intValue()); // totalPageViews
+                map.put("engagement", ((Number) row[2]).intValue() * 0.8); // engagement score
+            } else {
+                map.put("views", 0);
+                map.put("engagement", 0.0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processEngagementWeeklyResults(List<Object[]> results) {
+        // Build a map from week string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            resultMap.put(row[0].toString(), row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusWeeks(7); // last 8 weeks
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusWeeks(1)) {
+            int week = date.get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+            String weekKey = String.valueOf(week);
+            Object[] row = resultMap.get(weekKey);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", "Week " + weekKey);
+            if (row != null) {
+                map.put("views", ((Number) row[1]).intValue()); // totalPageViews
+                map.put("engagement", ((Number) row[1]).intValue() * 0.7); // engagement score
+            } else {
+                map.put("views", 0);
+                map.put("engagement", 0.0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processEngagementMonthlyResults(List<Object[]> results) {
+        // Build a map from year_month string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            String key = year + "_" + month;
+            resultMap.put(key, row);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusMonths(11); // last 12 months
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusMonths(1)) {
+            int year = date.getYear();
+            int month = date.getMonthValue();
+            String key = year + "_" + month;
+            Object[] row = resultMap.get(key);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", year + "-" + String.format("%02d", month));
+            if (row != null) {
+                map.put("views", ((Number) row[2]).intValue()); // totalPageViews
+                map.put("engagement", ((Number) row[2]).intValue() * 0.6); // engagement score
+            } else {
+                map.put("views", 0);
+                map.put("engagement", 0.0);
+            }
+            filled.add(map);
+        }
+        return filled;
+    }
+    
+    private List<Map<String, Object>> processEngagementYearlyResults(List<Object[]> results) {
+        return results.stream().map(row -> {
+            Map<String, Object> map = new HashMap<>();
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            map.put("period", String.format("%d-%02d", year, month));
+            map.put("views", ((Number) row[2]).intValue()); // totalPageViews
+            map.put("engagement", ((Number) row[2]).intValue() * 0.5); // engagement score
+            return map;
+        }).collect(Collectors.toList());
+    }
+
+    // Customer Acquisition processing methods
+    private List<Map<String, Object>> processCustomerAcquisitionHourlyResults(List<Object[]> results) {
+        System.out.println("Processing hourly customer acquisition results: " + results.size() + " rows");
+        
+        // Build a map from date+hour string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            String date = row[0].toString();
+            int hour = ((Number) row[1]).intValue();
+            String key = date + "_" + hour;
+            resultMap.put(key, row);
+            System.out.println("Raw hourly row: " + Arrays.toString(row) + " -> key: " + key);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start = now.minusHours(23); // last 24 hours
+
+        System.out.println("Filling hourly data from " + start + " to " + now);
+
+        for (LocalDateTime time = start; !time.isAfter(now); time = time.plusHours(1)) {
+            String date = time.toLocalDate().toString();
+            int hour = time.getHour();
+            String key = date + "_" + hour;
+            Object[] row = resultMap.get(key);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", date + " " + String.format("%02d:00", hour));
+            if (row != null) {
+                map.put("acquired", ((Number) row[2]).intValue());
+                map.put("churned", ((Number) row[3]).intValue());
+                map.put("retained", ((Number) row[4]).intValue());
+                System.out.println("Hour " + key + ": acquired=" + ((Number) row[2]).intValue() + 
+                                 ", churned=" + ((Number) row[3]).intValue() + 
+                                 ", retained=" + ((Number) row[4]).intValue());
+            } else {
+                map.put("acquired", 0);
+                map.put("churned", 0);
+                map.put("retained", 0);
+                System.out.println("Hour " + key + ": no data, using zeros");
+            }
+            filled.add(map);
+        }
+        
+        System.out.println("Final processed hourly data: " + filled.size() + " hours");
+        return filled;
+    }
+
+    private List<Map<String, Object>> processCustomerAcquisitionDailyResults(List<Object[]> results) {
+        System.out.println("Processing daily customer acquisition results: " + results.size() + " rows");
+        
+        // Build a map from date string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            String dateKey = row[0].toString();
+            resultMap.put(dateKey, row);
+            System.out.println("Raw row: " + Arrays.toString(row) + " -> key: " + dateKey);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusDays(6); // last 7 days
+
+        System.out.println("Filling data from " + start + " to " + today);
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusDays(1)) {
+            String dateStr = date.toString();
+            Object[] row = resultMap.get(dateStr);
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", dateStr);
+            if (row != null) {
+                map.put("acquired", ((Number) row[1]).intValue());
+                map.put("churned", ((Number) row[2]).intValue());
+                map.put("retained", ((Number) row[3]).intValue());
+                System.out.println("Date " + dateStr + ": acquired=" + ((Number) row[1]).intValue() + 
+                                 ", churned=" + ((Number) row[2]).intValue() + 
+                                 ", retained=" + ((Number) row[3]).intValue());
+            } else {
+                map.put("acquired", 0);
+                map.put("churned", 0);
+                map.put("retained", 0);
+                System.out.println("Date " + dateStr + ": no data, using zeros");
+            }
+            filled.add(map);
+        }
+        
+        System.out.println("Final processed data: " + filled.size() + " days");
+        return filled;
+    }
+
+    private List<Map<String, Object>> processCustomerAcquisitionWeeklyResults(List<Object[]> results) {
+        System.out.println("Processing weekly customer acquisition results: " + results.size() + " rows");
+        
+        // Build a map from week string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            String weekKey = row[0].toString();
+            resultMap.put(weekKey, row);
+            System.out.println("Raw weekly row: " + Arrays.toString(row) + " -> key: " + weekKey);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusWeeks(7); // last 8 weeks
+
+        System.out.println("Filling weekly data from " + start + " to " + today);
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusWeeks(1)) {
+            int week = date.get(ChronoField.ALIGNED_WEEK_OF_YEAR);
+            String weekKey = String.valueOf(week);
+            Object[] row = resultMap.get(weekKey);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", "Week " + weekKey);
+            if (row != null) {
+                map.put("acquired", ((Number) row[1]).intValue());
+                map.put("churned", ((Number) row[2]).intValue());
+                map.put("retained", ((Number) row[3]).intValue());
+                System.out.println("Week " + weekKey + ": acquired=" + ((Number) row[1]).intValue() + 
+                                 ", churned=" + ((Number) row[2]).intValue() + 
+                                 ", retained=" + ((Number) row[3]).intValue());
+            } else {
+                map.put("acquired", 0);
+                map.put("churned", 0);
+                map.put("retained", 0);
+                System.out.println("Week " + weekKey + ": no data, using zeros");
+            }
+            filled.add(map);
+        }
+        
+        System.out.println("Final processed weekly data: " + filled.size() + " weeks");
+        return filled;
+    }
+
+    private List<Map<String, Object>> processCustomerAcquisitionMonthlyResults(List<Object[]> results) {
+        System.out.println("Processing monthly customer acquisition results: " + results.size() + " rows");
+        
+        // Build a map from year_month string to result row
+        Map<String, Object[]> resultMap = new HashMap<>();
+        for (Object[] row : results) {
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            String key = year + "_" + month;
+            resultMap.put(key, row);
+            System.out.println("Raw monthly row: " + Arrays.toString(row) + " -> key: " + key);
+        }
+
+        List<Map<String, Object>> filled = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate start = today.minusMonths(11); // last 12 months
+
+        System.out.println("Filling monthly data from " + start + " to " + today);
+
+        for (LocalDate date = start; !date.isAfter(today); date = date.plusMonths(1)) {
+            int year = date.getYear();
+            int month = date.getMonthValue();
+            String key = year + "_" + month;
+            Object[] row = resultMap.get(key);
+            
+            Map<String, Object> map = new HashMap<>();
+            map.put("period", year + "-" + String.format("%02d", month));
+            if (row != null) {
+                map.put("acquired", ((Number) row[2]).intValue());
+                map.put("churned", ((Number) row[3]).intValue());
+                map.put("retained", ((Number) row[4]).intValue());
+                System.out.println("Month " + key + ": acquired=" + ((Number) row[2]).intValue() + 
+                                 ", churned=" + ((Number) row[3]).intValue() + 
+                                 ", retained=" + ((Number) row[4]).intValue());
+            } else {
+                map.put("acquired", 0);
+                map.put("churned", 0);
+                map.put("retained", 0);
+                System.out.println("Month " + key + ": no data, using zeros");
+            }
+            filled.add(map);
+        }
+        
+        System.out.println("Final processed monthly data: " + filled.size() + " months");
+        return filled;
+    }
+
+    private List<Map<String, Object>> processCustomerAcquisitionYearlyResults(List<Object[]> results) {
+        System.out.println("Processing yearly customer acquisition results: " + results.size() + " rows");
+        
+        return results.stream().map(row -> {
+            Map<String, Object> map = new HashMap<>();
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            map.put("period", String.format("%d-%02d", year, month));
+            map.put("acquired", ((Number) row[2]).intValue());
+            map.put("churned", ((Number) row[3]).intValue());
+            map.put("retained", ((Number) row[4]).intValue());
+            System.out.println("Year " + year + "-" + month + ": acquired=" + ((Number) row[2]).intValue() + 
+                             ", churned=" + ((Number) row[3]).intValue() + 
+                             ", retained=" + ((Number) row[4]).intValue());
+            return map;
+        }).collect(Collectors.toList());
+    }
+} 

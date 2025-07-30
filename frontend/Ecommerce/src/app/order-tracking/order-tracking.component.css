@@ -1,0 +1,954 @@
+body, .tracking-bg {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.tracking-card {
+  border-radius: 22px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 128, 0.1);
+  padding: 2.5rem 2rem 2rem 2rem;
+  max-width: auto;
+  width: 100%;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.title {
+  font-family: 'Playfair Display', Georgia, serif;
+  text-align: center;
+  font-weight: 700;
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+  color: #004085;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  color: #0c63e4;
+  font-size: 1.05rem;
+  margin-bottom: 1.5rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.track-form {
+  display: flex;
+  justify-content: center;
+  gap: 0.7rem;
+  margin-bottom: 2.2rem;
+}
+
+.order-input {
+  padding: 0.7rem 1.1rem;
+  border-radius: 8px;
+  border: 1.5px solid #6ea8fe;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+  background: #e7f1ff;
+  color: #003366;
+  width: 60%;
+}
+.order-input:focus {
+  border-color: #0d6efd;
+}
+
+.track-btn {
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px 0 rgba(0, 123, 255, 0.2);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.track-btn:hover {
+  background: linear-gradient(90deg, #66b2ff 0%, #0d6efd 100%);
+  box-shadow: 0 4px 16px 0 rgba(0, 123, 255, 0.3);
+}
+
+.tracking-info {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 rgba(76, 125, 217, 0.07);
+  padding: 1.5rem 1rem 1.2rem 1rem;
+  margin-top: 1.2rem;
+}
+
+.order-info {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.order-code {
+  font-size: 1.3rem;
+  color: #0d6efd;
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+}
+
+.delivery-date {
+  font-size: 1rem;
+  color: #007bff;
+  font-style: italic;
+}
+
+/* Steps */
+.tracking-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 2rem 1rem;
+  margin: 0 1rem;
+}
+
+/* Horizontal blue line */
+.tracking-steps::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 30px;
+  right: 30px;
+  height: 4px;
+  border-radius: 3px;
+  transform: translateY(-50%);
+  z-index: 1;
+  background: #e7f1ff; /* very light blue / neutral */
+}
+
+/* Each step */
+.step {
+  position: relative;
+  flex: 1;
+  text-align: center;
+}
+
+/* Dot */
+.dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #e7f1ff; /* very light blue / neutral */
+  border: 3px solid #0d6efd;
+  box-shadow: 0 0 12px 2px rgba(13, 110, 253, 0.4);
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+/* Active dot */
+.step.active .dot {
+  border-color: #66b2ff;
+  box-shadow: 0 0 20px 4px rgba(13, 110, 253, 0.7);
+}
+
+/* Label */
+.label {
+  margin-top: 60px;
+  font-size: 1rem;
+  color: #339af0;
+  font-weight: 600;
+}
+.step.active .label {
+  color: #0d6efd;
+  font-weight: 700;
+}
+
+.loading, .error-message {
+  text-align: center;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+.loading {
+  color: #0d6efd;
+}
+.error-message {
+  color: #dc3545;
+}
+
+/* Mobile View */
+@media (max-width: 600px) {
+  .tracking-steps {
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 1rem;
+    padding-left: 2rem;
+  }
+
+  .tracking-steps::before {
+    top: 0;
+    left: 18px;
+    width: 4px;
+    height: 100%;
+    background: #e7f1ff;
+    transform: none;
+  }
+
+  .step {
+    flex: none;
+    margin: 1.5rem 0;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  .dot {
+    margin-right: 1rem;
+  }
+
+  .label {
+    margin-top: 0;
+  }
+}
+
+/* --- Blue Progress Bar and Checkmarks --- */
+.tracking-steps-green {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 2rem 1rem;
+  margin: 0 1rem;
+}
+.tracking-steps-green::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 30px;
+  right: 30px;
+  height: 4px;
+  background: linear-gradient(90deg, #0d6efd, #66b2ff);
+  border-radius: 3px;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+.step-green {
+  position: relative;
+  flex: 1;
+  text-align: center;
+}
+.dot-green {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e7f1ff; /* very light blue */
+  border: 3px solid #0d6efd; /* bootstrap primary blue */
+  box-shadow: 0 0 12px 2px rgba(13, 110, 253, 0.3);
+  transition: all 0.3s ease;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step-green.active-green .dot-green {
+  background: #0d6efd; /* bootstrap primary blue */
+  border-color: #66b2ff;
+  color: #fff;
+}
+.checkmark {
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+}
+.label-green {
+  margin-top: 60px;
+  font-size: 1rem;
+  color: #0d6efd;
+  font-weight: 600;
+}
+.step-green.active-green .label-green {
+  color: #003d99; /* darker blue */
+  font-weight: 700;
+}
+
+/* --- Order Info Section --- */
+.order-id-label {
+  font-size: 1rem;
+  color: #888;
+  font-weight: 600;
+  letter-spacing: 1px;
+  margin-bottom: 0.2rem;
+}
+.order-id {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.5rem;
+}
+.tracking-code-status {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+}
+.tracking-code {
+  font-weight: 600;
+  color: #222;
+  margin-right: 1.2rem;
+}
+.tracking-status {
+  font-weight: 600;
+  color: #0d6efd; /* blue */
+}
+.tracking-status.delivered {
+  color: #0a58ca; /* darker blue for delivered */
+  font-weight: 700;
+}
+.order-success {
+  color: #0d6efd;
+  font-size: 1.1rem;
+  margin-top: 0.3rem;
+  font-weight: 600;
+}
+
+/* --- Status Timeline --- */
+.status-history {
+  margin-top: 2rem;
+  background: #f9f9f9;
+  padding: 1rem;
+  border-radius: 10px;
+}
+.status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.status-list li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.1rem;
+  font-size: 1rem;
+}
+.status-circle {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid #0d6efd; /* blue border */
+  background: transparent; /* no fill */
+  margin-right: 0.7rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-checkmark {
+  color: #0d6efd;
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1;
+}
+.status-label {
+  font-weight: 600;
+  color: #222;
+  margin-right: 0.7rem;
+}
+.status-date {
+  color: #888;
+  font-size: 0.95rem;
+  font-style: italic;
+}
+.show-more {
+  color: #0d6efd;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  margin-left: 1.7rem;
+  font-size: 1rem;
+  user-select: none;
+}
+.show-more:hover {
+  text-decoration: underline;
+}
+
+/* --- Responsive --- */
+@media (max-width: 600px) {
+  .tracking-steps-green {
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 0 1rem;
+    padding-left: 2rem;
+  }
+  .tracking-steps-green::before {
+    top: 0;
+    left: 18px;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(to bottom, #0d6efd, #66b2ff);
+    transform: none;
+  }
+  .label-green {
+    margin-top: 0.5rem;
+    margin-left: 2.5rem;
+  }
+}
+
+/* Tracking Order Title */
+.tracking-title {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  color: #222;
+  letter-spacing: 1px;
+}
+
+/* Tracking Actions (Cancel Order Button) */
+.tracking-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 2.5rem;
+  margin-bottom: 2rem;
+  margin-left: 2rem;
+}
+.cancel-order-btn {
+  background: #0d6efd;
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  padding: 0.8rem 2.2rem;
+  box-shadow: 0 2px 8px 0 rgba(76, 217, 100, 0.15);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.cancel-order-btn:hover {
+  background: #0d6efd;
+  box-shadow: 0 4px 16px 0 rgba(76, 217, 100, 0.25);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Policy Content Styles for Quill HTML */
+.policy-content {
+  line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+}
+
+.policy-content h1,
+.policy-content h2,
+.policy-content h3,
+.policy-content h4,
+.policy-content h5,
+.policy-content h6 {
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content h1 {
+  font-size: 1.5rem;
+}
+
+.policy-content h2 {
+  font-size: 1.25rem;
+}
+
+.policy-content h3 {
+  font-size: 1.125rem;
+}
+
+.policy-content p {
+  margin-bottom: 0.75rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content ul,
+.policy-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content li {
+  margin-bottom: 0.25rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content strong,
+.policy-content b {
+  font-weight: 600;
+  color: #1f2937;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content em,
+.policy-content i {
+  font-style: italic;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content u {
+  text-decoration: underline;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content a:hover {
+  color: #1d4ed8;
+}
+
+.policy-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #6b7280;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content pre {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Comprehensive word wrapping solution to prevent word breaking */
+.policy-content {
+  line-height: 1.6;
+  width: 100%;
+  max-width: 100%;
+  min-width: 600px;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  overflow-y: auto;
+  box-sizing: border-box;
+  text-align: left;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  display: block;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbars for policy content but allow scrolling */
+.policy-content::-webkit-scrollbar {
+  display: none;
+}
+
+.policy-content {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Comprehensive word wrapping for all text elements */
+.policy-content h1,
+.policy-content h2,
+.policy-content h3,
+.policy-content h4,
+.policy-content h5,
+.policy-content h6 {
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+  width: 100%;
+  max-width: 100%;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  line-height: 1.4;
+  text-align: left;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content h1 {
+  font-size: 1.5rem;
+}
+
+.policy-content h2 {
+  font-size: 1.25rem;
+}
+
+.policy-content h3 {
+  font-size: 1.125rem;
+}
+
+.policy-content p {
+  margin-bottom: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  line-height: 1.6;
+  text-align: justify;
+  text-justify: inter-word;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content ul,
+.policy-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  width: calc(100% - 1.5rem);
+  max-width: calc(100% - 1.5rem);
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content li {
+  margin-bottom: 0.25rem;
+  width: 100%;
+  max-width: 100%;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  line-height: 1.5;
+  text-align: justify;
+  text-justify: inter-word;
+  display: list-item;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content strong,
+.policy-content b {
+  font-weight: 600;
+  color: #1f2937;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content em,
+.policy-content i {
+  font-style: italic;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content u {
+  text-decoration: underline;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content a:hover {
+  color: #1d4ed8;
+}
+
+.policy-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #6b7280;
+  width: calc(100% - 1rem);
+  max-width: calc(100% - 1rem);
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  line-height: 1.6;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content pre {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  width: calc(100% - 2rem);
+  max-width: calc(100% - 2rem);
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  line-height: 1.5;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Ensure all elements respect width constraints and prevent word breaking */
+.policy-content * {
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+/* Ensure text containers don't overflow and keep words complete */
+.policy-content div {
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  min-width: 0;
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+/* Force no hyphenation anywhere */
+.policy-content {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -moz-hyphens: none !important;
+  -ms-hyphens: none !important;
+  word-break: normal !important;
+  word-wrap: normal !important;
+  overflow-wrap: normal !important;
+}
+
+/* Ensure proper spacing and alignment */
+.policy-content > *:first-child {
+  margin-top: 0;
+}
+
+.policy-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Optimize text wrapping for better readability */
+.policy-content {
+  orphans: 2;
+  widows: 2;
+  -webkit-orphans: 2;
+  -webkit-widows: 2;
+}
+
+/* Ensure consistent spacing between elements */
+.policy-content > * + * {
+  margin-top: 0.5rem;
+}
+
+/* Special handling for long words - keep them complete */
+.policy-content {
+  word-spacing: normal;
+  letter-spacing: normal;
+}
+
+/* Ensure proper line breaks */
+.policy-content br {
+  display: block;
+  content: "";
+  margin-top: 0.5rem;
+}
+
+/* Additional force rules to prevent any word breaking */
+.policy-content,
+.policy-content * {
+  word-break: normal !important;
+  word-wrap: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -moz-hyphens: none !important;
+  -ms-hyphens: none !important;
+}
+
+/* Modal container for optimal width management */
+.return-policy-modal {
+  max-width: 90vw;
+  width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.return-policy-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  min-width: 0;
+  display: block;
+  flex: 1;
+}
+
+/* Hide scrollbars but allow scrolling */
+.return-policy-content::-webkit-scrollbar {
+  display: none;
+}
+
+.return-policy-content {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}

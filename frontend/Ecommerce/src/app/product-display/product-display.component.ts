@@ -2,7 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { ProductDTO } from '../product';
 import { ProductService } from '../services/product.service';
 import { CartService } from '../services/cart.service';
+import { AuthService } from '../auth/auth.service';
+import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
+import { ImageService } from '../services/image.service';
+import { BreadcrumbComponent } from '../breadcrumb.component';
 
 interface Product {
   id: number;
@@ -27,7 +31,7 @@ interface Product {
   templateUrl: './product-display.component.html',
   styleUrls: ['./product-display.component.css']
 })
-export class ProductDisplayComponent{
+export class ProductDisplayComponent implements OnInit {
 
   showFilter = true;
 
@@ -90,7 +94,26 @@ export class ProductDisplayComponent{
   materialOptions = ['Cotton', 'Upholstered', 'Metal', 'Wood'];
   categoryOptions = ['Chair', 'Divan', 'Sofa', 'Sectional'];
 
-  constructor(private cartService: CartService) {}
+  userId: number | null = null;
+
+  breadcrumbItems = [
+    { label: 'Home', link: '/home' },
+    { label: 'Products', link: '/products' },
+    { label: 'Product Display' }
+  ];
+
+  constructor(
+    
+    private cartService: CartService,
+    public imageService: ImageService
+  ,
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit() {
+    this.userId = this.authService.getUserId();
+  }
 
   // Toggle sidebar
   toggleFilter() {
@@ -134,7 +157,13 @@ export class ProductDisplayComponent{
 
   // Add to cart method
   addToCart(product: Product) {
+    if (!this.userId) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.cartService.addToCart({
+      userId: this.userId,
       id: product.id,
       title: product.title,
       price: product.price,

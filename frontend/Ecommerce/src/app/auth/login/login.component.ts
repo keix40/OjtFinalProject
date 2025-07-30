@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { HttpClient } from '@angular/common/http';
+import { PermissionService } from '../../services/permission.service';
 
 @Component({
   selector: 'app-login',
@@ -31,6 +32,11 @@ export class LoginComponent implements OnInit {
   submittedOtp = false;
   submittedReset = false;
 
+  //Loading states
+  isResettingPassword = false;
+  isSendingOtp = false;
+  isVerifyingOtp=false;
+
   // Error messages
   forgotError = '';
   otpError = '';
@@ -39,12 +45,23 @@ export class LoginComponent implements OnInit {
   forgotEmailError = '';
   resetPasswordError='';
   resetConfirmPasswordError='';
+  resetSuccessMessage = '';
+
+  // Add state for login-time OTP and CAPTCHA
+  showCaptchaModal = false;
+  captchaInput = '';
+  captchaQuestion = '';
+  captchaAnswer = '';
+  isVerifyingCaptcha = false;
+  captchaError = '';
 
 
   constructor(
     private fb: FormBuilder,
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private permissionService: PermissionService,
+    private http: HttpClient // Inject HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -74,16 +91,113 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
 
   if (this.loginForm.invalid) return;
 
+  // Check and clear expired blacklist flags before login attempt
+  this.auth.checkAndClearExpiredBlacklist();
+
   this.auth.login(this.loginForm.value).subscribe({
     next: (res) => {
+      // Redirect to OTP page if required
+      if (res.otpRequired) {
+        const email = this.loginForm.get('email')?.value;
+        this.router.navigate(['/verify-otp'], { queryParams: { email, reason: 'login' } });
+        return;
+      }
+      if (res.captchaRequired) {
+        this.generateCaptcha();
+        this.showCaptchaModal = true;
+        return;
+      }
       this.auth.saveToken(res.accessToken);
-      this.router.navigate(['/home']);
+      localStorage.setItem('refreshToken', res.refreshToken);
+
+      // Call backend to check first time buyer eligibility
+      this.http.get('/api/notifications/check-first-time-buyer').subscribe();
+
+      const decoded = this.auth.getDecodedToken(); // Only declare once
+      const permissionString = decoded?.permissions || '';
+      const permissionArray = permissionString.split(',').map((p: string) => p.trim());
+
+      this.permissionService.setPermissions(permissionArray);
+      // Also set in localStorage for consistency
+      localStorage.setItem('userPermissions', JSON.stringify(permissionArray));
+
+      // Role-based redirect
+      const roles = decoded?.roles ? decoded.roles.split(',') : [];
+      if (roles.includes('CUSTOMER')) {
+        this.router.navigate(['/home']);
+      } else {
+        this.router.navigate(['/dashboard']);
+      }
+
+      if (decoded && decoded.sub) {
+        localStorage.setItem('email', decoded.sub); // reuse 'decoded'
+      }
     },
     error: (err) => {
+      if (err?.error?.otpRequired) {
+        const email = this.loginForm.get('email')?.value;
+        this.router.navigate(['/verify-otp'], { queryParams: { email, reason: 'login' } });
+        return;
+      }
+      if (err?.error?.captchaRequired) {
+        this.generateCaptcha();
+        this.showCaptchaModal = true;
+        return;
+      }
+      // Blacklist enforcement: if blocked, navigate to blocked page
+      if (err?.error?.blocked) {
+        // Set blacklist flags for route guard
+        localStorage.setItem('blacklisted', 'true');
+        localStorage.setItem('blacklistReason', err.error.reason || '');
+        localStorage.setItem('blacklistExpiryDate', err.error.expiryDate || '');
+        localStorage.setItem('banType', err.error.banType || 'Temporary');
+        localStorage.setItem('isPermanent', err.error.isPermanent ? 'true' : 'false');
+        
+        this.router.navigate(['/blacklist-blocked'], {
+          queryParams: {
+            reason: err.error.reason,
+            expiryDate: err.error.expiryDate,
+            banType: err.error.banType,
+            isPermanent: err.error.isPermanent
+          }
+        });
+        return;
+      }
       console.error(err);
-       this.loginError = 'Invalid email or password.';
+      if (err?.error?.message && err.error.message.toLowerCase().includes('verify your email')) {
+        // Redirect to OTP verification page with email
+        const email = this.loginForm.get('email')?.value;
+        this.router.navigate(['/verify-otp'], { queryParams: { email } });
+      } else {
+        this.loginError = 'Invalid email or password.';
+      }
     }
   });
+  }
+
+  // CAPTCHA logic (simple math question)
+  generateCaptcha() {
+    const a = Math.floor(Math.random() * 10) + 1;
+    const b = Math.floor(Math.random() * 10) + 1;
+    this.captchaQuestion = `What is ${a} + ${b}?`;
+    this.captchaAnswer = (a + b).toString();
+    this.captchaInput = '';
+    this.captchaError = '';
+  }
+
+  verifyCaptcha() {
+    this.captchaError = '';
+    this.isVerifyingCaptcha = true;
+    if (this.captchaInput.trim() === this.captchaAnswer) {
+      this.isVerifyingCaptcha = false;
+      this.showCaptchaModal = false;
+      // After CAPTCHA, try login again
+      this.submitLogin();
+    } else {
+      this.isVerifyingCaptcha = false;
+      this.captchaError = 'Incorrect answer. Please try again.';
+      this.generateCaptcha();
+    }
   }
 
   // ---------- FORGOT PASSWORD ----------
@@ -115,10 +229,12 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     return;
   }
 
+  this.isSendingOtp = true;
   this.forgotError = '';
 
   this.auth.sendResetOtp(this.forgotEmail).subscribe({
     next: () => {
+      this.isSendingOtp = false;
       this.showForgotPasswordModal = false;
       this.showOtpModal = true;
     },
@@ -139,13 +255,16 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
   }
 
   this.otpError = ''; // clear before calling
+  this.isVerifyingOtp=true;
 
   this.auth.verifyOtp(this.forgotEmail, this.enteredOtp).subscribe({
     next: () => {
       this.showOtpModal = false;
       this.showResetModal = true;
+      this.isVerifyingOtp = true;
     },
     error: (err) => {
+      this.isVerifyingOtp = false;
       this.otpError = err.error?.message || 'Invalid code.';
     }
   });
@@ -173,12 +292,43 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     return;
   }
 
+  this.isResettingPassword = true;
+  this.resetError = '';
+  this.resetSuccessMessage = '';
+
   this.auth.resetPassword(this.forgotEmail, this.newPassword).subscribe({
     next: () => {
+      this.isResettingPassword = false;
       this.showResetModal = false;
-      this.router.navigate(['/home']);
+      this.resetSuccessMessage = 'Password reset successfully. Logging you in ...';
+
+     // Automatically log in the user with their new password
+      this.auth.login({
+        email: this.forgotEmail,
+        password: this.newPassword
+      }).subscribe({
+        next: (loginRes) => {
+          this.auth.saveToken(loginRes.accessToken);
+          this.router.navigate(['/home']);
+          const decoded: any = this.auth.getDecodedToken();
+    if (decoded && decoded.sub) {
+      localStorage.setItem('email', decoded.sub); // "sub" is the email in your token
+    }
+        },
+        error: (loginErr) => {
+          console.error('Auto-login failed after password reset:', loginErr);
+          // If auto-login fails, show a success message and redirect to login
+          this.loginError = 'Password reset successful! Please log in with your new password.';
+          // Clear the reset form
+          this.forgotEmail = '';
+          this.enteredOtp = '';
+          this.newPassword = '';
+          this.confirmPassword = '';
+        }
+      });
     },
     error: (err) => {
+      this.isResettingPassword = false;
       console.error('reset error :'+err)
       this.resetError = err.error?.message || 'Reset failed.';
     }

@@ -1,0 +1,428 @@
+<div class="p-4 bg-slate-50 min-h-screen font-poppins">
+  <!-- Header Section -->
+  <div class="text-center mb-8">
+    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+      <i data-lucide="percent" class="w-8 h-8 text-indigo-500"></i>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Discount Management</h1>
+    <p class="text-gray-600 text-lg">Manage and track all discount codes, status, and validity</p>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <!-- Search and Filters -->
+      <div class="flex flex-col sm:flex-row gap-4 flex-1">
+        <div class="relative flex-1 max-w-md">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+          </div>
+          <input 
+            type="text" 
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+            placeholder="Search discount code or status..."
+            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-poppins"
+          >
+        </div>
+        <div class="flex items-center gap-2 text-sm text-gray-600 font-poppins">
+          <span class="font-medium">{{ totalItems }}</span>
+          <span>Discounts found</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Row -->
+  <div class="bulk-actions" style="margin-bottom: 1rem;">
+    <button class="btn btn-danger" (click)="deleteSelectedDiscounts()" [disabled]="selectedDiscounts.length === 0 || !permissionService.hasPermission(PermissionConstants.DISCOUNTS_DELETE)">Delete</button>
+  </div>
+
+  <!-- Discount Table -->
+  <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" [checked]="isAllSelected()" (change)="toggleSelectAll($event)">
+          </th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">End Date</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-slate-200">
+        <tr *ngFor="let discount of paginatedDiscounts; let i = index" class="hover:bg-slate-50">
+          <td class="px-4 py-3 whitespace-nowrap">
+            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" [checked]="isSelected(discount.id)" (change)="toggleSelectDiscount(discount.id, $event)">
+          </td>
+          <td class="px-4 py-3">{{ i + 1 }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <i *ngIf="!discount.autoApply" class="fas fa-ticket-alt coupon-icon" title="Coupon"></i>
+              <i *ngIf="discount.autoApply" class="fas fa-tag discount-icon" title="Discount Event"></i>
+              <span class="type-text">{{ discount.autoApply ? 'Discount' : 'Coupon' }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3">{{ discount.name }}</td>
+          <td class="px-4 py-3">
+           <ng-container *ngIf="discount.discountType === 'PERCENTAGE'; else fixed">
+          {{ (discount.discountValue <= 1 && discount.discountValue !== 0) ? (discount.discountValue * 100) : discount.discountValue }}%
+        </ng-container>
+        <ng-template #fixed>
+          {{ discount.discountValue }} MMK
+        </ng-template>
+          </td>
+          <td class="px-4 py-3">{{ discount.startDate | date: 'dd-MM-yyyy' }}</td>
+          <td class="px-4 py-3">{{ discount.endDate | date: 'dd-MM-yyyy' }}</td>
+          <td class="px-4 py-3">
+            <span [ngClass]="discount.status 
+              ? 'bg-green-100 text-green-800 px-3 py-0.5 rounded-full font-semibold uppercase text-xs' 
+              : 'bg-red-100 text-red-800 px-3 py-0.5 rounded-full font-semibold uppercase text-xs'">
+              {{ discount.status ? 'Active' : 'Inactive' }}
+            </span>
+          </td>
+          <td class="px-4 py-3">
+            <button (click)="openDetailsModal(discount, discountDetailsModal)" class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1" title="View Details">
+              <i data-lucide="eye" class="w-4 h-4"></i> View
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div *ngIf="!isLoading && filteredDiscounts.length === 0" class="empty-state">
+      <h3>No Discounts Found</h3>
+      <p>There are no discounts or coupons available at the moment.</p>
+    </div>
+    <!-- Pagination Controls -->
+    <div *ngIf="showPagination" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Showing {{ showingFrom }} to {{ showingTo }} of {{ totalItems }} results
+        </div>
+        <div class="flex items-center gap-2">
+          <button 
+            (click)="changePage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            Previous
+          </button>
+          <div class="flex items-center gap-1">
+            <button 
+              *ngFor="let page of getPageNumbers()"
+              (click)="changePage(page)"
+              [class]="page === currentPage ? 
+                'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
+                'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
+              {{ page }}
+            </button>
+          </div>
+          <button 
+            (click)="changePage(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Next
+            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Details Modal as ng-template -->
+<ng-template #discountDetailsModal let-modal>
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <!-- Modal Backdrop -->
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+    <!-- Modal Content -->
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="modal.dismiss()">&times;</button>
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between mb-4 md:mb-6">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
+            <i *ngIf="!detailsDiscount?.autoApply" class="fas fa-ticket-alt text-white text-xl"></i>
+            <i *ngIf="detailsDiscount?.autoApply" class="fas fa-tag text-white text-xl"></i>
+            </div>
+          <div>
+            <h3 class="text-2xl font-bold text-gray-900">{{ detailsDiscount?.name }}</h3>
+            <span class="inline-block mt-2 px-4 py-1 rounded-full text-xs font-semibold uppercase"
+              [ngClass]="detailsDiscount?.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                {{ detailsDiscount?.status ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+          </div>
+        <div class="flex items-center gap-2">
+          <button *ngIf="!isDetailsEditMode" (click)="startDetailsEdit()" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition" title="Edit">
+            <i class="fas fa-edit text-lg"></i>
+            </button>
+        </div>
+      </div>
+      <!-- Modal Body -->
+      <div class="flex-1 overflow-y-auto scrollbar-hide">
+        <form [formGroup]="detailsForm" *ngIf="detailsDiscount" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+              <input type="text" formControlName="name" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.border-red-500]="detailsForm.get('name')?.invalid && detailsForm.get('name')?.touched" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" >
+              <div *ngIf="detailsForm.get('name')?.invalid && detailsForm.get('name')?.touched" class="text-xs text-red-500 mt-1">Name is required</div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Code</label>
+              <input type="text" formControlName="code" [readonly]="!isDetailsEditMode || detailsDiscount.autoApply" [disabled]="!!detailsDiscount.autoApply || !isDetailsEditMode" [placeholder]="!isDetailsEditMode ? 'N/A' : 'Enter code'" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.border-red-500]="detailsForm.get('code')?.invalid && detailsForm.get('code')?.touched" [class.bg-gray-50]="!isDetailsEditMode || detailsDiscount.autoApply" [class.text-gray-600]="!isDetailsEditMode || detailsDiscount.autoApply" [class.opacity-75]="!isDetailsEditMode || detailsDiscount.autoApply">
+              <div *ngIf="detailsDiscount.autoApply === false && detailsForm.get('code')?.errors?.['required'] && detailsForm.get('code')?.touched" class="text-xs text-red-500 mt-1">Code is required</div>
+              <div *ngIf="detailsDiscount.autoApply === false && detailsForm.get('code')?.errors?.['codeExists'] && !detailsForm.get('code')?.errors?.['required'] && detailsForm.get('code')?.touched" class="text-xs text-red-500 mt-1">This code already exists. Please choose another.</div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+              <select formControlName="discountType" [disabled]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
+                <option value="PERCENTAGE">Percentage</option>
+                <option value="FIXED">Fixed Amount</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
+              <input type="number" formControlName="discountValue" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <input type="datetime-local" formControlName="startDate" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <input type="datetime-local" formControlName="endDate" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <textarea formControlName="description" [readonly]="!isDetailsEditMode" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center">
+                <span class="text-xs font-semibold mr-2" [ngClass]="detailsForm.get('status')?.value ? 'text-gray-400' : 'text-red-600'">Inactive</span>
+                <label class="relative inline-flex items-center cursor-pointer select-none">
+                  <input type="checkbox" formControlName="status" [disabled]="!isDetailsEditMode" class="sr-only peer">
+                  <div class="w-12 h-6 bg-gray-200 rounded-full peer peer-checked:bg-green-500 transition-all"></div>
+                  <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full shadow-md transition-all duration-200 peer-checked:translate-x-6"></div>
+                  </label>
+                <span class="text-xs font-semibold ml-2" [ngClass]="detailsForm.get('status')?.value ? 'text-green-600' : 'text-gray-400'">Active</span>
+              </div>
+            </div>
+          </div>
+          <!-- Discounted Products List (moved here) -->
+          <div *ngIf="detailsDiscount && discountProducts && discountProducts.length > 0" class="mt-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Product List (with Brand & Category):</label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-2">
+              <ng-container *ngFor="let product of discountProducts.slice(0, 5); let i = index">
+                <div class="flex flex-col items-center justify-center p-3 rounded-lg shadow-sm border bg-white" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'">
+                  <div class="relative w-16 h-16 mb-2">
+                    <img *ngIf="product.productImages && product.productImages.length > 0" [src]="getProductImageUrl(product)" alt="{{ product.productName }}" class="w-16 h-16 object-cover rounded-lg border" />
+                    <span *ngIf="!product.productImages || product.productImages.length === 0" class="text-gray-400 italic absolute inset-0 flex items-center justify-center">No image</span>
+                    <ng-container *ngIf="i === 4 && discountProducts.length > 5">
+                      <div class="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg border border-gray-200">
+                        <span class="text-gray-700 font-bold text-lg">+{{ discountProducts.length - 4 }}</span>
+                      </div>
+                    </ng-container>
+                  </div>
+                  <div class="text-xs font-semibold text-gray-800 text-center truncate max-w-[80px]" title="{{ product.productName }}">{{ product.productName }}</div>
+                </div>
+              </ng-container>
+            </div>
+            <div class="flex justify-center mt-2">
+              <button *ngIf="discountProducts.length > 0" (click)="openProductDetailsModal()" class="px-4 py-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-semibold transition">
+                Show More
+              </button>
+            </div>
+          </div>
+
+          <!-- User List Section -->
+          <div *ngIf="detailsDiscount && discountUsers && discountUsers.length > 0" class="mt-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">User List:</label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-2">
+              <ng-container *ngFor="let user of discountUsers.slice(0, 8); let i = index">
+                <div class="flex flex-col items-center justify-center p-3 rounded-lg shadow-sm border bg-white" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'">
+                  <div class="relative w-16 h-16 mb-2">
+                    <ng-container *ngIf="user.profileImage && user.profileImage !== '/upload/defaultProfile.png'; else showDefaultUserIcon">
+                      <img [src]="getUserProfileImage(user)" [alt]="user.name" class="w-16 h-16 object-cover rounded-full border" />
+                    </ng-container>
+                    <ng-template #showDefaultUserIcon>
+                      <div class="w-16 h-16 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200">
+                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
+                    </ng-template>
+                    <ng-container *ngIf="i === 7 && discountUsers.length > 8">
+                      <div class="absolute inset-0 bg-white/90 flex items-center justify-center rounded-full border border-gray-200">
+                        <span class="text-gray-700 font-bold text-sm">+{{ discountUsers.length - 7 }}</span>
+                      </div>
+                    </ng-container>
+                  </div>
+                  <div class="text-xs font-semibold text-gray-800 text-center truncate max-w-[80px]" title="{{ user.name }}">{{ user.name }}</div>
+                  <div class="text-xs text-gray-500 text-center truncate max-w-[80px]" title="{{ user.email }}">{{ user.email }}</div>
+                </div>
+              </ng-container>
+            </div>
+            <div class="flex justify-center mt-2">
+              <button *ngIf="discountUsers.length > 0" (click)="openUserDetailsModal()" class="px-4 py-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 text-xs font-semibold transition">
+                Show All Users
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+      <!-- Modal Footer -->
+      <div class="flex justify-end gap-2 mt-6">
+        <button class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm" (click)="modal.dismiss()">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+        <button *ngIf="isDetailsEditMode" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm" (click)="submitDetailsEdit()" [disabled]="detailsForm.invalid">
+            <i class="fas fa-save"></i> Update
+          </button>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteConfirmModal" class="modal-overlay" (click)="closeDeleteConfirmModal()">
+    <div class="delete-confirm-modal" (click)="$event.stopPropagation()">
+      <div class="delete-modal-header">
+        <div class="delete-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h3>Delete Discount</h3>
+      </div>
+      
+      <div class="delete-modal-body">
+        <p>Are you sure you want to delete <strong>"{{ discountToDelete?.name }}"</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+      
+      <div class="delete-modal-footer">
+        <button class="btn btn-cancel" (click)="closeDeleteConfirmModal()">
+          <i class="fas fa-times"></i> Cancel
+        </button>
+        <button class="btn btn-delete-confirm" (click)="confirmDelete()" [disabled]="!permissionService.hasPermission(PermissionConstants.DISCOUNTS_DELETE)">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+    </div>
+  </div>
+</div>
+
+<ng-template #productDetailsModal let-modal>
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-4xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-900">All Discounted Products</h2>
+        <button (click)="modal.dismiss()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm" style="min-width: 600px;">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Image</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Code</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Brand</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Category</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Price</th>
+              <th class="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of discountProducts; let i = index" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'" class="hover:bg-blue-50 transition group border-b last:border-b-0 text-sm">
+              <td class="px-3 py-2 text-center align-middle">
+                <img *ngIf="product.productImages && product.productImages.length > 0" [src]="getProductImageUrl(product)" alt="{{ product.productName }}" class="w-14 h-14 object-cover rounded-lg shadow border mx-auto" />
+                <span *ngIf="!product.productImages || product.productImages.length === 0" class="text-gray-400 italic">No image</span>
+              </td>
+              <td class="px-3 py-2 font-bold text-gray-900 truncate max-w-xs" title="{{ product.productName }}">{{ product.productName }}</td>
+              <td class="px-3 py-2 text-gray-700 truncate max-w-[120px]" title="{{ product.productCode }}">{{ product.productCode }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].brandName || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].cateName || '-' }}</td>
+              <td class="px-3 py-2 text-blue-700 font-semibold text-right">{{ product.price | number:'1.0-0' }}</td>
+              <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #userDetailsModal let-modal>
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-4xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-900">All Discounted Users</h2>
+        <button (click)="modal.dismiss()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm" style="min-width: 600px;">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Profile</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tier</th>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of discountUsers; let i = index" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'" class="hover:bg-green-50 transition group border-b last:border-b-0 text-sm">
+              <td class="px-3 py-2 text-center align-middle">
+                <ng-container *ngIf="user.profileImage && user.profileImage !== '/upload/defaultProfile.png'; else showDefaultUserIcon">
+                  <img [src]="getUserProfileImage(user)" [alt]="user.name" class="w-14 h-14 object-cover rounded-full shadow border mx-auto" />
+                </ng-container>
+                <ng-template #showDefaultUserIcon>
+                  <div class="w-14 h-14 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 mx-auto">
+                    <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                </ng-template>
+              </td>
+              <td class="px-3 py-2 font-bold text-gray-900 truncate max-w-xs" title="{{ user.name }}">{{ user.name }}</td>
+              <td class="px-3 py-2 text-gray-700 truncate max-w-[200px]" title="{{ user.email }}">{{ user.email }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ user.phoneNumber || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">
+                <span *ngIf="user.tier" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  {{ user.tier }}
+                </span>
+                <span *ngIf="!user.tier" class="text-gray-400">-</span>
+              </td>
+              <td class="px-3 py-2 text-center">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" 
+                      [ngClass]="user.status && user.status.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                  {{ user.status | titlecase }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</ng-template>

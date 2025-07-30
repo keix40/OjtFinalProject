@@ -1,47 +1,55 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CartService } from '../services/cart.service';
+import { ImageService } from '../services/image.service';
 
 @Component({
   selector: 'app-order-confirm',
   standalone: false,
   templateUrl: './order-confirm.component.html',
-  styleUrl: './order-confirm.component.css'
+  styleUrls: ['./order-confirm.component.css']
 })
 export class OrderConfirmComponent implements OnInit {
-  customer: any;
-  shipping: any;
-  delivery: any;
-  cartItems: any[] = [];
-  paymentMethod: string = '';
-  orderNumber: string = '';
+  @Input() orderDetails: any;
 
-  constructor(private router: Router, private cartService: CartService) {}
+  constructor(
+    public activeModal: NgbActiveModal,
+    private router: Router,
+    private cartService: CartService,
+    public imageService: ImageService
+  ) {}
 
   ngOnInit() {
-    const nav = window.history.state;
-    this.customer = nav.customer;
-    this.shipping = nav.shipping;
-    this.delivery = nav.delivery;
-    this.cartItems = nav.cartItems;
-    this.paymentMethod = nav.paymentMethod;
-    this.orderNumber = nav.orderNumber;
-    // Clear the cart after order confirmation
-    this.cartService.clearCart();
+    if (this.orderDetails) {
+      this.cartService.clearCart();
+    }
   }
 
   getSubtotal() {
-    return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  }
-  getDeliveryCost() {
-    if (!this.delivery || !this.delivery.method) return 0;
-    if (this.delivery.method.includes('Express DDP')) return 6.49;
-    if (this.delivery.method.includes('Standard DDP')) return 4.49;
-    if (this.delivery.method.includes('Standard DDU')) return 5.49;
-    if (this.delivery.method.includes('Express DDU')) return 10.49;
+    if (typeof this.orderDetails.subtotal === 'number') {
+      return this.orderDetails.subtotal;
+    }
+    if (this.orderDetails.cartItems) {
+      return this.orderDetails.cartItems.reduce((sum: any, item: any) => sum + item.price * item.quantity, 0);
+    }
     return 0;
   }
+
+  getDeliveryCost() {
+    if (typeof this.orderDetails.deliveryFee === 'number') {
+      return this.orderDetails.deliveryFee;
+    }
+    return 0;
+  }
+  
   getTotal() {
-    return this.getSubtotal() + this.getDeliveryCost() - 100; // Example discount
+    const discount = typeof this.orderDetails.discountAmount === 'number' ? this.orderDetails.discountAmount : 0;
+    return this.getSubtotal() + this.getDeliveryCost() - discount;
+  }
+
+  closeAndNavigate() {
+    this.activeModal.close();
+    this.router.navigate(['/userproductlist']);
   }
 }

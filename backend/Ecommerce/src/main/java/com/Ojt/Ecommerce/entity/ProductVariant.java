@@ -34,4 +34,14 @@ public class ProductVariant {
 
     @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VariantAttributeValue> variantAttributeValues;
+
+    @Column(name = "status", columnDefinition = "INT DEFAULT 1")
+    private Integer status;
+
+    @PrePersist
+    public void prePersist() {
+        if (status == null) {
+            status = 1;
+        }
+    }
 }

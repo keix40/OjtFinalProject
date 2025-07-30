@@ -11,6 +11,103 @@
     --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
+/* Modern Search Box Styles */
+.search-container {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.search-container:focus-within {
+    transform: scale(1.01);
+}
+
+.search-input {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.search-input:focus {
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
+}
+
+.search-button {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.search-button:hover {
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.search-button:active {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Search Suggestions Animation */
+.search-suggestions {
+    animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Search Icon Animation */
+.search-icon {
+    transition: color 0.3s ease;
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+}
+
+.search-container:focus-within .search-icon {
+    color: #3b82f6;
+}
+
+/* Pulse animation for search button */
+@keyframes searchPulse {
+    0% {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+    }
+    100% {
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+}
+
+.search-button:hover {
+    /* Removed animation to prevent movement */
+}
+
+/* Glassmorphism effect for search container */
+.search-glass {
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.search-glass:focus-within {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
 .main-header {
     background: linear-gradient(90deg, #fff 80%, #f7e9c7 100%);
     box-shadow: var(--shadow-md);
@@ -398,6 +495,79 @@
     display: block;
 }
 
+.first-time-buyer-badge {
+  background: linear-gradient(90deg, #ff3b3b 0%, #c81d25 100%);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 0.97rem;
+  padding: 3px 12px 3px 10px;
+  margin-left: 8px;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(200, 29, 37, 0.10);
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: none;
+}
+
+.first-time-buyer-badge i {
+  font-size: 1em;
+  margin-right: 2px;
+}
+
+.first-time-buyer-badge:hover {
+  transform: scale(1.04);
+  box-shadow: 0 4px 16px rgba(56, 249, 215, 0.18);
+}
+
+.first-time-buyer-badge::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 40%; height: 100%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.22) 100%);
+  transform: skewX(-20deg);
+  animation: shimmer 2.2s infinite;
+  pointer-events: none;
+}
+
+@keyframes shimmer {
+  0% { left: -60%; }
+  100% { left: 120%; }
+}
+
+.typewriter {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: .15em solid #2b6cb0;
+  animation: typing 2.5s steps(20, end) 1s 1 normal both;
+}
+
+.typewriter-cursor {
+  display: inline-block;
+  animation: blink-cursor 0.8s steps(1) infinite;
+  color: #2563eb;
+  font-weight: bold;
+  font-size: 1em;
+  margin-left: 2px;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
 /* Responsive Styles */
 @media (max-width: 1199.98px) {
     .search-form {
@@ -496,3 +666,4 @@
         width: 300px;
     }
 }
+

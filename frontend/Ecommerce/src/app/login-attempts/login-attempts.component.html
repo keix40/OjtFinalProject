@@ -109,7 +109,7 @@
             <input 
               type="text" 
               class="form-control search-input" 
-              placeholder="Search by IP, username, or location..."
+              placeholder="Search by IP, username, location, or session ID..."
               [(ngModel)]="searchTerm"
               (input)="onSearch()"
             >
@@ -174,163 +174,217 @@
         </div>
       </div>
     </div>
-  
-    <!-- Login Attempts Table -->
-    <div class="table-container">
-      <div class="table-header">
-        <h3 class="table-title">Recent Login Attempts</h3>
-        <div class="table-actions">
-          <button class="btn btn-bulk" [disabled]="selectedAttempts.length === 0" (click)="bulkBlock()">
-            <i class="fas fa-ban"></i>
-            Block Selected ({{ selectedAttempts.length }})
-          </button>
-        </div>
+
+    <!-- Security Policy Box (Modern UI, Expandable) -->
+<div class="mb-8">
+  <div class=" rounded-2xl shadow-lg p-6">
+    <div class="flex items-center gap-3 mb-4 cursor-pointer select-none" (click)="showPolicyExpanded = !showPolicyExpanded">
+      <div class="bg-blue-500 text-white rounded-full p-2 flex items-center justify-center shadow">
+        <i class="fas fa-shield-alt text-xl"></i>
       </div>
-  
-      <div class="table-responsive">
-        <table class="table">
-          <thead>
-            <tr>
-              <th>
-                <input 
-                  type="checkbox" 
-                  class="form-check-input"
-                  [checked]="isAllSelected()"
-                  (change)="toggleSelectAll()"
-                >
-              </th>
-              <th (click)="sort('timestamp')" class="sortable">
-                Timestamp
-                <i class="fas fa-sort sort-icon"></i>
-              </th>
-              <th (click)="sort('username')" class="sortable">
-                Username
-                <i class="fas fa-sort sort-icon"></i>
-              </th>
-              <th (click)="sort('ipAddress')" class="sortable">
-                IP Address
-                <i class="fas fa-sort sort-icon"></i>
-              </th>
-              <th>Location</th>
-              <th>Status</th>
-              <th>Threat Level</th>
-              <th>Attempts</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let attempt of paginatedAttempts; trackBy: trackByAttempt" 
-                [ngClass]="getRowClass(attempt)">
-              <td>
-                <input 
-                  type="checkbox" 
-                  class="form-check-input"
-                  [checked]="isSelected(attempt)"
-                  (change)="toggleSelect(attempt)"
-                >
-              </td>
-              <td>
-                <div class="timestamp-cell">
-                  <span class="timestamp-main">{{ attempt.timestamp | date:'MMM dd, HH:mm:ss' }}</span>
-                  <span class="timestamp-relative">{{ getRelativeTime(attempt.timestamp) }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="username-cell">
-                  <span class="username">{{ attempt.username }}</span>
-                  <span class="user-role" *ngIf="attempt.userRole">{{ attempt.userRole }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="ip-cell">
-                  <span class="ip-address">{{ attempt.ipAddress }}</span>
-                  <span class="ip-info" *ngIf="attempt.isVPN">VPN</span>
-                  <span class="ip-info proxy" *ngIf="attempt.isProxy">Proxy</span>
-                </div>
-              </td>
-              <td>
-                <div class="location-cell">
-                  <i class="fas fa-map-marker-alt location-icon"></i>
-                  <span class="location-text">{{ attempt.location }}</span>
-                  <span class="country-flag" [innerHTML]="getCountryFlag(attempt.countryCode)"></span>
-                </div>
-              </td>
-              <td>
-                <span class="status-badge" [ngClass]="attempt.status">
-                  <i class="fas" [ngClass]="getStatusIcon(attempt.status)"></i>
-                  {{ attempt.status | titlecase }}
-                </span>
-              </td>
-              <td>
-                <span class="threat-badge" [ngClass]="attempt.threatLevel">
-                  {{ attempt.threatLevel | titlecase }}
-                </span>
-              </td>
-              <td>
-                <div class="attempts-cell">
-                  <span class="attempts-count">{{ attempt.attemptCount }}</span>
-                  <span class="attempts-timeframe">in {{ attempt.timeframe }}</span>
-                </div>
-              </td>
-              <td>
-                <div class="action-buttons">
-                  <button 
-                    class="btn btn-action btn-details" 
-                    (click)="viewDetails(attempt)"
-                    title="View Details"
-                  >
-                    <i class="fas fa-eye"></i>
-                  </button>
-                  <button 
-                    class="btn btn-action btn-block" 
-                    (click)="blockIP(attempt)"
-                    title="Block IP"
-                    [disabled]="attempt.isBlocked"
-                  >
-                    <i class="fas fa-ban"></i>
-                  </button>
-                  <button 
-                    class="btn btn-action btn-whitelist" 
-                    (click)="whitelistIP(attempt)"
-                    title="Whitelist IP"
-                  >
-                    <i class="fas fa-check"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="flex-1">
+        <h2 class="text-xl font-bold text-blue-900 tracking-tight">Security Policy Rules</h2>
+        <p class="text-gray-500 text-sm">These rules control what happens after failed login attempts.</p>
       </div>
-  
-      <!-- Pagination -->
-      <div class="pagination-container">
-        <div class="pagination-info">
-          Showing {{ getStartIndex() + 1 }} to {{ getEndIndex() }} of {{ filteredAttempts.length }} entries
-        </div>
-        <nav class="pagination-nav">
-          <ul class="pagination">
-            <li class="page-item" [ngClass]="{'disabled': currentPage === 1}">
-              <button class="page-link" (click)="goToPage(currentPage - 1)">
-                <i class="fas fa-chevron-left"></i>
-              </button>
-            </li>
-            <li 
-              class="page-item" 
-              *ngFor="let page of getPageNumbers()" 
-              [ngClass]="{'active': page === currentPage}"
-            >
-              <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
-            </li>
-            <li class="page-item" [ngClass]="{'disabled': currentPage === totalPages}">
-              <button class="page-link" (click)="goToPage(currentPage + 1)">
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </li>
-          </ul>
-        </nav>
-      </div>
+      <button class="ml-2 bg-blue-100 hover: rounded-full p-2 transition" [attr.aria-expanded]="showPolicyExpanded">
+        <i class="fas" [ngClass]="showPolicyExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </button>
     </div>
+    <div *ngIf="showPolicyExpanded" class="overflow-x-auto transition-all duration-300">
+      <table class="min-w-full bg-white/80 rounded-xl shadow divide-y divide-blue-100">
+        <thead>
+          <tr class="text-blue-700 text-sm font-semibold">
+            <th class="px-4 py-2 text-left">Action</th>
+            <th class="px-4 py-2 text-center">Attempts</th>
+            <th class="px-4 py-2 text-center">Window (min)</th>
+            <th class="px-4 py-2 text-center">Edit</th>
+            <th class="px-4 py-2 text-center">Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rule of securityPolicy" class="hover:bg-blue-50 transition">
+            <td class="px-4 py-2 flex items-center gap-2">
+              <ng-container *ngIf="editingRuleId !== rule.id; else editActionTpl">
+                <i *ngIf="rule.action === 'email_alert'" class="fas fa-envelope text-blue-400"></i>
+                <i *ngIf="rule.action === 'require_otp'" class="fas fa-key text-yellow-500"></i>
+                <i *ngIf="rule.action === 'require_captcha'" class="fas fa-robot text-green-500"></i>
+                <i *ngIf="rule.action === 'ban_ip'" class="fas fa-ban text-red-500"></i>
+                <span class="capitalize font-medium">{{ rule.action.replace('_', ' ') }}</span>
+              </ng-container>
+              <ng-template #editActionTpl>
+                <select [(ngModel)]="editedRule.action" class="form-select form-select-xs w-32">
+                  <option value="email_alert">Email Alert</option>
+                  <option value="require_otp">Require OTP</option>
+                  <option value="require_captcha">Require CAPTCHA</option>
+                  <option value="ban_ip">Ban IP</option>
+                </select>
+              </ng-template>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <ng-container *ngIf="editingRuleId !== rule.id; else editAttemptsTpl">
+                <span class="font-bold text-blue-700">{{ rule.attempts }}</span>
+              </ng-container>
+              <ng-template #editAttemptsTpl>
+                <input type="number" min="1" [(ngModel)]="editedRule.attempts" class="form-input form-input-xs w-14 text-center" />
+              </ng-template>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <ng-container *ngIf="editingRuleId !== rule.id; else editWindowTpl">
+                <span class="text-gray-700">{{ rule.windowMinutes }}</span>
+              </ng-container>
+              <ng-template #editWindowTpl>
+                <input type="number" min="1" [(ngModel)]="editedRule.windowMinutes" class="form-input form-input-xs w-16 text-center" />
+              </ng-template>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <ng-container *ngIf="editingRuleId !== rule.id">
+                <button class="text-blue-600 hover:text-blue-800 transition" (click)="editRule(rule)" title="Edit"><i class="fas fa-edit"></i></button>
+              </ng-container>
+              <ng-container *ngIf="editingRuleId === rule.id">
+                <button class="text-green-600 hover:text-green-800 mr-2" (click)="saveRule(editedRule)" [disabled]="isSavingRule" title="Save"><i class="fas fa-check"></i></button>
+                <button class="text-gray-500 hover:text-gray-700" (click)="cancelEdit()" title="Cancel"><i class="fas fa-times"></i></button>
+              </ng-container>
+            </td>
+            <td class="px-4 py-2 text-center">
+              <button class="text-red-500 hover:text-red-700 transition" (click)="deleteRule(rule)" [disabled]="isDeletingRule" title="Delete"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="!showPolicyExpanded" class="flex flex-wrap gap-3 mt-2">
+      <ng-container *ngFor="let rule of securityPolicy">
+        <div class="flex items-center gap-2 px-3 py-1 rounded-lg  text-blue-900 text-sm font-medium shadow-sm">
+          <i *ngIf="rule.action === 'email_alert'" class="fas fa-envelope text-blue-400"></i>
+          <i *ngIf="rule.action === 'require_otp'" class="fas fa-key text-yellow-500"></i>
+          <i *ngIf="rule.action === 'require_captcha'" class="fas fa-robot text-green-500"></i>
+          <i *ngIf="rule.action === 'ban_ip'" class="fas fa-ban text-red-500"></i>
+          <span class="capitalize">{{ rule.action.replace('_', ' ') }}</span>
+          <span class="mx-1">at</span>
+          <span class="font-bold">{{ rule.attempts }}</span>
+          <span>fail</span>
+          <span class="text-xs text-gray-500">({{ rule.windowMinutes }} min)</span>
+        </div>
+      </ng-container>
+    </div>
+  </div>
+</div>
+  
+    <!-- View Mode Toggle -->
+    <!-- REMOVE THIS SECTION -->
+    <!-- <div class="view-toggle" style="margin-bottom: 16px; display: flex; gap: 8px;">
+      <button class="btn" [class.active]="viewMode === 'summary'" (click)="setViewMode('summary')">Summary View</button>
+      <button class="btn" [class.active]="viewMode === 'detailed'" (click)="setViewMode('detailed')">Detailed Log</button>
+    </div> -->
+
+<!-- Reusable Table Template -->
+<ng-template #logTable let-attempts>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>IP Address</th>
+          <th>Location</th>
+          <th>Attempts</th>
+          <th>Status</th>
+          <th>Threat Level</th>
+          <th>Timestamp</th>
+          <th>Actions</th>
+          <th>Detailed Log</th> <!-- NEW COLUMN -->
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let attempt of attempts; trackBy: trackByAttempt" [ngClass]="getRowClass(attempt)">
+          <td>{{ attempt.username }}</td>
+          <td>{{ attempt.ipAddress }}</td>
+          <td>
+            <div class="location-cell">
+              <i class="fas fa-map-marker-alt location-icon"></i>
+              <span class="location-text">{{ attempt.location }}</span>
+              <span class="country-flag" [innerHTML]="getCountryFlag(attempt.countryCode)"></span>
+            </div>
+          </td>
+          <td>
+            <span class="attempts-count">{{ attempt.attemptCount }}</span>
+            <span *ngIf="attempt.timeframe" class="attempts-timeframe">in {{ attempt.timeframe }}</span>
+          </td>
+          <td>
+            <span class="status-badge" [ngClass]="attempt.status">
+              <i class="fas" [ngClass]="getStatusIcon(attempt.status)"></i>
+              {{ attempt.status | titlecase }}
+            </span>
+          </td>
+          <td>
+            <span class="threat-badge" [ngClass]="attempt.threatLevel">
+              {{ attempt.threatLevel | titlecase }}
+            </span>
+          </td>
+          <td>
+            <span class="timestamp-main">{{ attempt.timestamp | date:'MMM dd, HH:mm:ss' }}</span>
+            <span class="timestamp-relative">{{ getRelativeTime(attempt.timestamp) }}</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn btn-action btn-details" (click)="viewDetails(attempt)" title="View Details">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn btn-action btn-block" (click)="blockIP(attempt)" title="Block IP" [disabled]="attempt.isBlocked">
+                <i class="fas fa-ban"></i>
+              </button>
+              <button class="btn btn-action btn-whitelist" (click)="whitelistIP(attempt)" title="Whitelist IP">
+                <i class="fas fa-check"></i>
+              </button>
+            </div>
+          </td>
+          <td>
+            <button class="btn btn-glassmorphism btn-detailed-log" (click)="openDetailedLogModal(attempt)">
+              <i class="fas fa-list"></i> Detailed Log
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</ng-template>
+
+<!-- Summary View Table (now uses detailed log table template) -->
+<div>
+  <ng-container *ngTemplateOutlet="logTable; context: { $implicit: summaryAttempts }"></ng-container>
+</div>
+
+<!-- Detailed Log Table (existing table, now uses template) -->
+<!-- REMOVE global detailed log and pagination section -->
+<!-- <div *ngIf="viewMode === 'detailed'">
+  <ng-container *ngTemplateOutlet="logTable; context: { $implicit: paginatedAttempts }"></ng-container>
+  <!-- Pagination and other controls remain below as before -->
+  <div class="pagination-container">
+    <div class="pagination-info">
+      Showing {{ getStartIndex() + 1 }} to {{ getEndIndex() }} of {{ filteredAttempts.length }} entries
+    </div>
+    <nav class="pagination-nav">
+      <ul class="pagination">
+        <li class="page-item" [ngClass]="{'disabled': currentPage === 1}">
+          <button class="page-link" (click)="goToPage(currentPage - 1)">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+        </li>
+        <li 
+          class="page-item" 
+          *ngFor="let page of getPageNumbers()" 
+          [ngClass]="{'active': page === currentPage}"
+        >
+          <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
+        </li>
+        <li class="page-item" [ngClass]="{'disabled': currentPage === totalPages}">
+          <button class="page-link" (click)="goToPage(currentPage + 1)">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div> 
   
     <!-- Real-time Activity Feed -->
     <div class="activity-feed" *ngIf="isRealTimeActive">
@@ -360,58 +414,274 @@
         </div>
       </div>
     </div>
-  </div>
   
   <!-- Modals -->
   <!-- Details Modal -->
   <div class="modal fade" id="detailsModal" tabindex="-1" *ngIf="selectedAttemptDetails">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Login Attempt Details</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md">
+        <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between">
+          <h5 class="modal-title flex items-center gap-2 text-xl font-semibold text-blue-900">
+            <i class="fas fa-info-circle text-blue-500"></i> Login Attempt Details
+          </h5>
+          <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition" data-bs-dismiss="modal" aria-label="Close">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <div class="modal-body">
-          <div class="details-grid">
-            <div class="detail-item">
-              <label>Timestamp:</label>
-              <span>{{ selectedAttemptDetails.timestamp | date:'full' }}</span>
+        <div class="modal-body p-4 md:p-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Timestamp -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-calendar-alt text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Timestamp</div>
+                <div class="font-medium">{{ selectedAttemptDetails.timestamp | date:'full' }}</div>
+                <div class="text-xs text-gray-400">({{ getRelativeTime(selectedAttemptDetails.timestamp) }})</div>
+              </div>
             </div>
-            <div class="detail-item">
-              <label>Username:</label>
-              <span>{{ selectedAttemptDetails.username }}</span>
+            <!-- Username -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-user text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Username</div>
+                <div class="font-medium">{{ selectedAttemptDetails.username }}</div>
+              </div>
             </div>
-            <div class="detail-item">
-              <label>IP Address:</label>
-              <span>{{ selectedAttemptDetails.ipAddress }}</span>
+            <!-- Email -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-envelope text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Email</div>
+                <div class="font-medium">{{ selectedAttemptDetails.username }}</div>
+              </div>
             </div>
-            <div class="detail-item">
-              <label>User Agent:</label>
-              <span>{{ selectedAttemptDetails.userAgent }}</span>
+            <!-- IP Address -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-globe text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">IP Address</div>
+                <div class="flex items-center gap-2">
+                  <span class="font-mono">{{ selectedAttemptDetails.ipAddress }}</span>
+                  <button class="btn btn-xs btn-light ml-2" (click)="copyToClipboard(selectedAttemptDetails.ipAddress)"><i class="fas fa-copy"></i></button>
+                </div>
+              </div>
             </div>
-            <div class="detail-item">
-              <label>Location:</label>
-              <span>{{ selectedAttemptDetails.location }}</span>
+            <!-- Location -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-map-marker-alt text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Location</div>
+                <div class="flex items-center gap-2">
+                  <span>{{ selectedAttemptDetails.location }}</span>
+                  <span class="country-flag" [innerHTML]="getCountryFlag(selectedAttemptDetails.countryCode)"></span>
+                  <a *ngIf="selectedAttemptDetails.location && selectedAttemptDetails.location !== 'Unknown'" class="ml-2 text-blue-500 underline" target="_blank"
+                    [href]="'https://www.google.com/maps/search/' + encodeURIComponent(selectedAttemptDetails.location)">
+                    <i class="fas fa-map"></i> Map
+                  </a>
+                </div>
+              </div>
             </div>
-            <div class="detail-item">
-              <label>ISP:</label>
-              <span>{{ selectedAttemptDetails.isp }}</span>
+            <!-- User Agent -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3 md:col-span-2">
+              <i class="fas fa-desktop text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">User Agent</div>
+                <div class="break-all text-sm">{{ selectedAttemptDetails.userAgent }}</div>
+              </div>
             </div>
-            <div class="detail-item">
-              <label>Threat Score:</label>
-              <span>{{ selectedAttemptDetails.threatScore }}/100</span>
+            <!-- Status -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-shield-alt text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Status</div>
+                <span class="status-badge" [ngClass]="selectedAttemptDetails.status">
+                  <i class="fas" [ngClass]="getStatusIcon(selectedAttemptDetails.status)"></i>
+                  {{ selectedAttemptDetails.status | titlecase }}
+                </span>
+              </div>
             </div>
-            <div class="detail-item">
-              <label>Session ID:</label>
-              <span>{{ selectedAttemptDetails.sessionId }}</span>
+            <!-- Threat Score -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-exclamation-triangle text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Threat Score</div>
+                <span class="threat-badge" [ngClass]="selectedAttemptDetails.threatLevel">
+                  {{ selectedAttemptDetails.threatScore }}/100 ({{ selectedAttemptDetails.threatLevel | titlecase }})
+                </span>
+              </div>
+            </div>
+            <!-- Attempts in Window -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-redo text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Attempts in Window</div>
+                <span class="font-medium">{{ selectedAttemptDetails.attemptCount }}</span>
+              </div>
+            </div>
+            <!-- VPN/Proxy -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-user-secret text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">VPN/Proxy</div>
+                <span *ngIf="selectedAttemptDetails.isVPN" class="badge bg-warning text-dark">VPN</span>
+                <span *ngIf="selectedAttemptDetails.isProxy" class="badge bg-danger">Proxy</span>
+                <span *ngIf="!selectedAttemptDetails.isVPN && !selectedAttemptDetails.isProxy" class="text-gray-400">None detected</span>
+              </div>
+            </div>
+            <!-- Session ID in details modal: clean, only session ID, copy, and view activity -->
+            <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
+              <i class="fas fa-key text-blue-400 text-lg"></i>
+              <div>
+                <div class="text-xs text-gray-500">Session ID</div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <a *ngIf="selectedAttemptDetails.sessionId" href="#" class="font-mono text-blue-600 underline hover:text-blue-800" (click)="$event.preventDefault(); openSessionActivity(selectedAttemptDetails.sessionId)">
+                    {{ selectedAttemptDetails.sessionId }}
+                  </a>
+                  <span *ngIf="!selectedAttemptDetails.sessionId" class="font-mono">N/A</span>
+                  <button *ngIf="selectedAttemptDetails.sessionId" class="btn btn-xs btn-light ml-2" (click)="copyToClipboard(selectedAttemptDetails.sessionId)"><i class="fas fa-copy"></i></button>
+                  <button *ngIf="selectedAttemptDetails.sessionId" class="btn btn-xs btn-link ml-2 text-blue-600" (click)="openSessionActivity(selectedAttemptDetails.sessionId)"><i class="fas fa-list"></i> View All Activity</button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-danger" (click)="blockIP(selectedAttemptDetails)">Block IP</button>
+          <!-- Divider -->
+          <div class="my-6 border-t border-gray-200"></div>
+          <!-- Actions -->
+          <div class="flex flex-wrap gap-3 justify-end">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
+            <button type="button" class="btn btn-danger" (click)="blockIP(selectedAttemptDetails)"><i class="fas fa-ban"></i> Block IP</button>
+            <button type="button" class="btn btn-success" (click)="whitelistIP(selectedAttemptDetails)"><i class="fas fa-check"></i> Whitelist IP</button>
+            <button type="button" class="btn btn-light" (click)="exportData()"><i class="fas fa-download"></i> Export</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
+  
+<!-- Session Activity Log Modal -->
+<div class="modal fade" id="sessionActivityModal" tabindex="-1" *ngIf="showSessionActivityModal">
+  <div class="modal-dialog w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto">
+    <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md">
+      <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+        <h5 class="modal-title flex items-center gap-2 text-lg md:text-xl font-semibold text-blue-900">
+          <i class="fas fa-list text-blue-500"></i> Session Activity Log
+        </h5>
+        <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition" (click)="closeSessionActivity()" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body p-2 md:p-4 lg:p-8 overflow-x-auto">
+        <div class="mb-4 flex flex-wrap gap-2 items-center">
+          <span class="font-mono text-blue-700 break-all">Session: {{ sessionActivitySessionId }}</span>
+          <button *ngIf="sessionActivitySessionId" class="btn btn-xs btn-danger ml-2" (click)="blockSession(sessionActivitySessionId!)"><i class="fas fa-ban"></i> Block Session</button>
+          <button *ngIf="sessionActivitySessionId" class="btn btn-xs btn-success ml-2" (click)="whitelistSession(sessionActivitySessionId!)"><i class="fas fa-check"></i> Whitelist Session</button>
+        </div>
+        <div class="table-responsive w-full overflow-x-auto">
+          <table class="table min-w-[600px] md:min-w-full text-xs md:text-sm">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Username</th>
+                <th>IP Address</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Threat</th>
+                <th>Attempts</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let attempt of sessionActivityAttempts">
+                <td class="whitespace-nowrap">{{ attempt.timestamp | date:'MMM dd, HH:mm:ss' }}</td>
+                <td class="whitespace-nowrap">{{ attempt.username }}</td>
+                <td class="whitespace-nowrap">{{ attempt.ipAddress }}</td>
+                <td class="whitespace-nowrap">{{ attempt.location }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="attempt.status">
+                    <i class="fas" [ngClass]="getStatusIcon(attempt.status)"></i>
+                    {{ attempt.status | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <span class="threat-badge" [ngClass]="attempt.threatLevel">
+                    {{ attempt.threatScore }}/100 ({{ attempt.threatLevel | titlecase }})
+                  </span>
+                </td>
+                <td class="whitespace-nowrap">{{ attempt.attemptCount }}</td>
+                <td>
+                  <button class="btn btn-xs btn-light" (click)="viewDetails(attempt)"><i class="fas fa-eye"></i></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer flex gap-2 flex-wrap justify-end px-4 py-3 md:px-6 md:py-4">
+        <button type="button" class="btn btn-secondary" (click)="closeSessionActivity()"><i class="fas fa-times"></i> Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+  
+<!-- BLUR OVERLAY FOR MODAL (must be outside all main containers) -->
+<div *ngIf="showDetailedLogModal" class="fixed inset-0 z-50 bg-white/40 backdrop-blur-sm transition-all duration-300"></div>
+
+<!-- MODAL FOR DETAILED LOG (must be outside all main containers) -->
+<div class="modal fade" id="detailedLogModal" tabindex="-1" [ngClass]="{'show d-block': showDetailedLogModal}" style="z-index:60;">
+  <div class="fixed inset-0 z-40 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-3xl bg-white/90">
+        <h5 class="modal-title flex items-center gap-2 text-lg md:text-2xl font-bold text-blue-900">
+          <i class="fas fa-list text-blue-500"></i>
+          <span>Detailed Log for</span>
+          <span class="truncate max-w-[120px] md:max-w-[200px]">{{ detailedLogContext?.username }}</span>
+          <span class="text-gray-400">&#64;</span>
+          <span class="truncate max-w-[100px] md:max-w-[160px]">{{ detailedLogContext?.ipAddress }}</span>
+        </h5>
+        <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition flex items-center justify-center absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="closeDetailedLogModal()" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body p-4 md:p-8 overflow-x-auto">
+        <div class="table-responsive">
+          <table class="table min-w-[600px] md:min-w-full text-xs md:text-sm">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Threat</th>
+                <th>Attempts</th>
+                <th>Location</th>
+                <th>User Agent</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="filteredDetailedLog.length === 0">
+                <td colspan="6" class="text-center text-gray-400">No log entries found for this user/IP.</td>
+              </tr>
+              <tr *ngFor="let log of filteredDetailedLog">
+                <td>{{ log.timestamp | date:'MMM dd, HH:mm:ss' }}</td>
+                <td>
+                  <span class="status-badge" [ngClass]="log.status">
+                    <i class="fas" [ngClass]="getStatusIcon(log.status)"></i>
+                    {{ log.status | titlecase }}
+                  </span>
+                </td>
+                <td>
+                  <span class="threat-badge" [ngClass]="log.threatLevel">
+                    {{ log.threatScore }}/100 ({{ log.threatLevel | titlecase }})
+                  </span>
+                </td>
+                <td>{{ log.attemptCount }}</td>
+                <td>{{ log.location }}</td>
+                <td class="break-all text-xs">{{ log.userAgent }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+  
+
   

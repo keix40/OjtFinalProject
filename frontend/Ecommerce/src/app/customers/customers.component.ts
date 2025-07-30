@@ -1,4 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewChecked } from '@angular/core';
+import { ImageService } from '../services/image.service';
+import { UserService } from '../services/user.service';
+import * as XLSX from 'xlsx'; // For Excel export
+import jsPDF from 'jspdf'; // For PDF export
+import autoTable from 'jspdf-autotable'; // For PDF table export
+import { PermissionService } from '../services/permission.service';
+import { PermissionConstants } from '../constants/permission.constants';
 
 interface Customer {
   id: string;
@@ -27,13 +34,20 @@ interface Address {
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.css']
 })
-export class CustomersComponent implements OnInit {
+export class CustomersComponent implements OnInit, AfterViewChecked {
   // Data properties
   customers: Customer[] = [];
   filteredCustomers: Customer[] = [];
   paginatedCustomers: Customer[] = [];
   selectedCustomers: string[] = [];
   selectedCustomerDetails: Customer | null = null;
+  openDropdownId: string | null = null;
+  showCustomerModal: boolean = false;
+  public PermissionConstants = PermissionConstants;
+  public permissionService: PermissionService;
+  logDropdownClick(customerId: string) {
+    console.log('Dropdown for', customerId);
+  }
 
   // Filter and search properties
   searchTerm: string = '';
@@ -54,118 +68,235 @@ export class CustomersComponent implements OnInit {
 
   // Utility property for template
   Math = Math;
+  viewMode: 'table' | 'cards' = 'table';
+
+  setViewMode(mode: 'table' | 'cards') {
+    this.viewMode = mode;
+  }
+
+  // --- Export Data (Excel/PDF, All/Selected) ---
+  exportDropdownOpen = false;
+  excelDropdownOpen = false;
+  pdfDropdownOpen = false;
+
+  toggleExportDropdown() {
+    this.exportDropdownOpen = !this.exportDropdownOpen;
+  }
+
+  exportCustomersExcel(selectedOnly: boolean = false): void {
+    // Why: Allow export of all or selected customers as Excel with styled header, title, borders, and colored money column
+    const exportData = (selectedOnly && this.selectedCustomers.length > 0)
+      ? this.customers.filter(c => this.selectedCustomers.includes(c.id))
+      : this.filteredCustomers;
+    // Prepare data rows
+    const dataRows = exportData.map(c => ([
+      c.id,
+      c.name,
+      c.email,
+      c.phone,
+      c.status,
+      c.joinDate.toLocaleDateString(),
+      c.totalOrders,
+      c.totalSpent
+    ]));
+    // Title row
+    const title = [["Customer List Export"]];
+    // Header row
+    const header = [[
+      'ID', 'Name', 'Email', 'Phone', 'Status', 'Join Date', 'Total Orders', 'Total Spent'
+    ]];
+    // Combine all rows
+    const wsData = [...title, ...header, ...dataRows];
+    const ws: XLSX.WorkSheet = XLSX.utils.aoa_to_sheet(wsData);
+    // Merge title row
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }];
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 6 },   // ID
+      { wch: 18 },  // Name
+      { wch: 28 },  // Email
+      { wch: 16 },  // Phone
+      { wch: 10 },  // Status
+      { wch: 14 },  // Join Date
+      { wch: 12 },  // Total Orders
+      { wch: 14 }   // Total Spent
+    ];
+    // Style title row (row 1, index 0)
+    const titleCell = ws['A1'];
+    if (titleCell) {
+      titleCell.s = {
+        font: { bold: true, sz: 18, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '2980B9' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } }
+      };
+    }
+    // Style header row (row 2, index 1)
+    const headerRow = 1;
+    for (let col = 0; col < header[0].length; col++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: headerRow, c: col })];
+      if (cell) {
+        cell.s = {
+          font: { bold: true, sz: 14, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '34495E' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } }
+        };
+      }
+    }
+    // Style data rows (center, bold, border; money column green)
+    for (let r = 2; r < wsData.length; r++) {
+      for (let c = 0; c < header[0].length; c++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c })];
+        if (cell) {
+          cell.s = {
+            font: { bold: true, sz: 12, color: { rgb: c === 7 ? '27AE60' : '000000' } }, // Total Spent column green
+            alignment: { horizontal: 'center', vertical: 'center' },
+            border: { top: { style: 'thin', color: { rgb: '000000' } }, bottom: { style: 'thin', color: { rgb: '000000' } }, left: { style: 'thin', color: { rgb: '000000' } }, right: { style: 'thin', color: { rgb: '000000' } } }
+          };
+        }
+      }
+    }
+    // Create workbook and export
+    const wb: XLSX.WorkBook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+    XLSX.writeFile(wb, `customers-${selectedOnly ? 'selected' : 'all'}-${new Date().toISOString().split('T')[0]}.xlsx`, { cellStyles: true });
+  }
+
+  exportCustomersPDF(selectedOnly: boolean = false): void {
+    // Why: Allow export of all or selected customers as PDF with styled table, title, colored header, centered cells, money column green, and all borders
+    const exportData = (selectedOnly && this.selectedCustomers.length > 0)
+      ? this.customers.filter(c => this.selectedCustomers.includes(c.id))
+      : this.filteredCustomers;
+    const doc = new jsPDF();
+    // Title row
+    doc.setFontSize(18);
+    doc.setTextColor(41, 128, 185);
+    doc.setFont('helvetica', 'bold'); // Fix: use valid font string
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const title = 'Customer List Export';
+    const titleWidth = doc.getTextWidth(title);
+    doc.text(title, (pageWidth - titleWidth) / 2, 18);
+    // Table
+    autoTable(doc, {
+      startY: 24,
+      head: [[
+        'ID', 'Name', 'Email', 'Phone', 'Status', 'Join Date', 'Total Orders', 'Total Spent'
+      ]],
+      body: exportData.map(c => [
+        c.id,
+        c.name,
+        c.email,
+        c.phone,
+        c.status,
+        c.joinDate.toLocaleDateString(),
+        c.totalOrders,
+        c.totalSpent
+      ]),
+      styles: {
+        fontSize: 12,
+        fontStyle: 'bold',
+        halign: 'center',
+        valign: 'middle',
+        cellPadding: 3,
+        lineWidth: 0.5,
+        lineColor: [0, 0, 0],
+      },
+      headStyles: {
+        fillColor: [52, 73, 94], // dark blue-gray
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 14,
+        halign: 'center',
+        valign: 'middle',
+      },
+      bodyStyles: {
+        fontSize: 12,
+        fontStyle: 'bold',
+        halign: 'center',
+        valign: 'middle',
+      },
+      columnStyles: {
+        7: { textColor: [39, 174, 96] } // Total Spent column green
+      },
+      didParseCell: (data) => {
+        // Add border to all cells
+        data.cell.styles.lineWidth = 0.5;
+        data.cell.styles.lineColor = [0, 0, 0];
+      },
+      margin: { top: 24 },
+      tableLineWidth: 0.5,
+      tableLineColor: [0, 0, 0],
+      theme: 'grid',
+      didDrawPage: (data) => {
+        // Center table on page (type guard for width)
+        const table = data.table as any;
+        const tableWidth = table && table.width ? table.width : 0;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        if (table && table.body && table.body.length > 0 && typeof tableWidth === 'number') {
+          table.x = (pageWidth - tableWidth) / 2;
+        }
+      }
+    });
+    doc.save(`customers-${selectedOnly ? 'selected' : 'all'}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+  // --- End Export Data ---
+
+  // --- Export Dropdown Logic ---
+  toggleExcelDropdown() {
+    this.excelDropdownOpen = !this.excelDropdownOpen;
+    this.pdfDropdownOpen = false;
+  }
+  togglePdfDropdown() {
+    this.pdfDropdownOpen = !this.pdfDropdownOpen;
+    this.excelDropdownOpen = false;
+  }
+  closeAllDropdowns() {
+    this.exportDropdownOpen = false;
+    this.excelDropdownOpen = false;
+    this.pdfDropdownOpen = false;
+  }
+  onDocumentClick(event: MouseEvent) {
+    // Close dropdowns if click is outside
+    this.closeAllDropdowns();
+  }
+  // --- End Export Dropdown Logic ---
+
+  constructor(
+    public imageService: ImageService,
+    private userService: UserService,
+    permissionService: PermissionService
+  ) {
+    this.permissionService = permissionService;
+  }
 
   ngOnInit(): void {
     this.loadCustomers();
-    this.calculateStats();
+  }
+
+  ngAfterViewChecked() {
+    if ((window as any)['lucide']) {
+      (window as any)['lucide'].createIcons();
+    }
   }
 
   loadCustomers(): void {
-    // Mock data - replace with actual API call
-    this.customers = [
-      {
-        id: 'CUST001',
-        name: 'John Smith',
-        email: 'john.smith@email.com',
-        phone: '+1 (555) 123-4567',
-        avatar: '/placeholder.svg?height=40&width=40',
-        status: 'active',
-        joinDate: new Date('2023-01-15'),
-        totalOrders: 24,
-        totalSpent: 2450.75,
-        addresses: [
-          {
-            type: 'billing',
-            street: '123 Main St',
-            city: 'New York',
-            state: 'NY',
-            zip: '10001'
-          }
-        ]
-      },
-      {
-        id: 'CUST002',
-        name: 'Sarah Johnson',
-        email: 'sarah.johnson@email.com',
-        phone: '+1 (555) 234-5678',
-        avatar: '/placeholder.svg?height=40&width=40',
-        status: 'active',
-        joinDate: new Date('2023-03-22'),
-        totalOrders: 18,
-        totalSpent: 1875.50,
-        addresses: [
-          {
-            type: 'shipping',
-            street: '456 Oak Ave',
-            city: 'Los Angeles',
-            state: 'CA',
-            zip: '90210'
-          }
-        ]
-      },
-      {
-        id: 'CUST003',
-        name: 'Michael Brown',
-        email: 'michael.brown@email.com',
-        phone: '+1 (555) 345-6789',
-        avatar: '/placeholder.svg?height=40&width=40',
-        status: 'inactive',
-        joinDate: new Date('2022-11-08'),
-        totalOrders: 12,
-        totalSpent: 980.25,
-        addresses: [
-          {
-            type: 'billing',
-            street: '789 Pine St',
-            city: 'Chicago',
-            state: 'IL',
-            zip: '60601'
-          }
-        ]
-      },
-      {
-        id: 'CUST004',
-        name: 'Emily Davis',
-        email: 'emily.davis@email.com',
-        phone: '+1 (555) 456-7890',
-        avatar: '/placeholder.svg?height=40&width=40',
-        status: 'active',
-        joinDate: new Date('2024-01-10'),
-        totalOrders: 8,
-        totalSpent: 650.00,
-        addresses: [
-          {
-            type: 'shipping',
-            street: '321 Elm St',
-            city: 'Houston',
-            state: 'TX',
-            zip: '77001'
-          }
-        ]
-      },
-      {
-        id: 'CUST005',
-        name: 'David Wilson',
-        email: 'david.wilson@email.com',
-        phone: '+1 (555) 567-8901',
-        avatar: '/placeholder.svg?height=40&width=40',
-        status: 'suspended',
-        joinDate: new Date('2023-07-14'),
-        totalOrders: 5,
-        totalSpent: 325.75,
-        addresses: [
-          {
-            type: 'billing',
-            street: '654 Maple Ave',
-            city: 'Phoenix',
-            state: 'AZ',
-            zip: '85001'
-          }
-        ]
-      }
-    ];
-
-    this.applyFilters();
+    this.userService.getCustomers().subscribe((data: any[]) => {
+      this.customers = data.map(c => ({
+        id: c.userId?.toString() ?? '',
+        name: c.name || '',
+        email: c.email,
+        phone: c.phoneNumber,
+        avatar: c.profileImage ? this.imageService.getFullImageUrl(c.profileImage) : this.imageService.generateAvatarWithInitials(c.name || c.email),
+        status: c.status?.toLowerCase() ?? 'active',
+        joinDate: c.joinDate ? new Date(c.joinDate) : new Date(),
+        totalOrders: c.totalOrders,
+        totalSpent: c.totalSpent,
+        addresses: []
+      }));
+      this.calculateStats();
+      this.applyFilters();
+    });
   }
 
   calculateStats(): void {
@@ -296,33 +427,66 @@ export class CustomersComponent implements OnInit {
     }
   }
 
-  // Customer actions
+  // --- Customer management actions ---
+  // View customer details (shows alert for now, replace with modal in production)
   viewCustomerDetails(customer: Customer): void {
-    this.selectedCustomerDetails = customer;
-    // You would typically use a modal service here
-    // For now, we'll assume Bootstrap modal is triggered via data attributes
+    this.userService.getUserById(customer.id).subscribe(
+      (user: any) => {
+        this.selectedCustomerDetails = {
+          ...customer,
+          ...user
+        };
+        this.showCustomerModal = true;
+      },
+      err => {
+        window.alert('Failed to load customer details.');
+      }
+    );
+  }
+  closeCustomerModal(): void {
+    this.showCustomerModal = false;
+    this.selectedCustomerDetails = null;
   }
 
+  // Edit customer (stub, show alert for now)
   editCustomer(customer: Customer): void {
-    console.log('Edit customer:', customer);
-    // Implement edit functionality
+    // In production, open a modal with a form and call updateUser on save
+    window.alert('Edit customer feature coming soon!');
   }
 
+  // Activate/deactivate customer (calls backend and updates UI)
   toggleCustomerStatus(customer: Customer): void {
-    const newStatus = customer.status === 'active' ? 'inactive' : 'active';
-    customer.status = newStatus;
-    console.log(`Customer ${customer.name} status changed to ${newStatus}`);
-    this.calculateStats();
+    const newStatus = customer.status === 'active' ? 'INACTIVE' : 'ACTIVE';
+    this.userService.updateUserStatus(customer.id, newStatus).subscribe(
+      () => {
+        // Fix: ensure status is set to correct union type
+        customer.status = newStatus === 'ACTIVE' ? 'active' : 'inactive';
+        this.calculateStats();
+        window.alert(`Customer status updated to ${newStatus}.`);
+      },
+      err => {
+        window.alert('Failed to update customer status.');
+      }
+    );
   }
 
+  // Delete customer (calls backend and updates UI)
   deleteCustomer(customer: Customer): void {
-    if (confirm(`Are you sure you want to delete ${customer.name}?`)) {
-      this.customers = this.customers.filter(c => c.id !== customer.id);
-      this.applyFilters();
-      this.calculateStats();
-      console.log('Customer deleted:', customer);
+    if (window.confirm(`Are you sure you want to delete ${customer.name}?`)) {
+      this.userService.deleteUser(customer.id).subscribe(
+        () => {
+          this.customers = this.customers.filter(c => c.id !== customer.id);
+          this.applyFilters();
+          this.calculateStats();
+          window.alert('Customer deleted successfully.');
+        },
+        err => {
+          window.alert('Failed to delete customer.');
+        }
+      );
     }
   }
+  // --- End customer management actions ---
 
   // Utility methods
   exportCustomers(): void {

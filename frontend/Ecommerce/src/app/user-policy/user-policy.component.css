@@ -1,0 +1,156 @@
+/* Fade-in animation for policy content */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Enhanced typography for policy content */
+.prose {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9fafb;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: #1f2937;
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.prose h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.prose p {
+  margin-bottom: 1em;
+  color: #374151;
+}
+
+.prose ul, .prose ol {
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin-bottom: 0.5em;
+  color: #374151;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.prose em {
+  font-style: italic;
+  color: #374151;
+}
+
+.prose a {
+  color: #3b82f6;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.prose a:hover {
+  color: #2563eb;
+}
+
+/* Custom scrollbar for policy content */
+.prose::-webkit-scrollbar {
+  width: 6px;
+}
+
+.prose::-webkit-scrollbar-track {
+  background: #f9fafb;
+  border-radius: 3px;
+}
+
+.prose::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.prose::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Hover effects for policy cards */
+.policy-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Focus styles for accessibility */
+button:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 2rem 1rem;
+  }
+  
+  .policy-title {
+    font-size: 1.125rem;
+  }
+  
+  .prose {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  
+  .prose h1 {
+    font-size: 1.5rem;
+  }
+  
+  .prose h2 {
+    font-size: 1.25rem;
+  }
+  
+  .prose h3 {
+    font-size: 1.125rem;
+  }
+}
+
+/* Ensure text content is properly displayed */
+.prose div {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Better spacing for policy content */
+.prose > * + * {
+  margin-top: 1em;
+}
+
+.prose > *:first-child {
+  margin-top: 0;
+}

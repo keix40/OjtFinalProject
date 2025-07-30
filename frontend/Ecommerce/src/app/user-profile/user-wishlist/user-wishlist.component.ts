@@ -3,12 +3,15 @@ import { WishlistService } from '../../services/wishlist.service';
 import { AuthService } from '../../auth/auth.service';
 import { ProductService } from '../../services/product.service';
 import { ProductDTO } from '../../product';
+import { ImageService } from '../../services/image.service';
 
 interface WishlistItem {
   id: number;
   title: string;
   price: number;
   image: string;
+  oldPrice?: number;
+  wishlistDate?: Date;
 }
 
 @Component({
@@ -21,11 +24,13 @@ export class UserWishlistComponent implements OnInit {
   wishlistItems: WishlistItem[] = [];
   userId: number | null = null;
   allProducts: ProductDTO[] = [];
+  isLoading: boolean = false;
 
   constructor(
     private wishlistService: WishlistService,
     private authService: AuthService,
-    private productService: ProductService
+    private productService: ProductService,
+    public imageService: ImageService
   ) { }
 
   ngOnInit(): void {
@@ -36,6 +41,7 @@ export class UserWishlistComponent implements OnInit {
   }
 
   private loadAllProducts() {
+    this.isLoading = true;
     this.productService.getAllAcProduct().subscribe({
       next: (products) => {
         this.allProducts = products;
@@ -43,12 +49,16 @@ export class UserWishlistComponent implements OnInit {
       },
       error: (error) => {
         console.error('Error loading products:', error);
+        this.isLoading = false;
       }
     });
   }
 
   private loadWishlistItems() {
-    if (!this.userId) return;
+    if (!this.userId) {
+      this.isLoading = false;
+      return;
+    }
 
     this.wishlistService.getWishlist(this.userId).subscribe({
       next: (productIds: number[]) => {
@@ -60,16 +70,18 @@ export class UserWishlistComponent implements OnInit {
               id: product.id,
               title: product.productName,
               price: product.price,
-              image: product.productImages && product.productImages.length > 0 
-                ? 'http://localhost:8080' + product.productImages[0].imageUrl 
-                : '/assets/project_img/fashion_store.jpg'
+              image: this.imageService.getProductImageUrl(product),
+              oldPrice: undefined, // Not available in current ProductDTO
+              wishlistDate: new Date() // You might want to get this from the wishlist service
             };
             this.wishlistItems.push(wishlistItem);
           }
         });
+        this.isLoading = false;
       },
       error: (error) => {
         console.error('Error loading wishlist:', error);
+        this.isLoading = false;
       }
     });
   }

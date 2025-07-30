@@ -36,7 +36,7 @@ export interface ProductDTO {
   description: string;
   status: number;
 
-  categoryBrandPairs: {
+  categoryBrandArray: {
     categoryId: number;
     cateName?: string;
     brandId: number | null;
@@ -48,4 +48,8 @@ export interface ProductDTO {
     imageUrl: string;
     status: number;
   }[];
+  
+  // Rating fields
+  averageRating?: number;
+  reviewCount?: number;
 }

@@ -1,43 +1,147 @@
-<app-header></app-header>
-<div class="container-fluid py-5 bg-light min-vh-100">
-  <div class="row justify-content-center checkout-row">
-    <div class="col-lg-8 col-xl-7 col-md-10 mb-4 mx-auto">
-      <div class="mx-auto animate-fadein" style="max-width: 700px;">
-        <div class="bg-white rounded-5 shadow-lg p-5 text-center">
-          <div class="mb-4">
-            <i class="bi bi-bag-check-fill text-success" style="font-size: 3rem;"></i>
+<div class="bg-white rounded-t-2xl">
+
+<div class="fixed inset-0 z-40 flex items-center justify-center">
+
+  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-auto relative overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b border-gray-100">
+      <h2 class="text-2xl font-bold text-gray-900">Order Confirmed</h2>
+      <button 
+        type="button" 
+        class="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+        (click)="activeModal.dismiss()">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="p-8">
+      <!-- Success Icon -->
+      <div class="flex justify-center mb-8">
+        <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+          <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Success Message -->
+      <div class="text-center mb-8">
+        <h3 class="text-3xl font-bold text-gray-900 mb-3">Thank You!</h3>
+        <p class="text-gray-600 text-lg">Your order has been successfully placed</p>
+      </div>
+
+          <!-- Order Details Card -->
+      <div class="bg-gray-50 rounded-2xl p-6 mb-8">
+        <h4 class="text-lg font-semibold text-gray-900 mb-4">Order Details</h4>
+        
+        <!-- Customer Info -->
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 text-sm">Customer</span>
+            <span class="font-medium text-gray-900">{{orderDetails?.customer?.name}}</span>
           </div>
-          <h3 class="fw-bold mb-3">Order Confirmed!</h3>
-          <div class="mb-2">Thank you for your purchase.</div>
-          <div class="mb-3">Order Number: <span class="fw-bold">#{{orderNumber}}</span></div>
-          <div class="row g-3 mb-4 text-start">
-            <div class="col-md-6">
-              <div class="bg-light rounded-3 p-3 mb-2"><strong>Customer Name</strong><br>{{customer?.firstName}} {{customer?.lastName}}</div>
-              <div class="bg-light rounded-3 p-3 mb-2"><strong>Phone Number</strong><br>{{customer?.phone}}</div>
-              <div class="bg-light rounded-3 p-3 mb-2"><strong>Shipping Address</strong><br>{{shipping?.address}}, {{shipping?.city}}, {{shipping?.state}}, {{shipping?.postal}}, {{shipping?.country}}</div>
-            </div>
-            <div class="col-md-6">
-              <div class="bg-light rounded-3 p-3 mb-2"><strong>Delivery Option</strong><br>{{delivery?.method}}</div>
-              <div class="bg-light rounded-3 p-3 mb-2"><strong>Payment Method</strong><br>{{paymentMethod === 'card' ? 'Card' : 'Cash on delivery'}}</div>
-              <div class="bg-light rounded-3 p-3 mb-2"><strong>Order Items</strong>
-                <ul class="list-unstyled mb-0">
-                  <li *ngFor="let item of cartItems" class="mb-1">
-                    <span class="fw-semibold">{{item.title}}</span> x{{item.quantity}}<br>
-                    <span class="small text-muted">{{item.size}}, {{item.color}}</span>
-                  </li>
-                </ul>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 text-sm">Email</span>
+            <span class="font-medium text-gray-900">{{orderDetails?.customer?.email}}</span>
+          </div>
+          <div class="flex justify-between items-start">
+            <span class="text-gray-600 text-sm">Shipping Address</span>
+            <span class="font-medium text-gray-900 text-right max-w-xs">
+              {{orderDetails?.shipping?.address}}, {{orderDetails?.shipping?.city}}
+            </span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-gray-600 text-sm">Payment Method</span>
+            <span class="font-medium text-gray-900">
+              Card ending in {{ orderDetails?.cardInfo?.cardNumber | slice:-4 }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Order Items -->
+        <div class="border-t border-gray-200 pt-4 mb-6">
+          <h5 class="text-sm font-semibold text-gray-900 mb-3">Order Items</h5>
+          <div class="space-y-3">
+            <div *ngFor="let item of orderDetails?.cartItems" class="flex items-center space-x-3">
+              <img [src]="item.image" class="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0" [alt]="item.title" (error)="imageService.handleImageError($event, 'product')">
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{item.title || 'Product'}}</p>
+                <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-xs text-gray-500">
+                  <ng-container *ngFor="let attr of item.variantAttributes">
+                    <ng-container *ngIf="attr.toLowerCase().startsWith('color:') || attr.toLowerCase().startsWith('colour:'); else regularAttr">
+                      <span style="display:inline-flex;align-items:center;margin-right:8px;">
+                        <span style="font-weight:500;margin-right:4px;">{{ attr.split(':')[0].charAt(0).toUpperCase() + attr.split(':')[0].slice(1) }}:</span>
+                        <span style="display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid #ccc;vertical-align:middle;"
+                              [ngStyle]="{'background-color': attr.split(':')[1].trim() || '#ccc'}"></span>
+                      </span>
+                    </ng-container>
+                    <ng-template #regularAttr>
+                      <span style="margin-right:8px;">{{ attr }}</span>
+                    </ng-template>
+                  </ng-container>
+                </div>
+                <p class="text-xs text-gray-500">Qty: {{item.quantity}} × {{item.price | number:'1.0-0'}} MMK</p>
+              </div>
+              <div class="text-right">
+                <p class="text-sm font-medium text-gray-900">{{(item.price * item.quantity) | number:'1.0-0'}} MMK</p>
               </div>
             </div>
           </div>
-          <h6 class="fw-bold mt-4 mb-2">Summary</h6>
-          <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>${{getSubtotal()}}</span></div>
-          <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>${{getDeliveryCost()}}</span></div>
-          <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-$100.00</span></div>
-          <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">${{getTotal()}}</span></div>
-          <div class="text-success mt-2">Yay! you saved 30% in total</div>
-          <a routerLink="/home" class="btn btn-outline-primary mt-4 rounded-pill px-4">Back to Shop</a>
+        </div>
+
+        <!-- Price Breakdown -->
+        <div class="border-t border-gray-200 pt-4">
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Subtotal</span>
+              <span class="font-medium text-gray-900">{{ getSubtotal() | number:'1.0-0' }} MMK</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Shipping</span>
+              <span class="font-medium text-gray-900">{{ getDeliveryCost() | number:'1.0-0' }} MMK</span>
+            </div>
+            <div *ngIf="orderDetails?.discountAmount > 0" class="flex justify-between items-center">
+              <span class="text-gray-600">Discount</span>
+              <span class="font-medium text-green-600">-{{ orderDetails.discountAmount | number:'1.0-0' }} MMK</span>
+            </div>
+          </div>
+          
+          <!-- Total -->
+          <div class="border-t border-gray-200 pt-3 mt-3">
+            <div class="flex justify-between items-center">
+              <span class="text-lg font-bold text-gray-900">Total</span>
+              <span class="text-xl font-bold text-blue-600">{{ getTotal() | number:'1.0-0' }} MMK</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Next Steps -->
+    <div class="bg-blue-50 rounded-2xl p-6 mb-6">
+      <div class="flex items-start space-x-3">
+        <svg class="w-6 h-6 text-blue-600 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <div>
+          <h5 class="font-semibold text-gray-900 mb-1">What's Next?</h5>
+          <p class="text-sm text-gray-600">You'll receive an email confirmation shortly. We'll notify you when your order ships.</p>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- Footer -->
+  <div class="p-6 border-t border-gray-100">
+    <button 
+      type="button" 
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
+      (click)="closeAndNavigate()">
+      Continue Shopping
+    </button>
+  </div>
+</div>
 </div>

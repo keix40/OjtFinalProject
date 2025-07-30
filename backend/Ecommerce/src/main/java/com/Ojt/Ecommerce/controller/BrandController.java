@@ -1,22 +1,66 @@
 package com.Ojt.Ecommerce.controller;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import com.Ojt.Ecommerce.dto.BrandDTO;
+import com.Ojt.Ecommerce.dto.BrandListDTO;
 import com.Ojt.Ecommerce.entity.Brand;
 import com.Ojt.Ecommerce.entity.BrandHasCategory;
 import com.Ojt.Ecommerce.entity.Category;
 import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
+@PermissionCategoryTag(value = "brands", name = "Brand Management", icon = "fa-tag")
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
 @RequestMapping("/brand")
 public class BrandController {
+    private final String IMAGE_PATH_DB_PREFIX = "/brand_and_category_image/";
+    private static final Path uploadPath = Paths.get("brand_and_category_image").toAbsolutePath();
+
     @Autowired
     private BrandService service;
 
@@ -27,8 +71,9 @@ public class BrandController {
     private BrandHasCategoryService bcService;
 
     @GetMapping("/getallbrand")
-    public List<Brand> getAllBrand(){
-        return service.getAllBrand();
+    @RequiresPermission(value = BRANDS_VIEW, level = "basic")
+    public List<BrandListDTO> getAllBrand(){
+        return service.getAllBrandsWithCategories();
     }
 
     @GetMapping("/getbycateid/{id}")
@@ -36,30 +81,48 @@ public class BrandController {
         return service.getAllBrandByCateId(id);
     }
 
-    @PostMapping("/addbrand")
-    public ResponseEntity<?> saveBrand(@RequestBody BrandDTO dto) {
-        // Check if brand exists
+    @LogActivity(actionType = "CREATE", entityType = "BRAND", description = "Created brand", severityLevel = "MEDIUM")
+    @PostMapping(value = "/addbrand", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequiresPermission(value = BRANDS_CREATE, level = "advanced")
+    public ResponseEntity<?> saveBrand(
+            @RequestPart("brand") BrandDTO dto,
+            @RequestPart(value = "image", required = false) MultipartFile imageFile
+    ) {
+        String dbPrefix = IMAGE_PATH_DB_PREFIX;
+
         if (service.checkNameExist(dto.getBrandName())) {
             return ResponseEntity.badRequest().body("Brand already exists.");
         }
 
         Brand brand = new Brand();
         brand.setName(dto.getBrandName());
-        Brand savedBrand = service.saveBrand(brand);
 
-        if (savedBrand == null) {
-            return ResponseEntity.badRequest().body("Brand registration failed.");
+        // Save image (optional)
+        if (imageFile != null && !imageFile.isEmpty()) {
+            try {
+                String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
+                Path path = uploadPath.resolve(filename);
+                Files.createDirectories(path.getParent());
+                Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+                brand.setImage(dbPrefix + filename);
+            } catch (IOException e) {
+                return ResponseEntity.internalServerError().body("Brand image upload failed.");
+            }
+        } else {
+            // If no image is provided, allow saving brand with null image
+            brand.setImage(null);
         }
 
+        Brand savedBrand = service.saveBrand(brand);
+
         if (dto.getCategoryName() != null && !dto.getCategoryName().isBlank()) {
-            boolean cateExist = cateService.checkNameExist(dto.getCategoryName());
-            if (cateExist) {
-                return ResponseEntity.badRequest().body("Category already exists, please select it.");
+            if (cateService.checkNameExist(dto.getCategoryName())) {
+                return ResponseEntity.badRequest().body("Category already exists. Please select it.");
             }
 
-            Category newCategory = new Category();
-            newCategory.setName(dto.getCategoryName());
-            Category savedCategory = cateService.saveCategory(newCategory);
+            Category category = new Category();
+            category.setName(dto.getCategoryName());
+            Category savedCategory = cateService.saveCategory(category);
 
             BrandHasCategory bc = new BrandHasCategory();
             bc.setBrand(savedBrand);
@@ -67,19 +130,134 @@ public class BrandController {
             bcService.saveBrandAndCat(bc);
         }
 
-        if (dto.getCategoryIds() != null && !dto.getCategoryIds().isEmpty()) {
-            for (Long categoryId : dto.getCategoryIds()) {
-                Category existingCategory = new Category();
-                existingCategory.setId(categoryId);
-
+        if (dto.getCategoryIds() != null) {
+            for (Long catId : dto.getCategoryIds()) {
+                Category cat = new Category();
+                cat.setId(catId);
                 BrandHasCategory bc = new BrandHasCategory();
                 bc.setBrand(savedBrand);
-                bc.setCategory(existingCategory);
+                bc.setCategory(cat);
                 bcService.saveBrandAndCat(bc);
             }
         }
-        return ResponseEntity.ok("Success");
+        return ResponseEntity.ok("Brand created successfully.");
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "BRAND", description = "Updated brand", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
+    @PutMapping("/update/{id}")
+    @RequiresPermission(value = BRANDS_UPDATE, level = "advanced")
+    public ResponseEntity<?> updateBrand(@PathVariable Long id,
+                                         @RequestPart("brand") BrandDTO dto,
+                                         @RequestPart(value = "image", required = false) MultipartFile imageFile) {
+        try {
+            Brand existing = service.getBrandById(id);
+            if (existing == null) {
+                return ResponseEntity.notFound().build();
+            }
 
+            existing.setName(dto.getBrandName());
+
+            // ✅ Update image if provided
+            if (imageFile != null && !imageFile.isEmpty()) {
+                String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
+                if (!Files.exists(uploadPath)) {
+                    Files.createDirectories(uploadPath);
+                }
+                Path path = uploadPath.resolve(filename);
+                Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+                existing.setImage(IMAGE_PATH_DB_PREFIX + filename);
+            }
+
+            Brand updated = service.saveBrand(existing);
+
+            // ✅ Replace category mapping
+            bcService.deleteByBrandId(id); // delete old mappings
+            if (dto.getCategoryIds() != null) {
+                for (Long catId : dto.getCategoryIds()) {
+                    BrandHasCategory map = new BrandHasCategory();
+                    map.setBrand(updated);
+                    Category cat = new Category();
+                    cat.setId(catId);
+                    map.setCategory(cat);
+                    bcService.saveBrandAndCat(map);
+                }
+            }
+
+            return ResponseEntity.ok("Updated successfully");
+
+        } catch (Exception e) {
+            e.printStackTrace(); // Log the full stack trace
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Update failed: " + e.getMessage());
+        }
+    }
+
+    @LogActivity(actionType = "DELETE", entityType = "BRAND", description = "Deleted brand", severityLevel = "HIGH", entityIdParam = "id")
+    @PutMapping("/delete/{id}")
+    @RequiresPermission(value = BRANDS_DELETE, level = "advanced")
+    public ResponseEntity<?> deleteBrand(@PathVariable Long id) {
+        Brand existing = service.getBrandById(id);
+        if (existing == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        existing.setStatus(0);
+        service.saveBrand(existing);
+        return ResponseEntity.ok("success");
+    }
+
+    @GetMapping("/getbrandbyid/{id}")
+    public ResponseEntity<BrandDTO> getBrandById(@PathVariable Long id) {
+        Brand brand = service.getBrandById(id);
+        if (brand == null || brand.getStatus() == 0) {
+            return ResponseEntity.notFound().build();
+        }
+
+        BrandDTO dto = new BrandDTO();
+        dto.setId(brand.getId());
+        dto.setBrandName(brand.getName());
+        dto.setImage(brand.getImage());
+
+        // Collect category IDs
+        if (brand.getBrandCategories() != null) {
+            List<Long> categoryIds = brand.getBrandCategories().stream()
+                    .map(bc -> bc.getCategory().getId())
+                    .toList();
+            dto.setCategoryIds(categoryIds);
+        }
+
+        return ResponseEntity.ok(dto);
+    }
+    //add for link brand with category by pmk july 7
+    @PostMapping("/linkwithcategory")
+    public ResponseEntity<?> linkBrandWithCategory(@RequestParam Long brandId, @RequestParam Long categoryId) {
+        try {
+            BrandHasCategory bc = new BrandHasCategory();
+            Brand brand = service.getBrandById(brandId);
+            Category category = cateService.getCategoryById(categoryId);
+
+            if (brand == null || category == null) {
+                return ResponseEntity.badRequest().body("Brand or Category not found");
+            }
+
+            bc.setBrand(brand);
+            bc.setCategory(category);
+
+            BrandHasCategory savedBc = bcService.saveBrandAndCat(bc);
+            return ResponseEntity.ok(savedBc);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to link brand with category: " + e.getMessage());
+        }
+    }
+
+    //add for fetch data for discount by pmk july 7
+    @GetMapping("/brandcategories")
+    public ResponseEntity<List<BrandHasCategory>> getAllBrandCategories() {
+        try {
+            List<BrandHasCategory> brandCategories = bcService.getAllBrandCategories();
+            return ResponseEntity.ok(brandCategories);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
 }
+

@@ -1,0 +1,172 @@
+<app-header></app-header>
+<div class="max-w-2xl mx-auto p-4">
+  <!-- Title -->
+  <div class="text-2xl font-bold text-slate-800 mb-6 text-center">Order Tracking</div>
+
+  <!-- Order Info -->
+  <div class="bg-white rounded-xl shadow p-4 mb-6 border border-slate-200">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
+      <div>
+        <div class="text-xs text-slate-500">Order Code</div>
+        <div class="font-semibold text-slate-800">{{ order?.orderCode }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Status</div>
+        <div class="font-semibold text-blue-700">
+          <ng-container *ngIf="order?.returnRequests?.length > 0 && order.returnRequests[0]?.refundId && order.returnRequests[0]?.refundType?.toUpperCase() === 'MONEY_REFUND'">
+            Refunded
+          </ng-container>
+          <ng-container *ngIf="!(order?.returnRequests?.length > 0 && order.returnRequests[0]?.refundId && order.returnRequests[0]?.refundType?.toUpperCase() === 'MONEY_REFUND')">
+            <ng-container [ngSwitch]="order?.status?.toUpperCase()">
+              <span *ngSwitchCase="'PENDING'">Order Placed</span>
+              <span *ngSwitchCase="'PAID'">Order Placed</span>
+              <span *ngSwitchCase="'PROCESSING'">Order Placed</span>
+              <span *ngSwitchCase="'SHIPPED'">Order Shipping</span>
+              <span *ngSwitchCase="'DELIVERED'">Order Completed</span>
+              <span *ngSwitchCase="'CANCELLED'">Order Cancelled</span>
+              <span *ngSwitchDefault>{{ order?.status ? (order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()) : '' }}</span>
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-2 mt-2">
+      <div>
+        <div class="text-xs text-slate-500">Placed On</div>
+        <div class="text-slate-700">{{ order?.orderDate | date:'medium' }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Total</div>
+        <div class="text-slate-700">{{ order?.total | number:'1.2-2' }} ks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Steps -->
+  <div class="flex items-center justify-between mb-8">
+    <ng-container *ngFor="let step of statusSteps; let i = index">
+      <div class="flex-1 flex flex-col items-center">
+        <div [ngClass]="{
+              'bg-blue-600 text-white': i <= getCurrentStep(),
+              'bg-slate-200 text-slate-400': i > getCurrentStep()
+            }"
+            class="w-8 h-8 rounded-full flex items-center justify-center font-bold mb-1 transition">
+          <span *ngIf="i < getCurrentStep()" class="text-lg">&#10003;</span>
+          <span *ngIf="i === getCurrentStep()">{{ i + 1 }}</span>
+          <span *ngIf="i > getCurrentStep()">{{ i + 1 }}</span>
+        </div>
+        <div class="text-xs text-center w-20 text-slate-700">{{ step }}</div>
+      </div>
+      <div *ngIf="i < statusSteps.length - 1" class="flex-1 h-1 bg-slate-200 mx-1">
+        <div [ngClass]="{ 'bg-blue-600': i < getCurrentStep() }" class="h-1 transition"></div>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Status History -->
+  <div class="bg-white rounded-xl shadow p-4 mb-6 border border-slate-200">
+    <div class="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Status History
+    </div>
+    <div class="space-y-4">
+      <div *ngFor="let s of order?.statusHistory" class="mb-4">
+        <div class="flex flex-col md:flex-row md:items-center gap-2">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full"
+                 [ngClass]="{
+                   'bg-green-500': s.status === 'DELIVERED',
+                   'bg-blue-500': s.status === 'PAID' || s.status === 'SHIPPED',
+                   'bg-red-500': s.status === 'CANCELLED',
+                   'bg-yellow-500': s.status === 'PENDING',
+                   'bg-purple-500': s.status === 'PROCESSING',
+                   'bg-gray-500': ['DELIVERED','PAID','CANCELLED','SHIPPED','PENDING','PROCESSING'].indexOf(s.status) === -1
+                 }"></div>
+            <span class="font-medium">{{ s.status }}</span>
+          </div>
+          <span class="text-xs text-slate-500">{{ s.statusDate | date:'yyyy-MM-dd HH:mm' }}</span>
+        </div>
+        <!-- Return Request Details for CANCELLED (always below, full width) -->
+        <div *ngIf="s.status === 'CANCELLED' && order?.returnRequests?.length > 0" class="ml-6 mt-2 flex flex-col">
+          <ng-container *ngFor="let r of order?.returnRequests">
+            <div *ngIf="isSameStatusDate(s.statusDate, r.requestedAt)">
+              <div class="text-sm text-slate-700 mb-1">
+                <strong>Reason:</strong> {{ formatReason(r.reasonForReturn) | titlecase }}
+              </div>
+              <div *ngIf="r.returnDetail" class="text-xs text-slate-500 mb-1">
+                <strong>Details:</strong> {{ r.returnDetail }}
+              </div>
+              <div class="text-xs mb-1">
+                <strong>Status:</strong> {{ r.status }}
+              </div>
+              <div *ngIf="r.status === 'APPROVED'" class="text-xs mb-1">
+                <strong>Admin Remark:</strong> {{ r.adminRemark }}
+              </div>
+              <div *ngIf="r.status === 'APPROVED'" class="text-xs mb-1">
+                <strong>Decision At:</strong> {{ r.decisionAt | date:'yyyy-MM-dd HH:mm' }} UTC
+              </div>
+              <div *ngIf="r.status === 'CANCELLED'" class="text-xs mb-1">
+                <strong>Cancelled At:</strong> {{ r.cancelledAt | date:'yyyy-MM-dd HH:mm' }} UTC
+              </div>
+              <div *ngIf="r.status === 'APPROVED' && r.refundId" class="text-xs mb-1">
+                <strong>Refund Info:</strong>
+                <div *ngIf="r.refundType === 'MONEY_REFUND'">
+                  <div>Amount: {{ r.refundAmount }}</div>
+                  <div>Card: ****{{ r.cardNumber?.slice(-4) }}</div>
+                  <div>Completed At: {{ r.completedAt | date:'yyyy-MM-dd HH:mm' }} UTC</div>
+                </div>
+                <div *ngIf="r.refundType === 'REPLACEMENT'">
+                  <div><strong>Replacement Sent</strong></div>
+                  <div *ngIf="r.initiatedAt">Initiated At: {{ r.initiatedAt | date:'yyyy-MM-dd HH:mm' }} UTC</div>
+                  <div *ngIf="r.completedAt">Completed At: {{ r.completedAt | date:'yyyy-MM-dd HH:mm' }} UTC</div>
+                  <div *ngIf="r.trackingCode">Tracking: {{ r.trackingCode }}</div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cancel Order Button -->
+  <div class="flex justify-end mt-6">
+    <button
+      class="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition shadow"
+      (click)="goToReturnRequest()"
+      *ngIf="shouldShowCancelOrder()"
+    >
+      Return Request
+    </button>
+  </div>
+
+  <!-- Return Policy Modal -->
+  <div *ngIf="showPolicyModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl mx-4 p-8 relative max-h-[90vh] flex flex-col return-policy-modal" style="width: 600px; min-width: 400px;">
+      <button (click)="onClosePolicyModal()" class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
+      <h2 class="text-2xl font-bold text-blue-700 mb-4 text-center">Return Policy</h2>
+      
+      <!-- Loading State -->
+      <div *ngIf="isLoadingPolicy" class="flex items-center justify-center py-8">
+        <div class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 mb-4">
+          <svg class="w-5 h-5 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <span class="ml-2 text-gray-600">Loading policy...</span>
+      </div>
+
+      <!-- Policy Content -->
+      <div *ngIf="!isLoadingPolicy" class="text-gray-700 mb-6 text-base leading-relaxed overflow-y-auto overflow-x-auto scrollbar-hide flex-1 return-policy-content" style="max-height:50vh; width: 100%;">
+        <div [innerHTML]="returnPolicyHtml" class="policy-content overflow-y-auto overflow-x-auto scrollbar-hide w-full" style="width: 100%; max-width: 100%; word-break: normal; word-wrap: normal; overflow-wrap: normal; hyphens: none; min-width: 600px;"></div>
+      </div>
+      
+      <div class="flex justify-end gap-3 mt-auto">
+        <button (click)="onClosePolicyModal()" class="px-5 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition">Close</button>
+        <button (click)="onAgreePolicy()" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-semibold">Agree</button>
+      </div>
+    </div>
+  </div>

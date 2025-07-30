@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -49,12 +51,6 @@ public class Product {
     @JsonIgnoreProperties({"products"}) // or everything lazy inside Brand
     private Brand brand;
 
-
-
-//    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-//    @JsonIgnore
-//    private List<ProductHasCategory> productCategories;
-
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL,fetch = FetchType.EAGER, orphanRemoval = true)
     @JsonIgnore
     @ToString.Exclude //add this two line to fix infinite loop error
@@ -68,7 +64,6 @@ public class Product {
     @JsonIgnore
     private List<Wishlist> wishlists;
 
-
     @OneToMany(mappedBy = "product")
     @JsonIgnore
     private List<UserOrderHasProduct> orderProducts;
@@ -79,6 +74,17 @@ public class Product {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PurchaseProducts> purchaseProducts;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductDiscount> productDiscounts;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Review> reviews = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<EventProduct> eventProduct;
 
     @PrePersist
     public void prePersist() {

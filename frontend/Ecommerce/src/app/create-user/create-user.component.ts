@@ -1,6 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
+import { UserService } from '../services/user.service';
+
+declare var lucide: any;
 
 interface RoleInfo {
   name: string;
@@ -9,12 +12,17 @@ interface RoleInfo {
 }
 
 interface CSVUser {
-  firstName: string;
-  lastName: string;
   email: string;
   phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  username?: string;
   role: string;
+  password?: string;
+  confirmPassword?: string;
   isActive: boolean;
+  emailVerified?: boolean;
+  sendWelcomeEmail?: boolean;
 }
 
 @Component({
@@ -23,7 +31,7 @@ interface CSVUser {
   templateUrl: './create-user.component.html',
   styleUrls: ['./create-user.component.css']
 })
-export class CreateUserComponent implements OnInit {
+export class CreateUserComponent implements OnInit, AfterViewInit {
   userForm: FormGroup;
   isSubmitting = false;
   showPassword = false;
@@ -31,50 +39,45 @@ export class CreateUserComponent implements OnInit {
   isDragOver = false;
   csvData: CSVUser[] = [];
   isImporting = false;
+  errorMessages: { [key: string]: string } = {};
+  createdUser: any = null;
+  roles: any[] = [];
+  selectedRoleDetails: any = null;
+  emailCheckMessage: string = '';
+  emailCheckSuccess: boolean = false;
+  
 
-  roleInformation: { [key: string]: RoleInfo } = {
-    customer: {
-      name: 'Customer',
-      description: 'Regular customer with basic access to purchase products and manage their account.',
-      permissions: ['View products', 'Place orders', 'Manage profile', 'View order history']
-    },
-    staff: {
-      name: 'Staff Member',
-      description: 'Staff member with access to basic administrative functions.',
-      permissions: ['View customers', 'Process orders', 'Manage inventory', 'Generate reports']
-    },
-    manager: {
-      name: 'Manager',
-      description: 'Manager with elevated privileges to oversee operations.',
-      permissions: ['Manage staff', 'View analytics', 'Approve refunds', 'Manage promotions', 'All staff permissions']
-    },
-    admin: {
-      name: 'Administrator',
-      description: 'Full system administrator with complete access to all features.',
-      permissions: ['Full system access', 'Manage users', 'System configuration', 'Security settings', 'All permissions']
-    },
-    support: {
-      name: 'Support Agent',
-      description: 'Customer support agent with access to help customers.',
-      permissions: ['View customer data', 'Process returns', 'Handle inquiries', 'Access support tools']
-    }
-  };
 
   constructor(
     private formBuilder: FormBuilder,
-    private router: Router
+    private router: Router,
+    private userService: UserService
   ) {
     this.userForm = this.createForm();
   }
 
   ngOnInit(): void {
+    this.userService.getAllRoles().subscribe({
+      next: (roles) => {
+        this.roles = roles;
+      },
+      error: (err) => {
+        console.error('Failed to fetch roles', err);
+      }
+    });
     this.setupFormSubscriptions();
+  }
+
+  ngAfterViewInit(): void {
+    if (typeof window !== 'undefined' && (window as any).lucide) {
+      (window as any).lucide.createIcons();
+    } else if (typeof lucide !== 'undefined') {
+      lucide.createIcons();
+    }
   }
 
   createForm(): FormGroup {
     return this.formBuilder.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.pattern(/^[\+]?[1-9][\d]{0,15}$/)]],
       dateOfBirth: [''],
@@ -87,11 +90,6 @@ export class CreateUserComponent implements OnInit {
         Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
       ]],
       confirmPassword: ['', [Validators.required]],
-      street: [''],
-      city: [''],
-      state: [''],
-      zipCode: [''],
-      country: [''],
       isActive: [true],
       emailVerified: [false],
       sendWelcomeEmail: [true]
@@ -99,8 +97,8 @@ export class CreateUserComponent implements OnInit {
   }
 
   setupFormSubscriptions(): void {
-    this.userForm.get('role')?.valueChanges.subscribe(role => {
-      // This will trigger the getter for selectedRoleInfo
+    this.userForm.get('role')?.valueChanges.subscribe(roleId => {
+      this.selectedRoleDetails = this.roles.find(r => r.id == roleId) || null;
     });
   }
 
@@ -115,9 +113,8 @@ export class CreateUserComponent implements OnInit {
     return password.value === confirmPassword.value ? null : { passwordMismatch: true };
   }
 
-  get selectedRoleInfo(): RoleInfo | null {
-    const selectedRole = this.userForm.get('role')?.value;
-    return selectedRole ? this.roleInformation[selectedRole] : null;
+  get selectedRoleInfo(): any {
+    return this.selectedRoleDetails;
   }
 
   isFieldInvalid(fieldName: string): boolean {
@@ -131,9 +128,7 @@ export class CreateUserComponent implements OnInit {
 
   fillSampleData(): void {
     this.userForm.patchValue({
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'john.doe@example.com',
+      email: 'john.doe@gmail.com',
       phone: '+1234567890',
       dateOfBirth: '1990-01-01',
       gender: 'male',
@@ -141,11 +136,6 @@ export class CreateUserComponent implements OnInit {
       role: 'customer',
       password: 'Password123!',
       confirmPassword: 'Password123!',
-      street: '123 Main Street',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10001',
-      country: 'US',
       isActive: true,
       emailVerified: true,
       sendWelcomeEmail: true
@@ -179,32 +169,133 @@ export class CreateUserComponent implements OnInit {
 
   validateEmail(): void {
     const email = this.userForm.get('email')?.value;
-    if (email) {
-      // Simulate email validation
-      console.log('Validating email:', email);
-      // In a real application, you would make an API call here
-      alert(`Email validation for ${email} - This would check if the email already exists in the system.`);
-    } else {
-      alert('Please enter an email address first.');
+    if (!email) {
+      this.emailCheckMessage = 'Please enter an email address first.';
+      this.emailCheckSuccess = false;
+      return;
     }
+    this.userService.checkEmailExists(email).subscribe({
+      next: (res) => {
+        if (res.exists) {
+          this.errorMessages['email'] = 'Email already exists.';
+          this.emailCheckMessage = 'Email already exists.';
+          this.emailCheckSuccess = false;
+          this.userForm.get('email')?.setErrors({ exists: true });
+    } else {
+          this.errorMessages['email'] = '';
+          this.emailCheckMessage = 'Email is available!';
+          this.emailCheckSuccess = true;
+          this.userForm.get('email')?.setErrors(null);
+        }
+      },
+      error: () => {
+        this.emailCheckMessage = 'Failed to validate email.';
+        this.emailCheckSuccess = false;
+      }
+    });
   }
 
-  onSubmit(): void {
-    if (this.userForm.valid) {
-      this.isSubmitting = true;
-      
-      const formData = this.userForm.value;
-      console.log('Creating user:', formData);
-      
-      // Simulate API call
-      setTimeout(() => {
-        this.isSubmitting = false;
-        alert('User created successfully!');
-        this.router.navigate(['/users']);
-      }, 2000);
-    } else {
-      this.markFormGroupTouched();
+  checkRealEmail(): void {
+    const email = this.userForm.get('email')?.value;
+    if (!email) {
+      this.emailCheckMessage = 'Please enter an email address first.';
+      this.emailCheckSuccess = false;
+      return;
     }
+    this.userService.validateRealEmail(email).subscribe({
+      next: (res) => {
+        this.emailCheckMessage = res.message;
+        this.emailCheckSuccess = res.real;
+      },
+      error: () => {
+        this.emailCheckMessage = 'Failed to validate real email.';
+        this.emailCheckSuccess = false;
+      }
+    });
+  }
+
+  async onSubmit(): Promise<void> {
+    if (this.userForm.invalid) {
+      this.markFormGroupTouched();
+      return;
+    }
+    this.isSubmitting = true;
+    this.errorMessages = {};
+    this.emailCheckMessage = '';
+    this.emailCheckSuccess = false;
+    const formValue = this.userForm.value;
+    // Check if email is real before proceeding
+    try {
+      const realEmailRes = await this.userService.validateRealEmail(formValue.email).toPromise();
+      if (!realEmailRes || !realEmailRes.real) {
+        this.errorMessages['email'] = (realEmailRes && realEmailRes.message) ? realEmailRes.message : 'Email does not exist or is not active.';
+        this.userForm.get('email')?.setErrors({ real: true });
+        this.isSubmitting = false;
+        return;
+      }
+    } catch (e) {
+      this.errorMessages['email'] = 'Failed to validate real email.';
+      this.userForm.get('email')?.setErrors({ real: true });
+      this.isSubmitting = false;
+      return;
+    }
+    // Map form values to backend DTO
+    const selectedRole = this.roles.find(r => r.id == formValue.role);
+    const payload = {
+      name: formValue.email.split('@')[0], // Use email prefix as name
+      email: formValue.email,
+      password: formValue.password,
+      gender: formValue.gender,
+      dateOfBirth: formValue.dateOfBirth,
+      phoneNumber: formValue.phone,
+      role: selectedRole ? selectedRole.name : '',
+      address: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: '',
+      addressType: 'HOME',
+      emailVerified: formValue.emailVerified,
+      sendWelcomeEmail: formValue.sendWelcomeEmail
+    };
+    this.userService.createUserByAdmin(payload).subscribe({
+      next: (res) => {
+        console.log('✅ User created successfully:', res);
+        this.isSubmitting = false;
+        this.createdUser = res;
+        console.log('✅ createdUser set to:', this.createdUser);
+        // Reset form after setting createdUser
+        this.userForm.reset();
+        this.userForm.patchValue({
+          isActive: true,
+          emailVerified: false,
+          sendWelcomeEmail: true
+        });
+        console.log('✅ Form reset, createdUser still:', this.createdUser);
+      },
+      error: (err) => {
+        console.log('❌ User creation error:', err);
+        this.isSubmitting = false;
+        console.log('❌ Error structure:', err);
+        if (err?.error?.message) {
+          if (err.error.message.toLowerCase().includes('email')) {
+            this.errorMessages['email'] = err.error.message;
+            this.userForm.get('email')?.setErrors({ backend: true });
+          } else if (err.error.message.toLowerCase().includes('password')) {
+            this.errorMessages['password'] = err.error.message;
+            this.userForm.get('password')?.setErrors({ backend: true });
+          } else {
+            this.errorMessages['general'] = err.error.message;
+          }
+        } else {
+          this.errorMessages['general'] = 'Failed to create user: Unknown error';
+        }
+      }
+    });
+  }
+
+  closeUserModal(): void {
+    this.createdUser = null;
   }
 
   markFormGroupTouched(): void {
@@ -224,7 +315,7 @@ export class CreateUserComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/users']);
+    this.router.navigate(['/admin-users']); // or your actual user list route
   }
 
   // Bulk Import Methods
@@ -302,9 +393,9 @@ export class CreateUserComponent implements OnInit {
   }
 
   downloadTemplate(): void {
-    const csvContent = 'firstName,lastName,email,phone,role,isActive\n' +
-                      'John,Doe,john.doe@example.com,+1234567890,customer,true\n' +
-                      'Jane,Smith,jane.smith@example.com,+1234567891,staff,true';
+    const csvContent = 'email,phone,dateOfBirth,gender,username,role,password,confirmPassword,isActive,emailVerified,sendWelcomeEmail\n' +
+                      'john.doe@example.com,+1234567890,1990-01-15,male,johndoe,customer,Password123!,Password123!,true,false,true\n' +
+                      'jane.smith@example.com,+1234567891,1985-03-22,female,janesmith,staff,SecurePass456!,SecurePass456!,true,true,true';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -315,16 +406,106 @@ export class CreateUserComponent implements OnInit {
     window.URL.revokeObjectURL(url);
   }
 
-  importUsers(): void {
-    if (this.csvData.length === 0) return;
-    
+  async importUsers(): Promise<void> {
+    if (!this.csvData.length) return;
     this.isImporting = true;
-    
-    // Simulate bulk import
-    setTimeout(() => {
+    const results: { user: any, success: boolean, error?: string }[] = [];
+    let completed = 0;
+
+    // First, validate all emails
+    const emailValidationResults = await this.validateAllEmails();
+    const validUsers = this.csvData.filter((user, index) => emailValidationResults[index]);
+
+    if (validUsers.length === 0) {
       this.isImporting = false;
-      alert(`Successfully imported ${this.csvData.length} users!`);
-      this.closeBulkImport();
-    }, 3000);
+      alert('No valid emails found. Please check your CSV data.');
+      return;
+    }
+
+    if (validUsers.length < this.csvData.length) {
+      const invalidCount = this.csvData.length - validUsers.length;
+      const proceed = confirm(`${invalidCount} users have invalid emails and will be skipped. Continue with ${validUsers.length} valid users?`);
+      if (!proceed) {
+        this.isImporting = false;
+        return;
+      }
+    }
+
+    // Process valid users
+    for (const csvUser of validUsers) {
+      // Map CSV fields to backend DTO
+      const selectedRole = this.roles.find(r => r.name.toLowerCase() === (csvUser.role || '').toLowerCase());
+      const payload = {
+        name: csvUser.email.split('@')[0], // Use email prefix as name
+        email: csvUser.email,
+        password: 'Password123!', // Default or random password, or add to CSV
+        gender: csvUser.gender || '',
+        dateOfBirth: csvUser.dateOfBirth || '',
+        phoneNumber: csvUser.phone || '',
+        role: selectedRole ? selectedRole.name : '',
+        address: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+        addressType: 'HOME',
+        emailVerified: csvUser.emailVerified || false,
+        sendWelcomeEmail: csvUser.sendWelcomeEmail !== undefined ? csvUser.sendWelcomeEmail : true
+      };
+      
+      this.userService.createUserByAdmin(payload).subscribe({
+        next: (res) => {
+          results.push({ user: csvUser, success: true });
+          checkDone();
+        },
+        error: (err) => {
+          results.push({ user: csvUser, success: false, error: err?.error?.message || 'Unknown error' });
+          checkDone();
+        }
+      });
+    }
+
+    const checkDone = () => {
+      completed++;
+      if (completed === validUsers.length) {
+        this.isImporting = false;
+        // Show detailed summary
+        const successCount = results.filter(r => r.success).length;
+        const failCount = results.length - successCount;
+        const invalidEmailCount = this.csvData.length - validUsers.length;
+        
+        let summaryMessage = `Bulk import complete.\n\n`;
+        summaryMessage += `✅ Successfully imported: ${successCount} users\n`;
+        summaryMessage += `❌ Failed to import: ${failCount} users\n`;
+        if (invalidEmailCount > 0) {
+          summaryMessage += `⚠️ Skipped (invalid email): ${invalidEmailCount} users\n`;
+        }
+        
+        if (failCount > 0) {
+          summaryMessage += `\nFailed users:\n`;
+          results.filter(r => !r.success).forEach(result => {
+            summaryMessage += `• ${result.user.firstName} ${result.user.lastName} (${result.user.email}): ${result.error}\n`;
+          });
+        }
+        
+        alert(summaryMessage);
+      }
+    };
   }
+
+  private async validateAllEmails(): Promise<boolean[]> {
+    const validationPromises = this.csvData.map(async (user) => {
+      try {
+        const realEmailRes = await this.userService.validateRealEmail(user.email).toPromise();
+        return !!(realEmailRes && realEmailRes.real);
+      } catch (e) {
+        console.error(`Failed to validate email ${user.email}:`, e);
+        return false;
+      }
+    });
+
+    return Promise.all(validationPromises);
+  }
+
+
 }

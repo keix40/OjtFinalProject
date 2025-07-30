@@ -1,0 +1,158 @@
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-white flex flex-col items-center justify-center py-8">
+  <!-- Header Section (outside container) -->
+  <div class="text-center mb-8 mt-8">
+    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+      <i data-lucide="truck" class="w-8 h-8 text-indigo-500"></i>
+    </div>
+    <h2 class="text-3xl font-bold text-gray-900 mb-2">Create New Delivery Service</h2>
+    <p class="text-gray-600 text-lg">Add a new delivery service to your system</p>
+  </div>
+  <div class="w-full max-w-3xl mx-auto">
+    <div class="rounded-3xl shadow-xl border border-gray-100 bg-white/80 backdrop-blur-md p-0 sm:p-0">
+      <form [formGroup]="deliveryServiceForm" (ngSubmit)="submit()" class="p-8 pt-4 space-y-8">
+        <div class="mb-8">
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+              <path d="M12 8v4l2 2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            <span class="text-lg font-semibold text-gray-900">Basic Information</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div class="col-span-1">
+              <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Service Name <span class="text-red-500">*</span>
+              </label>
+              <input type="text" formControlName="name" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" placeholder="Enter delivery service name">
+              <div *ngIf="deliveryServiceForm.get('name')?.invalid && deliveryServiceForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name is required.</div>
+            </div>
+            <div class="col-span-1">
+              <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 0V4m0 16v-4" />
+                </svg>
+                Fee Per Km (MMK) <span class="text-red-500">*</span>
+              </label>
+              <input type="number" formControlName="feePerKm" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" placeholder="Enter fee per km">
+              <div *ngIf="deliveryServiceForm.get('feePerKm')?.invalid && deliveryServiceForm.get('feePerKm')?.touched" class="text-red-500 text-xs mt-1">Fee per km is required and must be 0 or more.</div>
+            </div>
+            <div class="col-span-1">
+              <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 5h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
+                </svg>
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <input type="text" formControlName="phoneNumber" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" placeholder="Enter phone number">
+              <div *ngIf="deliveryServiceForm.get('phoneNumber')?.invalid && deliveryServiceForm.get('phoneNumber')?.touched" class="text-red-500 text-xs mt-1">Valid phone number is required.</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Base Address <span class="text-red-500">*</span>
+          </label>
+          <button type="button" (click)="openAddAddressModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg font-semibold hover:bg-slate-700 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            {{ selectedAddress ? 'Edit Address' : 'Add Address' }}
+          </button>
+          <div *ngIf="selectedAddress" class="mt-3 p-4 bg-gray-50 rounded border border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div><span class="font-semibold">Address:</span> {{ selectedAddress.address }}</div>
+            <div><span class="font-semibold">City:</span> {{ selectedAddress.city }}</div>
+            <div><span class="font-semibold">State:</span> {{ selectedAddress.state }}</div>
+            <div><span class="font-semibold">Postal Code:</span> {{ selectedAddress.postalCode }}</div>
+            <div><span class="font-semibold">Country:</span> {{ selectedAddress.country }}</div>
+            <div><span class="font-semibold">Latitude:</span> {{ selectedAddress.latitude }}</div>
+            <div><span class="font-semibold">Longitude:</span> {{ selectedAddress.longitude }}</div>
+          </div>
+          <div *ngIf="deliveryServiceForm.get('baseAddress')?.invalid && deliveryServiceForm.get('baseAddress')?.touched" class="text-red-500 text-xs mt-1">Base address is required.</div>
+        </div>
+        <button type="submit" [disabled]="deliveryServiceForm.invalid || isSubmitting || !permissionService.hasPermission(PermissionConstants.DELIVERY_CREATE) " class="w-full py-3 bg-slate-600 text-white font-bold rounded-xl hover:bg-slate-700 transition text-lg flex items-center justify-center gap-2 mt-6 shadow disabled:opacity-50 disabled:cursor-not-allowed">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Create Delivery Service
+        </button>
+      </form>
+    </div>
+
+    <!-- Add Address Modal -->
+<div *ngIf="showAddAddressModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+      <h3 class="text-2xl font-bold text-gray-900">Add New Address</h3>
+      <button type="button" class="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200" (click)="closeAddAddressModal()">
+        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <form [formGroup]="addressForm" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Address <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter address" formControlName="address" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">Address is required.</div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">City <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter city" formControlName="city" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">City is required.</div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">State <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter state" formControlName="state" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">State is required.</div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Postal Code <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter postal code" formControlName="postalCode" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">Postal code is required.</div>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Country <span class="text-red-500">*</span></label>
+            <input type="text" placeholder="Enter country" formControlName="country" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
+            <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">Country is required.</div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-3">Address Type</label>
+            <select formControlName="addressType" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none">
+              <option value="SHIPPING">Shipping</option>
+              <option value="WORK">Work</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 pt-4">
+          <button type="button" class="flex items-center space-x-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors duration-200" (click)="getCurrentLocation()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <span>Use My Location</span>
+          </button>
+        </div>
+        <div class="my-6">
+          <div id="map" class="rounded-xl border-2 border-blue-100 shadow-sm w-full min-h-[180px] h-[200px] bg-gray-100"></div>
+        </div>
+      </form>
+    </div>
+    <div class="p-6 border-t border-gray-100 flex space-x-3">
+      <button type="button" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200" (click)="closeAddAddressModal()">
+        Cancel
+      </button>
+      <button type="button" class="flex-1 px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" (click)="submitAddressForm()" [disabled]="addressForm.invalid">
+        Save Address
+      </button>
+    </div>
+  </div>
+</div>

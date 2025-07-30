@@ -1,7 +1,27 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from '../services/cart.service';
+import { OrderService } from '../services/order.service';
+import { UserOrder } from '../user-order';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { OrderConfirmComponent } from '../order-confirm/order-confirm.component';
+import { DiscountService } from '../services/discount.service';
+import { ProductService } from '../services/product.service';
+import { ProductDTO } from '../product';
+import { ImageService } from '../services/image.service';
+import { CardService } from '../services/card.service';
+import Swal from 'sweetalert2';
+
+interface Card {
+  id: number;
+  cardholderName: string;
+  cardBrand: string;
+  expiryDate: string;
+  isDefault: boolean;
+  cardNumber: string;
+}
 
 @Component({
   selector: 'app-payment',
@@ -9,60 +29,648 @@ import { Subscription } from 'rxjs';
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.css'
 })
-export class PaymentComponent implements OnInit, OnDestroy {
+export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
   customer: any;
   shipping: any;
   delivery: any;
   cartItems: CartItem[] = [];
-  paymentMethod: string = '';
-  orderNumber: string = '';
+  paymentMethod: string = 'card';
+
+  userId: number | null = null;
+  addressId: number | null = null;
+  deliveryServiceId: number | null = null;
+  discountId: number | null = null;
+  discount: any = null;
+  discountAmount: number = 0;
+  deliveryFee: number = 0;
+  
+  orderPreview: any = null;
+  isFirstTimeBuyerDiscount = false;
+  
+  // Loading state
+
+  isSubmitting: boolean = false;
+
+  cardForm: FormGroup;
+  
+  activeDiscounts: any[] = [];
+  productDiscounts: Map<number, any> = new Map();
+  productDetails: Map<number, ProductDTO> = new Map();
+  productDiscountAmount: number = 0;
+  
+  // Coupon properties for cart page integration
+  promoSuccess: boolean = false;
+  couponDiscount: number = 0;
+  couponDiscountType: string = '';
+  appliedCouponName: string = '';
+  
   private subscriptions: Subscription[] = [];
 
-  constructor(private router: Router, private cartService: CartService) {}
+  savedCards: Card[] = [];
+  selectedSavedCardId: string | null = null;
+  useNewCard: boolean = false;
+
+  constructor(
+    private router: Router,
+    private cartService: CartService,
+    private orderService: OrderService,
+    private cardService: CardService,
+    private fb: FormBuilder,
+    private modalService: NgbModal,
+    private discountService: DiscountService,
+    private productService: ProductService,
+    public imageService: ImageService,
+    private cdr: ChangeDetectorRef
+  ) {
+    this.cardForm = this.fb.group({
+      cardNumber: ['', [
+        Validators.required,
+        Validators.pattern(/^(\d{4} ){2,3}\d{3,4}$/)
+      ]],
+      cardholderName: ['', Validators.required],
+      expiryDate: ['', [Validators.required, Validators.pattern(/^(0[1-9]|1[0-2]) \/ \d{2}$/)]],
+      cvv: ['', [Validators.required, Validators.pattern(/^\d{3,4}$/)]],
+      cardBrand: ['', Validators.required]
+    });
+  }
 
   ngOnInit() {
-    const nav = window.history.state;
-    this.customer = nav.customer;
-    this.shipping = nav.shipping;
-    this.delivery = nav.delivery;
-    this.orderNumber = nav.orderNumber || (Math.floor(100000 + Math.random() * 900000).toString());
-    this.subscriptions.push(
-      this.cartService.getCartItems().subscribe(items => {
-        this.cartItems = items;
-      })
-    );
+  const nav = window.history.state;
+  this.customer = nav.customer;
+  this.shipping = nav.shipping;
+  this.delivery = nav.delivery;
+
+  this.userId = nav.userId;
+  this.addressId = nav.addressId;
+  this.deliveryServiceId = nav.deliveryServiceId;
+  this.discountId = nav.discountId;
+  this.discount = nav.discount;
+  this.discountAmount = nav.discountAmount;
+  this.deliveryFee = nav.deliveryFee;
+  this.productDiscountAmount = nav.productDiscountAmount;
+  this.orderPreview = nav.orderPreview;
+
+  // Load coupon from localStorage (applied in cart page)
+  this.loadCouponFromStorage();
+
+  this.cartItems = nav.cartItems;
+  this.loadActiveDiscounts();
+  this.loadProductDetails();
+  this.loadSavedCards();
   }
+
+  ngAfterViewInit() {
+    // Ensure cartItems update triggers change detection
+    this.cartService.getCartItems().subscribe(items => {
+      this.cartItems = items;
+      this.cdr.detectChanges();
+    });
+  }
+
+  
+  loadActiveDiscounts() {
+    this.discountService.getActiveDiscount().subscribe({
+      next: (discounts) => {
+        this.activeDiscounts = discounts;
+        this.calculateProductDiscounts();
+      }
+    });
+  }
+
+  loadProductDetails() {
+    const productIds = this.cartItems.map(item => item.productId || item.id);
+    if (productIds.length === 0) return;
+    this.productService.getProductsByIds(productIds).subscribe(products => {
+      products.forEach(product => {
+        this.productDetails.set(product.id, product);
+      });
+      this.calculateProductDiscounts();
+    });
+  }
+
+  calculateProductDiscounts() {
+    this.productDiscounts.clear();
+    this.cartItems.forEach(item => {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        const discount = this.findApplicableDiscount(product);
+        if (discount) {
+          this.productDiscounts.set(product.id, discount);
+        }
+      }
+    });
+  }
+
+  findApplicableDiscount(product: ProductDTO): any {
+    if (!this.activeDiscounts || this.activeDiscounts.length === 0) {
+      return null;
+    }
+    for (const discount of this.activeDiscounts) {
+      const rules = discount.rules || [];
+      for (const rule of rules) {
+        if (this.isProductAffectedByRule(product, rule)) {
+          return {
+            id: discount.id,
+            name: discount.name,
+            discount_percent: discount.discount_percent,
+            discount_amount: discount.discount_amount,
+            discountType: discount.discountType,
+            targetType: rule.targetType,
+            eventName: discount.name,
+            minimumSpend: discount.minimumSpend
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  isProductAffectedByRule(product: ProductDTO, rule: any): boolean {
+    switch (rule.targetType) {
+      case 'PRODUCT':
+        return rule.productId === product.id;
+      case 'BRAND':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.brandId === rule.brandId);
+      case 'CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.categoryId === rule.categoryId);
+      case 'BRAND_CATEGORY':
+        if (!product.categoryBrandArray) return false;
+        return product.categoryBrandArray.some(pair => pair.brandId === rule.brandId && pair.categoryId === rule.categoryId);
+      default:
+        return false;
+    }
+  }
+
+  getProductDiscount(productId: number): any {
+    if (this.isFirstTimeBuyerDiscount) return null;
+    
+    const discount = this.productDiscounts.get(productId);
+    if (!discount) return null;
+    
+    // Get the product to check its price
+    const product = this.productDetails.get(productId);
+    if (!product) return null;
+    
+    // Check minimum spend requirement
+    if (discount.minimumSpend && discount.minimumSpend > 0) {
+      if (product.price < discount.minimumSpend) {
+        // Product price is lower than minimum spend, don't show discount
+        return null;
+      }
+    }
+    
+    return discount;
+  }
+
+  getFinalDiscountedPrice(product: ProductDTO): number {
+    let price = product.price;
+    const productDiscount = this.getProductDiscount(product.id);
+
+    // 1. Apply product-based discount (if any)
+    if (productDiscount) {
+      if (productDiscount.discountType === 'PERCENTAGE') {
+        price = price - (price * productDiscount.discount_percent / 100);
+      } else {
+        price = price - productDiscount.discount_amount;
+      }
+    }
+
+    // 2. Always apply VIP tier discount (if any)
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (userVipTier) {
+      const vipDiscount = this.activeDiscounts.find(d =>
+        (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+      );
+      if (vipDiscount) {
+        price = price - (price * vipDiscount.discount_percent / 100);
+      }
+    }
+    return Math.round(price);
+  }
+
+  getVipDiscountPercent(product: ProductDTO): number | null {
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (!userVipTier) return null;
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    return vipDiscount ? vipDiscount.discount_percent : null;
+  }
+
+  getVipDiscountDisplay(product: ProductDTO): string {
+    const token = localStorage.getItem('token');
+    let userVipTier = null;
+    if (token) {
+      try {
+        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+      } catch {}
+    }
+    if (!userVipTier) return '';
+    const percent = this.getVipDiscountPercent(product);
+    if (percent) {
+      return `${userVipTier.charAt(0).toUpperCase() + userVipTier.slice(1)} Tier ${percent}% OFF`;
+    }
+    return '';
+  }
+
+  getDiscountDisplayText(discount: any): string {
+    if (!discount) return '';
+    if (discount.discountType === 'PERCENTAGE') {
+      return `${discount.discount_percent}% OFF`;
+    } else {
+      return `Save ${discount.discount_amount} MMK`;
+    }
+  }
+
+   getTotalDiscount() {
+    // If first time buyer discount is active, only use that
+    if (this.isFirstTimeBuyerDiscount && this.orderPreview?.discountAmount > 0) {
+      return this.orderPreview.discountAmount;
+    }
+    if (this.productDiscountAmount) return this.productDiscountAmount;
+    let discount = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        const finalPrice = this.getFinalDiscountedPrice(product);
+        if (finalPrice < product.price) {
+          discount += (product.price - finalPrice) * item.quantity;
+        }
+      }
+    }
+    return discount;
+  }
+
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    // Clear coupon if user navigates away without completing payment
+    if (this.promoSuccess) {
+      console.log('Clearing coupon on component destroy - payment not completed');
+      this.clearAppliedCoupon();
+    }
   }
 
-  getSubtotal() {
-    return this.cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    getSubtotal() {
+    // Always return the sum of original prices
+    let subtotal = 0;
+    for (const item of this.cartItems) {
+      const product = this.productDetails.get(item.productId || item.id);
+      if (product) {
+        subtotal += product.price * item.quantity;
+      } else {
+        subtotal += item.price * item.quantity;
+      }
+    }
+    return subtotal;
   }
+
   getDeliveryCost() {
-    if (!this.delivery || !this.delivery.method) return 0;
-    if (this.delivery.method.includes('Express DDP')) return 6.49;
-    if (this.delivery.method.includes('Standard DDP')) return 4.49;
-    if (this.delivery.method.includes('Standard DDU')) return 5.49;
-    if (this.delivery.method.includes('Express DDU')) return 10.49;
-    return 0;
+    return this.deliveryFee;
   }
+
   getTotal() {
-    return this.getSubtotal() + this.getDeliveryCost() - 100; // Example discount
+    // Always use subtotal - discount + shipping
+    return this.getSubtotal() - this.getTotalDiscount() + this.deliveryFee;
   }
+
 
   submitOrder() {
-    if (!this.paymentMethod) return;
-    this.router.navigate(['/checkout/confirm'], {
-      state: {
-        customer: this.customer,
-        shipping: this.shipping,
-        delivery: this.delivery,
-        cartItems: this.cartItems,
-        paymentMethod: this.paymentMethod,
-        orderNumber: this.orderNumber
+    if (this.isSubmitting) return;
+    this.isSubmitting = true;
+
+    if (this.useNewCard) {
+      if (this.cardForm.invalid) {
+        this.cardForm.markAllAsTouched();
+        this.isSubmitting = false;
+        return;
+      }
+      // Expiry date validation (same as user-payment-methods)
+      let expiry = this.cardForm.value.expiryDate?.trim().replace(/\s/g, '');
+      if (!expiry || !/^\d{2}\/\d{2}$/.test(expiry)) {
+        Swal.fire('Invalid Expiry', 'Expiry date must be in MM/YY format.', 'error');
+        this.isSubmitting = false;
+        return;
+      }
+      const [mm, yy] = expiry.split('/').map(Number);
+      if (mm < 1 || mm > 12) {
+        Swal.fire('Invalid Expiry', 'Month must be between 01 and 12.', 'error');
+        this.isSubmitting = false;
+        return;
+      }
+      const fullYear = 2000 + yy;
+      const expiryDate = new Date(fullYear, mm, 0); // Last day of the expiry month
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (expiryDate <= today) {
+        Swal.fire('Invalid Expiry', 'Expiry date must be after today.', 'error');
+        this.isSubmitting = false;
+        return;
+      }
+    } else {
+      if (!this.selectedSavedCardId) {
+        alert('Please select a saved card to proceed.');
+        this.isSubmitting = false;
+        return;
+      }
+    }
+
+    if (!this.userId || !this.addressId || !this.deliveryServiceId) {
+      console.error('Missing required data:', {
+        userId: this.userId,
+        addressId: this.addressId,
+        deliveryServiceId: this.deliveryServiceId
+      });
+      alert('Missing required order information.');
+      this.isSubmitting = false;
+      return;
+    }
+    
+    // Validate cart items
+    if (!this.cartItems || this.cartItems.length === 0) {
+      console.error('No cart items found');
+      alert('No items in cart. Please add items before proceeding.');
+      return;
+    }
+    
+    this.isSubmitting = true;
+    
+    // Log all received data for debugging
+    console.log('=== PAYMENT DEBUG DATA ===');
+    console.log('Customer:', this.customer);
+    console.log('Shipping:', this.shipping);
+    console.log('Delivery:', this.delivery);
+    console.log('Cart Items:', this.cartItems);
+    console.log('User ID:', this.userId);
+    console.log('Address ID:', this.addressId);
+    console.log('Delivery Method ID:', this.deliveryServiceId);
+    console.log('Discount ID:', this.discountId);
+    console.log('Discount:', this.discount);
+    console.log('Discount Amount:', this.discountAmount);
+    console.log('Delivery Fee:', this.deliveryFee);
+    console.log('Total Amount:', this.getTotal());
+    console.log('========================');
+    
+    // Create UserOrder object with proper data structure
+
+    if (this.useNewCard) {
+      const newCard = {
+        userId: this.userId,
+        cardholderName: this.cardForm.value.cardholderName,
+        cardNumber: this.cardForm.value.cardNumber.replace(/\s/g, ''),
+        expiryDate: this.cardForm.value.expiryDate,
+        cardBrand: this.cardForm.value.cardBrand,
+        isDefault: true
+      };
+
+      this.cardService.saveCard(newCard).subscribe({
+        next: (response: any) => {
+          const savedCardId = response?.id;
+          if (savedCardId) {
+            this.placeOrderWithCardId(savedCardId);
+          } else {
+            alert('Card saved but no ID returned.');
+            this.isSubmitting = false;
+          }
+        },
+        error: (err) => {
+          console.error('Failed to save card:', err);
+          this.isSubmitting = false;
+          alert('Failed to save card.');
+          // Don't clear coupon on card save error - let user retry
+          console.log('Card save failed - keeping coupon for retry');
+        }
+      });
+    } else {
+      const selectedCard = this.getSelectedSavedCard();
+      if (!selectedCard) {
+        alert('Selected card not found.');
+        this.isSubmitting = false;
+        return;
+      }
+      this.placeOrderWithCardId(Number(selectedCard.id));
+    }
+  }
+
+  placeOrderWithCardId(cardId?: number) {
+    const userOrder: UserOrder = {
+      userId: this.userId!,
+      addressId: this.addressId!,
+      discountId: this.discountId || null,
+      deliveryServiceId: this.deliveryServiceId!,
+      deliveryFee: typeof this.deliveryFee === 'number' ? this.deliveryFee : Number(this.deliveryFee),
+      totalAmount: typeof this.getTotal() === 'number' ? this.getTotal() : Number(this.getTotal()),
+      cartItem: this.cartItems.map(item => ({
+        productId: item.productId ?? item.id,
+        quantity: typeof item.quantity === 'number' ? item.quantity : Number(item.quantity),
+        price: typeof item.price === 'number' ? item.price : Number(item.price),
+        variantId: item.variantId ?? null
+      })),
+      cardId
+    };
+
+    // Debug: log the payload to ensure all numbers are correct
+    console.log('Submitting userOrder payload:', JSON.stringify(userOrder));
+
+    // Log coupon usage tracking information
+   if (this.discountId) {
+  userOrder.couponName = this.appliedCouponName;
+  userOrder.couponDiscount = this.couponDiscount;
+}
+
+    this.orderService.createOrder(userOrder).subscribe({
+      next: (response: any) => {
+        this.isSubmitting = false;
+        // Handle text response from backend
+        let orderData;
+        if (typeof response === 'string') {
+          // Backend returns "success" as plain text
+          orderData = { 
+            orderCode: 'ORDER-' + Date.now(), // Generate a temporary order code
+            status: response 
+          };
+        } else {
+          orderData = response;
+        }
+        
+        const orderDetails = {
+          ...orderData,
+          customer: this.customer,
+          shipping: this.shipping,
+          delivery: this.delivery,
+          cartItems: this.cartItems,
+          paymentMethod: this.paymentMethod,
+          subtotal: this.getSubtotal(),
+          discountAmount: this.getTotalDiscount(),
+          orderNumber: orderData.orderCode || orderData.orderId || 'ORDER-' + Date.now(),
+          deliveryFee: this.deliveryFee,
+          
+          cardInfo: this.useNewCard
+            ? {
+                ...this.cardForm.value,
+                cardNumber: this.maskCardNumber(this.cardForm.value.cardNumber)
+              }
+            : this.getSelectedSavedCard(),
+          discount: this.discount
+        };
+        this.openConfirmationModal(orderDetails);
+        this.clearAppliedCoupon(); // Clear applied coupon after successful order placement
+        this.cartService.clearCart(); // Clear cart after successful order placement
+      },
+      error: (error) => {
+        this.isSubmitting = false;
+        let msg = 'Failed to place order. Please try again.';
+        if (error?.error && typeof error.error === 'string') {
+          msg += '\n' + error.error;
+        }
+        Swal.fire('Order Error', msg);
+        // Don't clear coupon on error - let user retry with same coupon
+        console.log('Payment failed - keeping coupon for retry');
       }
     });
+  }
+
+  openConfirmationModal(orderDetails: any) {
+    const modalRef = this.modalService.open(OrderConfirmComponent, { centered: true });
+    modalRef.componentInstance.orderDetails = orderDetails;
+  }
+
+  onCardNumberInput(event: any) {
+    this.formatCardNumber(event);
+    const brand = this.detectCardBrand(event.target.value);
+    if (brand !== 'UNKNOWN') {
+      this.cardForm.get('cardBrand')?.setValue(brand, { emitEvent: false });
+    }
+  }
+
+  formatCardNumber(event: any) {
+    let value = event.target.value.replace(/\s/g, '');
+    value = value.replace(/\D/g, '');
+    value = value.replace(/(\d{4})/g, '$1 ').trim();
+    event.target.value = value.substring(0, 19);
+  }
+
+  formatExpiryDate(event: any) {
+    let value = event.target.value.replace(/\s\/\s/g, '').replace('/', '');
+    value = value.replace(/\D/g, '');
+
+    if (value.length > 2) {
+      value = value.slice(0, 2) + ' / ' + value.slice(2, 4);
+    }
+
+    event.target.value = value.substring(0, 7);
+  }
+
+  formatCVV(event: any) {
+    let value = event.target.value.replace(/\D/g, '');
+    if (value.length > 4) value = value.substring(0, 4);
+    event.target.value = value;
+  }
+
+  onPaymentMethodChange() {
+    if (this.paymentMethod !== 'card') {
+      this.cardForm.reset();
+    }
+  }
+
+  loadSavedCards() {
+    if (this.userId == null) return;
+    this.cardService.getCardsByUserId(this.userId).subscribe(cards => {
+      this.savedCards = cards.map(card => ({
+        id: Number(card.id),
+        cardholderName: card.cardholderName,
+        cardBrand: card.cardBrand,
+        cardNumber: card.cardNumber,
+        expiryDate: card.expiryDate,
+        isDefault: card.isDefault
+      }));
+      this.selectedSavedCardId = cards.length > 0 && cards[0]?.id != null
+      ? cards[0].id.toString()
+      : '';
+          this.useNewCard = cards.length === 0;
+    });
+  }
+
+  getSelectedSavedCard() {
+    if (!this.selectedSavedCardId) return undefined;
+    const selected = this.savedCards.find(card => card.id === +(this.selectedSavedCardId ?? 0));
+    console.log("Selected saved card:", selected);
+    return selected;
+  }
+  
+
+  detectCardBrand(cardNumber: string): string {
+    const noSpaces = cardNumber.replace(/\s/g, '');
+    if (/^4/.test(noSpaces)) return 'VISA';
+    if (/^5[1-5]/.test(noSpaces)) return 'MASTERCARD';
+    if (/^3[47]/.test(noSpaces)) return 'AMEX';
+    return 'UNKNOWN';
+  }
+
+  toggleUseNewCard(useNew: boolean) {
+    this.useNewCard = useNew;
+    if (!useNew && this.savedCards.length > 0) {
+      this.selectedSavedCardId = this.savedCards[0].id.toString();
+    }
+  }
+
+  maskCardNumber(cardNumber: string): string {
+    const cleaned = cardNumber.replace(/\s/g, '');
+    const length = cleaned.length;
+    if (length <= 4) return cleaned;
+    const maskedSection = '*'.repeat(length - 4);
+    const visibleSection = cleaned.slice(-4);
+    const fullMasked = maskedSection + visibleSection;
+    return fullMasked.match(/.{1,4}/g)?.join(' ') ?? fullMasked;
+  }
+
+  loadCouponFromStorage() {
+    const savedCoupon = localStorage.getItem('appliedCoupon');
+    if (savedCoupon) {
+      try {
+        const couponData = JSON.parse(savedCoupon);
+        this.promoSuccess = couponData.promoSuccess || false;
+        this.couponDiscount = couponData.couponDiscount || 0;
+        this.couponDiscountType = couponData.couponDiscountType || '';
+        this.appliedCouponName = couponData.appliedCouponName || '';
+        this.discountId  = couponData.discountId ?? null ;
+      } catch (error) {
+        console.error('Error loading coupon from localStorage:', error);
+        localStorage.removeItem('appliedCoupon');
+      }
+    }
+  }
+
+  // Get coupon name for display
+  getCouponName(): string {
+    if (!this.promoSuccess || !this.couponDiscount) return '';
+    return this.appliedCouponName || '';
+  }
+
+  // Clear applied coupon after successful order placement
+  private clearAppliedCoupon(): void {
+    if (this.promoSuccess) {
+      console.log('Clearing applied coupon from localStorage after successful payment');
+      localStorage.removeItem('appliedCoupon');
+      this.promoSuccess = false;
+      this.couponDiscount = 0;
+      this.couponDiscountType = '';
+      this.appliedCouponName = '';
+      console.log('Coupon cleared successfully');
+    }
   }
 }

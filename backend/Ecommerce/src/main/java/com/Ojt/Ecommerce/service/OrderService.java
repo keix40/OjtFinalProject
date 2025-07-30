@@ -1,0 +1,867 @@
+package com.Ojt.Ecommerce.service;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.stream.Collectors;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.Ojt.Ecommerce.dto.AddressDTO;
+import com.Ojt.Ecommerce.dto.CartDTO;
+import com.Ojt.Ecommerce.dto.DiscountDTO;
+import com.Ojt.Ecommerce.dto.OrderPreviewDTO;
+import com.Ojt.Ecommerce.dto.OrderProductDTO;
+import com.Ojt.Ecommerce.dto.ReturnRequestDTO;
+import com.Ojt.Ecommerce.dto.ReturnRequestProductDTO;
+import com.Ojt.Ecommerce.dto.StatusHistoryDTO;
+import com.Ojt.Ecommerce.dto.UserDTO;
+import com.Ojt.Ecommerce.dto.UserOrderDTO;
+import com.Ojt.Ecommerce.dto.UserOrderListDTO;
+import com.Ojt.Ecommerce.entity.Address;
+import com.Ojt.Ecommerce.entity.AddressType;
+import com.Ojt.Ecommerce.entity.DeliveryService;
+import com.Ojt.Ecommerce.entity.Discount;
+import com.Ojt.Ecommerce.entity.DiscountRule;
+import com.Ojt.Ecommerce.entity.DiscountType;
+import com.Ojt.Ecommerce.entity.OrderStatus;
+import com.Ojt.Ecommerce.entity.Product;
+import com.Ojt.Ecommerce.entity.ProductVariant;
+import com.Ojt.Ecommerce.entity.Refund;
+import com.Ojt.Ecommerce.entity.ReturnRequestImage;
+import com.Ojt.Ecommerce.entity.SavedCard;
+import com.Ojt.Ecommerce.entity.Status;
+import com.Ojt.Ecommerce.entity.StatusType;
+import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.entity.UserCouponUsage;
+import com.Ojt.Ecommerce.entity.UserOrder;
+import com.Ojt.Ecommerce.entity.UserOrderHasProduct;
+import com.Ojt.Ecommerce.entity.UserPointHistory;
+import com.Ojt.Ecommerce.repository.AddressRepository;
+import com.Ojt.Ecommerce.repository.DeliveryMethodRepository;
+import com.Ojt.Ecommerce.repository.DeliveryServiceRepository;
+import com.Ojt.Ecommerce.repository.DiscountRepository;
+import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
+import com.Ojt.Ecommerce.repository.OrderRepository;
+import com.Ojt.Ecommerce.repository.OrderStatusRepository;
+import com.Ojt.Ecommerce.repository.ProductRepository;
+import com.Ojt.Ecommerce.repository.ProductVariantRepository;
+import com.Ojt.Ecommerce.repository.ReturnRequestRepository;
+import com.Ojt.Ecommerce.repository.SavedCardRepository;
+import com.Ojt.Ecommerce.repository.StatusRepository;
+import com.Ojt.Ecommerce.repository.UserCouponUsageRepository;
+import com.Ojt.Ecommerce.repository.UserOrderHasProductRepository;
+import com.Ojt.Ecommerce.repository.UserPointHistoryRepository;
+import com.Ojt.Ecommerce.repository.UserRepository;
+import com.Ojt.Ecommerce.repository.RefundRepository;
+
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+
+@Service
+public class OrderService {
+    @Autowired
+    private ModelMapper mapper;
+
+    @Autowired
+    private OrderRepository repo;
+
+    @Autowired
+    private DiscountRepository discountRepo;
+
+    @Autowired
+    private UserOrderHasProductRepository opRepo;
+
+    @Autowired
+    private UserCouponUsageRepository couponRepo;
+
+    @Autowired
+    private UserRepository userRepo;
+
+    @Autowired
+    private DeliveryMethodRepository dmRepo;
+
+    @Autowired
+    private AddressRepository addRepo;
+
+    @Autowired
+    private ProductRepository proRepo;
+
+    @Autowired
+    private UserPointHistoryRepository pointRepo;
+
+    @Autowired
+    private ProductVariantRepository variantRepo;
+
+    @Autowired
+    private DiscountRuleRepository discountRuleRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private DeliveryServiceRepository deliveryServiceRepo;
+
+    @Autowired
+    private DistanceCalculatorService distanceCalculator; // You must create this
+
+
+    @Autowired
+    private UserActivityService userActivityService;
+
+    @Autowired
+    private DashboardBroadcastService dashboardBroadcastService;
+
+    @Autowired
+    private RefundRepository refundRepository;
+
+    // Method to ensure "First Time Buyer" discount exists
+    private void ensureFirstTimeBuyerDiscountExists() {
+        Discount firstTimeDiscount = discountRepo.findByName("First Time Buyer").orElse(null);
+        if (firstTimeDiscount == null) {
+            // Create the "First Time Buyer" discount if it doesn't exist
+            firstTimeDiscount = new Discount();
+            firstTimeDiscount.setName("First Time Buyer");
+            firstTimeDiscount.setDescription("10% discount for first-time buyers");
+            firstTimeDiscount.setDiscountType(DiscountType.PERCENTAGE);
+            firstTimeDiscount.setDiscountValue(0.10); // 10% discount
+            firstTimeDiscount.setStartDate(LocalDate.now());
+            firstTimeDiscount.setEndDate(LocalDate.now().plusYears(10)); // Valid for 10 years
+            firstTimeDiscount.setStatus(true);
+            discountRepo.save(firstTimeDiscount);
+        }
+    }
+
+    @Autowired
+    private StatusRepository statusRepository;
+
+    @Autowired
+    private OrderStatusRepository orderStatusRepository;
+
+    @Autowired
+    private ReturnRequestRepository returnRequestRepo;
+
+    @Autowired
+    private SavedCardRepository savedCardRepo;
+
+    //for discount
+    public DiscountDTO getDiscountByCode(String code) {
+        Discount discount = discountRepo.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Invalid coupon code"));
+
+        boolean isValid = !discount.getAutoApply()
+                && LocalDate.now().isAfter(discount.getStartDate().minusDays(1))
+                && LocalDate.now().isBefore(discount.getEndDate().plusDays(1));
+
+        // Convert stored decimal percentage back to percentage format for display
+        double displayValue;
+        if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
+            displayValue = discount.getDiscountValue() * 100.0;
+        } else {
+            displayValue = discount.getDiscountValue();
+        }
+
+        return DiscountDTO.builder()
+                .id(discount.getId())
+                .code(discount.getCode())
+                .name(discount.getName())
+                .discountType(discount.getDiscountType())
+                .discountValue(displayValue)
+                .startDate(discount.getStartDate())
+                .endDate(discount.getEndDate())
+                .canUse(isValid)
+                .build();
+    }
+
+    public boolean checkDiscountUsed(Long disId, Long userId){
+        return couponRepo.checkDiscountUsed(userId,disId);
+    }
+
+    //for order
+    // Create Order Method (fixed)
+    @Transactional
+    public UserOrder createOrder(UserOrderDTO dto) {
+        ensureFirstTimeBuyerDiscountExists();
+
+        // Debug logging
+        System.out.println("=== CREATE ORDER DEBUG ===");
+        System.out.println("User ID: " + dto.getUserId());
+        System.out.println("Discount ID: " + dto.getDiscountId());
+        System.out.println("Coupon Name: " + dto.getCouponName());
+        System.out.println("Coupon Discount: " + dto.getCouponDiscount());
+        System.out.println("==========================");
+
+        try {
+            UserOrder order = mapper.map(dto, UserOrder.class);
+
+            User user = userRepo.findById(dto.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + dto.getUserId()));
+
+            order.setUser(user);
+
+            Address address = addRepo.findById(dto.getAddressId())
+                    .orElseThrow(() -> new RuntimeException("Address not found with ID: " + dto.getAddressId()));
+            order.setAddress(address);
+
+            DeliveryService deliveryService = deliveryServiceRepo.findById(dto.getDeliveryServiceId())
+                    .orElseThrow(() -> new RuntimeException("Delivery service not found"));
+            order.setDeliveryService(deliveryService);
+
+            // Calculate delivery fee by distance
+            double distance = distanceCalculator.calculateDistance(
+                    deliveryService.getBaseAddress().getLatitude().doubleValue(),
+                    deliveryService.getBaseAddress().getLongitude().doubleValue(),
+                    address.getLatitude().doubleValue(),
+                    address.getLongitude().doubleValue()
+            );
+
+            BigDecimal deliveryFee = deliveryService.getFeePerKm().multiply(BigDecimal.valueOf(distance));
+            order.setDeliveryFee(deliveryFee);
+
+            // Set saved card if provided
+            if (dto.getCardId() != null) {
+                SavedCard savedCard = savedCardRepo.findById(dto.getCardId())
+                        .orElseThrow(() -> new RuntimeException("Saved card not found with ID: " + dto.getCardId()));
+                order.setSavedCard(savedCard);
+            }
+
+            // ===== FIRST-TIME BUYER DISCOUNT LOGIC =====
+            boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
+
+            if (isFirstOrder) {
+                if (user.getCreatedDate() != null && user.getCreatedDate().isBefore(LocalDateTime.now().minusDays(7))) {
+                    System.out.println("User registered more than 7 days ago, not eligible for first time buyer discount");
+                } else {
+                    Discount firstTimeDiscount = discountRepo.findByName("First Time Buyer").orElse(null);
+                    if (firstTimeDiscount != null && firstTimeDiscount.isStatus()
+                            && LocalDate.now().isAfter(firstTimeDiscount.getStartDate().minusDays(1))
+                            && LocalDate.now().isBefore(firstTimeDiscount.getEndDate().plusDays(1))) {
+
+                        List<DiscountRule> userDiscountRules = discountRuleRepository.findActiveUserDiscounts(user.getId());
+                        final Discount finalFirstTimeDiscount = firstTimeDiscount;
+                        boolean hasActiveDiscount = userDiscountRules.stream()
+                                .anyMatch(rule -> rule.getDiscount().getId().equals(finalFirstTimeDiscount.getId()));
+
+                        if (hasActiveDiscount) {
+                            order.setDiscount(firstTimeDiscount);
+                            System.out.println("Applied First Time Buyer discount for user: " + user.getEmail());
+                        }
+                    }
+                }
+            }
+
+            // If no first-time discount applied, apply manual discount if any
+            if (dto.getDiscountId() != null) {
+                Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
+                if (manualDiscount != null) {
+                    order.setDiscount(manualDiscount);
+                    order.setUserDiscountId(dto.getDiscountId());
+                    System.out.println("Applied manual discount: " + manualDiscount.getName() + " (ID: " + manualDiscount.getId() + ")");
+                } else {
+                    System.out.println("Warning: Discount with ID " + dto.getDiscountId() + " not found");
+                }
+            }
+
+            order.setOrderCode(generateUniqueOrderCode());
+            order.setOrderDate(LocalDateTime.now());
+            order.setUpdatedDate(LocalDateTime.now());
+
+            UserOrder savedOrder = repo.save(order);
+
+            // Ensure PENDING status exists; create if missing
+            Status pendingStatus = statusRepository.findByName(StatusType.PENDING)
+                    .orElseGet(() -> {
+                        Status newStatus = new Status();
+                        newStatus.setName(StatusType.PENDING);
+                        return statusRepository.save(newStatus);
+                    });
+
+            OrderStatus initialStatus = OrderStatus.builder()
+                    .userOrder(savedOrder)
+                    .status(pendingStatus)
+                    .statusDate(LocalDateTime.now())
+                    .build();
+            orderStatusRepository.save(initialStatus);
+
+            // Process order items, reduce stock accordingly
+            for (CartDTO item : dto.getCartItem()) {
+                Product product = proRepo.findById(item.getProductId())
+                        .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
+
+                UserOrderHasProduct orderProduct = new UserOrderHasProduct();
+                orderProduct.setUserOrder(savedOrder);
+                orderProduct.setProduct(product);
+                orderProduct.setQuantity(item.getQuantity());
+                orderProduct.setUnitPrice(item.getPrice());
+
+                if (item.getVariantId() != null) {
+                    ProductVariant variant = variantRepo.findById(item.getVariantId())
+                            .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
+
+                    if (variant.getStock() == null || variant.getStock() < item.getQuantity()) {
+                        throw new RuntimeException("Insufficient stock for variant ID: " + item.getVariantId());
+                    }
+
+                    variant.setStock(variant.getStock() - item.getQuantity());
+                    variantRepo.save(variant);
+                    orderProduct.setProductVariant(variant);
+                } else {
+                    if (product.getQuantity() == null || product.getQuantity() < item.getQuantity()) {
+                        throw new RuntimeException("Insufficient stock for product ID: " + item.getProductId());
+                    }
+
+                    product.setQuantity(product.getQuantity() - item.getQuantity());
+                    proRepo.save(product);
+                }
+
+                // Set discount rule if applicable
+                DiscountRule discountRule = discountRuleRepository.findActiveProductDiscountRule(product.getId(), user.getId());
+                if (discountRule != null) {
+                    orderProduct.setDiscountRule(discountRule);
+                    // If order-level userDiscountId is not set, set it to the discountRule's discount ID
+                    if (savedOrder.getUserDiscountId() == null) {
+                        savedOrder.setUserDiscountId(discountRule.getDiscount().getId());
+                    }
+                }
+
+                opRepo.save(orderProduct);
+            }
+
+            // Save coupon usage if discount applied - FIXED LOGIC
+            // Check both the saved order and the original discount ID from DTO
+            Discount discountToTrack = null;
+            if (savedOrder.getDiscount() != null) {
+                discountToTrack = savedOrder.getDiscount();
+            } else if (dto.getDiscountId() != null) {
+                // Fallback: get discount directly from repository
+                discountToTrack = discountRepo.findById(dto.getDiscountId()).orElse(null);
+            }
+            
+            if (discountToTrack != null) {
+                System.out.println("Saving UserCouponUsage for user: " + user.getId() + ", discount: " + discountToTrack.getId());
+                System.out.println("Coupon name from DTO: " + dto.getCouponName());
+                System.out.println("Coupon discount from DTO: " + dto.getCouponDiscount());
+                
+                try {
+                    UserCouponUsage usage = new UserCouponUsage();
+                    usage.setUser(user);
+                    usage.setDiscount(discountToTrack);
+                    usage.setUsedAt(LocalDateTime.now());
+                    
+                    System.out.println("About to save UserCouponUsage with:");
+                    System.out.println("  - User ID: " + usage.getUser().getId());
+                    System.out.println("  - Discount ID: " + usage.getDiscount().getId());
+                    System.out.println("  - Used At: " + usage.getUsedAt());
+                    
+                    UserCouponUsage savedUsage = couponRepo.save(usage);
+                    System.out.println("Successfully saved UserCouponUsage with ID: " + savedUsage.getId());
+                } catch (Exception e) {
+                    System.err.println("ERROR saving UserCouponUsage: " + e.getMessage());
+                    e.printStackTrace();
+                    // Don't throw the exception - just log it so the order can still be created
+                }
+            } else {
+                System.out.println("No discount found to track in UserCouponUsage");
+                System.out.println("Order discount: " + (savedOrder.getDiscount() != null ? savedOrder.getDiscount().getId() : "null"));
+                System.out.println("DTO discount ID: " + dto.getDiscountId());
+            }
+
+            // Calculate earned points and update user
+            double totalAmount = dto.getCartItem().stream()
+                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                    .sum();
+
+            int earnedPoints = calculatePoints(totalAmount);
+
+            Integer currentPoints = user.getTotalPoints() != null ? user.getTotalPoints() : 0;
+            user.setTotalPoints(currentPoints + earnedPoints);
+
+            // Update order count
+            if (user.getOrderCount() == null) {
+                user.setOrderCount(1);
+            } else {
+                user.setOrderCount(user.getOrderCount() + 1);
+            }
+
+            userRepo.save(user);
+
+            // Save user point history
+            UserPointHistory history = UserPointHistory.builder()
+                    .user(user)
+                    .order(savedOrder)
+                    .points(earnedPoints)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            pointRepo.save(history);
+
+            // Send notification to customer
+            String customerMessage = "Your order " + order.getOrderCode() + " has been placed.";
+            String customerLink = "/profile/" + user.getId() + "?section=orders&orderId=" + order.getId();
+            String customerType = "order";
+            notificationService.createNotificationForUser(order.getUser().getEmail(), customerMessage, customerType, customerLink);
+            notificationService.sendNotification(user.getEmail(), "Your order was successful");
+            
+            // Send notification to current user if they are Admin or Manager
+            String adminManagerMessage = "New order placed: " + order.getOrderCode() + " by " + user.getEmail();
+            String adminManagerType = "order_created";
+            String adminManagerLink = "/admin/orders/" + savedOrder.getId();
+            notificationService.sendNotificationToCurrentUserIfAdminOrManager(user.getEmail(), adminManagerMessage, adminManagerType, adminManagerLink);
+            // Log user activity for dashboard active users metric (order)
+            userActivityService.logActivity(user.getId(), "order");
+            // Broadcast dashboard metrics after order creation
+            dashboardBroadcastService.broadcastDashboardMetrics("day");
+            return savedOrder;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to create order: " + e.getMessage(), e);
+        }
+    }
+
+    //add discount preivew by pmk july 9
+
+    public OrderPreviewDTO previewOrder(UserOrderDTO dto) {
+        OrderPreviewDTO preview = new OrderPreviewDTO();
+        preview.setCartItems(dto.getCartItem());
+
+        double subtotal = dto.getCartItem().stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .sum();
+        preview.setSubtotal(subtotal);
+
+        String discountName = null;
+        double discountAmount = 0.0;
+        String discountReason = null;
+
+        User user = userRepo.findById(dto.getUserId()).orElse(null);
+        if (user != null) {
+            boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
+            if (isFirstOrder) {
+                if (user.getCreatedDate() != null && user.getCreatedDate().isBefore(LocalDateTime.now().minusDays(7))) {
+                    System.out.println("User registered more than 7 days ago, not eligible for first time buyer discount");
+                } else {
+                    Discount firstTimeDiscount = discountRepo.findByName("First Time Buyer").orElse(null);
+                    if (firstTimeDiscount != null && firstTimeDiscount.isStatus()
+                            && LocalDate.now().isAfter(firstTimeDiscount.getStartDate().minusDays(1))
+                            && LocalDate.now().isBefore(firstTimeDiscount.getEndDate().plusDays(1))) {
+
+                        List<DiscountRule> userDiscountRules = discountRuleRepository.findActiveUserDiscounts(user.getId());
+                        final Discount finalFirstTimeDiscount = firstTimeDiscount;
+                        boolean hasActiveDiscount = userDiscountRules.stream()
+                                .anyMatch(rule -> rule.getDiscount().getId().equals(finalFirstTimeDiscount.getId()));
+
+                        if (hasActiveDiscount) {
+                            discountName = firstTimeDiscount.getName();
+                            discountReason = "First time buyer discount (auto-applied)";
+                            if (firstTimeDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
+                                discountAmount = subtotal * firstTimeDiscount.getDiscountValue();
+                            } else {
+                                discountAmount = firstTimeDiscount.getDiscountValue();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (discountAmount == 0.0 && dto.getDiscountId() != null) {
+            Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
+            if (manualDiscount != null && manualDiscount.isStatus()) {
+                discountName = manualDiscount.getName();
+                discountReason = "Manual discount applied";
+                if (manualDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
+                    discountAmount = subtotal * manualDiscount.getDiscountValue();
+                } else {
+                    discountAmount = manualDiscount.getDiscountValue();
+                }
+            }
+        }
+
+        preview.setDiscountName(discountName);
+        preview.setDiscountAmount(Math.round(discountAmount));
+        preview.setDiscountReason(discountReason);
+
+        double deliveryFee = 0.0;
+        if (dto.getDeliveryServiceId() != null && dto.getAddressId() != null) {
+            DeliveryService deliveryService = deliveryServiceRepo.findById(dto.getDeliveryServiceId()).orElse(null);
+            Address userAddress = addRepo.findById(dto.getAddressId()).orElse(null);
+
+            if (deliveryService != null && userAddress != null) {
+                double distance = distanceCalculator.calculateDistance(
+                        deliveryService.getBaseAddress().getLatitude().doubleValue(),
+                        deliveryService.getBaseAddress().getLongitude().doubleValue(),
+                        userAddress.getLatitude().doubleValue(),
+                        userAddress.getLongitude().doubleValue()
+                );
+                deliveryFee = deliveryService.getFeePerKm().doubleValue() * distance;
+            }
+        }
+
+        preview.setDeliveryFee(deliveryFee);
+        preview.setTotal(Math.round(subtotal - discountAmount + deliveryFee));
+
+        return preview;
+    }
+    public String generateUniqueOrderCode() {
+        String code;
+        do {
+            code = generateRandomCode();
+        } while (repo.existsByOrderCode(code));
+        return code;
+    }
+
+    private String generateRandomCode() {
+        char letter = (char) ('A' + new Random().nextInt(26));
+        int number = 10000 + new Random().nextInt(90000);
+        return "#" + letter + number;
+    }
+
+    private int calculatePoints(double totalAmount) {
+        // Example: 1 point per 1000 MMK
+        return (int) (totalAmount / 1000);
+    }
+
+    public List<UserOrderListDTO> getOrdersByUserId(Long userId) {
+        List<UserOrder> orders = repo.findByUserId(userId);
+        return orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    public List<UserOrderListDTO> getAllOrders() {
+        List<UserOrder> orders = repo.findAll();
+        return orders.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public boolean updateOrderStatus(Long orderId, String statusStr, Long refundId) {
+        Optional<UserOrder> optionalOrder = repo.findById(orderId);
+        if (optionalOrder.isEmpty()) return false;
+
+        UserOrder order = optionalOrder.get();
+
+        StatusType type = StatusType.valueOf(statusStr.toUpperCase());
+        Status status = statusRepository.findByName(type)
+                .orElseThrow(() -> new RuntimeException("Status not found"));
+
+        OrderStatus.OrderStatusBuilder orderStatusBuilder = OrderStatus.builder()
+                .userOrder(order)
+                .status(status)
+                .statusDate(LocalDateTime.now());
+
+        // If refundId is provided and refund type is REPLACEMENT, set refund in OrderStatus
+        if (refundId != null) {
+            Refund refund = refundRepository.findById(refundId)
+                    .orElseThrow(() -> new RuntimeException("Refund not found with ID: " + refundId));
+            if (refund.getRefundType() != null && refund.getRefundType().toString().equals("REPLACEMENT")) {
+                orderStatusBuilder.Refund(refund);
+            }
+        }
+
+        OrderStatus orderStatus = orderStatusBuilder.build();
+        orderStatusRepository.save(orderStatus);
+
+        order.setUpdatedDate(LocalDateTime.now());
+        repo.save(order);
+
+        String statusMessage;
+        switch (type) {
+            case SHIPPED:
+                statusMessage = "has been shipped.";
+                break;
+            case DELIVERED:
+                statusMessage = "has been delivered.";
+                break;
+            case CANCELLED:
+                statusMessage = "has been cancelled.";
+                break;
+            default:
+                statusMessage = "has been placed.";
+                break;
+        }
+
+        String message = "Your order " + order.getOrderCode() + " " + statusMessage;
+        String link = "/profile/" + order.getUser().getId() + "?section=orders&orderId=" + order.getId();
+        String notiType = "order";
+
+        notificationService.createNotificationForUser(order.getUser().getEmail(), message, notiType, link);
+
+        return true;
+    }
+
+    private UserOrderListDTO convertToDTO(UserOrder order) {
+        UserOrderListDTO dto = new UserOrderListDTO();
+
+        dto.setOrderId(order.getId());
+        dto.setOrderCode(order.getOrderCode());
+        dto.setOrderDate(order.getOrderDate());
+        dto.setUpdatedDate(order.getUpdatedDate());
+
+        // Latest status and history
+        List<OrderStatus> statusHistory = order.getOrderStatusHistory();
+        if (!statusHistory.isEmpty()) {
+            statusHistory.sort((s1, s2) -> s2.getStatusDate().compareTo(s1.getStatusDate()));
+            dto.setStatus(statusHistory.get(0).getStatus().getName().toString());
+            dto.setStatusHistory(statusHistory.stream()
+                    .map(s -> new StatusHistoryDTO(s.getStatus().getName().toString(), s.getStatusDate()))
+                    .collect(Collectors.toList()));
+        }
+
+        // Delivery
+        if (order.getDeliveryService() != null) {
+            dto.setDeliveryService(order.getDeliveryService().getName());
+            dto.setDeliveryFee(order.getDeliveryFee() != null ? order.getDeliveryFee().doubleValue() : 0.0);
+        } else if (order.getDeliveryMethod() != null) {
+            dto.setDeliveryMethod(order.getDeliveryMethod().getName());
+            dto.setDeliveryFee(order.getDeliveryMethod().getFee() != null ? order.getDeliveryMethod().getFee().doubleValue() : 0.0);
+        }
+
+        // Order products
+        List<OrderProductDTO> productDTOs = order.getOrderProducts().stream().map(p -> {
+            OrderProductDTO pdto = new OrderProductDTO();
+            pdto.setOrderProductId(p.getId()); // Ensure this is set!
+            pdto.setProductId(p.getProduct().getId());
+            pdto.setProductName(p.getProduct().getProductName());
+            pdto.setQuantity(p.getQuantity());
+            pdto.setUnitPrice(p.getUnitPrice());
+            if (p.getProductVariant() != null) {
+                pdto.setVariantId(p.getProductVariant().getId());
+                pdto.setSku(p.getProductVariant().getStockKeeping());
+            }
+            pdto.setStatus(p.getStatus() != null ? p.getStatus().toString() : null);
+            // Set originalPrice and discountedPrice
+            pdto.setDiscountedPrice(p.getUnitPrice());
+            Double basePrice = null;
+            if (p.getProductVariant() != null && p.getProductVariant().getPrice() != null) {
+                basePrice = p.getProductVariant().getPrice().doubleValue();
+            } else if (p.getProduct().getPrice() != null) {
+                basePrice = p.getProduct().getPrice();
+            }
+            if (p.getDiscountRule() != null && p.getDiscountRule().getDiscount() != null && basePrice != null) {
+                Double discountValue = p.getDiscountRule().getDiscount().getDiscountValue();
+                String discountType = p.getDiscountRule().getDiscount().getDiscountType().toString();
+                if (discountType.equals("PERCENTAGE")) {
+                    pdto.setOriginalPrice(basePrice);
+                } else if (discountType.equals("FIXED")) {
+                    pdto.setOriginalPrice(basePrice);
+                } else {
+                    pdto.setOriginalPrice(basePrice);
+                }
+            } else if (basePrice != null) {
+                pdto.setOriginalPrice(basePrice);
+            } else {
+                pdto.setOriginalPrice(p.getUnitPrice());
+            }
+            return pdto;
+        }).collect(Collectors.toList());
+        dto.setProducts(productDTOs);
+
+        // Subtotal & Discount
+        double subtotal = order.getOrderProducts().stream()
+                .mapToDouble(p -> p.getQuantity() * p.getUnitPrice())
+                .sum();
+        dto.setSubtotal(Math.round(subtotal));
+
+        Discount discount = order.getDiscount();
+        double discountAmount = 0.0;
+        if (discount != null) {
+            if (discount.getDiscountType() != null) {
+                dto.setDiscountType(discount.getDiscountType().toString());
+            }
+            if (discount.getCode() != null) {
+                dto.setDiscountCode(discount.getCode());
+            }
+            if (discount.getDiscountValue() != null) {
+                if (discount.getDiscountType() == DiscountType.PERCENTAGE) {
+                    double percentageValue = discount.getDiscountValue() * 100.0;
+                    dto.setDiscountValue(percentageValue);
+                    discountAmount = subtotal * discount.getDiscountValue();
+                } else {
+                    dto.setDiscountValue(discount.getDiscountValue());
+                    discountAmount = discount.getDiscountValue();
+                }
+                dto.setDiscountAmount(Math.round(discountAmount));
+            }
+        } else {
+            dto.setDiscountAmount(0L);
+        }
+
+        double total = subtotal - discountAmount;
+        if (order.getDeliveryFee() != null) {
+            total += order.getDeliveryFee().doubleValue();
+        }
+        dto.setTotal(Math.round(total));
+
+        // Return requests
+        List<ReturnRequestDTO> returnRequestDTOs = order.getReturnRequests().stream().map(rr -> {
+            ReturnRequestDTO rrdto = new ReturnRequestDTO();
+            rrdto.setId(rr.getId());
+            rrdto.setOrderId(order.getId());
+            rrdto.setOrderCode(order.getOrderCode());
+            rrdto.setOrderDate(order.getOrderDate());
+            if (rr.getUser() != null) {
+                rrdto.setUserId(rr.getUser().getId());
+                rrdto.setUserName(rr.getUser().getName());
+            }
+            if (order.getSavedCard() != null) {
+                rrdto.setCardId(order.getSavedCard().getId());
+                rrdto.setCardNumber(order.getSavedCard().getCardNumber());
+            }
+            rrdto.setReasonForReturn(rr.getReasonForReturn());
+            rrdto.setReturnDetail(rr.getReturnDetail());
+            rrdto.setStatus(rr.getStatus().toString());
+            rrdto.setAdminRemark(rr.getAdminRemark());
+            rrdto.setRequestedAt(rr.getRequestedAt());
+            rrdto.setDecisionAt(rr.getDecisionAt());
+            rrdto.setCancelledAt(rr.getCancelledAt());
+            if (rr.getImages() != null && !rr.getImages().isEmpty()) {
+                rrdto.setImageUrls(rr.getImages().stream()
+                        .map(ReturnRequestImage::getImageUrl)
+                        .collect(Collectors.toList()));
+            }
+            // Map products
+            List<ReturnRequestProductDTO> rrProductDTOs = rr.getReturnRequestProducts().stream().map(rrp -> {
+                ReturnRequestProductDTO p = new ReturnRequestProductDTO();
+                p.setId(rrp.getId());
+                p.setOrderProductId(rrp.getOrderProduct().getId());
+                p.setProductName(rrp.getOrderProduct().getProduct().getProductName());
+                if (rrp.getOrderProduct().getProductVariant() != null) {
+                    p.setSku(rrp.getOrderProduct().getProductVariant().getStockKeeping());
+                }
+                p.setQuantity(rrp.getQuantity());
+                p.setUnitPrice(rrp.getOrderProduct().getUnitPrice());
+                p.setTotalAmount(rrp.getQuantity() * rrp.getOrderProduct().getUnitPrice());
+                p.setProductRemark(rrp.getProductRemark());
+                return p;
+            }).toList();
+            rrdto.setProducts(rrProductDTOs);
+            // Refund mapping
+            if (rr.getRefund() != null && rr.getRefund().getRefundType() != null) {
+                Refund refund = rr.getRefund();
+                rrdto.setRefundId(refund.getId());
+                rrdto.setRefundAmount(refund.getRefundAmount());
+                rrdto.setRefundAdminRemark(refund.getAdminRemark());
+                rrdto.setInitiatedAt(refund.getInitiatedAt());
+                rrdto.setCompletedAt(refund.getCompletedAt());
+                rrdto.setRefundStatus(refund.getStatus() != null ? refund.getStatus().toString() : null);
+                rrdto.setRefundType(refund.getRefundType().toString());
+            }
+            return rrdto;
+        }).collect(Collectors.toList());
+        dto.setReturnRequests(returnRequestDTOs);
+
+        // User
+        if (order.getUser() != null) {
+            User user = order.getUser();
+            UserDTO userDTO = new UserDTO();
+            userDTO.setId(user.getId());
+            userDTO.setName(user.getName());
+            userDTO.setEmail(user.getEmail());
+            userDTO.setDateOfBirth(user.getDateOfBirth());
+            userDTO.setGender(user.getGender());
+            userDTO.setPhoneNumber(user.getPhoneNumber());
+            userDTO.setCreatedDate(user.getCreatedDate());
+            userDTO.setTotalPoints(user.getTotalPoints());
+            dto.setUser(userDTO);
+        }
+
+        // Address
+        if (order.getAddress() != null) {
+            Address address = order.getAddress();
+            AddressDTO addressDTO = new AddressDTO();
+            addressDTO.setId(address.getId());
+            addressDTO.setAddress(address.getAddress());
+            addressDTO.setCity(address.getCity());
+            addressDTO.setState(address.getState());
+            addressDTO.setPostalCode(address.getPostalCode());
+            addressDTO.setCountry(address.getCountry());
+            addressDTO.setLatitude(address.getLatitude());
+            addressDTO.setLongitude(address.getLongitude());
+            addressDTO.setType(AddressType.valueOf(address.getType().toString()));
+            addressDTO.setCreateUpdate(address.getCreateUpdate());
+            addressDTO.setUpdateDate(address.getUpdateDate());
+            dto.setAddress(addressDTO);
+        }
+
+        dto.setUserDiscountId(order.getUserDiscountId());
+        return dto;
+    }
+
+    public UserOrderListDTO getOrderById(Long orderId) {
+        UserOrder order = repo.findById(orderId)
+                .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
+        return convertToDTO(order);
+    }
+
+    // Method to test first-time buyer discount functionality by pmk july 9
+    public boolean isUserFirstTimeBuyer(Long userId) {
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) return false;
+        return (user.getOrderCount() == null || user.getOrderCount() == 0);
+    }
+
+    // Method to get user's discount eligibility
+    public String getUserDiscountStatus(Long userId) {
+        User user = userRepo.findById(userId).orElse(null);
+        if (user == null) return "User not found";
+
+        boolean isFirstOrder = (user.getOrderCount() == null || user.getOrderCount() == 0);
+        if (isFirstOrder) {
+            List<DiscountRule> userDiscountRules = discountRuleRepository.findActiveUserDiscounts(userId);
+            if (!userDiscountRules.isEmpty()) {
+                return "Eligible for First Time Buyer discount (10% off)";
+            } else {
+                return "First-time buyer but no discount rule assigned";
+            }
+        } else {
+            return "Not eligible (order count: " + user.getOrderCount() + ")";
+        }
+    }
+
+    // Test method to verify UserCouponUsage table is working
+    public String testUserCouponUsageTable() {
+        try {
+            long count = couponRepo.count();
+            System.out.println("UserCouponUsage table is accessible. Current count: " + count);
+            return "UserCouponUsage table is working. Current count: " + count;
+        } catch (Exception e) {
+            System.err.println("ERROR accessing UserCouponUsage table: " + e.getMessage());
+            e.printStackTrace();
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+    // Analytics methods for pie charts
+    public List<Object[]> getBrandSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getBrandSalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getCategorySalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getCategorySalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getProductSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getProductSalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getDeliveryServiceData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getDeliveryServiceData(startDate, endDate);
+    }
+
+    // Debug methods
+    public long getTotalOrderCount() {
+        return repo.count();
+    }
+
+    public long getDeliveredOrderCount() {
+        return repo.countDeliveredOrders();
+    }
+
+    public long getBrandCount() {
+        return repo.countBrands();
+    }
+}

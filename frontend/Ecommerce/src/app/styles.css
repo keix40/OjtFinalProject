@@ -1,3 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+html, body, * {
+  font-family: 'Poppins', Arial, Helvetica, sans-serif !important;
+}
+
 /* You can add global styles to this file, and also import other style files */
  :root {
     --black: #000;

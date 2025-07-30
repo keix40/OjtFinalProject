@@ -1,94 +1,105 @@
-<div class="body">
-  <div class="card bold-form">
-    <div class="card-header form-header text-center">
-      <h2 class="mb-0">LOGIN</h2>
+<div class="login-bg flex items-center justify-center min-h-screen">
+  <div class="login-card">
+    <div class="login-avatar">
+      <img src="/assets/images/britium-logo.png" alt="Britium Logo" class="login-logo" />
     </div>
-    <div class="card-body form-body">
-      <!-- ✅ Angular Reactive Form -->
-      <form [formGroup]="loginForm" (ngSubmit)="submitLogin()">
-        <div class="mb-3 position-relative">
-          <label for="email" class="form-label fw-bold text-uppercase">Email</label>
-          <input type="email" class="form-control" id="email" name="email" formControlName="email" required />
-        </div>
-
-        <div class="mb-3 position-relative">
-          <label for="password" class="form-label fw-bold text-uppercase">Password</label>
-          <input [type]="showPassword ? 'text' : 'password'" class="form-control" id="password" name="password" formControlName="password" required />
-          <span class="input-icon" (click)="togglePasswordVisibility()">
-            <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
-          </span>
-        </div>
-
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <div class="form-check">
-            <input class="form-check-input" type="checkbox" id="remember" />
-            <label class="form-check-label fw-bold" for="remember">Remember me</label>
-          </div>
-          <button type="button" class="btn btn-bold" href-like (click)="openForgotModal()">Forgot Password?</button>
-        </div>
-
-        <!-- ✅ Button must be inside form with type="submit" -->
-        <button type="submit" class="btn btn-bold w-100 mb-3">SIGN IN</button>
-
-        <div class="text-center">
-          <span class="fw-bold">Don't have an account?</span>
-          <a routerLink="/register" class="form-link">Register</a>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Forgot Password Modal -->
-<div *ngIf="showForgotPasswordModal" class="modal-backdrop">
-  <div class="modal-box">
-    <h4>Forgot Password</h4>
-    <input type="email" [(ngModel)]="forgotEmail" (ngModelChange)="onForgotEmailChange()" placeholder="Enter your email" class="form-control" />
-      <div *ngIf="submittedForgot && forgotEmailError" class="text-danger mt-1">
-      {{ forgotEmailError }}
+    <h2 class="login-title">Sign In</h2>
+    <p class="login-subtitle">Welcome back! Please login to your account.</p>
+    <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="login-form">
+      <div class="login-group">
+        <label for="email" class="login-label">Email</label>
+        <input type="email" id="email" name="email" formControlName="email" required class="login-input" placeholder="Enter your email" />
       </div>
-    <div class="text-danger mt-1" *ngIf="forgotError">{{ forgotError }}</div>
-
-    <button class="btn btn-primary mt-2" (click)="sendForgotPasswordOtp()">Send OTP</button>
+      <div class="login-group relative">
+        <label for="password" class="login-label">Password</label>
+        <input [type]="showPassword ? 'text' : 'password'" id="password" name="password" formControlName="password" required class="login-input pr-10" placeholder="Enter your password" />
+        <button type="button" (click)="togglePasswordVisibility()" class="login-toggle">
+          <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+        </button>
+      </div>
+      <div class="login-row">
+        <label class="login-checkbox">
+          <input type="checkbox" class="login-checkbox-input" />
+          Remember me
+        </label>
+        <button type="button" class="login-link" (click)="openForgotModal()">Forgot Password?</button>
+      </div>
+      <button type="submit" class="login-btn">Sign In</button>
+      <div class="login-divider">
+        <span>or</span>
+      </div>
+      <div class="text-center login-footer">
+        Don't have an account?
+        <a routerLink="/register" class="login-link">Register</a>
+      </div>
+    </form>
+    <ng-container *ngTemplateOutlet="forgotModal"></ng-container>
+    <ng-container *ngTemplateOutlet="otpModal"></ng-container>
+    <ng-container *ngTemplateOutlet="resetModal"></ng-container>
+    <ng-container *ngTemplateOutlet="captchaModal"></ng-container>
   </div>
 </div>
 
+<!-- Forgot Password Modal -->
+<ng-template #forgotModal>
+  <div *ngIf="showForgotPasswordModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+    <div class="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl p-6 w-full max-w-xs">
+      <h4 class="text-lg font-bold mb-2 text-gray-800">Forgot Password</h4>
+      <input type="email" [(ngModel)]="forgotEmail" (ngModelChange)="onForgotEmailChange()" placeholder="Enter your email" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
+      <div *ngIf="submittedForgot && forgotEmailError" class="text-red-500 text-xs mb-1">{{ forgotEmailError }}</div>
+      <div class="text-red-500 text-xs mb-1" *ngIf="forgotError">{{ forgotError }}</div>
+      <button class="w-full py-2 rounded-lg bg-blue-500 text-white font-bold shadow hover:bg-blue-600 transition" (click)="sendForgotPasswordOtp()" [disabled]="isSendingOtp">
+        <span *ngIf="!isSendingOtp">Send OTP</span>
+        <span *ngIf="isSendingOtp">Sending...</span>
+      </button>
+    </div>
+  </div>
+</ng-template>
 <!-- OTP Modal -->
-<div *ngIf="showOtpModal" class="modal-backdrop">
-  <div class="modal-box">
-    <h4>Enter OTP</h4>
-    <input type="text" [(ngModel)]="enteredOtp" (ngModelChange)="onOtpChange()" placeholder="Enter OTP" class="form-control" />
-    <div class="text-danger mt-1" *ngIf="submittedOtp && otpError">{{ otpError }}</div>
-    <button class="btn btn-primary mt-2" (click)="verifyOtp()">Verify OTP</button>
+<ng-template #otpModal>
+  <div *ngIf="showOtpModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+    <div class="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl p-6 w-full max-w-xs">
+      <h4 class="text-lg font-bold mb-2 text-gray-800">Enter OTP</h4>
+      <input type="text" [(ngModel)]="enteredOtp" (ngModelChange)="onOtpChange()" placeholder="Enter OTP" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
+      <div class="text-red-500 text-xs mb-1" *ngIf="submittedOtp && otpError">{{ otpError }}</div>
+      <button class="w-full py-2 rounded-lg bg-blue-500 text-white font-bold shadow hover:bg-blue-600 transition" (click)="verifyOtp()" [disabled]="isVerifyingOtp">
+        <span *ngIf="!isVerifyingOtp">Verify OTP</span>
+        <span *ngIf="isVerifyingOtp">Verifying...</span>
+      </button>
+    </div>
   </div>
-</div>
-
+</ng-template>
 <!-- Reset Password Modal -->
-<div *ngIf="showResetModal" class="modal-backdrop">
-  <div class="modal-box">
-    <h4>Reset Password</h4>
-    <input type="password" [(ngModel)]="newPassword" placeholder="New Password" class="form-control mb-2" />
-    <div class="error" *ngIf="resetPasswordError">{{ resetPasswordError }}</div>
-    <input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm Password" class="form-control mb-2" />
-    <div class="error" *ngIf="resetConfirmPasswordError">{{ resetConfirmPasswordError }}</div>
-    <button class="btn btn-success" (click)="resetPassword()">Reset</button>
+<ng-template #resetModal>
+  <div *ngIf="showResetModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+    <div class="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl p-6 w-full max-w-xs">
+      <h4 class="text-lg font-bold mb-2 text-gray-800">Reset Password</h4>
+      <input type="password" [(ngModel)]="newPassword" placeholder="New Password" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
+      <div class="text-red-500 text-xs mb-1" *ngIf="resetPasswordError">{{ resetPasswordError }}</div>
+      <input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm Password" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
+      <div class="text-red-500 text-xs mb-1" *ngIf="resetConfirmPasswordError">{{ resetConfirmPasswordError }}</div>
+      <div class="text-red-500 text-xs mb-1" *ngIf="resetError">{{ resetError }}</div>
+      <button class="w-full py-2 rounded-lg bg-green-500 text-white font-bold shadow hover:bg-green-600 transition" (click)="resetPassword()" [disabled]="isResettingPassword">
+        <span *ngIf="!isResettingPassword">Reset Password</span>
+        <span *ngIf="isResettingPassword">Resetting...</span>
+      </button>
+    </div>
   </div>
-</div>
-
-  <!-- Password Toggle JS -->
-  <script>
-    document.querySelectorAll('.password-toggle').forEach(icon => {
-      icon.addEventListener('click', function () {
-        const input = this.parentElement.querySelector('input');
-        if (input.type === 'password') {
-          input.type = 'text';
-          this.classList.remove('fa-eye');
-          this.classList.add('fa-eye-slash');
-        } else {
-          input.type = 'password';
-          this.classList.remove('fa-eye-slash');
-          this.classList.add('fa-eye');
-        }
-      });
-    });
-  </script>
-</div>
+</ng-template>
+<!-- CAPTCHA Modal -->
+<ng-template #captchaModal>
+  <div *ngIf="showCaptchaModal" class="fixed inset-0 z-40 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-xs mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showCaptchaModal = false">&times;</button>
+      <h4 class="text-lg font-bold mb-2 text-gray-800">Security Check</h4>
+      <div class="mb-2 text-gray-700">{{ captchaQuestion }}</div>
+      <input type="text" [(ngModel)]="captchaInput" placeholder="Answer" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
+      <div class="text-red-500 text-xs mb-1" *ngIf="captchaError">{{ captchaError }}</div>
+      <button class="w-full py-2 rounded-lg bg-blue-500 text-white font-bold shadow hover:bg-blue-600 transition" (click)="verifyCaptcha()" [disabled]="isVerifyingCaptcha">
+        <span *ngIf="!isVerifyingCaptcha">Verify</span>
+        <span *ngIf="isVerifyingCaptcha">Verifying...</span>
+      </button>
+    </div>
+  </div>
+</ng-template>

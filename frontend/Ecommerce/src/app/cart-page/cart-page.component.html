@@ -1,70 +1,360 @@
 <app-header></app-header>
-<div class="cart-bg py-5" style="background: #F1F5F9; min-height:100vh; font-family: 'Inter', 'Roboto', 'Helvetica Neue', Arial, sans-serif;">
-  <div class="container-xxl">
-    <h2 class="text-success fw-bold fs-3 mb-4">Excellent choices!</h2>
-    <div class="d-flex flex-wrap gap-3 mb-4">
-      <button class="btn btn-outline-primary px-4" (click)="continueShopping()"><i class="bi bi-arrow-left"></i> Continue shopping</button>
-      <button class="btn btn-outline-secondary px-4"><i class="bi bi-heart"></i> Move all items into wishlist</button>
-    </div>
-    <div class="row g-4">
-      <!-- Cart Items -->
-      <div class="col-lg-8">
-        <div *ngFor="let item of cartItems" class="cart-product-card bg-white rounded-3 shadow-sm mb-4 p-4 d-flex align-items-center gap-4" style="border-radius:12px;">
-          <img [src]="item.image" [alt]="item.title" class="rounded-3 flex-shrink-0" style="width:80px;height:80px;object-fit:cover;">
-          <div class="flex-grow-1">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <div>
-                <span class="fw-bold fs-5">{{item.title}}</span>
-                <div class="small text-muted mt-1" *ngIf="item.size || item.color">
-                  <div *ngIf="item.size">Size: <span class="fw-bold text-body">{{item.size}}</span></div>
-                  <div class="mt-1" *ngIf="item.color">Color: <span class="fw-bold text-body">{{item.color}}</span></div>
+
+<!-- Main Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-8">
+    <h1 class="text-3xl lg:text-4xl font-bold text-neutral-900 mb-2 animate-slide-up">Shopping Cart</h1>
+    <p class="text-neutral-600 animate-slide-up" style="animation-delay: 0.1s">Review your items and proceed to checkout
+    </p>
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Cart Items -->
+    <div class="lg:col-span-2">
+      <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden animate-fade-in hover-lift">
+        <!-- Cart Header -->
+        <div class="px-6 py-4 border-b border-neutral-200 bg-neutral-50">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-neutral-900">Cart Items</h2>
+            <span class="text-sm text-neutral-500 animate-pulse">{{ cartItems.length }} items</span>
+          </div>
+        </div>
+          <!-- Cart Items List -->
+          <div class="divide-y divide-neutral-200">
+            <ng-container *ngFor="let item of cartItems; let i = index">
+              <div class="p-6 hover:bg-neutral-50 transition-colors duration-200 cart-item animate-slide-up" 
+                  [style.animation-delay]="(i * 0.1) + 's'">
+                <div class="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-4">
+                  <div class="flex-shrink-0 self-center sm:self-start">
+                    <img [src]="item.image" alt="{{ item.title }}"
+                      class="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-xl border border-neutral-200 product-image">
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
+                      <div class="flex-1">
+                        <h3 class="text-base sm:text-lg font-semibold text-neutral-900 mb-1 break-words">{{ item.title }}</h3>
+                        <div class="text-sm text-neutral-500 mb-2">
+                          <ng-container *ngIf="item.variantAttributes && item.variantAttributes.length; else legacyAttrs">
+                            <ng-container *ngFor="let attr of item.variantAttributes">
+                              <ng-container *ngIf="attr.toLowerCase().startsWith('color:') || attr.toLowerCase().startsWith('colour:'); else regularAttr">
+                                <span style="display:inline-flex;align-items:center;margin-right:8px;">
+                                  <span style="font-weight:500;margin-right:4px;">{{ attr.split(':')[0].charAt(0).toUpperCase() + attr.split(':')[0].slice(1) }}:</span>
+                                  <span style="display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid #ccc;vertical-align:middle;"
+                                        [ngStyle]="{'background-color': attr.split(':')[1].trim() || '#ccc'}"></span>
+                                </span>
+                              </ng-container>
+                              <ng-template #regularAttr>
+                                <span style="margin-right:8px;">{{ attr }}</span>
+                              </ng-template>
+                            </ng-container>
+                          </ng-container>
+                          <ng-template #legacyAttrs>
+                            <span *ngIf="item.color">Color: {{ item.color }}</span>
+                            <span *ngIf="item.size"> • Size: {{ item.size }}</span>
+                          </ng-template>
+                        </div>
+                        <div class="flex items-center mb-3">
+                          <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">In Stock</span>
+                        </div>
+                      </div>
+                      <button (click)="removeItem(item.id)"
+                        class="self-end sm:self-start p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 remove-btn touch-manipulation">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                          </path>
+                        </svg>
+                      </button>
+                    </div>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0 mt-4 sm:mt-0">
+                      <div class="flex items-center justify-center sm:justify-start space-x-2 sm:space-x-3">
+                        <button (click)="decreaseQty(item)"
+                          class="w-12 h-12 sm:w-10 sm:h-10 rounded-xl border border-neutral-300 hover:border-neutral-400 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition-all duration-200 hover:scale-105 qty-btn touch-manipulation">
+                          <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                          </svg>
+                        </button>
+                        <span class="font-semibold text-neutral-900 min-w-[4rem] sm:min-w-[3rem] text-center text-xl sm:text-lg animate-bounce select-none">{{ item.quantity }}</span>
+                        <button (click)="increaseQty(item)"
+                          class="w-12 h-12 sm:w-10 sm:h-10 rounded-xl border border-neutral-300 hover:border-neutral-400 flex items-center justify-center text-neutral-600 hover:text-neutral-900 transition-all duration-200 hover:scale-105 qty-btn touch-manipulation"
+                          [disabled]="item.quantity >= getMaxQuantity(item)"
+                          [attr.title]="'Max: ' + getMaxQuantity(item)">
+                          <svg class="w-5 h-5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                          </svg>
+                        </button>
+                      </div>
+                      <div class="text-center sm:text-right">
+                        <ng-container *ngIf="productDetails.get(item.productId || item.id) as product; else noProduct">
+                          <div class="flex flex-col items-end">
+                            <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="inline-block px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold mb-1">
+                              <span *ngIf="getProductDiscount(product.id)?.eventName">{{ getProductDiscount(product.id)?.eventName }} </span> ({{ getDiscountDisplayText(getProductDiscount(product.id)) }})
+                            </span>
+                            <!-- VIP Tier Badge -->
+                            <span *ngIf="getVipDiscountDisplay(product)"
+                                  class="inline-block px-2 py-1 rounded-full bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs font-bold mb-1 ms-1">
+                              {{ getVipDiscountDisplay(product) }}
+                            </span>
+                            <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="text-muted text-decoration-line-through mb-1">
+                              {{ product.price }} MMK
+                            </span>
+                            <span class="font-bold text-lg text-neutral-900">
+                              {{ getFinalDiscountedPrice(product) }} MMK
+                            </span>
+                          </div>
+                        </ng-container>
+                        <ng-template #noProduct>
+                          <div class="font-bold text-lg text-neutral-900">{{ item.price }} MMK</div>
+                        </ng-template>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="text-end">
-                <div class="small text-muted">Each</div>
-                <span class="fw-bold fs-5 text-success">${{item.price}}</span>
+            </ng-container> <!-- ✅ This was missing -->
+          </div>
+
+        <!-- Cart Actions -->
+        <div class="px-6 py-4 border-t border-neutral-200 bg-neutral-50">
+          <div class="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+            <button (click)="continueShopping()"
+              class="flex items-center space-x-2 text-neutral-600 hover:text-blue-600 transition-colors duration-200 btn-hover-effect">
+              <svg class="w-4 h-4 animate-rotate" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18">
+                </path>
+              </svg>
+              <span>Continue Shopping</span>
+            </button>
+            <button (click)="clearCart()"
+              class="flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors duration-200 btn-hover-effect">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                </path>
+              </svg>
+              <span>Clear Cart</span>
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Recommended Products (dynamic) -->
+      <div class="mt-8 bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 animate-fade-in hover-lift scrollbar-hide"
+        style="animation-delay: 0.2s" *ngIf="relatedProducts.length > 0">
+        <h3 class="text-lg font-semibold text-neutral-900 mb-6">You might also like</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-y-auto">
+          <div *ngFor="let product of relatedProducts; let i = index" 
+               class="group cursor-pointer bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1 animate-slide-up"
+               [style.animation-delay]="(i * 0.1) + 's'"
+               (click)="goToProductDetail(product.id)">
+            
+            <!-- Product Image Container -->
+            <div class="relative aspect-square overflow-hidden bg-gray-50">
+              <img [src]="imageService.getProductImageUrl(product)"
+                   [alt]="product.productName"
+                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                   (error)="imageService.handleImageError($event, 'product')">
+              
+              <!-- Discount Badge -->
+              <div *ngIf="getRelatedProductDiscount(product)" 
+                   class="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+                {{ getRelatedProductDiscountText(product) }}
               </div>
+              
+              <!-- VIP Badge -->
+              <div *ngIf="getRelatedProductVipDiscount(product)" 
+                   class="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded shadow-lg z-10">
+                {{ getRelatedProductVipDiscount(product) }}
+              </div>
+              
+              <!-- Wishlist Button -->
+              <button (click)="toggleRelatedProductWishlist(product.id, $event)"
+                      class="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-1.5 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-50 hover:scale-110 z-20"
+                      [class.opacity-100]="isRelatedProductInWishlist(product.id)"
+                      [class.text-red-500]="isRelatedProductInWishlist(product.id)">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </button>
             </div>
-            <div class="d-flex align-items-center gap-3 mb-2">
-              <div class="quantity-stepper bg-light rounded-pill px-3 py-1 d-flex align-items-center gap-2" style="font-size:15px;">
-                <span class="text-muted">Quantity:</span>
-                <button class="btn btn-outline-secondary btn-sm px-2 py-0" (click)="updateQuantity(item.id, item.quantity - 1)">-</button>
-                <span class="fw-bold">{{item.quantity}}</span>
-                <button class="btn btn-outline-secondary btn-sm px-2 py-0" (click)="updateQuantity(item.id, item.quantity + 1)">+</button>
+            
+            <!-- Product Info -->
+            <div class="p-4">
+              <!-- Product Title -->
+              <h4 class="font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-200 text-sm">
+                {{ product.productName }}
+              </h4>
+              
+              <!-- Star Rating -->
+              <div class="flex items-center mb-2">
+                <div class="flex items-center">
+                  <svg *ngFor="let star of [1,2,3,4,5]" 
+                       class="w-4 h-4" 
+                       [class.text-yellow-400]="star <= getRelatedProductRating(product)" 
+                       [class.text-gray-300]="star > getRelatedProductRating(product)" 
+                       fill="currentColor" 
+                       viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                </div>
+                <span class="text-xs text-gray-500 ml-1">({{ product.reviewCount || 0 }})</span>
               </div>
-              <div class="form-check ms-3">
-                <input type="checkbox" class="form-check-input" id="giftCheck{{item.id}}">
-                <label class="form-check-label small text-muted" [for]="'giftCheck' + item.id">Send as a gift</label>
-                <a href="#" class="ms-2 text-info small">Details</a>
+              
+              <!-- Price Section -->
+              <div class="flex items-center space-x-2">
+                <span *ngIf="getRelatedProductDiscount(product)" class="text-sm text-gray-500 line-through">
+                  {{ product.price }} MMK
+                </span>
+                <span class="text-base font-bold" 
+                      [ngClass]="getRelatedProductDiscount(product) ? 'text-red-600' : 'text-gray-900'">
+                  {{ getRelatedProductFinalPrice(product) }} MMK
+                </span>
               </div>
-            </div>
-            <div class="d-flex gap-3 mt-2">
-              <a href="#" class="text-danger small" (click)="removeItem(item.id)">Remove</a>
-              <a href="#" class="text-info small" (click)="moveToWishlist(item.id)">Move to wishlist</a>
             </div>
           </div>
         </div>
-        <!-- Summary of selected items -->
-        <div class="d-flex align-items-center justify-content-between bg-white rounded-3 p-3 mt-4 shadow-sm" style="border-radius:12px;">
-          <span class="text-muted">{{selectedItems}} items selected</span>
-          <span class="fw-bold fs-5">Total <span class="text-success">${{cartTotal}}</span></span>
-        </div>
       </div>
-      <!-- Cart Summary Sidebar -->
-      <div class="col-lg-4">
-        <div class="cart-summary-box bg-light rounded-3 shadow-sm p-4" style="border-radius:12px;">
-          <input type="text" class="form-control bg-white border-0 mb-3" placeholder="Enter a coupon or a reward code">
-          <button class="btn btn-primary w-100 mb-3 rounded-pill py-2 fs-6">Apply</button>
-          <div class="small text-success mb-3">You have applied coupon <b>TAKE100</b><br>Which saves you $100.00</div>
-          <h5 class="mb-3">Summary</h5>
-          <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><span>${{cartTotal}}</span></div>
-          <div class="d-flex justify-content-between mb-2"><span>Shipping cost</span><span>TBA</span></div>
-          <div class="d-flex justify-content-between mb-2"><span>Discount</span><span class="text-success">-$100.00</span></div>
-          <div class="d-flex justify-content-between fw-bold fs-4 mt-3"><span>Total</span><span class="text-success">${{cartTotal - 100}}</span></div>
-          <div class="text-success mt-2">Yay! you saved 30% in total</div>
-          <button class="btn btn-primary w-100 mt-3 rounded-pill py-2 fs-5" (click)="goToCheckout()">Checkout as guest</button>
+    </div>
+    <!-- Order Summary -->
+    <div class="lg:col-span-1">
+      <div class="bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 sticky top-24 animate-fade-in hover-lift glow"
+        style="animation-delay: 0.1s">
+        <h2 class="text-xl font-semibold text-neutral-900 mb-6">Order Summary</h2>
+        <!-- Summary Details -->
+        <div class="space-y-4 mb-6">
+          <div class="flex justify-between text-neutral-600">
+            <span>Subtotal ({{ cartItems.length }} items)</span>
+            <span class="animate-pulse">{{ getSubtotal()}} MMK</span>
+          </div>
+          <!-- Discount Savings Row -->
+          <div class="flex items-center justify-between text-green-600" *ngIf="isFirstTimeBuyerDiscount">
+            <span>
+              Discount
+              <span class="text-green-500 font-semibold ms-1">(First time buyer 10%)</span>
+            </span>
+            <span class="font-bold text-green-600">-{{ getFirstTimeBuyerDiscountAmount() | currency }}</span>
+          </div>
+          <div class="flex justify-between text-green-600" *ngIf="getTotalDiscount() > 0 && !isFirstTimeBuyerDiscount">
+            <span>Discount</span>
+            <span>-{{ getTotalDiscount()}}MMK</span>
+          </div>
+          <div class="border-t border-neutral-200 pt-4">
+            <div class="flex justify-between text-xl font-bold ">
+              <span>Total</span>
+              <span class="text-neutral-900">{{ getOrderTotal()}} MMK</span>
+            </div>
+          </div>
+        </div>
+        <!-- Promo Code -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-neutral-700 mb-2">Promo Code</label>
+          <div class="flex space-x-2">
+            <div class="relative flex-1">
+              <input type="text" [(ngModel)]="promoCode" 
+                     [placeholder]="isCouponInputDisabled() ? getCouponDisabledReason() : 'Enter code'"
+                     [title]="isCouponInputDisabled() ? getCouponDisabledReason() : 'Enter your promo code'"
+              [disabled]="isCouponInputDisabled()"
+            class="w-full px-4 py-2.5 border border-neutral-300 rounded-xl focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 transition-all duration-300 outline-none"
+            [ngClass]="{'opacity-50 cursor-not-allowed': isCouponInputDisabled()}">
+              <!-- Lock icon when disabled -->
+              <div *ngIf="isCouponInputDisabled()" class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <svg class="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                </svg>
+              </div>
+            </div>
+            <button (click)="applyPromoCode()" [disabled]="isCouponInputDisabled()"
+                    [title]="isCouponInputDisabled() ? getCouponDisabledReason() : 'Apply promo code'"
+              class="px-4 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 rounded-xl font-medium transition-colors duration-200 btn-hover-effect"
+              [ngClass]="{'opacity-50 cursor-not-allowed': isCouponInputDisabled()}">
+              Apply
+            </button>
+                </div>
+                <div *ngIf="hasProductDiscount()" class="text-xs text-red-500 mt-1">
+              Promo code cannot be used with product discounts.
+            </div>
+          
+          <div *ngIf="promoMessage && !promoSuccess" [ngClass]="'text-red-600'" class="mt-2">
+            {{ promoMessage }}
+          </div>
+          
+          <!-- Applied Coupon Display -->
+          <div *ngIf="promoSuccess && couponDiscount" class="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <!-- Coupon Icon -->
+                <div class="flex-shrink-0">
+                  <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                          d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z">
+                    </path>
+                  </svg>
+                </div>
+                <!-- Coupon Details -->
+                <div class="flex-1">
+                  <div class="text-sm font-semibold text-green-800">
+                    {{ getCouponName() }}
+                  </div>
+                  <div class="text-xs text-green-600">
+                    <span *ngIf="couponDiscountType === 'PERCENTAGE'">
+                      {{ couponDiscount }}% off
+                    </span>
+                    <span *ngIf="couponDiscountType === 'FIXED'">
+                      Save {{ couponDiscount }} MMK
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <!-- Remove Button -->
+              <button (click)="removeCoupon()" 
+                      class="flex-shrink-0 p-1 text-green-600 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors duration-200"
+                      title="Remove coupon">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- Checkout Button -->
+        <button (click)="proceedToCheckout()"
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 hover:scale-105 shadow-lg mb-4 checkout-btn btn-hover-effect">
+          Proceed to Checkout
+        </button>
+        <!-- Payment Methods -->
+        <div class="text-center">
+          <p class="text-sm text-neutral-500 mb-3">We accept</p>
+          <div class="flex justify-center space-x-3">
+            <div class="w-12 h-8 bg-neutral-100 rounded-lg flex items-center justify-center hover-lift">
+              <span class="text-xs font-bold text-neutral-600">VISA</span>
+            </div>
+            <div class="w-12 h-8 bg-neutral-100 rounded-lg flex items-center justify-center hover-lift">
+              <span class="text-xs font-bold text-neutral-600">MC</span>
+            </div>
+            <div class="w-12 h-8 bg-neutral-100 rounded-lg flex items-center justify-center hover-lift">
+              <span class="text-xs font-bold text-neutral-600">AMEX</span>
+            </div>
+            <div class="w-12 h-8 bg-neutral-100 rounded-lg flex items-center justify-center hover-lift">
+              <span class="text-xs font-bold text-neutral-600">PP</span>
+            </div>
+          </div>
+        </div>
+        <!-- Security Badge -->
+        <div class="mt-6 p-4 bg-green-50 rounded-xl border border-green-200 hover-lift">
+          <div class="flex items-center space-x-3">
+            <div class="flex-shrink-0">
+              <svg class="w-6 h-6 text-green-600 floating" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                </path>
+              </svg>
+            </div>
+            <div>
+              <p class="text-sm font-medium text-green-800">Secure Checkout</p>
+              <p class="text-xs text-green-600">Your data is protected</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-</div> 
+</div>

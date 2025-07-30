@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, AfterViewChecked, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ProductService } from '../services/product.service';
@@ -8,6 +8,11 @@ import { CategoryService } from '../services/category.service';
 import { BrandService } from '../services/brand.service';
 import { AttributeService } from '../services/attribute.service';
 import { ModalService } from '../services/modal.service';
+import { AttributeAndValueDTO } from '../attribute';
+import Swal from 'sweetalert2';
+import { ActivatedRoute } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
 
 
 // ===== Interfaces =====
@@ -31,7 +36,7 @@ interface ProductAttribute {
 }
 
 interface Variant {
-  id: string;
+  id: string | number;
   attributes: {
     attributeId: number;
     attributeName: string;
@@ -45,6 +50,7 @@ interface Variant {
     file: File;
     preview: string
   }[];
+  status?: number; // 1 = active, 0 = soft deleted
 }
 
 // ===== Constants =====
@@ -58,12 +64,14 @@ const VALID_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
   templateUrl: './product.component.html',
   styleUrl: './product.component.css'
 })
-export class ProductComponent implements OnInit {
+export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked {
   // ===== Form Properties =====
   productForm!: FormGroup;
   submitted = false;
   hasVariant = false;
   sku: string = 'XXXXXXXXXXX';
+  editMode = false;
+  editingProductId: string | null = null;
 
   // ===== Data Properties =====
   categories: Category[] = [];
@@ -74,6 +82,13 @@ export class ProductComponent implements OnInit {
   // ===== Image Properties =====
   selectedImages: File[] = [];
   selectedImagesPreview: string[] = [];
+  existingImages: any[] = [];
+  imagesMarkedForDeletion: number[] = [];
+  // For variant images
+  existingVariantImages: { [variantIndex: number]: any[] } = {};
+  variantImagesMarkedForDeletion: { [variantIndex: number]: number[] } = {};
+  newVariantImages: { [variantIndex: number]: File[] } = {};
+  newVariantImagesPreview: { [variantIndex: number]: string[] } = {};
   isDragging = false;
   uploadError = '';
 
@@ -87,6 +102,47 @@ export class ProductComponent implements OnInit {
   // ===== Data Properties =====
   availableAttributes: Attribute[] = [];
 
+  // ===== Icon Management =====
+  private iconInitialized = false;
+
+  // ===== New Form Array =====
+  categoryBrandArray!: FormArray;
+  removedCategoryBrandPairs: any[] = [];
+
+  // ===== Variant Removal Tracking =====
+  removedVariantIds: number[] = []; // Track removed variant IDs for soft delete
+
+  // For color picker support in attribute values
+  isColorAttribute(attr: ProductAttribute): boolean {
+    const name = attr.attributeName.toLowerCase().trim();
+    return ['color', 'colors', 'colour', 'colours'].includes(name);
+  }
+  newAttributeValueInputs: { [attrIndex: number]: string } = {};
+
+  // When color picker changes, update the text input to match
+  onColorPickerChange(attrIndex: number, event: any): void {
+    this.newAttributeValueInputs[attrIndex] = event.target.value;
+  }
+
+  // Helper to check if a string is a valid hex color
+  isValidHexColor(val: string): boolean {
+    return /^#([0-9A-Fa-f]{6}|[0-9A-Fa-f]{3})$/.test(val);
+  }
+
+  // Watch for changes in color input and sync with text input
+  ngDoCheck(): void {
+    this.productAttributes.forEach((attr, i) => {
+      if (this.isColorAttribute(attr)) {
+        const val = this.newAttributeValueInputs[i];
+        // If user types a valid hex, update color picker
+        if (val && this.isValidHexColor(val)) {
+          // The color input is already bound to this value
+        }
+        // If user types a color name, do not update color picker (let add logic handle conversion)
+      }
+    });
+  }
+
   // ===== Constructor =====
   constructor(
     private fb: FormBuilder,
@@ -96,6 +152,9 @@ export class ProductComponent implements OnInit {
     private attributeService: AttributeService,
     private router: Router,
     private modalService: ModalService,
+    private cdr: ChangeDetectorRef,
+    private route: ActivatedRoute,
+    private ngbModal: NgbModal // Inject NgbModal
   ) {
     this.initForm();
   }
@@ -107,27 +166,106 @@ export class ProductComponent implements OnInit {
     this.loadBrands();
     this.loadAttributes();
 
+    // Initialize Lucide icons
+    this.initializeLucideIcons();
+
     // Update SKU live as the form changes
     this.productForm.valueChanges.subscribe(() => {
       this.updateSKU();
     });
+
+    // Hard-disable logic for hasVariant
+    const nameCtrl = this.productForm.get('productName');
+    const priceCtrl = this.productForm.get('price');
+    const quantityCtrl = this.productForm.get('quantity');
+    const hasVariantCtrl = this.productForm.get('hasVariant');
+    const updateHasVariantState = () => {
+      if (!this.canEnableVariants) {
+        hasVariantCtrl?.disable({ emitEvent: false });
+        hasVariantCtrl?.setValue(false, { emitEvent: false });
+      } else {
+        hasVariantCtrl?.enable({ emitEvent: false });
+      }
+    };
+    [nameCtrl, priceCtrl, quantityCtrl].forEach(ctrl => {
+      ctrl?.valueChanges.subscribe(updateHasVariantState);
+    });
+    // Also run once on init
+    updateHasVariantState();
+
+    // Check for edit mode
+    this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
+      if (id) {
+        this.editMode = true;
+        this.editingProductId = id;
+        this.loadProductForEdit(id);
+      }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    // Initialize icons after view is initialized
+    this.initializeLucideIcons();
+  }
+
+  ngAfterViewChecked(): void {
+    // Re-initialize icons after view changes
+    this.initializeLucideIcons();
+  }
+
+  // ===== Icon Initialization =====
+  private initializeLucideIcons(): void {
+    // Wait for DOM to be ready
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).lucide) {
+        try {
+          (window as any).lucide.createIcons();
+          this.iconInitialized = true;
+        } catch (error) {
+          console.warn('Failed to initialize Lucide icons:', error);
+        }
+      }
+    }, 100);
+  }
+
+  private forceIconReinitialization(): void {
+    this.iconInitialized = false;
+    this.initializeLucideIcons();
   }
 
   // ===== Form Initialization =====
   private initForm(): void {
+    this.categoryBrandArray = this.fb.array([
+      this.fb.group({
+        categoryId: [null, Validators.required],
+        brandId: [null], // brand is optional
+        availableBrands: [this.brands]
+      })
+    ]);
+
     this.productForm = this.fb.group({
       productName: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
-      price: [0, [Validators.required, Validators.min(0.01)]],
-      quantity: [0, [Validators.required, Validators.min(0)]],
+      price: [null, [Validators.required, Validators.min(0.01)]],
+      quantity: [null, [Validators.required, Validators.min(1)]],
       status: [1, Validators.required],
-      brands: this.fb.array([this.fb.control(null, Validators.required)]),
-      categories: this.fb.array([this.fb.control(null, Validators.required)]),
       hasVariant: [false],
       attributes: this.fb.array([]),
-      variants: this.fb.array([])
+      variants: this.fb.array([]),
+      categoryBrandArray: this.categoryBrandArray,
+      brands: this.fb.array([]),
+      categories: this.fb.array([])
     });
+
+
+    // Assign reference for convenience
+    this.categoryBrandArray = this.productForm.get('categoryBrandArray') as FormArray;
+
+    // Sync and setup
     this.submitted = false;
+
+    // Watch hasVariant changes
     this.productForm.get('hasVariant')?.valueChanges.subscribe(hasVariant => {
       this.hasVariant = hasVariant;
       if (!hasVariant) {
@@ -146,7 +284,10 @@ export class ProductComponent implements OnInit {
   }
 
   get variantFormGroups(): FormGroup[] {
-    return (this.variants as FormArray).controls as FormGroup[];
+    // Only show variants with status !== 0 and ensure type safety
+    return (this.variants as FormArray).controls
+      .filter((ctrl): ctrl is FormGroup => ctrl instanceof FormGroup)
+      .filter((fg: FormGroup) => fg.get('status')?.value !== 0);
   }
 
   get categoriesArray() {
@@ -154,6 +295,51 @@ export class ProductComponent implements OnInit {
   }
   get brandsArray() {
     return this.productForm.get('brands') as FormArray;
+  }
+
+  get categoryBrandArrayFormArray(): FormArray {
+    return this.productForm.get('categoryBrandArray') as FormArray;
+  }
+
+  get canSubmitProduct(): boolean {
+    // Allow submit if all required fields are present and valid
+    if (!this.productForm.valid) return false;
+    if (this.productForm.get('hasVariant')?.value) {
+      // For variants, check that all required fields are present
+      for (let i = 0; i < this.variants.length; i++) {
+        const variant = this.variants.at(i) as FormGroup;
+        if (!variant.get('sku')?.value || !variant.get('price')?.valid || !variant.get('stock')?.valid) {
+          return false;
+        }
+      }
+      // Optionally, check that total variant stock matches product quantity
+      const productQuantity = Number(this.productForm.get('quantity')?.value ?? 0);
+      const totalVariantStock = this.variants.controls.reduce((sum, variant) => {
+        const stock = Number((variant as FormGroup).get('stock')?.value ?? 0);
+        return sum + (isNaN(stock) ? 0 : stock);
+      }, 0);
+      return productQuantity > 0 && totalVariantStock === productQuantity;
+    }
+    return true;
+  }
+
+  // ===== Validation for Variant Checkbox =====
+  get canEnableVariants(): boolean {
+    const nameCtrl = this.productForm.get('productName');
+    const priceCtrl = this.productForm.get('price');
+    const quantityCtrl = this.productForm.get('quantity');
+    // Strictly check for null, empty string, or invalid
+    const nameValid = !!nameCtrl && nameCtrl.value && nameCtrl.valid;
+    const priceValid = !!priceCtrl && priceCtrl.value != null && priceCtrl.valid;
+    const quantityValid = !!quantityCtrl && quantityCtrl.value != null && quantityCtrl.valid;
+    const result = nameValid && priceValid && quantityValid;
+    if (!result) {
+      console.log('canEnableVariants is false:', {
+        nameValid, priceValid, quantityValid,
+        nameValue: nameCtrl?.value, priceValue: priceCtrl?.value, quantityValue: quantityCtrl?.value
+      });
+    }
+    return result;
   }
 
   // ===== Data Loading Methods =====
@@ -164,9 +350,18 @@ export class ProductComponent implements OnInit {
     });
   }
 
+  // After loading brands, update availableBrands for each group
   private loadBrands(): void {
     this.brandService.getAllBrand().subscribe({
-      next: (data: Brand[]) => this.brands = data,
+      next: (data: Brand[]) => {
+        this.brands = data;
+        // Update availableBrands for all existing pairs
+        if (this.categoryBrandArray && this.categoryBrandArray.length > 0) {
+          this.categoryBrandArray.controls.forEach(group => {
+            group.patchValue({ availableBrands: this.brands });
+          });
+        }
+      },
       error: (err: any) => console.error('Brand error:', err)
     });
   }
@@ -188,16 +383,101 @@ export class ProductComponent implements OnInit {
               const attribute = this.availableAttributes.find(a => a.id === attr.id);
               if (attribute) {
                 console.log('Raw values from backend for attribute', attr.id, ':', values);
-                if (Array.isArray(values) && values.length > 0 && typeof values[0] === 'object' && 'id' in values[0] && 'value' in values[0]) {
-                  attribute.values = values.map((v: any) => ({ ...v, isNew: false }));
+                if (Array.isArray(values) && values.length > 0 && typeof values[0] === 'object' && 'value' in values[0]) {
+                  attribute.values = values.map((v: any) => ({
+                    id: v.id,
+                    value: v.value,
+                    isNew: false
+                  }));
                 } else {
-                  attribute.values = values.map((v: any) => ({ id: -1, value: v ? String(v) : '', isNew: false }));
+                  attribute.values = values.map((v: any, i: number) => ({
+                    id: i,
+                    value: v ? String(v) : '',
+                    isNew: false
+                  }));
                 }
                 console.log('Mapped attribute values:', attribute.values);
               }
             }
           });
         });
+      }
+    });
+  }
+
+  // Patch variants (update by id if exists, ensure all fields are present)
+  loadProductForEdit(id: string): void {
+    this.removedVariantIds = []; // Reset when loading a product
+    this.proService.getProductDetailById(id).subscribe(product => {
+      this.productForm.patchValue({
+        productName: product.productName,
+        productCode: product.productCode,
+        price: product.price,
+        quantity: product.quantity,
+        description: product.description,
+        status: product.status,
+        hasVariant: !!product.hasVariant
+      });
+      // Patch categories & brands
+      if (product.categoryBrandArray && product.categoryBrandArray.length > 0) {
+        this.categoryBrandArray.clear();
+        product.categoryBrandArray.forEach((pair: any) => {
+          let availableBrands = this.brands;
+          this.categoryBrandArray.push(this.fb.group({
+            categoryId: [pair.categoryId, Validators.required],
+            brandId: [pair.brandId],
+            availableBrands: [availableBrands]
+          }));
+        });
+      }
+      // Patch product images
+      this.selectedImages = [];
+      this.selectedImagesPreview = [];
+      this.existingImages = (product.productImages || []).filter((img: any) => !img.variantId).map((img: any) => ({
+        id: img.id,
+        imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`
+      }));
+      this.imagesMarkedForDeletion = [];
+      // Patch variants and their images
+      if (product.variants && Array.isArray(product.variants)) {
+        const variantsFormArray = this.productForm.get('variants') as FormArray;
+        variantsFormArray.clear();
+        this.existingVariantImages = {};
+        this.variantImagesMarkedForDeletion = {};
+        this.newVariantImages = {};
+        this.newVariantImagesPreview = {};
+        product.variants.forEach((variant: any, idx: number) => {
+          variantsFormArray.push(this.fb.group({
+            id: [variant.id],
+            sku: [variant.sku, Validators.required],
+            price: [variant.price, [Validators.required, Validators.min(0.01)]],
+            stock: [variant.stock, [Validators.required, Validators.min(1)]],
+            attributes: this.fb.array(variant.attributes || []),
+            images: [[]],
+            status: [variant.status ?? 1] // Add status field
+          }));
+          // Existing images for this variant
+          this.existingVariantImages[idx] = (product.productImages || []).filter((img: any) => img.variantId === variant.id).map((img: any) => ({
+            id: img.id,
+            imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`
+          }));
+          this.variantImagesMarkedForDeletion[idx] = [];
+          this.newVariantImages[idx] = [];
+          this.newVariantImagesPreview[idx] = [];
+        });
+      }
+      // Patch attributes
+      if (product.attributes && Array.isArray(product.attributes)) {
+        this.productAttributes = product.attributes.map((attr: any) => ({
+          attributeId: attr.attributeId,
+          attributeName: attr.attributeName,
+          allowedValues: (attr.values || []).map((val: any) => ({
+            id: val.id,
+            value: val.value,
+            selected: val.selected,
+            isNew: false
+          }))
+        }));
       }
     });
   }
@@ -220,6 +500,8 @@ export class ProductComponent implements OnInit {
       this.selectedImages.push(file);
       this.createImagePreview(file);
     }
+    // Re-initialize icons after adding images
+    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
   private validateFile(file: File): boolean {
@@ -240,11 +522,31 @@ export class ProductComponent implements OnInit {
     const reader = new FileReader();
     reader.onload = () => {
       this.selectedImagesPreview.push(reader.result as string);
+      // Re-initialize icons after creating image preview
+      setTimeout(() => this.initializeLucideIcons(), 100);
     };
     reader.readAsDataURL(file);
   }
 
-  removeImage(index: number): void {
+  // Product image remove
+  removeImage(index: number, isExisting: boolean = false): void {
+    if (isExisting) {
+      this.removeExistingImage(index);
+    } else {
+      this.removeNewImage(index);
+    }
+    setTimeout(() => this.initializeLucideIcons(), 100);
+  }
+
+  removeExistingImage(index: number): void {
+    const img = this.existingImages[index];
+    if (img && img.id) {
+      this.imagesMarkedForDeletion.push(img.id);
+    }
+    this.existingImages.splice(index, 1);
+  }
+
+  removeNewImage(index: number): void {
     this.selectedImages.splice(index, 1);
     this.selectedImagesPreview.splice(index, 1);
   }
@@ -289,21 +591,45 @@ export class ProductComponent implements OnInit {
       });
       // this.regenerateVariants(); // Commented out so the card stays visible
       console.log('productAttributes after push:', this.productAttributes);
+      // Re-initialize icons after adding attribute
+      setTimeout(() => this.initializeLucideIcons(), 100);
     }
     this.selectedAttributeId = null;
   }
 
   removeProductAttribute(attrIndex: number): void {
-    this.productAttributes.splice(attrIndex, 1);
-    this.regenerateVariants();
+    // Get the attributeId to remove
+    const removedAttr = this.productAttributes[attrIndex];
+    // Remove the attribute and its values only
+    this.productAttributes = [
+      ...this.productAttributes.slice(0, attrIndex),
+      ...this.productAttributes.slice(attrIndex + 1)
+    ];
+    // Remove any new value input for this attribute
+    if (this.newAttributeValueInputs[attrIndex] !== undefined) {
+      delete this.newAttributeValueInputs[attrIndex];
+    }
+    // Do NOT remove or regenerate variants. Just update the UI and icons.
+    this.cdr.detectChanges();
+    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
   // ===== Attribute Modal Methods =====
   openNewAttributeModal(): void {
-    this.showNewAttributeModal = true;
-    this.newAttributeName = '';
-    this.newAttributeValues = [];
-    this.newAttributeValueInput = '';
+    const modalRef = this.ngbModal.open(CreateAttributeValueComponent, {
+      centered: true,
+      backdrop: 'static',
+      size: 'lg',
+      windowClass: 'p-0',
+      scrollable: true
+    });
+    modalRef.componentInstance.createMode = true;
+    modalRef.result.then(
+      (result: any) => {
+        this.loadAttributes(); // Reload attributes after creation
+      },
+      () => {}
+    );
   }
 
   closeNewAttributeModal(): void {
@@ -320,28 +646,50 @@ export class ProductComponent implements OnInit {
   saveNewAttribute(): void {
     if (!this.newAttributeName.trim() || this.newAttributeValues.length === 0) return;
 
-    const newAttrId = Math.max(0, ...this.availableAttributes.map(a => a.id)) + 1;
-    const values: AttributeValue[] = this.newAttributeValues.map((v, i) => ({
-      id: newAttrId * 100 + i,
-      value: v,
-      isNew: true
+    // ✨ Prepare DTO with proper structure
+    const values = this.newAttributeValues.map((v) => ({
+      value: typeof v === 'string' ? v : (v as any).value  // <-- Ensure string
     }));
 
-    const newAttr: Attribute = {
-      id: newAttrId,
-      name: this.newAttributeName.trim(),
-      values
+    const dto = {
+      attributeId: undefined,  // ✅ send null explicitly for new attribute
+      attributeName: this.newAttributeName.trim(),
+      values: values
     };
 
-    this.availableAttributes.push(newAttr);
-    this.productAttributes.push({
-      attributeId: newAttr.id,
-      attributeName: newAttr.name,
-      allowedValues: [...values]
-    });
+    this.attributeService.create(dto as AttributeAndValueDTO).subscribe({
+      next: () => {
+        const newAttrId = Math.max(0, ...this.availableAttributes.map(a => a.id)) + 1;
 
-    this.closeNewAttributeModal();
-    this.regenerateVariants();
+        const attrValues = this.newAttributeValues.map((v, i) => ({
+          id: newAttrId * 100 + i,
+          value: typeof v === 'string' ? v : (v as any).value,  // Ensure value is string
+          isNew: true
+        }));
+
+        const newAttr = {
+          id: newAttrId,
+          name: this.newAttributeName.trim(),
+          values: attrValues
+        };
+
+        this.availableAttributes.push(newAttr);
+        this.productAttributes.push({
+          attributeId: newAttr.id,
+          attributeName: newAttr.name,
+          allowedValues: [...attrValues]
+        });
+
+        this.closeNewAttributeModal();
+        this.regenerateVariants();
+        // Re-initialize icons after adding new attribute
+        setTimeout(() => this.initializeLucideIcons(), 100);
+      },
+      error: (err) => {
+        console.error('Failed to create attribute:', err);
+        alert(err.error || 'Unknown error');
+      }
+    });
   }
 
   // ===== Variant Management Methods =====
@@ -378,6 +726,8 @@ export class ProductComponent implements OnInit {
 
     const combinations = this.generateCombinations(valueCombinations);
     this.createVariants(combinations);
+    // Re-initialize icons after regenerating variants
+    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
   private generateCombinations(arr: any[][]): any[][] {
@@ -435,74 +785,81 @@ export class ProductComponent implements OnInit {
     attrs: { attributeName: string, value: string }[],
     variantIndex: number
   ): string {
-    // Product name code (first 2 letters uppercase)
-    const pc = productName ? productName.substring(0, 2).toUpperCase() : 'XX';
-
-    // Category code (first letter of each category, max 2)
-    const cc = categories.length > 0
-      ? categories
-        .map(c => c.charAt(0)) // Get first character of each category
-        .join('')              // Join characters into a single string
-        .substring(0, 2)       // Take first 2 characters
-        .toUpperCase()         // Convert to uppercase
-      : 'XX';
-
-    // Brand code (first 2 letters uppercase)
-    const bc = brands.length > 0
-      ? brands[0].substring(0, 2).toUpperCase()
-      : 'XX';
-
-    // Attribute-value codes (more comprehensive handling)
-    let av = '';
-    if (attrs.length > 0) {
-      // Take first 2 letters of first attribute's value
-      if (attrs.length >= 1) {
-        av += attrs[0].value.substring(0, 2).toUpperCase();
-      }
-      // Take first letter of second attribute's value if exists
-      if (attrs.length >= 2) {
-        av += attrs[1].value.charAt(0).toUpperCase();
-      }
-      // Pad with 'V' if needed
-      av = av.padEnd(3, 'V');
-    } else {
-      av = 'NOV'; // No variant
+    // Helper to clean and pad
+    const clean = (str: string, len: number) => (str || '').replace(/[^A-Z0-9]/gi, '').toUpperCase().padEnd(len, 'X').substring(0, len);
+    // Product name (2)
+    let pn = clean(productName || '', 2);
+    // Category (2)
+    let cat = 'XX';
+    if (Array.isArray(categories) && categories.length >= 2) {
+      cat = clean(((categories[0] && categories[0][0]) || 'X') + ((categories[1] && categories[1][0]) || 'X'), 2);
+    } else if (Array.isArray(categories) && categories.length === 1) {
+      cat = clean(categories[0], 2);
     }
-
-    // Variant index (3 digits)
-    const vi = (variantIndex + 1).toString().padStart(3, '0');
-
-    // Combine all parts (total 12 characters)
-    return `${pc}${cc}${bc}${av}${vi}`.substring(0, 12);
+    // Brand (2)
+    let br = 'XX';
+    if (Array.isArray(brands) && brands.length >= 2) {
+      br = clean(((brands[0] && brands[0][0]) || 'X') + ((brands[1] && brands[1][0]) || 'X'), 2);
+    } else if (Array.isArray(brands) && brands.length === 1) {
+      br = clean(brands[0], 2);
+    }
+    // Attribute values (2)
+    let va = 'XX';
+    if (Array.isArray(attrs) && attrs.length >= 2) {
+      const v1 = attrs[0] && attrs[0].value ? attrs[0].value[0] : 'X';
+      const v2 = attrs[1] && attrs[1].value ? attrs[1].value[0] : 'X';
+      va = clean(v1 + v2, 2);
+    } else if (Array.isArray(attrs) && attrs.length === 1) {
+      va = clean((attrs[0] && attrs[0].value) || '', 2);
+    }
+    // Last 3: Variant index, zero-padded
+    const vi = (typeof variantIndex === 'number' ? variantIndex + 1 : 1).toString().padStart(3, '0');
+    // Combine all parts (11 chars)
+    return `${pn}${cat}${br}${va}${vi}`.substring(0, 11);
   }
 
   private createVariants(combinations: any[][]): void {
-    while (this.variants.length) {
-      this.variants.removeAt(0);
+    // Preserve existing variant data by SKU
+    const oldVariantsMap = new Map<string, any>();
+    this.variants.controls.forEach((variant: any, idx: number) => {
+      const sku = variant.get('sku')?.value;
+      if (sku) {
+        oldVariantsMap.set(sku, {
+          stock: variant.get('stock')?.value,
+          price: variant.get('price')?.value,
+          images: variant.get('images')?.value,
+          // Preserve new variant images and previews
+          newVariantImages: this.newVariantImages[idx] || [],
+          newVariantImagesPreview: this.newVariantImagesPreview[idx] || []
+        });
+      }
+    });
+
+    // Do NOT clear the variants FormArray. Only add new variants that do not already exist.
+    const formData = this.productForm.value;
+    const productName = typeof formData.productName === 'string' ? formData.productName : null;
+    const categories = this.getCategoryNamesFromPairs();
+    const brands = this.getBrandNamesFromPairs();
+    const basePrice = Number(this.productForm.get('price')?.value ?? 0);
+    // Only generate variants if every attribute has at least one selected value
+    if (!combinations.length || combinations.some(attrs => !attrs.length)) {
+      return;
     }
 
-    const formData = this.productForm.value;
+    // Track existing SKUs
+    const existingSkus = new Set<string>();
+    this.variants.controls.forEach((variant: any) => {
+      const sku = variant.get('sku')?.value;
+      if (sku) existingSkus.add(sku);
+    });
 
-    // Get product name
-    const productName = typeof formData.productName === 'string'
-      ? formData.productName
-      : null;
-
-    // Get categories
-    const categories = this.getCategoryNames();
-
-    // Get brands
-    const brands = this.getBrandNames();
-
-    // Create each variant with unique SKU
     combinations.forEach((attributes, idx) => {
-      // Create attribute pairs with proper names and values
-      const attrPairs = attributes.map(a => ({
+      // Defensive: always ensure attributes is an array of objects with attributeName and value
+      const attrPairs = (attributes || []).map(a => ({
         attributeName: a.attributeName || '',
         value: a.value || ''
       }));
 
-      // Generate unique SKU
       const sku = this.generateSKU12(
         productName,
         categories,
@@ -511,31 +868,57 @@ export class ProductComponent implements OnInit {
         idx
       );
 
-      // Create variant form group
+      // If this SKU already exists, skip adding
+      if (existingSkus.has(sku)) return;
+
+      // Try to restore old data by SKU
+      const oldData = oldVariantsMap.get(sku);
+
       const variant = this.fb.group({
         attributes: this.fb.array(attributes),
         sku: [sku, Validators.required],
-        price: [formData.price || 0, [Validators.required, Validators.min(0.01)]],
-        stock: [formData.quantity || 0, [Validators.required, Validators.min(0)]],
-        images: [[]]
+        price: [oldData?.price ?? basePrice, [Validators.required, Validators.min(0.01)]],
+        stock: [oldData?.stock ?? null, [Validators.required, Validators.min(1)]],
+        images: [oldData?.images ?? []],
+        status: [1] // Always active when created
       });
-
       this.variants.push(variant);
+
+      // Restore newVariantImages and newVariantImagesPreview for this index
+      if (oldData) {
+        this.newVariantImages[this.variants.length - 1] = oldData.newVariantImages || [];
+        this.newVariantImagesPreview[this.variants.length - 1] = oldData.newVariantImagesPreview || [];
+      } else {
+        this.newVariantImages[this.variants.length - 1] = [];
+        this.newVariantImagesPreview[this.variants.length - 1] = [];
+      }
     });
+
+    // Subscribe to stock changes for all variants
+    this.variants.controls.forEach((variant) => {
+      (variant as FormGroup).get('stock')?.valueChanges.subscribe(() => {
+        this.checkTotalVariantStock(variant as FormGroup);
+      });
+    });
+    // Initial check (no adjustment needed)
+    this.checkTotalVariantStock();
   }
 
-  private getCategoryNames(): string[] {
-    return this.categoriesArray.value
-      .map((catId: any) => {
+  private getCategoryNamesFromPairs(): string[] {
+    // Use categoryBrandArray to get selected category names
+    return this.categoryBrandArray.controls
+      .map((group: any) => {
+        const catId = group.get('categoryId')?.value;
         const cat = this.categories.find((c) => c.id === catId);
         return cat?.name ? String(cat.name) : '';
       })
       .filter((name: string) => name !== '');
   }
-
-  private getBrandNames(): string[] {
-    return this.brandsArray.value
-      .map((brandId: any) => {
+  private getBrandNamesFromPairs(): string[] {
+    // Use categoryBrandArray to get selected brand names
+    return this.categoryBrandArray.controls
+      .map((group: any) => {
+        const brandId = group.get('brandId')?.value;
         const brand = this.brands.find((b) => b.id === brandId);
         return brand?.name ? String(brand.name) : '';
       })
@@ -547,6 +930,8 @@ export class ProductComponent implements OnInit {
       this.variants.removeAt(0);
     }
     this.productAttributes = [];
+    // Re-initialize icons after clearing variants
+    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
   // ===== Variant Image Methods =====
@@ -555,39 +940,78 @@ export class ProductComponent implements OnInit {
     if (input) input.click();
   }
 
-  onVariantImageChange(event: Event, index: number): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files) return;
-
-    const files = Array.from(input.files);
-    const variant = this.variants.at(index);
-    const currentImages = variant.get('images')?.value || [];
-
-    for (let file of files) {
-      if (!this.validateFile(file)) continue;
-
-      this.createVariantImagePreview(file, currentImages, variant);
+  // Variant image add
+  onVariantImageChange(event: any, variantIndex: number): void {
+    const files: FileList = event.target.files;
+    if (!this.newVariantImages[variantIndex]) this.newVariantImages[variantIndex] = [];
+    if (!this.newVariantImagesPreview[variantIndex]) this.newVariantImagesPreview[variantIndex] = [];
+    for (const file of Array.from(files)) {
+      this.newVariantImages[variantIndex].push(file);
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.newVariantImagesPreview[variantIndex].push(e.target.result);
+      };
+      reader.readAsDataURL(file);
     }
-    input.value = '';
   }
 
-  private createVariantImagePreview(file: File, currentImages: any[], variant: any): void {
-    const reader = new FileReader();
-    reader.onload = () => {
-      currentImages.push({
-        file: file,
-        preview: reader.result as string
-      });
-      variant.get('images')?.setValue(currentImages);
-    };
-    reader.readAsDataURL(file);
+  // Variant image remove
+  removeVariantImage(variantIndex: number, imageIndex: number, isExisting: boolean = false): void {
+    if (isExisting) {
+      const img = this.existingVariantImages[variantIndex][imageIndex];
+      if (!this.variantImagesMarkedForDeletion[variantIndex]) this.variantImagesMarkedForDeletion[variantIndex] = [];
+      this.variantImagesMarkedForDeletion[variantIndex].push(img.id);
+      this.existingVariantImages[variantIndex].splice(imageIndex, 1);
+    } else {
+      this.newVariantImages[variantIndex].splice(imageIndex, 1);
+      this.newVariantImagesPreview[variantIndex].splice(imageIndex, 1);
+    }
+    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
-  removeVariantImage(variantIndex: number, imageIndex: number): void {
-    const variant = this.variants.at(variantIndex);
-    const currentImages = variant.get('images')?.value || [];
-    currentImages.splice(imageIndex, 1);
-    variant.get('images')?.setValue(currentImages);
+  removeVariantCard(variantIndex: number): void {
+    const variantGroup = this.variants.at(variantIndex) as FormGroup;
+    const variantId = variantGroup.get('id')?.value;
+    if (variantId && variantId !== 0 && variantId !== '0') {
+      // Only track if it's an existing variant
+      this.removedVariantIds.push(Number(variantId));
+    }
+    this.variants.removeAt(variantIndex);
+    // Remove images for this variant index
+    if (this.newVariantImages[variantIndex]) delete this.newVariantImages[variantIndex];
+    if (this.newVariantImagesPreview[variantIndex]) delete this.newVariantImagesPreview[variantIndex];
+    if (this.existingVariantImages[variantIndex]) delete this.existingVariantImages[variantIndex];
+    if (this.variantImagesMarkedForDeletion[variantIndex]) delete this.variantImagesMarkedForDeletion[variantIndex];
+    // Re-index image arrays/objects to match new variant indices
+    this.newVariantImages = this.reindexObject(this.newVariantImages);
+    this.newVariantImagesPreview = this.reindexObject(this.newVariantImagesPreview);
+    this.existingVariantImages = this.reindexObject(this.existingVariantImages);
+    this.variantImagesMarkedForDeletion = this.reindexObject(this.variantImagesMarkedForDeletion);
+    // Unselect the corresponding attribute values
+    const variantAttrs = variantGroup.get('attributes')?.value || [];
+    variantAttrs.forEach((attr: any) => {
+      const prodAttr = this.productAttributes.find(a => a.attributeId === attr.attributeId);
+      if (prodAttr) {
+        const valueObj = prodAttr.allowedValues.find(v => v.id === attr.valueId);
+        if (valueObj) {
+          valueObj.selected = false;
+        }
+      }
+    });
+    // Do NOT call this.regenerateVariants() here!
+    // Just update the UI
+    this.cdr.detectChanges();
+    setTimeout(() => this.initializeLucideIcons(), 100);
+  }
+  // Helper to reindex image objects after variant removal
+  private reindexObject(obj: any): any {
+    const newObj: any = {};
+    let idx = 0;
+    Object.keys(obj).sort((a, b) => Number(a) - Number(b)).forEach((key) => {
+      newObj[idx] = obj[key];
+      idx++;
+    });
+    return newObj;
   }
 
   // ===== Helper Methods =====
@@ -613,10 +1037,70 @@ export class ProductComponent implements OnInit {
   addNewAttributeValueToAttribute(attrIndex: number, value: string, isNew: boolean = false): void {
     if (!value.trim()) return;
     const attr = this.productAttributes[attrIndex];
-    const newId = Math.max(0, ...attr.allowedValues.map(v => v.id)) + 1;
-    attr.allowedValues.push({ id: newId, value: value.trim(), selected: true, isNew });
-    this.regenerateVariants();
+    let val = value.trim();
+    // Prevent duplicate (case-insensitive)
+    if (attr.allowedValues.some(v => v.value.toLowerCase() === val.toLowerCase())) {
+      Swal.fire({ icon: 'error', title: 'Duplicate Value', text: `The value "${val}" is already added.` });
+      return;
+    }
+    if (this.isColorAttribute(attr)) {
+      // Accept hex or color name, convert to hex if needed
+      if (!this.isValidHexColor(val)) {
+        // Try to convert color name to hex using a temporary element
+        if (typeof document !== 'undefined') {
+          const d = document.createElement('div');
+          d.style.color = val;
+          document.body.appendChild(d);
+          const computedColor = window.getComputedStyle(d).color;
+          document.body.removeChild(d);
+          const rgb = computedColor.match(/\d+/g)?.map(Number);
+          if (rgb && rgb.length >= 3) {
+            val = "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1).toUpperCase();
+          } else {
+            // Invalid color name
+            Swal.fire({ icon: 'error', title: 'Invalid Color', text: `Could not recognize "${value}" as a color.` });
+            return;
+          }
+        }
+      }
+      // Always update the input to the hex value for consistency
+      this.newAttributeValueInputs[attrIndex] = val;
+      // Check again for duplicate after conversion
+      if (attr.allowedValues.some(v => v.value.toLowerCase() === val.toLowerCase())) {
+        Swal.fire({ icon: 'error', title: 'Duplicate Value', text: `The value "${val}" is already added.` });
+        return;
+      }
+    }
+    this.attributeService.addValue(attr.attributeId, val).subscribe({
+      next: () => {
+        // Reload attribute values from backend to get the correct IDs and state
+        this.attributeService.getValueById(attr.attributeId).subscribe({
+          next: (result: any) => {
+            const values = Array.isArray(result) && result.length > 0 && result[0].values ? result[0].values : [];
+            attr.allowedValues = values.map((v: any) => ({
+              id: v.id,
+              value: v.value,
+              selected: false,
+              isNew: false
+            }));
+            // Now, select the new value (case-insensitive match)
+            const newVal = attr.allowedValues.find(v => v.value.toLowerCase() === val.toLowerCase());
+            if (newVal) {
+              newVal.selected = true;
+            }
+            this.newAttributeValueInputs[attrIndex] = '';
+            this.regenerateVariants();
+            setTimeout(() => this.initializeLucideIcons(), 100);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to save value:', err);
+        Swal.fire({ icon: 'error', title: 'Error saving value', text: err.error || 'Error saving value' });
+      }
+    });
   }
+
 
   toggleAttributeValue(attrIndex: number, valueIndex: number): void {
     const attr = this.productAttributes[attrIndex];
@@ -633,7 +1117,23 @@ export class ProductComponent implements OnInit {
       }))
     });
 
-    this.regenerateVariants();
+    if (!clickedValue.selected) {
+      // Remove only variants that use this value
+      const valueId = clickedValue.id;
+      for (let i = this.variants.length - 1; i >= 0; i--) {
+        const variant = this.variants.at(i);
+        const attrs = variant.get('attributes')?.value || [];
+        if (attrs.some((a: any) => a.attributeId === attr.attributeId && a.valueId === valueId)) {
+          this.variants.removeAt(i);
+        }
+      }
+      // Do NOT regenerate all variants
+    } else {
+      // Only add new variants for this value
+      this.regenerateVariants();
+    }
+    // Re-initialize icons after toggling attribute value
+    setTimeout(() => this.initializeLucideIcons(), 100);
   }
 
   updateSKU(): void {
@@ -642,11 +1142,8 @@ export class ProductComponent implements OnInit {
     // Get basic info
     const productName = typeof formData.productName === 'string' ? formData.productName : null;
 
-    const foundCategory = this.categories.find(c => c.id === formData.category);
-    const categoryName = foundCategory?.name || null;
-
-    const foundBrand = this.brands.find(b => b.id === formData.brand);
-    const brandName = foundBrand?.name || null;
+    const categories = this.getCategoryNamesFromPairs();
+    const brands = this.getBrandNamesFromPairs();
 
     // Get selected attribute values
     const attrValues: string[] = [];
@@ -662,8 +1159,8 @@ export class ProductComponent implements OnInit {
     console.log('Selected attribute values:', attrValues);
     this.sku = this.generateSKU12(
       productName,
-      [categoryName !== null ? String(categoryName) : ''],
-      [brandName !== null ? String(brandName) : ''],
+      categories,
+      brands,
       [
         { attributeName: 'attr1', value: attrValues[0] || '' },
         { attributeName: 'attr2', value: attrValues[1] || '' }
@@ -679,121 +1176,101 @@ export class ProductComponent implements OnInit {
   // ===== Form Submission Methods =====
   onSubmit(): void {
     this.submitted = true;
+
     if (this.productForm.valid) {
       const formData = this.productForm.value;
-      console.log('Form Data to be submitted:', formData);
-      let payload: any = formData;
-      // If you are using FormData for file upload, log the FormData as well
-      if (this.selectedImages && this.selectedImages.length > 0) {
-        const fd = new FormData();
-        formData.categoryBrandPairs = [];
-        const categoryIds = this.productForm.value.categories;
-        const brandIds = this.productForm.value.brands;
-
-        for (let i = 0; i < categoryIds.length; i++) {
-          formData.categoryBrandPairs.push({
-            categoryId: categoryIds[i],
-            brandId: brandIds[i] || null
-          });
-        }
-        console.log('Form Data with categoryBrandPairs:', formData);
-        const productBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
-        fd.append('product', productBlob);
-        
-        // Add main product images
-        for (const file of this.selectedImages) {
-          fd.append('images', file);
-        }
-
-        // Add variant images
-        if (formData.variants && formData.variants.length > 0) {
-          formData.variants.forEach((variant: any, variantIndex: number) => {
-            if (variant.images && variant.images.length > 0) {
-              variant.images.forEach((image: any, imgIndex: number) => {
-                if (image.file) {
-                  fd.append(`variantImages_${variantIndex}`, image.file);
-                }
-              });
-            }
-          });
-        }
-
-        // Log FormData keys and values
-        for (const pair of fd.entries()) {
-          console.log('FormData:', pair[0], pair[1]);
-        }
-
-        // Add debug logging for variant images
-        if (formData.variants && formData.variants.length > 0) {
-          console.log('Variant Images Debug:');
-          formData.variants.forEach((variant: any, index: number) => {
-            console.log(`Variant ${index + 1} Images:`, variant.images);
-            if (variant.images && variant.images.length > 0) {
-              variant.images.forEach((image: any, imgIndex: number) => {
-                console.log(`Variant ${index + 1} Image ${imgIndex + 1}:`, {
-                  fileName: image.file?.name,
-                  fileSize: image.file?.size,
-                  fileType: image.file?.type,
-                  previewUrl: image.preview
-                });
-              });
-            }
-          });
-        }
-
-        payload = fd;
+      // --- Merge removed variants for soft delete ---
+      if (!formData.variants) formData.variants = [];
+      // Add removed variants with status: 0
+      for (const removedId of this.removedVariantIds) {
+        formData.variants.push({ id: removedId, status: 0 });
       }
-      this.proService.createProduct(payload,).subscribe({
+      // Ensure all other variants have status: 1 and correct attributes
+      if (formData.variants && Array.isArray(formData.variants)) {
+        formData.variants = formData.variants.map((v: any, idx: number) => {
+          if (v.status === undefined) v.status = 1;
+          // Map attributes to expected DTO format (attributeId, valueId, attributeName, value)
+          if (Array.isArray(v.attributes)) {
+            v.attributes = v.attributes.map((attr: any) => {
+              return {
+                attributeId: attr.attributeId,
+                valueId: attr.valueId,
+                attributeName: attr.attributeName,
+                value: attr.value
+              };
+            });
+          }
+          return v;
+        });
+      }
+      const fd = new FormData();
+      // Map category-brand pairs from the FormArray
+      const categoryBrandPairs = this.categoryBrandArray.controls.map((group: any) => ({
+        categoryId: group.get('categoryId')?.value,
+        brandId: group.get('brandId')?.value || null
+      }));
+      formData.categoryBrandPairs = categoryBrandPairs;
+      formData.categoryBrandPairsMarkedForDeletion = this.removedCategoryBrandPairs;
+      formData.imagesMarkedForDeletion = this.imagesMarkedForDeletion;
+      formData.variantImagesMarkedForDeletion = this.variantImagesMarkedForDeletion;
+      const productBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
+      fd.append('product', productBlob);
+      // Product images
+      for (const file of this.selectedImages) {
+        fd.append('images', file);
+      }
+      // Variant images
+      if (formData.variants && formData.variants.length > 0) {
+        formData.variants.forEach((variant: any, variantIndex: number) => {
+          // New images
+          if (this.newVariantImages[variantIndex] && this.newVariantImages[variantIndex].length > 0) {
+            this.newVariantImages[variantIndex].forEach((file: File) => {
+              fd.append(`variantImages_${variantIndex}`, file);
+            });
+          }
+        });
+      }
+      // Before building FormData in onSubmit
+      this.newVariantImages = this.reindexObject(this.newVariantImages);
+      this.newVariantImagesPreview = this.reindexObject(this.newVariantImagesPreview);
+      this.existingVariantImages = this.reindexObject(this.existingVariantImages);
+      this.variantImagesMarkedForDeletion = this.reindexObject(this.variantImagesMarkedForDeletion);
+      if (this.editMode && this.editingProductId) {
+        // Call update product
+        this.proService.updateProduct(this.editingProductId, fd).subscribe({
+          next: (data) => {
+            // Show Swal success box
+            Swal.fire({
+              icon: 'success',
+              title: 'Product updated successfully!',
+              showConfirmButton: true,
+              confirmButtonText: 'OK'
+            }).then(() => {
+              this.router.navigate(['/productlist']);
+            });
+          },
+          error: (err) => {
+            console.error('Error updating product:', err);
+          }
+        });
+      } else {
+        // Create new product
+      this.proService.createProduct(fd).subscribe({
         next: (data) => {
-          const productId = data.id || data.productId || data;
-          let categoryName: string | null = null;
-          let brandName: string | null = null;
-          const foundCategory = this.categories.find(c => c.id === this.productForm.value.category);
-          if (foundCategory && typeof foundCategory.name === 'string') {
-            categoryName = foundCategory.name;
-          }
-          const foundBrand = this.brands.find(b => b.id === this.productForm.value.brand);
-          if (foundBrand && typeof foundBrand.name === 'string') {
-            brandName = foundBrand.name;
-          }
-          let attr1: string | null = null;
-          let attr2: string | null = null;
-          let attrValues: string[] = [];
-          if (this.productAttributes && this.productAttributes.length > 0) {
-            for (const attr of this.productAttributes) {
-              if (attr.allowedValues && attr.allowedValues.length > 0) {
-                console.log('Attribute:', attr.attributeName, 'Values:', attr.allowedValues);
-                const selected = attr.allowedValues.find((v: any) => v.selected);
-                if (selected) {
-                  console.log('Selected value for', attr.attributeName, ':', selected.value);
-                }
-                const valueToUse = selected || attr.allowedValues[0];
-                if (valueToUse && valueToUse.value) {
-                  attrValues.push(valueToUse.value);
-                }
-              }
-              if (attrValues.length === 2) break;
-            }
-          }
-          console.log('Attribute values used for SKU:', attrValues);
-          attr1 = attrValues[0] || null;
-          attr2 = attrValues[1] || null;
-          this.sku = this.generateSKU12(
-            this.productForm.value.productName,
-            [categoryName !== null ? String(categoryName) : ''],
-            [brandName !== null ? String(brandName) : ''],
-            [
-              { attributeName: 'attr1', value: attrValues[0] || '' },
-              { attributeName: 'attr2', value: attrValues[1] || '' }
-            ],
-            0 // variantIndex
-          );
-          console.log('Generated SKU:', this.sku);
+          Swal.fire({
+            icon: 'success',
+            title: 'Product created successfully!',
+            showConfirmButton: true,
+            confirmButtonText: 'OK'
+          }).then(() => {
+            this.router.navigate(['/productlist']);
+          });
         },
         error: (err) => {
           console.error('Error creating product:', err);
         }
       });
+      }
     } else {
       this.markFormGroupTouched(this.productForm);
     }
@@ -809,11 +1286,28 @@ export class ProductComponent implements OnInit {
   }
 
   openNewCategoryModal(): void {
-    this.modalService.openCreateCategoryModal();
+    this.modalService.openCreateCategoryModal().then((result) => {
+      if (result === 'success') {
+        this.loadCategories();
+      }
+    }).catch(() => {
+      // Modal dismissed — do nothing
+    });
   }
 
   openNewBrandModal(): void {
-    this.modalService.openCreateBrandModal();
+    this.modalService.openCreateBrandModal().then((result) => {
+      if (result === 'success') {
+        this.loadBrands();
+        if (this.categoryBrandArray && this.categoryBrandArray.length > 0) {
+          this.categoryBrandArray.controls.forEach(group => {
+            group.patchValue({ availableBrands: this.brands });
+          });
+        }
+      }
+    }).catch(() => {
+      // Modal dismissed — do nothing
+    });
   }
 
   addCategorySelect(): void {
@@ -851,5 +1345,173 @@ export class ProductComponent implements OnInit {
   openNewCategoryOrBrandModal(): void {
     // You can implement a combined modal, or for now just open category modal as an example
     this.openNewCategoryModal();
+  }
+
+  // ===== New Form Array Methods =====
+  addCategoryBrandPair() {
+    const group = this.fb.group({
+      categoryId: [null, Validators.required],
+      brandId: [null],
+      availableBrands: [this.brands]
+    });
+    this.categoryBrandArray.push(group);
+    // Re-initialize icons after adding category-brand pair
+    setTimeout(() => this.initializeLucideIcons(), 100);
+  }
+
+  removeCategoryBrandPair(index: number) {
+    if (this.categoryBrandArray.length > 1) {
+      const group = this.categoryBrandArray.at(index);
+      const removedPair = {
+        categoryId: group.get('categoryId')?.value,
+        brandId: group.get('brandId')?.value
+      };
+      this.removedCategoryBrandPairs.push(removedPair);
+      this.categoryBrandArray.removeAt(index);
+    }
+  }
+
+  onCategoryChange(index: number) {
+    const group = this.categoryBrandArray.at(index);
+    const categoryId = group.get('categoryId')?.value;
+    if (categoryId === 'add_new_category') {
+      this.openNewCategoryModal();
+      group.patchValue({ categoryId: null });
+      return;
+    }
+    if (!categoryId) {
+      // If no category selected, show all brands
+      group.patchValue({ availableBrands: this.brands, brandId: null });
+      return;
+    }
+    this.brandService.getBrandByCateId(categoryId).subscribe((brands: Brand[]) => {
+      group.patchValue({ availableBrands: brands, brandId: null });
+    });
+  }
+
+  onBrandChange(index: number) {
+    const group = this.categoryBrandArray.at(index);
+    const brandId = group.get('brandId')?.value;
+    if (brandId === 'add_new_brand') {
+      this.openNewBrandModal();
+      group.patchValue({ brandId: null });
+      return;
+    }
+  }
+
+  resetAllVariantPrices(): void {
+    const basePrice = this.productForm.get('price')?.value;
+    this.variants.controls.forEach((variant) => {
+      (variant as FormGroup).get('price')?.setValue(basePrice);
+    });
+  }
+
+  private checkTotalVariantStock(lastEditedVariant?: FormGroup): void {
+    const productQuantity = Number(this.productForm.get('quantity')?.value ?? 0);
+    const stocks = this.variants.controls.map(variant => Number((variant as FormGroup).get('stock')?.value ?? 0));
+    const totalVariantStock = stocks.reduce((sum, stock) => sum + (isNaN(stock) ? 0 : stock), 0);
+    if (totalVariantStock > productQuantity && lastEditedVariant) {
+      const message = 'Stock exceeds product quantity';
+      Swal.fire({
+        toast: true,
+        position: 'top',
+        title: message,
+        icon: undefined,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        background: 'rgba(30, 41, 59, 0.85)', // Semi-transparent slate
+        color: '#f8fafc',
+        customClass: {
+          popup: 'rounded-xl shadow-2xl px-4 py-2 mx-auto backdrop-blur-sm', // Use Tailwind or your own CSS for blur
+          title: 'font-medium text-sm leading-snug text-center',
+          timerProgressBar: 'bg-cyan-400/30'
+        },
+        showClass: { popup: 'animate-fade-in-down' },
+        hideClass: { popup: 'animate-fade-out-up' },
+        didOpen: (toast) => {
+          toast.style.maxWidth = 'min(90vw, 420px)';
+          toast.style.margin = '12px auto';
+          toast.style.whiteSpace = 'normal';
+          toast.style.wordBreak = 'break-word';
+          toast.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.18)';
+        }
+      }).then(() => {
+        // Calculate how much to reduce
+        const excess = totalVariantStock - productQuantity;
+        const currentStock = Number(lastEditedVariant.get('stock')?.value ?? 0);
+        const newStock = Math.max(0, currentStock - excess);
+        lastEditedVariant.get('stock')?.setValue(newStock);
+      });
+    }
+  }
+
+  // TrackBy functions for image ngFor
+  trackByExistingImage(index: number, item: any): any {
+    return item.id || index;
+  }
+  trackByNewImage(index: number, item: any): any {
+    return index;
+  }
+
+  // Helper to convert color name to hex (copied from create-attribute-value.component)
+  private colorNameToHex(color: string): string | null {
+    if (typeof document === 'undefined') return null; // Guard for non-browser environments
+    if (color.startsWith('#')) {
+      // Basic hex validation
+      return /^#[0-9A-F]{6}$/i.test(color) || /^#[0-9A-F]{3}$/i.test(color) ? color : null;
+    }
+    const d = document.createElement('div');
+    d.style.color = color;
+    document.body.appendChild(d);
+    const computedColor = window.getComputedStyle(d).color;
+    document.body.removeChild(d);
+    if (!computedColor || computedColor === 'rgba(0, 0, 0, 0)') return null;
+    const rgb = computedColor.match(/\d+/g)?.map(Number);
+    if (!rgb || rgb.length < 3) return null;
+    return "#" + ((1 << 24) + (rgb[0] << 16) + (rgb[1] << 8) + rgb[2]).toString(16).slice(1).toUpperCase();
+  }
+
+  // Add new color value (copied/adjusted from create-attribute-value.component)
+  addNewColorValueToAttribute(attrIndex: number): void {
+    const attr = this.productAttributes[attrIndex];
+    let val = (this.newAttributeValueInputs[attrIndex] || '').trim();
+    const hex = this.colorNameToHex(val);
+    if (!hex) {
+      Swal.fire({ icon: 'error', title: 'Invalid Color', text: `Could not recognize "${val}" as a color.` });
+      return;
+    }
+    val = hex;
+    // Check for duplicate (case-insensitive)
+    if (attr.allowedValues.some(v => v.value.toLowerCase() === val.toLowerCase())) {
+      Swal.fire({ icon: 'error', title: 'Duplicate Value', text: `The value "${val}" is already added.` });
+      return;
+    }
+    this.attributeService.addValue(attr.attributeId, val).subscribe({
+      next: () => {
+        this.attributeService.getValueById(attr.attributeId).subscribe({
+          next: (result: any) => {
+            const values = Array.isArray(result) && result.length > 0 && result[0].values ? result[0].values : [];
+            attr.allowedValues = values.map((v: any) => ({
+              id: v.id,
+              value: v.value,
+              selected: false,
+              isNew: false
+            }));
+            const newVal = attr.allowedValues.find(v => v.value.toLowerCase() === val.toLowerCase());
+            if (newVal) {
+              newVal.selected = true;
+            }
+            this.newAttributeValueInputs[attrIndex] = '';
+            this.regenerateVariants();
+            setTimeout(() => this.initializeLucideIcons(), 100);
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Failed to save value:', err);
+        Swal.fire({ icon: 'error', title: 'Error saving value', text: err.error || 'Error saving value' });
+      }
+    });
   }
 }
