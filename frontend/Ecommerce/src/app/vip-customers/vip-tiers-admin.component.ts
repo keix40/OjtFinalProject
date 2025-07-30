@@ -356,9 +356,12 @@ export class VipTiersAdminComponent implements OnInit {
 
   loadTiers() {
 <<<<<<< HEAD
+<<<<<<< HEAD
     this.vipTierService.getAllVipTiers().subscribe((tiers: VipTier[]) => {
       this.tiers = tiers.sort((a: VipTier, b: VipTier) => (a.order ?? 0) - (b.order ?? 0));
 =======
+=======
+>>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
     this.loading = true;
     this.vipTierService.getAll().subscribe({
       next: (tiers) => {
@@ -375,6 +378,9 @@ export class VipTiersAdminComponent implements OnInit {
           confirmButtonText: 'OK'
         });
       }
+<<<<<<< HEAD
+>>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
+=======
 >>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
     });
   }

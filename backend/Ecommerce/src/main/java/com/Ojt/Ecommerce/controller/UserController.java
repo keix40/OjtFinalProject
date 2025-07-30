@@ -111,6 +111,9 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Long id, @RequestBody RegisterRequest dto, @RequestHeader("Authorization") String token) {
 =======
     public ResponseEntity<Map<String, Object>>  updateUser(@PathVariable Long id ,@RequestBody RegisterRequest dto,@RequestHeader("Authorization") String token){
+<<<<<<< HEAD
+>>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
+=======
 >>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
         RegisterRequest updatedUser = userService.updateUser(id, dto);
 
@@ -122,8 +125,12 @@ public class UserController {
         response.put("user", updatedUser);
         response.put("token", newToken);
 <<<<<<< HEAD
+<<<<<<< HEAD
         return ResponseEntity.ok(response);
 
+=======
+        return  ResponseEntity.ok(response);
+>>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
 =======
         return  ResponseEntity.ok(response);
 >>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
@@ -329,8 +336,11 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 <<<<<<< HEAD
+<<<<<<< HEAD
 }
 =======
+=======
+>>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
 
 
 
@@ -376,6 +386,9 @@ public class UserController {
         }
     }
 
+<<<<<<< HEAD
+>>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
+=======
 >>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
     // --- End customer management actions ---
 
