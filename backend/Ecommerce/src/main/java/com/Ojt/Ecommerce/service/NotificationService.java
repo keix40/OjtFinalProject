@@ -1,9 +1,10 @@
 package com.Ojt.Ecommerce.service;
 
 import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
+import com.Ojt.Ecommerce.dto.NotificationDTO;
 import com.Ojt.Ecommerce.dto.NotificationRequestDTO;
-import com.Ojt.Ecommerce.entity.Notification;
-import com.Ojt.Ecommerce.entity.User;
+import com.Ojt.Ecommerce.entity.*;
+import com.Ojt.Ecommerce.entity.NotificationTypeEnum;
 import com.Ojt.Ecommerce.repository.NotificationRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import com.Ojt.Ecommerce.entity.UserOrder;
-import com.Ojt.Ecommerce.entity.Role;
 import com.Ojt.Ecommerce.repository.RoleRepository;
 
 @Service
@@ -35,34 +34,56 @@ public class NotificationService {
     private final RoleRepository roleRepository;
 
     public void sendNotification(String username, String message) {
+        Optional<User> userOpt = userRepository.findByEmail(username);
+        if (userOpt.isEmpty()) {
+            System.out.println("User not found: " + username);
+            return;
+        }
 
+        User user = userOpt.get();
 
         Notification notification = new Notification();
-        notification.setRecipientEmail(username);
+        notification.setUser(user); // set user relation
+        notification.setRecipientEmail(username); // optional
         notification.setMessage(message);
         notification.setRead(false);
         notification.setTimestamp(LocalDateTime.now());
-        notificationRepository.save(notification);
+        notification.setUserType(NotificationTypeEnum.CUSTOMER); // or "ADMIN" if for admin dashboard
 
-        // Sends a message to a user-specific queue
-        messagingTemplate.convertAndSendToUser(username, "/queue/notifications", notification);
+        notificationRepository.save(notification);
+        NotificationDTO dto = new NotificationDTO(notification);
+
+        messagingTemplate.convertAndSendToUser(username, "/queue/notifications", dto);
         System.out.println("Sending notification to: " + username);
     }
 
+
     public Notification createNotificationForUser(String username, String message) {
-        return createNotificationForUser(username, message, null, null);
+        return createNotificationForUser(username, message, null, null,null);
     }
 
-    public Notification createNotificationForUser(String username, String message, String type, String link) {
+    public Notification createNotificationForUser(String username, String message, String type, String link,String category) {
+        Optional<User> userOpt = userRepository.findByEmail(username);
+        if (userOpt.isEmpty()) {
+            System.out.println("User not found: " + username);
+            return null;
+        }
+
+        User user = userOpt.get();
         Notification notification = new Notification();
+        notification.setUser(user);
         notification.setRecipientEmail(username);
         notification.setMessage(message);
         notification.setRead(false);
         notification.setTimestamp(LocalDateTime.now());
+        notification.setCategory(category);
         notification.setType(type);
         notification.setLink(link);
+        notification.setUserType(NotificationTypeEnum.CUSTOMER);
         notificationRepository.save(notification);
-        messagingTemplate.convertAndSendToUser(username, "/queue/notifications", notification);
+        NotificationDTO dto = new NotificationDTO(notification);
+        messagingTemplate.convertAndSendToUser(username, "/queue/notifications", dto);
+
         return notification;
     }
 
@@ -82,847 +103,268 @@ public class NotificationService {
             String message = "🎉 Welcome! First Time Buyer Discount is available for you. Click to view details.";
             String link = "/userproductlist"; // Adjust to your frontend route
             String type = "first time buyer discount";
-            return this.createNotificationForUser(user.getEmail(), message, type, link);
+            String notiCate = "discount";
+            return this.createNotificationForUser(user.getEmail(), message, type, link,notiCate);
         }
         return null;
     }
 
-    public List<Notification> sendNotificationToAllAdmins(String message, String type, String link) {
-        // Find all users with admin role (role_id = 1 for admin)
-        List<User> adminUsers = userRepository.findByRoleId(1L);
+    public void sendNotificationToRole(Long roleId, String message, String category, String type, String link) {
+        List<User> users = userRepository.findByRoleId(roleId);
+        NotificationTypeEnum userType = getUserTypeEnumByRoleId(roleId);
 
-        List<Notification> notifications = new ArrayList<>();
+        System.out.println("=== DEBUG: sendNotificationToRole ===");
+        System.out.println("Role ID: " + roleId);
+        System.out.println("Users found: " + users.size());
+        System.out.println("UserType enum: " + userType);
+        System.out.println("Message: " + message);
+        System.out.println("Category: " + category);
+        System.out.println("Type: " + type);
+        System.out.println("Link: " + link);
 
-        for (User admin : adminUsers) {
+        for (User user : users) {
+            System.out.println("Sending notification to user: " + user.getEmail() + " with userType: " + userType);
+            
             Notification notification = new Notification();
-            notification.setRecipientEmail(admin.getEmail());
+            notification.setUser(user);
+            notification.setRecipientEmail(user.getEmail());
             notification.setMessage(message);
             notification.setRead(false);
             notification.setTimestamp(LocalDateTime.now());
+            notification.setUserType(userType); // This should be the correct enum
+            notification.setCategory(category);
             notification.setType(type);
             notification.setLink(link);
 
-            // Set category based on type
-            if ("login_attempt".equals(type)) {
-                notification.setCategory("login_attempt");
-                notification.setPriority("high");
-            } else {
-                notification.setCategory("admin_only");
-                notification.setPriority("medium");
-            }
-
-            // Save notification
-            Notification savedNotification = notificationRepository.save(notification);
-            notifications.add(savedNotification);
-
-            // Send real-time notification via WebSocket
-            messagingTemplate.convertAndSendToUser(admin.getEmail(), "/queue/notifications", savedNotification);
-
-            System.out.println("Sending admin notification to: " + admin.getEmail());
-        }
-
-        return notifications;
-    }
-
-    public List<Notification> sendNotificationToAllAdmins(String message) {
-        return sendNotificationToAllAdmins(message, "admin_notification", null);
-    }
-
-    public List<Notification> sendSystemAlertToAdmins(String alertMessage, String severity) {
-        String message = "🚨 SYSTEM ALERT (" + severity + "): " + alertMessage;
-        String type = "system_alert_" + severity.toLowerCase();
-        String link = "/admin/dashboard"; // Link to admin dashboard
-
-        return sendNotificationToAllAdmins(message, type, link);
-    }
-
-    public List<Notification> getAllAdminNotifications() {
-        return notificationRepository.findByRecipientEmailIn(
-                userRepository.findByRoleId(1L).stream()
-                        .map(User::getEmail)
-                        .collect(Collectors.toList())
-        );
-    }
-
-    public List<Notification> getAdminNotificationsByType(String type) {
-        List<String> adminEmails = userRepository.findByRoleId(1L).stream()
-                .map(User::getEmail)
-                .collect(Collectors.toList());
-
-        return notificationRepository.findByRecipientEmailInAndType(adminEmails, type);
-    }
-
-    public List<Notification> getUnreadAdminNotifications() {
-        List<String> adminEmails = userRepository.findByRoleId(1L).stream()
-                .map(User::getEmail)
-                .collect(Collectors.toList());
-
-        return notificationRepository.findByRecipientEmailInAndReadFalse(adminEmails);
-    }
-
-    public Page<Notification> getAdminNotificationsWithPagination(int page, int size) {
-        List<String> adminEmails = userRepository.findByRoleId(1L).stream()
-                .map(User::getEmail)
-                .collect(Collectors.toList());
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by("timestamp").descending());
-        return notificationRepository.findByRecipientEmailIn(adminEmails, pageable);
-    }
-
-    public List<Notification> getAdminNotificationsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        List<String> adminEmails = userRepository.findByRoleId(1L).stream()
-                .map(User::getEmail)
-                .collect(Collectors.toList());
-
-        return notificationRepository.findByRecipientEmailInAndTimestampBetween(
-                adminEmails, startDate, endDate
-        );
-    }
-
-    public Map<String, Object> getAdminNotificationStatistics() {
-        List<String> adminEmails = userRepository.findByRoleId(1L).stream()
-                .map(User::getEmail)
-                .collect(Collectors.toList());
-
-        long totalNotifications = notificationRepository.countByRecipientEmailIn(adminEmails);
-        long unreadNotifications = notificationRepository.countByRecipientEmailInAndReadFalse(adminEmails);
-        long todayNotifications = notificationRepository.countByRecipientEmailInAndTimestampAfter(
-                adminEmails, LocalDateTime.now().withHour(0).withMinute(0).withSecond(0)
-        );
-
-        Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalNotifications", totalNotifications);
-        statistics.put("unreadNotifications", unreadNotifications);
-        statistics.put("todayNotifications", todayNotifications);
-        statistics.put("readNotifications", totalNotifications - unreadNotifications);
-
-        return statistics;
-    }
-
-    public Notification markAdminNotificationAsRead(Long notificationId) {
-        Optional<Notification> notificationOpt = notificationRepository.findById(notificationId);
-
-        if (notificationOpt.isPresent()) {
-            Notification notification = notificationOpt.get();
-            notification.setRead(true);
-            return notificationRepository.save(notification);
-        }
-
-        return null;
-    }
-
-    public int markAllAdminNotificationsAsRead() {
-        List<String> adminEmails = userRepository.findByRoleId(1L).stream()
-                .map(User::getEmail)
-                .collect(Collectors.toList());
-
-        return notificationRepository.markAllAsReadByRecipientEmailIn(adminEmails);
-    }
-
-    public boolean deleteAdminNotification(Long notificationId) {
-        Optional<Notification> notificationOpt = notificationRepository.findById(notificationId);
-
-        if (notificationOpt.isPresent()) {
-            Notification notification = notificationOpt.get();
-            // Check if the notification belongs to an admin
-            List<String> adminEmails = userRepository.findByRoleId(1L).stream()
-                    .map(User::getEmail)
-                    .collect(Collectors.toList());
-
-            if (adminEmails.contains(notification.getRecipientEmail())) {
-                notificationRepository.delete(notification);
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-
-    /**
-     * Send notification to admin users only
-     */
-    public void sendNotificationToAdminOnly(String message, String type, String link) {
-        try {
-            // Get admin role ID (assuming admin role ID is 1)
-            Role adminRole = roleRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
-
-            List<User> adminUsers = userRepository.findByRoleId(adminRole.getId());
-
-            for (User admin : adminUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(admin.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-
-                // Set category and priority based on type
-                if ("login_attempt".equals(type)) {
-                    notification.setCategory("login_attempt");
-                    notification.setPriority("high");
-                } else {
-                    notification.setCategory("admin_only");
-                    notification.setPriority("medium");
-                }
-
-                // Save notification
-                Notification savedNotification = notificationRepository.save(notification);
-
-                // Send real-time notification via WebSocket
-                messagingTemplate.convertAndSendToUser(admin.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Admin notification sent to: " + admin.getEmail());
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending admin notification: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Send notification to manager and admin users
-     */
-    public void sendNotificationToManagerAndAdmin(String message, String type, String link) {
-        try {
-            System.out.println("=== DEBUG: sendNotificationToManagerAndAdmin ===");
-            System.out.println("Message: " + message);
-            System.out.println("Type: " + type);
-            System.out.println("Link: " + link);
+            notificationRepository.save(notification);
+            NotificationDTO dto = new NotificationDTO(notification);
+            messagingTemplate.convertAndSendToUser(user.getEmail(), "/queue/notifications", dto);
             
-            // Get admin role ID (assuming admin role ID is 1)
-            Role adminRole = roleRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
-            System.out.println("Admin role found: " + adminRole.getName() + " (ID: " + adminRole.getId() + ")");
-
-            // Get manager role ID (assuming manager role ID is 2)
-            Role managerRole = roleRepository.findById(2L)
-                    .orElseThrow(() -> new RuntimeException("Manager role not found"));
-            System.out.println("Manager role found: " + managerRole.getName() + " (ID: " + managerRole.getId() + ")");
-
-            List<User> adminUsers = userRepository.findByRoleId(adminRole.getId());
-            List<User> managerUsers = userRepository.findByRoleId(managerRole.getId());
-            
-            System.out.println("Admin users found: " + adminUsers.size());
-            adminUsers.forEach(user -> System.out.println("  - Admin: " + user.getEmail()));
-            
-            System.out.println("Manager users found: " + managerUsers.size());
-            managerUsers.forEach(user -> System.out.println("  - Manager: " + user.getEmail()));
-
-            // If no manager users exist, log a warning
-            if (managerUsers.isEmpty()) {
-                System.out.println("⚠️  WARNING: No users with MANAGER role found in database!");
-                System.out.println("   This is why manager notifications are not showing.");
-                System.out.println("   You need to create a user with MANAGER role first.");
-            }
-
-            // Send to admin users
-            for (User admin : adminUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(admin.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("order");
-                notification.setPriority("high");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(admin.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Manager+Admin notification sent to admin: " + admin.getEmail());
-            }
-
-            // Send to manager users
-            for (User manager : managerUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(manager.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("order");
-                notification.setPriority("high");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(manager.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Manager+Admin notification sent to manager: " + manager.getEmail());
-            }
-            
-            System.out.println("=== END DEBUG: sendNotificationToManagerAndAdmin ===");
-        } catch (Exception e) {
-            System.err.println("Error sending manager and admin notification: " + e.getMessage());
-            e.printStackTrace();
+            System.out.println("Notification saved with ID: " + notification.getId() + " and userType: " + notification.getUserType());
         }
+        System.out.println("=== END DEBUG: sendNotificationToRole ===");
     }
 
-    // 3. Send to Sales Manager and Admin
-    public void sendNotificationToSalesManagerAndAdmin(String message, String type, String link) {
-        try {
-            // Get admin role ID (assuming admin role ID is 1)
-            Role adminRole = roleRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
-
-            // Get sales/marketing role ID (assuming sales role ID is 3)
-            Role salesRole = roleRepository.findById(3L)
-                    .orElseThrow(() -> new RuntimeException("Sales/Marketing role not found"));
-
-            List<User> adminUsers = userRepository.findByRoleId(adminRole.getId());
-            List<User> salesUsers = userRepository.findByRoleId(salesRole.getId());
-
-            // Send to admin users
-            for (User admin : adminUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(admin.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("sales");
-                notification.setPriority("medium");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(admin.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Sales+Admin notification sent to admin: " + admin.getEmail());
-            }
-
-            // Send to sales users
-            for (User sales : salesUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(sales.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("sales");
-                notification.setPriority("medium");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(sales.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Sales+Admin notification sent to sales: " + sales.getEmail());
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending sales manager and admin notification: " + e.getMessage());
-            e.printStackTrace();
+    private NotificationTypeEnum getUserTypeEnumByRoleId(Long roleId) {
+        System.out.println("=== DEBUG: getUserTypeEnumByRoleId ===");
+        System.out.println("Input roleId: " + roleId);
+        
+        NotificationTypeEnum result;
+        switch (roleId.intValue()) {
+            case 1: 
+                result = NotificationTypeEnum.ADMIN;
+                break;
+            case 2: 
+                result = NotificationTypeEnum.MANAGER;
+                break;
+            case 3: 
+                result = NotificationTypeEnum.SALES_MARKETING;
+                break;
+            case 4: 
+                result = NotificationTypeEnum.CUSTOMER_SUPPORT;
+                break;
+            case 5: 
+                result = NotificationTypeEnum.WAREHOUSE_STAFF;
+                break;
+            case 6: 
+                result = NotificationTypeEnum.CUSTOMER;
+                break;
+            default: 
+                throw new IllegalArgumentException("Unknown role id: " + roleId);
         }
+        
+        System.out.println("Returning enum: " + result);
+        System.out.println("=== END DEBUG: getUserTypeEnumByRoleId ===");
+        return result;
+    }
+
+    public void sendNotificationToAdmin(String message, String category, String type, String link) {
+        sendNotificationToRole(1L, message, category, type, link);
+    }
+
+    public void sendNotificationToManager(String message, String category, String type, String link) {
+        System.out.println("=== DEBUG: sendNotificationToManager ===");
+        System.out.println("Message: " + message);
+        System.out.println("Category: " + category);
+        System.out.println("Type: " + type);
+        System.out.println("Link: " + link);
+        
+        sendNotificationToRole(2L, message, category, type, link);
+        
+        System.out.println("=== END DEBUG: sendNotificationToManager ===");
+    }
+
+    public void sendNotificationToSalesMarketing(String message, String category, String type, String link) {
+        sendNotificationToRole(3L, message, category, type, link);
+    }
+
+    public void sendNotificationToCustomerSupport(String message, String category, String type, String link) {
+        sendNotificationToRole(4L, message, category, type, link);
+    }
+
+    public void sendNotificationToWarehouseStaff(String message, String category, String type, String link) {
+        sendNotificationToRole(5L, message, category, type, link);
+    }
+
+    public void sendNotificationToCustomer(String message, String category, String type, String link) {
+        sendNotificationToRole(6L, message, category, type, link);
+    }
+
+    public void sendToAdminAndCustomerSupport(String message, String category, String type, String link) {
+        sendNotificationToAdmin(message, category, type, link);
+        sendNotificationToCustomerSupport(message, category, type, link);
     }
 
     /**
-     * Send notification to customer support and admin users
+     * Send notification to a specific customer by email
      */
-    public void sendNotificationToCustomerSupportAndAdmin(String message, String type, String link) {
-        try {
-            // Get admin role ID (assuming admin role ID is 1)
-            Role adminRole = roleRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
-
-            // Get customer support role ID (assuming customer support role ID is 4)
-            Role customerSupportRole = roleRepository.findById(4L)
-                    .orElseThrow(() -> new RuntimeException("Customer Support role not found"));
-
-            List<User> adminUsers = userRepository.findByRoleId(adminRole.getId());
-            List<User> customerSupportUsers = userRepository.findByRoleId(customerSupportRole.getId());
-
-            // Send to admin users
-            for (User admin : adminUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(admin.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("support");
-                notification.setPriority("medium");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(admin.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Support+Admin notification sent to admin: " + admin.getEmail());
-            }
-
-            // Send to customer support users
-            for (User support : customerSupportUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(support.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("support");
-                notification.setPriority("medium");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(support.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Support+Admin notification sent to support: " + support.getEmail());
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending customer support and admin notification: " + e.getMessage());
-            e.printStackTrace();
+    public void sendNotificationToSpecificCustomer(String customerEmail, String message, String category, String type, String link) {
+        Optional<User> userOpt = userRepository.findByEmail(customerEmail);
+        if (userOpt.isEmpty()) {
+            System.out.println("Customer not found: " + customerEmail);
+            return;
         }
+
+        User user = userOpt.get();
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setRecipientEmail(customerEmail);
+        notification.setMessage(message);
+        notification.setRead(false);
+        notification.setTimestamp(LocalDateTime.now());
+        notification.setUserType(NotificationTypeEnum.CUSTOMER);
+        notification.setCategory(category);
+        notification.setType(type);
+        notification.setLink(link);
+
+        notificationRepository.save(notification);
+        NotificationDTO dto = new NotificationDTO(notification);
+        messagingTemplate.convertAndSendToUser(customerEmail, "/queue/notifications", dto);
+        System.out.println("Sending notification to customer: " + customerEmail);
     }
 
     /**
-     * Send notification to warehouse staff and admin users
+     * Get notifications for a specific customer by email
+     * Returns: ALL customer notifications + personal notifications for this user
      */
-    public void sendNotificationToWarehouseStaffAndAdmin(String message, String type, String link) {
-        try {
-            // Get admin role ID (assuming admin role ID is 1)
-            Role adminRole = roleRepository.findById(1L)
-                    .orElseThrow(() -> new RuntimeException("Admin role not found"));
-
-            // Get warehouse staff role ID (assuming warehouse staff role ID is 5)
-            Role warehouseRole = roleRepository.findById(5L)
-                    .orElseThrow(() -> new RuntimeException("Warehouse Staff role not found"));
-
-            List<User> adminUsers = userRepository.findByRoleId(adminRole.getId());
-            List<User> warehouseUsers = userRepository.findByRoleId(warehouseRole.getId());
-
-            // Send to admin users
-            for (User admin : adminUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(admin.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("warehouse");
-                notification.setPriority("medium");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(admin.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Warehouse+Admin notification sent to admin: " + admin.getEmail());
-            }
-
-            // Send to warehouse users
-            for (User warehouse : warehouseUsers) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(warehouse.getEmail());
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("warehouse");
-                notification.setPriority("medium");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(warehouse.getEmail(), "/queue/notifications", savedNotification);
-
-                System.out.println("Warehouse+Admin notification sent to warehouse: " + warehouse.getEmail());
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending warehouse staff and admin notification: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public List<Notification> getCustomerNotificationsByEmail(String customerEmail) {
+        // Get all customer notifications (broadcast messages) - only CUSTOMER type
+        List<Notification> allCustomerNotifications = getCustomerNotifications();
+        
+        // Get personal notifications for this specific customer - only CUSTOMER type
+        List<Notification> personalNotifications = notificationRepository.findByRecipientEmailAndUserType(customerEmail, NotificationTypeEnum.CUSTOMER);
+        
+        // Combine both lists and remove duplicates
+        List<Notification> combinedNotifications = new ArrayList<>(allCustomerNotifications);
+        combinedNotifications.addAll(personalNotifications);
+        
+        // Remove duplicates based on notification ID and ensure only CUSTOMER type notifications
+        return combinedNotifications.stream()
+                .filter(notification -> notification.getUserType() == NotificationTypeEnum.CUSTOMER)
+                .collect(Collectors.toMap(
+                    Notification::getId,
+                    notification -> notification,
+                    (existing, replacement) -> existing
+                ))
+                .values()
+                .stream()
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Send notification to specific roles
-     */
-    public void sendNotificationToRoles(String message, String type, String link, String category, List<String> roleNames) {
-        try {
-            for (String roleName : roleNames) {
-                // Get role ID from role name
-                Role role = roleRepository.findByName(roleName)
-                        .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-                List<User> usersWithRole = userRepository.findByRoleId(role.getId());
-
-                for (User user : usersWithRole) {
-                    Notification notification = new Notification();
-                    notification.setRecipientEmail(user.getEmail());
-                    notification.setMessage(message);
-                    notification.setRead(false);
-                    notification.setTimestamp(LocalDateTime.now());
-                    notification.setType(type);
-                    notification.setLink(link);
-                    notification.setCategory(category);
-                    notification.setPriority("medium");
-
-                    Notification savedNotification = notificationRepository.save(notification);
-                    messagingTemplate.convertAndSendToUser(user.getEmail(), "/queue/notifications", savedNotification);
-
-                    System.out.println("Role-based notification sent to " + roleName + ": " + user.getEmail());
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending role-based notification: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    // ===== ROLE-BASED NOTIFICATION RETRIEVAL METHODS =====
+    // ========== FETCHING METHODS ==========
 
     /**
-     * Get notifications for users of a specific role
+     * Get notifications for a specific role
      */
     public List<Notification> getNotificationsByRole(String roleName) {
-        try {
-            // Get role ID from role name
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+        return getNotificationsByRole(roleName, null);
+    }
 
-            List<User> usersWithRole = userRepository.findByRoleId(role.getId());
-            List<String> emails = usersWithRole.stream()
-                    .map(User::getEmail)
-                    .collect(Collectors.toList());
-
-            if (emails.isEmpty()) {
-                return new ArrayList<>();
-            }
-
-            return notificationRepository.findByRecipientEmailIn(emails);
-        } catch (Exception e) {
-            System.err.println("Error getting notifications by role: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
+    /**
+     * Get notifications for a specific role (with email for customer role)
+     */
+    public List<Notification> getNotificationsByRole(String roleName, String email) {
+        switch (roleName.toUpperCase()) {
+            case "ADMIN":
+                return getAdminNotifications();
+            case "MANAGER":
+                return getManagerNotifications();
+            case "SALES/MARKETING":
+                return getSalesMarketingNotifications();
+            case "CUSTOMER SUPPORT":
+                return getCustomerSupportNotifications();
+            case "WAREHOUSE STAFF":
+                return getWarehouseStaffNotifications();
+            case "CUSTOMER":
+                if (email != null) {
+                    // Customer user: Get all customer notifications + personal notifications
+                    return getCustomerNotificationsByEmail(email);
+                } else {
+                    // Admin view: Get all customer notifications
+                    return getCustomerNotifications();
+                }
+            default:
+                throw new IllegalArgumentException("Unknown role: " + roleName);
         }
     }
 
     /**
-     * Get notifications for users of a specific role and category
+     * Get notifications for a specific role and category
      */
     public List<Notification> getNotificationsByRoleAndCategory(String roleName, String category) {
-        try {
-            // Get role ID from role name
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-            List<User> usersWithRole = userRepository.findByRoleId(role.getId());
-            List<String> emails = usersWithRole.stream()
-                    .map(User::getEmail)
-                    .collect(Collectors.toList());
-
-            if (emails.isEmpty()) {
-                return new ArrayList<>();
-            }
-
-            return notificationRepository.findByRecipientEmailInAndCategory(emails, category);
-        } catch (Exception e) {
-            System.err.println("Error getting notifications by role and category: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+        List<Notification> roleNotifications = getNotificationsByRole(roleName);
+        return roleNotifications.stream()
+                .filter(notification -> category.equalsIgnoreCase(notification.getCategory()))
+                .collect(Collectors.toList());
     }
 
     /**
-     * Get notifications for users of a specific role and type
+     * Get notifications for a specific role and type
      */
     public List<Notification> getNotificationsByRoleAndType(String roleName, String type) {
-        try {
-            // Get role ID from role name
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-            List<User> usersWithRole = userRepository.findByRoleId(role.getId());
-            List<String> emails = usersWithRole.stream()
-                    .map(User::getEmail)
-                    .collect(Collectors.toList());
-
-            if (emails.isEmpty()) {
-                return new ArrayList<>();
-            }
-
-            return notificationRepository.findByRecipientEmailInAndType(emails, type);
-        } catch (Exception e) {
-            System.err.println("Error getting notifications by role and type: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+        List<Notification> roleNotifications = getNotificationsByRole(roleName);
+        return roleNotifications.stream()
+                .filter(notification -> type.equalsIgnoreCase(notification.getType()))
+                .collect(Collectors.toList());
     }
 
     /**
-     * Get unread notifications count for users of a specific role
+     * Get unread notifications count for a specific role
      */
     public long getUnreadNotificationsCountByRole(String roleName) {
-        try {
-            // Get role ID from role name
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-
-            List<User> usersWithRole = userRepository.findByRoleId(role.getId());
-            List<String> emails = usersWithRole.stream()
-                    .map(User::getEmail)
-                    .collect(Collectors.toList());
-
-            if (emails.isEmpty()) {
-                return 0L;
-            }
-
-            return notificationRepository.countByRecipientEmailInAndReadFalse(emails);
-        } catch (Exception e) {
-            System.err.println("Error getting unread notifications count by role: " + e.getMessage());
-            e.printStackTrace();
-            return 0L;
-        }
+        List<Notification> roleNotifications = getNotificationsByRole(roleName);
+        return roleNotifications.stream()
+                .filter(notification -> !notification.isRead())
+                .count();
     }
 
-    /**
-     * Get notifications for current user based on their role
-     */
-    public List<Notification> getCurrentUserNotifications(String userEmail) {
-        try {
-            User user = userRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
-
-            String roleName = user.getRole().getName();
-            return getNotificationsByRole(roleName);
-        } catch (Exception e) {
-            System.err.println("Error getting current user notifications: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+    public List<Notification> getAdminNotifications() {
+        return notificationRepository.findByUserTypeIn(
+            List.of(NotificationTypeEnum.ADMIN, NotificationTypeEnum.MANAGER, 
+                   NotificationTypeEnum.SALES_MARKETING, NotificationTypeEnum.CUSTOMER_SUPPORT, 
+                   NotificationTypeEnum.WAREHOUSE_STAFF)
+        );
     }
 
-    /**
-     * Get role-specific notifications with category filtering
-     */
-    public List<Notification> getRoleSpecificNotifications(String roleName, List<String> allowedCategories) {
-        try {
-            List<Notification> allNotifications = new ArrayList<>();
-
-            for (String category : allowedCategories) {
-                List<Notification> categoryNotifications = getNotificationsByRoleAndCategory(roleName, category);
-                allNotifications.addAll(categoryNotifications);
-            }
-
-            // Remove duplicates and sort by timestamp (newest first)
-            return allNotifications.stream()
-                    .distinct()
-                    .sorted((n1, n2) -> n2.getTimestamp().compareTo(n1.getTimestamp()))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            System.err.println("Error getting role-specific notifications: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
+    public List<Notification> getManagerNotifications() {
+        return notificationRepository.findByUserType(NotificationTypeEnum.MANAGER);
     }
 
-    /**
-     * Get notifications based on role permissions
-     */
-    public List<Notification> getNotificationsByRolePermissions(String roleName) {
-        try {
-            // Get role ID from role name
-            Role role = roleRepository.findByName(roleName)
-                    .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
-            
-            List<User> usersWithRole = userRepository.findByRoleId(role.getId());
-            List<String> emails = usersWithRole.stream()
-                    .map(User::getEmail)
-                    .collect(Collectors.toList());
-            
-            if (emails.isEmpty()) {
-                return new ArrayList<>();
-            }
-            
-            // For manager users, also include notifications sent to admin users
-            if ("MANAGER".equals(roleName)) {
-                Role adminRole = roleRepository.findById(1L)
-                        .orElseThrow(() -> new RuntimeException("Admin role not found"));
-                
-                List<User> adminUsers = userRepository.findByRoleId(adminRole.getId());
-                List<String> adminEmails = adminUsers.stream()
-                        .map(User::getEmail)
-                        .collect(Collectors.toList());
-                
-                // Combine manager and admin emails
-                emails.addAll(adminEmails);
-            }
-            
-            // Get notifications specifically for this role's users (role-based notifications)
-            return notificationRepository.findByRecipientEmailIn(emails).stream()
-                    .sorted((n1, n2) -> n2.getTimestamp().compareTo(n1.getTimestamp()))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            System.err.println("Error getting notifications by role permissions: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-        /**
-         * Get notifications specifically for admin users only
-         */
-        public List<Notification> getAdminOnlyNotifications() {
-            try {
-                // Get admin role ID (assuming admin role ID is 1)
-                Role adminRole = roleRepository.findById(1L)
-                        .orElseThrow(() -> new RuntimeException("Admin role not found"));
-                
-                // Get manager role ID (assuming manager role ID is 2)
-                Role managerRole = roleRepository.findById(2L)
-                        .orElseThrow(() -> new RuntimeException("Manager role not found"));
-                
-                List<User> adminUsers = userRepository.findByRoleId(adminRole.getId());
-                List<User> managerUsers = userRepository.findByRoleId(managerRole.getId());
-                
-                // Combine emails from both admin and manager users
-                List<String> allEmails = new ArrayList<>();
-                allEmails.addAll(adminUsers.stream().map(User::getEmail).collect(Collectors.toList()));
-                allEmails.addAll(managerUsers.stream().map(User::getEmail).collect(Collectors.toList()));
-                
-                if (allEmails.isEmpty()) {
-                    return new ArrayList<>();
-                }
-                
-                // Get notifications sent to both admin and manager users
-                return notificationRepository.findByRecipientEmailIn(allEmails).stream()
-                        .sorted((n1, n2) -> n2.getTimestamp().compareTo(n1.getTimestamp()))
-                        .collect(Collectors.toList());
-            } catch (Exception e) {
-                System.err.println("Error getting admin-only notifications: " + e.getMessage());
-                e.printStackTrace();
-                return new ArrayList<>();
-            }
-        }
-
-    /**
-     * Send notification to current user only if they have one of the specified roles
-     */
-    public void sendNotificationToCurrentUserIfRoles(String userEmail, String message, String type, String link, String... allowedRoles) {
-        try {
-            // Get the user by email
-            User user = userRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
-            
-            String userRole = user.getRole().getName();
-            
-            // Check if user has any of the allowed roles
-            boolean hasAllowedRole = false;
-            for (String role : allowedRoles) {
-                if (role.equals(userRole)) {
-                    hasAllowedRole = true;
-                    break;
-                }
-            }
-            
-            // Only send notification if user has an allowed role
-            if (hasAllowedRole) {
-                Notification notification = new Notification();
-                notification.setRecipientEmail(userEmail);
-                notification.setMessage(message);
-                notification.setRead(false);
-                notification.setTimestamp(LocalDateTime.now());
-                notification.setType(type);
-                notification.setLink(link);
-                notification.setCategory("support");
-                notification.setPriority("medium");
-
-                Notification savedNotification = notificationRepository.save(notification);
-                messagingTemplate.convertAndSendToUser(userEmail, "/queue/notifications", savedNotification);
-
-                System.out.println("Notification sent to current user: " + userEmail + " (Role: " + userRole + ")");
-            } else {
-                System.out.println("User " + userEmail + " has role " + userRole + " - no notification sent");
-            }
-        } catch (Exception e) {
-            System.err.println("Error sending notification to current user: " + e.getMessage());
-            e.printStackTrace();
-        }
+    public List<Notification> getSalesMarketingNotifications() {
+        return notificationRepository.findByUserType(NotificationTypeEnum.SALES_MARKETING);
     }
 
-    /**
-     * Send notification to current user only if they are Customer Support or Admin
-     */
-    public void sendNotificationToCurrentUserIfRole(String userEmail, String message, String type, String link) {
-        sendNotificationToCurrentUserIfRoles(userEmail, message, type, link, "CUSTOMER SUPPORT", "ADMIN");
+    public List<Notification> getCustomerSupportNotifications() {
+        return notificationRepository.findByUserType(NotificationTypeEnum.CUSTOMER_SUPPORT);
     }
 
-    /**
-     * Send notification to current user only if they are Admin or Manager
-     */
-    public void sendNotificationToCurrentUserIfAdminOrManager(String userEmail, String message, String type, String link) {
-        sendNotificationToCurrentUserIfRoles(userEmail, message, type, link, "ADMIN", "MANAGER");
+    public List<Notification> getWarehouseStaffNotifications() {
+        return notificationRepository.findByUserType(NotificationTypeEnum.WAREHOUSE_STAFF);
     }
 
-    /**
-     * Send notification to current user only if they are Sales Manager or Admin
-     */
-    public void sendNotificationToCurrentUserIfSalesManagerOrAdmin(String userEmail, String message, String type, String link) {
-        sendNotificationToCurrentUserIfRoles(userEmail, message, type, link, "SALES MANAGER", "ADMIN");
+    public List<Notification> getCustomerNotifications() {
+        return notificationRepository.findByUserType(NotificationTypeEnum.CUSTOMER);
     }
 
-    /**
-     * Send notification to current user only if they are Warehouse Staff or Admin
-     */
-    public void sendNotificationToCurrentUserIfWarehouseOrAdmin(String userEmail, String message, String type, String link) {
-        sendNotificationToCurrentUserIfRoles(userEmail, message, type, link, "WAREHOUSE STAFF", "ADMIN");
-    }
-
-    /**
-     * Get notifications for regular users only (excluding admin notifications)
-     */
-    public List<Notification> getUserOnlyNotifications(String userEmail) {
-        try {
-            User user = userRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new RuntimeException("User not found: " + userEmail));
-
-            // Get all notifications for this user
-            List<Notification> userNotifications = notificationRepository.findByRecipientEmail(userEmail);
-            
-            // Filter to show only user-appropriate notifications
-            return userNotifications.stream()
-                    .filter(notification -> {
-                        String type = notification.getType();
-                        if (type == null) return true; // Keep notifications without type
-                        
-                        // List of admin-specific notification types to exclude
-                        String[] adminTypes = {
-                            "admin_only",
-                            "login_attempt", 
-                            "order_created",
-                            "review_submitted",
-                            "system_alert_high",
-                            "system_alert_medium",
-                            "system_alert_low"
-                        };
-                        
-                        // Check if this is an admin-specific notification
-                        for (String adminType : adminTypes) {
-                            if (adminType.equals(type)) {
-                                return false; // Exclude this notification
-                            }
-                        }
-                        
-                        // List of user-appropriate notification types to include
-                        String[] userTypes = {
-                            "order",
-                            "discount",
-                            "first time buyer discount"
-                        };
-                        
-                        // Check if this is a user-appropriate notification
-                        for (String userType : userTypes) {
-                            if (userType.equals(type)) {
-                                return true; // Include this notification
-                            }
-                        }
-                        
-                        // For any other type, exclude it (to be safe)
-                        return false;
-                    })
-                    .sorted((n1, n2) -> n2.getTimestamp().compareTo(n1.getTimestamp()))
-                    .collect(Collectors.toList());
-                    
-        } catch (Exception e) {
-            System.err.println("Error getting user-only notifications: " + e.getMessage());
-            e.printStackTrace();
-            return new ArrayList<>();
-        }
-    }
-
-    }
+}

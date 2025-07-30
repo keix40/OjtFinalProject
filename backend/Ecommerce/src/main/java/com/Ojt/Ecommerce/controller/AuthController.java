@@ -233,7 +233,7 @@ public class AuthController {
             // --- Broadcast real-time activity feed event ---
             // In AuthController.java, after a successful login:
             String activityMsg = "Successful login for " + email + " from IP " + ip;
-            notificationService.sendNotificationToAllAdmins(activityMsg, "login_attempt", null);
+           /* notificationService.sendNotificationToAllAdmins(activityMsg, "login_attempt", null);
             List<User> admins = userRepository.findByRoleId(1L);
             for (User admin : admins) {
                 messagingTemplate.convertAndSendToUser(
@@ -245,7 +245,7 @@ public class AuthController {
                                 "message", activityMsg
                         )
                 );
-            }
+            } */
             // Reset OTP/CAPTCHA for this IP
             loginAttemptService.handleSuccessfulLogin(ip);
             String accessToken = jwtTokenProvider.generateToken(user);

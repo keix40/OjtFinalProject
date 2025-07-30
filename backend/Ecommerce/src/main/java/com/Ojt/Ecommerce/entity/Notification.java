@@ -14,6 +14,9 @@ public class Notification {
     private Long id;
 
     private String recipientEmail;
+    
+    @Enumerated(EnumType.STRING)
+    private NotificationTypeEnum userType;
 
     @Column(columnDefinition = "LONGTEXT")
     private String message;
@@ -22,10 +25,12 @@ public class Notification {
     private boolean read;
 
     private LocalDateTime timestamp;
-
-    private String type; // e.g., 'discount', 'first_time_buyer', etc.
+    private String type; // e.g., 'success', 'failed', etc.
     private String link; // e.g., '/userproductlist'
-
-    private String category;
+    private String category; //e.g., 'discount', 'order', etc.
     private String priority;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 }

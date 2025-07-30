@@ -317,7 +317,6 @@ public class UserServiceImpl implements UserService {
 
         if (changed) {
             userRepository.save(user);
-            notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
         }
 
         return modelMapper.map(user, RegisterRequest.class);
@@ -405,7 +404,6 @@ public class UserServiceImpl implements UserService {
             dto.setPhoneNumber(user.getPhoneNumber());
             dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
             dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
-            dto.setDateOfBirth(user.getDateOfBirth() != null ? user.getDateOfBirth().toString() : null);
             dto.setJoinDate(user.getCreatedDate());
             dto.setTotalOrders(totalOrders);
             dto.setTotalSpent(totalSpent);

@@ -30,6 +30,7 @@ public class DiscountCouponService {
     private final UserRepository userRepository;
     private final VipTierRepository vipTierRepository;
     private final DiscountRuleService discountRuleService;
+    private final NotificationService notificationService;
 
 
     @Transactional
@@ -79,6 +80,9 @@ public class DiscountCouponService {
         } else {
             discountRuleService.createGlobalDiscountRule(saved);
         }
+
+        // Send admin notification for discount creation
+        sendAdminNotificationForDiscountCreation(dto, saved.getId());
 
         return mapToDTO(saved, dto.getProductIdsforCoupon());
     }
@@ -418,5 +422,35 @@ public class DiscountCouponService {
                 : null);
         dto.setProductIds(productIds);
         return dto;
+    }
+
+    /**
+     * Send notification to admin when a new discount is created
+     */
+    private void sendAdminNotificationForDiscountCreation(DiscountRequestDTO dto, Long discountId) {
+        try {
+            String discountValueText;
+            if ("PERCENTAGE".equalsIgnoreCase(dto.getDiscountType())) {
+                double percent = dto.getDiscount_percent();
+                discountValueText = percent + "% off";
+            } else {
+                discountValueText = dto.getDiscount_amount() + " MMK off";
+            }
+
+            String notificationMessage = "🎯 New discount created: \"" + dto.getName() + "\" - " + discountValueText + 
+                                      " | Target: " + dto.getTargetType() + " | Duration: " + 
+                                      dto.getStartDate().toLocalDate() + " to " + dto.getEndDate().toLocalDate();
+            
+            String type = "create";
+            String category = "discount";
+            String link = "/admin/discount-management";
+
+            notificationService.sendNotificationToAdmin(notificationMessage, category, type, link);
+            
+            System.out.println("[DiscountCouponService] Admin notification sent for discount: " + dto.getName());
+        } catch (Exception e) {
+            System.err.println("[DiscountCouponService] Failed to send admin notification: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

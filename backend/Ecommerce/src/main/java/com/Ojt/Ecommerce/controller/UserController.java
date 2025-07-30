@@ -105,8 +105,8 @@ public class UserController {
     @PutMapping("/{id}")
     @Transactional
     @RequiresPermission(value = USERS_UPDATE, level = "intermediate", description = "Update user information")
-    public ResponseEntity<Map<String, Object>>  updateUser(@PathVariable Long id ,@RequestBody RegisterRequest dto,@RequestHeader("Authorization") String token){
-        RegisterRequest updatedUser = userService.updateUser(id,dto);
+    public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Long id, @RequestBody RegisterRequest dto, @RequestHeader("Authorization") String token) {
+        RegisterRequest updatedUser = userService.updateUser(id, dto);
 
         User user = userRepository.findById(id).orElseThrow();
         String newToken = jwtTokenProvider.generateToken(user);
@@ -115,7 +115,7 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         response.put("user", updatedUser);
         response.put("token", newToken);
-        return  ResponseEntity.ok(response);
+        return ResponseEntity.ok(response);
 
     }
 
@@ -254,15 +254,15 @@ public class UserController {
         List<User> usersWithNullStatus = userRepository.findAll().stream()
                 .filter(user -> user.getStatus() == null)
                 .collect(Collectors.toList());
-        
+
         for (User user : usersWithNullStatus) {
             user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.ACTIVE);
             userRepository.save(user);
         }
-        
+
         return ResponseEntity.ok(Map.of(
-            "message", "Fixed " + usersWithNullStatus.size() + " users with null status",
-            "fixedCount", usersWithNullStatus.size()
+                "message", "Fixed " + usersWithNullStatus.size() + " users with null status",
+                "fixedCount", usersWithNullStatus.size()
         ));
     }
 
@@ -288,7 +288,7 @@ public class UserController {
         String sessionId = payload.get("sessionId").toString();
         String userAgent = payload.get("userAgent").toString();
         String ipAddress = payload.get("ipAddress").toString();
-        
+
         // Handle anonymous users (userId = 0)
         if (userId == 0) {
             // For anonymous users, we can use a special identifier or null
@@ -312,7 +312,7 @@ public class UserController {
         sessionService.endSession(sessionId);
         return ResponseEntity.ok().build();
     }
+}
     // --- End customer management actions ---
 
 
-}

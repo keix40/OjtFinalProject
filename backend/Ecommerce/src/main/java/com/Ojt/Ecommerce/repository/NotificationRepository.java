@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.repository;
 
 import com.Ojt.Ecommerce.entity.Notification;
+import com.Ojt.Ecommerce.entity.NotificationTypeEnum;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -50,4 +51,14 @@ public interface NotificationRepository extends JpaRepository<Notification,Long>
      // New methods for role-based filtering
      List<Notification> findByRecipientEmailInAndCategory(List<String> emails, String category);
 
+     // Role-based notification fetching methods
+     List<Notification> findByUserType(NotificationTypeEnum userType);
+     List<Notification> findByUserTypeIn(List<NotificationTypeEnum> userTypes);
+     List<Notification> findByUserTypeAndCategory(NotificationTypeEnum userType, String category);
+     List<Notification> findByUserTypeAndType(NotificationTypeEnum userType, String type);
+     List<Notification> findByUserTypeAndReadFalse(NotificationTypeEnum userType);
+     long countByUserTypeAndReadFalse(NotificationTypeEnum userType);
+     
+     // Customer-specific notification methods
+     List<Notification> findByRecipientEmailAndUserType(String recipientEmail, NotificationTypeEnum userType);
 }
