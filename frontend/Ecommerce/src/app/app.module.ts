@@ -91,6 +91,7 @@ import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.componen
 import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
 import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
 
+
 @NgModule({
   declarations: [
     AppComponent,
