@@ -140,7 +140,6 @@ import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.componen
     UserProfileComponent, 
     CreateDeliveryServiceComponent,
     DeliveryServiceListComponent,
-
   ],
   imports: [
     BrowserModule,
