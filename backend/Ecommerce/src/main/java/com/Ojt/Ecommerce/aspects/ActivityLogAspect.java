@@ -39,6 +39,8 @@ import com.Ojt.Ecommerce.repository.OrderRepository;
 import com.Ojt.Ecommerce.entity.Discount;
 import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
 import com.Ojt.Ecommerce.repository.DiscountRepository;
+import java.io.BufferedReader;
+import java.io.IOException;
 
 @Aspect
 @Component
@@ -57,7 +59,10 @@ public class ActivityLogAspect {
     @Autowired private OrderRepository orderRepository;
     @Autowired private DiscountRepository discountRepository;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
+
+
 
     @Around("@annotation(com.Ojt.Ecommerce.annotations.LogActivity)")
     public Object logActivity(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -74,8 +79,11 @@ public class ActivityLogAspect {
         String userName = "";
         String userRole = "";
 
+
+        
         if (authentication != null && authentication.isAuthenticated()) {
             Object principal = authentication.getPrincipal();
+            
             if (principal instanceof com.Ojt.Ecommerce.dto.UserDTO) {
                 com.Ojt.Ecommerce.dto.UserDTO user = (com.Ojt.Ecommerce.dto.UserDTO) principal;
                 userId = user.getId();
@@ -86,9 +94,42 @@ public class ActivityLogAspect {
                 userId = user.getId();
                 userName = user.getName();
                 userRole = user.getRole() != null ? user.getRole().getName() : "UNKNOWN";
+            } else if (principal instanceof String) {
+                // Handle JWT token or username string
+                String principalStr = (String) principal;
+                // Try to extract user info from JWT token or username
+                if (principalStr.contains("@")) {
+                    // It might be an email
+                    userName = principalStr;
+                    userRole = "CUSTOMER"; // Default role
+                }
             } else {
-                userName = "UNKNOWN";
-                userRole = "UNKNOWN";
+                // Try to extract from JWT token in request header
+                try {
+                    ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                    if (attributes != null) {
+                        HttpServletRequest request = attributes.getRequest();
+                        String authHeader = request.getHeader("Authorization");
+                        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                            String token = authHeader.substring(7);
+                            
+                            // Extract user info from JWT token
+                            Map<String, Object> userInfo = extractUserInfoFromToken(token);
+                            if (userInfo != null) {
+                                userId = Long.valueOf(userInfo.get("id").toString());
+                                userName = (String) userInfo.get("name");
+                                userRole = (String) userInfo.get("roles");
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error extracting user info from JWT: " + e.getMessage());
+                }
+                
+                if (userName.isEmpty()) {
+                    userName = "UNKNOWN";
+                    userRole = "UNKNOWN";
+                }
             }
         }
 
@@ -107,12 +148,7 @@ public class ActivityLogAspect {
                 sessionId = request.getSession().getId();
                 userLocation = IpLocationUtil.getUserLocation(ipAddress);
                 
-                // Debug logging
-                System.out.println("Activity Log Debug - IP: " + ipAddress + ", Location: " + userLocation);
-                System.out.println("Activity Log Debug - RemoteAddr: " + request.getRemoteAddr());
-                System.out.println("Activity Log Debug - X-Forwarded-For: " + request.getHeader("X-Forwarded-For"));
-                System.out.println("Activity Log Debug - X-Client-IP: " + request.getHeader("X-Client-IP"));
-                System.out.println("Activity Log Debug - X-Debug-IP: " + request.getHeader("X-Debug-IP"));
+
             }
         } catch (Exception e) {
             System.err.println("Error getting request info: " + e.getMessage());
@@ -122,7 +158,7 @@ public class ActivityLogAspect {
         String entityId = extractEntityId(joinPoint, logActivity.entityIdParam());
         String entityName = extractEntityName(joinPoint, logActivity.entityNameParam());
 
-        // Store original state for change tracking
+        // Store original state for change tracking - MUST happen BEFORE method execution
         Object originalState = null;
         if (logActivity.logChanges() && logActivity.actionType().equals("UPDATE")) {
             originalState = captureOriginalState(joinPoint, logActivity, entityId);
@@ -288,7 +324,42 @@ public class ActivityLogAspect {
         try {
             if (logActivity.entityType().equals("USER") && entityId != null) {
                 Long id = Long.valueOf(entityId);
-                return userRepository.findById(id).orElse(null);
+                // Force a fresh database query to avoid any caching issues
+                System.out.println("=== CAPTURING ORIGINAL STATE ===");
+                System.out.println("Fetching user with ID: " + id);
+                
+                // Use EntityManager to force a fresh query and detach the entity
+                try {
+                    // Get the EntityManager from the repository
+                    User originalUser = userRepository.findById(id).orElse(null);
+                    if (originalUser != null) {
+                        // Create a deep copy to avoid any JPA managed entity issues
+                        User detachedUser = new User();
+                        detachedUser.setId(originalUser.getId());
+                        detachedUser.setName(originalUser.getName());
+                        detachedUser.setEmail(originalUser.getEmail());
+                        detachedUser.setPhoneNumber(originalUser.getPhoneNumber());
+                        detachedUser.setGender(originalUser.getGender());
+                        detachedUser.setDateOfBirth(originalUser.getDateOfBirth());
+                        
+                        System.out.println("Original user name: '" + detachedUser.getName() + "'");
+                        System.out.println("Original user email: '" + detachedUser.getEmail() + "'");
+                        System.out.println("Original user phone: '" + detachedUser.getPhoneNumber() + "'");
+                        System.out.println("Original user gender: '" + detachedUser.getGender() + "'");
+                        System.out.println("Original user dateOfBirth: '" + detachedUser.getDateOfBirth() + "'");
+                        System.out.println("User entity state: Detached (ID: " + detachedUser.getId() + ")");
+                        
+                        return detachedUser;
+                    } else {
+                        System.out.println("User not found with ID: " + id);
+                    }
+                    System.out.println("=== END CAPTURING ORIGINAL STATE ===");
+                    return null;
+                } catch (Exception e) {
+                    System.err.println("Error fetching original user: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
+                }
             }
             if (logActivity.entityType().equals("PRODUCT") && entityId != null) {
                 Long id = Long.valueOf(entityId);
@@ -316,6 +387,7 @@ public class ActivityLogAspect {
             }
         } catch (Exception e) {
             System.err.println("Error fetching original entity: " + e.getMessage());
+            e.printStackTrace();
         }
         return null;
     }
@@ -325,52 +397,83 @@ public class ActivityLogAspect {
         try {
             Map<String, Object> beforeChanges = new HashMap<>();
             Map<String, Object> afterChanges = new HashMap<>();
+            
             // USER (already implemented)
             if (logActivity.entityType().equals("USER") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.User) {
                 com.Ojt.Ecommerce.entity.User beforeUser = (com.Ojt.Ecommerce.entity.User) originalState;
-                MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-                String[] parameterNames = signature.getParameterNames();
                 Object[] args = joinPoint.getArgs();
+                
+                System.out.println("=== CAPTURE CHANGES DEBUG ===");
+                System.out.println("Number of arguments: " + args.length);
+                for (int i = 0; i < args.length; i++) {
+                    System.out.println("Arg " + i + " type: " + (args[i] != null ? args[i].getClass().getSimpleName() : "null"));
+                    System.out.println("Arg " + i + " value: " + args[i]);
+                }
+                
+                // Look for RegisterRequest in method arguments (input DTO)
                 com.Ojt.Ecommerce.dto.RegisterRequest request = null;
-                for (int i = 0; i < parameterNames.length; i++) {
-                    if (args[i] != null && args[i] instanceof com.Ojt.Ecommerce.dto.RegisterRequest) {
-                        request = (com.Ojt.Ecommerce.dto.RegisterRequest) args[i];
+                for (Object arg : args) {
+                    if (arg instanceof com.Ojt.Ecommerce.dto.RegisterRequest) {
+                        request = (com.Ojt.Ecommerce.dto.RegisterRequest) arg;
+                        System.out.println("Found RegisterRequest input: " + request.getName());
                         break;
                     }
                 }
-                boolean anyChange = false;
-                if (request != null) {
-                    if (request.getName() != null && !request.getName().equals(beforeUser.getName())) {
+                
+                // Also check if newState is a RegisterRequest (return value from service)
+                com.Ojt.Ecommerce.dto.RegisterRequest resultRequest = null;
+                if (newState instanceof com.Ojt.Ecommerce.dto.RegisterRequest) {
+                    resultRequest = (com.Ojt.Ecommerce.dto.RegisterRequest) newState;
+                    System.out.println("Found RegisterRequest result: " + resultRequest.getName());
+                }
+                
+                // Use the input request for comparison (this contains the changes that will be applied)
+                com.Ojt.Ecommerce.dto.RegisterRequest afterRequest = request;
+                
+                if (afterRequest != null) {
+                    System.out.println("Comparing fields with: " + afterRequest.getName());
+                    System.out.println("Before user name: '" + beforeUser.getName() + "'");
+                    System.out.println("After request name: '" + afterRequest.getName() + "'");
+                    System.out.println("Names equal: " + (afterRequest.getName() != null && afterRequest.getName().equals(beforeUser.getName())));
+                    
+                    // Compare each field and capture changes
+                    if (afterRequest.getName() != null && !afterRequest.getName().equals(beforeUser.getName())) {
+                        System.out.println("Name changed from '" + beforeUser.getName() + "' to '" + afterRequest.getName() + "'");
                         beforeChanges.put("name", beforeUser.getName());
-                        afterChanges.put("name", request.getName());
-                        anyChange = true;
+                        afterChanges.put("name", afterRequest.getName());
                     }
-                    if (request.getEmail() != null && !request.getEmail().equals(beforeUser.getEmail())) {
+                    if (afterRequest.getEmail() != null && !afterRequest.getEmail().equals(beforeUser.getEmail())) {
+                        System.out.println("Email changed from '" + beforeUser.getEmail() + "' to '" + afterRequest.getEmail() + "'");
                         beforeChanges.put("email", beforeUser.getEmail());
-                        afterChanges.put("email", request.getEmail());
-                        anyChange = true;
+                        afterChanges.put("email", afterRequest.getEmail());
                     }
-                    if (request.getPhoneNumber() != null && !request.getPhoneNumber().equals(beforeUser.getPhoneNumber())) {
+                    if (afterRequest.getPhoneNumber() != null && !afterRequest.getPhoneNumber().equals(beforeUser.getPhoneNumber())) {
+                        System.out.println("Phone changed from '" + beforeUser.getPhoneNumber() + "' to '" + afterRequest.getPhoneNumber() + "'");
                         beforeChanges.put("phoneNumber", beforeUser.getPhoneNumber());
-                        afterChanges.put("phoneNumber", request.getPhoneNumber());
-                        anyChange = true;
+                        afterChanges.put("phoneNumber", afterRequest.getPhoneNumber());
                     }
-                    if (request.getDateOfBirth() != null && !request.getDateOfBirth().equals(beforeUser.getDateOfBirth())) {
+                    if (afterRequest.getDateOfBirth() != null && !afterRequest.getDateOfBirth().equals(beforeUser.getDateOfBirth())) {
+                        System.out.println("DateOfBirth changed from '" + beforeUser.getDateOfBirth() + "' to '" + afterRequest.getDateOfBirth() + "'");
                         beforeChanges.put("dateOfBirth", beforeUser.getDateOfBirth());
-                        afterChanges.put("dateOfBirth", request.getDateOfBirth());
-                        anyChange = true;
+                        afterChanges.put("dateOfBirth", afterRequest.getDateOfBirth());
                     }
-                    if (request.getGender() != null && !request.getGender().equals(beforeUser.getGender())) {
+                    if (afterRequest.getGender() != null && !afterRequest.getGender().equals(beforeUser.getGender())) {
+                        System.out.println("Gender changed from '" + beforeUser.getGender() + "' to '" + afterRequest.getGender() + "'");
                         beforeChanges.put("gender", beforeUser.getGender());
-                        afterChanges.put("gender", request.getGender());
-                        anyChange = true;
+                        afterChanges.put("gender", afterRequest.getGender());
                     }
+                } else {
+                    System.out.println("No RegisterRequest found in arguments or result");
                 }
-                // Always log changes, even if no field changed
-                if (!anyChange) {
-                    beforeChanges.put("info", "No changes detected");
-                    afterChanges.put("info", "No changes detected");
-                }
+                System.out.println("=== END CAPTURE CHANGES DEBUG ===");
+                
+                // Simple test to verify comparison logic
+                System.out.println("=== COMPARISON TEST ===");
+                System.out.println("beforeUser.getName(): '" + beforeUser.getName() + "'");
+                System.out.println("afterRequest.getName(): '" + afterRequest.getName() + "'");
+                System.out.println("beforeUser.getName().equals(afterRequest.getName()): " + beforeUser.getName().equals(afterRequest.getName()));
+                System.out.println("!beforeUser.getName().equals(afterRequest.getName()): " + !beforeUser.getName().equals(afterRequest.getName()));
+                System.out.println("=== END COMPARISON TEST ===");
             }
             // PRODUCT
             if (logActivity.entityType().equals("PRODUCT") && logActivity.actionType().equals("UPDATE") && originalState instanceof com.Ojt.Ecommerce.entity.Product) {
@@ -684,11 +787,25 @@ public class ActivityLogAspect {
                 }
             }
             // Only add to changes if there are actual changes
-            if (!afterChanges.isEmpty() || beforeChanges.containsKey("info")) {
+            System.out.println("=== FINAL CHECK ===");
+            System.out.println("afterChanges size: " + afterChanges.size());
+            System.out.println("afterChanges content: " + afterChanges);
+            System.out.println("beforeChanges size: " + beforeChanges.size());
+            System.out.println("beforeChanges content: " + beforeChanges);
+            
+            if (!afterChanges.isEmpty()) {
                 changes.put("before", beforeChanges);
                 changes.put("after", afterChanges);
                 changes.put("changedFields", afterChanges.keySet());
+                System.out.println("=== FINAL CHANGES DEBUG ===");
+                System.out.println("Changes being saved: " + changes);
+                System.out.println("=== END FINAL CHANGES DEBUG ===");
+            } else {
+                System.out.println("=== NO CHANGES DEBUG ===");
+                System.out.println("No changes detected - afterChanges is empty");
+                System.out.println("=== END NO CHANGES DEBUG ===");
             }
+            System.out.println("=== END FINAL CHECK ===");
         } catch (Exception e) {
             changes.put("error", "Error capturing changes: " + e.getMessage());
         }
@@ -713,16 +830,41 @@ public class ActivityLogAspect {
     
     private String getRequestBody(HttpServletRequest request) {
         try {
-            // Create a copy of the request to read the body
-            ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
-            
-            // Read the body
-            byte[] content = wrappedRequest.getContentAsByteArray();
-            if (content.length > 0) {
-                return new String(content, "UTF-8");
+            BufferedReader reader = request.getReader();
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            return "Error reading request body: " + e.getMessage();
+        }
+    }
+    
+    private Map<String, Object> extractUserInfoFromToken(String token) {
+        try {
+            // Simple JWT token parsing (without signature verification for debugging)
+            String[] parts = token.split("\\.");
+            if (parts.length == 3) {
+                // Decode the payload (second part)
+                String payload = parts[1];
+                // Add padding if needed
+                while (payload.length() % 4 != 0) {
+                    payload += "=";
+                }
+                // Replace URL-safe characters
+                payload = payload.replace('-', '+').replace('_', '/');
+                
+                // Decode base64
+                byte[] decodedBytes = java.util.Base64.getDecoder().decode(payload);
+                String decodedPayload = new String(decodedBytes);
+                
+                // Parse JSON
+                return objectMapper.readValue(decodedPayload, Map.class);
             }
         } catch (Exception e) {
-            System.err.println("Error reading request body: " + e.getMessage());
+            System.err.println("Error parsing JWT token: " + e.getMessage());
         }
         return null;
     }

@@ -45,4 +45,10 @@ public interface BlacklistRepository extends JpaRepository<BlacklistEntry, Strin
     
     @Query("SELECT b FROM BlacklistEntry b WHERE b.status = 'ACTIVE' AND b.expiryDate IS NOT NULL AND b.expiryDate <= :date")
     List<BlacklistEntry> findActiveEntriesWithExpiryBefore(LocalDateTime date);
+    
+    @Query("SELECT b FROM BlacklistEntry b WHERE b.associatedEmail = :associatedEmail AND b.status = :status")
+    List<BlacklistEntry> findByAssociatedEmailAndStatus(String associatedEmail, BlacklistEntry.Status status);
+    
+    @Query("SELECT COUNT(b) FROM BlacklistEntry b WHERE b.addedDate >= ?1 AND b.addedDate < ?2")
+    long countEntriesAddedBetween(LocalDateTime startDate, LocalDateTime endDate);
 } 

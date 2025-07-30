@@ -1,9 +1,11 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { OrderService } from '../services/order.service';
 import { ModalService } from '../services/modal.service';
 import { ReturnService } from '../services/return.service';
 import { AuthService } from '../auth/auth.service';
+import { PolicyService } from '../services/policy.service';
 
 @Component({
   selector: 'app-order-tracking',
@@ -22,17 +24,179 @@ export class OrderTrackingComponent {
 
   // Return Policy Modal
   showPolicyModal: boolean = false;
-  returnPolicyText: string = `Customers are eligible to request returns under the following conditions. All return requests must be reviewed and approved by the admin before any refund or replacement is processed.\n\n1. Wrong Item Delivered\nIf the item received is different from what was ordered, a return request must be submitted within 7 days of delivery.\n\nUpon verification, a full refund will be issued.\n\n2. Damaged on Arrival\nIf the item is received in a damaged or defective condition, photo evidence must be provided.\n\nAfter verification by the admin, customers will be offered either a refund or a replacement.\n\n3. Changed Mind\nReturns due to a change of mind are accepted only if the product is unused and sealed.\n\nThe customer is responsible for the return shipping costs.\n\nA refund will be processed after the returned product is inspected and approved.`;
+  returnPolicyText: string = '';
+  returnPolicyHtml: SafeHtml = '';
+  isLoadingPolicy: boolean = false;
+  selectedPolicy: any = null;
 
   constructor(
     private route: ActivatedRoute,
     private orderService: OrderService,
     private modalService: ModalService,
-    private returnService: ReturnService
+    private returnService: ReturnService,
+    private policyService: PolicyService,
+    private sanitizer: DomSanitizer
   ) {}
 
   ngOnInit(): void {
     this.loadOrderTracking();
+    this.getReturnPolicy();
+  }
+
+  getReturnPolicy() {
+    this.isLoadingPolicy = true;
+    this.policyService.getPolicyByTitle().subscribe({
+      next: (policy) => {
+        this.selectedPolicy = policy;
+        this.returnPolicyText = policy.content;
+        // Process content for smart text wrapping
+        this.returnPolicyText = this.processContentForSmartWrapping(this.returnPolicyText);
+        this.returnPolicyHtml = this.sanitizer.bypassSecurityTrustHtml(this.returnPolicyText);
+        this.isLoadingPolicy = false;
+      },
+      error: (error) => {
+        console.error('Failed to load return policy:', error);
+        // Fallback to default policy text if loading fails
+        this.returnPolicyText = `<p>Customers are eligible to request returns under the following conditions. All return requests must be reviewed and approved by the admin before any refund or replacement is processed.</p>
+
+<h3>1. Wrong Item Delivered</h3>
+<p>If the item received is different from what was ordered, a return request must be submitted within 7 days of delivery.</p>
+<p>Upon verification, a full refund will be issued.</p>
+
+<h3>2. Damaged on Arrival</h3>
+<p>If the item is received in a damaged or defective condition, photo evidence must be provided.</p>
+<p>After verification by the admin, customers will be offered either a refund or a replacement.</p>
+
+<h3>3. Changed Mind</h3>
+<p>Returns due to a change of mind are accepted only if the product is unused and sealed.</p>
+<p>The customer is responsible for the return shipping costs.</p>
+<p>A refund will be processed after the returned product is inspected and approved.</p>
+
+<h3>4. Return Process</h3>
+<ul>
+<li>Submit return request through the order tracking page</li>
+<li>Provide clear photos of the item condition</li>
+<li>Package item securely for return shipping</li>
+<li>Wait for admin approval before shipping</li>
+<li>Return shipping costs are the responsibility of the customer for change of mind returns</li>
+</ul>
+
+<h3>5. Refund Timeline</h3>
+<ul>
+<li>Refunds will be processed within 5-7 business days after receiving the returned item</li>
+<li>Refunds will be issued to the original payment method</li>
+<li>Processing times may vary depending on your bank or payment provider</li>
+</ul>
+
+<h3>6. Contact Information</h3>
+<p>For questions about returns, please contact our customer service team.</p>`;
+        // Process fallback content for smart text wrapping
+        this.returnPolicyText = this.processContentForSmartWrapping(this.returnPolicyText);
+        this.returnPolicyHtml = this.sanitizer.bypassSecurityTrustHtml(this.returnPolicyText);
+        this.selectedPolicy = {
+          content: this.returnPolicyText
+        };
+        this.isLoadingPolicy = false;
+      }
+    });
+  }
+
+  /**
+   * Process HTML content for smart text wrapping
+   * This method ensures proper word wrapping by keeping words complete
+   */
+  private processContentForSmartWrapping(content: string): string {
+    // Create a temporary div to process the HTML content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    // Apply CSS to prevent word breaking
+    tempDiv.style.wordBreak = 'normal';
+    tempDiv.style.wordWrap = 'normal';
+    tempDiv.style.overflowWrap = 'normal';
+    tempDiv.style.hyphens = 'none';
+    
+    // Process all text nodes to ensure no word breaking
+    this.processTextNodesForNoBreaking(tempDiv);
+    
+    return tempDiv.innerHTML;
+  }
+
+  /**
+   * Recursively process text nodes to prevent word breaking
+   */
+  private processTextNodesForNoBreaking(element: HTMLElement): void {
+    const walker = document.createTreeWalker(
+      element,
+      NodeFilter.SHOW_TEXT,
+      null
+    );
+
+    const textNodes: Text[] = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node as Text);
+    }
+
+    textNodes.forEach(textNode => {
+      const text = textNode.textContent || '';
+      if (text.trim()) {
+        // Ensure text is wrapped in spans to prevent word breaking
+        const processedText = this.ensureNoWordBreaking(text);
+        if (processedText !== text) {
+          // Create a span element to wrap the text
+          const span = document.createElement('span');
+          span.textContent = processedText;
+          span.style.wordBreak = 'normal';
+          span.style.wordWrap = 'normal';
+          span.style.overflowWrap = 'normal';
+          span.style.hyphens = 'none';
+          span.style.whiteSpace = 'normal';
+          
+          // Replace the text node with the span
+          textNode.parentNode?.replaceChild(span, textNode);
+        }
+      }
+    });
+  }
+
+  /**
+   * Ensure no word breaking in text
+   */
+  private ensureNoWordBreaking(text: string): string {
+    // Split text into words and ensure they stay together
+    const words = text.split(/(\s+)/);
+    
+    return words.map(word => {
+      // If it's a space, return as is
+      if (/^\s+$/.test(word)) {
+        return word;
+      }
+      
+      // For actual words, ensure they stay complete
+      // Add non-breaking space if needed for very short words
+      if (word.length <= 3) {
+        return word.replace(/\s/g, '\u00A0'); // Non-breaking space
+      }
+      
+      return word;
+    }).join('');
+  }
+
+  /**
+   * Add soft hyphens to long words for better breaking
+   */
+  private addSoftHyphens(text: string): string {
+    // Return text as-is to keep words complete
+    return text;
+  }
+
+  /**
+   * Simple syllable detection for soft hyphenation
+   */
+  private getSyllables(word: string): string[] {
+    // Return word as single syllable to keep it complete
+    return [word];
   }
 
   loadOrderTracking() {
@@ -98,6 +262,10 @@ export class OrderTrackingComponent {
 
   goToReturnRequest() {
     this.showPolicyModal = true;
+  }
+
+  refreshReturnPolicy() {
+    this.getReturnPolicy();
   }
 
   onAgreePolicy() {

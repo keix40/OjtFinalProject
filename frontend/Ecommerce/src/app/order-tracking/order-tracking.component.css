@@ -442,3 +442,513 @@ body, .tracking-bg {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+
+/* Policy Content Styles for Quill HTML */
+.policy-content {
+  line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+}
+
+.policy-content h1,
+.policy-content h2,
+.policy-content h3,
+.policy-content h4,
+.policy-content h5,
+.policy-content h6 {
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content h1 {
+  font-size: 1.5rem;
+}
+
+.policy-content h2 {
+  font-size: 1.25rem;
+}
+
+.policy-content h3 {
+  font-size: 1.125rem;
+}
+
+.policy-content p {
+  margin-bottom: 0.75rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content ul,
+.policy-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content li {
+  margin-bottom: 0.25rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content strong,
+.policy-content b {
+  font-weight: 600;
+  color: #1f2937;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content em,
+.policy-content i {
+  font-style: italic;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content u {
+  text-decoration: underline;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content a:hover {
+  color: #1d4ed8;
+}
+
+.policy-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #6b7280;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.policy-content pre {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.policy-content pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Comprehensive word wrapping solution to prevent word breaking */
+.policy-content {
+  line-height: 1.6;
+  width: 100%;
+  max-width: 100%;
+  min-width: 600px;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  overflow-y: auto;
+  box-sizing: border-box;
+  text-align: left;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  display: block;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hide scrollbars for policy content but allow scrolling */
+.policy-content::-webkit-scrollbar {
+  display: none;
+}
+
+.policy-content {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Comprehensive word wrapping for all text elements */
+.policy-content h1,
+.policy-content h2,
+.policy-content h3,
+.policy-content h4,
+.policy-content h5,
+.policy-content h6 {
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+  width: 100%;
+  max-width: 100%;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  line-height: 1.4;
+  text-align: left;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content h1 {
+  font-size: 1.5rem;
+}
+
+.policy-content h2 {
+  font-size: 1.25rem;
+}
+
+.policy-content h3 {
+  font-size: 1.125rem;
+}
+
+.policy-content p {
+  margin-bottom: 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  line-height: 1.6;
+  text-align: justify;
+  text-justify: inter-word;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content ul,
+.policy-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 0.75rem;
+  width: calc(100% - 1.5rem);
+  max-width: calc(100% - 1.5rem);
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content li {
+  margin-bottom: 0.25rem;
+  width: 100%;
+  max-width: 100%;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  line-height: 1.5;
+  text-align: justify;
+  text-justify: inter-word;
+  display: list-item;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content strong,
+.policy-content b {
+  font-weight: 600;
+  color: #1f2937;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content em,
+.policy-content i {
+  font-style: italic;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content u {
+  text-decoration: underline;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content a {
+  color: #2563eb;
+  text-decoration: underline;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content a:hover {
+  color: #1d4ed8;
+}
+
+.policy-content blockquote {
+  border-left: 4px solid #e5e7eb;
+  padding-left: 1rem;
+  margin: 1rem 0;
+  font-style: italic;
+  color: #6b7280;
+  width: calc(100% - 1rem);
+  max-width: calc(100% - 1rem);
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  overflow-x: auto;
+  line-height: 1.6;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  display: inline;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content pre {
+  background-color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  width: calc(100% - 2rem);
+  max-width: calc(100% - 2rem);
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  line-height: 1.5;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+.policy-content pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Ensure all elements respect width constraints and prevent word breaking */
+.policy-content * {
+  max-width: 100%;
+  box-sizing: border-box;
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  overflow-x: auto;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+/* Ensure text containers don't overflow and keep words complete */
+.policy-content div {
+  word-wrap: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  white-space: normal;
+  min-width: 0;
+  overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+  -ms-hyphens: none;
+}
+
+/* Force no hyphenation anywhere */
+.policy-content {
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -moz-hyphens: none !important;
+  -ms-hyphens: none !important;
+  word-break: normal !important;
+  word-wrap: normal !important;
+  overflow-wrap: normal !important;
+}
+
+/* Ensure proper spacing and alignment */
+.policy-content > *:first-child {
+  margin-top: 0;
+}
+
+.policy-content > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Optimize text wrapping for better readability */
+.policy-content {
+  orphans: 2;
+  widows: 2;
+  -webkit-orphans: 2;
+  -webkit-widows: 2;
+}
+
+/* Ensure consistent spacing between elements */
+.policy-content > * + * {
+  margin-top: 0.5rem;
+}
+
+/* Special handling for long words - keep them complete */
+.policy-content {
+  word-spacing: normal;
+  letter-spacing: normal;
+}
+
+/* Ensure proper line breaks */
+.policy-content br {
+  display: block;
+  content: "";
+  margin-top: 0.5rem;
+}
+
+/* Additional force rules to prevent any word breaking */
+.policy-content,
+.policy-content * {
+  word-break: normal !important;
+  word-wrap: normal !important;
+  overflow-wrap: normal !important;
+  hyphens: none !important;
+  -webkit-hyphens: none !important;
+  -moz-hyphens: none !important;
+  -ms-hyphens: none !important;
+}
+
+/* Modal container for optimal width management */
+.return-policy-modal {
+  max-width: 90vw;
+  width: 600px;
+  max-height: 90vh;
+  overflow: hidden;
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.return-policy-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  min-width: 0;
+  display: block;
+  flex: 1;
+}
+
+/* Hide scrollbars but allow scrolling */
+.return-policy-content::-webkit-scrollbar {
+  display: none;
+}
+
+.return-policy-content {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox */
+}

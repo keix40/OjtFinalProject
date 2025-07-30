@@ -25,6 +25,11 @@ public class PolicyController {
         return policyService.getById(id);
     }
 
+    @GetMapping("/getreturnpolicy")
+    public PolicyResponseDTO getByTitle() {
+        return policyService.getByTitle("Return Policy");
+    }
+
     @PostMapping
     public PolicyResponseDTO create(@RequestBody PolicyRequestDTO dto) {
         return policyService.create(dto);
@@ -38,5 +43,11 @@ public class PolicyController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         policyService.delete(id);
+    }
+
+    @PostMapping("/seed-return-policy")
+    public String seedReturnPolicy() {
+        policyService.seedReturnPolicyIfNotExists();
+        return "Return policy seeded successfully";
     }
 }

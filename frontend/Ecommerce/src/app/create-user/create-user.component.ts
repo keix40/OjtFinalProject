@@ -12,14 +12,17 @@ interface RoleInfo {
 }
 
 interface CSVUser {
-  firstName: string;
-  lastName: string;
   email: string;
   phone?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  username?: string;
   role: string;
+  password?: string;
+  confirmPassword?: string;
   isActive: boolean;
-  addressType?: string;
   emailVerified?: boolean;
+  sendWelcomeEmail?: boolean;
 }
 
 @Component({
@@ -42,6 +45,8 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
   selectedRoleDetails: any = null;
   emailCheckMessage: string = '';
   emailCheckSuccess: boolean = false;
+  
+
 
   constructor(
     private formBuilder: FormBuilder,
@@ -73,8 +78,6 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
 
   createForm(): FormGroup {
     return this.formBuilder.group({
-      firstName: ['', [Validators.required, Validators.minLength(2)]],
-      lastName: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.pattern(/^[\+]?[1-9][\d]{0,15}$/)]],
       dateOfBirth: [''],
@@ -87,15 +90,9 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
         Validators.pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
       ]],
       confirmPassword: ['', [Validators.required]],
-      street: [''],
-      city: [''],
-      state: [''],
-      zipCode: [''],
-      country: [''],
       isActive: [true],
       emailVerified: [false],
-      sendWelcomeEmail: [true],
-      addressType: ['HOME']
+      sendWelcomeEmail: [true]
     }, { validators: this.passwordMatchValidator });
   }
 
@@ -131,8 +128,6 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
 
   fillSampleData(): void {
     this.userForm.patchValue({
-      firstName: 'John',
-      lastName: 'Doe',
       email: 'john.doe@gmail.com',
       phone: '+1234567890',
       dateOfBirth: '1990-01-01',
@@ -141,15 +136,9 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
       role: 'customer',
       password: 'Password123!',
       confirmPassword: 'Password123!',
-      street: '123 Main Street',
-      city: 'New York',
-      state: 'NY',
-      zipCode: '10001',
-      country: 'US',
       isActive: true,
       emailVerified: true,
-      sendWelcomeEmail: true,
-      addressType: 'HOME'
+      sendWelcomeEmail: true
     });
   }
 
@@ -253,32 +242,41 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
     // Map form values to backend DTO
     const selectedRole = this.roles.find(r => r.id == formValue.role);
     const payload = {
-      name: `${formValue.firstName} ${formValue.lastName}`.trim(),
+      name: formValue.email.split('@')[0], // Use email prefix as name
       email: formValue.email,
       password: formValue.password,
       gender: formValue.gender,
       dateOfBirth: formValue.dateOfBirth,
       phoneNumber: formValue.phone,
       role: selectedRole ? selectedRole.name : '',
-      address: formValue.street,
-      city: formValue.city,
-      state: formValue.state,
-      postalCode: formValue.zipCode,
-      country: formValue.country,
-      addressType: formValue.addressType || 'HOME',
+      address: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: '',
+      addressType: 'HOME',
       emailVerified: formValue.emailVerified,
       sendWelcomeEmail: formValue.sendWelcomeEmail
     };
     this.userService.createUserByAdmin(payload).subscribe({
       next: (res) => {
+        console.log('✅ User created successfully:', res);
         this.isSubmitting = false;
         this.createdUser = res;
-        // Optionally reset form
+        console.log('✅ createdUser set to:', this.createdUser);
+        // Reset form after setting createdUser
         this.userForm.reset();
+        this.userForm.patchValue({
+          isActive: true,
+          emailVerified: false,
+          sendWelcomeEmail: true
+        });
+        console.log('✅ Form reset, createdUser still:', this.createdUser);
       },
       error: (err) => {
+        console.log('❌ User creation error:', err);
         this.isSubmitting = false;
-        console.log('User creation error:', err); // Debug error structure
+        console.log('❌ Error structure:', err);
         if (err?.error?.message) {
           if (err.error.message.toLowerCase().includes('email')) {
             this.errorMessages['email'] = err.error.message;
@@ -312,8 +310,7 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
     this.userForm.patchValue({
       isActive: true,
       emailVerified: false,
-      sendWelcomeEmail: true,
-      addressType: 'HOME'
+      sendWelcomeEmail: true
     });
   }
 
@@ -396,9 +393,9 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
   }
 
   downloadTemplate(): void {
-    const csvContent = 'firstName,lastName,email,phone,role,isActive\n' +
-                      'John,Doe,john.doe@example.com,+1234567890,customer,true\n' +
-                      'Jane,Smith,jane.smith@example.com,+1234567891,staff,true';
+    const csvContent = 'email,phone,dateOfBirth,gender,username,role,password,confirmPassword,isActive,emailVerified,sendWelcomeEmail\n' +
+                      'john.doe@example.com,+1234567890,1990-01-15,male,johndoe,customer,Password123!,Password123!,true,false,true\n' +
+                      'jane.smith@example.com,+1234567891,1985-03-22,female,janesmith,staff,SecurePass456!,SecurePass456!,true,true,true';
     
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -409,20 +406,41 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
     window.URL.revokeObjectURL(url);
   }
 
-  importUsers(): void {
+  async importUsers(): Promise<void> {
     if (!this.csvData.length) return;
     this.isImporting = true;
     const results: { user: any, success: boolean, error?: string }[] = [];
     let completed = 0;
-    for (const csvUser of this.csvData) {
+
+    // First, validate all emails
+    const emailValidationResults = await this.validateAllEmails();
+    const validUsers = this.csvData.filter((user, index) => emailValidationResults[index]);
+
+    if (validUsers.length === 0) {
+      this.isImporting = false;
+      alert('No valid emails found. Please check your CSV data.');
+      return;
+    }
+
+    if (validUsers.length < this.csvData.length) {
+      const invalidCount = this.csvData.length - validUsers.length;
+      const proceed = confirm(`${invalidCount} users have invalid emails and will be skipped. Continue with ${validUsers.length} valid users?`);
+      if (!proceed) {
+        this.isImporting = false;
+        return;
+      }
+    }
+
+    // Process valid users
+    for (const csvUser of validUsers) {
       // Map CSV fields to backend DTO
       const selectedRole = this.roles.find(r => r.name.toLowerCase() === (csvUser.role || '').toLowerCase());
       const payload = {
-        name: `${csvUser.firstName} ${csvUser.lastName}`.trim(),
+        name: csvUser.email.split('@')[0], // Use email prefix as name
         email: csvUser.email,
         password: 'Password123!', // Default or random password, or add to CSV
-        gender: '',
-        dateOfBirth: '',
+        gender: csvUser.gender || '',
+        dateOfBirth: csvUser.dateOfBirth || '',
         phoneNumber: csvUser.phone || '',
         role: selectedRole ? selectedRole.name : '',
         address: '',
@@ -430,10 +448,11 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
         state: '',
         postalCode: '',
         country: '',
-        addressType: csvUser.addressType || 'HOME',
+        addressType: 'HOME',
         emailVerified: csvUser.emailVerified || false,
-        sendWelcomeEmail: true // Assuming sendWelcomeEmail is true for bulk import
+        sendWelcomeEmail: csvUser.sendWelcomeEmail !== undefined ? csvUser.sendWelcomeEmail : true
       };
+      
       this.userService.createUserByAdmin(payload).subscribe({
         next: (res) => {
           results.push({ user: csvUser, success: true });
@@ -445,16 +464,48 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
         }
       });
     }
+
     const checkDone = () => {
       completed++;
-      if (completed === this.csvData.length) {
+      if (completed === validUsers.length) {
         this.isImporting = false;
-        // Show summary (could be a modal, alert, or UI section)
+        // Show detailed summary
         const successCount = results.filter(r => r.success).length;
         const failCount = results.length - successCount;
-        alert(`Bulk import complete. Success: ${successCount}, Failed: ${failCount}`);
-        // Optionally, show details in the UI
+        const invalidEmailCount = this.csvData.length - validUsers.length;
+        
+        let summaryMessage = `Bulk import complete.\n\n`;
+        summaryMessage += `✅ Successfully imported: ${successCount} users\n`;
+        summaryMessage += `❌ Failed to import: ${failCount} users\n`;
+        if (invalidEmailCount > 0) {
+          summaryMessage += `⚠️ Skipped (invalid email): ${invalidEmailCount} users\n`;
+        }
+        
+        if (failCount > 0) {
+          summaryMessage += `\nFailed users:\n`;
+          results.filter(r => !r.success).forEach(result => {
+            summaryMessage += `• ${result.user.firstName} ${result.user.lastName} (${result.user.email}): ${result.error}\n`;
+          });
+        }
+        
+        alert(summaryMessage);
       }
     };
   }
+
+  private async validateAllEmails(): Promise<boolean[]> {
+    const validationPromises = this.csvData.map(async (user) => {
+      try {
+        const realEmailRes = await this.userService.validateRealEmail(user.email).toPromise();
+        return !!(realEmailRes && realEmailRes.real);
+      } catch (e) {
+        console.error(`Failed to validate email ${user.email}:`, e);
+        return false;
+      }
+    });
+
+    return Promise.all(validationPromises);
+  }
+
+
 }

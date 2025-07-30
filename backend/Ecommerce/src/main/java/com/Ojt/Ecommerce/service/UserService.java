@@ -20,6 +20,7 @@ public interface UserService {
     List<User> getAllUsers();
 
     public RegisterRequest updateUser(Long id, RegisterRequest userDTO);
+    
     void assignRoleToUser(Long userId, Long roleId);
     public List<User> findUsersByRoleId(Long roleId) ;
 

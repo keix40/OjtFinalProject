@@ -274,8 +274,14 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       profileImage: profileImageUrl || this.userDetails?.profileImage || '',
     };
 
-    // Short debug
-    console.log('Updating user:', updatedData);
+    // Debug: Show exactly what's being sent
+    console.log('=== FRONTEND DEBUG ===');
+    console.log('Current user details:', this.userDetails);
+    console.log('Form values:', this.personalInfoForm.value);
+    console.log('Sending updated data:', updatedData);
+    console.log('Name changed?', this.userDetails?.name !== updatedData.name);
+    console.log('From:', this.userDetails?.name, 'To:', updatedData.name);
+    console.log('=== END FRONTEND DEBUG ===');
 
     this.authService.updateUserDetails(updatedData).subscribe({
       next: (response: any) => {

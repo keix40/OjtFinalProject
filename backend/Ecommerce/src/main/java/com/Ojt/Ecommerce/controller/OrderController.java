@@ -1,5 +1,6 @@
 package com.Ojt.Ecommerce.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -30,28 +31,20 @@ import static com.Ojt.Ecommerce.constants.PermissionConstants.ORDERS_VIEW;
 import com.Ojt.Ecommerce.dto.DiscountDTO;
 import com.Ojt.Ecommerce.dto.UserOrderDTO;
 import com.Ojt.Ecommerce.dto.UserOrderListDTO;
+import com.Ojt.Ecommerce.dto.BrandSalesDTO;
+import com.Ojt.Ecommerce.dto.CategorySalesDTO;
+import com.Ojt.Ecommerce.dto.ProductSalesDTO;
+import com.Ojt.Ecommerce.dto.DeliveryServiceDTO;
+import com.Ojt.Ecommerce.dto.AddressDTO;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import com.Ojt.Ecommerce.entity.UserOrder;
 import com.Ojt.Ecommerce.service.DeliveryService;
 import com.Ojt.Ecommerce.service.OrderService;
 import com.Ojt.Ecommerce.service.UserActivityService;
 import com.Ojt.Ecommerce.service.SessionService;
 import com.Ojt.Ecommerce.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.Objects;
-import com.Ojt.Ecommerce.annotations.LogActivity;
-import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
-import com.Ojt.Ecommerce.annotations.RequiresPermission;
-import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -601,5 +594,237 @@ public class OrderController {
     public ResponseEntity<List<Map<String, Object>>> getCustomerAcquisition(@RequestParam(defaultValue = "day") String timeFrame) {
         List<Map<String, Object>> acquisition = sessionService.getCustomerAcquisition(timeFrame);
         return ResponseEntity.ok(acquisition);
+    }
+
+    // Analytics endpoints for pie charts
+    @GetMapping("/analytics/brand-sales")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<BrandSalesDTO>> getBrandSalesData(@RequestParam(defaultValue = "day") String timeFrame) {
+        LocalDateTime startDate, endDate;
+        LocalDateTime now = LocalDateTime.now();
+        
+        switch (timeFrame.toLowerCase()) {
+            case "hour":
+                endDate = now;
+                startDate = now.minusHours(1);
+                break;
+            case "week":
+                endDate = now;
+                startDate = now.minusWeeks(1);
+                break;
+            case "month":
+                endDate = now;
+                startDate = now.minusMonths(1);
+                break;
+            case "year":
+                endDate = now;
+                startDate = now.minusYears(1);
+                break;
+            case "day":
+            default:
+                endDate = now;
+                startDate = now.minusDays(1);
+                break;
+        }
+
+        List<Object[]> results = service.getBrandSalesData(startDate, endDate);
+        List<BrandSalesDTO> brandSales = new ArrayList<>();
+        
+        String[] colors = {"#3B82F6", "#10B981", "#F59E0B", "#8B5CF6", "#6B7280", "#EF4444", "#06B6D4", "#84CC16"};
+        int colorIndex = 0;
+        
+        for (Object[] result : results) {
+            String name = (String) result[0];
+            Long value = (Long) result[1];
+            String color = colors[colorIndex % colors.length];
+            
+            brandSales.add(new BrandSalesDTO(name, value, color));
+            colorIndex++;
+        }
+        
+        return ResponseEntity.ok(brandSales);
+    }
+
+    @GetMapping("/analytics/category-sales")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<CategorySalesDTO>> getCategorySalesData(@RequestParam(defaultValue = "day") String timeFrame) {
+        LocalDateTime startDate, endDate;
+        LocalDateTime now = LocalDateTime.now();
+        
+        switch (timeFrame.toLowerCase()) {
+            case "hour":
+                endDate = now;
+                startDate = now.minusHours(1);
+                break;
+            case "week":
+                endDate = now;
+                startDate = now.minusWeeks(1);
+                break;
+            case "month":
+                endDate = now;
+                startDate = now.minusMonths(1);
+                break;
+            case "year":
+                endDate = now;
+                startDate = now.minusYears(1);
+                break;
+            case "day":
+            default:
+                endDate = now;
+                startDate = now.minusDays(1);
+                break;
+        }
+
+        List<Object[]> results = service.getCategorySalesData(startDate, endDate);
+        List<CategorySalesDTO> categorySales = new ArrayList<>();
+        
+        String[] colors = {"#EF4444", "#06B6D4", "#84CC16", "#F97316", "#EC4899", "#3B82F6", "#10B981", "#F59E0B"};
+        int colorIndex = 0;
+        
+        for (Object[] result : results) {
+            String name = (String) result[0];
+            Long value = (Long) result[1];
+            String color = colors[colorIndex % colors.length];
+            
+            categorySales.add(new CategorySalesDTO(name, value, color));
+            colorIndex++;
+        }
+        
+        return ResponseEntity.ok(categorySales);
+    }
+
+    @GetMapping("/analytics/product-sales")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<ProductSalesDTO>> getProductSalesData(@RequestParam(defaultValue = "day") String timeFrame) {
+        LocalDateTime startDate, endDate;
+        LocalDateTime now = LocalDateTime.now();
+        
+        switch (timeFrame.toLowerCase()) {
+            case "hour":
+                endDate = now;
+                startDate = now.minusHours(1);
+                break;
+            case "week":
+                endDate = now;
+                startDate = now.minusWeeks(1);
+                break;
+            case "month":
+                endDate = now;
+                startDate = now.minusMonths(1);
+                break;
+            case "year":
+                endDate = now;
+                startDate = now.minusYears(1);
+                break;
+            case "day":
+            default:
+                endDate = now;
+                startDate = now.minusDays(1);
+                break;
+        }
+
+        List<Object[]> results = service.getProductSalesData(startDate, endDate);
+        List<ProductSalesDTO> productSales = new ArrayList<>();
+        
+        String[] colors = {"#6366F1", "#059669", "#DC2626", "#7C3AED", "#9CA3AF", "#3B82F6", "#10B981", "#F59E0B"};
+        int colorIndex = 0;
+        
+        for (Object[] result : results) {
+            String name = (String) result[0];
+            Long value = (Long) result[1];
+            String color = colors[colorIndex % colors.length];
+            
+            productSales.add(new ProductSalesDTO(name, value, color));
+            colorIndex++;
+        }
+        
+        return ResponseEntity.ok(productSales);
+    }
+
+    @GetMapping("/analytics/delivery-services")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<DeliveryServiceDTO>> getDeliveryServiceData(@RequestParam(defaultValue = "day") String timeFrame) {
+        LocalDateTime startDate, endDate;
+        LocalDateTime now = LocalDateTime.now();
+        
+        switch (timeFrame.toLowerCase()) {
+            case "hour":
+                endDate = now;
+                startDate = now.minusHours(1);
+                break;
+            case "week":
+                endDate = now;
+                startDate = now.minusWeeks(1);
+                break;
+            case "month":
+                endDate = now;
+                startDate = now.minusMonths(1);
+                break;
+            case "year":
+                endDate = now;
+                startDate = now.minusYears(1);
+                break;
+            case "day":
+            default:
+                endDate = now;
+                startDate = now.minusDays(1);
+                break;
+        }
+
+        List<Object[]> results = service.getDeliveryServiceData(startDate, endDate);
+        List<DeliveryServiceDTO> deliveryServices = new ArrayList<>();
+        
+        String[] colors = {"#059669", "#3B82F6", "#F59E0B", "#8B5CF6", "#EF4444", "#06B6D4", "#84CC16", "#EC4899"};
+        int colorIndex = 0;
+        
+        for (Object[] result : results) {
+            String name = (String) result[0];
+            Long value = (Long) result[1];
+            String color = colors[colorIndex % colors.length];
+
+            deliveryServices.add(new DeliveryServiceDTO(
+                    null,              // id
+                    name,              // name
+                    BigDecimal.ZERO,   // feePerKm
+                    null,              // baseAddress
+                    null,              // phoneNumber
+                    value,             // value
+                    color              // color
+            ));
+
+            colorIndex++;
+        }
+        
+        return ResponseEntity.ok(deliveryServices);
+    }
+
+    // Debug endpoint to test basic data
+    @GetMapping("/analytics/debug")
+    public ResponseEntity<Map<String, Object>> debugData() {
+        Map<String, Object> debugInfo = new HashMap<>();
+        
+        try {
+            // Test basic order count
+            long totalOrders = service.getTotalOrderCount();
+            debugInfo.put("totalOrders", totalOrders);
+            
+            // Test delivered orders count
+            long deliveredOrders = service.getDeliveredOrderCount();
+            debugInfo.put("deliveredOrders", deliveredOrders);
+            
+            // Test brand count
+            long brandCount = service.getBrandCount();
+            debugInfo.put("brandCount", brandCount);
+            
+            debugInfo.put("status", "success");
+            debugInfo.put("message", "Debug data retrieved successfully");
+            
+        } catch (Exception e) {
+            debugInfo.put("status", "error");
+            debugInfo.put("message", "Error: " + e.getMessage());
+            debugInfo.put("exception", e.getClass().getSimpleName());
+        }
+        
+        return ResponseEntity.ok(debugInfo);
     }
 }

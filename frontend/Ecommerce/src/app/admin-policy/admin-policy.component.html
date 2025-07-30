@@ -277,7 +277,7 @@
      class="fixed inset-0 z-50 flex items-center justify-center p-4"
      (click)="closePolicyDetail()">
   <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-  <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden" (click)="$event.stopPropagation()">
+  <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto scrollbar-hide" style="max-height: 90vh;" (click)="$event.stopPropagation()">
     
     <!-- Modal Header -->
     <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
@@ -302,15 +302,15 @@
 
     <!-- Modal Content -->
     <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-      <div class="policy-content-full prose prose-sm max-w-none" [innerHTML]="selectedPolicy.content"></div>
+      <div class="policy-content-full prose prose-sm max-w-none overflow-y-auto scrollbar-hide" style="max-height: 90vh;" [innerHTML]="selectedPolicy.content"></div>
     </div>
 
     <!-- Modal Footer -->
     <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
       <div class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
+        <!-- <div class="flex items-center space-x-4">
           <span class="text-sm text-gray-500">Policy ID: {{ selectedPolicy.id }}</span>
-        </div>
+        </div> -->
         <div class="flex items-center space-x-3">
           <button 
             (click)="editPolicy(selectedPolicy)"

@@ -49,6 +49,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   customerSegmentation: any[] = [];
   customerAcquisitionData: any[] = [];
 
+  // Sales Analytics Data
+  brandSalesData: any[] = [];
+  categorySalesData: any[] = [];
+  productSalesData: any[] = [];
+  deliveryServiceData: any[] = [];
+
   // fetchOnlineAdminCount(): void {
   //   this.adminUserService.getAdminUsersOnlineStatus().subscribe(statusMap => {
   //     this.onlineAdminCount = Object.values(statusMap).filter((s: any) => s.isOnline).length;
@@ -93,6 +99,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   customerAcquisitionChart: any;
   customerDistributionChart: any;
   profileViewsChart: any;
+  
+  // Sales Analytics Chart instances
+  brandSalesChart: any;
+  categorySalesChart: any;
+  productSalesChart: any;
+  deliveryServiceChart: any;
 
   constructor(
     private dashboardService: DashboardService,
@@ -219,7 +231,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                       console.log('VIP Tier Data received:', vipTierData);
                       this.customerSegmentation = vipTierData;
                       this.segmentationData = vipTierData; // Update the display data
-                      this.totalCustomers = vipTierData.reduce((sum: number, tier: any) => sum + tier.value, 0);
+                      this.totalCustomers = vipTierData.filter((tier: any) => tier.value > 0).reduce((sum: number, tier: any) => sum + tier.value, 0);
                       console.log('Total customers:', this.totalCustomers);
                       console.log('Segmentation data updated:', this.segmentationData);
                       this.updateCustomerAcqChart();
@@ -228,10 +240,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                       console.error('Error fetching VIP tier data:', error);
                       // Set default data on error
                       this.segmentationData = [
-                        { name: 'Regular', color: '#708090', value: 0 },
-                        { name: 'Silver', color: '#C0C0C0', value: 0 },
-                        { name: 'Gold', color: '#FFD700', value: 0 },
-                        { name: 'Platinum', color: '#E5E4E2', value: 0 }
+                        { name: 'Regular', color: '#374151', value: 0 },
+                        { name: 'Silver', color: '#9CA3AF', value: 0 },
+                        { name: 'Gold', color: '#F59E0B', value: 0 },
+                        { name: 'Platinum', color: '#E5E7EB', value: 0 }
                       ];
                       this.totalCustomers = 0;
                       this.updateCustomerAcqChart();
@@ -249,6 +261,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                       console.error('Error fetching customer acquisition:', error);
                     }
                   });
+
+                  // Refresh sales analytics charts
+                  this.createSalesAnalyticsCharts();
                 });
               });
             });
@@ -265,6 +280,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // Create charts after view is initialized
     setTimeout(() => {
       this.createCustomerDistributionPieChart();
+      this.createSalesAnalyticsCharts();
     }, 100);
   }
 
@@ -279,6 +295,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.stompClient.deactivate();
     }
     Object.values(this.charts).forEach(chart => chart.destroy());
+    
+    // Destroy sales analytics charts
+    if (this.brandSalesChart) {
+      this.brandSalesChart.destroy();
+    }
+    if (this.categorySalesChart) {
+      this.categorySalesChart.destroy();
+    }
+    if (this.productSalesChart) {
+      this.productSalesChart.destroy();
+    }
+    if (this.deliveryServiceChart) {
+      this.deliveryServiceChart.destroy();
+    }
   }
 
   changeTimeFrame(frame: 'hour'|'day'|'week'|'month'|'year'): void {
@@ -286,6 +316,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.refreshDashboard();
     this.updateSalesTrendChart();
     this.updateUserMetrics();
+    this.createSalesAnalyticsCharts();
   }
 
   updateDashboard(totalSales: number, trend: any[]): void {
@@ -453,6 +484,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.updateCustomerAcqChart();
     }, 500);
+  }
+
+  private createSalesAnalyticsCharts(): void {
+    console.log('🎯 createSalesAnalyticsCharts() called');
+    console.log('📊 Current timeFrame:', this.currentTimeFrame);
+    
+    // Load dynamic data from API
+    this.loadBrandSalesData();
+    this.loadCategorySalesData();
+    this.loadProductSalesData();
+    this.loadDeliveryServiceData();
   }
 
   private createMiniChart(canvasId: string, data: any[], color: string, type = 'line', labels?: string[]): void {
@@ -803,11 +845,144 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private generateCustomerSegmentationData(): any[] {
     return [
-      { name: "Platinum", value: 2450, color: "#FFD700" },
-      { name: "Diamond", value: 1890, color: "#00CED1" },
-      { name: "Silver", value: 3420, color: "#C0C0C0" },
-      { name: "No Level", value: 5240, color: "#708090" },
+      { name: "Regular", value: 1, color: "#374151" }, // Dark grey for regular customers
+      { name: "Silver", value: 0, color: "#9CA3AF" }, // Light grey for silver
+      { name: "Gold", value: 1, color: "#F59E0B" }, // Amber/gold for gold tier
+      { name: "Platinum", value: 0, color: "#E5E7EB" }, // Very light grey for platinum
     ];
+  }
+
+  private generateBrandSalesData(): any[] {
+    return [
+      { name: "Nike", value: 1250, color: "#3B82F6" }, // Blue
+      { name: "Adidas", value: 980, color: "#10B981" }, // Emerald
+      { name: "Apple", value: 750, color: "#F59E0B" }, // Amber
+      { name: "Samsung", value: 620, color: "#8B5CF6" }, // Purple
+      { name: "Others", value: 400, color: "#6B7280" }  // Gray
+    ];
+  }
+
+  private generateCategorySalesData(): any[] {
+    return [
+      { name: "Electronics", value: 2100, color: "#EF4444" }, // Red
+      { name: "Fashion", value: 1800, color: "#06B6D4" }, // Cyan
+      { name: "Home & Garden", value: 950, color: "#84CC16" }, // Lime
+      { name: "Sports", value: 720, color: "#F97316" }, // Orange
+      { name: "Books", value: 480, color: "#EC4899" }  // Pink
+    ];
+  }
+
+  private generateProductSalesData(): any[] {
+    return [
+      { name: "iPhone 15", value: 850, color: "#6366F1" }, // Indigo
+      { name: "Nike Air Max", value: 720, color: "#059669" }, // Emerald
+      { name: "MacBook Pro", value: 680, color: "#DC2626" }, // Red
+      { name: "Samsung TV", value: 520, color: "#7C3AED" }, // Violet
+      { name: "Others", value: 1230, color: "#9CA3AF" }  // Gray
+    ];
+  }
+
+  private generateDeliveryServiceData(): any[] {
+    return [
+      { name: "Express Delivery", value: 1850, color: "#059669" }, // Emerald
+      { name: "Standard Shipping", value: 1420, color: "#3B82F6" }, // Blue
+      { name: "Same Day Delivery", value: 680, color: "#F59E0B" }, // Amber
+      { name: "Free Shipping", value: 950, color: "#8B5CF6" }, // Purple
+      { name: "International", value: 320, color: "#EF4444" }  // Red
+    ];
+  }
+
+  // Load dynamic data from API
+  private loadBrandSalesData(): void {
+    console.log('🔄 Loading brand sales data for timeFrame:', this.currentTimeFrame);
+    this.dashboardService.getBrandSalesData(this.currentTimeFrame).subscribe({
+      next: (data: any[]) => {
+        console.log('✅ Brand sales data received:', data);
+        this.brandSalesData = data;
+        this.createBrandSalesPieChart();
+      },
+      error: (error) => {
+        console.error('❌ Error loading brand sales data:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url
+        });
+        // Remove static data fallback - show empty chart instead
+        this.brandSalesData = [];
+        this.createBrandSalesPieChart();
+      }
+    });
+  }
+
+  private loadCategorySalesData(): void {
+    console.log('🔄 Loading category sales data for timeFrame:', this.currentTimeFrame);
+    this.dashboardService.getCategorySalesData(this.currentTimeFrame).subscribe({
+      next: (data: any[]) => {
+        console.log('✅ Category sales data received:', data);
+        this.categorySalesData = data;
+        this.createCategorySalesPieChart();
+      },
+      error: (error) => {
+        console.error('❌ Error loading category sales data:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url
+        });
+        // Remove static data fallback - show empty chart instead
+        this.categorySalesData = [];
+        this.createCategorySalesPieChart();
+      }
+    });
+  }
+
+  private loadProductSalesData(): void {
+    console.log('🔄 Loading product sales data for timeFrame:', this.currentTimeFrame);
+    this.dashboardService.getProductSalesData(this.currentTimeFrame).subscribe({
+      next: (data: any[]) => {
+        console.log('✅ Product sales data received:', data);
+        this.productSalesData = data;
+        this.createProductSalesPieChart();
+      },
+      error: (error) => {
+        console.error('❌ Error loading product sales data:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url
+        });
+        // Remove static data fallback - show empty chart instead
+        this.productSalesData = [];
+        this.createProductSalesPieChart();
+      }
+    });
+  }
+
+  private loadDeliveryServiceData(): void {
+    console.log('🔄 Loading delivery service data for timeFrame:', this.currentTimeFrame);
+    this.dashboardService.getDeliveryServiceData(this.currentTimeFrame).subscribe({
+      next: (data: any[]) => {
+        console.log('✅ Delivery service data received:', data);
+        this.deliveryServiceData = data;
+        this.createDeliveryServicePieChart();
+      },
+      error: (error) => {
+        console.error('❌ Error loading delivery service data:', error);
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.status,
+          statusText: error.statusText,
+          url: error.url
+        });
+        // Remove static data fallback - show empty chart instead
+        this.deliveryServiceData = [];
+        this.createDeliveryServicePieChart();
+      }
+    });
   }
 
   private getHourlyMultiplier(hour: number): number {
@@ -1135,50 +1310,55 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.customerDistributionChart.destroy();
     }
     
-    // Prepare data for pie chart
-    const labels = this.segmentationData.map(tier => tier.name);
-    const data = this.segmentationData.map(tier => tier.value);
-    const colors = this.segmentationData.map(tier => tier.color);
+    // Filter out zero values and prepare data for pie chart
+    const filteredData = this.segmentationData.filter(tier => tier.value > 0);
+    const labels = filteredData.map(tier => tier.name);
+    const data = filteredData.map(tier => tier.value);
+    const colors = filteredData.map(tier => tier.color);
     
-    // Define tier icons
-                  const tierIcons: { [key: string]: string } = {
-                'Regular': '👤',
-                'Silver': '🥈',
-                'Gold': '🥇',
-                'Platinum': '👑',
-                'Diamond': '💎',
-                'Ruby': '💎',
-                'Emerald': '💎',
-                // Default icon for any new tiers
-                'default': '👤'
-              };
+    // Define professional tier icons
+    const tierIcons: { [key: string]: string } = {
+      'Regular': '👤',
+      'Silver': '🥈',
+      'Gold': '🥇',
+      'Platinum': '👑',
+      'Diamond': '💎',
+      'Ruby': '💎',
+      'Emerald': '💎',
+      'default': '👤'
+    };
     
     this.customerDistributionChart = new Chart(ctx, {
-      type: 'pie',
+      type: 'doughnut',
       data: {
-                          labels: labels.map(label => `${tierIcons[label] || tierIcons['default']} ${label}`),
+        labels: labels.map(label => `${tierIcons[label] || tierIcons['default']} ${label}`),
         datasets: [{
           data: data,
           backgroundColor: colors,
           borderColor: '#ffffff',
-          borderWidth: 2,
+          borderWidth: 3,
           hoverBorderColor: '#ffffff',
-          hoverBorderWidth: 3
+          hoverBorderWidth: 4,
+          hoverOffset: 8
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        cutout: '60%',
         plugins: {
           legend: {
             position: 'bottom',
             labels: {
-              padding: 20,
+              padding: 25,
               usePointStyle: true,
-              font: {
-                size: 12,
-                weight: 'bold'
-              },
+              pointStyle: 'circle',
+                              font: {
+                  size: 13,
+                  weight: 600,
+                  family: 'Inter, system-ui, sans-serif'
+                },
+              color: '#374151',
               generateLabels: function(chart: any) {
                 const data = chart.data;
                 if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
@@ -1204,16 +1384,688 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             }
           },
           tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            cornerRadius: 8,
+            displayColors: true,
+            callbacks: {
+              title: function(context: any) {
+                return context[0].label.replace(/[👤🥈🥇👑💎]/g, '').trim();
+              },
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `Customers: ${value} (${percentage}%)`;
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 1000,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  createBrandSalesPieChart() {
+    console.log('📈 Creating brand sales pie chart with data:', this.brandSalesData);
+    const ctx = document.getElementById('brandSalesChart') as HTMLCanvasElement;
+    if (!ctx) {
+      console.error('❌ Brand sales canvas element not found');
+      return;
+    }
+    
+    // Destroy existing chart if it exists
+    if (this.brandSalesChart) {
+      this.brandSalesChart.destroy();
+    }
+    
+    // Use actual data (not static generation)
+    const filteredData = this.brandSalesData.filter(item => item.value > 0);
+    console.log('📊 Filtered brand sales data:', filteredData);
+    
+    // Check if we have data
+    if (filteredData.length === 0) {
+      // Show "No Data" message
+      this.brandSalesChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['No Data'],
+          datasets: [{
+            data: [1],
+            backgroundColor: ['#f3f4f6'],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 800,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+      
+      // Add "No Data" text overlay
+      const chartContainer = ctx.parentElement;
+      if (chartContainer) {
+        let noDataText = chartContainer.querySelector('.no-data-text');
+        if (!noDataText) {
+          noDataText = document.createElement('div');
+          noDataText.className = 'no-data-text absolute inset-0 flex items-center justify-center text-slate-500 text-sm font-medium';
+          noDataText.textContent = 'No brand sales data available';
+          chartContainer.appendChild(noDataText);
+        }
+      }
+      return;
+    }
+    
+    // Remove any existing "No Data" text
+    const chartContainer = ctx.parentElement;
+    if (chartContainer) {
+      const noDataText = chartContainer.querySelector('.no-data-text');
+      if (noDataText) {
+        noDataText.remove();
+      }
+    }
+    
+    const labels = filteredData.map(item => item.name);
+    const data = filteredData.map(item => item.value);
+    const colors = filteredData.map(item => item.color);
+    
+    this.brandSalesChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverBorderColor: '#ffffff',
+          hoverBorderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 8,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 9,
+                weight: 400,
+                family: 'Inter, system-ui, sans-serif'
+              },
+              color: '#374151',
+              generateLabels: function(chart: any) {
+                const data = chart.data;
+                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
+                  return data.labels.map((label: string, i: number) => {
+                    const dataset = data.datasets[0];
+                    const value = dataset.data[i] as number;
+                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
+                    
+                    // Truncate long labels and show only percentage
+                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
+                    
+                    return {
+                      text: `${shortLabel} ${percentage}%`,
+                      fillStyle: dataset.backgroundColor[i],
+                      strokeStyle: dataset.backgroundColor[i],
+                      lineWidth: 0,
+                      pointStyle: 'circle',
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            cornerRadius: 6,
+            displayColors: true,
             callbacks: {
               label: function(context: any) {
                 const label = context.label || '';
                 const value = context.parsed;
                 const total = context.dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
-                return `${label}: ${value} (${percentage}%)`;
+                return `${label}: ${value} sales (${percentage}%)`;
               }
             }
           }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 800,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  createCategorySalesPieChart() {
+    console.log('📈 Creating category sales pie chart with data:', this.categorySalesData);
+    const ctx = document.getElementById('categorySalesChart') as HTMLCanvasElement;
+    if (!ctx) {
+      console.error('❌ Category sales canvas element not found');
+      return;
+    }
+    
+    // Destroy existing chart if it exists
+    if (this.categorySalesChart) {
+      this.categorySalesChart.destroy();
+    }
+    
+    // Use actual data (not static generation)
+    const filteredData = this.categorySalesData.filter(item => item.value > 0);
+    console.log('📊 Filtered category sales data:', filteredData);
+    
+    // Check if we have data
+    if (filteredData.length === 0) {
+      // Show "No Data" message
+      this.categorySalesChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['No Data'],
+          datasets: [{
+            data: [1],
+            backgroundColor: ['#f3f4f6'],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 800,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+      
+      // Add "No Data" text overlay
+      const chartContainer = ctx.parentElement;
+      if (chartContainer) {
+        let noDataText = chartContainer.querySelector('.no-data-text');
+        if (!noDataText) {
+          noDataText = document.createElement('div');
+          noDataText.className = 'no-data-text absolute inset-0 flex items-center justify-center text-slate-500 text-sm font-medium';
+          noDataText.textContent = 'No category sales data available';
+          chartContainer.appendChild(noDataText);
+        }
+      }
+      return;
+    }
+    
+    // Remove any existing "No Data" text
+    const chartContainer = ctx.parentElement;
+    if (chartContainer) {
+      const noDataText = chartContainer.querySelector('.no-data-text');
+      if (noDataText) {
+        noDataText.remove();
+      }
+    }
+    
+    const labels = filteredData.map(item => item.name);
+    const data = filteredData.map(item => item.value);
+    const colors = filteredData.map(item => item.color);
+    
+    this.categorySalesChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverBorderColor: '#ffffff',
+          hoverBorderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 8,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 9,
+                weight: 400,
+                family: 'Inter, system-ui, sans-serif'
+              },
+              color: '#374151',
+              generateLabels: function(chart: any) {
+                const data = chart.data;
+                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
+                  return data.labels.map((label: string, i: number) => {
+                    const dataset = data.datasets[0];
+                    const value = dataset.data[i] as number;
+                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
+                    
+                    // Truncate long labels and show only percentage
+                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
+                    
+                    return {
+                      text: `${shortLabel} ${percentage}%`,
+                      fillStyle: dataset.backgroundColor[i],
+                      strokeStyle: dataset.backgroundColor[i],
+                      lineWidth: 0,
+                      pointStyle: 'circle',
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            cornerRadius: 6,
+            displayColors: true,
+            callbacks: {
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${label}: ${value} sales (${percentage}%)`;
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 800,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  createProductSalesPieChart() {
+    console.log('📈 Creating product sales pie chart with data:', this.productSalesData);
+    const ctx = document.getElementById('productSalesChart') as HTMLCanvasElement;
+    if (!ctx) {
+      console.error('❌ Product sales canvas element not found');
+      return;
+    }
+    
+    // Destroy existing chart if it exists
+    if (this.productSalesChart) {
+      this.productSalesChart.destroy();
+    }
+    
+    // Use actual data (not static generation)
+    const filteredData = this.productSalesData.filter(item => item.value > 0);
+    console.log('📊 Filtered product sales data:', filteredData);
+    
+    // Check if we have data
+    if (filteredData.length === 0) {
+      // Show "No Data" message
+      this.productSalesChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['No Data'],
+          datasets: [{
+            data: [1],
+            backgroundColor: ['#f3f4f6'],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 800,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+      
+      // Add "No Data" text overlay
+      const chartContainer = ctx.parentElement;
+      if (chartContainer) {
+        let noDataText = chartContainer.querySelector('.no-data-text');
+        if (!noDataText) {
+          noDataText = document.createElement('div');
+          noDataText.className = 'no-data-text absolute inset-0 flex items-center justify-center text-slate-500 text-sm font-medium';
+          noDataText.textContent = 'No product sales data available';
+          chartContainer.appendChild(noDataText);
+        }
+      }
+      return;
+    }
+    
+    // Remove any existing "No Data" text
+    const chartContainer = ctx.parentElement;
+    if (chartContainer) {
+      const noDataText = chartContainer.querySelector('.no-data-text');
+      if (noDataText) {
+        noDataText.remove();
+      }
+    }
+    
+    const labels = filteredData.map(item => item.name);
+    const data = filteredData.map(item => item.value);
+    const colors = filteredData.map(item => item.color);
+    
+    this.productSalesChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverBorderColor: '#ffffff',
+          hoverBorderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 8,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 9,
+                weight: 400,
+                family: 'Inter, system-ui, sans-serif'
+              },
+              color: '#374151',
+              generateLabels: function(chart: any) {
+                const data = chart.data;
+                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
+                  return data.labels.map((label: string, i: number) => {
+                    const dataset = data.datasets[0];
+                    const value = dataset.data[i] as number;
+                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
+                    
+                    // Truncate long labels and show only percentage
+                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
+                    
+                    return {
+                      text: `${shortLabel} ${percentage}%`,
+                      fillStyle: dataset.backgroundColor[i],
+                      strokeStyle: dataset.backgroundColor[i],
+                      lineWidth: 0,
+                      pointStyle: 'circle',
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            cornerRadius: 6,
+            displayColors: true,
+            callbacks: {
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${label}: ${value} sales (${percentage}%)`;
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 800,
+          easing: 'easeOutQuart'
+        }
+      }
+    });
+  }
+
+  createDeliveryServicePieChart() {
+    console.log('📈 Creating delivery service pie chart with data:', this.deliveryServiceData);
+    const ctx = document.getElementById('deliveryServiceChart') as HTMLCanvasElement;
+    if (!ctx) {
+      console.error('❌ Delivery service canvas element not found');
+      return;
+    }
+    
+    // Destroy existing chart if it exists
+    if (this.deliveryServiceChart) {
+      this.deliveryServiceChart.destroy();
+    }
+    
+    // Use actual data (not static generation)
+    const filteredData = this.deliveryServiceData.filter(item => item.value > 0);
+    console.log('📊 Filtered delivery service data:', filteredData);
+    
+    // Check if we have data
+    if (filteredData.length === 0) {
+      // Show "No Data" message
+      this.deliveryServiceChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['No Data'],
+          datasets: [{
+            data: [1],
+            backgroundColor: ['#f3f4f6'],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              enabled: false
+            }
+          },
+          animation: {
+            animateRotate: true,
+            animateScale: true,
+            duration: 800,
+            easing: 'easeOutQuart'
+          }
+        }
+      });
+      
+      // Add "No Data" text overlay
+      const chartContainer = ctx.parentElement;
+      if (chartContainer) {
+        let noDataText = chartContainer.querySelector('.no-data-text');
+        if (!noDataText) {
+          noDataText = document.createElement('div');
+          noDataText.className = 'no-data-text absolute inset-0 flex items-center justify-center text-slate-500 text-sm font-medium';
+          noDataText.textContent = 'No delivery service data available';
+          chartContainer.appendChild(noDataText);
+        }
+      }
+      return;
+    }
+    
+    // Remove any existing "No Data" text
+    const chartContainer = ctx.parentElement;
+    if (chartContainer) {
+      const noDataText = chartContainer.querySelector('.no-data-text');
+      if (noDataText) {
+        noDataText.remove();
+      }
+    }
+    
+    const labels = filteredData.map(item => item.name);
+    const data = filteredData.map(item => item.value);
+    const colors = filteredData.map(item => item.color);
+    
+    this.deliveryServiceChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverBorderColor: '#ffffff',
+          hoverBorderWidth: 3,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 8,
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: {
+                size: 9,
+                weight: 400,
+                family: 'Inter, system-ui, sans-serif'
+              },
+              color: '#374151',
+              generateLabels: function(chart: any) {
+                const data = chart.data;
+                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
+                  return data.labels.map((label: string, i: number) => {
+                    const dataset = data.datasets[0];
+                    const value = dataset.data[i] as number;
+                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
+                    
+                    // Truncate long labels and show only percentage
+                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
+                    
+                    return {
+                      text: `${shortLabel} ${percentage}%`,
+                      fillStyle: dataset.backgroundColor[i],
+                      strokeStyle: dataset.backgroundColor[i],
+                      lineWidth: 0,
+                      pointStyle: 'circle',
+                      hidden: false,
+                      index: i
+                    };
+                  });
+                }
+                return [];
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleColor: '#ffffff',
+            bodyColor: '#ffffff',
+            borderColor: '#ffffff',
+            borderWidth: 1,
+            cornerRadius: 6,
+            displayColors: true,
+            callbacks: {
+              label: function(context: any) {
+                const label = context.label || '';
+                const value = context.parsed;
+                const total = context.dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
+                const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                return `${label}: ${value} orders (${percentage}%)`;
+              }
+            }
+          }
+        },
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 800,
+          easing: 'easeOutQuart'
         }
       }
     });
