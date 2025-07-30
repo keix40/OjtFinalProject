@@ -33,6 +33,18 @@ export class CartPageComponent implements OnInit, OnDestroy {
   isFirstTimeBuyerDiscount: boolean = false;
   maxQuantities: Map<string, number> = new Map();
 
+
+  discountId: number | null = null;
+  promoCode: string = '';
+  promoMessage: string = '';
+  promoSuccess: boolean = false;
+  couponDiscount: number = 0;
+  couponDiscountType: string = '';
+  couponInfoMessage: string = '';
+  appliedCouponName: string = '';
+  private isValidatingCoupon: boolean = false;
+  private isComponentInitialized: boolean = false;
+
   constructor(
     private router: Router,
     private cartService: CartService,
@@ -54,6 +66,15 @@ export class CartPageComponent implements OnInit, OnDestroy {
       this.cartService.getCartItems().subscribe(items => {
         this.cartItems = items;
         this.selectedItems = items.length;
+        
+        // Load coupon data after cart items are loaded
+        this.loadCouponFromStorage();
+        
+        // Clear coupon if cart is empty
+        if (items.length === 0 && this.promoSuccess) {
+          this.removeCoupon();
+        }
+        
         this.loadProductDetails();
         this.loadMaxQuantities(); // fetch max quantities
         
@@ -70,6 +91,18 @@ export class CartPageComponent implements OnInit, OnDestroy {
     );
     this.loadActiveDiscounts();
     this.checkFirstTimeBuyerDiscount();
+    
+    // Set component as initialized after all initializations
+    setTimeout(() => {
+      this.isComponentInitialized = true;
+      console.log('Component fully initialized');
+      
+      // Trigger validation if coupon is loaded
+      if (this.promoSuccess && this.couponDiscount) {
+        console.log('Triggering delayed validation after initialization');
+        this.validateStoredCoupon();
+      }
+    }, 1000);
   }
 
   loadActiveDiscounts() {
@@ -90,6 +123,14 @@ export class CartPageComponent implements OnInit, OnDestroy {
       });
       this.calculateProductDiscounts();
       this.loadRelatedProducts(); // Load related products after product details are loaded
+      
+      // Validate stored coupon after product details are loaded with a delay
+      if (this.promoSuccess && this.couponDiscount && this.isComponentInitialized) {
+        // Add a small delay to ensure all data is properly loaded
+        setTimeout(() => {
+          this.validateStoredCoupon();
+        }, 500);
+      }
     });
   }
 
@@ -121,7 +162,8 @@ export class CartPageComponent implements OnInit, OnDestroy {
             discount_amount: discount.discount_amount,
             discountType: discount.discountType,
             targetType: rule.targetType,
-            eventName: discount.name
+            eventName: discount.name,
+            minimumSpend: discount.minimumSpend
           };
         }
       }
@@ -149,7 +191,23 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   getProductDiscount(productId: number): any {
     if (this.isFirstTimeBuyerDiscount) return null;
-    return this.productDiscounts.get(productId);
+    
+    const discount = this.productDiscounts.get(productId);
+    if (!discount) return null;
+    
+    // Get the product to check its price
+    const product = this.productDetails.get(productId);
+    if (!product) return null;
+    
+    // Check minimum spend requirement
+    if (discount.minimumSpend && discount.minimumSpend > 0) {
+      if (product.price < discount.minimumSpend) {
+        // Product price is lower than minimum spend, don't show discount
+        return null;
+      }
+    }
+    
+    return discount;
   }
 
   getFinalDiscountedPrice(product: ProductDTO): number {
@@ -165,7 +223,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
       }
     }
 
-    // 2. Always apply VIP tier discount (if any)
+    // 2. Apply VIP tier discount (if any)
     const token = localStorage.getItem('token');
     let userVipTier = null;
     if (token) {
@@ -174,13 +232,15 @@ export class CartPageComponent implements OnInit, OnDestroy {
       } catch {}
     }
     if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
+      // Find the best VIP discount for this tier
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
       );
-      if (vipDiscount) {
+      if (vipDiscount && vipDiscount.discount_percent) {
         price = price - (price * vipDiscount.discount_percent / 100);
       }
     }
+
     return Math.round(price);
   }
 
@@ -240,6 +300,26 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   // Returns the total discount amount saved
   getTotalDiscount(): number {
+    if (this.isFirstTimeBuyerDiscount) {
+      return this.getFirstTimeBuyerDiscountAmount();
+    }
+    
+    if (this.hasProductDiscount()) {
+      // Product discount exists, coupon cannot be used, so use product + VIP tier discounts
+      const productDiscount = this.getTotalProductDiscount();
+      const vipDiscount = this.getVipTierDiscountAmount();
+      console.log('Product discount:', productDiscount, 'VIP discount:', vipDiscount);
+      return productDiscount + vipDiscount;
+      }
+    
+    // No product discount, allow coupon + VIP tier
+    const couponDiscount = this.getCouponDiscountAmount();
+    const vipDiscount = this.getVipTierDiscountAmount();
+    console.log('Coupon discount:', couponDiscount, 'VIP discount:', vipDiscount);
+    return couponDiscount + vipDiscount;
+  }
+
+  getTotalProductDiscount(): number {
     let discount = 0;
     for (const item of this.cartItems) {
       const product = this.productDetails.get(item.productId || item.id);
@@ -255,13 +335,18 @@ export class CartPageComponent implements OnInit, OnDestroy {
   // Returns the final order total: subtotal - discount (no tax, no shipping)
   getOrderTotal(): number {
     const subtotal = this.getSubtotal();
+  
     if (this.isFirstTimeBuyerDiscount) {
-      const firstTimeDiscount = this.getFirstTimeBuyerDiscountAmount();
-      return Math.round(subtotal - firstTimeDiscount);
-    } else {
-      const discount = this.getTotalDiscount();
-      return Math.round(subtotal - discount);
+      return Math.round(subtotal - this.getFirstTimeBuyerDiscountAmount());
     }
+  
+    if (this.hasProductDiscount()) {
+      // Product discount exists, coupon cannot be used, so use product + VIP tier discounts
+      return Math.round(subtotal - this.getTotalProductDiscount() - this.getVipTierDiscountAmount());
+    }
+  
+    // No product discount, allow coupon + VIP tier
+    return Math.round(subtotal - this.getCouponDiscountAmount() - this.getVipTierDiscountAmount());
   }
 
   // Returns the amount saved by first time buyer discount (10% of subtotal)
@@ -271,6 +356,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.saveCouponToStorage(); // Save coupon data on destroy
   }
 
   goToCheckout() {
@@ -484,6 +570,8 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   clearCart() {
     this.cartService.clearCart();
+    // Clear coupon when cart is cleared
+    this.removeCoupon();
   }
 
   proceedToCheckout() {
@@ -782,5 +870,377 @@ export class CartPageComponent implements OnInit, OnDestroy {
     }
     // Return rounded rating for display purposes
     return Math.round(product.averageRating * 10) / 10;
+  }
+
+  applyPromoCode() {
+  this.promoMessage = '';
+  this.promoSuccess = false;
+  this.couponInfoMessage = '';
+  const userId = this.userId;
+  const total = this.getSubtotal();
+
+  this.discountService.getCouponMinimumSpend(this.promoCode).subscribe({
+    next: minSpend => {
+      console.log('minSpend:', minSpend, 'total:', total); // Debug log
+      if (minSpend == null) {
+        this.promoMessage = 'promo code invalid';
+        this.promoSuccess = false;
+        this.couponDiscount = 0;
+        this.couponDiscountType = '';
+        this.couponInfoMessage = '';
+        return;
+      }
+      if (total < minSpend) {
+        this.promoMessage = `This promo code only allow for over ${minSpend}mmk`;
+        this.promoSuccess = false;
+        this.couponDiscount = 0;
+        this.couponDiscountType = '';
+        this.couponInfoMessage = '';
+        return; // Do NOT call backend
+      }
+      // Only now call the backend to validate the coupon
+      this.http.post<any>('http://localhost:8080/api/coupons/validate', {
+        couponCode: this.promoCode,
+        userId: userId,
+        total: total
+      }).subscribe({
+        next: (res) => {
+          if (res.valid) {
+            this.promoSuccess = true;
+            this.couponDiscount = res.discountAmount;
+            this.couponDiscountType = res.discountType; // 'PERCENTAGE' or 'FIXED'
+            this.appliedCouponName = res.couponName || this.promoCode;
+            // Set the detailed coupon message with proper coupon name
+            if (res.discountType === 'PERCENTAGE') {
+              this.promoMessage = `You are using ${this.appliedCouponName} for save ${res.discountAmount}% off`;
+            } else {
+              this.promoMessage = `You are using ${this.appliedCouponName} for save ${res.discountAmount} MMK`;
+            }
+            this.couponInfoMessage = '';
+            this.promoCode = ''; // Clear input after successful application
+            this.discountId = res.discountId;
+            this.saveCouponToStorage(); // Save to localStorage
+          } else {
+            this.promoMessage = res.message || 'Invalid promo code';
+            this.promoSuccess = false;
+            this.couponDiscount = 0;
+            this.couponDiscountType = '';
+            this.couponInfoMessage = '';
+            this.appliedCouponName = '';
+            this.clearCouponFromStorage(); // Clear from localStorage
+          }
+        },
+        error: (err) => {
+          this.promoMessage = err.error?.message || err.message || 'promo code invalid';
+          this.promoSuccess = false;
+          this.couponDiscount = 0;
+          this.couponDiscountType = '';
+          this.couponInfoMessage = '';
+          this.appliedCouponName = '';
+          this.clearCouponFromStorage(); // Clear from localStorage
+        }
+      });
+    },
+    error: (err) => {
+      this.promoMessage = err.error?.message || err.message || 'promo code invalid';
+      this.promoSuccess = false;
+      this.couponDiscount = 0;
+      this.couponDiscountType = '';
+      this.couponInfoMessage = '';
+      this.appliedCouponName = '';
+      this.clearCouponFromStorage(); // Clear from localStorage
+    }
+  });
+}
+
+getCouponDiscountAmount(): number {
+  if (!this.promoSuccess || !this.couponDiscount) return 0;
+  // Only apply coupon to products without a product discount
+  let eligibleTotal = 0;
+  for (const item of this.cartItems) {
+    const product = this.productDetails.get(item.productId || item.id);
+    if (product && !this.getProductDiscount(product.id)) {
+      eligibleTotal += product.price * item.quantity;
+    }
+  }
+  if (this.couponDiscountType === 'PERCENTAGE') {
+    return Math.round(eligibleTotal * this.couponDiscount / 100);
+  } else {
+    return this.couponDiscount;
+  }
+}
+
+getVipTierDiscountAmount(): number {
+  const token = localStorage.getItem('token');
+  let userVipTier = null;
+  if (token) {
+    try {
+      userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
+    } catch {}
+  }
+  if (!userVipTier || !this.activeDiscounts.length) return 0;
+  const vipDiscount = this.activeDiscounts.find(d =>
+    (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+  );
+  if (!vipDiscount || !vipDiscount.discount_percent) return 0;
+  let vipDiscountAmount = 0;
+  for (const item of this.cartItems) {
+    const product = this.productDetails.get(item.productId || item.id);
+    if (product) {
+      // Apply VIP discount to the already product-discounted price
+      let price = product.price;
+      const productDiscount = this.getProductDiscount(product.id);
+      if (productDiscount) {
+        if (productDiscount.discountType === 'PERCENTAGE') {
+          price = price - (price * productDiscount.discount_percent / 100);
+        } else {
+          price = price - productDiscount.discount_amount;
+        }
+      }
+      vipDiscountAmount += Math.round(price * vipDiscount.discount_percent / 100) * item.quantity;
+    }
+  }
+  return vipDiscountAmount;
+}
+
+   hasProductDiscount(): boolean {
+       const result = this.cartItems.some(item => !!this.getProductDiscount(item.productId || item.id));
+       console.log('hasProductDiscount:', result, this.cartItems.map(item => this.getProductDiscount(item.productId || item.id)));
+       return result;
+     }
+
+  // Check if coupon input should be disabled
+  isCouponInputDisabled(): boolean {
+    return this.hasProductDiscount() || this.promoSuccess;
+  }
+
+  // Get the reason why coupon input is disabled
+  getCouponDisabledReason(): string {
+    if (this.hasProductDiscount()) {
+      return 'Cannot use with product discounts';
+    }
+    if (this.promoSuccess) {
+      return 'Coupon already applied';
+    }
+    return '';
+  }
+
+  // Get the coupon name for display
+  getCouponName(): string {
+    if (!this.promoSuccess || !this.couponDiscount) return '';
+    return this.appliedCouponName || this.promoCode;
+  }
+
+  // Remove the applied coupon
+  removeCoupon() {
+    this.promoSuccess = false;
+    this.couponDiscount = 0;
+    this.couponDiscountType = '';
+    this.promoMessage = '';
+    this.promoCode = '';
+    this.couponInfoMessage = '';
+    this.appliedCouponName = '';
+    this.clearCouponFromStorage();
+  }
+
+  // Save coupon data to localStorage
+  private saveCouponToStorage(): void {
+    if (this.promoSuccess && this.couponDiscount) {
+      const couponData = {
+        promoCode: this.promoCode,
+        promoSuccess: this.promoSuccess,
+        couponDiscount: this.couponDiscount,
+        couponDiscountType: this.couponDiscountType,
+        appliedCouponName: this.appliedCouponName,
+        discountId: this.discountId,
+        promoMessage: this.promoMessage
+      };
+      localStorage.setItem('appliedCoupon', JSON.stringify(couponData));
+    } else {
+      localStorage.removeItem('appliedCoupon');
+    }
+  }
+
+  // Load coupon data from localStorage
+  private loadCouponFromStorage(): void {
+    console.log('Loading coupon from localStorage...');
+    const savedCoupon = localStorage.getItem('appliedCoupon');
+    if (savedCoupon) {
+      try {
+        const couponData = JSON.parse(savedCoupon);
+        this.promoCode = couponData.promoCode || '';
+        this.promoSuccess = couponData.promoSuccess || false;
+        this.couponDiscount = couponData.couponDiscount || 0;
+        this.couponDiscountType = couponData.couponDiscountType || '';
+        this.appliedCouponName = couponData.appliedCouponName || '';
+        this.promoMessage = couponData.promoMessage || '';
+        this.discountId = couponData.discountId || '';
+        
+        console.log('Coupon loaded from localStorage:', {
+          promoCode: this.promoCode,
+          promoSuccess: this.promoSuccess,
+          couponDiscount: this.couponDiscount,
+          couponDiscountType: this.couponDiscountType,
+          appliedCouponName: this.appliedCouponName,
+          discountId: this.discountId
+        });
+        
+        // Validation will be called after product details are loaded
+      } catch (error) {
+        console.error('Error loading coupon from localStorage:', error);
+        localStorage.removeItem('appliedCoupon');
+      }
+    } else {
+      console.log('No coupon found in localStorage');
+    }
+  }
+
+  // Validate stored coupon to ensure it's still valid
+  private validateStoredCoupon(): void {
+    if (this.isValidatingCoupon) {
+      console.log('Validation already in progress, skipping');
+      return;
+    }
+    
+    if (!this.userId || !this.promoCode) {
+      console.log('Validation skipped: missing userId or promoCode');
+      this.clearCouponFromStorage();
+      return;
+    }
+
+    // Ensure component is fully initialized
+    if (!this.isComponentInitialized) {
+      console.log('Validation skipped: component not fully initialized');
+      return;
+    }
+
+    // Ensure cart items are loaded
+    if (!this.cartItems || this.cartItems.length === 0) {
+      console.log('Validation skipped: no cart items');
+      return;
+    }
+
+    // Ensure product details are loaded
+    if (this.productDetails.size === 0) {
+      console.log('Validation skipped: product details not loaded');
+      return;
+    }
+
+    const total = this.getSubtotal();
+    
+    // Don't validate if subtotal is 0 (cart items not loaded yet)
+    if (total <= 0) {
+      console.log('Validation skipped: subtotal is 0');
+      return;
+    }
+    
+    this.isValidatingCoupon = true;
+    console.log('Validating stored coupon:', {
+      promoCode: this.promoCode,
+      userId: this.userId,
+      total: total,
+      cartItemsCount: this.cartItems.length,
+      productDetailsCount: this.productDetails.size
+    });
+    
+    this.http.post<any>('http://localhost:8080/api/coupons/validate', {
+      couponCode: this.promoCode,
+      userId: this.userId,
+      total: total
+    }).subscribe({
+      next: (res) => {
+        this.isValidatingCoupon = false;
+        console.log('Coupon validation response:', res);
+        if (!res.valid) {
+          console.log('Coupon validation failed, clearing coupon');
+          // Coupon is no longer valid, clear it
+          this.promoSuccess = false;
+          this.couponDiscount = 0;
+          this.couponDiscountType = '';
+          this.promoMessage = '';
+          this.promoCode = '';
+          this.couponInfoMessage = '';
+          this.appliedCouponName = '';
+          this.clearCouponFromStorage();
+        } else {
+          console.log('Coupon validation successful');
+          // Update coupon data with fresh data from server
+          this.couponDiscount = res.discountAmount;
+          this.couponDiscountType = res.discountType;
+          this.appliedCouponName = res.couponName || this.promoCode;
+          this.saveCouponToStorage();
+        }
+      },
+      error: (err) => {
+        this.isValidatingCoupon = false;
+        console.error('Coupon validation error:', err);
+        
+        // Don't clear coupon on network errors, only on validation failures
+        if (err.status === 0 || err.status >= 500) {
+          console.log('Network error during validation, keeping coupon');
+          return;
+        }
+        
+        // Only clear coupon on specific validation errors
+        if (err.status === 400 || err.status === 404) {
+          console.log('Validation error, clearing coupon');
+          this.promoSuccess = false;
+          this.couponDiscount = 0;
+          this.couponDiscountType = '';
+          this.promoMessage = '';
+          this.promoCode = '';
+          this.couponInfoMessage = '';
+          this.appliedCouponName = '';
+          this.clearCouponFromStorage();
+        }
+      }
+    });
+    
+    // Add timeout to prevent hanging
+    setTimeout(() => {
+      if (this.isValidatingCoupon) {
+        console.log('Coupon validation timeout, clearing flag');
+        this.isValidatingCoupon = false;
+      }
+    }, 10000); // 10 second timeout
+  }
+
+  // Clear coupon data from localStorage
+  private clearCouponFromStorage(): void {
+    localStorage.removeItem('appliedCoupon');
+  }
+
+  // Public method for debugging coupon persistence
+  public debugCouponStatus(): void {
+    console.log('=== COUPON DEBUG INFO ===');
+    console.log('Component initialized:', this.isComponentInitialized);
+    console.log('Cart items count:', this.cartItems.length);
+    console.log('Product details count:', this.productDetails.size);
+    console.log('Promo success:', this.promoSuccess);
+    console.log('Coupon discount:', this.couponDiscount);
+    console.log('Applied coupon name:', this.appliedCouponName);
+    console.log('LocalStorage coupon:', localStorage.getItem('appliedCoupon'));
+    console.log('Subtotal:', this.getSubtotal());
+    console.log('Is validating:', this.isValidatingCoupon);
+    console.log('========================');
+  }
+
+  // Public method to manually trigger validation for testing
+  public testCouponValidation(): void {
+    console.log('Manually triggering coupon validation...');
+    this.validateStoredCoupon();
+  }
+
+  // Public method to test backend connectivity
+  public testBackendConnection(): void {
+    console.log('Testing backend connection...');
+    this.http.get('http://localhost:8080/api/coupons/test', { responseType: 'text' }).subscribe({
+      next: (response) => {
+        console.log('Backend connection successful:', response);
+      },
+      error: (error) => {
+        console.log('Backend connection failed:', error);
+      }
+    });
   }
 }

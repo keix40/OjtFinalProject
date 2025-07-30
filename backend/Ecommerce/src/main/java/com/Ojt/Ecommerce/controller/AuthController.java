@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -75,6 +76,7 @@ public class AuthController {
     private final EmailVerificationService emailVerificationService;
     private final PasswordEncoder passwordEncoder;
     private final BlacklistServiceImpl blacklistServiceImpl;
+    private final NotificationService notificationService;
 
     // Configurable thresholds
     private static final int THREAT_SCORE_BLOCK_THRESHOLD = 60; // 60 = high, 80 = critical
@@ -229,12 +231,21 @@ public class AuthController {
             successDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
             loginAttemptService.saveAttempt(successDTO);
             // --- Broadcast real-time activity feed event ---
-            String activityMsg = "Successful login for " + email + " from IP " + ip + (isVPN ? " [VPN detected]" : "") + (isProxy ? " [Proxy detected]" : "");
-            messagingTemplate.convertAndSend("/topic/activity-feed", Map.of(
-                "timestamp", LocalDateTime.now().toString(),
-                "type", isVPN || isProxy ? "warning" : "success",
-                "message", activityMsg
-            ));
+            // In AuthController.java, after a successful login:
+            String activityMsg = "Successful login for " + email + " from IP " + ip;
+            notificationService.sendNotificationToAllAdmins(activityMsg, "login_attempt", null);
+            List<User> admins = userRepository.findByRoleId(1L);
+            for (User admin : admins) {
+                messagingTemplate.convertAndSendToUser(
+                        admin.getEmail(),
+                        "/queue/notifications",
+                        Map.of(
+                                "timestamp", LocalDateTime.now().toString(),
+                                "type", "success",
+                                "message", activityMsg
+                        )
+                );
+            }
             // Reset OTP/CAPTCHA for this IP
             loginAttemptService.handleSuccessfulLogin(ip);
             String accessToken = jwtTokenProvider.generateToken(user);

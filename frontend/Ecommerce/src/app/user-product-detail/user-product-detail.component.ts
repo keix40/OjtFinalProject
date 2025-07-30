@@ -409,17 +409,43 @@ export class UserProductDetailComponent implements OnInit {
   }
 }
 
-  getProductDiscount(): any {
-    if (!this.product?.hasDiscount) return null;
-    
-    return {
-      discountType: this.product.discountType,
-      discountValue: this.product.discountValue,
-      discountName: this.product.discountName,
-      discount_percent: this.product.discountType === 'PERCENTAGE' ? this.product.discountValue * 100 : null,
-      discount_amount: this.product.discountType === 'FIXED' ? this.product.discountValue : null
-    };
+getProductDiscount(): any {
+  // Exclude if first-time buyer discount is active
+  if (this.isFirstTimeBuyerDiscount) return null;
+
+  const discount = this.productDiscounts.get(this.product?.id);
+
+  // If no dynamic discount found, fallback to product-level discount
+  const effectiveDiscount = discount || (this.product?.hasDiscount ? {
+    discountType: this.product.discountType,
+    discountValue: this.product.discountValue,
+    discountName: this.product.discountName,
+  } : null);
+
+  if (!effectiveDiscount) return null;
+
+  // Check minimum spend condition
+  if (effectiveDiscount.minimumSpend && effectiveDiscount.minimumSpend > 0) {
+    const productPrice = this.selectedVariant?.price || this.product?.price || 0;
+    if (productPrice < effectiveDiscount.minimumSpend) {
+      return null;
+    }
   }
+
+  // Add computed fields for UI
+  return {
+    ...effectiveDiscount,
+    discount_percent: effectiveDiscount.discountType === 'PERCENTAGE' 
+      ? effectiveDiscount.discountValue * 100 
+      : null,
+    discount_amount: effectiveDiscount.discountType === 'FIXED' 
+      ? effectiveDiscount.discountValue 
+      : null
+  };
+}
+
+
+  
 
   getFinalDiscountedPrice(): number {
     let price = this.selectedVariant?.price || this.product?.price || 0;
@@ -1402,7 +1428,12 @@ checkFirstTimeBuyerDiscount(): void {
       for (const discount of this.activeDiscounts) {
         for (const rule of discount.rules || []) {
           if (rule.targetType === 'USER_PRODUCT' && rule.userId === userId && rule.productId === product.id) {
-            return { ...discount, ...rule, eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule, 
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
         }
       }
@@ -1418,7 +1449,12 @@ checkFirstTimeBuyerDiscount(): void {
               rule.brandId === pair.brandId &&
               rule.categoryId === pair.categoryId
             ) {
-              return { ...discount, ...rule, eventName: discount.name };
+              return { 
+                ...discount, 
+                ...rule, 
+                eventName: discount.name,
+                minimumSpend: discount.minimumSpend 
+              };
             }
           }
         }
@@ -1436,7 +1472,12 @@ checkFirstTimeBuyerDiscount(): void {
               rule.targetType === 'BRAND' &&
               rule.brandId === pair.brandId
             ) {
-              return { ...discount, ...rule, eventName: discount.name };
+              return { 
+                ...discount, 
+                ...rule, 
+                eventName: discount.name,
+                minimumSpend: discount.minimumSpend 
+              };
             }
           }
         }

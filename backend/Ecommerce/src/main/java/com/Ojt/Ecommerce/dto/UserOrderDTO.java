@@ -18,4 +18,6 @@ public class UserOrderDTO {
     private Long cardId;
     private Long deliveryServiceId;
     private BigDecimal deliveryFee;
+    private String couponName;
+    private String couponDiscount;
 }

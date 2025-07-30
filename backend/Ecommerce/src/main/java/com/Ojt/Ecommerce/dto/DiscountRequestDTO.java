@@ -36,4 +36,8 @@ public class DiscountRequestDTO {
     private List<Long> productIdsforCoupon;
     private String userIds;
     private String vipTierId;
+    private String vipTierIds; // comma-separated VIP tier IDs
+    private List<Long> userIdsforCoupon;
+    private List<Long> vipTierIdsforCoupon;
+    private Double minimumSpend;
 }

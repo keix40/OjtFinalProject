@@ -899,17 +899,38 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
     return null;
   }
 
-    // 1. USER_PRODUCT
+    // 1. USER_GLOBAL (highest priority - applies to all products for specific user)
+    if (userId) {
+      for (const discount of this.activeDiscounts) {
+        for (const rule of discount.rules || []) {
+          if (rule.targetType === 'USER_GLOBAL' && rule.userId === userId) {
+            return { 
+              ...discount, 
+              ...rule, 
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
+          }
+        }
+      }
+    }
+
+    // 2. USER_PRODUCT
     if (userId) {
     for (const discount of this.activeDiscounts) {
       for (const rule of discount.rules || []) {
         if (rule.targetType === 'USER_PRODUCT' && rule.userId === userId && rule.productId === product.id) {
-          return { ...discount, ...rule,eventName: discount.name };
+          return { 
+            ...discount, 
+            ...rule,
+            eventName: discount.name,
+            minimumSpend: discount.minimumSpend 
+          };
         }
         }
       }
     }
-    // 2. USER_BRAND_CATEGORY
+    // 3. USER_BRAND_CATEGORY
     if (userId && product.categoryBrandArray) {
     for (const discount of this.activeDiscounts) {
       for (const pair of product.categoryBrandArray) {
@@ -920,13 +941,18 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
             rule.brandId === pair.brandId &&
             rule.categoryId === pair.categoryId
           ) {
-            return { ...discount, ...rule,eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule,
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
           }
         }
       }
     }
-    // 3. USER_CATEGORY
+    // 4. USER_CATEGORY
     if (userId && product.categoryBrandArray) {
     for (const discount of this.activeDiscounts) {
       for (const pair of product.categoryBrandArray) {
@@ -936,7 +962,12 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
             rule.userId === userId &&
             rule.categoryId === pair.categoryId
           ) {
-            return { ...discount, ...rule,eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule,
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
           }
         }
@@ -953,7 +984,12 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
             Number(rule.brandId) === Number(pair.brandId)
           ) {
             console.log('MATCHED USER_BRAND:', { userId, brandId: pair.brandId, discount });
-            return { ...discount, ...rule,eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule,
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
           }
         }
@@ -963,7 +999,12 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
   for (const discount of this.activeDiscounts) {
     for (const rule of discount.rules || []) {
       if (rule.targetType === 'PRODUCT' && rule.productId === product.id) {
-        return { ...discount, ...rule,eventName: discount.name };
+        return { 
+          ...discount, 
+          ...rule,
+          eventName: discount.name,
+          minimumSpend: discount.minimumSpend 
+        };
       }
       }
     }
@@ -977,7 +1018,12 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
             rule.brandId === pair.brandId &&
             rule.categoryId === pair.categoryId
           ) {
-            return { ...discount, ...rule,eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule,
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
           }
         }
@@ -992,7 +1038,12 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
             rule.targetType === 'CATEGORY' &&
             rule.categoryId === pair.categoryId
           ) {
-            return { ...discount, ...rule,eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule,
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
           }
         }
@@ -1007,7 +1058,12 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
             rule.targetType === 'BRAND' &&
             rule.brandId === pair.brandId
           ) {
-            return { ...discount, ...rule,eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule,
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
         }
       }
@@ -1046,7 +1102,23 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
 
   getProductDiscount(productId: number): any {
     if (this.isFirstTimeBuyerDiscount) return null;
-    return this.productDiscounts.get(productId);
+    
+    const discount = this.productDiscounts.get(productId);
+    if (!discount) return null;
+    
+    // Get the product to check its price
+    const product = this.products.find(p => p.id === productId);
+    if (!product) return null;
+    
+    // Check minimum spend requirement
+    if (discount.minimumSpend && discount.minimumSpend > 0) {
+      if (product.price < discount.minimumSpend) {
+        // Product price is lower than minimum spend, don't show discount
+        return null;
+      }
+    }
+    
+    return discount;
   }
 
   getDiscountDisplayText(discount: any): string {

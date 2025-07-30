@@ -11,6 +11,8 @@ public interface DiscountRepository extends JpaRepository<Discount, Long> {
     List<Discount> findByDiscountEventIsNull();
     List<Discount> findByDiscountEvent(DiscountEvent discountEvent);
     List<Discount> findByStatusTrue();
+    List<Discount> findByAutoApplyFalseAndStatusTrue();
+    List<Discount> findByAutoApplyFalse();
     Optional<Discount> findByName(String name);
     Optional<Discount> findByCode(String code);
     boolean existsByCode(String code);

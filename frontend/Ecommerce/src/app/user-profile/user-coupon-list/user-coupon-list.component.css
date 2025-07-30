@@ -1,0 +1,98 @@
+/* Custom animations for the coupon list component */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { 
+    opacity: 0; 
+    transform: translate(-50%, -100%);
+  }
+  to { 
+    opacity: 1; 
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes fadeOut {
+  from { 
+    opacity: 1; 
+    transform: translate(-50%, 0);
+  }
+  to { 
+    opacity: 0; 
+    transform: translate(-50%, -20px);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes bounceGentle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.animate-fade-out {
+  animation: fadeOut 0.3s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-bounce-gentle {
+  animation: bounceGentle 2s ease-in-out infinite;
+}
+
+/* Custom scrollbar for the coupons list */
+.max-h-\[32rem\]::-webkit-scrollbar {
+  width: 6px;
+}
+
+.max-h-\[32rem\]::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.max-h-\[32rem\]::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.max-h-\[32rem\]::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Smooth transitions for coupon items */
+.coupon-item {
+  transition: all 0.3s ease;
+}
+
+.coupon-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus states for accessibility */
+button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Custom hover effects for better UX */
+.coupon-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}

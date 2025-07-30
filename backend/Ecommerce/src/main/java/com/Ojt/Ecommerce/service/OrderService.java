@@ -188,6 +188,14 @@ public class OrderService {
     public UserOrder createOrder(UserOrderDTO dto) {
         ensureFirstTimeBuyerDiscountExists();
 
+        // Debug logging
+        System.out.println("=== CREATE ORDER DEBUG ===");
+        System.out.println("User ID: " + dto.getUserId());
+        System.out.println("Discount ID: " + dto.getDiscountId());
+        System.out.println("Coupon Name: " + dto.getCouponName());
+        System.out.println("Coupon Discount: " + dto.getCouponDiscount());
+        System.out.println("==========================");
+
         try {
             UserOrder order = mapper.map(dto, UserOrder.class);
 
@@ -249,8 +257,14 @@ public class OrderService {
 
             // If no first-time discount applied, apply manual discount if any
             if (dto.getDiscountId() != null) {
-                order.setDiscount(discountRepo.findById(dto.getDiscountId()).orElse(null));
-                order.setUserDiscountId(dto.getDiscountId());
+                Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
+                if (manualDiscount != null) {
+                    order.setDiscount(manualDiscount);
+                    order.setUserDiscountId(dto.getDiscountId());
+                    System.out.println("Applied manual discount: " + manualDiscount.getName() + " (ID: " + manualDiscount.getId() + ")");
+                } else {
+                    System.out.println("Warning: Discount with ID " + dto.getDiscountId() + " not found");
+                }
             }
 
             order.setOrderCode(generateUniqueOrderCode());
@@ -310,21 +324,51 @@ public class OrderService {
                 if (discountRule != null) {
                     orderProduct.setDiscountRule(discountRule);
                     // If order-level userDiscountId is not set, set it to the discountRule's discount ID
-                    if (order.getUserDiscountId() == null) {
-                        order.setUserDiscountId(discountRule.getDiscount().getId());
+                    if (savedOrder.getUserDiscountId() == null) {
+                        savedOrder.setUserDiscountId(discountRule.getDiscount().getId());
                     }
                 }
 
                 opRepo.save(orderProduct);
             }
 
-            // Save coupon usage if discount applied
-            if (order.getDiscount() != null) {
-                UserCouponUsage usage = new UserCouponUsage();
-                usage.setUser(user);
-                usage.setDiscount(order.getDiscount());
-                usage.setUsedAt(LocalDateTime.now());
-                couponRepo.save(usage);
+            // Save coupon usage if discount applied - FIXED LOGIC
+            // Check both the saved order and the original discount ID from DTO
+            Discount discountToTrack = null;
+            if (savedOrder.getDiscount() != null) {
+                discountToTrack = savedOrder.getDiscount();
+            } else if (dto.getDiscountId() != null) {
+                // Fallback: get discount directly from repository
+                discountToTrack = discountRepo.findById(dto.getDiscountId()).orElse(null);
+            }
+            
+            if (discountToTrack != null) {
+                System.out.println("Saving UserCouponUsage for user: " + user.getId() + ", discount: " + discountToTrack.getId());
+                System.out.println("Coupon name from DTO: " + dto.getCouponName());
+                System.out.println("Coupon discount from DTO: " + dto.getCouponDiscount());
+                
+                try {
+                    UserCouponUsage usage = new UserCouponUsage();
+                    usage.setUser(user);
+                    usage.setDiscount(discountToTrack);
+                    usage.setUsedAt(LocalDateTime.now());
+                    
+                    System.out.println("About to save UserCouponUsage with:");
+                    System.out.println("  - User ID: " + usage.getUser().getId());
+                    System.out.println("  - Discount ID: " + usage.getDiscount().getId());
+                    System.out.println("  - Used At: " + usage.getUsedAt());
+                    
+                    UserCouponUsage savedUsage = couponRepo.save(usage);
+                    System.out.println("Successfully saved UserCouponUsage with ID: " + savedUsage.getId());
+                } catch (Exception e) {
+                    System.err.println("ERROR saving UserCouponUsage: " + e.getMessage());
+                    e.printStackTrace();
+                    // Don't throw the exception - just log it so the order can still be created
+                }
+            } else {
+                System.out.println("No discount found to track in UserCouponUsage");
+                System.out.println("Order discount: " + (savedOrder.getDiscount() != null ? savedOrder.getDiscount().getId() : "null"));
+                System.out.println("DTO discount ID: " + dto.getDiscountId());
             }
 
             // Calculate earned points and update user
@@ -355,11 +399,18 @@ public class OrderService {
                     .build();
             pointRepo.save(history);
 
-            String message = "Your order " + order.getOrderCode() + " has been placed.";
-            String link = "/profile/" + user.getId() + "?section=orders&orderId=" + order.getId();
-            String type = "order";
-            notificationService.createNotificationForUser(order.getUser().getEmail(), message, type, link );
+            // Send notification to customer
+            String customerMessage = "Your order " + order.getOrderCode() + " has been placed.";
+            String customerLink = "/profile/" + user.getId() + "?section=orders&orderId=" + order.getId();
+            String customerType = "order";
+            notificationService.createNotificationForUser(order.getUser().getEmail(), customerMessage, customerType, customerLink);
             notificationService.sendNotification(user.getEmail(), "Your order was successful");
+            
+            // Send notification to current user if they are Admin or Manager
+            String adminManagerMessage = "New order placed: " + order.getOrderCode() + " by " + user.getEmail();
+            String adminManagerType = "order_created";
+            String adminManagerLink = "/admin/orders/" + savedOrder.getId();
+            notificationService.sendNotificationToCurrentUserIfAdminOrManager(user.getEmail(), adminManagerMessage, adminManagerType, adminManagerLink);
             // Log user activity for dashboard active users metric (order)
             userActivityService.logActivity(user.getId(), "order");
             // Broadcast dashboard metrics after order creation
@@ -769,5 +820,48 @@ public class OrderService {
         } else {
             return "Not eligible (order count: " + user.getOrderCount() + ")";
         }
+    }
+
+    // Test method to verify UserCouponUsage table is working
+    public String testUserCouponUsageTable() {
+        try {
+            long count = couponRepo.count();
+            System.out.println("UserCouponUsage table is accessible. Current count: " + count);
+            return "UserCouponUsage table is working. Current count: " + count;
+        } catch (Exception e) {
+            System.err.println("ERROR accessing UserCouponUsage table: " + e.getMessage());
+            e.printStackTrace();
+            return "ERROR: " + e.getMessage();
+        }
+    }
+
+    // Analytics methods for pie charts
+    public List<Object[]> getBrandSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getBrandSalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getCategorySalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getCategorySalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getProductSalesData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getProductSalesData(startDate, endDate);
+    }
+
+    public List<Object[]> getDeliveryServiceData(LocalDateTime startDate, LocalDateTime endDate) {
+        return repo.getDeliveryServiceData(startDate, endDate);
+    }
+
+    // Debug methods
+    public long getTotalOrderCount() {
+        return repo.count();
+    }
+
+    public long getDeliveredOrderCount() {
+        return repo.countDeliveredOrders();
+    }
+
+    public long getBrandCount() {
+        return repo.countBrands();
     }
 }

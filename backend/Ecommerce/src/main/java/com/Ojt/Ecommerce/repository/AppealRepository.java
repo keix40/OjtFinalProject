@@ -26,4 +26,7 @@ public interface AppealRepository extends JpaRepository<Appeal, String> {
     // Find appeals submitted in the last 24 hours
     @Query("SELECT a FROM Appeal a WHERE a.submittedAt >= :since ORDER BY a.submittedAt DESC")
     List<Appeal> findRecentAppeals(@Param("since") java.time.LocalDateTime since);
+    
+    // Find appeals by multiple statuses
+    List<Appeal> findByStatusIn(List<Appeal.AppealStatus> statuses);
 }

@@ -88,6 +88,8 @@ import { AboutUsComponent } from './about-us/about-us.component';
 import { ContactUsComponent } from './contact-us/contact-us.component';
 import { FooterComponent } from './footer/footer.component';
 import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
+import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
+import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
 
 @NgModule({
   declarations: [
@@ -140,6 +142,9 @@ import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.componen
     UserProfileComponent, 
     CreateDeliveryServiceComponent,
     DeliveryServiceListComponent,
+    UserCouponListComponent,
+    AdminInboxComponent,
+
   ],
   imports: [
     BrowserModule,

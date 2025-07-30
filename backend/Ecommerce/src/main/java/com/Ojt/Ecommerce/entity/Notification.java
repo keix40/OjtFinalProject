@@ -25,4 +25,7 @@ public class Notification {
 
     private String type; // e.g., 'discount', 'first_time_buyer', etc.
     private String link; // e.g., '/userproductlist'
+
+    private String category;
+    private String priority;
 }

@@ -11,83 +11,196 @@
 <!-- Modern Centered Card Container -->
 <div class="flex justify-center items-center min-h-[60vh]">
   <div class="w-full max-w-2xl rounded-2xl shadow-xl border border-gray-100 bg-white p-8">
-    <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="coupon-form">
-      <div class="form-grid">
-        <!-- Row 1: Name & Code -->
-        <div class="form-group">
-          <label for="name" class="form-label">Name</label>
-          <input id="name" type="text" class="form-control" formControlName="name" required placeholder="Discount name" title="Discount name">
-          <div *ngIf="discountForm.get('name')?.invalid && discountForm.get('name')?.touched" class="text-danger small">Name is required.</div>
+    <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="space-y-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Name -->
+        <div>
+          <label for="name" class="block text-black font-semibold mb-2">Name</label>
+          <input id="name" type="text" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black placeholder-gray-400 transition" formControlName="name" required placeholder="Discount name" title="Discount name">
+          <div *ngIf="discountForm.get('name')?.invalid && discountForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name is required.</div>
         </div>
-        <div class="form-group">
-          <label for="code" class="form-label">Code</label>
-          <input id="code" type="text" class="form-control" formControlName="code" required placeholder="Discount code" title="Discount code">
-          <div *ngIf="discountForm.get('code')?.hasError('required') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty)" class="text-danger small">Code is required.</div>
-          <div *ngIf="discountForm.get('code')?.hasError('codeExists') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty) && !discountForm.get('code')?.hasError('required')" class="text-danger small">This code is already exist</div>
+        <!-- Code -->
+        <div>
+          <label for="code" class="block text-black font-semibold mb-2">Coupon Code</label>
+          <input id="code" type="text" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black placeholder-gray-400 transition" formControlName="code" required placeholder="Coupon code" title="Discount code">
+          <div *ngIf="discountForm.get('code')?.hasError('required') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty)" class="text-red-500 text-xs mt-1">Code is required.</div>
+          <div *ngIf="discountForm.get('code')?.hasError('minlength') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty)" class="text-red-500 text-xs mt-1">Code must be at least 4 characters.</div>
+          <div *ngIf="discountForm.get('code')?.hasError('codeExists') && (discountForm.get('code')?.touched || discountForm.get('code')?.dirty) && !discountForm.get('code')?.hasError('required')" class="text-red-500 text-xs mt-1">This code already exists.</div>
         </div>
-        <!-- Row 2: Discount Type & Value -->
-        <div class="form-group">
-          <label for="discountType" class="form-label">Discount Type</label>
-          <select id="discountType" class="form-select" formControlName="discountType" title="Discount type">
+        <!-- Description (full width) -->
+        <div class="md:col-span-2">
+          <label for="description" class="block text-black font-semibold mb-2">Description</label>
+          <textarea id="description" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black placeholder-gray-400 transition" formControlName="description" required placeholder="Description" title="Description" rows="3"></textarea>
+          <div *ngIf="discountForm.get('description')?.invalid && discountForm.get('description')?.touched" class="text-red-500 text-xs mt-1">Description is required.</div>
+        </div>
+        <!-- Discount Type -->
+        <div>
+          <label for="discountType" class="block text-black font-semibold mb-2">Discount Type</label>
+          <select id="discountType" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black transition" formControlName="discountType" title="Discount type">
             <option value="PERCENTAGE">Percentage</option>
             <option value="FIXED">Fixed</option>
           </select>
         </div>
-        <div class="form-group">
-          <label for="discountValue" class="form-label">Discount Value</label>
-          <input id="discountValue" type="number" class="form-control" formControlName="discountValue" required
+        <!-- Discount Value -->
+        <div>
+          <label for="discountValue" class="block text-black font-semibold mb-2">Discount Value</label>
+          <input id="discountValue" type="number" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black placeholder-gray-400 transition" formControlName="discountValue" required
             [attr.max]="discountForm.get('discountType')?.value === 'PERCENTAGE' ? 100 : null"
             [attr.min]="discountForm.get('discountType')?.value === 'FIXED' ? 1 : null"
             placeholder="Value" title="Discount value" (wheel)="onWheel($event)" (input)="onDiscountValueInput($event)">
           <div *ngIf="discountForm.get('discountType')?.value === 'PERCENTAGE' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)">
             <div *ngIf="discountForm.get('discountValue')?.value === null || discountForm.get('discountValue')?.value === ''">
-              <span class="text-danger small">Discount percentage is required.</span>
+              <span class="text-red-500 text-xs mt-1">Discount percentage is required.</span>
             </div>
             <div *ngIf="discountForm.get('discountValue')?.value == 0 && discountForm.get('discountValue')?.value !== '' && discountForm.get('discountValue')?.value !== null">
-              <span class="text-danger small">Discount percentage must be between 1 and 100.</span>
+              <span class="text-red-500 text-xs mt-1">Discount percentage must be between 1 and 100.</span>
             </div>
             <div *ngIf="discountForm.get('discountValue')?.hasError('percentRange') && discountForm.get('discountValue')?.value && discountForm.get('discountValue')?.value != 0">
-              <span class="text-danger small">Discount percentage must be between 1 and 100.</span>
+              <span class="text-red-500 text-xs mt-1">Discount percentage must be between 1 and 100.</span>
             </div>
           </div>
           <div *ngIf="discountForm.get('discountType')?.value === 'FIXED' && (discountForm.get('discountValue')?.touched || discountForm.get('discountValue')?.dirty)">
             <div *ngIf="discountForm.get('discountValue')?.value === null || discountForm.get('discountValue')?.value === ''">
-              <span class="text-danger small">Discount amount is required.</span>
+              <span class="text-red-500 text-xs mt-1">Discount amount is required.</span>
             </div>
             <div *ngIf="discountForm.get('discountValue')?.value == 0 && discountForm.get('discountValue')?.value !== '' && discountForm.get('discountValue')?.value !== null">
-              <span class="text-danger small">Discount amount must be greater than 0.</span>
+              <span class="text-red-500 text-xs mt-1">Discount amount must be greater than 0.</span>
             </div>
             <div *ngIf="discountForm.get('discountValue')?.hasError('fixedInvalid') && discountForm.get('discountValue')?.value && discountForm.get('discountValue')?.value != 0">
-              <span class="text-danger small">Discount amount must be greater than 0.</span>
+              <span class="text-red-500 text-xs mt-1">Discount amount must be greater than 0.</span>
             </div>
           </div>
         </div>
-        <!-- Row 3: Start Date & End Date -->
-        <div class="form-group">
-          <label for="startDate" class="form-label">Start Date</label>
-          <input id="startDate" type="date" class="form-control" formControlName="startDate" required placeholder="Start date" title="Start date">
-          <div *ngIf="discountForm.get('startDate')?.hasError('required') && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-danger small">Start date is required.</div>
+        <!-- Minimum Amount -->
+        <div>
+          <label for="minimumAmount" class="block text-black font-semibold mb-2">Minimum Amount (Optional)</label>
+          <input id="minimumAmount" type="number" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black placeholder-gray-400 transition" formControlName="minimumAmount" placeholder="Minimum amount (optional)" title="Minimum amount spend" (wheel)="onWheel($event)">
+          <div *ngIf="discountForm.get('minimumAmount')?.hasError('minimumAmountInvalid') && (discountForm.get('minimumAmount')?.touched || discountForm.get('minimumAmount')?.dirty)" class="text-red-500 text-xs mt-1">Minimum amount must be greater than 0.</div>
         </div>
-        <div class="form-group">
-          <label for="endDate" class="form-label">End Date</label>
-          <input id="endDate" type="date" class="form-control" formControlName="endDate" required placeholder="End date" title="End date">
-          <div *ngIf="discountForm.get('endDate')?.hasError('required') && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-danger small">End date is required.</div>
+        <!-- Eligible Users -->
+        <div>
+          <label class="block text-black font-semibold mb-2">Eligible Users (Optional)</label>
+          <button type="button" (click)="openUserModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 transition relative">
+            <span class="text-black">Select Users</span>
+            <span *ngIf="getSelectedUsersCount() > 0" class="ml-2 inline-flex items-center justify-center text-xs font-semibold bg-black text-white rounded-full px-2 py-0.5">{{ getSelectedUsersCount() }}</span>
+          </button>
+        </div>
+        <!-- Eligible VIP Tiers (full width) -->
+        <div class="md:col-span-2">
+          <label class="block text-black font-semibold mb-2">Eligible VIP Tiers (Optional)</label>
+          <div class="flex flex-wrap gap-3">
+            <ng-container *ngFor="let tier of vipTiers">
+              <label [ngClass]="{
+                'border-2 border-black bg-gray-100': (discountForm.value.selectedVipTiers || []).includes(tier.id),
+                'border border-gray-300 bg-white': !(discountForm.value.selectedVipTiers || []).includes(tier.id)
+              }" class="flex items-center px-4 py-2 rounded-lg cursor-pointer font-medium transition border">
+                <input type="checkbox" [value]="tier.id" (change)="onCheckboxChange($event, 'selectedVipTiers')" [checked]="(discountForm.value.selectedVipTiers || []).includes(tier.id)" class="mr-2 accent-black">
+                <span class="text-black">{{ tier.name }}</span>
+              </label>
+            </ng-container>
+          </div>
+        </div>
+        <!-- Start Date -->
+        <div>
+          <label for="startDate" class="block text-black font-semibold mb-2">Start Date</label>
+          <input id="startDate" type="date" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black transition" formControlName="startDate" required placeholder="Start date" title="Start date">
+          <div *ngIf="discountForm.get('startDate')?.hasError('required') && (discountForm.get('startDate')?.touched || discountForm.get('startDate')?.dirty)" class="text-red-500 text-xs mt-1">Start date is required.</div>
+        </div>
+        <!-- End Date -->
+        <div>
+          <label for="endDate" class="block text-black font-semibold mb-2">End Date</label>
+          <input id="endDate" type="date" class="w-full rounded-lg border border-gray-300 focus:border-black focus:ring-2 focus:ring-gray-200 px-4 py-2 bg-white text-black transition" formControlName="endDate" required placeholder="End date" title="End date">
+          <div *ngIf="discountForm.get('endDate')?.hasError('required') && (discountForm.get('endDate')?.touched || discountForm.get('endDate')?.dirty)" class="text-red-500 text-xs mt-1">End date is required.</div>
         </div>
       </div>
       <!-- Switch for Active Coupon -->
-      <div class="form-switch-row">
-        <label class="switch-label" for="statusSwitch">Active coupon now</label>
-        <label class="switch">
-          <input id="statusSwitch" type="checkbox" formControlName="status">
-          <span class="slider round"></span>
+      <div class="flex items-center gap-4 mt-4">
+        <label class="text-black font-semibold" for="statusSwitch">Active coupon now</label>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input id="statusSwitch" type="checkbox" formControlName="status" class="sr-only peer">
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-gray-400 rounded-full peer peer-checked:bg-black transition"></div>
+          <div class="absolute left-1 top-1 w-4 h-4 bg-white border border-gray-300 rounded-full transition peer-checked:translate-x-5 peer-checked:border-black"></div>
         </label>
       </div>
-      <div class="form-actions">
-        <button type="submit" [disabled]="discountForm.invalid" class="px-6 py-3 bg-slate-600 text-white rounded-xl font-semibold hover:bg-slate-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed me-2">{{ isEditMode ? 'Update' : 'Create' }}</button>
-        <button type="button" class="px-6 py-3 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors duration-200" (click)="resetForm()">Reset</button>
+      <!-- Actions -->
+      <div class="flex gap-4 mt-8">
+        <button type="submit" [disabled]="discountForm.invalid" class="flex-1 px-6 py-3 bg-black text-white rounded-lg font-semibold hover:bg-gray-900 focus:ring-2 focus:ring-gray-300 transition disabled:opacity-50 disabled:cursor-not-allowed">{{ isEditMode ? 'Update' : 'Create' }}</button>
+        <button type="button" class="flex-1 px-6 py-3 border border-gray-300 text-black rounded-lg font-semibold hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 transition" (click)="resetForm()">Reset</button>
       </div>
-      <div *ngIf="message" class="alert alert-info mt-3">{{ message }}</div>
-    </form>
+      <div *ngIf="message" class="mt-4 px-4 py-3 rounded-lg bg-gray-50 text-black border border-gray-200">{{ message }}</div>
+      <div *ngIf="message" [ngClass]="isSuccess ? 'text-green-600' : 'text-red-600'" class="mt-4">
+    {{ message }}
   </div>
-</div>
+      
+    </form>
+    <!-- User Selection Modal -->
+    <div *ngIf="showUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div>
+            <h3 class="text-xl font-bold flex items-center gap-2 text-black"><i class="fas fa-users"></i> Select Users</h3>
+            <p class="text-gray-500 text-sm">Choose users to apply the discount coupon </p>
+          </div>
+          <button type="button" (click)="closeUserModal()" class="text-gray-400 hover:text-black text-2xl">&times;</button>
+        </div>
+        <div class="px-6 py-4 flex flex-col gap-4 overflow-y-auto">
+          <!-- Search -->
+          <div class="flex items-center gap-2 mb-2">
+            <div class="relative flex-1">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><i class="fas fa-search"></i></span>
+              <input type="text" class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-gray-300 placeholder-gray-400 text-black bg-white" placeholder="Search users by name, email, or tier..." [(ngModel)]="searchTerm" [ngModelOptions]="{standalone: true}" (input)="filterUsersBySearch()">
+            </div>
+            <span class="text-xs text-gray-500">{{ filteredAllUsers.length }} users</span>
+          </div>
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead>
+                <tr class="bg-gray-50">
+                  <th class="p-2"><input type="checkbox" [checked]="areAllUsersSelected()" [disabled]="filteredAllUsers.length === 0" (change)="toggleAllUsers()"></th>
+                  <th class="p-2 text-black">Profile</th>
+                  <th class="p-2 text-black">Name</th>
+                  <th class="p-2 text-black">Email</th>
+                  <th class="p-2 text-black">Tier</th>
+                  <th class="p-2 text-black">Birthdate</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="filteredAllUsers.length === 0 && searchTerm.trim() !== ''">
+                  <td colspan="6" class="text-center text-gray-400 py-6">
+                    <i class="fas fa-search"></i> No users found for "<strong>{{ searchTerm }}</strong>"
+                  </td>
+                </tr>
+                <tr *ngFor="let user of filteredAllUsers" class="hover:bg-gray-50 transition">
+                  <td class="p-2 text-center">
+                    <input type="checkbox" [checked]="isUserSelected(user.userId)" (click)="$event.stopPropagation()" (change)="toggleUserSelection(user.userId)">
+                  </td>
+                  <td class="p-2">
+                    <img [src]="getUserProfileImage(user)" (error)="onUserImageError($event)" alt="Profile" class="w-10 h-10 rounded-full object-cover border border-gray-200">
+                  </td>
+                  <td class="p-2 font-medium text-black">{{ user.name }}</td>
+                  <td class="p-2 text-black">{{ user.email }}</td>
+                  <td class="p-2"><span class="inline-block px-2 py-0.5 rounded bg-gray-100 text-black text-xs">{{ user.tier }}</span></td>
+                  <td class="p-2 text-black">{{ user.dateOfBirth || '-' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+          <div class="flex flex-1 items-center">
+            <span class="text-sm text-gray-500" *ngIf="tempSelectedUsers.length > 0">
+              <i class="fas fa-check-circle text-black"></i> {{ tempSelectedUsers.length }} user{{ tempSelectedUsers.length !== 1 ? 's' : '' }} selected
+            </span>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" (click)="closeUserModal()" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-100 text-black">Cancel</button>
+            <button type="button" (click)="confirmUserSelection()" class="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-900 font-semibold flex items-center gap-2">
+              <i class="fas fa-check"></i> Confirm Selection
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

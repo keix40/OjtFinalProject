@@ -182,6 +182,80 @@
         </div>
       </div>
   
+      <!-- Sales Analytics Pie Charts Section -->
+      <div class="space-y-6 animate-fade-in animate-delay-250">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-2xl font-bold text-slate-800">Sales Analytics</h2>
+            <p class="text-slate-500 mt-1">Distribution analysis across brands, categories, products & delivery services</p>
+          </div>
+          <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{{ timeFrameLabels[currentTimeFrame] }} view</div>
+        </div>
+  
+        <!-- Four Pie Charts Row -->
+        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          <!-- Brand Sales Pie Chart -->
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Brand Sales</h3>
+              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <i lucide="tag" class="h-4 w-4 text-blue-600"></i>
+              </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 200px" class="relative">
+                <canvas id="brandSalesChart"></canvas>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Category Sales Pie Chart -->
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Category Sales</h3>
+              <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <i lucide="folder" class="h-4 w-4 text-emerald-600"></i>
+              </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 200px" class="relative">
+                <canvas id="categorySalesChart"></canvas>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Product Sales Pie Chart -->
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Product Sales</h3>
+              <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <i lucide="package" class="h-4 w-4 text-purple-600"></i>
+              </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 200px" class="relative">
+                <canvas id="productSalesChart"></canvas>
+              </div>
+            </div>
+          </div>
+  
+          <!-- Delivery Service Usage Pie Chart -->
+          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
+            <div class="flex items-center justify-between p-5 pb-3">
+              <h3 class="text-lg font-bold text-slate-800">Delivery Services</h3>
+              <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                <i lucide="truck" class="h-4 w-4 text-orange-600"></i>
+              </div>
+            </div>
+            <div class="px-5 pb-5 relative">
+              <div style="height: 200px" class="relative">
+                <canvas id="deliveryServiceChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+  
       <!-- User Engagement Section -->
       <div class="space-y-6 animate-fade-in animate-delay-300">
         <div class="flex items-center justify-between">
@@ -301,30 +375,49 @@
         <!-- Customer Tier Cards -->
         <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
         @for (tier of segmentationData; track tier.name) {
-          <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-white to-slate-50">
-            <div class="p-5">
-              <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center space-x-3">
-                  <div class="p-2 rounded-lg" [style.backgroundColor]="tier.color"></div>
-                  <span class="text-sm font-semibold text-slate-700">{{ tier.name }}</span>
+          @if (tier.value > 0) {
+            <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200/50">
+              <div class="p-5">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.backgroundColor]="tier.color">
+                      @if (tier.name === 'Regular') {
+                        <span class="text-white text-sm">👤</span>
+                      } @else if (tier.name === 'Silver') {
+                        <span class="text-white text-sm">🥈</span>
+                      } @else if (tier.name === 'Gold') {
+                        <span class="text-white text-sm">🥇</span>
+                      } @else if (tier.name === 'Platinum') {
+                        <span class="text-white text-sm">👑</span>
+                      } @else {
+                        <span class="text-white text-sm">💎</span>
+                      }
+                    </div>
+                    <span class="text-sm font-semibold text-slate-700">{{ tier.name }}</span>
+                  </div>
+                  <div class="w-12 h-6">
+                    <svg width="100%" height="100%" viewBox="0 0 48 24">
+                      <path d="M 0 12 L 12 8 L 24 14 L 36 6 L 48 10" [attr.stroke]="tier.color" stroke-width="2" fill="none"/>
+                    </svg>
+                  </div>
                 </div>
-                <div class="w-12 h-6">
-                  <svg width="100%" height="100%" viewBox="0 0 48 24">
-                    <path d="M 0 12 L 12 8 L 24 14 L 36 6 L 48 10" [attr.stroke]="tier.color" stroke-width="2" fill="none"/>
-                  </svg>
-                </div>
-              </div>
-              <div class="space-y-2">
-                <div class="text-2xl font-bold text-slate-900">{{ formatNumber(tier.value) }}</div>
-                <div class="flex items-center justify-between">
-                  <div class="text-xs text-slate-500">{{ (tier.value / totalCustomers * 100).toFixed(1) }}% of total</div>
-                  <div class="px-2 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-600">
-                    {{ tier.value > 3000 ? 'High' : tier.value > 2000 ? 'Medium' : 'Low' }} Volume
+                <div class="space-y-2">
+                  <div class="text-2xl font-bold text-slate-900">{{ formatNumber(tier.value) }}</div>
+                  <div class="flex items-center justify-between">
+                    <div class="text-xs text-slate-500">{{ (tier.value / totalCustomers * 100).toFixed(1) }}% of total</div>
+                    <div class="px-2 py-1 rounded-full text-xs font-medium" 
+                         [ngClass]="{
+                           'bg-emerald-100 text-emerald-700': tier.value > 1000,
+                           'bg-blue-100 text-blue-700': tier.value > 500 && tier.value <= 1000,
+                           'bg-slate-100 text-slate-600': tier.value <= 500
+                         }">
+                      {{ tier.value > 1000 ? 'High' : tier.value > 500 ? 'Medium' : 'Low' }} Volume
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+          }
         }
         </div>
   

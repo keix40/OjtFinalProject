@@ -40,6 +40,9 @@ public class ReviewService {
     @Autowired
     private ReviewMediaRepository rmRepo;
 
+    @Autowired
+    private NotificationService notificationService;
+
     private static final String MEDIA_UPLOAD_DIR = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/review/";
 
     public Review saveReview(ReviewMessageDTO msg) {
@@ -48,7 +51,23 @@ public class ReviewService {
         review.setUser((User) userRepo.findByName(msg.getUsername()).orElseThrow());
         review.setComment(msg.getComment());
         review.setRating(msg.getRating());
-        return repo.save(review);
+        
+        Review savedReview = repo.save(review);
+
+        // Send notification to current user if they are Customer Support or Admin
+        String notificationMessage = "New review submitted for product: " + review.getProduct().getProductName() + 
+                                   " by " + review.getUser().getName() + " (Rating: " + msg.getRating() + "/5)";
+        String notificationType = "review_submitted";
+        String notificationLink = "/admin/reviews/" + savedReview.getId();
+        
+        notificationService.sendNotificationToCurrentUserIfRole(
+            review.getUser().getEmail(), 
+            notificationMessage, 
+            notificationType, 
+            notificationLink
+        );
+
+        return savedReview;
     }
 
     @Transactional
@@ -85,7 +104,22 @@ public class ReviewService {
             }
         }
 
-        return repo.save(review);
+        Review savedReview = repo.save(review);
+
+        // Send notification to current user if they are Customer Support or Admin
+        String notificationMessage = "New review submitted for product: " + review.getProduct().getProductName() + 
+                                   " by " + review.getUser().getName() + " (Rating: " + rating + "/5)";
+        String notificationType = "review_submitted";
+        String notificationLink = "/admin/reviews/" + savedReview.getId();
+        
+        notificationService.sendNotificationToCurrentUserIfRole(
+            review.getUser().getEmail(), 
+            notificationMessage, 
+            notificationType, 
+            notificationLink
+        );
+
+        return savedReview;
     }
 
     public Review updateReviewWithMedia(Long id, int rating, String comment,

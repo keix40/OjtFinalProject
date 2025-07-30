@@ -25,4 +25,7 @@ public class AdminCreateUserRequest {
     private String country;
     // Optionally: type (HOME/WORK/OTHER)
     private String addressType; // e.g., 'HOME', 'WORK', etc.
+    
+    // Welcome email flag
+    private Boolean sendWelcomeEmail;
 } 

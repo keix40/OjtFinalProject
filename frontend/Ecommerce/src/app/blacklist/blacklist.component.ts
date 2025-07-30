@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy } from "@angular/core";
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, HostListener } from "@angular/core";
 import { FormBuilder, FormGroup, Validators } from "@angular/forms";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -74,6 +74,11 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   appealStatusFilter = '';
   filteredAppeals: Appeal[] = [];
   isEditMode = false;
+
+  // Dropdown menu properties
+  openMenuId: string | null = null;
+  dropdownPosition = { x: 0, y: 0 };
+  showBulkActionsDropdown = false;
 
   // Computed properties for appeal counts
   get approvedAppealsCount(): number {
@@ -176,6 +181,8 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     ]).pipe(takeUntil(this.destroy$))
     .subscribe({
       next: ([stats, entriesResponse]) => {
+        console.log('[BlacklistComponent] Stats received:', stats);
+        console.log('[BlacklistComponent] Trends data:', stats?.trends);
         this.stats = stats;
         
         // Set dashboard stats from backend response
@@ -317,8 +324,8 @@ export class BlacklistComponent implements OnInit, OnDestroy {
         reason: formValue.reason,
         expiryDate: formValue.expiryDate ? new Date(formValue.expiryDate) : undefined,
         associatedEmail: formValue.associatedEmail,
-        notes: formValue.notes,
-        addedBy: 'System' // Default value; replace with actual user if available
+        notes: formValue.notes
+        // addedBy will be set automatically by backend to current authenticated user
       };
 
       // Add the main entry first
@@ -365,8 +372,8 @@ export class BlacklistComponent implements OnInit, OnDestroy {
             reason: `Related account to ${targetValue}: ${reason}`,
             expiryDate: undefined, // Same expiry as main entry
             associatedEmail: targetValue,
-            notes: `Automatically blocked due to relationship with ${targetValue}`,
-            addedBy: 'System'
+            notes: `Automatically blocked due to relationship with ${targetValue}`
+            // addedBy will be set automatically by backend to current authenticated user
           }));
 
           // Add all related entries
@@ -491,16 +498,20 @@ export class BlacklistComponent implements OnInit, OnDestroy {
 
   // Bulk actions
   bulkLiftBan(): void {
+    console.log('[BlacklistComponent] bulkLiftBan called with selected entries:', this.selectedEntries);
     if (confirm(`Lift ban for ${this.selectedEntries.length} selected entries?`)) {
       this.blacklistService.bulkLiftBan(this.selectedEntries)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
+            console.log('[BlacklistComponent] Bulk lift ban successful');
             this.toastr.success('Bans lifted successfully');
             this.selectedEntries = [];
+            this.showBulkActionsDropdown = false;
             this.loadData();
           },
           error: (error) => {
+            console.error('[BlacklistComponent] Bulk lift ban error:', error);
             this.toastr.error('Failed to lift bans');
             console.error('Error lifting bans:', error);
           }
@@ -509,18 +520,34 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   bulkExtendBan(): void {
+    console.log('[BlacklistComponent] bulkExtendBan called with selected entries:', this.selectedEntries);
     const date = prompt("Enter new expiry date (YYYY-MM-DD):");
     if (date) {
       const newExpiryDate = new Date(date);
+      // Validate date
+      if (isNaN(newExpiryDate.getTime())) {
+        this.toastr.error('Invalid date format. Please use YYYY-MM-DD format.');
+        return;
+      }
+      // Check if date is in the future
+      if (newExpiryDate <= new Date()) {
+        this.toastr.error('Expiry date must be in the future.');
+        return;
+      }
+      
+      console.log('[BlacklistComponent] Extending bans with date:', newExpiryDate);
       this.blacklistService.bulkExtendBan(this.selectedEntries, newExpiryDate)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
+            console.log('[BlacklistComponent] Bulk extend ban successful');
             this.toastr.success('Bans extended successfully');
             this.selectedEntries = [];
+            this.showBulkActionsDropdown = false;
             this.loadData();
           },
           error: (error) => {
+            console.error('[BlacklistComponent] Bulk extend ban error:', error);
             this.toastr.error('Failed to extend bans');
             console.error('Error extending bans:', error);
           }
@@ -529,21 +556,32 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   bulkUpdateCategory(): void {
-    const category = prompt("Enter new category (fraud/spam/abuse/chargeback/fake_account/policy_violation):");
+    console.log('[BlacklistComponent] bulkUpdateCategory called with selected entries:', this.selectedEntries);
+    const validCategories = ['fraud', 'spam', 'abuse', 'chargeback', 'fake_account', 'policy_violation'];
+    const category = prompt(`Enter new category (${validCategories.join('/')}):`);
     if (category) {
-      this.blacklistService.bulkUpdateCategory(this.selectedEntries, category)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            this.toastr.success('Categories updated successfully');
-            this.selectedEntries = [];
-            this.loadData();
-          },
-          error: (error) => {
-            this.toastr.error('Failed to update categories');
-            console.error('Error updating categories:', error);
-          }
-        });
+      const normalizedCategory = category.toLowerCase().replace(' ', '_');
+      console.log('[BlacklistComponent] Normalized category:', normalizedCategory);
+      if (validCategories.includes(normalizedCategory)) {
+        this.blacklistService.bulkUpdateCategory(this.selectedEntries, normalizedCategory)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              console.log('[BlacklistComponent] Bulk update category successful');
+              this.toastr.success('Categories updated successfully');
+              this.selectedEntries = [];
+              this.showBulkActionsDropdown = false;
+              this.loadData();
+            },
+            error: (error) => {
+              console.error('[BlacklistComponent] Bulk update category error:', error);
+              this.toastr.error('Failed to update categories');
+              console.error('Error updating categories:', error);
+            }
+          });
+      } else {
+        this.toastr.error(`Invalid category. Please use one of: ${validCategories.join(', ')}`);
+      }
     }
   }
 
@@ -563,6 +601,7 @@ export class BlacklistComponent implements OnInit, OnDestroy {
         link.download = `blacklist-entries-${new Date().toISOString().split('T')[0]}.csv`;
         link.click();
         window.URL.revokeObjectURL(url);
+        this.showBulkActionsDropdown = false;
       },
       error: (error) => {
         this.toastr.error('Failed to export entries');
@@ -1062,6 +1101,96 @@ export class BlacklistComponent implements OnInit, OnDestroy {
       this.filteredAppeals = this.appeals.filter(appeal => appeal.status === this.appealStatusFilter);
     }
     this.cdr.detectChanges();
+  }
+
+  // Utility methods for dropdown menu
+  openMenu(id: string): void {
+    this.openMenuId = id;
+    this.cdr.detectChanges();
+    
+    // After the dropdown is rendered, adjust its position if needed
+    setTimeout(() => {
+      this.adjustDropdownPosition(id);
+    }, 0);
+  }
+
+  closeMenu(): void {
+    this.openMenuId = null;
+    this.cdr.detectChanges();
+  }
+
+  toggleMenu(id: string): void {
+    if (this.openMenuId === id) {
+      this.closeMenu();
+    } else {
+      this.openMenu(id);
+    }
+  }
+
+  // Adjust dropdown position to prevent clipping
+  private adjustDropdownPosition(id: string): void {
+    const button = document.getElementById(`menu-button-${id}`);
+    
+    if (button) {
+      const buttonRect = button.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
+      const dropdownWidth = 192; // w-48 = 12rem = 192px
+      const dropdownHeight = 160; // Approximate height of dropdown with 4 items
+      
+      let x = buttonRect.right - dropdownWidth;
+      let y = buttonRect.bottom + 8; // 8px gap below button
+      
+      // Ensure dropdown doesn't go off the right edge
+      if (x < 0) {
+        x = 8; // 8px from left edge
+      }
+      
+      // Check if dropdown would be cut off at the bottom
+      if (y + dropdownHeight > viewportHeight) {
+        // Position dropdown above the button
+        y = buttonRect.top - dropdownHeight - 8; // 8px gap above button
+      }
+      
+      // Ensure dropdown doesn't go off the top edge
+      if (y < 0) {
+        y = 8; // 8px from top edge
+      }
+      
+      this.dropdownPosition = { x, y };
+      this.cdr.detectChanges();
+    }
+  }
+
+  // Click outside handler for dropdown menu
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (this.openMenuId && !target.closest(`[id="menu-button-${this.openMenuId}"]`)) {
+      this.closeMenu();
+    }
+    // Close bulk actions dropdown if clicking outside
+    if (this.showBulkActionsDropdown && !target.closest('.bulk-actions')) {
+      this.showBulkActionsDropdown = false;
+    }
+  }
+
+  // Toggle bulk actions dropdown
+  toggleBulkActionsDropdown(): void {
+    this.showBulkActionsDropdown = !this.showBulkActionsDropdown;
+    this.cdr.detectChanges();
+  }
+
+  getTrendIcon(direction: string | undefined): string {
+    switch (direction) {
+      case 'up':
+        return 'trending-up';
+      case 'down':
+        return 'trending-down';
+      case 'stable':
+      default:
+        return 'minus';
+    }
   }
 
   // Helper methods for body scroll management

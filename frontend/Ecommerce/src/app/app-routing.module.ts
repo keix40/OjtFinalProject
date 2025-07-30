@@ -185,7 +185,8 @@ export class BlacklistGuard implements CanActivate {
     console.log('[BlacklistGuard] User is not logged in, allowing access');
     return true;
   }
-}
+}import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
+
 
 const routes: Routes = [
   // Public routes

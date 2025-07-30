@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { AuthService } from '../../auth/auth.service';
 import { Router } from '@angular/router';
 import { UserDetails } from '../user-details';
+import { HttpClient } from '@angular/common/http';
 
 declare var bootstrap: any;
 @Component({
@@ -16,6 +17,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
   @Input() userDetails: UserDetails | null = null;
 
   personalInfoForm!: FormGroup;
+  otpForm!: FormGroup;
   isEditing = false;
   originalDetails: UserDetails | null = null; // To store original data for canceling edits
 
@@ -23,10 +25,25 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
   previewAvatarUrl: string | null = null;  //add for profile avatar by pmk june 13
   originalAvatarUrl: string | null = null;  //add for profile avatar by pmk june 13
 
-  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router) { }
+  // Phone verification properties
+  isSendingOtp = false;
+  isVerifyingOtp = false;
+  isResendingOtp = false;
+  hasOtpSent = false;
+  otpMessage = '';
+  otpSuccess = false;
+  currentPhoneNumber = '';
+
+  constructor(
+    private fb: FormBuilder, 
+    private authService: AuthService, 
+    private router: Router,
+    private http: HttpClient
+  ) { }
 
   ngOnInit(): void {
     this.buildForm();
+    this.buildOtpForm();
     let details = this.userDetails;
     const decoded = this.authService.getDecodedToken();
     console.log('Decoded JWT:', decoded);
@@ -79,6 +96,12 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
     });
   }
 
+  buildOtpForm(): void {
+    this.otpForm = this.fb.group({
+      otpCode: ['', [Validators.required, Validators.pattern(/^\d{6}$/)]]
+    });
+  }
+
   patchForm(details: UserDetails): void {
     this.personalInfoForm.patchValue(details);
   }
@@ -89,8 +112,147 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       this.originalAvatarUrl = this.userDetails?.profileImage || '';
     } else {
       this.previewAvatarUrl = null;
+      this.clearOtpMessage();
     }
     this.isEditing ? this.personalInfoForm.enable() : this.personalInfoForm.disable();
+  }
+
+  // Phone verification methods
+  sendOTP(): void {
+    const phoneNumber = this.personalInfoForm.get('phoneNumber')?.value;
+    if (!phoneNumber || phoneNumber.trim() === '') {
+      this.showOtpMessage('Please enter a phone number first.', false);
+      return;
+    }
+
+    this.isSendingOtp = true;
+    this.clearOtpMessage();
+
+            this.http.post<any>('http://localhost:8080/api/phone-verification/send-otp', {
+          phoneNumber: phoneNumber
+        }).subscribe({
+          next: (response) => {
+            this.isSendingOtp = false;
+            if (response.success) {
+              this.hasOtpSent = true;
+              this.currentPhoneNumber = response.formattedPhoneNumber || phoneNumber;
+              
+              // Show different message based on whether user is changing phone number
+              if (response.isChangingPhoneNumber) {
+                this.showOtpMessage('OTP sent to new phone number for verification. Please verify the new number.', true);
+              } else {
+                this.showOtpMessage(response.message, true);
+              }
+            } else {
+              this.showOtpMessage(response.message, false);
+            }
+          },
+      error: (error) => {
+        this.isSendingOtp = false;
+        console.error('Error sending OTP:', error);
+        this.showOtpMessage('Failed to send OTP. Please try again.', false);
+      }
+    });
+  }
+
+  openVerificationModal(): void {
+    const modal = new bootstrap.Modal(document.getElementById('phoneVerificationModal'));
+    modal.show();
+    setTimeout(() => {
+      const otpInput = document.getElementById('otpCode') as HTMLInputElement;
+      if (otpInput) {
+        otpInput.focus();
+      }
+    }, 100);
+  }
+
+  verifyOTP(): void {
+    if (!this.otpForm.valid) {
+      return;
+    }
+
+    const phoneNumber = this.personalInfoForm.get('phoneNumber')?.value;
+    const otpCode = this.otpForm.get('otpCode')?.value;
+
+    this.isVerifyingOtp = true;
+
+    this.http.post<any>('http://localhost:8080/api/phone-verification/verify-otp', {
+      phoneNumber: phoneNumber,
+      otpCode: otpCode
+    }).subscribe({
+      next: (response) => {
+        this.isVerifyingOtp = false;
+        if (response.success) {
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('phoneVerificationModal'));
+          if (modal) {
+            modal.hide();
+          }
+
+          // Update user details
+          if (this.userDetails) {
+            this.userDetails.phoneNumber = response.phoneNumber || phoneNumber;
+            this.userDetails.phoneVerified = true;
+          }
+
+          // Update form
+          this.personalInfoForm.patchValue({ phoneNumber: response.phoneNumber || phoneNumber });
+
+          // Show success message based on whether it was a phone number change
+          const successMessage = response.phoneNumber !== this.originalDetails?.phoneNumber ? 
+            'Phone number changed and verified successfully!' : 
+            'Phone number verified successfully!';
+          this.showOtpMessage(successMessage, true);
+          this.hasOtpSent = false;
+          this.otpForm.reset();
+        } else {
+          this.showOtpMessage(response.message, false);
+        }
+      },
+      error: (error) => {
+        this.isVerifyingOtp = false;
+        console.error('Error verifying OTP:', error);
+        this.showOtpMessage('Failed to verify OTP. Please try again.', false);
+      }
+    });
+  }
+
+  resendOTP(): void {
+    this.isResendingOtp = true;
+    this.otpForm.reset();
+
+    this.http.post<any>('http://localhost:8080/api/phone-verification/send-otp', {
+      phoneNumber: this.currentPhoneNumber
+    }).subscribe({
+      next: (response) => {
+        this.isResendingOtp = false;
+        if (response.success) {
+          this.showOtpMessage('OTP resent successfully!', true);
+        } else {
+          this.showOtpMessage(response.message, false);
+        }
+      },
+      error: (error) => {
+        this.isResendingOtp = false;
+        console.error('Error resending OTP:', error);
+        this.showOtpMessage('Failed to resend OTP. Please try again.', false);
+      }
+    });
+  }
+
+  showOtpMessage(message: string, success: boolean): void {
+    this.otpMessage = message;
+    this.otpSuccess = success;
+    
+    // Clear message after 5 seconds
+    setTimeout(() => {
+      this.clearOtpMessage();
+    }, 5000);
+  }
+
+  clearOtpMessage(): void {
+    this.otpMessage = '';
+    this.otpSuccess = false;
   }
 
   saveChanges(): void {
@@ -110,8 +272,14 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       profileImage: profileImageUrl || this.userDetails?.profileImage || '',
     };
 
-    // Short debug
-    console.log('Updating user:', updatedData);
+    // Debug: Show exactly what's being sent
+    console.log('=== FRONTEND DEBUG ===');
+    console.log('Current user details:', this.userDetails);
+    console.log('Form values:', this.personalInfoForm.value);
+    console.log('Sending updated data:', updatedData);
+    console.log('Name changed?', this.userDetails?.name !== updatedData.name);
+    console.log('From:', this.userDetails?.name, 'To:', updatedData.name);
+    console.log('=== END FRONTEND DEBUG ===');
 
     this.authService.updateUserDetails(updatedData).subscribe({
       next: (response: any) => {
@@ -159,6 +327,8 @@ cancelEdit(): void { //add for profile avatar by pmk june 13
     if (this.originalDetails) this.patchForm(this.originalDetails);
     this.userDetails!.profileImage = this.originalAvatarUrl!;
     this.personalInfoForm.disable();
+    this.clearOtpMessage();
+    this.hasOtpSent = false;
   }
 
   openEditAvatarModal(): void {
@@ -224,5 +394,15 @@ isPhoneEmpty(): boolean {
 
 isPhoneUnverified(): boolean {
   return !this.isPhoneEmpty() && this.userDetails?.phoneVerified === false;
+}
+
+isPhoneVerified(): boolean {
+  return !this.isPhoneEmpty() && this.userDetails?.phoneVerified === true;
+}
+
+isPhoneNumberChanged(): boolean {
+  const currentPhone = this.personalInfoForm.get('phoneNumber')?.value;
+  const originalPhone = this.originalDetails?.phoneNumber;
+  return currentPhone && originalPhone && currentPhone !== originalPhone;
 }
 }
