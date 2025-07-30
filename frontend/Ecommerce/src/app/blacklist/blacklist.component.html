@@ -35,10 +35,15 @@
         </div>
         <h3 class="text-4xl font-extrabold text-rose-700 mb-1">{{ stats?.totalActive || 0 }}</h3>
         <p class="text-slate-700 text-lg font-medium">Total Blacklisted</p>
-        <div class="flex items-center gap-1 text-sm text-rose-600 mt-2">
-          <i data-lucide="trending-up" class="w-4 h-4"></i>
-          <span>+{{ stats?.newThisWeek || 0 }} this week</span>
+        <div class="flex items-center gap-1 text-sm" [ngClass]="{
+          'text-rose-600': stats?.trends?.entriesTrendDirection === 'up',
+          'text-green-600': stats?.trends?.entriesTrendDirection === 'down',
+          'text-gray-600': stats?.trends?.entriesTrendDirection === 'stable'
+        }">
+          <i [attr.data-lucide]="getTrendIcon(stats?.trends?.entriesTrendDirection)" class="w-4 h-4"></i>
+          <span>{{ (stats?.trends?.entriesTrend || 0) > 0 ? '+' : '' }}{{ stats?.trends?.entriesTrend || 0 }}% vs last month</span>
         </div>
+       
       </div>
       <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
         <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 mb-4">
@@ -46,12 +51,16 @@
         </div>
         <h3 class="text-4xl font-extrabold text-blue-700 mb-1">{{ fraudPrevented }}</h3>
         <p class="text-slate-700 text-lg font-medium">Fraud Attempts Blocked</p>
-        <div class="flex items-center gap-1 text-sm text-blue-600 mt-2">
-          <i data-lucide="trending-down" class="w-4 h-4"></i>
-          <span>-15% vs last month</span>
+        <div class="flex items-center gap-1 text-sm" [ngClass]="{
+          'text-blue-600': stats?.trends?.fraudTrendDirection === 'up',
+          'text-green-600': stats?.trends?.fraudTrendDirection === 'down',
+          'text-gray-600': stats?.trends?.fraudTrendDirection === 'stable'
+        }">
+          <i [attr.data-lucide]="getTrendIcon(stats?.trends?.fraudTrendDirection)" class="w-4 h-4"></i>
+          <span>{{ (stats?.trends?.fraudTrend || 0) > 0 ? '+' : '' }}{{ stats?.trends?.fraudTrend || 0 }}% vs last month</span>
         </div>
       </div>
-      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
+      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4 cursor-pointer hover:shadow-lg transition" (click)="openAppealManagementModal()">
         <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-yellow-100 mb-4">
           <i data-lucide="gavel" class="w-9 h-9 text-yellow-600"></i>
         </div>
@@ -181,27 +190,54 @@
         <h5 class="text-lg font-semibold text-slate-700"><i data-lucide="list" class="w-5 h-5 mr-2 text-slate-600"></i>Blacklist Entries ({{ (filteredEntries && filteredEntries.length) || 0 }})</h5>
         <div class="flex items-center gap-2">
           <div class="bulk-actions me-3" *ngIf="selectedEntries.length > 0">
-            <span class="selected-count">{{ selectedEntries.length }} selected</span>
-            <div class="dropdown">
-              <button class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i data-lucide="cog" class="w-4 h-4 text-rose-600"></i>
+            <span class="selected-count text-sm text-gray-600 mr-2">{{ selectedEntries.length }} selected</span>
+            <div class="relative inline-block text-left">
+              <button 
+                class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all"
+                type="button"
+                (click)="toggleBulkActionsDropdown()"
+              >
+                <i data-lucide="cog" class="w-4 h-4"></i>
                 Bulk Actions
+                <i data-lucide="chevron-down" class="w-4 h-4"></i>
               </button>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" (click)="bulkLiftBan()">
-                  <i data-lucide="unlock" class="w-4 h-4 mr-2 text-green-600"></i>Lift Ban
-                </a></li>
-                <li><a class="dropdown-item" (click)="bulkExtendBan()">
-                  <i data-lucide="clock" class="w-4 h-4 mr-2 text-yellow-600"></i>Extend Ban
-                </a></li>
-                <li><a class="dropdown-item" (click)="bulkUpdateCategory()">
-                  <i data-lucide="tag" class="w-4 h-4 mr-2 text-blue-600"></i>Update Category
-                </a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" (click)="bulkExport()">
-                  <i data-lucide="download" class="w-4 h-4 mr-2 text-slate-600"></i>Export Selected
-                </a></li>
-              </ul>
+              <div 
+                *ngIf="showBulkActionsDropdown"
+                class="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                role="menu"
+              >
+                <div class="py-1" role="none">
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkLiftBan(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="unlock" class="w-4 h-4 mr-2 text-green-600"></i>
+                    Lift Ban
+                  </button>
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkExtendBan(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="clock" class="w-4 h-4 mr-2 text-yellow-600"></i>
+                    Extend Ban
+                  </button>
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkUpdateCategory(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="tag" class="w-4 h-4 mr-2 text-blue-600"></i>
+                    Update Category
+                  </button>
+                  <hr class="my-1">
+                  <button 
+                    class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center"
+                    (click)="bulkExport(); showBulkActionsDropdown = false"
+                  >
+                    <i data-lucide="download" class="w-4 h-4 mr-2 text-slate-600"></i>
+                    Export Selected
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="view-toggle">
@@ -234,138 +270,170 @@
         <!-- Content when not loading -->
         <ng-container *ngIf="!loading">
           <!-- Table View -->
-          <div *ngIf="viewMode === 'table'" class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead class="table-header">
+          <div *ngIf="viewMode === 'table'" class="overflow-x-auto">
+            <table class="w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+              <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th width="50">
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                     <input 
                       type="checkbox" 
-                      class="form-check-input"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       (change)="selectAll($event)"
                       [checked]="selectedEntries.length === paginatedEntries.length && paginatedEntries.length > 0"
                     >
                   </th>
-                  <th>Target Information</th>
-                  <th>Category</th>
-                  <th>Risk Level</th>
-                  <th>Reason</th>
-                  <th>Added Date</th>
-                  <th>Status</th>
-                  <th>Added By</th>
-                  <th width="120">Actions</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target Information</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added Date</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Added By</th>
+                  <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-32">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody class="bg-white divide-y divide-gray-200">
                 <tr 
                   *ngFor="let entry of paginatedEntries; trackBy: trackByEntryId"
-                  [class.table-row-selected]="selectedEntries.includes(entry.id)"
-                  [class.table-row-low]="entry.riskLevel === 'LOW'"
-                  [class.table-row-medium]="entry.riskLevel === 'MEDIUM'"
-                  [class.table-row-high]="entry.riskLevel === 'HIGH'"
-                  [class.table-row-critical]="entry.riskLevel === 'CRITICAL'"
+                  class="hover:bg-gray-50 transition-colors duration-200"
+                  [class.bg-blue-50]="selectedEntries.includes(entry.id)"
                 >
-                  <td>
+                  <td class="px-4 py-3 whitespace-nowrap">
                     <input 
                       type="checkbox" 
-                      class="form-check-input"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                       [checked]="selectedEntries.includes(entry.id)"
                       (change)="toggleEntrySelection(entry.id, $event)"
                     >
                   </td>
-                  <td>
-                    <div class="target-info">
-                      <div class="target-primary">
-                        <i [attr.data-lucide]="getTargetIconName(entry.targetType)" class="w-5 h-5 text-slate-600 me-2"></i>
-                        <strong>{{ entry.targetValue }}</strong>
-                      </div>
-                      <div class="target-details">
-                        <span class="target-type">{{ getTargetTypeLabel(entry.targetType) }}</span>
-                        <span *ngIf="entry.associatedEmail" class="associated-info">
-                          <i data-lucide="link" class="w-3 h-3 mr-1 text-blue-600"></i>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i [attr.data-lucide]="getTargetIconName(entry.targetType)" class="w-5 h-5 text-gray-600 mr-2"></i>
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ entry.targetValue }}</div>
+                        <div class="text-sm text-gray-500">{{ getTargetTypeLabel(entry.targetType) }}</div>
+                        <div *ngIf="entry.associatedEmail" class="text-xs text-blue-600 flex items-center">
+                          <i data-lucide="link" class="w-3 h-3 mr-1"></i>
                           {{ entry.associatedEmail }}
-                        </span>
-                      </div>
-                      <div class="fingerprint-info" *ngIf="entry.deviceFingerprint">
-                        <small class="text-muted">
-                          <i data-lucide="fingerprint" class="w-3 h-3 mr-1 text-slate-600"></i>
-                          Device: {{ entry.deviceFingerprint.substring(0, 12) }}...
-                        </small>
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td class="px-4 py-3 whitespace-nowrap text-gray-800">
-                    <i data-lucide="alert-triangle" class="w-5 h-5 text-blue-500 inline-block"></i>
-                    <span class="ml-1 font-semibold text-gray-800">{{ getCategoryLabel(entry.category) }}</span>
-                  </td>
-                  <td class="px-4 py-3 whitespace-nowrap text-gray-800">
-                    <i data-lucide="activity" class="w-5 h-5 text-yellow-500 inline-block"></i>
-                    <span class="ml-1 font-semibold text-gray-800">{{ entry.riskLevel }}</span>
-                  </td>
-                  <td>
-                    <div class="reason-info">
-                      <div class="reason-primary">{{ entry.reason }}</div>
-                      <div class="incident-count" *ngIf="entry.incidentCount > 1">
-                        <small class="text-muted">{{ entry.incidentCount }} incidents</small>
-                      </div>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i data-lucide="alert-triangle" class="w-5 h-5 text-blue-500 mr-2"></i>
+                      <span class="text-sm font-medium text-gray-900">{{ getCategoryLabel(entry.category) }}</span>
                     </div>
                   </td>
-                  <td>
-                    <div class="date-info">
-                      <div>{{ entry.addedDate | date:'MMM dd, yyyy' }}</div>
-                      <small class="text-muted">{{ getTimeAgo(entry.addedDate) }}</small>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i data-lucide="activity" class="w-5 h-5 text-yellow-500 mr-2"></i>
+                      <span class="text-sm font-medium text-gray-900">{{ entry.riskLevel }}</span>
                     </div>
                   </td>
-                  <td>
-                    <div class="status-info">
-                      <div class="status-badge" 
-                           [ngClass]="'bg-' + getStatusColor(entry.status) + '-100 text-' + getStatusColor(entry.status) + '-700'">
-                        <i [attr.data-lucide]="getStatusIconName(entry.status)" 
-                           [ngClass]="'w-5 h-5 text-' + getStatusColor(entry.status) + '-600'"></i>
+                  <td class="px-4 py-3">
+                    <div class="text-sm text-gray-900">{{ entry.reason }}</div>
+                    <div *ngIf="entry.incidentCount > 1" class="text-xs text-gray-500">{{ entry.incidentCount }} incidents</div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="text-sm text-gray-900">{{ entry.addedDate | date:'MMM dd, yyyy' }}</div>
+                    <div class="text-xs text-gray-500">{{ getTimeAgo(entry.addedDate) }}</div>
+                  </td>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                            [ngClass]="{
+                              'bg-red-100 text-red-800': normalizeStatus(entry.status) === 'ACTIVE',
+                              'bg-yellow-100 text-yellow-800': normalizeStatus(entry.status) === 'APPEALED',
+                              'bg-green-100 text-green-800': normalizeStatus(entry.status) === 'LIFTED',
+                              'bg-gray-100 text-gray-800': normalizeStatus(entry.status) === 'EXPIRED'
+                            }">
+                        <i [attr.data-lucide]="getStatusIconName(entry.status)" class="w-3 h-3 mr-1"></i>
                         {{ getStatusLabel(entry.status) }}
-                      </div>
-                      <div class="expiry-info" *ngIf="entry.expiryDate && normalizeStatus(entry.status) === 'ACTIVE'">
-                        <small class="text-muted">
-                          Expires: {{ entry.expiryDate | date:'MMM dd' }}
-                        </small>
-                      </div>
-                      <div class="appeal-indicator" *ngIf="hasAppeals(entry)">
-                        <small class="text-orange-600 font-medium">
-                          <i data-lucide="gavel" class="w-3 h-3 inline-block mr-1"></i>
-                          {{ getEntryAppeals(entry).length }} Appeal(s)
-                        </small>
-                      </div>
+                      </span>
+                    </div>
+                    <div *ngIf="hasAppeals(entry)" class="text-xs text-orange-600 mt-1">
+                      <i data-lucide="gavel" class="w-3 h-3 inline-block mr-1"></i>
+                      {{ getEntryAppeals(entry).length }} Appeal(s)
                     </div>
                   </td>
-                  <td>
-                    <div class="added-by-info">
-                      <div class="staff-name">{{ entry.addedBy }}</div>
-                      <div class="add-method">
-                        <small class="text-muted">
-                          <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-4 h-4 ms-1 text-slate-600"></i>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center">
+                      <i data-lucide="user" class="w-4 h-4 text-gray-600 mr-2"></i>
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ entry.addedBy }}</div>
+                        <div class="text-xs text-gray-500 flex items-center">
+                          <i [attr.data-lucide]="getAutomaticIconName(entry.isAutomatic)" class="w-3 h-3 mr-1"></i>
                           {{ entry.isAutomatic ? 'Auto' : 'Manual' }}
-                        </small>
+                        </div>
                       </div>
                     </div>
                   </td>
-                  <td class="flex items-center gap-2 justify-center">
-                    <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="viewEntryDetails(entry)" title="View Details" data-bs-toggle="modal" data-bs-target="#entryDetailsModal">
-                      <i data-lucide="eye" class="w-4 h-4 text-blue-600"></i>
-                    </button>
-                    <button class="bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="editEntry(entry)" title="Edit Entry">
-                      <i data-lucide="edit" class="w-4 h-4 text-yellow-600"></i>
-                    </button>
-                    <div class="dropdown">
-                      <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i data-lucide="more-horizontal" class="w-4 h-4 text-slate-600"></i>
+                  <td class="px-4 py-3 whitespace-nowrap">
+                    <div class="flex items-center space-x-2">
+                      <button 
+                        class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        (click)="viewEntryDetails(entry)" 
+                        title="View Details"
+                      >
+                        <i data-lucide="eye" class="w-3 h-3"></i>
                       </button>
-                      <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" (click)="viewIncidentHistory(entry)"><i data-lucide="history" class="w-4 h-4 mr-2 text-slate-600"></i>Incident History</a></li>
-                        <li><a class="dropdown-item" (click)="addNote(entry)"><i data-lucide="sticky-note" class="w-4 h-4 mr-2 text-yellow-600"></i>Add Note</a></li>
-                        <li><a class="dropdown-item" (click)="extendBan(entry)"><i data-lucide="clock" class="w-4 h-4 mr-2 text-yellow-600"></i>Extend Ban</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-green-500" (click)="liftBan(entry)"><i data-lucide="unlock" class="w-4 h-4 mr-2 text-green-600"></i>Lift Ban</a></li>
-                      </ul>
+                      <button 
+                        class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-yellow-700 bg-yellow-100 hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                        (click)="editEntry(entry)" 
+                        title="Edit Entry"
+                      >
+                        <i data-lucide="edit" class="w-3 h-3"></i>
+                      </button>
+                      <div class="relative inline-block text-left">
+                        <button 
+                          type="button"
+                          class="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded text-gray-700 bg-gray-100 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                          (click)="toggleMenu(entry.id)"
+                          id="menu-button-{{entry.id}}"
+                        >
+                          <i data-lucide="more-horizontal" class="w-3 h-3"></i>
+                        </button>
+                        <div 
+                          *ngIf="openMenuId === entry.id"
+                          class="fixed z-[9999] w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                          [style.top.px]="dropdownPosition.y"
+                          [style.left.px]="dropdownPosition.x"
+                          role="menu"
+                        >
+                          <div class="py-1" role="none">
+                            <button 
+                              class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              (click)="viewIncidentHistory(entry)"
+                            >
+                              <i data-lucide="history" class="w-4 h-4 inline-block mr-2"></i>
+                              Incident History
+                            </button>
+                            <button 
+                              class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              (click)="addNote(entry)"
+                            >
+                              <i data-lucide="sticky-note" class="w-4 h-4 inline-block mr-2"></i>
+                              Add Note
+                            </button>
+                            <button 
+                              class="text-gray-700 block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                              (click)="extendBan(entry)"
+                            >
+                              <i data-lucide="clock" class="w-4 h-4 inline-block mr-2"></i>
+                              Extend Ban
+                            </button>
+                            <hr class="my-1">
+                            <button 
+                              class="text-green-700 block w-full text-left px-4 py-2 text-sm hover:bg-green-50"
+                              (click)="liftBan(entry)"
+                            >
+                              <i data-lucide="unlock" class="w-4 h-4 inline-block mr-2"></i>
+                              Lift Ban
+                            </button>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </td>
                 </tr>

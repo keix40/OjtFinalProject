@@ -51,6 +51,9 @@ public class User {
     @Column(name = "is_verified")
     private boolean verified = false;
 
+    @Column(name = "phone_verified", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean phoneVerified = false;
+
 //    @Column(name = "is_verified")
 //    private boolean isVerified = false;
 
@@ -102,6 +105,8 @@ public class User {
         this.createdDate = LocalDateTime.now();
     }
 
+
+
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
     @Builder.Default
@@ -115,15 +120,29 @@ public class User {
         return "Platinum";
     }
 
+    /**
+     * Safely get phoneVerified status, ensuring it's never null
+     */
+    public boolean isPhoneVerified() {
+        return phoneVerified;
+    }
+
+    /**
+     * Safely set phoneVerified status
+     */
+    public void setPhoneVerified(boolean phoneVerified) {
+        this.phoneVerified = phoneVerified;
+    }
+
     // Calculate current period spending (last 30 days)
     public double getCurrentPeriodSpent() {
         if (orders == null || orders.isEmpty()) {
             return 0.0;
         }
-        
+
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         return orders.stream()
-                .filter(order -> order.getOrderDate() != null && 
+                .filter(order -> order.getOrderDate() != null &&
                                order.getOrderDate().isAfter(thirtyDaysAgo))
                 .mapToDouble(order -> {
                     if (order.getOrderProducts() != null) {
@@ -141,13 +160,13 @@ public class User {
         if (orders == null || orders.isEmpty()) {
             return 0.0;
         }
-        
+
         LocalDateTime sixtyDaysAgo = LocalDateTime.now().minusDays(60);
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
-        
+
         return orders.stream()
-                .filter(order -> order.getOrderDate() != null && 
-                               order.getOrderDate().isAfter(sixtyDaysAgo) && 
+                .filter(order -> order.getOrderDate() != null &&
+                               order.getOrderDate().isAfter(sixtyDaysAgo) &&
                                order.getOrderDate().isBefore(thirtyDaysAgo))
                 .mapToDouble(order -> {
                     if (order.getOrderProducts() != null) {
@@ -164,11 +183,11 @@ public class User {
     public double getSpendingChangePercentage() {
         double currentPeriod = getCurrentPeriodSpent();
         double previousPeriod = getPreviousPeriodSpent();
-        
+
         if (previousPeriod == 0) {
             return currentPeriod > 0 ? 100.0 : 0.0; // If no previous spending but current spending, show 100% growth
         }
-        
+
         return ((currentPeriod - previousPeriod) / previousPeriod) * 100;
     }
 

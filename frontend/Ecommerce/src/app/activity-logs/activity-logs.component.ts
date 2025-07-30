@@ -150,6 +150,9 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
 
     this.activityLogService.getActivityLogs(filter).subscribe({
       next: (response: ActivityLogResponse) => {
+        // Clear cache when new data is loaded
+        this.hasActualChangesCache.clear();
+        
         // Parse changes for all logs
         response.logs.forEach(log => {
           if (typeof log.changes === 'string') {
@@ -242,8 +245,11 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
       size: this.itemsPerPage
     };
 
-    this.activityLogService.getActivityLogs(filter).subscribe({
+            this.activityLogService.getActivityLogs(filter).subscribe({
       next: (response: ActivityLogResponse) => {
+        // Clear cache when new data is loaded
+        this.hasActualChangesCache.clear();
+        
         // Parse changes for all logs
         response.logs.forEach(log => {
           if (typeof log.changes === 'string') {
@@ -449,10 +455,14 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
         const allFields = new Set([...Object.keys(before), ...Object.keys(after)]);
         
         allFields.forEach(field => {
+          // Use proper null/undefined checks instead of || operator
+          const beforeValue = before.hasOwnProperty(field) ? before[field] : 'N/A';
+          const afterValue = after.hasOwnProperty(field) ? after[field] : 'N/A';
+          
           changes.push({
             field: field.charAt(0).toUpperCase() + field.slice(1),
-            before: before[field] || 'N/A',
-            after: after[field] || 'N/A'
+            before: beforeValue,
+            after: afterValue
           });
         });
         
@@ -463,9 +473,25 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
       if (Array.isArray(parsed)) {
         return parsed.map((change: any) => ({
           field: change.field || change.key || 'Unknown',
-          before: change.before || change.oldValue || 'N/A',
-          after: change.after || change.newValue || 'N/A'
+          before: change.before !== undefined ? change.before : (change.oldValue !== undefined ? change.oldValue : 'N/A'),
+          after: change.after !== undefined ? change.after : (change.newValue !== undefined ? change.newValue : 'N/A')
         }));
+      }
+      
+      // Handle case where changes might be a simple object with field names as keys
+      if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const changes: Array<{field: string, before: any, after: any}> = [];
+        Object.keys(parsed).forEach(field => {
+          const value = parsed[field];
+          if (typeof value === 'object' && value !== null && (value.before !== undefined || value.after !== undefined)) {
+            changes.push({
+              field: field.charAt(0).toUpperCase() + field.slice(1),
+              before: value.before !== undefined ? value.before : 'N/A',
+              after: value.after !== undefined ? value.after : 'N/A'
+            });
+          }
+        });
+        return changes;
       }
       
       return [];
@@ -473,6 +499,44 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
       console.error('Error parsing changes:', e);
       return [];
     }
+  }
+
+  // Helper method to format change values for display
+  formatChangeValue(value: any): string {
+    if (value === null || value === undefined) {
+      return 'N/A';
+    }
+    if (value === '') {
+      return '(empty)';
+    }
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    }
+    return String(value);
+  }
+
+  // Cache for hasActualChanges results to prevent excessive method calls
+  private hasActualChangesCache = new Map<string, boolean>();
+
+  // Helper method to check if there are actual changes to display
+  hasActualChanges(changes: any): boolean {
+    if (!changes) return false;
+    
+    // Create a cache key based on the changes object
+    const cacheKey = typeof changes === 'string' ? changes : JSON.stringify(changes);
+    
+    // Check if we have a cached result
+    if (this.hasActualChangesCache.has(cacheKey)) {
+      return this.hasActualChangesCache.get(cacheKey)!;
+    }
+    
+    // Use getLogChanges to properly parse and check for actual changes
+    const parsedChanges = this.getLogChanges(changes);
+    const hasChanges = parsedChanges.length > 0;
+    
+    // Cache the result
+    this.hasActualChangesCache.set(cacheKey, hasChanges);
+    return hasChanges;
   }
 
   copyLogInfo(log: ActivityLog): void {

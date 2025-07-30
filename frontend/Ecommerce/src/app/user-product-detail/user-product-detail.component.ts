@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { WishlistService } from '../services/wishlist.service';
 import { BreadcrumbComponent } from '../breadcrumb.component';
 import { DiscountService } from '../services/discount.service';
+import { CartItem } from '../services/cart.service';
 import { HttpClient } from '@angular/common/http';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener } from '@angular/core';
@@ -49,8 +50,29 @@ interface Variant {
   animations: [
     trigger('fadeIn', [
       transition(':enter', [
-        style({ opacity: 0 }),
-        animate('400ms', style({ opacity: 1 }))
+        style({ opacity: 0, transform: 'translateY(10px)' }),
+        animate('400ms ease-out', style({ opacity: 1, transform: 'translateY(0)' }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-in', style({ opacity: 0, transform: 'translateY(-10px)' }))
+      ])
+    ]),
+    trigger('slideIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'translateX(-20px)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'translateX(0)' }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ opacity: 0, transform: 'translateX(20px)' }))
+      ])
+    ]),
+    trigger('scaleIn', [
+      transition(':enter', [
+        style({ opacity: 0, transform: 'scale(0.8)' }),
+        animate('300ms ease-out', style({ opacity: 1, transform: 'scale(1)' }))
+      ]),
+      transition(':leave', [
+        animate('200ms ease-in', style({ opacity: 0, transform: 'scale(0.8)' }))
       ])
     ])
   ]
@@ -63,6 +85,7 @@ export class UserProductDetailComponent implements OnInit {
   currentImageIndex: number = 0;
   quantity: number = 1;
   selectedAttributes: { [key: string]: string } = {};
+  attributeValuesMap: { [key: string]: string[] } = {};
 
   currentUser: string = '';
   newReview: string = '';
@@ -76,6 +99,7 @@ export class UserProductDetailComponent implements OnInit {
   mostHelpfulReview: ReviewMessage | null = null;
 
   private reviewSubscription?: Subscription;
+  private routeSubscription?: Subscription;
   userImageUrl: string = '';
 
   userImageMap: { [username: string]: string } = {};
@@ -118,6 +142,13 @@ export class UserProductDetailComponent implements OnInit {
   productDiscounts: Map<number, any> = new Map(); // productId -> discount info
   isFirstTimeBuyerDiscount: boolean = false;
 
+  // Related products properties
+  relatedProducts: any[] = [];
+  isLoadingRelatedProducts: boolean = false;
+
+  activeTab: 'description' | 'specs' | 'reviews' = 'description';
+  showReviewForm: boolean = true;
+
   @ViewChild('mainImage', { static: false }) mainImageRef!: ElementRef<HTMLImageElement>;
   @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate!: ElementRef;
   private mediaModalRef: NgbModalRef | null = null;
@@ -128,6 +159,8 @@ export class UserProductDetailComponent implements OnInit {
   rippleX = 0;
   rippleY = 0;
   rippleSize = 0;
+
+
 
   constructor(
     private route: ActivatedRoute,
@@ -144,13 +177,126 @@ export class UserProductDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Subscribe to route parameter changes
+    this.routeSubscription = this.route.params.subscribe(params => {
+      const productId = params['id'];
+      if (productId) {
+        // Reset component state
+        this.resetComponentState();
+        // Load new product data
+        this.loadProductDetail();
+        this.loadReviews();
+        this.checkFirstTimeBuyerDiscount();
+        this.loadProductDiscounts();
+      }
+    });
+
+    // Add document click listener for dropdown menus
+    document.addEventListener('click', this.onDocumentClick.bind(this));
+  }
+
+  initializeRatingData() {
+    // Ensure rating data is properly initialized from product data
+    if (this.product) {
+      // Set rating data from product (server data)
+      this.overallRating = this.product.averageRating || 0;
+      this.totalReviews = this.product.reviewCount || 0;
+      
+      // Ensure product data is preserved
+      if (this.product.averageRating === undefined) {
+        this.product.averageRating = this.overallRating;
+      }
+      if (this.product.reviewCount === undefined) {
+        this.product.reviewCount = this.totalReviews;
+      }
+    }
+  }
+
+  synchronizeRatingData() {
+    // Ensure rating data is consistent between product and component
+    if (this.product) {
+      // Use product data as source of truth
+      this.overallRating = this.product.averageRating || 0;
+      this.totalReviews = this.product.reviewCount || 0;
+      
+      // If no reviews loaded yet, preserve product data
+      if (this.reviews.length === 0) {
+        // Keep the product data as is
+        return;
+      }
+      
+              // If reviews are loaded, use review data but preserve product data as fallback
+        if (this.reviews.length > 0) {
+          // Calculate from reviews but don't override product data unnecessarily
+          const calculatedRating = this.calculateRatingFromReviews();
+          const calculatedCount = this.reviews.length;
+          
+          // Always use calculated rating from reviews when available
+          this.overallRating = calculatedRating;
+          this.product.averageRating = calculatedRating;
+          
+          if (calculatedCount !== this.product.reviewCount) {
+            this.totalReviews = calculatedCount;
+            this.product.reviewCount = calculatedCount;
+          }
+        }
+    }
+  }
+
+  calculateRatingFromReviews(): number {
+    if (!this.reviews.length) return 0;
+    const sum = this.reviews.reduce((acc, review) => acc + review.rating, 0);
+    return Math.round((sum / this.reviews.length) * 10) / 10;
+  }
+
+  getDisplayRating(): number {
+    // Return a consistent rating for display purposes
+    return Math.round(this.overallRating * 10) / 10;
+  }
+
+  resetComponentState() {
+    // Reset all component state when navigating to a new product
+    this.product = null;
+    this.selectedImage = null;
+    this.selectedVariant = null;
+    this.displayedImages = [];
+    this.currentImageIndex = 0;
+    this.quantity = 1;
+    this.selectedAttributes = {};
+    this.reviews = [];
+    // Don't reset rating data - it will be set from product data
+    this.ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    this.relatedProducts = [];
+    this.isLoadingRelatedProducts = false;
+    this.newReview = '';
+    this.newRating = 5;
+    this.editingReviewId = null;
+    this.selectedReviewFiles = [];
+    this.removedMedia = [];
+    this.existingReviewMedia = [];
+    this.showReviewForm = false;
+    this.activeDropdown = null;
+    this.wishlistPulse = false;
+    this.wishlistFeedback = '';
+    this.showRipple = false;
+  }
+
+  loadProductDetail(){
     this.currentUser = this.authService.getUsername() || '';
     const productId = this.route.snapshot.paramMap.get('id');
     if (productId) {
-      this.productService.getProductDetailById(productId).subscribe(data => {
+      const userId = this.authService.getUserId();
+      this.productService.getProductDetailById(productId, userId || undefined).subscribe(data => {
         this.product = {
           ...data,
           categoryBrandPairs: data.categoryBrandArray || [],
+          hasDiscount: data.hasDiscount || false,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+          discountName: data.discountName,
+          // Ensure rating data is properly set
+          averageRating: data.averageRating || 0,
+          reviewCount: data.reviewCount || 0,
           images: (data.productImages || []).map((img: any) => ({
             id: img.id,
             url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
@@ -179,10 +325,19 @@ export class UserProductDetailComponent implements OnInit {
           }))
         };
 
+        // Initialize rating data from product if available
+        this.initializeRatingData();
+
+        // Ensure rating data is synchronized
+        this.synchronizeRatingData();
+
         this.selectedVariant = null;
         this.displayedImages = this.product.images;
         if (this.displayedImages.length > 0) {
           this.selectedImage = this.displayedImages[0].url;
+        } else {
+          // Fallback to default image if no product images
+          this.selectedImage = '/assets/images/default-brand.svg';
         }
         // Set breadcrumbs dynamically
         this.breadcrumbItems = [
@@ -191,8 +346,14 @@ export class UserProductDetailComponent implements OnInit {
           { label: this.product.productName || 'Product Detail' }
         ];
 
+        // Process attribute options for variant selection
+        this.processAttributeOptions();
+        
         // Load discounts after product is set
         this.loadProductDiscounts();
+        
+        // Load related products
+        this.loadRelatedProducts();
       });
     } else {
       // Fallback if no productId
@@ -204,11 +365,8 @@ export class UserProductDetailComponent implements OnInit {
     }
 
     if (productId) {
-      this.reviewService.connect(+productId, this.currentUser); // ADD THIS LINE
+      this.reviewService.connect(+productId, this.currentUser);
     }
-    this.loadReviews();
-    this.checkFirstTimeBuyerDiscount();
-    // Removed: this.loadProductDiscounts();
   }
 
   loadProductDiscounts() {
@@ -231,7 +389,9 @@ export class UserProductDetailComponent implements OnInit {
   if (!discount) return '';
   
   if (discount.discountType === 'PERCENTAGE') {
-    return `${discount.discount_percent}% OFF`;
+    // Convert decimal to percentage (e.g., 0.2 -> 20)
+    const percentageValue = discount.discount_percent <= 1 ? discount.discount_percent * 100 : discount.discount_percent;
+    return `${Math.round(percentageValue)}% OFF`;
   } else {
     return `Save ${discount.discount_amount} MMK`;
   }
@@ -249,33 +409,69 @@ export class UserProductDetailComponent implements OnInit {
   }
 }
 
-  getProductDiscount(): any {
-    return this.productDiscounts.get(this.product?.id);
+getProductDiscount(): any {
+  // Exclude if first-time buyer discount is active
+  if (this.isFirstTimeBuyerDiscount) return null;
+
+  const discount = this.productDiscounts.get(this.product?.id);
+
+  // If no dynamic discount found, fallback to product-level discount
+  const effectiveDiscount = discount || (this.product?.hasDiscount ? {
+    discountType: this.product.discountType,
+    discountValue: this.product.discountValue,
+    discountName: this.product.discountName,
+  } : null);
+
+  if (!effectiveDiscount) return null;
+
+  // Check minimum spend condition
+  if (effectiveDiscount.minimumSpend && effectiveDiscount.minimumSpend > 0) {
+    const productPrice = this.selectedVariant?.price || this.product?.price || 0;
+    if (productPrice < effectiveDiscount.minimumSpend) {
+      return null;
+    }
   }
+
+  // Add computed fields for UI
+  return {
+    ...effectiveDiscount,
+    discount_percent: effectiveDiscount.discountType === 'PERCENTAGE' 
+      ? effectiveDiscount.discountValue * 100 
+      : null,
+    discount_amount: effectiveDiscount.discountType === 'FIXED' 
+      ? effectiveDiscount.discountValue 
+      : null
+  };
+}
+
+
+  
 
   getFinalDiscountedPrice(): number {
     let price = this.selectedVariant?.price || this.product?.price || 0;
     const discount = this.getProductDiscount();
 
-    // 1. Apply product-based discount (if any)
+    // Apply product-based discount (if any)
     if (discount) {
       if (discount.discountType === 'PERCENTAGE') {
-        const percent = discount.discount_percent > 1 ? discount.discount_percent / 100 : discount.discount_percent;
-        price = price * (1 - percent);
+        // Convert decimal to percentage if needed (e.g., 0.2 -> 20)
+        const discountPercent = discount.discountValue <= 1 ? discount.discountValue * 100 : discount.discountValue;
+        price = price - (price * discountPercent / 100);
       } else if (discount.discountType === 'FIXED') {
-        price = price - discount.discount_amount;
+        price = price - discount.discountValue;
       }
     }
 
-    // 2. Apply VIP tier discount (if any)
+    // Apply VIP tier discount (if any)
     const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
     if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
-      // Find VIP_TIER discount for this tier
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
       );
       if (vipDiscount) {
-        price = price - (price * vipDiscount.discount_percent / 100);
+        // Convert decimal to percentage if needed
+        const vipDiscountPercent = vipDiscount.discount_percent <= 1 ? vipDiscount.discount_percent * 100 : vipDiscount.discount_percent;
+        price = price - (price * vipDiscountPercent / 100);
       }
     }
 
@@ -377,20 +573,23 @@ checkFirstTimeBuyerDiscount(): void {
   }
 
   toggleAttribute(attrName: string, value: string) {
-    const attrNames = this.attributeNames;
+    const attrNames = Object.keys(this.attributeValuesMap);
     const attrIndex = attrNames.indexOf(attrName);
+    
     if (this.selectedAttributes[attrName] === value) {
       // Unselect this attribute and all subsequent attributes
       for (let i = attrIndex; i < attrNames.length; i++) {
         delete this.selectedAttributes[attrNames[i]];
       }
       this.selectedVariant = null;
-      this.selectedImage = this.product.images[0]?.url;
+      this.selectedImage = this.product.images[0]?.url || '/assets/images/default-brand.svg';
       this.currentImageIndex = 0;
       return;
     }
+    
     // Select this value
     this.selectedAttributes[attrName] = value;
+    
     // For all subsequent attributes, check if their selected value is still connected; if not, unselect
     for (let i = attrIndex + 1; i < attrNames.length; i++) {
       const nextAttr = attrNames[i];
@@ -398,10 +597,10 @@ checkFirstTimeBuyerDiscount(): void {
       if (selectedNextValue) {
         // Is there a variant with all selected up to this point?
         const isConnected = (this.product?.variants || []).some((variant: any) =>
-          attrNames.slice(0, i + 1).every((an: string) => {
+          attrNames.slice(0, i + 1).every((an, idx) => {
             const selVal = this.selectedAttributes[an];
             if (!selVal) return false;
-            return (variant.attributes || []).some((attr: any) => attr.attributeName === an && attr.value === selVal);
+            return variant.attributes.some((attr: any) => attr.attributeName === an && attr.value === selVal);
           })
         );
         if (!isConnected) {
@@ -410,26 +609,110 @@ checkFirstTimeBuyerDiscount(): void {
         }
       }
     }
-    const matchingVariant = this.product.variants.find((variant: any) => {
-      return (variant.attributes || []).every((attr: any) => {
-        return this.selectedAttributes[attr.attributeName] === attr.value;
-      });
-    });
-    if (matchingVariant) {
-      this.selectedVariant = matchingVariant;
-      const variantImage = this.product.images.find((img: any) => img.variantId === matchingVariant.id);
-      if (variantImage) {
-        this.selectedImage = variantImage.url;
-        this.currentImageIndex = this.product.images.findIndex((img: any) => img.url === variantImage.url);
-      } else {
-        this.selectedImage = this.product.images[0]?.url;
-        this.currentImageIndex = 0;
-      }
+    
+    // Find matching variant based on selected attributes
+    const matchingVariant = this.product?.variants?.find((variant: any) =>
+      Object.entries(this.selectedAttributes).every(([k, v]) =>
+        variant.attributes.some((attr: any) => attr.attributeName === k && attr.value === v)
+      )
+    );
+    
+    this.selectedVariant = matchingVariant || null;
+    
+    // Update displayed images based on selected variant
+    if (this.selectedVariant) {
+      this.updateImagesForVariant(this.selectedVariant);
     } else {
-      this.selectedVariant = null;
-      this.selectedImage = this.product.images[0]?.url;
+      this.selectedImage = this.product.images[0]?.url || '/assets/images/default-brand.svg';
       this.currentImageIndex = 0;
     }
+  }
+
+  updateImagesForVariant(variant: any) {
+    // First, try to find images specifically associated with this variant
+    const variantImages = this.product.images.filter((img: any) => img.variantId === variant.id);
+    
+    if (variantImages.length > 0) {
+      // Use the first variant-specific image
+      this.selectedImage = variantImages[0].url;
+      this.currentImageIndex = this.product.images.findIndex((img: any) => img.url === variantImages[0].url);
+    } else {
+      // If no variant-specific images, try to find images that match the variant's attributes
+      const variantAttributeValues = variant.attributes.map((attr: any) => attr.value);
+      
+      // Look for images that might be associated with this variant through attribute matching
+      const matchingImage = this.product.images.find((img: any) => {
+        // Check if image has any metadata that matches variant attributes
+        // This is a fallback for when variantId is not set but images are still variant-specific
+        return img.attributes && img.attributes.some((imgAttr: any) => 
+          variantAttributeValues.includes(imgAttr.value)
+        );
+      });
+      
+      if (matchingImage) {
+        this.selectedImage = matchingImage.url;
+        this.currentImageIndex = this.product.images.findIndex((img: any) => img.url === matchingImage.url);
+      } else {
+        // Fallback to first product image
+        this.selectedImage = this.product.images[0]?.url || '/assets/images/default-brand.svg';
+        this.currentImageIndex = 0;
+      }
+    }
+  }
+
+  getVariantImages(variant: any): any[] {
+    if (!variant || !this.product?.images) return [];
+    
+    // Get images specifically associated with this variant
+    const variantImages = this.product.images.filter((img: any) => img.variantId === variant.id);
+    
+    if (variantImages.length > 0) {
+      return variantImages;
+    }
+    
+    // If no direct variant images, try to find images that match the variant's attributes
+    const variantAttributeValues = variant.attributes.map((attr: any) => attr.value);
+    
+    return this.product.images.filter((img: any) => {
+      return img.attributes && img.attributes.some((imgAttr: any) => 
+        variantAttributeValues.includes(imgAttr.value)
+      );
+    });
+  }
+
+  getCurrentVariantImages(): any[] {
+    // If a variant is selected, show variant-specific images
+    if (this.selectedVariant) {
+      const variantImages = this.getVariantImages(this.selectedVariant);
+      if (variantImages.length > 0) {
+        return variantImages;
+      }
+    }
+    
+    // If no variant is selected or no variant-specific images, show all product images
+    return this.product?.images || [];
+  }
+
+  objectKeys(obj: any): string[] {
+    return Object.keys(obj || {});
+  }
+
+  processAttributeOptions(): void {
+    const attrMap: { [key: string]: Set<string> } = {};
+
+    for (const variant of this.product?.variants || []) {
+      for (const attr of variant.attributes || []) {
+        if (!attrMap[attr.attributeName]) {
+          attrMap[attr.attributeName] = new Set();
+        }
+        attrMap[attr.attributeName].add(attr.value);
+      }
+    }
+
+    this.attributeValuesMap = {};
+    Object.keys(attrMap).forEach(attr => {
+      this.attributeValuesMap[attr] = Array.from(attrMap[attr]);
+    });
   }
 
   addToCart() {
@@ -477,23 +760,26 @@ checkFirstTimeBuyerDiscount(): void {
   }
 
   selectImageByIndex(index: number) {
-    if (this.displayedImages[index]) {
-      this.selectedImage = this.displayedImages[index].url;
+    const currentImages = this.getCurrentVariantImages();
+    if (currentImages[index]) {
+      this.selectedImage = currentImages[index].url;
       this.currentImageIndex = index;
     }
   }
 
   previousImage() {
+    const currentImages = this.getCurrentVariantImages();
     if (this.currentImageIndex > 0) {
       this.currentImageIndex--;
-      this.selectedImage = this.displayedImages[this.currentImageIndex].url;
+      this.selectedImage = currentImages[this.currentImageIndex].url;
     }
   }
 
   nextImage() {
-    if (this.currentImageIndex < this.displayedImages.length - 1) {
+    const currentImages = this.getCurrentVariantImages();
+    if (this.currentImageIndex < currentImages.length - 1) {
       this.currentImageIndex++;
-      this.selectedImage = this.displayedImages[this.currentImageIndex].url;
+      this.selectedImage = currentImages[this.currentImageIndex].url;
     }
   }
 
@@ -608,17 +894,56 @@ checkFirstTimeBuyerDiscount(): void {
       }));
 
       this.computeReviewStats();
+      
+      // Only refresh product data if we have actual reviews
+      if (this.product && this.product.id && reviews.length > 0) {
+        this.refreshProductReviewCount();
+      }
     });
+  }
+
+  refreshProductReviewCount() {
+    // Only update product data if we have actual reviews
+    if (this.product && this.reviews.length > 0) {
+      this.product.reviewCount = this.totalReviews;
+      this.product.averageRating = this.overallRating;
+    }
+    // Always ensure overallRating is synchronized with product data
+    if (this.product?.averageRating !== undefined) {
+      this.overallRating = this.product.averageRating;
+    }
+  }
+
+  refreshProductData() {
+    // Refresh product data from server to get latest review count
+    const productId = this.route.snapshot.paramMap.get('id');
+    if (productId) {
+      const userId = this.authService.getUserId();
+      this.productService.getProductDetailById(productId, userId || undefined).subscribe(data => {
+        // Update only the review-related fields to avoid disrupting user interactions
+        if (this.product) {
+          this.product.reviewCount = data.reviewCount || 0;
+          this.product.averageRating = data.averageRating || 0;
+        }
+      });
+    }
   }
   
   computeReviewStats() {
+    // Always preserve product rating data as fallback
+    const productRating = this.product?.averageRating || 0;
+    const productReviewCount = this.product?.reviewCount || 0;
+    
     if (!this.reviews.length) {
-      this.overallRating = 0;
-      this.totalReviews = 0;
+      // If no reviews loaded yet, use product data
+      this.overallRating = productRating;
+      this.totalReviews = productReviewCount;
       this.ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
       this.mostHelpfulReview = null;
       return;
     }
+    
+    // Calculate from actual reviews
     this.totalReviews = this.reviews.length;
     let sum = 0;
     this.ratingBreakdown = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
@@ -626,7 +951,14 @@ checkFirstTimeBuyerDiscount(): void {
       sum += r.rating;
       this.ratingBreakdown[r.rating] = (this.ratingBreakdown[r.rating] || 0) + 1;
     });
-    this.overallRating = Math.round((sum / this.totalReviews) * 10) / 10;
+    this.overallRating = this.calculateRatingFromReviews();
+    
+    // Update product review count and average rating
+    if (this.product) {
+      this.product.reviewCount = this.totalReviews;
+      this.product.averageRating = this.overallRating;
+    }
+    
     // Most helpful: highest rating, then most recent
     this.mostHelpfulReview = [...this.reviews].sort((a, b) => 
       b.rating - a.rating || 
@@ -636,6 +968,7 @@ checkFirstTimeBuyerDiscount(): void {
   
   ngOnDestroy() {
     this.reviewSubscription?.unsubscribe();
+    this.routeSubscription?.unsubscribe();
   }
 
   submitReview() {
@@ -676,6 +1009,17 @@ checkFirstTimeBuyerDiscount(): void {
         this.selectedReviewFiles = [];
         this.mediaModalCurrentReview = null;
         this.removedMedia = [];
+        this.existingReviewMedia = [];
+        this.showReviewForm = false;
+        
+        // Refresh reviews to update count immediately
+        this.loadReviews();
+        
+        // Refresh product data to ensure review count is updated
+        setTimeout(() => {
+          this.refreshProductData();
+        }, 500);
+        
         Swal.fire({
           toast: true,
           position: 'top-end',
@@ -700,6 +1044,26 @@ checkFirstTimeBuyerDiscount(): void {
     this.mediaModalCurrentReview = review;
     this.selectedReviewFiles = [];
     this.removedMedia = [];
+    this.showReviewForm = true;
+    
+    // Populate existingReviewMedia with current review media
+    this.existingReviewMedia = [];
+    if (review.imageUrls && review.imageUrls.length > 0) {
+      review.imageUrls.forEach((url: string) => {
+        this.existingReviewMedia.push({ url: 'http://localhost:8080' + url, type: 'image' });
+      });
+    }
+    if (review.videoUrls && review.videoUrls.length > 0) {
+      review.videoUrls.forEach((url: string) => {
+        this.existingReviewMedia.push({ url: 'http://localhost:8080' + url, type: 'video' });
+      });
+    }
+    
+    // Switch to reviews tab and scroll to form
+    this.activeTab = 'reviews';
+    setTimeout(() => {
+      this.scrollToReviewForm();
+    }, 100);
   }
 
   cancelEdit() {
@@ -709,6 +1073,8 @@ checkFirstTimeBuyerDiscount(): void {
     this.mediaModalCurrentReview = null;
     this.selectedReviewFiles = [];
     this.removedMedia = [];
+    this.existingReviewMedia = [];
+    this.showReviewForm = false;
   }
   
   deleteReview(review: any) {
@@ -730,6 +1096,10 @@ checkFirstTimeBuyerDiscount(): void {
           customClass: { popup: 'swal2-toast' }
         });
         this.loadReviews();
+        // Refresh product data to ensure review count is updated
+        setTimeout(() => {
+          this.refreshProductData();
+        }, 500);
       },
       error: () => {
         Swal.fire('Error', 'Failed to delete review.', 'error');
@@ -763,7 +1133,7 @@ checkFirstTimeBuyerDiscount(): void {
   }
   
   createArray(n: number): number[] {
-    return Array(n).fill(0);
+    return Array.from({length: n}, (_, i) => i + 1);
   }
   
   round(value: number): number {
@@ -820,9 +1190,9 @@ checkFirstTimeBuyerDiscount(): void {
   }
 
   // Remove old openMediaModal and closeMediaModal, replace with NgbModal logic
-  openMediaModal(review: any, type: 'image' | 'video', index: number) {
+  openMediaModal(review: any, type: string, index: number) {
     this.mediaModalCurrentReview = review;
-    this.mediaModalCurrentType = type;
+    this.mediaModalCurrentType = type as 'image' | 'video';
     this.mediaModalCurrentIndex = index;
     this.updateMediaModalTypeAndUrl();
     if (this.mediaModalRef) {
@@ -926,12 +1296,14 @@ checkFirstTimeBuyerDiscount(): void {
     });
   }
 
-  removeExistingMedia(url: string, type: 'image' | 'video') {
+  removeExistingMedia(url: string, type: string) {
     this.removedMedia.push(url);
+    // Remove from existingReviewMedia array
+    this.existingReviewMedia = this.existingReviewMedia.filter(media => media.url !== url);
     // Remove from preview
     if (type === 'image') {
       this.mediaModalCurrentReview.imageUrls = this.mediaModalCurrentReview.imageUrls.filter((u: string) => u !== url);
-    } else {
+    } else if (type === 'video') {
       this.mediaModalCurrentReview.videoUrls = this.mediaModalCurrentReview.videoUrls.filter((u: string) => u !== url);
     }
   }
@@ -978,8 +1350,12 @@ checkFirstTimeBuyerDiscount(): void {
 
   // Add this method for improved image/variant sync
   onThumbnailClick(image: any, i: number) {
-    this.selectedImage = image.url;
-    this.currentImageIndex = i;
+    // Add a small delay to allow for smooth transition
+    setTimeout(() => {
+      this.selectedImage = image.url;
+      this.currentImageIndex = i;
+    }, 50);
+    
     // If the image is associated with a variant, auto-select that variant
     if (image.variantId) {
       const variant = this.product.variants.find((v: any) => v.id === image.variantId);
@@ -991,6 +1367,30 @@ checkFirstTimeBuyerDiscount(): void {
           this.selectedAttributes[attr.attributeName] = attr.value;
         });
       }
+    }
+  }
+
+  onImageGalleryKeyDown(event: KeyboardEvent) {
+    const currentImages = this.getCurrentVariantImages();
+    if (!currentImages || currentImages.length <= 1) return;
+    
+    switch (event.key) {
+      case 'ArrowLeft':
+        event.preventDefault();
+        this.previousImage();
+        break;
+      case 'ArrowRight':
+        event.preventDefault();
+        this.nextImage();
+        break;
+      case 'Home':
+        event.preventDefault();
+        this.selectImageByIndex(0);
+        break;
+      case 'End':
+        event.preventDefault();
+        this.selectImageByIndex(currentImages.length - 1);
+        break;
     }
   }
 
@@ -1028,7 +1428,12 @@ checkFirstTimeBuyerDiscount(): void {
       for (const discount of this.activeDiscounts) {
         for (const rule of discount.rules || []) {
           if (rule.targetType === 'USER_PRODUCT' && rule.userId === userId && rule.productId === product.id) {
-            return { ...discount, ...rule, eventName: discount.name };
+            return { 
+              ...discount, 
+              ...rule, 
+              eventName: discount.name,
+              minimumSpend: discount.minimumSpend 
+            };
           }
         }
       }
@@ -1044,7 +1449,12 @@ checkFirstTimeBuyerDiscount(): void {
               rule.brandId === pair.brandId &&
               rule.categoryId === pair.categoryId
             ) {
-              return { ...discount, ...rule, eventName: discount.name };
+              return { 
+                ...discount, 
+                ...rule, 
+                eventName: discount.name,
+                minimumSpend: discount.minimumSpend 
+              };
             }
           }
         }
@@ -1062,7 +1472,12 @@ checkFirstTimeBuyerDiscount(): void {
               rule.targetType === 'BRAND' &&
               rule.brandId === pair.brandId
             ) {
-              return { ...discount, ...rule, eventName: discount.name };
+              return { 
+                ...discount, 
+                ...rule, 
+                eventName: discount.name,
+                minimumSpend: discount.minimumSpend 
+              };
             }
           }
         }
@@ -1079,5 +1494,454 @@ checkFirstTimeBuyerDiscount(): void {
     );
     return vipDiscount ? vipDiscount.discount_percent : null;
   }
-  
+
+  getDiscountSavings(): number {
+    const originalPrice = this.selectedVariant?.price || this.product?.price || 0;
+    const discountedPrice = this.getFinalDiscountedPrice();
+    return Math.round(originalPrice - discountedPrice);
+  }
+
+  // Load related products based on category and brand
+  loadRelatedProducts() {
+    this.isLoadingRelatedProducts = true;
+    
+    // Get category and brand IDs from the current product
+    const categoryIds: number[] = [];
+    const brandIds: number[] = [];
+    
+    // Extract category and brand IDs from the product data
+    console.log('Product data:', this.product);
+    console.log('CategoryBrandPairs:', this.product?.categoryBrandPairs);
+    console.log('CategoryBrandArray:', this.product?.categoryBrandArray);
+    
+    if (this.product?.categoryBrandPairs?.length) {
+      this.product.categoryBrandPairs.forEach((pair: any) => {
+        if (pair.categoryId) categoryIds.push(pair.categoryId);
+        if (pair.brandId) brandIds.push(pair.brandId);
+      });
+    }
+    
+    // Fallback: try to get from categoryBrandArray if categoryBrandPairs is empty
+    if (categoryIds.length === 0 && brandIds.length === 0 && this.product?.categoryBrandArray?.length) {
+      this.product.categoryBrandArray.forEach((pair: any) => {
+        if (pair.categoryId) categoryIds.push(pair.categoryId);
+        if (pair.brandId) brandIds.push(pair.brandId);
+      });
+    }
+    
+    // Also try to get brand ID from the product's brand property
+    if (this.product?.brand?.id && !brandIds.includes(this.product.brand.id)) {
+      brandIds.push(this.product.brand.id);
+    }
+    
+    console.log('Category IDs:', categoryIds);
+    console.log('Brand IDs:', brandIds);
+    
+    // Check if we have valid category or brand IDs
+    if (categoryIds.length === 0 && brandIds.length === 0) {
+      console.log('No category or brand IDs found for related products');
+      this.relatedProducts = [];
+      this.isLoadingRelatedProducts = false;
+      return;
+    }
+
+    // Call backend to get related products
+    this.productService.getRelatedProducts(categoryIds, brandIds, this.product.id, [this.product.id]).subscribe({
+      next: (products) => {
+        console.log('Backend returned related products:', products?.length || 0);
+        if (products && products.length > 0) {
+          // Randomly select 5 products from the backend response
+          this.relatedProducts = this.shuffleArray(products).slice(0, 5);
+          console.log('Related products loaded:', this.relatedProducts.length);
+        } else {
+          console.log('No related products found from backend');
+          this.relatedProducts = [];
+        }
+        this.isLoadingRelatedProducts = false;
+      },
+      error: (error) => {
+        console.error('Failed to load related products:', error);
+        this.relatedProducts = [];
+        this.isLoadingRelatedProducts = false;
+      }
+    });
+  }
+
+  addToWishlistFromRelated(product: any, event: Event) {
+    event.stopPropagation(); // Prevent navigation to product detail
+    
+    if (!this.authService.isLoggedIn()) {
+      // Show login prompt or redirect to login
+      Swal.fire({
+        title: 'Login Required',
+        text: 'Please login to add items to your wishlist',
+        icon: 'info',
+        showCancelButton: true,
+        confirmButtonText: 'Login',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          this.router.navigate(['/login']);
+        }
+      });
+      return;
+    }
+
+    const userId = this.authService.getUserId();
+    if (!userId) return;
+
+    this.wishlistService.saveWishlist(userId, product.id).subscribe({
+      next: () => {
+        // Add visual feedback
+        const button = event.target as HTMLElement;
+        const svg = button.querySelector('svg');
+        if (svg) {
+          svg.style.fill = '#ef4444'; // Red color for filled heart
+          svg.style.stroke = '#ef4444';
+        }
+        
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'Added to wishlist!',
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true,
+          customClass: { popup: 'swal2-toast' }
+        });
+      },
+      error: (error: any) => {
+        console.error('Failed to add to wishlist:', error);
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'error',
+          title: 'Failed to add to wishlist',
+          showConfirmButton: false,
+          timer: 1500,
+          timerProgressBar: true,
+          customClass: { popup: 'swal2-toast' }
+        });
+      }
+    });
+  }
+
+  // Shuffle array to randomize product selection
+  shuffleArray(array: any[]): any[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  // Navigate to product detail
+  goToProductDetail(productId: number) {
+    this.router.navigate(['/product', productId]);
+  }
+
+  // Get product image URL
+  getProductImageUrl(product: any): string {
+    if (product.productImages?.length > 0) {
+      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+    }
+    return '/assets/images/default-brand.svg';
+  }
+
+  // Get final discounted price for related products
+  getRelatedProductDiscountedPrice(product: any): number {
+    let price = product.price || 0;
+    const originalPrice = price;
+    
+    // Check if product has built-in discount properties first
+    if (product.hasDiscount && product.discountType && product.discountValue) {
+      if (product.discountType === 'PERCENTAGE') {
+        // Convert decimal to percentage if needed (e.g., 0.2 -> 20)
+        const discountPercent = product.discountValue <= 1 ? product.discountValue * 100 : product.discountValue;
+        price = price - (price * discountPercent / 100);
+      } else if (product.discountType === 'AMOUNT') {
+        price = price - product.discountValue;
+      }
+    } else {
+      // Find applicable discount for this product from active discounts
+      const applicableDiscount = this.activeDiscounts.find(discount => {
+        return (discount.rules || []).some((rule: any) => {
+          if (rule.targetType === 'PRODUCT' && rule.productId === product.id) {
+            return true;
+          }
+          if (product.categoryBrandArray) {
+            return product.categoryBrandArray.some((pair: any) => {
+              if (rule.targetType === 'BRAND' && rule.brandId === pair.brandId) {
+                return true;
+              }
+              if (rule.targetType === 'CATEGORY' && rule.categoryId === pair.categoryId) {
+                return true;
+              }
+              if (rule.targetType === 'BRAND_CATEGORY' && rule.brandId === pair.brandId && rule.categoryId === pair.categoryId) {
+                return true;
+              }
+              return false;
+            });
+          }
+          // Also check categoryBrandPairs if categoryBrandArray is not available
+          if (product.categoryBrandPairs) {
+            return product.categoryBrandPairs.some((pair: any) => {
+              if (rule.targetType === 'BRAND' && rule.brandId === pair.brandId) {
+                return true;
+              }
+              if (rule.targetType === 'CATEGORY' && rule.categoryId === pair.categoryId) {
+                return true;
+              }
+              if (rule.targetType === 'BRAND_CATEGORY' && rule.brandId === pair.brandId && rule.categoryId === pair.categoryId) {
+                return true;
+              }
+              return false;
+            });
+          }
+          return false;
+        });
+      });
+
+      // Apply discount if found
+      if (applicableDiscount) {
+        if (applicableDiscount.discountType === 'PERCENTAGE') {
+          // Convert decimal to percentage if needed (e.g., 0.2 -> 20)
+          const discountPercent = applicableDiscount.discount_percent <= 1 ? applicableDiscount.discount_percent * 100 : applicableDiscount.discount_percent;
+          price = price - (price * discountPercent / 100);
+        } else if (applicableDiscount.discountType === 'AMOUNT') {
+          price = price - applicableDiscount.discount_amount;
+        }
+      }
+    }
+    
+    // Apply VIP tier discount if applicable (on top of existing discount)
+    const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+    if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
+      const vipDiscount = this.activeDiscounts.find(d =>
+        (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+      );
+      if (vipDiscount) {
+        // Convert decimal to percentage if needed
+        const vipDiscountPercent = vipDiscount.discount_percent <= 1 ? vipDiscount.discount_percent * 100 : vipDiscount.discount_percent;
+        price = price - (price * vipDiscountPercent / 100);
+      }
+    }
+    
+    // Ensure price doesn't go below 0
+    return Math.max(0, Math.round(price));
+  }
+
+  // Check if related product has discount
+  hasRelatedProductDiscount(product: any): boolean {
+    // Check if product has built-in discount properties
+    if (product.hasDiscount || product.discountType || product.discountValue) {
+      return true;
+    }
+
+    // Check active discounts
+    return this.activeDiscounts.some(discount => {
+      return (discount.rules || []).some((rule: any) => {
+        if (rule.targetType === 'PRODUCT' && rule.productId === product.id) {
+          return true;
+        }
+        if (product.categoryBrandArray) {
+          return product.categoryBrandArray.some((pair: any) => {
+            if (rule.targetType === 'BRAND' && rule.brandId === pair.brandId) {
+              return true;
+            }
+            if (rule.targetType === 'CATEGORY' && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            if (rule.targetType === 'BRAND_CATEGORY' && rule.brandId === pair.brandId && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            return false;
+          });
+        }
+        // Also check categoryBrandPairs if categoryBrandArray is not available
+        if (product.categoryBrandPairs) {
+          return product.categoryBrandPairs.some((pair: any) => {
+            if (rule.targetType === 'BRAND' && rule.brandId === pair.brandId) {
+              return true;
+            }
+            if (rule.targetType === 'CATEGORY' && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            if (rule.targetType === 'BRAND_CATEGORY' && rule.brandId === pair.brandId && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            return false;
+          });
+        }
+        return false;
+      });
+    });
+  }
+
+  // Get discount display text for related products
+  getRelatedProductDiscountText(product: any): string {
+    // Check if product has built-in discount properties first
+    if (product.hasDiscount && product.discountType && product.discountValue) {
+      if (product.discountType === 'PERCENTAGE') {
+        // Convert decimal to percentage (e.g., 0.2 -> 20)
+        const percentageValue = product.discountValue <= 1 ? product.discountValue * 100 : product.discountValue;
+        return `${Math.round(percentageValue)}% OFF`;
+      } else {
+        return `Save ${product.discountValue} MMK`;
+      }
+    }
+
+    // Check active discounts
+    const discount = this.activeDiscounts.find(discount => {
+      return (discount.rules || []).some((rule: any) => {
+        if (rule.targetType === 'PRODUCT' && rule.productId === product.id) {
+          return true;
+        }
+        if (product.categoryBrandArray) {
+          return product.categoryBrandArray.some((pair: any) => {
+            if (rule.targetType === 'BRAND' && rule.brandId === pair.brandId) {
+              return true;
+            }
+            if (rule.targetType === 'CATEGORY' && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            if (rule.targetType === 'BRAND_CATEGORY' && rule.brandId === pair.brandId && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            return false;
+          });
+        }
+        // Also check categoryBrandPairs if categoryBrandArray is not available
+        if (product.categoryBrandPairs) {
+          return product.categoryBrandPairs.some((pair: any) => {
+            if (rule.targetType === 'BRAND' && rule.brandId === pair.brandId) {
+              return true;
+            }
+            if (rule.targetType === 'CATEGORY' && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            if (rule.targetType === 'BRAND_CATEGORY' && rule.brandId === pair.brandId && rule.categoryId === pair.categoryId) {
+              return true;
+            }
+            return false;
+          });
+        }
+        return false;
+      });
+    });
+
+    if (!discount) return '';
+    
+    if (discount.discountType === 'PERCENTAGE') {
+      // Convert decimal to percentage (e.g., 0.2 -> 20)
+      const percentageValue = discount.discount_percent <= 1 ? discount.discount_percent * 100 : discount.discount_percent;
+      return `${Math.round(percentageValue)}% OFF`;
+    } else {
+      return `Save ${discount.discount_amount} MMK`;
+    }
+  }
+
+  // Toggle the dropdown menu for a review
+  toggleMenu(review: any, event: MouseEvent): void {
+    event.stopPropagation();
+    this.reviews.forEach(r => {
+      if (r !== review) r.showMenu = false;
+    });
+    review.showMenu = !review.showMenu;
+  }
+
+  // Check if the current user is the author of the review
+  isCurrentUserReview(review: any): boolean {
+    return review.username === this.currentUser;
+  }
+
+  // Close dropdown menus when clicking outside
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    // Close all dropdown menus when clicking outside
+    this.reviews.forEach(review => {
+      if (review.showMenu) {
+        review.showMenu = false;
+      }
+    });
+  }
+
+  trackByImageId(index: number, image: ProductImage): number {
+    return image.id;
+  }
+
+  trackByFileIndex(index: number, file: any): number {
+    return index;
+  }
+
+  trackByMediaUrl(index: number, media: any): string {
+    return media.url;
+  }
+
+  trackByReviewId(index: number, review: ReviewMessage): number {
+    return review.id || index;
+  }
+
+  trackByProductId(index: number, product: any): number {
+    return product.id;
+  }
+
+  scrollToReviewForm() {
+    const reviewForm = document.querySelector('.review-form-container');
+    if (reviewForm) {
+      reviewForm.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  }
+
+  showReviewFormAndScroll() {
+    this.showReviewForm = true;
+    this.activeTab = 'reviews';
+    setTimeout(() => {
+      this.scrollToReviewForm();
+    }, 100);
+  }
+
+  // Add to Cart Button State Management
+  isAddToCartDisabled(): boolean {
+    // If product has variants, check if all required attributes are selected
+    if (this.product?.variants && this.product.variants.length > 0) {
+      // Get all unique attribute names from variants
+      const allAttributeNames = new Set<string>();
+      this.product.variants.forEach((variant: any) => {
+        variant.attributes.forEach((attr: any) => {
+          allAttributeNames.add(attr.attributeName);
+        });
+      });
+      
+      // Check if all attributes have been selected
+      const selectedAttributeNames = Object.keys(this.selectedAttributes);
+      return selectedAttributeNames.length < allAttributeNames.size;
+    }
+    // If product has no variants, button should be enabled
+    return false;
+  }
+
+  getAddToCartButtonText(): string {
+    return 'Add to Cart';
+  }
+
+  getTotalRequiredAttributes(): number {
+    if (!this.product?.variants || this.product.variants.length === 0) {
+      return 0;
+    }
+    
+    const allAttributeNames = new Set<string>();
+    this.product.variants.forEach((variant: any) => {
+      variant.attributes.forEach((attr: any) => {
+        allAttributeNames.add(attr.attributeName);
+      });
+    });
+    
+    return allAttributeNames.size;
+  }
 }

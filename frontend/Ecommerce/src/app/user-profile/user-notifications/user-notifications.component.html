@@ -4,7 +4,7 @@
     <div class="flex flex-col items-center mb-8 animate-fade-in">
       <div class="relative mb-4">
         <div class="inline-flex items-center justify-center w-16 h-16 bg-white/80 backdrop-blur-xl rounded-full border-2 border-blue-200 animate-float">
-          <svg class="w-8 h-8 text-blue-600 animate-bounce-gentle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-8 h-8 text-blue-500 animate-bounce-gentle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12c-1.268 0-2.39-.63-3.068-1.593C17.656 9.711 17.5 8.5 17.5 7c0-3.314-2.686-6-6-6s-6 2.686-6 6c0 1.5-.156 2.711-.432 3.407C4.39 11.37 3.268 12 2 12"/>
@@ -20,9 +20,9 @@
     <!-- Notifications Container -->
     <div class="bg-white/80 backdrop-blur-xl rounded-3xl border border-blue-100 overflow-hidden animate-fade-in">
       <!-- Header -->
-      <div class="px-10 py-6 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white flex items-center justify-between">
+      <div class="px-10 py-6 border-b border-blue-100 flex items-center justify-between">
         <div class="flex items-center space-x-4">
-          <div class="w-2 h-10 bg-gradient-to-b from-blue-500 to-blue-300 rounded-full"></div>
+          <div class="w-2 h-10 bg-blue-500 rounded-full"></div>
           <h2 class="text-2xl font-bold text-neutral-900 tracking-tight">Notifications</h2>
           <div class="mt-1">
             <span class="inline-block px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
@@ -58,7 +58,7 @@
             Mark All as Read
           </button>
           <button (click)="toggleMultiSelectMode()"
-                  class="px-2 py-1 rounded-lg font-semibold text-xs mx-1 bg-gradient-to-r from-blue-500 to-blue-400 text-white shadow hover:scale-105 transition-all duration-200 focus:outline-none">
+                  class="px-2 py-1 rounded-lg font-semibold text-xs mx-1 bg-blue-500 text-white shadow hover:scale-105 transition-all duration-200 focus:outline-none">
             {{ multiSelectMode ? 'Cancel' : 'Multi-Select' }}
           </button>
         </div>
@@ -67,7 +67,7 @@
       <!-- Notifications List -->
       <div class="max-h-[32rem] overflow-y-auto bg-gradient-to-br from-white/70 to-blue-50/60">
         <!-- Empty State -->
-        <div *ngIf="notifications.length === 0" class="text-center py-24 animate-fade-in">
+        <div *ngIf="notifications.length === 0" class="text-center py-24">
           <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"/>
@@ -81,7 +81,7 @@
 
         <!-- Notifications -->
         <div *ngFor="let notif of notifications" 
-             class="relative group hover:scale-[1.02] hover:shadow-xl hover:ring-2 hover:ring-blue-200 transition-all duration-200 cursor-pointer animate-fade-in notification-item"
+             class="relative group hover:scale-[1.02] hover:shadow-xl hover:ring-2 hover:ring-blue-200 transition-all duration-200 cursor-pointer notification-item"
              [ngClass]="{
                'border-l-4 border-blue-400 shadow-md bg-white/90': !notif.read,
                'bg-white': notif.read
@@ -93,7 +93,7 @@
               <div class="flex items-center mr-2 pt-2">
                 <input
                   type="checkbox"
-                  class="form-checkbox w-5 h-5 rounded border-2 border-blue-400 text-blue-600 focus:ring-2 focus:ring-blue-400 transition-all duration-200 shadow-sm"
+                  class="form-checkbox w-5 h-5 rounded border-2 border-blue-400 text-blue-500 focus:ring-2 focus:ring-blue-400 transition-all duration-200 shadow-sm"
                   [checked]="isSelected(notif.id)"
                   (click)="toggleSelect(notif.id, $event)"
                 />
@@ -104,15 +104,11 @@
               <div class="w-10 h-10 rounded-xl flex items-center justify-center"
                      [ngClass]="notif.type === 'discount' ? 'bg-yellow-100' : 'bg-blue-100'">
                   <ng-container *ngIf="notif.type === 'discount'; else defaultIcon">
-                    <!-- Discount Icon -->
-                  <svg class="w-5 h-5 text-yellow-600 animate-bounce-gentle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13l3 3L22 4"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <circle cx="15.5" cy="15.5" r="1.5"/>
-                    </svg>
+                    <!-- Discount Icon: Material Icons percent sign -->
+                    <span class="material-icons text-yellow-600" style="font-size: 20px;">percent</span>
                   </ng-container>
                   <ng-template #defaultIcon>
-                  <svg class="w-5 h-5 text-blue-600 animate-float" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5z"/>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"/>
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12c-1.268 0-2.39-.63-3.068-1.593C17.656 9.711 17.5 8.5 17.5 7c0-3.314-2.686-6-6-6s-6 2.686-6 6c0 1.5-.156 2.711-.432 3.407C4.39 11.37 3.268 12 2 12"/>
@@ -120,7 +116,7 @@
                   </ng-template>
                 </div>
                 <!-- Unread Indicator -->
-              <div *ngIf="!notif.read" class="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-tr from-blue-500 to-blue-300 rounded-full border-2 border-white animate-pulse-soft"></div>
+              <div *ngIf="!notif.read" class="absolute -top-2 -right-2 w-4 h-4 bg-gradient-to-tr from-blue-500 to-blue-300 rounded-full border-2 border-white"></div>
               </div>
 
               <!-- Notification Content -->

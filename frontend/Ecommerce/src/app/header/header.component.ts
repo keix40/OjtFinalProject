@@ -323,8 +323,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
   onSearch() {
     const value = this.searchQuery?.trim();
     if (value) {
-      this.router.navigate(['/userproductlist'], { queryParams: { search: value } });
+      // Navigate to user product list with search query (no live parameter)
+      this.router.navigate(['/userproductlist'], { 
+        queryParams: { search: value }
+      });
+      
+      // Clear the search query after navigation
+      this.searchQuery = '';
+      
+      // Close any open dropdowns
+      this.openDropdown = null;
     }
+  }
+
+  // Remove live search functionality - only search on button click
+  onSearchInput() {
+    // Do nothing - search only happens on button click
   }
 
   startTypewriter() {

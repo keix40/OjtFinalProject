@@ -72,4 +72,21 @@ export class DashboardService {
   getCustomerAcquisition(timeFrame: string): Observable<any[]> {
     return this.http.get<any[]>(`http://localhost:8080/order/customer-acquisition?timeFrame=${timeFrame}`);
   }
+
+  // Analytics endpoints for pie charts
+  getBrandSalesData(timeFrame: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8080/order/analytics/brand-sales?timeFrame=${timeFrame}`);
+  }
+
+  getCategorySalesData(timeFrame: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8080/order/analytics/category-sales?timeFrame=${timeFrame}`);
+  }
+
+  getProductSalesData(timeFrame: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8080/order/analytics/product-sales?timeFrame=${timeFrame}`);
+  }
+
+  getDeliveryServiceData(timeFrame: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8080/order/analytics/delivery-services?timeFrame=${timeFrame}`);
+  }
 } 

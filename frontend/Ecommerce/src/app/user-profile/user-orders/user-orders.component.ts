@@ -240,6 +240,31 @@ export class UserOrdersComponent implements OnInit, AfterViewChecked {
     return !!(order.discountAmount > 0 || order.userDiscountId);
   }
 
+  // Helper: Does this order have a MONEY_REFUND?
+  hasMoneyRefund(order: UserOrderListDTO): boolean {
+    return !!(order.returnRequests && order.returnRequests.some(r => r.refundId && r.refundType === 'MONEY_REFUND'));
+  }
+
+  // Helper: Get the first MONEY_REFUND return request for this order
+  getMoneyRefund(order: UserOrderListDTO) {
+    return order.returnRequests?.find(r => r.refundId && r.refundType === 'MONEY_REFUND');
+  }
+
+  // Helper: Format refund type for display (remove underscores, capitalize)
+  formatRefundType(refundType: string | undefined | null): string {
+    if (!refundType) return '';
+    return refundType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // Helper: Is the refund type REPLACEMENT?
+  isReplacementRefund(order: UserOrderListDTO): boolean {
+    return !!(order.returnRequests && order.returnRequests.some(r => r.refundId && r.refundType === 'REPLACEMENT'));
+  }
+
+  getReplacement(order: UserOrderListDTO) {
+    return order.returnRequests?.find(r => r.refundId && r.refundType === 'REPLACEMENT');
+  }
+
   scrollToExpandedOrder() {
     if (this.expandedOrderId !== null) {
       const el = document.getElementById('order-' + this.expandedOrderId);

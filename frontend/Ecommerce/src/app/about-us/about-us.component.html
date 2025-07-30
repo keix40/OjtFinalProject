@@ -1,57 +1,193 @@
-<div class="min-h-screen bg-gradient-to-b from-neutral-50 to-white flex flex-col items-center py-10 px-4 sm:px-6 lg:px-8">
-  <div class="w-full max-w-3xl bg-white rounded-3xl shadow-xl p-8 sm:p-12 flex flex-col gap-8">
-    <!-- Title -->
-    <div class="text-center">
-      <h1 class="text-4xl font-extrabold text-black mb-2">Who We Are</h1>
-      <p class="text-lg text-neutral-700 font-medium">Passionate about quality. Dedicated to you.</p>
-    </div>
+<app-header></app-header>
 
-    <!-- Mission Statement -->
-    <div class="bg-neutral-100 rounded-2xl p-6 shadow-sm">
-      <h2 class="text-2xl font-bold text-black mb-2">Our Mission</h2>
-      <p class="text-neutral-700 text-base">
-        Our journey began with a simple idea: to make great products accessible to everyone, everywhere. Frustrated by the lack of trustworthy online options, we set out to create a place where quality meets convenience and every customer is treated like family. We are committed to providing an exceptional shopping experience, backed by excellent customer service and a genuine passion for what we do.
+<!-- Hero Section -->
+<section class="relative bg-white py-20 overflow-hidden">
+  <div class="absolute inset-0 bg-blue-50"></div>
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center">
+      <h1 class="text-5xl lg:text-6xl font-bold text-black mb-6">
+        About <span class="text-blue-600">Us</span>
+      </h1>
+      <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+        We're passionate about delivering exceptional products and experiences to our customers. 
+        Our journey is built on trust, quality, and innovation.
       </p>
     </div>
+  </div>
+</section>
 
-    <!-- Values Section -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-      <div class="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-        <div class="w-12 h-12 flex items-center justify-center rounded-full bg-neutral-200 mb-3">
-          <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 1.343-3 3 0 2.5 3 5 3 5s3-2.5 3-5c0-1.657-1.343-3-3-3z"/><circle cx="12" cy="12" r="10"/></svg>
+<!-- Mission Section -->
+<section class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-2 gap-12 items-center">
+      <!-- Content -->
+      <div class="space-y-8">
+        <div class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-6">
+          <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+          Our Mission
         </div>
-        <h3 class="font-semibold text-black mb-1">Quality</h3>
-        <p class="text-neutral-600 text-sm">We carefully curate every product to ensure the highest standards.</p>
+        <h2 class="text-4xl font-bold text-black mb-6">
+          Empowering Your Lifestyle Through Quality Products
+        </h2>
+        <p class="text-lg text-gray-600 leading-relaxed mb-6">
+          Our journey began with a simple idea: to make great products accessible to everyone, everywhere. 
+          Frustrated by the lack of trustworthy online options, we set out to create a place where quality 
+          meets convenience and every customer is treated like family.
+        </p>
+        <p class="text-lg text-gray-600 leading-relaxed">
+          We are committed to providing an exceptional shopping experience, backed by excellent customer 
+          service and a genuine passion for what we do. Every product we offer is carefully selected to 
+          enhance your daily life.
+        </p>
       </div>
-      <div class="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-        <div class="w-12 h-12 flex items-center justify-center rounded-full bg-neutral-200 mb-3">
-          <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 14h.01M16 10h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/></svg>
+      
+      <!-- Image/Illustration -->
+      <div class="relative">
+        <div class="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+          <div class="text-center">
+            <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-black mb-4">Quality First</h3>
+            <p class="text-gray-600">Every product is carefully curated to meet our high standards of quality and reliability.</p>
+          </div>
         </div>
-        <h3 class="font-semibold text-black mb-1">Customer Service</h3>
-        <p class="text-neutral-600 text-sm">Our friendly team is always here to help and support you.</p>
       </div>
-      <div class="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-        <div class="w-12 h-12 flex items-center justify-center rounded-full bg-neutral-200 mb-3">
-          <svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a5 5 0 00-10 0v2a5 5 0 00-2 4v5a2 2 0 002 2h10a2 2 0 002-2v-5a5 5 0 00-2-4z"/></svg>
-        </div>
-        <h3 class="font-semibold text-black mb-1">Trust</h3>
-        <p class="text-neutral-600 text-sm">Shop with confidence—your security and satisfaction are our priority.</p>
-      </div>
-    </div>
-
-    <!-- Image/Brand Illustration Placeholder -->
-    <div class="flex flex-col items-center gap-2">
-      <div class="w-32 h-32 rounded-full bg-neutral-200 flex items-center justify-center shadow-inner mb-2 overflow-hidden">
-        <!-- Replace with actual team/brand image if available -->
-        <svg class="w-16 h-16 text-neutral-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7"/></svg>
-      </div>
-      <span class="text-neutral-500 text-sm">Our Team / Brand</span>
-    </div>
-
-    <!-- Buttons at the bottom -->
-    <div class="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-      <a routerLink="/contact-us" class="inline-block px-8 py-3 bg-black text-white font-semibold rounded-xl shadow hover:bg-neutral-900 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50">Contact Us</a>
-      <a routerLink="/userproductlist" class="inline-block px-8 py-3 bg-black text-white font-semibold rounded-xl shadow hover:bg-neutral-900 transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50">Shop Now</a>
     </div>
   </div>
-</div>
+</section>
+
+<!-- Values Section -->
+<section class="py-20 bg-gray-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-bold text-black mb-4">Our Core Values</h2>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        These principles guide everything we do and shape the way we serve our customers.
+      </p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-8">
+      <!-- Quality -->
+      <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-black mb-4">Quality</h3>
+        <p class="text-gray-600 leading-relaxed">
+          We carefully curate every product to ensure the highest standards. Quality isn't just a promise—it's our foundation.
+        </p>
+      </div>
+      
+      <!-- Customer Service -->
+      <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-black mb-4">Customer Service</h3>
+        <p class="text-gray-600 leading-relaxed">
+          Our friendly team is always here to help and support you. We believe in building lasting relationships with our customers.
+        </p>
+      </div>
+      
+      <!-- Trust -->
+      <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+        <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mb-6">
+          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-black mb-4">Trust</h3>
+        <p class="text-gray-600 leading-relaxed">
+          Shop with confidence—your security and satisfaction are our priority. We value the trust you place in us.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats Section -->
+<!-- <section class="py-20 bg-blue-600">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid md:grid-cols-4 gap-8 text-center">
+      <div class="text-white">
+        <div class="text-4xl font-bold mb-2">10K+</div>
+        <div class="text-blue-100">Happy Customers</div>
+      </div>
+      <div class="text-white">
+        <div class="text-4xl font-bold mb-2">500+</div>
+        <div class="text-blue-100">Products</div>
+      </div>
+      <div class="text-white">
+        <div class="text-4xl font-bold mb-2">24/7</div>
+        <div class="text-blue-100">Support</div>
+      </div>
+      <div class="text-white">
+        <div class="text-4xl font-bold mb-2">99%</div>
+        <div class="text-blue-100">Satisfaction</div>
+      </div>
+    </div>
+  </div>
+</section> -->
+
+<!-- Team Section -->
+<section class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-bold text-black mb-4">Meet Our Team</h2>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+        We're a dedicated team passionate about delivering the best experience for our customers.
+      </p>
+    </div>
+    
+    <div class="flex justify-center">
+      <div class="bg-gray-50 rounded-2xl p-8 max-w-md text-center">
+        <div class="w-32 h-32 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <svg class="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <h3 class="text-2xl font-bold text-black mb-2">Our Team</h3>
+        <p class="text-gray-600">
+          A passionate group dedicated to bringing you the best products and service.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-20 bg-gray-50">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+    <h2 class="text-4xl font-bold text-black mb-6">Ready to Get Started?</h2>
+    <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+      Join thousands of satisfied customers who trust us for their shopping needs.
+    </p>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a routerLink="/userproductlist" 
+         class="inline-flex items-center px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+        Shop Now
+      </a>
+      <a routerLink="/contact-us" 
+         class="inline-flex items-center px-8 py-4 bg-white text-black font-semibold rounded-xl shadow-lg border-2 border-gray-200 hover:border-blue-600 hover:text-blue-600 transition-all duration-300 transform hover:scale-105">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/>
+        </svg>
+        Contact Us
+      </a>
+    </div>
+  </div>
+</section>
+
+<app-footer></app-footer>

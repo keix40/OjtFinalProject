@@ -1,7 +1,7 @@
 package com.Ojt.Ecommerce.config;
 
-import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,15 +15,13 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
 
-
-import static org.springframework.security.config.Customizer.withDefaults;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @EnableWebSecurity
@@ -79,6 +77,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/contact/**").permitAll()
                         .requestMatchers("/api/notification/**").permitAll()
                         .requestMatchers("/api/newsletter/**").permitAll()
+                        .requestMatchers("/events/**").permitAll()
+                        .requestMatchers("/event/**").permitAll()
 
                         .anyRequest().authenticated()
 
@@ -114,6 +114,11 @@ public class SecurityConfig {
             "x-forwarded-for",
             "x-forwarded-proto",
             "x-forwarded-host",
+            "x-client-ip",
+            "X-Client-IP",
+            "X-Forwarded-For",
+            "X-Forwarded-Proto",
+            "X-Forwarded-Host",
             "Sec-WebSocket-Protocol",
             "Sec-WebSocket-Key",
             "Sec-WebSocket-Version",

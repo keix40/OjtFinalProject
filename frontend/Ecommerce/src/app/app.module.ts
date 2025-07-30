@@ -6,7 +6,6 @@ import { GoogleMapsModule } from '@angular/google-maps';
 import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { TestComponent } from './test/test.component';
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
@@ -35,7 +34,6 @@ import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
 import { ProductDisplayComponent } from './product-display/product-display.component';
-import { WishlistComponent } from './wishlist/wishlist.component';
 import { CustomersComponent } from './customers/customers.component';
 import { CreateUserComponent } from './create-user/create-user.component';
 import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
@@ -49,7 +47,6 @@ import { BlacklistComponent } from './blacklist/blacklist.component';
 import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
 import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
 import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
-import { FooterComponent } from './footer/footer.component';
 import { OrderManagementComponent } from './order-management/order-management.component';
 import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { ReturnRequestComponent } from './return-request/return-request.component';
@@ -69,7 +66,6 @@ import { HeaderComponent } from './header/header.component';
 import { BreadcrumbComponent } from './breadcrumb.component';
 
 import { BrandListComponent } from './brand-list/brand-list.component';
-import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
 import { NotifcationService } from './notifcation.service';
 import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
@@ -78,12 +74,22 @@ import { OrderInvoiceComponent } from './order-invoice/order-invoice.component';
 import { ToastrModule } from 'ngx-toastr';
 import { NotificationSidebarComponent } from './notification-sidebar/notification-sidebar.component';
 import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
+import { AdminPolicyEditComponent } from './admin-policy/admin-policy-edit.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { DiscountAdminComponent } from './discount-admin/discount-admin.component';
+import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'lucide-angular';
+import { AdminProfileComponent } from './admin-profile/admin-profile.component';
+import { EventListComponent } from './event-list/event-list.component';
+import { WishlistComponent } from './wishlist/wishlist.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
 import { UserPolicyComponent } from './user-policy/user-policy.component';
+import { TestComponent } from './test/test.component';
 import { AboutUsComponent } from './about-us/about-us.component';
 import { ContactUsComponent } from './contact-us/contact-us.component';
-import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'lucide-angular';
+import { FooterComponent } from './footer/footer.component';
+import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
+import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
+import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
 
 @NgModule({
   declarations: [
@@ -91,7 +97,6 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
     LoginComponent,
     RegisterComponent,
     CreateDeliveryServiceComponent,
-    UserProfileComponent,
     UserOrdersComponent,
     UserWishlistComponent,
     UserPaymentMethodsComponent,
@@ -111,7 +116,6 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
     ProductComponent,
     ProductMangementComponent,
     ProductDisplayComponent,
-    WishlistComponent,
     CustomersComponent,
     CreateUserComponent,
     ActivityLogsComponent,
@@ -128,19 +132,18 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
     ReturnRequestComponent,
     ReturnListComponent,
     BrandListComponent,
-    UserBrandListComponent,
-    DeliveryServiceListComponent,
-    OrderInvoiceComponent,
-
-    CreateDeliveryServiceComponent,
     DeliveryServiceListComponent,
     OrderInvoiceComponent,
     AdminPolicyComponent,
+    AdminPolicyEditComponent, 
     DashboardComponent,
     DiscountAdminComponent,
-    UserPolicyComponent,
-    AboutUsComponent,
-    ContactUsComponent,
+    AdminProfileComponent,
+    UserProfileComponent, 
+    CreateDeliveryServiceComponent,
+    DeliveryServiceListComponent,
+    UserCouponListComponent,
+    AdminInboxComponent,
 
   ],
   imports: [
@@ -154,7 +157,6 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
     NgbModule,
     GoogleMapsModule,
     RouterModule,
-    CommonModule, // Required for pipes like date, currency, number
     // Angular Material Modules
     MatCardModule,
     MatFormFieldModule,
@@ -164,18 +166,23 @@ import { LucideAngularModule, Tag, Box, Gift, Heart, ShoppingBag, Star } from 'l
     MatProgressSpinnerModule,
     // Quill Editor
     QuillModule.forRoot(),
-    CartSidebarComponent, // Standalone component must be imported here
-   ProductDetailComponent,
-    BrowserAnimationsModule,
-    TestComponent,
-    FooterComponent,
-    HeaderComponent,
-    BreadcrumbComponent,
+    // Standalone components
+    CartSidebarComponent,
+    ProductDetailComponent,
     VerifyOtpComponent,
     NotificationComponent,
     BreadcrumbComponent,
     BannedPageComponent,
     NotificationSidebarComponent,
+    EventListComponent,
+    HeaderComponent,
+    AboutUsComponent,
+    ContactUsComponent,
+    FooterComponent,
+    TestComponent,
+    WishlistComponent,
+    UserBrandListComponent,
+    UserPolicyComponent,
     ToastrModule.forRoot({
       timeOut: 3000,
       positionClass: 'toast-top-right',

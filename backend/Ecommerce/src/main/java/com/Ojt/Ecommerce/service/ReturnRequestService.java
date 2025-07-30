@@ -314,6 +314,7 @@ public class ReturnRequestService {
         refundRepo.save(refund);
 
         // Update stock for all returned products and set status to 2 (refunded/returned)
+        double totalRefundAmount = 0.0;
         for (ReturnRequestProduct rrp : request.getReturnRequestProducts()) {
             UserOrderHasProduct orderProduct = rrp.getOrderProduct();
             // Set status to 2 (refunded/returned)
@@ -333,6 +334,27 @@ public class ReturnRequestService {
                     productRepo.save(product);
                 }
             }
+            // Calculate refund amount for points deduction
+            if (orderProduct.getUnitPrice() != null && rrp.getQuantity() != null) {
+                totalRefundAmount += orderProduct.getUnitPrice() * rrp.getQuantity();
+            }
+        }
+        // Deduct points from user
+        User user = request.getUser();
+        int pointsToDeduct = (int) (totalRefundAmount / 1000);
+        if (pointsToDeduct > 0) {
+            Integer currentPoints = user.getTotalPoints() != null ? user.getTotalPoints() : 0;
+            int newPoints = Math.max(0, currentPoints - pointsToDeduct);
+            user.setTotalPoints(newPoints);
+            userRepo.save(user);
+            // Log point deduction
+            UserPointHistory history = UserPointHistory.builder()
+                    .user(user)
+                    .order(request.getOrder())
+                    .points(-pointsToDeduct)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            userPointHistoryRepo.save(history);
         }
         // No direct totalAmount field to update on UserOrder. The order management page should recalculate the total as the sum of all UserOrderHasProduct rows with status != RETURNED.
     }

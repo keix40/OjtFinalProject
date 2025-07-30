@@ -87,6 +87,9 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     }
   };
 
+  showPermissionModal = false;
+  selectedAdminForPermission: any = null;
+
   constructor(
     public imageService: ImageService,
     private adminUserService: AdminUserService,
@@ -311,6 +314,15 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
 
   closePermissionsModal(): void {
     this.selectedAdminForPermissions = null;
+  }
+
+  openPermissionModal(admin: any): void {
+    this.selectedAdminForPermission = admin;
+    this.showPermissionModal = true;
+  }
+  closePermissionModal(): void {
+    this.showPermissionModal = false;
+    this.selectedAdminForPermission = null;
   }
 
   // Edit modal logic

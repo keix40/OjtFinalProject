@@ -1,6 +1,17 @@
 <app-notification-sidebar [showNotificationSidebar]="showNotificationSidebar" (closeNotificationSidebar)="closeNotificationSidebar()"></app-notification-sidebar>
 <router-outlet />
 
+<!-- Go to Top Button -->
+<button 
+  *ngIf="showGoToTop" 
+  (click)="scrollToTop()"
+  class="fixed bottom-6 right-6 z-40 w-12 h-12 bg-white hover:bg-blue-50 text-blue-600 border-2 border-blue-200 hover:border-blue-400 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group flex items-center justify-center"
+  title="Go to top">
+  <svg class="w-6 h-6 transition-all duration-300 group-hover:-translate-y-1 group-hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+  </svg>
+</button>
+
 <!-- Toast Notification -->
 <div *ngIf="toastMessage" class="fixed top-24 left-1/2 -translate-x-1/2 z-50"
      [ngClass]="isToastClosing ? 'animate-fade-out-down' : 'animate-fade-in-down'"

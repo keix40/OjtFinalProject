@@ -103,7 +103,8 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
             discount_amount: discount.discount_amount,
             discountType: discount.discountType,
             targetType: rule.targetType,
-            eventName: discount.name
+            eventName: discount.name,
+            minimumSpend: discount.minimumSpend
           };
         }
       }
@@ -131,7 +132,23 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
 
   getProductDiscount(productId: number): any {
     if (this.isFirstTimeBuyerDiscount) return null;
-    return this.productDiscounts.get(productId);
+    
+    const discount = this.productDiscounts.get(productId);
+    if (!discount) return null;
+    
+    // Get the product to check its price
+    const product = this.productDetails.get(productId);
+    if (!product) return null;
+    
+    // Check minimum spend requirement
+    if (discount.minimumSpend && discount.minimumSpend > 0) {
+      if (product.price < discount.minimumSpend) {
+        // Product price is lower than minimum spend, don't show discount
+        return null;
+      }
+    }
+    
+    return discount;
   }
 
   getFinalDiscountedPrice(product: ProductDTO): number {

@@ -185,6 +185,8 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
       this.forwardGeocodeTimeout = null;
     }
     this.addressForm.patchValue({ latitude: null, longitude: null });
+    // Add body scroll lock
+    document.body.style.overflow = 'hidden';
     setTimeout(() => this.initMap(), 0);
   }
 
@@ -218,7 +220,14 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
       longitude: null,
       addressType: ''
     });
-    window.location.reload();
+    // Remove body scroll lock
+    document.body.style.overflow = '';
+  }
+
+  onModalBackdropClick(event: Event) {
+    if (event.target === event.currentTarget) {
+      this.closeAddModal();
+    }
   }
 
   ngAfterViewInit() {}

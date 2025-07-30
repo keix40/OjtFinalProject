@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { NotifcationService } from './notifcation.service';
 import { IpService } from './services/ip.service';
@@ -26,6 +26,9 @@ export class AppComponent implements OnInit, OnDestroy {
   newNotificationCount = 0;
 
   private blacklistCheckSubscription: Subscription | null = null;
+
+  // Go to Top button properties
+  showGoToTop = false;
 
   constructor(
     private notificationService: NotifcationService,
@@ -87,6 +90,20 @@ export class AppComponent implements OnInit, OnDestroy {
           }
         });
       });
+  }
+
+  // Go to Top button methods
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    // Show button when user scrolls down more than 300px
+    this.showGoToTop = window.pageYOffset > 300;
+  }
+
+  scrollToTop() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
   }
 
   showToast(message: string, notification: any = null) {

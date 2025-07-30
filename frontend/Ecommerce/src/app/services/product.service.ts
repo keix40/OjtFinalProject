@@ -59,8 +59,9 @@ export class ProductService {
     return this.http.get<ProductDTO[]>(`${this.baseUrl}/productlist`);
   }
 
-  getProductDetailById(id: string) {
-    return this.http.get<any>(`${this.baseUrl}/adminProductDetail/${id}`);
+  getProductDetailById(id: string, userId?: number) {
+    const url = userId ? `${this.baseUrl}/adminProductDetail/${id}?userId=${userId}` : `${this.baseUrl}/adminProductDetail/${id}`;
+    return this.http.get<any>(url);
   }
 
   getProductsByIds(ids: number[]): Observable<ProductDTO[]> {
@@ -87,8 +88,41 @@ export class ProductService {
     return this.http.get<ProductList[]>(`${this.baseUrl}/topordered`);
   }
 
+  getTrendingProducts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/trending`);
+  }
+
+  getFeaturedProducts(userId?: number): Observable<any[]> {
+    const url = userId ? `${this.baseUrl}/featured?userId=${userId}` : `${this.baseUrl}/featured`;
+    return this.http.get<any[]>(url);
+  }
+
+  getRelatedProducts(categoryIds: number[], brandIds: number[], currentProductId: number, excludeProductIds: number[]): Observable<ProductDTO[]> {
+    const params = new URLSearchParams();
+    categoryIds.forEach(id => params.append('categoryIds', id.toString()));
+    brandIds.forEach(id => params.append('brandIds', id.toString()));
+    params.append('currentProductId', currentProductId.toString());
+    excludeProductIds.forEach(id => params.append('excludeProductIds', id.toString()));
+    
+    const url = `${this.baseUrl}/related?${params.toString()}`;
+    console.log('Calling related products API:', url);
+    console.log('Parameters:', { categoryIds, brandIds, currentProductId, excludeProductIds });
+    
+    return this.http.get<ProductDTO[]>(url);
+  }
+
   searchProducts(keyword: string): Observable<ProductDTO[]> {
     return this.http.get<ProductDTO[]>(`${this.baseUrl}/search?keyword=${encodeURIComponent(keyword)}`);
+  }
+
+  // Enhanced search method for comprehensive search
+  searchProductsComprehensive(keyword: string): Observable<ProductDTO[]> {
+    return this.http.get<ProductDTO[]>(`${this.baseUrl}/search-comprehensive?keyword=${encodeURIComponent(keyword)}`);
+  }
+
+  // Live search method for real-time results
+  liveSearch(keyword: string): Observable<ProductDTO[]> {
+    return this.http.get<ProductDTO[]>(`${this.baseUrl}/live-search?keyword=${encodeURIComponent(keyword)}`);
   }
   
 }

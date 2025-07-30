@@ -1,59 +1,95 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { RouterModule, Routes, CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+// Guards and Services
+import { AuthGuard } from './auth/guards/auth.guard.service';
+import { PermissionGuard } from './guards/permission.guard';
+import { PermissionConstants } from './constants/permission.constants';
+import { IpService } from './services/ip.service';
+import { LoginAttemptsService } from './services/login-attempts.service';
+
+// Auth Components
 import { LoginComponent } from './auth/login/login.component';
 import { RegisterComponent } from './auth/register/register.component';
-import { AuthGuard } from './auth/guards/auth.guard.service';
+import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
 import { LoggedInGuard } from './auth/guards/logged-in.guard';
+
+// User Components
 import { UserProfileComponent } from './user-profile/user-profile.component';
+import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
+import { UserProductListComponent } from './user-product-list/user-product-list';
+import { UserCategoryListComponent } from './user-category-list/user-category-list.component';
+import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
+import { UserPolicyComponent } from './user-policy/user-policy.component';
+
+// Cart and Checkout Components
 import { CartPageComponent } from './cart-page/cart-page.component';
 import { CheckoutComponent } from './checkout/checkout.component';
 import { PaymentComponent } from './payment/payment.component';
 import { OrderConfirmComponent } from './order-confirm/order-confirm.component';
+import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
+
+// Product Components
 import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
-import { LayoutComponent } from './layout/layout.component';
 import { ProductDisplayComponent } from './product-display/product-display.component';
-import { OrderManagementComponent } from './order-management/order-management.component';
-import { WishlistComponent } from './wishlist/wishlist.component';
-import { OrderTrackingComponent } from './order-tracking/order-tracking.component';
 import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
-import { UserProductDetailComponent } from './user-product-detail/user-product-detail.component';
-import { ReviewComponent } from './review/review.component';
-import { CustomersComponent } from './customers/customers.component';
-import { CreateUserComponent } from './create-user/create-user.component';
-import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
-import { AdminUsersComponent } from './admin-users/admin-users.component';
-import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
-import { VipCustomersComponent } from './vip-customers/vip-customers.component';
-import { BlacklistComponent } from './blacklist/blacklist.component';
-import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
-import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
-import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
-import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
-import { HomeComponent } from './home/home.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { UserProductListComponent } from './user-product-list/user-product-list';
-import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ReturnRequestComponent } from './return-request/return-request.component';
-import { ReturnListComponent } from './return-list/return-list.component';
-import { ReturnDetailComponent } from './return-detail/return-detail.component';
-import { VerifyOtpComponent } from './auth/verify-otp/verify-otp.component';
 import { CategoryListComponent } from './category-list/category-list.component';
 import { BrandListComponent } from './brand-list/brand-list.component';
 import { CategoryAddSubcategoryComponent } from './category-add-subcategory/category-add-subcategory.component';
-import { UserCategoryListComponent } from './user-category-list/user-category-list.component';
-import { UserBrandListComponent } from './user-brand-list/user-brand-list.component';
-import { BannedPageComponent } from './banned-page.component';
-import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { IpService } from './services/ip.service';
-import { LoginAttemptsService } from './services/login-attempts.service';
-import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
+
+// Order and Return Components
+import { OrderManagementComponent } from './order-management/order-management.component';
+import { ReturnRequestComponent } from './return-request/return-request.component';
+import { ReturnListComponent } from './return-list/return-list.component';
+import { ReturnDetailComponent } from './return-detail/return-detail.component';
+
+// Wishlist and Review Components
+import { WishlistComponent } from './wishlist/wishlist.component';
+import { ReviewComponent } from './review/review.component';
+
+// Admin Components
+import { LayoutComponent } from './layout/layout.component';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { AdminUsersComponent } from './admin-users/admin-users.component';
+import { AdminProfileComponent } from './admin-profile/admin-profile.component';
+import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
+import { AdminPolicyEditComponent } from './admin-policy/admin-policy-edit.component';
+
+// User Management Components
+import { CustomersComponent } from './customers/customers.component';
+import { CreateUserComponent } from './create-user/create-user.component';
+import { ActivityLogsComponent } from './activity-logs/activity-logs.component';
+import { RolesPermissionsComponent } from './roles-permissions/roles-permissions.component';
+import { VipCustomersComponent } from './vip-customers/vip-customers.component';
+import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
+import { BlacklistComponent } from './blacklist/blacklist.component';
 import { BlacklistBlockedComponent } from './blacklist/blacklist-blocked.component';
-import { PermissionGuard } from './guards/permission.guard';
-import { PermissionConstants } from './constants/permission.constants';
+import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+
+// Discount Components
+import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
+import { DiscountInsertComponent } from './discount-insert/discount-insert.component';
+import { DiscountCouponComponent } from './discount-coupon/discount-coupon.component';
+
+// Delivery Components
+import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
+import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
+
+// Event Components
+import { CreateEventComponent } from './create-event/create-event.component';
+import { EventListComponent } from './event-list/event-list.component';
+
+// Other Components
+import { HomeComponent } from './home/home.component';
+import { AboutUsComponent } from './about-us/about-us.component';
+import { ContactUsComponent } from './contact-us/contact-us.component';
+import { BannedPageComponent } from './banned-page.component';
+import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
 import { AuthService } from './auth/auth.service';
 
 
@@ -78,13 +114,7 @@ export class BlockedGuard implements CanActivate {
     });
   }
 }
-import { CreateDeliveryServiceComponent } from './create-delivery-service/create-delivery-service.component';
-import { DeliveryServiceListComponent } from './delivery-service-list/delivery-service-list.component';
-import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
-import { AdminPolicyComponent } from './admin-policy/admin-policy.component';
-import { UserPolicyComponent } from './user-policy/user-policy.component';
-import { AboutUsComponent } from './about-us/about-us.component';
-import { ContactUsComponent } from './contact-us/contact-us.component';
+
 
 
 @Injectable({ providedIn: 'root' })
@@ -155,7 +185,8 @@ export class BlacklistGuard implements CanActivate {
     console.log('[BlacklistGuard] User is not logged in, allowing access');
     return true;
   }
-}
+}import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
+
 
 const routes: Routes = [
   // Public routes
@@ -222,9 +253,16 @@ const routes: Routes = [
       { path: 'users/login-attempts', component: LoginAttemptsComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Login Attempts', permission: PermissionConstants.SECURITY_VIEW_ATTEMPTS, role: 'admin' } },
       { path: 'users/activity', component: ActivityLogsComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Activity Logs', permission: PermissionConstants.ACTIVITY_LOGS_VIEW, role: 'admin' } },
       // Admin Settings
-      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Revenue Target', permission: PermissionConstants.ADMIN_REVENUE_TARGET, role: 'admin' } },
-      { path: 'admin/vip-tiers', component: VipTiersAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'VIP Tiers', permission: PermissionConstants.CUSTOMERS_VIEW_VIP, role: 'admin' } },
-      { path: 'admin/policies', component: AdminPolicyComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Policies', permission: PermissionConstants.ADMIN_ROLES_MANAGE, role: 'admin' } },
+      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Revenue Target',} },
+      { path: 'admin/vip-tiers', component: VipTiersAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'VIP Tiers'} },
+      { path: 'admin/policies', component: AdminPolicyComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Policies', role: 'admin' } },
+      { path: 'admin/policies/edit/:id', component: AdminPolicyEditComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Edit Policy' } },
+      { path: 'admin/profile/:id', component: AdminProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
+
+      //Event Management
+      { path: 'admin/event', component: CreateEventComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Create Event', permission: PermissionConstants.DISCOUNTS_CREATE, role: 'admin' } },
+      { path: 'admin/event/:id', component: CreateEventComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Edit Event', permission: PermissionConstants.DISCOUNTS_CREATE } },
+      { path: 'admin/eventlist', component: EventListComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Event List', permission: PermissionConstants.DISCOUNTS_VIEW, role: 'admin' } },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

@@ -88,8 +88,10 @@
 </ng-template>
 <!-- CAPTCHA Modal -->
 <ng-template #captchaModal>
-  <div *ngIf="showCaptchaModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-    <div class="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl p-6 w-full max-w-xs">
+  <div *ngIf="showCaptchaModal" class="fixed inset-0 z-40 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-xs mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showCaptchaModal = false">&times;</button>
       <h4 class="text-lg font-bold mb-2 text-gray-800">Security Check</h4>
       <div class="mb-2 text-gray-700">{{ captchaQuestion }}</div>
       <input type="text" [(ngModel)]="captchaInput" placeholder="Answer" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />

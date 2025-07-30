@@ -2,7 +2,7 @@
      [class.hidden]="!sidebarVisible && isMobile()"
      (mouseenter)="onSidebarMouseEnter()"
      (mouseleave)="onSidebarMouseLeave()">
-  <aside [ngClass]="sidebarCollapsed ? 'w-20' : 'w-72'" class="sidebar sticky top-0 bg-white/60 backdrop-blur-lg max-w-full min-h-screen flex flex-col shadow-xl border border-white/30 transition-all duration-300 ease-in-out transition-width overflow-y-auto animate-fade-in font-sans hover:shadow-2xl">
+  <aside [ngClass]="sidebarCollapsed ? 'w-20' : 'w-72'" class="sidebar sticky top-0 bg-white/60 backdrop-blur-lg max-w-full min-h-screen flex flex-col shadow-xl border border-white/30 transition-all duration-300 ease-in-out transition-width overflow-y-auto animate-fade-in font-sans hover:shadow-2xl scrollbar-hide" style="max-height:90vh;">
     <!-- Header with Logo -->
     <div class="relative p-4 border-b border-gray-200/50 flex items-center transition-all duration-300"
       [class.justify-start]="!sidebarCollapsed">
@@ -59,11 +59,22 @@
         
         <!-- Discounts -->
         <li class="mb-2">
-            <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
-                    (click)="navigateToSubmenu('discounts')">
+          <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                  (click)="navigateToSubmenu('discounts')">
             <span class="flex items-center gap-3">
               <i data-lucide="percent" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
-                <span *ngIf="!sidebarCollapsed">Discounts</span>
+              <span *ngIf="!sidebarCollapsed">Discounts</span>
+            </span>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
+          </button>
+        </li>
+        <!-- Event Management (same design as other menu items) -->
+        <li class="mb-2">
+          <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                  (click)="navigateToSubmenu('event')">
+            <span class="flex items-center gap-3">
+              <i data-lucide="circle-check" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span *ngIf="!sidebarCollapsed">Event Management</span>
             </span>
             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
           </button>
@@ -74,7 +85,7 @@
             <button class="flex items-center justify-between w-full px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                     (click)="navigateToSubmenu('delivery')">
             <span class="flex items-center gap-3">
-              <i data-lucide="package" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <i data-lucide="truck" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                 <span *ngIf="!sidebarCollapsed">Delivery Service</span>
             </span>
             <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500 transition-transform duration-300"></i>
@@ -99,6 +110,15 @@
                [routerLink]="'/revenue-target-admin'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
             <i data-lucide="target" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
               <span *ngIf="!sidebarCollapsed">Revenue Target</span>
+          </a>
+        </li>
+
+        <!-- Policy Management -->
+        <li class="mb-2">
+            <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 font-sans h-16 hover:shadow-sm" 
+               [routerLink]="'/admin/policies'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+            <i data-lucide="file-text" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+              <span *ngIf="!sidebarCollapsed">Policy Management</span>
           </a>
         </li>
       </ng-container>
@@ -183,6 +203,7 @@
                   <span>Add Discount</span>
               </a>
             </li>
+
             <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/discount-coupon'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
@@ -197,7 +218,7 @@
             <li class="mb-2" *ngIf="permissionService.hasPermission(PermissionConstants.DELIVERY_CREATE)">
                 <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm" 
                    [routerLink]="'/createdeliveryservice'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
-                <i data-lucide="plus-square" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <i data-lucide="truck" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
                   <span>Add Delivery</span>
               </a>
             </li>
@@ -288,6 +309,24 @@
               </a>
             </li>
           </ng-container>
+
+          <!-- Event Management Submenu (same design as other submenus) -->
+          <ng-container *ngSwitchCase="'event'">
+            <li class="mb-2">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                 [routerLink]="'/admin/event'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="circle-check" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span>Add Event</span>
+              </a>
+            </li>
+            <li class="mb-2">
+              <a class="flex items-center gap-3 px-4 py-2 rounded-xl text-slate-700 hover:bg-white/60 hover:text-slate-900 transition-all duration-200 font-semibold transform hover:scale-105 h-16 hover:shadow-sm"
+                 [routerLink]="'/admin/eventlist'" routerLinkActive="bg-white/60 text-slate-900 font-bold">
+                <i data-lucide="list-check" class="w-5 h-5 text-slate-500 transition-transform duration-200 hover:scale-110"></i>
+                <span>Event List</span>
+              </a>
+            </li>
+          </ng-container>
         </ng-container>
       </ng-container>
 
@@ -322,8 +361,14 @@
           </li>
           <li class="flex justify-center mb-2">
             <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                    (click)="navigateToSubmenu('event'); forceReinitializeIcons()" [attr.title]="'Event Management'">
+              <i data-lucide="circle-check" class="w-5 h-5 text-slate-500"></i>
+            </button>
+          </li>
+          <li class="flex justify-center mb-2">
+            <button class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
                     (click)="navigateToSubmenu('delivery'); forceReinitializeIcons()" [attr.title]="'Delivery Service'">
-              <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
+              <i data-lucide="truck" class="w-5 h-5 text-slate-500"></i>
             </button>
           </li>
           <li class="flex justify-center mb-2">
@@ -337,6 +382,13 @@
                [routerLink]="'/revenue-target-admin'" routerLinkActive="bg-white/60 text-slate-900 font-bold border-slate-400 shadow-md" 
                [attr.title]="'Revenue Target Admin'" (click)="forceReinitializeIcons()">
               <i data-lucide="target" class="w-5 h-5 text-slate-500"></i>
+            </a>
+          </li>
+          <li class="flex justify-center mb-2">
+            <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+               [routerLink]="'/admin/policies'" routerLinkActive="bg-white/60 text-slate-900 font-bold border-slate-400 shadow-md" 
+               [attr.title]="'Policy Management'" (click)="forceReinitializeIcons()">
+              <i data-lucide="file-text" class="w-5 h-5 text-slate-500"></i>
             </a>
           </li>
         </ng-container>
@@ -425,7 +477,7 @@
               <li class="flex justify-center mb-2">
                 <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
                    [routerLink]="'/createdeliveryservice'" [attr.title]="'Add Delivery'" (click)="forceReinitializeIcons()">
-                  <i data-lucide="plus-square" class="w-5 h-5 text-slate-500"></i>
+                  <i data-lucide="truck" class="w-5 h-5 text-slate-500"></i>
                 </a>
               </li>
               <li class="flex justify-center mb-2">
@@ -487,13 +539,30 @@
                 </a>
               </li>
             </ng-container>
+
+            <!-- Event Management Submenu (collapsed, same design as others) -->
+            <ng-container *ngSwitchCase="'event'">
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/admin/event'" [attr.title]="'Add Event'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="circle-check" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+              <li class="flex justify-center mb-2">
+                <a class="flex items-center justify-center p-3 rounded-lg w-12 h-16 mx-auto hover:bg-white/40 transition-all duration-200" 
+                   [routerLink]="'/admin/eventlist'" [attr.title]="'Event List'" (click)="forceReinitializeIcons()">
+                  <i data-lucide="list-check" class="w-5 h-5 text-slate-500"></i>
+                </a>
+              </li>
+            </ng-container>
           </ng-container>
         </ng-container>
       </ng-container>
     </ul>
     <!-- Profile Section -->
-    <div class="p-4 border-t border-white/30 bg-gradient-to-t from-white/70 to-white/40 flex flex-col items-center justify-end">
-      <div *ngIf="!sidebarCollapsed" class="flex items-center gap-3 mb-3 p-3 rounded-xl bg-white/60 border border-white/30 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 w-full relative">
+    <div class="p-4 border-t border-white/30 bg-gradient-to-t from-white/70 to-white/40 flex flex-col items-center justify-end"
+      (mouseenter)="onProfileMouseEnter()" (mouseleave)="onProfileMouseLeave()">
+      <div *ngIf="!sidebarCollapsed" class="flex items-center gap-3 mb-3 p-3 rounded-xl bg-white/60 border border-white/30 shadow-sm hover:shadow-md transition-all duration-200 transform hover:scale-105 w-full">
         <div class="flex justify-center items-center w-12 h-12">
           <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-12 h-12 rounded-full object-cover mx-auto border-2 border-slate-300 shadow" (error)="onImageError($event)">
         </div>
@@ -501,7 +570,7 @@
           <h6 class="text-slate-900 font-bold text-sm truncate">{{ getUserDisplayName() }}</h6>
           <p class="text-slate-500 text-xs truncate">{{ getUserRolesDisplay() }}</p>
         </div>
-        <button id="profile-dropdown-btn" (click)="toggleProfileDropdown($event)" class="flex items-center justify-center w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 shadow transition-all duration-200 transform hover:scale-110">
+        <button class="flex items-center justify-center w-8 h-8 rounded-full bg-white text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 shadow transition-all duration-200 transform hover:scale-110">
           <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-300" [ngClass]="profileDropdownOpen ? 'rotate-180' : ''"></i>
         </button>
         <div *ngIf="profileDropdownOpen" id="profile-dropdown-menu" class="absolute left-0 right-0 mx-auto bottom-full mb-3 z-50 max-w-xs w-full bg-white border border-slate-200 rounded-xl shadow-lg animate-slide-down p-0 sm:p-0" style="animation-duration: 0.3s;" (click)="$event.stopPropagation()">
@@ -531,9 +600,109 @@
           </div>
         </div>
       </div>
-      <div *ngIf="sidebarCollapsed" class="flex flex-col items-center mb-3">
-        <div class="flex justify-center items-center w-10 h-10">
+      <div *ngIf="sidebarCollapsed" class="flex flex-col items-center mb-3 relative">
+        <div class="flex justify-center items-center w-10 h-10 cursor-pointer">
           <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-10 h-10 rounded-full object-cover mx-auto border-2 border-slate-300 shadow" (error)="onImageError($event)">
+        </div>
+        <!-- Dropdown for collapsed -->
+        <div *ngIf="profileDropdownOpen" class="absolute right-0 bottom-20 translate-y-full mb-2 w-44 bg-white border border-slate-200 rounded-xl shadow-lg z-50 animate-fade-in"
+          (mouseenter)="onProfileMouseEnter()" (mouseleave)="onProfileMouseLeave()">
+          <button class="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-slate-700 hover:bg-blue-50 transition-colors duration-200" (click)="navigateToProfile()">
+            <i data-lucide="user" class="w-4 h-4"></i> My Profile
+          </button>
+          <button class="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors duration-200" (click)="logout()">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Profile Dropdown Menu -->
+      <div *ngIf="profileDropdownOpen && !sidebarCollapsed" 
+           class="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50 animate-fade-in">
+        <div class="py-2">
+          <!-- Profile Info -->
+          <div class="px-4 py-3 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200">
+              <div class="flex-1 min-w-0">
+                <h6 class="text-slate-900 font-semibold text-sm truncate">{{ getUserDisplayName() }}</h6>
+                <p class="text-slate-500 text-xs truncate">{{ userEmail }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Menu Items -->
+          <div class="py-1">
+            <!-- Inbox Button -->
+            <button (click)="openAdminInbox()" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="inbox" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Inbox</span>
+              <span *ngIf="unreadMessages > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold animate-pulse">{{ unreadMessages }}</span>
+            </button>
+            
+            <!-- Profile Button -->
+            <button (click)="navigateToProfile(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="user" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Profile</span>
+            </button>
+            
+            <!-- Divider -->
+            <div class="border-t border-slate-100 my-1"></div>
+            
+            <!-- Logout Button -->
+            <button (click)="logout(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group">
+              <i data-lucide="log-out" class="w-4 h-4 text-red-500 group-hover:text-red-600 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Logout</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Dropdown Menu -->
+      <div *ngIf="profileDropdownOpen && !sidebarCollapsed" 
+           class="absolute bottom-full left-4 right-4 mb-2 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50 animate-fade-in">
+        <div class="py-2">
+          <!-- Profile Info -->
+          <div class="px-4 py-3 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+              <img [src]="getProfileImageUrl()" [alt]="getUserDisplayName()" class="w-10 h-10 rounded-full object-cover border-2 border-slate-200">
+              <div class="flex-1 min-w-0">
+                <h6 class="text-slate-900 font-semibold text-sm truncate">{{ getUserDisplayName() }}</h6>
+                <p class="text-slate-500 text-xs truncate">{{ userEmail }}</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Menu Items -->
+          <div class="py-1">
+            <!-- Inbox Button -->
+            <button (click)="openAdminInbox()" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="inbox" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Inbox</span>
+              <span *ngIf="unreadMessages > 0" class="ml-auto inline-block px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold animate-pulse">{{ unreadMessages }}</span>
+            </button>
+            
+            <!-- Profile Button -->
+            <button (click)="navigateToProfile(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-all duration-200 group">
+              <i data-lucide="user" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Profile</span>
+            </button>
+            
+            <!-- Divider -->
+            <div class="border-t border-slate-100 my-1"></div>
+            
+            <!-- Logout Button -->
+            <button (click)="logout(); profileDropdownOpen = false" 
+                    class="flex items-center gap-3 w-full px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 group">
+              <i data-lucide="log-out" class="w-4 h-4 text-red-500 group-hover:text-red-600 transition-colors duration-200"></i>
+              <span class="text-sm font-medium">Logout</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

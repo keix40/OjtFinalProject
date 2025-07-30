@@ -1,11 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { BrandService } from '../services/brand.service';
 import { BrandListDTO } from '../brand';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
+import { FooterComponent } from '../footer/footer.component';
+import { CommonModule } from '@angular/common';
+import { HeaderComponent } from '../header/header.component';
 
 @Component({
   selector: 'app-user-brand-list',
-  standalone: false,
+  standalone: true,
+  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent],
   templateUrl: './user-brand-list.component.html',
   styleUrl: './user-brand-list.component.css'
 })
@@ -47,3 +51,4 @@ export class UserBrandListComponent implements OnInit {
     this.router.navigate(['/userproductlist'], { queryParams: { brand: brand.name } });
   }
 }
+

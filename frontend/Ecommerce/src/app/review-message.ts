@@ -9,5 +9,6 @@ export interface ReviewMessage {
   userImage?: string;
 
   imageUrls?: string[]; // add this line
-  videoUrls?: string[]; 
+  videoUrls?: string[];
+  showMenu?: boolean; // Add this for dropdown menu functionality
 }

@@ -37,4 +37,14 @@ public class ProductDTO {
     private Map<String, List<Long>> variantImagesMarkedForDeletion;
     // For category-brand pair deletion
     private List<CategoryBrandPair> categoryBrandPairsMarkedForDeletion;
+    
+    // Discount fields
+    private Boolean hasDiscount;
+    private String discountType;
+    private Double discountValue;
+    private String discountName;
+    
+    // Rating fields
+    private Double averageRating;
+    private Integer reviewCount;
 }

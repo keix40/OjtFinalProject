@@ -58,6 +58,12 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
   productDetails: Map<number, ProductDTO> = new Map();
   productDiscountAmount: number = 0;
   
+  // Coupon properties for cart page integration
+  promoSuccess: boolean = false;
+  couponDiscount: number = 0;
+  couponDiscountType: string = '';
+  appliedCouponName: string = '';
+  
   private subscriptions: Subscription[] = [];
 
   savedCards: Card[] = [];
@@ -99,52 +105,19 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
   this.deliveryServiceId = nav.deliveryServiceId;
   this.discountId = nav.discountId;
   this.discount = nav.discount;
-  this.discountAmount = nav.discountAmount || 0;
-  this.deliveryFee = nav.deliveryFee || 0;
-  this.paymentMethod = 'card';
-  this.orderPreview = nav.orderPreview || null;
-  this.isFirstTimeBuyerDiscount = !!(this.orderPreview && this.orderPreview.discountReason && this.orderPreview.discountReason.toLowerCase().includes('first time buyer'));
-  if (this.orderPreview && this.orderPreview.discountAmount) {
-    this.discountAmount = this.orderPreview.discountAmount;
-  } else {
-    this.discountAmount = nav.discountAmount || 0;
-  }
-  this.productDiscountAmount = nav.productDiscountAmount || 0;
+  this.discountAmount = nav.discountAmount;
+  this.deliveryFee = nav.deliveryFee;
+  this.productDiscountAmount = nav.productDiscountAmount;
+  this.orderPreview = nav.orderPreview;
 
-  // Debug logging
-  console.log('Payment Component - Received data from checkout:', {
-    userId: this.userId,
-    addressId: this.addressId,
-    deliveryServiceId: this.deliveryServiceId,
-    discountId: this.discountId,
-    discount: this.discount,
-    discountAmount: this.discountAmount,
-    deliveryFee: this.deliveryFee
-  });
+  // Load coupon from localStorage (applied in cart page)
+  this.loadCouponFromStorage();
 
-  this.subscriptions.push(
-    this.cartService.getCartItems().subscribe(items => {
-      this.cartItems = items;
-      this.loadProductDetails();
-    })
-  );
-
-  if (this.userId != null) {
-    this.loadSavedCards();
-  } else {
-    this.useNewCard = true;
-  }
-
-  this.subscriptions.push(
-    this.cartService.getCartItems().subscribe(items => {
-      setTimeout(() => {
-        this.cartItems = items;
-      });
-    })
-  );
-
+  this.cartItems = nav.cartItems;
   this.loadActiveDiscounts();
-}
+  this.loadProductDetails();
+  this.loadSavedCards();
+  }
 
   ngAfterViewInit() {
     // Ensure cartItems update triggers change detection
@@ -203,7 +176,8 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
             discount_amount: discount.discount_amount,
             discountType: discount.discountType,
             targetType: rule.targetType,
-            eventName: discount.name
+            eventName: discount.name,
+            minimumSpend: discount.minimumSpend
           };
         }
       }
@@ -231,7 +205,23 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
 
   getProductDiscount(productId: number): any {
     if (this.isFirstTimeBuyerDiscount) return null;
-    return this.productDiscounts.get(productId);
+    
+    const discount = this.productDiscounts.get(productId);
+    if (!discount) return null;
+    
+    // Get the product to check its price
+    const product = this.productDetails.get(productId);
+    if (!product) return null;
+    
+    // Check minimum spend requirement
+    if (discount.minimumSpend && discount.minimumSpend > 0) {
+      if (product.price < discount.minimumSpend) {
+        // Product price is lower than minimum spend, don't show discount
+        return null;
+      }
+    }
+    
+    return discount;
   }
 
   getFinalDiscountedPrice(product: ProductDTO): number {
@@ -328,6 +318,11 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnDestroy() {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+    // Clear coupon if user navigates away without completing payment
+    if (this.promoSuccess) {
+      console.log('Clearing coupon on component destroy - payment not completed');
+      this.clearAppliedCoupon();
+    }
   }
 
     getSubtotal() {
@@ -456,6 +451,8 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
           console.error('Failed to save card:', err);
           this.isSubmitting = false;
           alert('Failed to save card.');
+          // Don't clear coupon on card save error - let user retry
+          console.log('Card save failed - keeping coupon for retry');
         }
       });
     } else {
@@ -489,6 +486,12 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
     // Debug: log the payload to ensure all numbers are correct
     console.log('Submitting userOrder payload:', JSON.stringify(userOrder));
 
+    // Log coupon usage tracking information
+   if (this.discountId) {
+  userOrder.couponName = this.appliedCouponName;
+  userOrder.couponDiscount = this.couponDiscount;
+}
+
     this.orderService.createOrder(userOrder).subscribe({
       next: (response: any) => {
         this.isSubmitting = false;
@@ -515,6 +518,7 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
           discountAmount: this.getTotalDiscount(),
           orderNumber: orderData.orderCode || orderData.orderId || 'ORDER-' + Date.now(),
           deliveryFee: this.deliveryFee,
+          
           cardInfo: this.useNewCard
             ? {
                 ...this.cardForm.value,
@@ -524,6 +528,8 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
           discount: this.discount
         };
         this.openConfirmationModal(orderDetails);
+        this.clearAppliedCoupon(); // Clear applied coupon after successful order placement
+        this.cartService.clearCart(); // Clear cart after successful order placement
       },
       error: (error) => {
         this.isSubmitting = false;
@@ -532,6 +538,8 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
           msg += '\n' + error.error;
         }
         Swal.fire('Order Error', msg);
+        // Don't clear coupon on error - let user retry with same coupon
+        console.log('Payment failed - keeping coupon for retry');
       }
     });
   }
@@ -628,5 +636,41 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
     const visibleSection = cleaned.slice(-4);
     const fullMasked = maskedSection + visibleSection;
     return fullMasked.match(/.{1,4}/g)?.join(' ') ?? fullMasked;
+  }
+
+  loadCouponFromStorage() {
+    const savedCoupon = localStorage.getItem('appliedCoupon');
+    if (savedCoupon) {
+      try {
+        const couponData = JSON.parse(savedCoupon);
+        this.promoSuccess = couponData.promoSuccess || false;
+        this.couponDiscount = couponData.couponDiscount || 0;
+        this.couponDiscountType = couponData.couponDiscountType || '';
+        this.appliedCouponName = couponData.appliedCouponName || '';
+        this.discountId  = couponData.discountId ?? null ;
+      } catch (error) {
+        console.error('Error loading coupon from localStorage:', error);
+        localStorage.removeItem('appliedCoupon');
+      }
+    }
+  }
+
+  // Get coupon name for display
+  getCouponName(): string {
+    if (!this.promoSuccess || !this.couponDiscount) return '';
+    return this.appliedCouponName || '';
+  }
+
+  // Clear applied coupon after successful order placement
+  private clearAppliedCoupon(): void {
+    if (this.promoSuccess) {
+      console.log('Clearing applied coupon from localStorage after successful payment');
+      localStorage.removeItem('appliedCoupon');
+      this.promoSuccess = false;
+      this.couponDiscount = 0;
+      this.couponDiscountType = '';
+      this.appliedCouponName = '';
+      console.log('Coupon cleared successfully');
+    }
   }
 }

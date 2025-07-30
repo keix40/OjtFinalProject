@@ -14,6 +14,7 @@ public interface DiscountService {
     ResponseEntity<?> checkDuplicateDiscount(DiscountRequestDTO dto);
     ResponseEntity<?> getActiveDiscounts();
     List<DiscountDTO> getAllDiscounts();
+    List<DiscountDTO> getActiveAliveDiscounts(); // New method for active and alive discounts
     ResponseEntity<?> updateDiscount(Long id, DiscountRequestDTO dto);
     ResponseEntity<?> getDiscountsByProduct(Long productId);
     ResponseEntity<?> getDiscountById(Long id);

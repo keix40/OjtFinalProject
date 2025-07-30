@@ -1,10 +1,15 @@
 package com.Ojt.Ecommerce.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "policies")
@@ -19,6 +24,9 @@ public class Policy {
 
     @Column(columnDefinition = "TEXT")
     private String content;
+
+    @Column(columnDefinition = "INTEGER DEFAULT 1")
+    private Integer status; // 1=Active, 0=Inactive, 2=Deleted
 
     private LocalDateTime lastUpdated;
 }

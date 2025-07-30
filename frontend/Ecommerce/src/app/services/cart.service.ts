@@ -46,6 +46,10 @@ export class CartService {
     return this.cartItems.asObservable();
   }
 
+  getCartItemsSync(): CartItem[] {
+    return this.cartItems.value;
+  }
+
   getCartTotal(): Observable<number> {
     return this.cartTotal.asObservable();
   }

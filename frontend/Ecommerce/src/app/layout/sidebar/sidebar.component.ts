@@ -7,6 +7,7 @@ import { AdminUserService } from '../../services/admin-user.service';
 import { PermissionConstants } from '../../constants/permission.constants';
 import { DashboardService } from '../../services/dashboard.service';
 import { UserService } from '../../services/user.service';
+import { AdminInboxService } from '../../services/admin-inbox.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -32,7 +33,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   suspiciousLogins: number = 0;
   recentSecurityEvents: number = 0;
   sidebarVisible: boolean = window.innerWidth >= 640; // Show sidebar by default on desktop
-  sidebarCollapsed: boolean = false;
+  sidebarCollapsed: boolean = true; // Start with collapsed sidebar
   currentMenu: string | null = null;
   currentSubmenu: string | null = null; // Track which submenu is active
 
@@ -45,6 +46,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   userEmail: string | null = null;
   userStatus: string = 'Online';
   userData: any = null; // Store complete user data
+  unreadMessages: number = 0; // For inbox notification count
 
   // Fetch these values from your backend
 
@@ -69,6 +71,14 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     }, 120); // 120ms delay for smoothness
   }
 
+  onProfileMouseEnter() {
+    this.profileDropdownOpen = true;
+  }
+
+  onProfileMouseLeave() {
+    this.profileDropdownOpen = false;
+  }
+
   constructor(
     private router: Router,
     private authService: AuthService,
@@ -76,7 +86,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     private imageService: ImageService,
     private adminUserService: AdminUserService,
     private dashboardService: DashboardService,
-    private userService: UserService
+    private userService: UserService,
+    private adminInboxService: AdminInboxService
   ) { }
 
   toggleSidebar() {
@@ -161,8 +172,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   toggleProfileDropdown(event: MouseEvent) {
     event.stopPropagation();
     this.profileDropdownOpen = !this.profileDropdownOpen;
-    // Reinitialize icons after dropdown toggle
-    setTimeout(() => this.initializeIcons(), 100);
+    // Reinitialize icons immediately after dropdown toggle for real-time icon update
+    this.forceReinitializeIcons();
   }
 
   private loadUserInfo() {
@@ -270,6 +281,25 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     }
   }
 
+  navigateToAdminProfile() {
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.router.navigate([`/admin/profile/${userId}`]);
+      this.profileDropdownOpen = false;
+    }
+  }
+
+  navigateToSettings() {
+    // Placeholder for settings navigation
+    console.log('Navigate to settings');
+    // this.router.navigate(['/settings']);
+  }
+
+  openAdminInbox() {
+    this.profileDropdownOpen = false;
+    this.adminInboxService.openModal();
+  }
+
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
@@ -311,6 +341,12 @@ export class SidebarComponent implements OnInit, AfterViewInit {
           { icon: 'list', link: '/discount-list' },
           { icon: 'plus', link: 'discount-add' },
           { icon: 'ticket', link: '/discount-coupon' },
+        ];
+      case 'event':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'circle-check', link: '/admin/event' },
+          { icon: 'list-check', link: '/admin/eventlist' },
         ];
       case 'delivery':
         return [

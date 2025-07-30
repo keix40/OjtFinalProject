@@ -1,7 +1,11 @@
 package com.Ojt.Ecommerce.controller;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +21,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.ORDERS_CREATE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.ORDERS_UPDATE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.ORDERS_VIEW;
 import com.Ojt.Ecommerce.dto.DiscountDTO;
 import com.Ojt.Ecommerce.dto.UserOrderDTO;
 import com.Ojt.Ecommerce.dto.UserOrderListDTO;
@@ -390,9 +400,20 @@ public class OrderController {
     @RequiresPermission(value = ORDERS_UPDATE, level = "basic", description = "Update order status")
     public ResponseEntity<String> updateOrderStatus(
             @PathVariable Long orderId,
-            @RequestBody Map<String, String> request) {
-        String status = request.get("status");
-        boolean updated = service.updateOrderStatus(orderId, status);
+            @RequestBody Map<String, Object> request) {
+        String status = (String) request.get("status");
+        Long refundId = null;
+        if (request.containsKey("refundId")) {
+            Object refundIdObj = request.get("refundId");
+            if (refundIdObj instanceof Number) {
+                refundId = ((Number) refundIdObj).longValue();
+            } else if (refundIdObj instanceof String) {
+                try {
+                    refundId = Long.parseLong((String) refundIdObj);
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        boolean updated = service.updateOrderStatus(orderId, status, refundId);
 
         if (updated) {
             return ResponseEntity.ok("Order status updated successfully.");

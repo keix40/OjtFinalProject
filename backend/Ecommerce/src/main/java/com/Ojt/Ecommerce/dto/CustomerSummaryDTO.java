@@ -21,7 +21,7 @@ public class CustomerSummaryDTO {
     private Double totalSpent;
     private String profileImage;
     private String tier;
-    
+
     // Spending trend data
     private String spendingTrend;
     private Double spendingChange;

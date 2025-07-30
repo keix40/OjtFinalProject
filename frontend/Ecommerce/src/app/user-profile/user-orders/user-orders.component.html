@@ -127,7 +127,19 @@
                           'bg-red-500': order.status === 'CANCELLED' || order.status === 'RETURNED',
                           'bg-purple-500': order.status === 'SHIPPED'
                         }"></div>
-                      {{ order.status }}
+                      <ng-container *ngIf="hasMoneyRefund(order) && !isReplacementRefund(order)">
+                        <span class="text-green-800 font-bold">
+                          {{ formatRefundType(getMoneyRefund(order)?.refundType) }}
+                        </span>
+                      </ng-container>
+                      <ng-container *ngIf="isReplacementRefund(order)">
+                        <span class="text-orange-800 font-bold">
+                          {{ formatRefundType(getReplacement(order)?.refundType) }} : 
+                        </span>
+                      </ng-container>
+                      <ng-container *ngIf="!hasMoneyRefund(order)">
+                        {{ order.status }}
+                      </ng-container>
                     </div>
                   </div>
                   
@@ -236,6 +248,24 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Refund Info for Return Requests -->
+                <div *ngIf="order.returnRequests && order.returnRequests.length > 0" class="mt-4">
+                  <div *ngFor="let ret of order.returnRequests">
+                    <div *ngIf="ret.refundId && ret.refundType === 'MONEY_REFUND'" class="mt-2 p-3 rounded-lg border border-green-200 bg-green-50">
+                      <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                        <span class="font-semibold text-green-700">Refund Status:</span>
+                        <span class="text-green-800">{{ ret.refundStatus }}</span>
+                        <span class="ml-4 font-semibold text-green-700">Type:</span>
+                        <span class="text-green-800">{{ ret.refundType }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>

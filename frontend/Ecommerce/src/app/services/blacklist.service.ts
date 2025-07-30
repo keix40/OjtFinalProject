@@ -30,6 +30,12 @@ export interface BlacklistStats {
   estimatedSavings: number;
   pendingAppeals: number;
   avgAppealTime: number;
+  trends?: {
+    fraudTrend: number;
+    fraudTrendDirection: 'up' | 'down' | 'stable';
+    entriesTrend: number;
+    entriesTrendDirection: 'up' | 'down' | 'stable';
+  };
 }
 
 export interface BlacklistFilters {
@@ -291,12 +297,17 @@ getEntries(filters: BlacklistFilters): Observable<{
 
   // Bulk lift bans
   bulkLiftBan(ids: string[], reason?: string): Observable<void> {
+    console.log('[BlacklistService] bulkLiftBan called with IDs:', ids, 'reason:', reason);
     return this.http.post<void>(
       `${this.apiUrl}/entries/bulk-lift`,
       { ids, reason },
       { withCredentials: true }
     ).pipe(
-      catchError(this.handleError)
+      tap(() => console.log('[BlacklistService] bulkLiftBan request sent successfully')),
+      catchError(error => {
+        console.error('[BlacklistService] bulkLiftBan error:', error);
+        return this.handleError(error);
+      })
     );
   }
 
@@ -366,9 +377,12 @@ getEntries(filters: BlacklistFilters): Observable<{
 
   // Extend ban duration
   extendBan(id: string, newExpiryDate: Date): Observable<BlacklistEntry> {
+    // Format date as LocalDateTime string for backend
+    const formattedDate = newExpiryDate.toISOString().slice(0, 19); // Remove milliseconds and timezone
+    
     return this.http.post<BlacklistEntry>(
       `${this.apiUrl}/entries/${id}/extend`,
-      { expiryDate: newExpiryDate },
+      { expiryDate: formattedDate },
       { withCredentials: true }
     ).pipe(
       catchError(this.handleError)
@@ -377,20 +391,29 @@ getEntries(filters: BlacklistFilters): Observable<{
 
   // Bulk extend bans
   bulkExtendBan(ids: string[], newExpiryDate: Date): Observable<void> {
+    // Format date as LocalDateTime string for backend
+    const formattedDate = newExpiryDate.toISOString().slice(0, 19); // Remove milliseconds and timezone
+    console.log('[BlacklistService] bulkExtendBan called with IDs:', ids, 'formatted date:', formattedDate);
+    
     return this.http.post<void>(
       `${this.apiUrl}/entries/bulk-extend`,
       {
         ids,
-        expiryDate: newExpiryDate
+        expiryDate: formattedDate
       },
       { withCredentials: true }
     ).pipe(
-      catchError(this.handleError)
+      tap(() => console.log('[BlacklistService] bulkExtendBan request sent successfully')),
+      catchError(error => {
+        console.error('[BlacklistService] bulkExtendBan error:', error);
+        return this.handleError(error);
+      })
     );
   }
 
   // Update category for multiple entries
   bulkUpdateCategory(ids: string[], category: string): Observable<void> {
+    console.log('[BlacklistService] bulkUpdateCategory called with IDs:', ids, 'category:', category);
     return this.http.post<void>(
       `${this.apiUrl}/entries/bulk-category`,
       {
@@ -399,7 +422,11 @@ getEntries(filters: BlacklistFilters): Observable<{
       },
       { withCredentials: true }
     ).pipe(
-      catchError(this.handleError)
+      tap(() => console.log('[BlacklistService] bulkUpdateCategory request sent successfully')),
+      catchError(error => {
+        console.error('[BlacklistService] bulkUpdateCategory error:', error);
+        return this.handleError(error);
+      })
     );
   }
 

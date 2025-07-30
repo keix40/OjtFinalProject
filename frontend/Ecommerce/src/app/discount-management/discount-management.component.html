@@ -1,8 +1,8 @@
 <div class="p-4 bg-slate-50 min-h-screen font-poppins">
   <!-- Header Section -->
   <div class="text-center mb-8">
-    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
-      <i data-lucide="percent" class="w-8 h-8 text-white"></i>
+    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
+      <i data-lucide="percent" class="w-8 h-8 text-indigo-500"></i>
     </div>
     <h1 class="text-3xl font-bold text-gray-900 mb-2">Discount Management</h1>
     <p class="text-gray-600 text-lg">Manage and track all discount codes, status, and validity</p>
@@ -91,7 +91,7 @@
           </td>
           <td class="px-4 py-3">
             <button (click)="openDetailsModal(discount, discountDetailsModal)" class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1" title="View Details">
-              <i class="fas fa-eye"></i> View
+              <i data-lucide="eye" class="w-4 h-4"></i> View
             </button>
           </td>
         </tr>
@@ -144,11 +144,12 @@
 
 <!-- Details Modal as ng-template -->
 <ng-template #discountDetailsModal let-modal>
-  <div class="fixed inset-0 z-40 flex items-center justify-center">
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
     <!-- Modal Backdrop -->
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
     <!-- Modal Content -->
-    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="modal.dismiss()">&times;</button>
       <!-- Modal Header -->
       <div class="flex items-center justify-between mb-4 md:mb-6">
         <div class="flex items-center gap-4">
@@ -168,7 +169,6 @@
           <button *ngIf="!isDetailsEditMode" (click)="startDetailsEdit()" class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition" title="Edit">
             <i class="fas fa-edit text-lg"></i>
             </button>
-          <button (click)="modal.dismiss()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none ml-2">&times;</button>
         </div>
       </div>
       <!-- Modal Body -->
@@ -177,12 +177,12 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-              <input type="text" formControlName="name" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.border-red-500]="detailsForm.get('name')?.invalid && detailsForm.get('name')?.touched">
+              <input type="text" formControlName="name" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.border-red-500]="detailsForm.get('name')?.invalid && detailsForm.get('name')?.touched" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" >
               <div *ngIf="detailsForm.get('name')?.invalid && detailsForm.get('name')?.touched" class="text-xs text-red-500 mt-1">Name is required</div>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Code</label>
-              <input type="text" formControlName="code" [readonly]="!isDetailsEditMode || detailsDiscount.autoApply" [disabled]="!!detailsDiscount.autoApply || !isDetailsEditMode" [placeholder]="!isDetailsEditMode ? 'N/A' : 'Enter code'" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.border-red-500]="detailsForm.get('code')?.invalid && detailsForm.get('code')?.touched">
+              <input type="text" formControlName="code" [readonly]="!isDetailsEditMode || detailsDiscount.autoApply" [disabled]="!!detailsDiscount.autoApply || !isDetailsEditMode" [placeholder]="!isDetailsEditMode ? 'N/A' : 'Enter code'" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.border-red-500]="detailsForm.get('code')?.invalid && detailsForm.get('code')?.touched" [class.bg-gray-50]="!isDetailsEditMode || detailsDiscount.autoApply" [class.text-gray-600]="!isDetailsEditMode || detailsDiscount.autoApply" [class.opacity-75]="!isDetailsEditMode || detailsDiscount.autoApply">
               <div *ngIf="detailsDiscount.autoApply === false && detailsForm.get('code')?.errors?.['required'] && detailsForm.get('code')?.touched" class="text-xs text-red-500 mt-1">Code is required</div>
               <div *ngIf="detailsDiscount.autoApply === false && detailsForm.get('code')?.errors?.['codeExists'] && !detailsForm.get('code')?.errors?.['required'] && detailsForm.get('code')?.touched" class="text-xs text-red-500 mt-1">This code already exists. Please choose another.</div>
             </div>
@@ -190,29 +190,29 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
-              <select formControlName="discountType" [disabled]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+              <select formControlName="discountType" [disabled]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
                 <option value="PERCENTAGE">Percentage</option>
                 <option value="FIXED">Fixed Amount</option>
               </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Discount Value</label>
-              <input type="number" formControlName="discountValue" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+              <input type="number" formControlName="discountValue" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
             </div>
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
-              <input type="datetime-local" formControlName="startDate" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+              <input type="datetime-local" formControlName="startDate" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
-              <input type="datetime-local" formControlName="endDate" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+              <input type="datetime-local" formControlName="endDate" [readonly]="!isDetailsEditMode" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode">
             </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea formControlName="description" [readonly]="!isDetailsEditMode" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"></textarea>
+            <textarea formControlName="description" [readonly]="!isDetailsEditMode" rows="3" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" [class.bg-gray-50]="!isDetailsEditMode" [class.text-gray-600]="!isDetailsEditMode" [class.opacity-75]="!isDetailsEditMode"></textarea>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -238,8 +238,8 @@
                     <img *ngIf="product.productImages && product.productImages.length > 0" [src]="getProductImageUrl(product)" alt="{{ product.productName }}" class="w-16 h-16 object-cover rounded-lg border" />
                     <span *ngIf="!product.productImages || product.productImages.length === 0" class="text-gray-400 italic absolute inset-0 flex items-center justify-center">No image</span>
                     <ng-container *ngIf="i === 4 && discountProducts.length > 5">
-                      <div class="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center rounded-lg">
-                        <span class="text-white font-bold text-lg">+{{ discountProducts.length - 4 }}</span>
+                      <div class="absolute inset-0 bg-white/90 flex items-center justify-center rounded-lg border border-gray-200">
+                        <span class="text-gray-700 font-bold text-lg">+{{ discountProducts.length - 4 }}</span>
                       </div>
                     </ng-container>
                   </div>
@@ -250,6 +250,41 @@
             <div class="flex justify-center mt-2">
               <button *ngIf="discountProducts.length > 0" (click)="openProductDetailsModal()" class="px-4 py-1.5 rounded bg-blue-100 text-blue-700 hover:bg-blue-200 text-xs font-semibold transition">
                 Show More
+              </button>
+            </div>
+          </div>
+
+          <!-- User List Section -->
+          <div *ngIf="detailsDiscount && discountUsers && discountUsers.length > 0" class="mt-6">
+            <label class="block text-sm font-medium text-gray-700 mb-2">User List:</label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-2">
+              <ng-container *ngFor="let user of discountUsers.slice(0, 8); let i = index">
+                <div class="flex flex-col items-center justify-center p-3 rounded-lg shadow-sm border bg-white" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'">
+                  <div class="relative w-16 h-16 mb-2">
+                    <ng-container *ngIf="user.profileImage && user.profileImage !== '/upload/defaultProfile.png'; else showDefaultUserIcon">
+                      <img [src]="getUserProfileImage(user)" [alt]="user.name" class="w-16 h-16 object-cover rounded-full border" />
+                    </ng-container>
+                    <ng-template #showDefaultUserIcon>
+                      <div class="w-16 h-16 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200">
+                        <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                      </div>
+                    </ng-template>
+                    <ng-container *ngIf="i === 7 && discountUsers.length > 8">
+                      <div class="absolute inset-0 bg-white/90 flex items-center justify-center rounded-full border border-gray-200">
+                        <span class="text-gray-700 font-bold text-sm">+{{ discountUsers.length - 7 }}</span>
+                      </div>
+                    </ng-container>
+                  </div>
+                  <div class="text-xs font-semibold text-gray-800 text-center truncate max-w-[80px]" title="{{ user.name }}">{{ user.name }}</div>
+                  <div class="text-xs text-gray-500 text-center truncate max-w-[80px]" title="{{ user.email }}">{{ user.email }}</div>
+                </div>
+              </ng-container>
+            </div>
+            <div class="flex justify-center mt-2">
+              <button *ngIf="discountUsers.length > 0" (click)="openUserDetailsModal()" class="px-4 py-1.5 rounded bg-green-100 text-green-700 hover:bg-green-200 text-xs font-semibold transition">
+                Show All Users
               </button>
             </div>
           </div>
@@ -295,8 +330,8 @@
 </div>
 
 <ng-template #productDetailsModal let-modal>
-  <div class="fixed inset-0 z-40 flex items-center justify-center">
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
     <div class="relative bg-white rounded-xl shadow-lg w-full max-w-4xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold text-gray-900">All Discounted Products</h2>
@@ -323,10 +358,67 @@
               </td>
               <td class="px-3 py-2 font-bold text-gray-900 truncate max-w-xs" title="{{ product.productName }}">{{ product.productName }}</td>
               <td class="px-3 py-2 text-gray-700 truncate max-w-[120px]" title="{{ product.productCode }}">{{ product.productCode }}</td>
-              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0]?.brandName || '-' }}</td>
-              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0]?.cateName || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].brandName || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].cateName || '-' }}</td>
               <td class="px-3 py-2 text-blue-700 font-semibold text-right">{{ product.price | number:'1.0-0' }}</td>
               <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</ng-template>
+
+<ng-template #userDetailsModal let-modal>
+  <div class="fixed inset-0 z-50 flex items-center justify-center">
+    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-4xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-bold text-gray-900">All Discounted Users</h2>
+        <button (click)="modal.dismiss()" class="text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none">&times;</button>
+      </div>
+      <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm" style="min-width: 600px;">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Profile</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
+              <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tier</th>
+              <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of discountUsers; let i = index" [ngClass]="i % 2 === 0 ? 'bg-white' : 'bg-slate-50'" class="hover:bg-green-50 transition group border-b last:border-b-0 text-sm">
+              <td class="px-3 py-2 text-center align-middle">
+                <ng-container *ngIf="user.profileImage && user.profileImage !== '/upload/defaultProfile.png'; else showDefaultUserIcon">
+                  <img [src]="getUserProfileImage(user)" [alt]="user.name" class="w-14 h-14 object-cover rounded-full shadow border mx-auto" />
+                </ng-container>
+                <ng-template #showDefaultUserIcon>
+                  <div class="w-14 h-14 rounded-full flex items-center justify-center bg-gray-100 border border-gray-200 mx-auto">
+                    <svg class="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  </div>
+                </ng-template>
+              </td>
+              <td class="px-3 py-2 font-bold text-gray-900 truncate max-w-xs" title="{{ user.name }}">{{ user.name }}</td>
+              <td class="px-3 py-2 text-gray-700 truncate max-w-[200px]" title="{{ user.email }}">{{ user.email }}</td>
+              <td class="px-3 py-2 text-gray-700">{{ user.phoneNumber || '-' }}</td>
+              <td class="px-3 py-2 text-gray-700">
+                <span *ngIf="user.tier" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  {{ user.tier }}
+                </span>
+                <span *ngIf="!user.tier" class="text-gray-400">-</span>
+              </td>
+              <td class="px-3 py-2 text-center">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium" 
+                      [ngClass]="user.status && user.status.toLowerCase() === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                  {{ user.status | titlecase }}
+                </span>
+              </td>
             </tr>
           </tbody>
         </table>

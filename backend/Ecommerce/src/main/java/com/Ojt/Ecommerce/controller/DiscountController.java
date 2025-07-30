@@ -1,5 +1,18 @@
 package com.Ojt.Ecommerce.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.dto.DiscountDTO;
 import com.Ojt.Ecommerce.dto.DiscountRequestDTO;
@@ -8,6 +21,8 @@ import com.Ojt.Ecommerce.service.DiscountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 import java.util.Map;
@@ -51,7 +66,9 @@ public class DiscountController {
         dto.setCategoryIds((String) request.get("categoryIds"));
         dto.setBrandCategoryIds((String) request.get("brandCategoryIds"));
         dto.setUserIds((String) request.get("userIds"));
-        dto.setVipTierId((String)request.get("vipTierId"));
+        dto.setVipTierIds((String) request.get("vipTierIds"));
+
+
         // You can add more fields as needed
 
         // Parse conflictResolutions
@@ -79,6 +96,11 @@ public class DiscountController {
         return discountService.getAllDiscounts();
     }
 
+    @GetMapping("/active-alive")
+    public List<DiscountDTO> getActiveAliveDiscounts(){
+        return discountService.getActiveAliveDiscounts();
+    }
+
     @GetMapping("/active")
     public ResponseEntity<?> getActiveDiscounts(){
         return discountService.getActiveDiscounts();
@@ -92,6 +114,16 @@ public class DiscountController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getDiscountById(@PathVariable Long id) {
         return discountService.getDiscountById(id);
+    }
+
+    @GetMapping("/min-spend")
+    public ResponseEntity<?> getMinimumSpend(@RequestParam String couponCode) {
+        var discount = discountRepository.findByCode(couponCode).orElse(null);
+        if (discount == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid promo code");
+        }
+        Double minSpend = discount.getMinimumSpend();
+        return ResponseEntity.ok(Map.of("minSpend", minSpend));
     }
 
     @LogActivity(actionType = "DELETE", entityType = "DISCOUNT", description = "Deleted discount", severityLevel = "HIGH", entityIdParam = "id")
