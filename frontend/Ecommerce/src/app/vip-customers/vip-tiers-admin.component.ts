@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
   template: `
   <div class="min-h-screen bg-gray-50 p-6">
     <div class="max-w-6xl mx-auto">
-      
+
       <!-- Header Section -->
       <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
@@ -24,7 +24,7 @@ import Swal from 'sweetalert2';
 
       <!-- Main Form Card -->
       <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-        
+
         <!-- Form Header -->
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
           <div class="flex items-center space-x-2">
@@ -40,13 +40,13 @@ import Swal from 'sweetalert2';
         <!-- Form Content -->
         <div class="p-6">
           <form [formGroup]="tierForm" (ngSubmit)="onSubmit()" class="space-y-6">
-            
+
             <!-- Two Column Layout -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               <!-- Left Column -->
               <div class="space-y-6">
-                
+
                 <!-- Tier Name -->
                 <div>
                   <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
@@ -57,10 +57,10 @@ import Swal from 'sweetalert2';
                       <span>Tier Name</span>
                     </div>
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="name"
-                    formControlName="name" 
+                    formControlName="name"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Enter tier name (e.g., Bronze, Silver, Gold)"
                     [class.border-red-300]="tierForm.get('name')?.invalid && tierForm.get('name')?.touched"
@@ -80,10 +80,10 @@ import Swal from 'sweetalert2';
                       <span>Minimum Points Required</span>
                     </div>
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     id="minPoints"
-                    formControlName="minPoints" 
+                    formControlName="minPoints"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="0"
                     [class.border-red-300]="tierForm.get('minPoints')?.invalid && tierForm.get('minPoints')?.touched"
@@ -103,10 +103,10 @@ import Swal from 'sweetalert2';
                       <span>Display Order</span>
                     </div>
                   </label>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     id="order"
-                    formControlName="order" 
+                    formControlName="order"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="0"
                   />
@@ -116,7 +116,7 @@ import Swal from 'sweetalert2';
 
               <!-- Right Column -->
               <div class="space-y-6">
-                
+
                 <!-- Icon -->
                 <div>
                   <label for="icon" class="block text-sm font-medium text-gray-700 mb-2">
@@ -127,10 +127,10 @@ import Swal from 'sweetalert2';
                       <span>Icon (Lucide Name)</span>
                     </div>
                   </label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     id="icon"
-                    formControlName="icon" 
+                    formControlName="icon"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="crown, star, trophy, etc."
                   />
@@ -146,7 +146,7 @@ import Swal from 'sweetalert2';
                       <span>Color Class</span>
                     </div>
                   </label>
-                  <select 
+                  <select
                     id="color"
                     formControlName="color"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white"
@@ -173,9 +173,9 @@ import Swal from 'sweetalert2';
                       <span>Description</span>
                     </div>
                   </label>
-                  <textarea 
+                  <textarea
                     id="description"
-                    formControlName="description" 
+                    formControlName="description"
                     rows="3"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
                     placeholder="Enter tier description..."
@@ -188,14 +188,14 @@ import Swal from 'sweetalert2';
 
             <!-- Form Actions -->
             <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
-              <button 
+              <button
                 *ngIf="editId"
                 type="button"
                 (click)="resetForm()"
                 class="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-medium">
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 [disabled]="tierForm.invalid || loading"
                 class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors font-medium flex items-center space-x-2">
@@ -303,7 +303,7 @@ import Swal from 'sweetalert2';
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <div class="flex items-center space-x-2">
-                    <button 
+                    <button
                       (click)="editTier(tier)"
                       class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                       <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -311,7 +311,7 @@ import Swal from 'sweetalert2';
                       </svg>
                       Edit
                     </button>
-                    <button 
+                    <button
                       (click)="deleteTier(tier.id)"
                       class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
                       <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -324,8 +324,6 @@ import Swal from 'sweetalert2';
           </tr>
         </tbody>
       </table>
-        </div>
-      </div>
     </div>
   </div>
   `,
@@ -355,13 +353,6 @@ export class VipTiersAdminComponent implements OnInit {
   }
 
   loadTiers() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    this.vipTierService.getAllVipTiers().subscribe((tiers: VipTier[]) => {
-      this.tiers = tiers.sort((a: VipTier, b: VipTier) => (a.order ?? 0) - (b.order ?? 0));
-=======
-=======
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
     this.loading = true;
     this.vipTierService.getAll().subscribe({
       next: (tiers) => {
@@ -378,13 +369,9 @@ export class VipTiersAdminComponent implements OnInit {
           confirmButtonText: 'OK'
         });
       }
-<<<<<<< HEAD
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
-=======
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
     });
   }
-  
+
 
   onSubmit() {
     if (this.tierForm.invalid) {
@@ -394,7 +381,7 @@ export class VipTiersAdminComponent implements OnInit {
 
     this.loading = true;
     const tier: VipTier = this.tierForm.value;
-    
+
     if (this.editId) {
       this.vipTierService.update(this.editId, tier).subscribe({
         next: () => {
@@ -500,4 +487,4 @@ export class VipTiersAdminComponent implements OnInit {
       control?.markAsTouched();
     });
   }
-} 
+}

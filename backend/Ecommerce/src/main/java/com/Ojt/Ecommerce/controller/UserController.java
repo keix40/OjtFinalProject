@@ -54,7 +54,6 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final AddressService addressService;
     private final RoleRepository roleRepository;
-    private final EmailService emailService;
     @Autowired
     private UserActivityService userActivityService;
 
@@ -107,14 +106,7 @@ public class UserController {
     @PutMapping("/{id}")
     @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
     @RequiresPermission(value = USERS_UPDATE, level = "intermediate", description = "Update user information")
-<<<<<<< HEAD
-    public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Long id, @RequestBody RegisterRequest dto, @RequestHeader("Authorization") String token) {
-=======
     public ResponseEntity<Map<String, Object>>  updateUser(@PathVariable Long id ,@RequestBody RegisterRequest dto,@RequestHeader("Authorization") String token){
-<<<<<<< HEAD
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
-=======
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
         RegisterRequest updatedUser = userService.updateUser(id, dto);
 
         User user = userRepository.findById(id).orElseThrow();
@@ -124,16 +116,7 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         response.put("user", updatedUser);
         response.put("token", newToken);
-<<<<<<< HEAD
-<<<<<<< HEAD
-        return ResponseEntity.ok(response);
-
-=======
         return  ResponseEntity.ok(response);
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
-=======
-        return  ResponseEntity.ok(response);
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
     }
 
     @PutMapping("/{userId}/assign-role")
@@ -335,12 +318,6 @@ public class UserController {
         sessionService.endSession(sessionId);
         return ResponseEntity.ok().build();
     }
-<<<<<<< HEAD
-<<<<<<< HEAD
-}
-=======
-=======
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
 
 
 
@@ -351,7 +328,7 @@ public class UserController {
         try {
             String userName = user.getName() != null ? user.getName() : user.getEmail().split("@")[0];
             String verificationStatus = user.isVerified() ? "VERIFIED" : "NOT VERIFIED";
-            
+
             String emailBody = String.format(
                 "Dear %s,\n\n" +
                 "Welcome to Britium Gallary! Your account has been successfully created by an administrator.\n\n" +
@@ -377,19 +354,16 @@ public class UserController {
                 "Britium Gallary",
                 userName, user.getEmail(), password, roleName, verificationStatus
             );
-            
+
             emailService.sendEmail(user.getEmail(), "Welcome to Our Platform - Account Created", emailBody);
-            
+
         } catch (Exception e) {
             System.err.println("Failed to send welcome email to " + user.getEmail() + ": " + e.getMessage());
             // Don't throw exception to avoid breaking user creation
         }
     }
 
-<<<<<<< HEAD
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
-=======
->>>>>>> ba8eae7d9201afca0b741396e13d6c85535281ad
     // --- End customer management actions ---
 
 
+}
