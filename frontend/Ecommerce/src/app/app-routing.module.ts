@@ -211,8 +211,8 @@ const routes: Routes = [
   { path: 'product/:id', component: UserProductDetailComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Product Detail' } },
   { path: 'review', component: ReviewComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Review', role: 'customer' } },
   { path: 'return-request', component: ReturnRequestComponent, canActivate: [AuthGuard, BlacklistGuard] },
-  { path: 'usercategorylist', component: UserCategoryListComponent, canActivate: [AuthGuard, BlacklistGuard], data: { role: 'customer' } },
-  { path: 'userbrandlist', component: UserBrandListComponent, canActivate: [AuthGuard, BlacklistGuard], data: { role: 'customer' } },
+  { path: 'usercategorylist', component: UserCategoryListComponent, canActivate: [AuthGuard, BlacklistGuard],  },
+  { path: 'userbrandlist', component: UserBrandListComponent, canActivate: [AuthGuard, BlacklistGuard],  },
   { path: 'ordertracking/:orderId', component: OrderTrackingComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Order Tracking', role: 'customer' } },
   { path: 'profile/:userId', component: UserProfileComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Profile' } },
 

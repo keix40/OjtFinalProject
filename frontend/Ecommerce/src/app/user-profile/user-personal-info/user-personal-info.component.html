@@ -101,8 +101,11 @@
               <!-- Next Tier Progress -->
               <div *ngIf="vipTierInfo?.nextTier" class="mt-4">
                 <div class="text-center mb-2">
-                  <div class="text-sm font-semibold text-gray-700">
+                  <div *ngIf="vipTierInfo?.nextTier" class="text-sm font-semibold text-gray-700">
                     {{ vipTierInfo?.pointsToNextTier || 0 }} points to {{ vipTierInfo?.nextTier?.name || 'Next Tier' }}
+                  </div>
+                  <div *ngIf="!vipTierInfo?.nextTier" class="text-sm font-semibold text-green-600">
+                    🎉 You've reached the highest tier!
                   </div>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-2">

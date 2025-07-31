@@ -1937,15 +1937,15 @@ public class DiscountServiceImpl implements DiscountService {
                 discountValueText = dto.getDiscount_amount() + " MMK off";
             }
 
-            String notificationMessage = "🎯 New discount created: \"" + dto.getName() + "\" - " + discountValueText + 
+            /*String notificationMessage = "🎯 New discount created: \"" + dto.getName() + "\" - " + discountValueText +
                                       " | Target: " + dto.getTargetType() + " | Duration: " + 
                                       dto.getStartDate().toLocalDate() + " to " + dto.getEndDate().toLocalDate();
             
             String type = "create";
             String category = "discount";
-            String link = "/admin/discount-management";
+            String link = "admindiscount-management";
 
-            notificationService.sendNotificationToAdmin(notificationMessage, category, type, link);
+            notificationService.sendNotificationToAdmin(notificationMessage, category, type, link); */
             
             System.out.println("[DiscountService] Admin notification sent for discount: " + dto.getName());
         } catch (Exception e) {

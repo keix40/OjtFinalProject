@@ -19,7 +19,6 @@ import com.Ojt.Ecommerce.service.AddressService;
 import com.Ojt.Ecommerce.service.UserService;
 import com.Ojt.Ecommerce.service.UserActivityService;
 import com.Ojt.Ecommerce.service.SessionService;
-import com.Ojt.Ecommerce.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -104,9 +103,9 @@ public class UserController {
     //to show userProfile userinfo (kei_1)
     @LogActivity(actionType = "UPDATE", entityType = "USER", description = "Updated user", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/{id}")
-    @Transactional(isolation = org.springframework.transaction.annotation.Isolation.READ_COMMITTED)
+    @Transactional
     @RequiresPermission(value = USERS_UPDATE, level = "intermediate", description = "Update user information")
-    public ResponseEntity<Map<String, Object>>  updateUser(@PathVariable Long id ,@RequestBody RegisterRequest dto,@RequestHeader("Authorization") String token){
+    public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Long id, @RequestBody RegisterRequest dto, @RequestHeader("Authorization") String token) {
         RegisterRequest updatedUser = userService.updateUser(id, dto);
 
         User user = userRepository.findById(id).orElseThrow();
@@ -116,7 +115,8 @@ public class UserController {
         Map<String, Object> response = new HashMap<>();
         response.put("user", updatedUser);
         response.put("token", newToken);
-        return  ResponseEntity.ok(response);
+        return ResponseEntity.ok(response);
+
     }
 
     @PutMapping("/{userId}/assign-role")
@@ -191,16 +191,10 @@ public class UserController {
             addressService.addNewAddress(addressDTO);
         }
 
-        // 4. Send welcome email if requested
-        if (request.getSendWelcomeEmail() != null && request.getSendWelcomeEmail()) {
-            sendWelcomeEmail(user, request.getPassword(), role.getName());
-        }
-
-        // 5. Return UserDTO (optionally include address info)
+        // 4. Return UserDTO (optionally include address info)
         UserDTO userDTO = new UserDTO(user);
         userDTO.setRoleId(role.getId());
         userDTO.setRoleName(role.getName());
-        System.out.println("✅ User created successfully, returning: " + userDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(userDTO);
     }
 
@@ -319,51 +313,26 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-
-
-    /**
-     * Send welcome email to newly created user
-     */
-    private void sendWelcomeEmail(User user, String password, String roleName) {
+    // Get user total points endpoint
+    @GetMapping("/{userId}/total-points")
+    public ResponseEntity<Map<String, Object>> getUserTotalPoints(@PathVariable Long userId) {
         try {
-            String userName = user.getName() != null ? user.getName() : user.getEmail().split("@")[0];
-            String verificationStatus = user.isVerified() ? "VERIFIED" : "NOT VERIFIED";
-
-            String emailBody = String.format(
-                "Dear %s,\n\n" +
-                "Welcome to Britium Gallary! Your account has been successfully created by an administrator.\n\n" +
-                "=== YOUR ACCOUNT INFORMATION ===\n" +
-                "Username: %s\n" +
-                "Password: %s\n" +
-                "Role: %s\n" +
-                "Email Verification Status: %s\n\n" +
-                "=== IMPORTANT INSTRUCTIONS ===\n" +
-                "1. Please log in to your account using the credentials above.\n" +
-                "   Login URL: http://localhost:4200/login\n" +
-                "2. After logging in, you can change your password in your profile settings.\n" +
-                "3. IMPORTANT: Your email is not verified. Please verify your email address after logging in.\n" +
-                "   - Go to your profile settings\n" +
-                "   - Click on 'Verify Email' or check for verification instructions\n" +
-                "   - Follow the verification process to activate your account fully\n\n" +
-                "=== SECURITY REMINDERS ===\n" +
-                "- Keep your password secure and don't share it with anyone\n" +
-                "- Change your password regularly\n" +
-                "- Enable two-factor authentication if available\n" +
-                "- Log out when using shared devices\n\n" +
-                "Best regards,\n" +
-                "Britium Gallary",
-                userName, user.getEmail(), password, roleName, verificationStatus
-            );
-
-            emailService.sendEmail(user.getEmail(), "Welcome to Our Platform - Account Created", emailBody);
-
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                return ResponseEntity.notFound().build();
+            }
+            Map<String, Object> response = new HashMap<>();
+            response.put("userId", userId);
+            response.put("totalPoints", user.getTotalPoints() != null ? user.getTotalPoints() : 0);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            System.err.println("Failed to send welcome email to " + user.getEmail() + ": " + e.getMessage());
-            // Don't throw exception to avoid breaking user creation
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to get user total points");
+            errorResponse.put("message", e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
         }
     }
-
+}
     // --- End customer management actions ---
 
 
-}

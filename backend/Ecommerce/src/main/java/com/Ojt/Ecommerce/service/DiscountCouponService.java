@@ -445,7 +445,7 @@ public class DiscountCouponService {
             String category = "discount";
             String link = "/admin/discount-management";
 
-            notificationService.sendNotificationToAdmin(notificationMessage, category, type, link);
+           // notificationService.sendNotificationToAdmin(notificationMessage, category, type, link);
             
             System.out.println("[DiscountCouponService] Admin notification sent for discount: " + dto.getName());
         } catch (Exception e) {

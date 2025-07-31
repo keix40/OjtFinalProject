@@ -50,8 +50,11 @@ export class VipTierService {
   }
 
   calculateVipTierInfo(totalPoints: number, allTiers: VipTier[]): VipTierInfo {
+    console.log('calculateVipTierInfo called with totalPoints:', totalPoints, 'allTiers:', allTiers);
+    
     // Sort tiers by minPoints in ascending order
     const sortedTiers = allTiers.sort((a, b) => a.minPoints - b.minPoints);
+    console.log('Sorted tiers:', sortedTiers);
     
     let currentTier: VipTier | null = null;
     let nextTier: VipTier | null = null;

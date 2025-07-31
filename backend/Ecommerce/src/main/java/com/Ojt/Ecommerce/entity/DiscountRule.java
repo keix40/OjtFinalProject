@@ -57,4 +57,20 @@ public class DiscountRule {
 
     @Column(name = "end_date")
     private LocalDate endDate;
+
+    @Override
+    public String toString() {
+        return "DiscountRule{" +
+                "id=" + id +
+                ", targetType=" + targetType +
+                ", discount=" + (discount != null ? discount.getId() : null) +
+                ", product=" + (product != null ? product.getId() : null) +
+                ", brand=" + (brand != null ? brand.getId() : null) +
+                ", category=" + (category != null ? category.getId() : null) +
+                ", user=" + (user != null ? user.getId() : null) +
+                ", vipTier=" + (vipTier != null ? vipTier.getId() : null) +
+                ", startDate=" + startDate +
+                ", endDate=" + endDate +
+                '}';
+    }
 }

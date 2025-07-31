@@ -48,12 +48,13 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<!-- ✅ Change this -->
+		<!--
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
-			<version>8.4.0</version> <!-- ✅ as of July 2025 -->
+			<version>8.4.0</version>
 		</dependency>
+		!-->
 
 
 		<dependency>
@@ -168,12 +169,12 @@
 			<version>1.10.0</version> <!-- Check for the latest version -->
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>org.postgresql</groupId>-->
-<!--			<artifactId>postgresql</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
-		<!-- Apache HttpClient dependencies removed: now using Java's built-in HttpClient -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>

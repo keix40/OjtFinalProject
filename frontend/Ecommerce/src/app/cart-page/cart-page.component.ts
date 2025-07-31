@@ -135,6 +135,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   calculateProductDiscounts() {
+    const hadProductDiscounts = this.hasProductDiscount();
     this.productDiscounts.clear();
     this.cartItems.forEach(item => {
       const product = this.productDetails.get(item.productId || item.id);
@@ -145,6 +146,11 @@ export class CartPageComponent implements OnInit, OnDestroy {
         }
       }
     });
+    
+    // If product discounts just became active, check for conflicting coupons
+    if (!hadProductDiscounts && this.hasProductDiscount()) {
+      this.checkAndRemoveConflictingCoupon();
+    }
   }
 
   findApplicableDiscount(product: ProductDTO): any {
@@ -519,7 +525,13 @@ export class CartPageComponent implements OnInit, OnDestroy {
     };
     this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
       next: (preview) => {
+        const wasFirstTimeBuyerDiscount = this.isFirstTimeBuyerDiscount;
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
+        
+        // If first-time buyer discount just became active, check for conflicting coupons
+        if (!wasFirstTimeBuyerDiscount && this.isFirstTimeBuyerDiscount) {
+          this.checkAndRemoveConflictingCoupon();
+        }
       },
       error: () => {
         this.isFirstTimeBuyerDiscount = false;
@@ -873,6 +885,16 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   applyPromoCode() {
+  // Check if coupon should be disabled
+  if (this.isCouponInputDisabled()) {
+    this.promoMessage = this.getCouponDisabledReason();
+    this.promoSuccess = false;
+    this.couponDiscount = 0;
+    this.couponDiscountType = '';
+    this.couponInfoMessage = '';
+    return;
+  }
+
   this.promoMessage = '';
   this.promoSuccess = false;
   this.couponInfoMessage = '';
@@ -954,7 +976,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
 }
 
 getCouponDiscountAmount(): number {
-  if (!this.promoSuccess || !this.couponDiscount) return 0;
+  if (!this.promoSuccess || !this.couponDiscount || this.isFirstTimeBuyerDiscount) return 0;
   // Only apply coupon to products without a product discount
   let eligibleTotal = 0;
   for (const item of this.cartItems) {
@@ -1011,13 +1033,16 @@ getVipTierDiscountAmount(): number {
 
   // Check if coupon input should be disabled
   isCouponInputDisabled(): boolean {
-    return this.hasProductDiscount() || this.promoSuccess;
+    return this.hasProductDiscount() || this.isFirstTimeBuyerDiscount || this.promoSuccess;
   }
 
   // Get the reason why coupon input is disabled
   getCouponDisabledReason(): string {
     if (this.hasProductDiscount()) {
       return 'Cannot use with product discounts';
+    }
+    if (this.isFirstTimeBuyerDiscount) {
+      return 'Cannot use with first-time buyer discount';
     }
     if (this.promoSuccess) {
       return 'Coupon already applied';
@@ -1041,6 +1066,14 @@ getVipTierDiscountAmount(): number {
     this.couponInfoMessage = '';
     this.appliedCouponName = '';
     this.clearCouponFromStorage();
+  }
+
+  // Check if coupon should be automatically removed due to conflicting discounts
+  checkAndRemoveConflictingCoupon() {
+    if (this.promoSuccess && (this.hasProductDiscount() || this.isFirstTimeBuyerDiscount)) {
+      this.removeCoupon();
+      this.promoMessage = this.getCouponDisabledReason();
+    }
   }
 
   // Save coupon data to localStorage

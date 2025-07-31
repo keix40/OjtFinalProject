@@ -274,14 +274,8 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       profileImage: profileImageUrl || this.userDetails?.profileImage || '',
     };
 
-    // Debug: Show exactly what's being sent
-    console.log('=== FRONTEND DEBUG ===');
-    console.log('Current user details:', this.userDetails);
-    console.log('Form values:', this.personalInfoForm.value);
-    console.log('Sending updated data:', updatedData);
-    console.log('Name changed?', this.userDetails?.name !== updatedData.name);
-    console.log('From:', this.userDetails?.name, 'To:', updatedData.name);
-    console.log('=== END FRONTEND DEBUG ===');
+    // Short debug
+    console.log('Updating user:', updatedData);
 
     this.authService.updateUserDetails(updatedData).subscribe({
       next: (response: any) => {
@@ -409,20 +403,38 @@ isPhoneNumberChanged(): boolean {
 }
 
 getProgressPercentage(): number {
-  if (!this.vipTierInfo?.currentTier || !this.vipTierInfo?.nextTier) {
+  console.log('getProgressPercentage called with vipTierInfo:', this.vipTierInfo);
+  
+  if (!this.vipTierInfo?.currentTier) {
+    console.log('No current tier, returning 0');
     return 0;
   }
   
   const currentPoints = this.vipTierInfo?.currentPoints || 0;
   const currentTierMinPoints = this.vipTierInfo?.currentTier?.minPoints || 0;
-  const nextTierMinPoints = this.vipTierInfo?.nextTier?.minPoints || 0;
   
+  console.log('Current points:', currentPoints, 'Current tier min points:', currentTierMinPoints);
+  
+  // If there's no next tier, show 100% progress
+  if (!this.vipTierInfo?.nextTier) {
+    console.log('No next tier, returning 100');
+    return 100;
+  }
+  
+  const nextTierMinPoints = this.vipTierInfo?.nextTier?.minPoints || 0;
   const totalRange = nextTierMinPoints - currentTierMinPoints;
   const userProgress = currentPoints - currentTierMinPoints;
   
-  if (totalRange <= 0) return 100;
+  console.log('Next tier min points:', nextTierMinPoints, 'Total range:', totalRange, 'User progress:', userProgress);
   
-  return Math.min(100, Math.max(0, (userProgress / totalRange) * 100));
+  if (totalRange <= 0) {
+    console.log('Total range <= 0, returning 100');
+    return 100;
+  }
+  
+  const percentage = Math.min(100, Math.max(0, (userProgress / totalRange) * 100));
+  console.log('Calculated percentage:', percentage);
+  return percentage;
 }
 
 getVipTierClass(): string {
