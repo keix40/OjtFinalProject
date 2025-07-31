@@ -6,10 +6,12 @@ import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import com.Ojt.Ecommerce.util.PhoneNumberUtil;
 import java.time.LocalDateTime;
@@ -26,9 +28,12 @@ public class PhoneVerificationController {
     private final UserService userService;
     private final UserRepository userRepository;
 
+
+
     /**
      * Send OTP to phone number
      */
+    @LogActivity(actionType = "CREATE", entityType = "PHONE_VERIFICATION", description = "Sent OTP", severityLevel = "LOW")
     @PostMapping("/send-otp")
     public ResponseEntity<Map<String, Object>> sendOTP(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");
@@ -121,6 +126,7 @@ public class PhoneVerificationController {
     /**
      * Verify OTP and update phone number
      */
+    @LogActivity(actionType = "UPDATE", entityType = "PHONE_VERIFICATION", description = "Verified OTP", severityLevel = "LOW", logChanges = true)
     @PostMapping("/verify-otp")
     public ResponseEntity<Map<String, Object>> verifyOTP(@RequestBody Map<String, String> request) {
         String phoneNumber = request.get("phoneNumber");

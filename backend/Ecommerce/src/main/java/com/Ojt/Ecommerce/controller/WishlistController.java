@@ -10,6 +10,7 @@ import com.Ojt.Ecommerce.service.WishlistService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ public class WishlistController {
     @Autowired
     private ProductRepository productRepository;
 
+    @LogActivity(actionType = "CREATE", entityType = "WISHLIST", description = "Added product to wishlist", severityLevel = "LOW")
     @PostMapping("/save/{userId}/{proId}")
     public ResponseEntity<?> saveWishlist(@PathVariable long userId, @PathVariable long proId) {
         if (service.existWishlist(userId, proId)) {
@@ -49,6 +51,7 @@ public class WishlistController {
         }
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "WISHLIST", description = "Removed product from wishlist", severityLevel = "LOW")
     @PutMapping("/remove/{userId}/{proId}")
     public ResponseEntity<?> removeWishlist(@PathVariable long userId, @PathVariable long proId) {
         if (service.existWishlist(userId, proId)) {

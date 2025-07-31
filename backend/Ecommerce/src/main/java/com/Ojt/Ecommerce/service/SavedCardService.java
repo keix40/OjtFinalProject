@@ -102,4 +102,20 @@ public class SavedCardService {
         );
     }
 
+    public SavedCard getCardById(Long cardId) {
+        return cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+    }
+
+    public SavedCardResponseDTO convertToDTO(SavedCard card) {
+        return new SavedCardResponseDTO(
+                card.getId(),
+                card.getCardholderName(),
+                card.getCardBrand(),
+                card.getExpiryDate(),
+                card.isDefault(),
+                card.getCardNumber()
+        );
+    }
+
 }

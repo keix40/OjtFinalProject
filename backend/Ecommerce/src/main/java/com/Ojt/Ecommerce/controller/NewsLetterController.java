@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +18,9 @@ public class NewsLetterController {
     @Autowired
     private NewsLetterService newsletterService;
 
+
+
+    @LogActivity(actionType = "CREATE", entityType = "NEWSLETTER", description = "Subscribed to newsletter", severityLevel = "LOW")
     @PostMapping("/subscribe")
     public ResponseEntity<Map<String, String>> subscribe(@RequestParam String email) {
         boolean success = newsletterService.subscribe(email);

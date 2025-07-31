@@ -15,7 +15,7 @@ public interface DiscountService {
     ResponseEntity<?> getActiveDiscounts();
     List<DiscountDTO> getAllDiscounts();
     List<DiscountDTO> getActiveAliveDiscounts(); // New method for active and alive discounts
-    ResponseEntity<?> updateDiscount(Long id, DiscountRequestDTO dto);
+    com.Ojt.Ecommerce.entity.Discount updateDiscount(Long id, DiscountRequestDTO dto);
     ResponseEntity<?> getDiscountsByProduct(Long productId);
     ResponseEntity<?> getDiscountById(Long id);
 }

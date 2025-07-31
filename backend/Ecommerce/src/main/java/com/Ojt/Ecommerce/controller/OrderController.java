@@ -391,7 +391,7 @@ public class OrderController {
     @LogActivity(actionType = "UPDATE", entityType = "ORDER", description = "Updated order status", severityLevel = "HIGH", entityIdParam = "orderId", logChanges = true)
     @PutMapping("/updatestatus/{orderId}")
     @RequiresPermission(value = ORDERS_UPDATE, level = "basic", description = "Update order status")
-    public ResponseEntity<String> updateOrderStatus(
+    public ResponseEntity<?> updateOrderStatus(
             @PathVariable Long orderId,
             @RequestBody Map<String, Object> request) {
         String status = (String) request.get("status");
@@ -406,10 +406,10 @@ public class OrderController {
                 } catch (NumberFormatException ignored) {}
             }
         }
-        boolean updated = service.updateOrderStatus(orderId, status, refundId);
+        com.Ojt.Ecommerce.entity.UserOrder updatedOrder = service.updateOrderStatus(orderId, status, refundId);
 
-        if (updated) {
-            return ResponseEntity.ok("Order status updated successfully.");
+        if (updatedOrder != null) {
+            return ResponseEntity.ok(updatedOrder);
         } else {
             return ResponseEntity.badRequest().body("Invalid order ID or status.");
         }

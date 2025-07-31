@@ -289,6 +289,14 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     }
   }
 
+  navigateToProfile() {
+    const userId = this.authService.getUserId();
+    if (userId) {
+      this.router.navigate([`/admin/profile/${userId}`]);
+      this.profileDropdownOpen = false;
+    }
+  }
+
   navigateToSettings() {
     // Placeholder for settings navigation
     console.log('Navigate to settings');

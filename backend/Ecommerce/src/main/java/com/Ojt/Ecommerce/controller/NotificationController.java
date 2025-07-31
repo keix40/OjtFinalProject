@@ -13,6 +13,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -56,6 +57,7 @@ public class NotificationController {
         }
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "NOTIFICATION", description = "Deleted notification", severityLevel = "HIGH", entityIdParam = "id")
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteNotification(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
@@ -73,6 +75,7 @@ public class NotificationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "NOTIFICATION", description = "Marked notification as read", severityLevel = "LOW", entityIdParam = "id", logChanges = true)
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/{id}/read")
     public ResponseEntity<?> markNotificationAsRead(@PathVariable Long id, @AuthenticationPrincipal UserDetails user) {
@@ -103,6 +106,7 @@ public class NotificationController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "NOTIFICATION", description = "Created notification", severityLevel = "MEDIUM")
     @PreAuthorize("isAuthenticated()")
     @PostMapping
     public ResponseEntity<?> createNotification(

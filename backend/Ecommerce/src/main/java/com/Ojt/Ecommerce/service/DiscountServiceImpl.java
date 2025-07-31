@@ -1744,41 +1744,34 @@ public class DiscountServiceImpl implements DiscountService {
     }
 
     @Override
-    public ResponseEntity<?> updateDiscount(Long id, DiscountRequestDTO dto) {
-        try {
-            // Find the existing discount
-            Discount existingDiscount = discountRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Discount not found with id: " + id));
+    public com.Ojt.Ecommerce.entity.Discount updateDiscount(Long id, DiscountRequestDTO dto) {
+        // Find the existing discount
+        Discount existingDiscount = discountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Discount not found with id: " + id));
 
-            // Update discount properties
-            existingDiscount.setName(dto.getName());
-            existingDiscount.setDescription(dto.getDescription());
-            existingDiscount.setDiscountType(DiscountType.valueOf(dto.getDiscountType()));
-            
-            // Convert percentage to decimal format for storage
-            if (dto.getDiscountType().equals("PERCENTAGE")) {
-                // Convert percentage to decimal (e.g., 1% -> 0.01, 10% -> 0.10)
-                double percentageValue = dto.getDiscount_percent();
-                double decimalValue = percentageValue / 100.0;
-                existingDiscount.setDiscountValue(decimalValue);
-            } else {
-                // Fixed amount remains unchanged
-                existingDiscount.setDiscountValue(dto.getDiscount_amount());
-            }
-            
-            existingDiscount.setDescription(dto.getDescription());
-            existingDiscount.setStartDate(dto.getStartDate().toLocalDate());
-            existingDiscount.setEndDate(dto.getEndDate().toLocalDate());
-            existingDiscount.setStatus(dto.isStatus());
-
-            // Save the updated discount
-            discountRepository.save(existingDiscount);
-            System.out.println("description :"+ dto.getDescription());
-            return ResponseEntity.ok(Map.of("message", "Discount updated successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        // Update discount properties
+        existingDiscount.setName(dto.getName());
+        existingDiscount.setDescription(dto.getDescription());
+        existingDiscount.setDiscountType(DiscountType.valueOf(dto.getDiscountType()));
+        
+        // Convert percentage to decimal format for storage
+        if (dto.getDiscountType().equals("PERCENTAGE")) {
+            // Convert percentage to decimal (e.g., 1% -> 0.01, 10% -> 0.10)
+            double percentageValue = dto.getDiscount_percent();
+            double decimalValue = percentageValue / 100.0;
+            existingDiscount.setDiscountValue(decimalValue);
+        } else {
+            // Fixed amount remains unchanged
+            existingDiscount.setDiscountValue(dto.getDiscount_amount());
         }
+        
+        existingDiscount.setDescription(dto.getDescription());
+        existingDiscount.setStartDate(dto.getStartDate().toLocalDate());
+        existingDiscount.setEndDate(dto.getEndDate().toLocalDate());
+        existingDiscount.setStatus(dto.isStatus());
 
+        // Save and return the updated discount
+        return discountRepository.save(existingDiscount);
     }
 
     @Override

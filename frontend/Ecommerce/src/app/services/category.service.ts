@@ -47,7 +47,9 @@ export class CategoryService {
   updateCategory(id: number, name: string, parentId?: number, imageFile?: File): Observable<any> {
     const formData = new FormData();
     formData.append('name', name);
-    if (parentId) formData.append('parentId', parentId.toString());
+    if (parentId !== undefined && parentId !== null) {
+      formData.append('parentId', parentId.toString());
+    }
     if (imageFile) formData.append('image', imageFile);
 
     return this.http.put(`${this.baseUrl}/update/${id}`, formData);

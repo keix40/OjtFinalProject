@@ -9,10 +9,12 @@ import com.Ojt.Ecommerce.repository.DiscountRepository;
 import com.Ojt.Ecommerce.service.DiscountCouponService;
 import com.Ojt.Ecommerce.service.DiscountService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import java.util.Map;
 import java.util.List;
@@ -25,6 +27,9 @@ public class CouponController {
     private final DiscountRepository discountRepository;
     private final DiscountCouponService discountCouponService;
 
+
+
+    @LogActivity(actionType = "CREATE", entityType = "COUPON", description = "Validated coupon", severityLevel = "LOW")
     @PostMapping("/validate")
     public CouponApplyResponse validateCoupon(@RequestBody CouponApplyRequest request) {
         return discountCouponService.validateCoupon(request);

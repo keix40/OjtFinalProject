@@ -47,7 +47,7 @@ export class CategoryUpdateComponent implements OnInit {
         if (found) {
           this.category = found;
           this.categoryNames = [found.name];
-          this.selectedParentCategoryId = found.parentId;
+          this.selectedParentCategoryId = found.parentId || undefined;
           this.imagePreviewUrl = found.image ? `http://localhost:8080${found.image}` : null;
         }
       }

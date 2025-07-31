@@ -4,6 +4,12 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center gap-2 py-3 overflow-x-visible">
       <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
+        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'personal-info', 'text-neutral-600': activeSection !== 'personal-info'}"
+        (click)="selectSection('personal-info')">
+        <i class="bi bi-person"></i>
+        Personal info
+      </button>
+      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
         [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'orders', 'text-neutral-600': activeSection !== 'orders'}"
         (click)="selectSection('orders')">
         <i class="bi bi-box-seam"></i>
@@ -27,12 +33,6 @@
         (click)="selectSection('reviews')">
         <i class="bi bi-star"></i>
         My reviews
-      </button>
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'personal-info', 'text-neutral-600': activeSection !== 'personal-info'}"
-        (click)="selectSection('personal-info')">
-        <i class="bi bi-person"></i>
-        Personal info
       </button>
       <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
         [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'addresses', 'text-neutral-600': activeSection !== 'addresses'}"
@@ -84,36 +84,43 @@
 <main class="main-content">
   <div class="content-container">
       <div class="content-card">
+
+          <!-- Personal Info Section -->
+          <div *ngIf="activeSection === 'personal-info'" class="content-section">
+            <app-user-personal-info [userDetails]="userDetails"></app-user-personal-info>
+          </div>
+
           <!-- Orders Section -->
           <div *ngIf="activeSection === 'orders'" class="content-section">
               <app-user-orders></app-user-orders>
           </div>
-          
+
           <!-- Wishlist Section -->
           <div *ngIf="activeSection === 'wishlist'" class="content-section">
               <app-user-wishlist></app-user-wishlist>
           </div>
-          
+
           <!-- Payment Methods Section -->
           <div *ngIf="activeSection === 'payment'" class="content-section">
               <app-user-payment-methods></app-user-payment-methods>
           </div>
-          
+
           <!-- My Reviews Section -->
           <div *ngIf="activeSection === 'reviews'" class="content-section">
               <app-user-reviews></app-user-reviews>
           </div>
-          
+
           <!-- Personal Info Section -->
           <div *ngIf="activeSection === 'personal-info'" class="content-section">
               <app-user-personal-info [userDetails]="userDetails" [vipTierInfo]="vipTierInfo"></app-user-personal-info>
           </div>
-          
+
+
           <!-- Addresses Section -->
           <div *ngIf="activeSection === 'addresses'" class="content-section">
               <app-user-addresses></app-user-addresses>
           </div>
-          
+
           <!-- Notifications Section -->
           <div *ngIf="activeSection === 'notifications'" class="content-section">
               <app-user-notifications></app-user-notifications>

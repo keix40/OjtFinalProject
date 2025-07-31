@@ -49,11 +49,13 @@ public class AddressController {
     @LogActivity(actionType = "UPDATE", entityType = "ADDRESS", description = "Updated address", severityLevel = "LOW", entityIdParam = "id", logChanges = true)
     @PutMapping("/updateAddress/{id}")
     public ResponseEntity<?> updateAddress(@PathVariable Long id, @RequestBody AddressDTO dto) {
-        Long result = addressService.updateAddress(id, dto);
-        return ResponseEntity.ok(result);
+        com.Ojt.Ecommerce.entity.Address updatedAddress = addressService.updateAddress(id, dto);
+        // Convert to DTO to avoid circular references
+        AddressDTO responseDto = addressService.convertToDTO(updatedAddress);
+        return ResponseEntity.ok(responseDto);
     }
 
-    @LogActivity(actionType = "DELETE", entityType = "ADDRESS", description = "Deleted address", severityLevel = "LOW", entityIdParam = "id")
+    @LogActivity(actionType = "DELETE", entityType = "ADDRESS", description = "", severityLevel = "LOW", entityIdParam = "id")
     @DeleteMapping("/deleteAddress/{id}")
     public ResponseEntity<?> deleteAddress(@PathVariable Long id) {
         addressService.deleteAddress(id);

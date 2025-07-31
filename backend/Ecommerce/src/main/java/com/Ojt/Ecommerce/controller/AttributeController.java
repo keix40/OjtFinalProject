@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,9 @@ public class AttributeController {
 
     @Autowired
     private AttributeValueService avService;
+
+    @Autowired
+    private com.Ojt.Ecommerce.repository.AttributeRepository attributeRepository;
 
     @GetMapping("/getallattribute")
     public List<Attribute> getAllAttribute(){
@@ -57,6 +61,7 @@ public class AttributeController {
         }
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "ATTRIBUTE", description = "Created attribute", severityLevel = "MEDIUM")
     @PostMapping("/create")
     public ResponseEntity<?> saveAttributeAndValue(@RequestBody AttributeAndValueDTO dto) {
         Attribute attribute;
@@ -155,16 +160,20 @@ public class AttributeController {
         return ResponseEntity.ok("Value added");
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "ATTRIBUTE", description = "Updated attribute", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateAttribute(@PathVariable Long id, @RequestBody Attribute dto) {
         try {
             attService.updateAttribute(id, dto.getName());
-            return ResponseEntity.ok("Attribute updated successfully");
+            // Return the actual entity for logging
+            Attribute updatedAttribute = attributeRepository.findById(id).orElse(null);
+            return ResponseEntity.ok(updatedAttribute);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to update attribute");
         }
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "ATTRIBUTE", description = "Deleted attribute", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> softDeleteAttribute(@PathVariable Long id) {
         try {

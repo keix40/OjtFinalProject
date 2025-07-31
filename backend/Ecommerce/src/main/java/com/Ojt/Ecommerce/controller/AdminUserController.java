@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.entity.UserActivity;
 import com.Ojt.Ecommerce.repository.UserActivityRepository;
@@ -64,6 +65,7 @@ public class AdminUserController {
     }
 
     // Create admin user
+    @LogActivity(actionType = "CREATE", entityType = "ADMIN_USER", description = "Created admin user", severityLevel = "MEDIUM")
     @PostMapping
     @RequiresPermission(value = ADMIN_USERS_CREATE, level = "advanced")
     public ResponseEntity<?> createAdminUser(@RequestBody UserDTO dto) {
@@ -79,11 +81,12 @@ public class AdminUserController {
         user.setEmail(dto.getEmail());
         user.setPassword(dto.getPassword()); // Hash in real app!
         user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.valueOf(dto.getStatus() != null ? dto.getStatus().toUpperCase() : "ACTIVE"));
-        userRepository.save(user);
-        return ResponseEntity.ok(new UserDTO(user));
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 
     // Edit admin user
+    @LogActivity(actionType = "UPDATE", entityType = "ADMIN_USER", description = "Updated admin user", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/{id}")
     @RequiresPermission(value = ADMIN_USERS_UPDATE, level = "advanced")
     public ResponseEntity<?> updateAdminUser(@PathVariable Long id, @RequestBody UserDTO dto) {
@@ -102,8 +105,8 @@ public class AdminUserController {
             roleOpt.ifPresent(user::setRole);
         }
         if (dto.getStatus() != null) user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.valueOf(dto.getStatus().toUpperCase()));
-        userRepository.save(user);
-        return ResponseEntity.ok(new UserDTO(user));
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
     }
 
     // Update admin status
@@ -123,6 +126,7 @@ public class AdminUserController {
     }
 
     // Delete admin user
+    @LogActivity(actionType = "DELETE", entityType = "ADMIN_USER", description = "Deleted admin user", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     @RequiresPermission(value = ADMIN_USERS_DELETE, level = "critical")
     public ResponseEntity<?> deleteAdminUser(@PathVariable Long id) {

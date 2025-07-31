@@ -727,19 +727,71 @@ public class AuthController {
     }
 
     @GetMapping("/check-blacklist-status")
-    public ResponseEntity<?> checkBlacklistStatus(@RequestHeader("Authorization") String tokenHeader) {
+    public ResponseEntity<?> checkBlacklistStatus(@RequestHeader("Authorization") String tokenHeader, HttpServletRequest request) {
         try {
             String token = tokenHeader.replace("Bearer ", "");
             String email = jwtTokenProvider.getEmailFromToken(token);
+            String clientIp = getClientIpAddress(request);
             
-            // Check if user is blacklisted
-            BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
+            // Get user's phone number from token if available
+            String phoneNumber = null;
+            try {
+                phoneNumber = jwtTokenProvider.getPhoneNumberFromToken(token);
+                System.out.println("[AuthController] Extracted phone number from token: " + phoneNumber);
+            } catch (Exception e) {
+                System.out.println("[AuthController] Could not extract phone number from token: " + e.getMessage());
+                // Phone number not available in token, continue without it
+            }
             
-            if (blacklistEntry != null) {
+            // Check if user is blacklisted by email
+            BlacklistEntry emailBlacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
+            
+            // Check if user is blacklisted by IP
+            BlacklistEntry ipBlacklistEntry = blacklistServiceImpl.getActiveBlacklistByIp(clientIp);
+            
+            // Check if user is blacklisted by phone number
+            BlacklistEntry phoneBlacklistEntry = null;
+            if (phoneNumber != null) {
+                System.out.println("[AuthController] Checking blacklist for phone: " + phoneNumber);
+                phoneBlacklistEntry = blacklistServiceImpl.getActiveBlacklistByPhone(phoneNumber);
+                if (phoneBlacklistEntry != null) {
+                    System.out.println("[AuthController] Found blacklist entry for phone: " + phoneNumber);
+                } else {
+                    System.out.println("[AuthController] No blacklist entry found for phone: " + phoneNumber);
+                }
+            } else {
+                System.out.println("[AuthController] No phone number available for blacklist check");
+            }
+            
+            // If any of email, IP, or phone is blacklisted, return blacklisted status
+            if (emailBlacklistEntry != null) {
                 return ResponseEntity.ok(Map.of(
                     "blacklisted", true,
-                    "reason", blacklistEntry.getReason(),
-                    "expiryDate", blacklistEntry.getExpiryDate()
+                    "reason", emailBlacklistEntry.getReason(),
+                    "expiryDate", emailBlacklistEntry.getExpiryDate(),
+                    "banType", emailBlacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary",
+                    "isPermanent", emailBlacklistEntry.getExpiryDate() == null,
+                    "blacklistType", "email"
+                ));
+            } else if (ipBlacklistEntry != null) {
+                return ResponseEntity.ok(Map.of(
+                    "blacklisted", true,
+                    "reason", ipBlacklistEntry.getReason(),
+                    "expiryDate", ipBlacklistEntry.getExpiryDate(),
+                    "banType", ipBlacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary",
+                    "isPermanent", ipBlacklistEntry.getExpiryDate() == null,
+                    "blacklistType", "ip",
+                    "blockedIp", clientIp
+                ));
+            } else if (phoneBlacklistEntry != null) {
+                return ResponseEntity.ok(Map.of(
+                    "blacklisted", true,
+                    "reason", phoneBlacklistEntry.getReason(),
+                    "expiryDate", phoneBlacklistEntry.getExpiryDate(),
+                    "banType", phoneBlacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary",
+                    "isPermanent", phoneBlacklistEntry.getExpiryDate() == null,
+                    "blacklistType", "phone",
+                    "blockedPhone", phoneNumber
                 ));
             } else {
                 return ResponseEntity.ok(Map.of("blacklisted", false));

@@ -36,7 +36,9 @@
                 </div>
               </div>
               <div class="space-y-2">
-                <div class="font-bold text-slate-900 text-2xl">{{ metric.value }}</div>
+                <div class="font-bold text-slate-900 text-2xl">
+                  {{ metric.value }}<span *ngIf="metric.currency" class="text-sm font-normal text-slate-600 ml-1">{{ metric.currency }}</span>
+                </div>
                 <div class="flex items-center space-x-2">
                   <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
                     @if (metric.isPositive) {
@@ -111,7 +113,7 @@
                 </div>
                 <div class="space-y-2">
                   <div class="font-bold text-slate-900 text-lg">
-                    {{ metric.value }}
+                    {{ metric.value }}<span *ngIf="metric.currency" class="text-sm font-normal text-slate-600 ml-1">{{ metric.currency }}</span>
                   </div>
                   <div class="flex items-center space-x-2">
                     <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
@@ -287,7 +289,7 @@
             <h2 class="text-2xl font-bold text-slate-800">User Engagement</h2>
             <p class="text-slate-500 mt-1">Monitor user activity and behavior patterns</p>
           </div>
-          <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Engagement rate: {{ engagementRate.toFixed(1) }}%</div>
+          <!-- <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Engagement rate: {{ engagementRate.toFixed(1) }}%</div> -->
         </div>
   
         <!-- User Metric Cards -->

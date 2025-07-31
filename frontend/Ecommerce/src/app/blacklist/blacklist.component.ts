@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ChangeDetectionStrategy, HostListener } from "@angular/core";
-import { FormBuilder, FormGroup, Validators } from "@angular/forms";
+import { FormBuilder, FormGroup, Validators, ValidatorFn, AbstractControl, ValidationErrors } from "@angular/forms";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ReactiveFormsModule } from "@angular/forms";
@@ -62,6 +62,11 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   avgAppealTime: number = 0;
   activeTab: string = 'overview';
   Math = Math;
+  
+  // Get current date for date inputs
+  get currentDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
 
   // Appeal management properties
   appeals: Appeal[] = [];
@@ -91,6 +96,10 @@ export class BlacklistComponent implements OnInit, OnDestroy {
 
   // Form
   blacklistForm: FormGroup;
+  editingEntryId: string | null = null;
+  showExtendBanModal = false;
+  extendingEntry: BlacklistEntry | null = null;
+  extendBanForm: FormGroup;
 
   constructor(
     private fb: FormBuilder,
@@ -102,16 +111,22 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     this.PermissionConstants = PermissionConstants;
     this.permissionService = permissionService;
     this.blacklistForm = this.fb.group({
-      targetType: ["email", Validators.required],
+      targetType: ["", Validators.required], // Remove default value
       targetValue: ["", Validators.required],
-      category: ["fraud", Validators.required],
-      riskLevel: ["medium", Validators.required],
+      category: ["", Validators.required], // Remove default value
+      riskLevel: ["", Validators.required], // Remove default value
       reason: ["", Validators.required],
       expiryDate: [""],
       associatedEmail: ["", [Validators.email]],
       notes: [""],
       notifyTeam: [true],
       blockRelated: [false],
+    });
+
+    // Initialize extend ban form
+    this.extendBanForm = this.fb.group({
+      newExpiryDate: ['', Validators.required],
+      reason: ['', Validators.required]
     });
 
     // Initialize appeal review form
@@ -293,18 +308,26 @@ export class BlacklistComponent implements OnInit, OnDestroy {
 
   // Entry management methods
   openAddBlacklistModal(): void {
-    this.blacklistForm.reset({
-      targetType: "email",
-      category: "fraud",
-      riskLevel: "medium",
-      notifyTeam: true,
-      blockRelated: false,
-    });
+    this.blacklistForm.reset();
+    this.isEditMode = false;
+    this.editingEntryId = null;
+    this.relatedAccounts = [];
     this.showEditModal = true;
+    this.cdr.detectChanges();
   }
 
   closeEditModal(): void {
     this.showEditModal = false;
+    this.resetForm();
+  }
+
+  resetForm(): void {
+    this.blacklistForm.reset();
+    this.isEditMode = false;
+    this.editingEntryId = null;
+    this.relatedAccounts = [];
+    this.showEditModal = false;
+    this.cdr.markForCheck();
   }
 
   closeIncidentHistoryModal(): void {
@@ -315,8 +338,8 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     if (this.blacklistForm.valid) {
       const formValue = this.blacklistForm.value;
       
-      // Create the main blacklist entry
-      const mainEntry = {
+      // Create the blacklist entry data
+      const entryData = {
         targetType: formValue.targetType ? formValue.targetType.toUpperCase() : undefined,
         targetValue: formValue.targetValue,
         category: formValue.category ? formValue.category.toUpperCase() : undefined,
@@ -328,29 +351,45 @@ export class BlacklistComponent implements OnInit, OnDestroy {
         // addedBy will be set automatically by backend to current authenticated user
       };
 
-      // Add the main entry first
-      this.blacklistService.addEntry(mainEntry)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-          next: (mainResponse) => {
-            console.log('[BlacklistComponent] Main entry added:', mainResponse);
-            
-            // If "Block related accounts" is checked, find and block related accounts
-            if (formValue.blockRelated) {
-              this.blockRelatedAccounts(formValue.targetType?.toUpperCase(), formValue.targetValue, formValue.reason);
-            } else {
-          this.toastr.success('Entry added to blacklist successfully');
-          this.loadData();
-          this.blacklistForm.reset();
-          this.showEditModal = false;
-          this.cdr.markForCheck();
+      if (this.isEditMode && this.editingEntryId) {
+        // Update existing entry
+        this.blacklistService.updateEntry(this.editingEntryId, entryData)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (response) => {
+              console.log('[BlacklistComponent] Entry updated:', response);
+              this.toastr.success('Entry updated successfully');
+              this.loadData();
+              this.resetForm();
+            },
+            error: (error) => {
+              this.toastr.error('Failed to update entry');
+              console.error('Error updating entry:', error);
             }
-        },
-        error: (error) => {
-          this.toastr.error('Failed to add entry to blacklist');
-          console.error('Error adding entry:', error);
-        }
-      });
+          });
+      } else {
+        // Add new entry
+        this.blacklistService.addEntry(entryData)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: (mainResponse) => {
+              console.log('[BlacklistComponent] Main entry added:', mainResponse);
+              
+              // If "Block related accounts" is checked, find and block related accounts
+              if (formValue.blockRelated) {
+                this.blockRelatedAccounts(formValue.targetType?.toUpperCase(), formValue.targetValue, formValue.reason);
+              } else {
+                this.toastr.success('Entry added to blacklist successfully');
+                this.loadData();
+                this.resetForm();
+              }
+            },
+            error: (error) => {
+              this.toastr.error('Failed to add entry to blacklist');
+              console.error('Error adding entry:', error);
+            }
+          });
+      }
     }
   }
 
@@ -632,6 +671,47 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   onTargetTypeChange(): void {
     // Reset target value when target type changes
     this.blacklistForm.patchValue({ targetValue: '' });
+    
+    // Update validation based on target type
+    const targetType = this.blacklistForm.get('targetType')?.value;
+    const targetValueControl = this.blacklistForm.get('targetValue');
+    
+    if (targetValueControl) {
+      // Clear existing validators
+      targetValueControl.clearValidators();
+      
+      // Add appropriate validators based on target type
+      switch (targetType) {
+        case 'email':
+          targetValueControl.setValidators([Validators.required, Validators.email]);
+          break;
+        case 'ip':
+          targetValueControl.setValidators([Validators.required, this.ipAddressValidator()]);
+          break;
+        case 'phone':
+          targetValueControl.setValidators([Validators.required, this.phoneNumberValidator()]);
+          break;
+        default:
+          targetValueControl.setValidators([Validators.required]);
+      }
+      
+      targetValueControl.updateValueAndValidity();
+    }
+  }
+
+  // Custom validators
+  private ipAddressValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      return ipRegex.test(control.value) ? null : { invalidIp: true };
+    };
+  }
+
+  private phoneNumberValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+      return phoneRegex.test(control.value) ? null : { invalidPhone: true };
+    };
   }
 
   loadRelatedAccounts(): void {
@@ -675,21 +755,17 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     const placeholders = {
       email: "user@example.com",
       ip: "192.168.1.1",
-      device: "device_fingerprint_hash",
       phone: "+1234567890",
-      user_id: "user_12345",
     };
-    return placeholders[targetType as keyof typeof placeholders] || "";
+    return placeholders[targetType as keyof typeof placeholders] || "Enter target value";
   }
 
   // Utility methods for icons and labels
   getTargetIconName(targetType: string): string {
-    switch (targetType) {
+    switch (targetType?.toLowerCase()) {
       case 'email': return 'mail';
       case 'ip': return 'globe';
-      case 'device': return 'smartphone';
       case 'phone': return 'phone';
-      case 'user_id': return 'user';
       default: return 'user';
     }
   }
@@ -698,15 +774,13 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     const labels = {
       email: "Email Address",
       ip: "IP Address",
-      device: "Device Fingerprint",
       phone: "Phone Number",
-      user_id: "User ID",
     };
-    return labels[targetType as keyof typeof labels] || targetType;
+    return labels[targetType?.toLowerCase() as keyof typeof labels] || targetType;
   }
 
   getCategoryIconName(category: string): string {
-    switch (category) {
+    switch (category?.toUpperCase()) {
       case 'FRAUD': return 'alert-triangle';
       case 'SPAM': return 'message-circle';
       case 'ABUSE': return 'slash';
@@ -726,11 +800,11 @@ export class BlacklistComponent implements OnInit, OnDestroy {
       FAKE_ACCOUNT: "Fake Account",
       POLICY_VIOLATION: "Policy Violation",
     };
-    return labels[category as keyof typeof labels] || category;
+    return labels[category?.toUpperCase() as keyof typeof labels] || category;
   }
 
   getRiskIconName(riskLevel: string): string {
-    switch (riskLevel) {
+    switch (riskLevel?.toUpperCase()) {
       case 'CRITICAL': return 'flame';
       case 'HIGH': return 'trending-up';
       case 'MEDIUM': return 'activity';
@@ -740,7 +814,7 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   getStatusIconName(status: string): string {
-    switch (status) {
+    switch (status?.toUpperCase()) {
       case 'ACTIVE': return 'lock';
       case 'APPEALED': return 'clock';
       case 'EXPIRED': return 'calendar-x';
@@ -849,6 +923,7 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   editEntry(entry: BlacklistEntry): void {
+    this.editingEntryId = entry.id;
     this.blacklistForm.patchValue({
       targetType: entry.targetType.toLowerCase(),
       targetValue: entry.targetValue,
@@ -861,6 +936,8 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     });
     
     this.showEditModal = true;
+    this.isEditMode = true;
+    this.cdr.detectChanges();
   }
 
   viewIncidentHistory(entry: BlacklistEntry): void {
@@ -879,15 +956,27 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   extendBan(entry: BlacklistEntry): void {
-    const date = prompt("Enter new expiry date (YYYY-MM-DD):");
-    if (date) {
-      const newExpiryDate = new Date(date);
-      this.blacklistService.extendBan(entry.id, newExpiryDate)
+    this.extendingEntry = entry;
+    this.extendBanForm.patchValue({
+      newExpiryDate: entry.expiryDate ? entry.expiryDate.toString().split('T')[0] : '',
+      reason: '' // Reason will be added by user
+    });
+    this.showExtendBanModal = true;
+    this.cdr.detectChanges();
+  }
+
+  submitExtendBan(): void {
+    if (this.extendBanForm.valid && this.extendingEntry) {
+      const formValue = this.extendBanForm.value;
+      const newExpiryDate = new Date(formValue.newExpiryDate);
+      
+      this.blacklistService.extendBan(this.extendingEntry.id, newExpiryDate)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
             this.toastr.success('Ban extended successfully');
             this.loadData();
+            this.closeExtendBanModal();
           },
           error: (error) => {
             this.toastr.error('Failed to extend ban');
@@ -895,6 +984,13 @@ export class BlacklistComponent implements OnInit, OnDestroy {
           }
         });
     }
+  }
+
+  closeExtendBanModal(): void {
+    this.showExtendBanModal = false;
+    this.extendingEntry = null;
+    this.extendBanForm.reset();
+    this.cdr.detectChanges();
   }
 
   getAffectedAccounts(): number {

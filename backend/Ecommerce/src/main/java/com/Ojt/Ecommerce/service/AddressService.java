@@ -7,8 +7,7 @@ import com.Ojt.Ecommerce.dto.AddressDTO;
 public interface AddressService {
     Long addNewAddress(AddressDTO dto);
     List<AddressDTO> getAddressByUserId(Long userId);
-    Long updateAddress(Long id, AddressDTO dto);
+    com.Ojt.Ecommerce.entity.Address updateAddress(Long id, AddressDTO dto);
     void deleteAddress(Long id);
-
-
+    AddressDTO convertToDTO(com.Ojt.Ecommerce.entity.Address address);
 }

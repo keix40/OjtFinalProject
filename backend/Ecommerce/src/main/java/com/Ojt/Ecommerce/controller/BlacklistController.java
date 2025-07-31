@@ -4,6 +4,7 @@ import com.Ojt.Ecommerce.entity.BlacklistEntry;
 import com.Ojt.Ecommerce.service.BlacklistService;
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -77,6 +78,7 @@ public class BlacklistController {
         return ResponseEntity.ok(blacklistService.getStats());
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "BLACKLIST", description = "Added entry to blacklist", severityLevel = "HIGH")
     @PostMapping("/entries")
     @RequiresPermission(value = BLACKLIST_CREATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> addEntry(@RequestBody BlacklistEntry entry) {
@@ -89,14 +91,17 @@ public class BlacklistController {
         return ResponseEntity.ok(blacklistService.getEntry(id));
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "BLACKLIST", description = "Updated blacklist entry", severityLevel = "HIGH", entityIdParam = "id", logChanges = true)
     @PutMapping("/entries/{id}")
     @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> updateEntry(
             @PathVariable String id,
             @RequestBody BlacklistEntry entry) {
-        return ResponseEntity.ok(blacklistService.updateEntry(id, entry));
+        BlacklistEntry updatedEntry = blacklistService.updateEntry(id, entry);
+        return ResponseEntity.ok(updatedEntry);
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "BLACKLIST", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/entries/{id}")
     @RequiresPermission(value = BLACKLIST_DELETE, level = "advanced")
     public ResponseEntity<Void> deleteEntry(@PathVariable String id) {
@@ -104,10 +109,12 @@ public class BlacklistController {
         return ResponseEntity.ok().build();
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "BLACKLIST", description = "Lifted ban for blacklist entry", severityLevel = "HIGH", entityIdParam = "id", logChanges = true)
     @PostMapping("/entries/{id}/lift")
     @RequiresPermission(value = BLACKLIST_UPDATE, level = "advanced")
     public ResponseEntity<BlacklistEntry> liftBan(@PathVariable String id) {
-        return ResponseEntity.ok(blacklistService.liftBan(id));
+        BlacklistEntry updatedEntry = blacklistService.liftBan(id);
+        return ResponseEntity.ok(updatedEntry);
     }
 
     @PostMapping("/entries/bulk-lift")

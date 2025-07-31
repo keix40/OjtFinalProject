@@ -539,9 +539,9 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-    public boolean updateOrderStatus(Long orderId, String statusStr, Long refundId) {
+    public com.Ojt.Ecommerce.entity.UserOrder updateOrderStatus(Long orderId, String statusStr, Long refundId) {
         Optional<UserOrder> optionalOrder = repo.findById(orderId);
-        if (optionalOrder.isEmpty()) return false;
+        if (optionalOrder.isEmpty()) return null;
 
         UserOrder order = optionalOrder.get();
 
@@ -596,7 +596,7 @@ public class OrderService {
 
         notificationService.createNotificationForUser(order.getUser().getEmail(), message, notiType, link,notiCate);
 
-        return true;
+        return order;
     }
 
     private UserOrderListDTO convertToDTO(UserOrder order) {

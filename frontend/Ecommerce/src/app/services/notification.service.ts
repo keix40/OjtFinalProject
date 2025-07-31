@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { environment } from '../../environments/environment';
 
 export interface NotificationData {
   message: string;
@@ -64,25 +65,25 @@ export class NotificationService {
 
   // Get notifications specifically for admin users only
   getAdminOnlyNotifications(): Observable<Notification[]> {
-    return this.http.get<Notification[]>('/api/notifications/admin-only');
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/admin-only`);
   }
 
   // Role-based notification methods
   getNotificationsByRole(roleName: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`/api/notifications/role/${roleName}`);
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/role/${roleName}`);
   }
 
   getNotificationsByRoleAndCategory(roleName: string, category: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`/api/notifications/role/${roleName}/category/${category}`);
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/role/${roleName}/category/${category}`);
   }
 
   getNotificationsByRoleAndType(roleName: string, type: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`/api/notifications/role/${roleName}/type/${type}`);
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/role/${roleName}/type/${type}`);
   }
 
   // Get notifications for current user based on their role
   getCurrentUserNotifications(): Observable<Notification[]> {
-    return this.http.get<Notification[]>('/api/notifications/current-user');
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/current-user`);
   }
 
   // Get role-specific notifications based on current user's role
@@ -165,7 +166,7 @@ export class NotificationService {
   // Get notifications for current user with role-based filtering
   getCurrentUserRoleNotifications(): Observable<Notification[]> {
     // Use the correct endpoint that any authenticated user can access
-    return this.http.get<Notification[]>('/api/notifications/current-user/role-specific');
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/current-user/role-specific`);
   }
 
   // Get notifications for specific role with category filtering
@@ -212,7 +213,7 @@ export class NotificationService {
 
   // Create sample notifications for testing
   createSampleNotifications(): Observable<any> {
-    return this.http.post<any>('/api/notifications/test/create-sample', {});
+    return this.http.post<any>(`${environment.apiUrl}/notifications/test/create-sample`, {});
   }
 
   // Delete notification

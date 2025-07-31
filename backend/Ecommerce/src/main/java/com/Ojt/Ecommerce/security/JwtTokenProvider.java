@@ -89,6 +89,11 @@ public class JwtTokenProvider implements InitializingBean {
         return claims.get("roles", String.class);
     }
 
+    public String getPhoneNumberFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("phoneNumber", String.class);
+    }
+
 
 
     public boolean validateToken(String token) {
