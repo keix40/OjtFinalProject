@@ -91,7 +91,7 @@
             <div *ngFor="let attrName of objectKeys(attributeValuesMap)">
               <h3 class="text-lg font-semibold text-gray-800 mb-3 capitalize">{{ attrName }}:</h3>
               <div class="flex flex-wrap gap-3">
-                <ng-container *ngIf="attrName.toLowerCase() === 'color'; else regularOptions">
+                <ng-container *ngIf="isColorAttribute(attrName); else regularOptions">
                   <button
                     *ngFor="let value of attributeValuesMap[attrName]"
                     class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all"
@@ -543,6 +543,11 @@
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">No related products found</h3>
           <p class="text-sm text-gray-600">We couldn't find any products related to this item.</p>
+          <button 
+            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            (click)="debugRelatedProducts()">
+            Debug Related Products
+          </button>
         </div>
       </div>
     </div>

@@ -59,8 +59,8 @@
               >
                 <i class="fas text-sm" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
               </button>
-            </div>
-          </div>
+    </div>
+      </div>
 
           <!-- Forgot Password -->
           <div class="flex justify-end">
@@ -70,8 +70,8 @@
               class="text-slate-900 hover:text-slate-500 text-sm font-medium transition-colors hover:underline"
             >
               Forgot Password?
-            </button>
-          </div>
+        </button>
+      </div>
 
           <!-- Submit Button -->
           <button 
@@ -89,19 +89,19 @@
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-transparent text-slate-900 font-medium">or</span>
             </div>
-          </div>
+      </div>
 
           <!-- Register Link -->
           <div class="text-center">
             <span class="text-slate-900 text-sm">Don't have an account? </span>
             <a routerLink="/register" class="text-slate-800 hover:text-slate-500 font-bold transition-colors underline">Register</a>
-          </div>
+      </div>
         </form>
       </div>
-    </div>
   </div>
+</div>
 
-  <!-- Forgot Password Modal -->
+<!-- Forgot Password Modal -->
   <div *ngIf="showForgotPasswordModal" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
     <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
@@ -125,14 +125,14 @@
           (click)="sendForgotPasswordOtp()" 
           [disabled]="isSendingOtp"
         >
-          <span *ngIf="!isSendingOtp">Send OTP</span>
-          <span *ngIf="isSendingOtp">Sending...</span>
-        </button>
-      </div>
+        <span *ngIf="!isSendingOtp">Send OTP</span>
+        <span *ngIf="isSendingOtp">Sending...</span>
+      </button>
     </div>
   </div>
+  </div>
 
-  <!-- OTP Modal -->
+<!-- OTP Modal -->
   <div *ngIf="showOtpModal" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
     <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
@@ -155,14 +155,14 @@
           (click)="verifyOtp()" 
           [disabled]="isVerifyingOtp"
         >
-          <span *ngIf="!isVerifyingOtp">Verify OTP</span>
-          <span *ngIf="isVerifyingOtp">Verifying...</span>
-        </button>
-      </div>
+        <span *ngIf="!isVerifyingOtp">Verify OTP</span>
+        <span *ngIf="isVerifyingOtp">Verifying...</span>
+      </button>
     </div>
   </div>
+  </div>
 
-  <!-- Reset Password Modal -->
+<!-- Reset Password Modal -->
   <div *ngIf="showResetModal" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
     <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
@@ -192,14 +192,14 @@
           (click)="resetPassword()" 
           [disabled]="isResettingPassword"
         >
-          <span *ngIf="!isResettingPassword">Reset Password</span>
-          <span *ngIf="isResettingPassword">Resetting...</span>
-        </button>
-      </div>
+        <span *ngIf="!isResettingPassword">Reset Password</span>
+        <span *ngIf="isResettingPassword">Resetting...</span>
+      </button>
     </div>
   </div>
+  </div>
 
-  <!-- CAPTCHA Modal -->
+<!-- CAPTCHA Modal -->
   <div *ngIf="showCaptchaModal" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
     <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
@@ -222,10 +222,10 @@
           (click)="verifyCaptcha()" 
           [disabled]="isVerifyingCaptcha"
         >
-          <span *ngIf="!isVerifyingCaptcha">Verify</span>
-          <span *ngIf="isVerifyingCaptcha">Verifying...</span>
-        </button>
-      </div>
+        <span *ngIf="!isVerifyingCaptcha">Verify</span>
+        <span *ngIf="isVerifyingCaptcha">Verifying...</span>
+      </button>
     </div>
+  </div>
   </div>
 </div>

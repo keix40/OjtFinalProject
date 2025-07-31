@@ -1179,13 +1179,13 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
 
     if (this.productForm.valid) {
       const formData = this.productForm.value;
-      // --- Merge removed variants for soft delete ---
-      if (!formData.variants) formData.variants = [];
-      // Add removed variants with status: 0
-      for (const removedId of this.removedVariantIds) {
-        formData.variants.push({ id: removedId, status: 0 });
+      
+      // Filter out removed variants from the form data
+      if (formData.variants && Array.isArray(formData.variants)) {
+        formData.variants = formData.variants.filter((v: any) => v.status !== 0);
       }
-      // Ensure all other variants have status: 1 and correct attributes
+      
+      // Ensure all variants have status: 1 and correct attributes
       if (formData.variants && Array.isArray(formData.variants)) {
         formData.variants = formData.variants.map((v: any, idx: number) => {
           if (v.status === undefined) v.status = 1;
@@ -1203,6 +1203,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
           return v;
         });
       }
+      
       const fd = new FormData();
       // Map category-brand pairs from the FormArray
       const categoryBrandPairs = this.categoryBrandArray.controls.map((group: any) => ({
@@ -1213,6 +1214,12 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
       formData.categoryBrandPairsMarkedForDeletion = this.removedCategoryBrandPairs;
       formData.imagesMarkedForDeletion = this.imagesMarkedForDeletion;
       formData.variantImagesMarkedForDeletion = this.variantImagesMarkedForDeletion;
+      
+      // Add removed variant IDs as a separate field for backend processing
+      if (this.removedVariantIds.length > 0) {
+        formData.removedVariantIds = this.removedVariantIds;
+      }
+      
       const productBlob = new Blob([JSON.stringify(formData)], { type: 'application/json' });
       fd.append('product', productBlob);
       // Product images
@@ -1251,6 +1258,13 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
           },
           error: (err) => {
             console.error('Error updating product:', err);
+            // Show error message to user
+            Swal.fire({
+              icon: 'error',
+              title: 'Error updating product',
+              text: 'An error occurred while updating the product. Please try again.',
+              confirmButtonText: 'OK'
+            });
           }
         });
       } else {
@@ -1268,6 +1282,13 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
         },
         error: (err) => {
           console.error('Error creating product:', err);
+          // Show error message to user
+          Swal.fire({
+            icon: 'error',
+            title: 'Error creating product',
+            text: 'An error occurred while creating the product. Please try again.',
+            confirmButtonText: 'OK'
+          });
         }
       });
       }

@@ -140,7 +140,9 @@
       <!-- Recommended Products (dynamic) -->
       <div class="mt-8 bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 animate-fade-in hover-lift scrollbar-hide"
         style="animation-delay: 0.2s" *ngIf="relatedProducts.length > 0">
-        <h3 class="text-lg font-semibold text-neutral-900 mb-6">You might also like</h3>
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-semibold text-neutral-900">You might also like</h3>
+        </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 overflow-y-auto">
           <div *ngFor="let product of relatedProducts; let i = index" 
                class="group cursor-pointer bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden hover:shadow-xl hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1 animate-slide-up"
@@ -212,6 +214,22 @@
             </div>
           </div>
         </div>
+      </div>
+      
+      <!-- No Related Products Found -->
+      <div *ngIf="cartItems.length > 0 && relatedProducts.length === 0" class="mt-8 bg-white rounded-2xl shadow-sm border border-neutral-200 p-6 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No related products found</h3>
+        <p class="text-sm text-gray-600 mb-4">We couldn't find any products related to your cart items.</p>
+        <button 
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          (click)="debugCartRelatedProducts()">
+          Debug Related Products
+        </button>
       </div>
     </div>
     <!-- Order Summary -->

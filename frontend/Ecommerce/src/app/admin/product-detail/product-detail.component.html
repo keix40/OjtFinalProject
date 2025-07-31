@@ -89,10 +89,10 @@
               <div *ngFor="let attrName of objectKeys(attributeValuesMap)">
                 <h3 class="text-lg font-semibold text-slate-800 mb-3 capitalize">{{ attrName }}:</h3>
                 <div class="flex flex-wrap gap-3">
-                  <ng-container *ngIf="attrName.toLowerCase() === 'color'; else regularOptions">
+                  <ng-container *ngIf="isColorAttribute(attrName); else regularOptions">
                     <button
                       *ngFor="let value of attributeValuesMap[attrName]"
-                      class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center"
+                      class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all"
                       [class.border-blue-500]="selectedAttributes[attrName] === value"
                       [class.border-slate-300]="selectedAttributes[attrName] !== value"
                       [class.opacity-50]="isAttributeValueDisabled(attrName, value)"
@@ -107,7 +107,7 @@
                   <ng-template #regularOptions>
                     <button
                       *ngFor="let value of attributeValuesMap[attrName]"
-                      class="px-4 py-2 rounded-lg font-medium"
+                      class="px-4 py-2 rounded-lg font-medium transition-all"
                       [class.bg-blue-600]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
                       [class.text-white]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
                       [class.bg-slate-100]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
@@ -267,6 +267,15 @@
                 </div>
               </ng-container>
             </div>
+            
+            <!-- Test button for modal -->
+            <div class="mt-2">
+              <button 
+                class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600"
+                (click)="testModal()">
+                Test Modal
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -276,22 +285,77 @@
 
 <!-- Media Preview Modal as ng-template -->
 <ng-template #mediaPreviewModal let-modal>
-  <div class="fixed inset-0 z-50 flex items-center justify-center">
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-    <button type="button" class="absolute top-6 right-8 text-slate-200 hover:text-white text-3xl z-50" (click)="modal.dismiss()">&times;</button>
-    <div class="relative flex items-center justify-center w-full max-w-2xl">
-      <button *ngIf="mediaModalCanGoLeft" (click)="mediaModalPrev()" class="absolute left-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-black bg-opacity-75 backdrop-blur-sm"></div>
+    
+    <!-- Close button -->
+    <button 
+      type="button" 
+      class="absolute top-4 right-4 text-white hover:text-gray-300 text-3xl z-50 transition-colors duration-200 bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center" 
+      (click)="modal.dismiss()">
+      &times;
     </button>
-    <ng-container *ngIf="mediaModalCurrentType === 'image'">
-        <img [src]="mediaModalCurrentUrl" class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40" alt="Media Preview" />
-    </ng-container>
-    <ng-container *ngIf="mediaModalCurrentType === 'video'">
-        <video [src]="mediaModalCurrentUrl" class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40" controls></video>
-    </ng-container>
-      <button *ngIf="mediaModalCanGoRight" (click)="mediaModalNext()" class="absolute right-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    
+    <!-- Modal content -->
+    <div class="relative flex items-center justify-center w-full max-w-4xl max-h-[90vh]">
+      
+      <!-- Previous button -->
+      <button 
+        *ngIf="mediaModalCanGoLeft" 
+        (click)="mediaModalPrev()" 
+        class="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full p-3 z-50 focus:outline-none transition-all duration-200">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
       </button>
+      
+      <!-- Media content -->
+      <div class="relative max-w-full max-h-full">
+        <ng-container *ngIf="mediaModalCurrentType === 'image' && mediaModalCurrentUrl">
+          <img 
+            [src]="mediaModalCurrentUrl" 
+            class="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl" 
+            alt="Media Preview"
+            (error)="logError('Image failed to load:', mediaModalCurrentUrl)"
+            (load)="logInfo('Image loaded successfully:', mediaModalCurrentUrl)" />
+        </ng-container>
+        
+        <ng-container *ngIf="mediaModalCurrentType === 'video' && mediaModalCurrentUrl">
+          <video 
+            [src]="mediaModalCurrentUrl" 
+            class="max-h-[80vh] max-w-full object-contain rounded-lg shadow-2xl" 
+            controls
+            (error)="logError('Video failed to load:', mediaModalCurrentUrl)"
+            (loadstart)="logInfo('Video loading started:', mediaModalCurrentUrl)">
+          </video>
+        </ng-container>
+        
+        <!-- Loading indicator -->
+        <div *ngIf="!mediaModalCurrentUrl" class="flex items-center justify-center w-64 h-64 bg-gray-100 rounded-lg">
+          <div class="text-gray-500">Loading...</div>
+        </div>
+        
+        <!-- Error indicator -->
+        <div *ngIf="mediaModalCurrentUrl && !mediaModalCurrentType" class="flex items-center justify-center w-64 h-64 bg-gray-100 rounded-lg">
+          <div class="text-red-500">Error loading media</div>
+        </div>
+      </div>
+      
+      <!-- Next button -->
+      <button 
+        *ngIf="mediaModalCanGoRight" 
+        (click)="mediaModalNext()" 
+        class="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-75 text-white rounded-full p-3 z-50 focus:outline-none transition-all duration-200">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+      
+      <!-- Media counter -->
+      <div *ngIf="getMediaModalArray().length > 1" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+        {{ mediaModalCurrentIndex + 1 }} / {{ getMediaModalArray().length }}
+      </div>
     </div>
   </div>
 </ng-template>

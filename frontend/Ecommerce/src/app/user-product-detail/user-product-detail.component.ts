@@ -1514,16 +1514,17 @@ checkFirstTimeBuyerDiscount(): void {
     console.log('CategoryBrandPairs:', this.product?.categoryBrandPairs);
     console.log('CategoryBrandArray:', this.product?.categoryBrandArray);
     
-    if (this.product?.categoryBrandPairs?.length) {
-      this.product.categoryBrandPairs.forEach((pair: any) => {
+    // Try multiple ways to get category and brand IDs
+    if (this.product?.categoryBrandArray?.length) {
+      this.product.categoryBrandArray.forEach((pair: any) => {
         if (pair.categoryId) categoryIds.push(pair.categoryId);
         if (pair.brandId) brandIds.push(pair.brandId);
       });
     }
     
-    // Fallback: try to get from categoryBrandArray if categoryBrandPairs is empty
-    if (categoryIds.length === 0 && brandIds.length === 0 && this.product?.categoryBrandArray?.length) {
-      this.product.categoryBrandArray.forEach((pair: any) => {
+    // Fallback: try categoryBrandPairs if categoryBrandArray is empty
+    if (categoryIds.length === 0 && brandIds.length === 0 && this.product?.categoryBrandPairs?.length) {
+      this.product.categoryBrandPairs.forEach((pair: any) => {
         if (pair.categoryId) categoryIds.push(pair.categoryId);
         if (pair.brandId) brandIds.push(pair.brandId);
       });
@@ -1534,14 +1535,23 @@ checkFirstTimeBuyerDiscount(): void {
       brandIds.push(this.product.brand.id);
     }
     
+    // Additional fallback: try to extract from product properties
+    if (this.product?.categories?.length) {
+      this.product.categories.forEach((category: any) => {
+        if (category.id && !categoryIds.includes(category.id)) {
+          categoryIds.push(category.id);
+        }
+      });
+    }
+    
     console.log('Category IDs:', categoryIds);
     console.log('Brand IDs:', brandIds);
     
     // Check if we have valid category or brand IDs
     if (categoryIds.length === 0 && brandIds.length === 0) {
-      console.log('No category or brand IDs found for related products');
-      this.relatedProducts = [];
-      this.isLoadingRelatedProducts = false;
+      console.log('No category or brand IDs found for related products, trying fallback...');
+      // Fallback: load trending or featured products
+      this.loadFallbackRelatedProducts();
       return;
     }
 
@@ -1554,15 +1564,74 @@ checkFirstTimeBuyerDiscount(): void {
           this.relatedProducts = this.shuffleArray(products).slice(0, 5);
           console.log('Related products loaded:', this.relatedProducts.length);
         } else {
-          console.log('No related products found from backend');
-          this.relatedProducts = [];
+          console.log('No related products found from backend, trying fallback...');
+          this.loadFallbackRelatedProducts();
         }
         this.isLoadingRelatedProducts = false;
       },
       error: (error) => {
         console.error('Failed to load related products:', error);
-        this.relatedProducts = [];
+        this.loadFallbackRelatedProducts();
+      }
+    });
+  }
+
+  // Fallback method to load trending or featured products
+  loadFallbackRelatedProducts() {
+    console.log('Loading fallback related products...');
+    const userId = this.authService.getUserId();
+    
+    // Try to get featured products first
+    this.productService.getFeaturedProducts(userId || undefined).subscribe({
+      next: (products) => {
+        if (products && products.length > 0) {
+          // Filter out the current product and get 5 random products
+          const filteredProducts = products.filter((p: any) => p.id !== this.product.id);
+          this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 5);
+          console.log('Fallback related products loaded (featured):', this.relatedProducts.length);
+        } else {
+          // If no featured products, try trending products
+          this.productService.getTrendingProducts().subscribe({
+            next: (trendingProducts) => {
+              if (trendingProducts && trendingProducts.length > 0) {
+                const filteredProducts = trendingProducts.filter((p: any) => p.id !== this.product.id);
+                this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 5);
+                console.log('Fallback related products loaded (trending):', this.relatedProducts.length);
+              } else {
+                console.log('No fallback products available');
+                this.relatedProducts = [];
+              }
+              this.isLoadingRelatedProducts = false;
+            },
+            error: (error) => {
+              console.error('Failed to load trending products:', error);
+              this.relatedProducts = [];
+              this.isLoadingRelatedProducts = false;
+            }
+          });
+        }
         this.isLoadingRelatedProducts = false;
+      },
+      error: (error) => {
+        console.error('Failed to load featured products:', error);
+        // Try trending products as last resort
+        this.productService.getTrendingProducts().subscribe({
+          next: (trendingProducts) => {
+            if (trendingProducts && trendingProducts.length > 0) {
+              const filteredProducts = trendingProducts.filter((p: any) => p.id !== this.product.id);
+              this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 5);
+              console.log('Fallback related products loaded (trending):', this.relatedProducts.length);
+            } else {
+              this.relatedProducts = [];
+            }
+            this.isLoadingRelatedProducts = false;
+          },
+          error: (trendingError) => {
+            console.error('Failed to load trending products:', trendingError);
+            this.relatedProducts = [];
+            this.isLoadingRelatedProducts = false;
+          }
+        });
       }
     });
   }
@@ -1900,10 +1969,7 @@ checkFirstTimeBuyerDiscount(): void {
 
   showReviewFormAndScroll() {
     this.showReviewForm = true;
-    this.activeTab = 'reviews';
-    setTimeout(() => {
-      this.scrollToReviewForm();
-    }, 100);
+    this.scrollToReviewForm();
   }
 
   // Add to Cart Button State Management
@@ -1943,5 +2009,22 @@ checkFirstTimeBuyerDiscount(): void {
     });
     
     return allAttributeNames.size;
+  }
+
+  // Debug method for related products
+  debugRelatedProducts() {
+    console.log('=== RELATED PRODUCTS DEBUG ===');
+    console.log('Product:', this.product);
+    console.log('Related Products:', this.relatedProducts);
+    console.log('Is Loading:', this.isLoadingRelatedProducts);
+    console.log('Product ID:', this.product?.id);
+    console.log('Category Brand Array:', this.product?.categoryBrandArray);
+    console.log('Category Brand Pairs:', this.product?.categoryBrandPairs);
+    console.log('Categories:', this.product?.categories);
+    console.log('Brand:', this.product?.brand);
+    
+    // Test the loadRelatedProducts method
+    console.log('Testing loadRelatedProducts...');
+    this.loadRelatedProducts();
   }
 }

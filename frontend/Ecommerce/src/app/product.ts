@@ -49,6 +49,9 @@ export interface ProductDTO {
     status: number;
   }[];
   
+  // Variant deletion
+  removedVariantIds?: number[];
+  
   // Rating fields
   averageRating?: number;
   reviewCount?: number;
