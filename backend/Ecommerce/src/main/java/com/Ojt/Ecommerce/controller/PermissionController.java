@@ -5,6 +5,7 @@ import com.Ojt.Ecommerce.entity.Permission;
 import com.Ojt.Ecommerce.service.PermissionService;
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,10 @@ public class PermissionController {
     @Autowired
     private PermissionService permissionService;
 
+    @Autowired
+    private com.Ojt.Ecommerce.repository.PermissionRepository permissionRepository;
+
+    @LogActivity(actionType = "CREATE", entityType = "PERMISSION", description = "Created permission", severityLevel = "MEDIUM")
     @PostMapping
     @RequiresPermission(value = PERMISSIONS_CREATE, level = "critical", description = "Create new permission")
     public Permission createPermission(@RequestBody Permission permission) {
@@ -47,6 +52,7 @@ public class PermissionController {
     }
 
 
+    @LogActivity(actionType = "DELETE", entityType = "PERMISSION", description = "Deleted permission", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     @RequiresPermission(value = PERMISSIONS_DELETE, level = "critical", description = "Delete permission")
     public void deletePermission(@PathVariable Long id) {

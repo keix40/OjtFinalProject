@@ -28,6 +28,10 @@ export class PolicyService {
     return this.http.get<Policy>(`${this.baseUrl}/${id}`);
   }
 
+  getPolicyByTitle(): Observable<Policy> {
+    return this.http.get<Policy>(`${this.baseUrl}/getreturnpolicy`);
+  }
+
   createPolicy(data: { title: string; content: string; status?: number }): Observable<Policy> {
     return this.http.post<Policy>(this.baseUrl, data);
   }

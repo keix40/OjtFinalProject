@@ -166,7 +166,7 @@ public class CategoryController {
         }
     }
 
-    @LogActivity(actionType = "DELETE", entityType = "CATEGORY", description = "Deleted category", severityLevel = "HIGH", entityIdParam = "id")
+    @LogActivity(actionType = "DELETE", entityType = "CATEGORY", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     @RequiresPermission(value = CATEGORIES_DELETE, level = "advanced")
     public ResponseEntity<?> softDeleteCategory(@PathVariable Long id) {

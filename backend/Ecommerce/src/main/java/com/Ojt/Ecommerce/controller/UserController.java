@@ -124,10 +124,32 @@ public class UserController {
     @RequiresPermission(value = USERS_ASSIGN_ROLE, level = "advanced", description = "Assign roles to users")
     public ResponseEntity<String> assignRoleToUser(
             @PathVariable Long userId,
-            @RequestParam Long roleId
+            @RequestParam Long roleId,
+            @RequestHeader("Authorization") String tokenHeader
     ) {
+        // Get current user from token to check if they're assigning role to themselves
+        String token = tokenHeader.replace("Bearer ", "");
+        String currentUserEmail = jwtTokenProvider.getEmailFromToken(token);
+        User currentUser = userRepository.findByEmail(currentUserEmail)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+        
+        // Assign role to user
         userService.assignRoleToUser(userId, roleId);
-        return ResponseEntity.ok("Role assigned successfully to user");
+        
+        // If the current user is assigning role to themselves, return a new token
+        if (currentUser.getId() == userId) {
+            // Get the updated user with new role
+            User updatedUser = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("Updated user not found"));
+            
+            // Generate new token with updated role information
+            String newToken = jwtTokenProvider.generateToken(updatedUser);
+            
+            // Return the new token in the response
+            return ResponseEntity.ok("{\"message\":\"Role assigned successfully\",\"newToken\":\"" + newToken + "\",\"userAffected\":true}");
+        }
+        
+        return ResponseEntity.ok("{\"message\":\"Role assigned successfully\",\"userAffected\":false}");
     }
 
     @GetMapping("/roles/{roleId}/users")
@@ -224,7 +246,7 @@ public class UserController {
 
     // --- Added for customer management actions ---
     // Delete user endpoint (for customer management table delete action)
-    @LogActivity(actionType = "DELETE", entityType = "USER", description = "Deleted user", severityLevel = "HIGH", entityIdParam = "id")
+    @LogActivity(actionType = "DELETE", entityType = "USER", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     @RequiresPermission(value = USERS_DELETE, level = "advanced", description = "Delete user")
     public ResponseEntity<?> deleteUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {

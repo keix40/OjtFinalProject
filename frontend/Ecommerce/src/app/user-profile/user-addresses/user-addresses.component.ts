@@ -309,7 +309,13 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
   submitAddress() {
     if (this.addressForm.valid) {
       const formValue = this.addressForm.value;
-      const newAddress = {
+      const userId = this.authService.getUserId();
+      if (!userId) {
+        alert('User ID not found. Please log in again.');
+        return;
+      }
+
+      const addressData = {
         address: formValue.address,
         city: formValue.city,
         state: formValue.state,
@@ -318,18 +324,46 @@ export class UserAddressesComponent implements OnInit, OnDestroy, AfterViewCheck
         latitude: formValue.latitude,
         longitude: formValue.longitude,
         type: formValue.addressType,
-        userId: this.authService.getUserId()
+        userId: userId
       };
 
-      this.addressService.addAddress(newAddress as Address).subscribe({
-        next: (response) => {
-          // Auto reload the page after successful address creation
-          window.location.reload();
-        },
-        error: (error) => {
-          alert('Failed to add address. Please try again.');
-        }
-      });
+      if (this.isEditMode && this.editingAddressId) {
+        // Update existing address
+        this.addressService.updateAddress(this.editingAddressId, addressData as Address).subscribe({
+          next: (response) => {
+            console.log('Address update response:', response);
+            // Update the address in the local array
+            const index = this.addresses.findIndex(addr => addr.id === this.editingAddressId);
+            if (index !== -1) {
+              this.addresses[index] = { ...this.addresses[index], ...addressData };
+            }
+            this.closeAddModal();
+            // Show success message
+            alert('Address updated successfully!');
+          },
+          error: (error) => {
+            console.error('Address update error:', error);
+            console.error('Error details:', {
+              status: error.status,
+              statusText: error.statusText,
+              message: error.message,
+              error: error.error
+            });
+            alert(`Failed to update address. Error: ${error.status} - ${error.statusText || error.message}`);
+          }
+        });
+      } else {
+        // Add new address
+        this.addressService.addAddress(addressData as Address).subscribe({
+          next: (response) => {
+            // Auto reload the page after successful address creation
+            window.location.reload();
+          },
+          error: (error) => {
+            alert('Failed to add address. Please try again.');
+          }
+        });
+      }
     } else {
       Object.keys(this.addressForm.controls).forEach(key => {
         const control = this.addressForm.get(key);

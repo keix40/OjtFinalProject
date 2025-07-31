@@ -270,16 +270,16 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   }
 
   onImageError(event: any): void {
-    // Handle image loading errors using image service
-    this.imageService.handleImageError(event, 'avatar', this.getUserDisplayName());
+    event.target.src = 'assets/images/default-avatar.png';
   }
 
-  navigateToProfile() {
-    const userId = this.authService.getUserId();
-    if (userId) {
-      this.router.navigate(['/profile', userId], { queryParams: { section: 'personal-info' } });
-    }
-  }
+
+
+  
+
+
+
+
 
   navigateToAdminProfile() {
     const userId = this.authService.getUserId();

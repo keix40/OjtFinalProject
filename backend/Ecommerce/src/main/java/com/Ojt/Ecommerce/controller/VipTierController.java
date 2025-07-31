@@ -5,6 +5,7 @@ import com.Ojt.Ecommerce.service.VipTierService;
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.constants.PermissionConstants;
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -35,18 +36,22 @@ public class VipTierController {
         return vipTierService.getTierById(id);
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "VIP_TIER", description = "Created VIP tier", severityLevel = "MEDIUM")
     @RequiresPermission(value = PermissionConstants.VIP_TIERS_CREATE,description = "Create a new VIP tier")
     @PostMapping
     public VipTier createTier(@RequestBody VipTier tier) {
         return vipTierService.createTier(tier);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "VIP_TIER", description = "Updated VIP tier", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @RequiresPermission(value = PermissionConstants.VIP_TIERS_UPDATE,description = "Update a VIP tier")
     @PutMapping("/{id}")
     public VipTier updateTier(@PathVariable Long id, @RequestBody VipTier tier) {
-        return vipTierService.updateTier(id, tier);
+        VipTier updatedTier = vipTierService.updateTier(id, tier);
+        return updatedTier;
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "VIP_TIER", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @RequiresPermission(value = PermissionConstants.VIP_TIERS_DELETE,description = "Delete a VIP tier")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteTier(@PathVariable Long id) {

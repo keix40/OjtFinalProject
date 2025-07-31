@@ -167,11 +167,12 @@
 			<artifactId>commons-csv</artifactId>
 			<version>1.10.0</version> <!-- Check for the latest version -->
 		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.postgresql</groupId>-->
-<!--			<artifactId>postgresql</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 		<!-- Apache HttpClient dependencies removed: now using Java's built-in HttpClient -->
 	</dependencies>
 

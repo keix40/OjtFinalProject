@@ -96,7 +96,7 @@ public class ProductController {
         return service.getAllActiveProductDTOs();
     }
 
-    @LogActivity(actionType = "DELETE", entityType = "PRODUCT", description = "Deleted product", severityLevel = "HIGH", entityIdParam = "id")
+    @LogActivity(actionType = "DELETE", entityType = "PRODUCT", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     @Transactional
     @RequiresPermission(value = PRODUCTS_DELETE, level = "advanced")
@@ -129,6 +129,7 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "PRODUCT", description = "Updated product", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @RequiresPermission(value = PRODUCTS_UPDATE, level = "advanced")
     public ResponseEntity<?> updateProduct(
@@ -151,7 +152,7 @@ public class ProductController {
             return ResponseEntity.badRequest().body(Map.of("message", "Failed to update product"));
         }
 
-        return ResponseEntity.ok(Map.of("message", "Product updated successfully"));
+        return ResponseEntity.ok(updatedProduct);
     }
 
     @GetMapping("/adminProductDetail/{id}")

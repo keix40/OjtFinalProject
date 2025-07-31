@@ -373,6 +373,79 @@ public class BlacklistServiceImpl implements BlacklistService {
         }
     }
 
+    // Method to get active blacklist entry by IP
+    public BlacklistEntry getActiveBlacklistByIp(String ip) {
+        try {
+            return blacklistRepository.findActiveByTargetTypeAndTargetValue(
+                BlacklistEntry.TargetType.IP, 
+                ip
+            );
+        } catch (Exception e) {
+            // If no entry found or any other error, return null
+            return null;
+        }
+    }
+
+    // Method to get active blacklist entry by phone
+    public BlacklistEntry getActiveBlacklistByPhone(String phone) {
+        try {
+            if (phone == null || phone.trim().isEmpty()) {
+                System.out.println("[BlacklistService] Phone number is null or empty");
+                return null;
+            }
+            
+            // Clean and normalize the phone number
+            String normalizedPhone = phone.trim();
+            System.out.println("[BlacklistService] Checking phone number: " + normalizedPhone);
+            
+            // First try exact match
+            BlacklistEntry entry = blacklistRepository.findActiveByTargetTypeAndTargetValue(
+                BlacklistEntry.TargetType.PHONE, 
+                normalizedPhone
+            );
+            
+            if (entry != null) {
+                System.out.println("[BlacklistService] Found exact match for phone: " + normalizedPhone);
+                return entry;
+            }
+            
+            // Try without + prefix
+            if (normalizedPhone.startsWith("+")) {
+                String withoutPlus = normalizedPhone.substring(1);
+                System.out.println("[BlacklistService] Trying without + prefix: " + withoutPlus);
+                entry = blacklistRepository.findActiveByTargetTypeAndTargetValue(
+                    BlacklistEntry.TargetType.PHONE, 
+                    withoutPlus
+                );
+                if (entry != null) {
+                    System.out.println("[BlacklistService] Found match without + prefix for phone: " + withoutPlus);
+                    return entry;
+                }
+            }
+            
+            // Try with + prefix
+            if (!normalizedPhone.startsWith("+")) {
+                String withPlus = "+" + normalizedPhone;
+                System.out.println("[BlacklistService] Trying with + prefix: " + withPlus);
+                entry = blacklistRepository.findActiveByTargetTypeAndTargetValue(
+                    BlacklistEntry.TargetType.PHONE, 
+                    withPlus
+                );
+                if (entry != null) {
+                    System.out.println("[BlacklistService] Found match with + prefix for phone: " + withPlus);
+                    return entry;
+                }
+            }
+            
+            System.out.println("[BlacklistService] No blacklist entry found for phone: " + normalizedPhone);
+            return null;
+            
+        } catch (Exception e) {
+            System.err.println("[BlacklistService] Error checking phone blacklist: " + e.getMessage());
+            return null;
+        }
+    }
+
     // Method to get blacklist entry by email and status
     @Override
     public BlacklistEntry getBlacklistByEmailAndStatus(String email, BlacklistEntry.Status status) {

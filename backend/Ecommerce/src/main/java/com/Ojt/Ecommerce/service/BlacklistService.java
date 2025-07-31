@@ -45,6 +45,12 @@ public interface BlacklistService {
     // Method to get active blacklist entry by email
     BlacklistEntry getActiveBlacklistByEmail(String email);
     
+    // Method to get active blacklist entry by IP
+    BlacklistEntry getActiveBlacklistByIp(String ip);
+    
+    // Method to get active blacklist entry by phone
+    BlacklistEntry getActiveBlacklistByPhone(String phone);
+    
     // Method to get blacklist entry by email and status
     BlacklistEntry getBlacklistByEmailAndStatus(String email, BlacklistEntry.Status status);
     
