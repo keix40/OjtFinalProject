@@ -59,8 +59,8 @@
               >
                 <i class="fas text-sm" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
               </button>
-            </div>
-          </div>
+    </div>
+      </div>
 
           <!-- Forgot Password -->
           <div class="flex justify-end">
@@ -70,8 +70,8 @@
               class="text-slate-900 hover:text-slate-500 text-sm font-medium transition-colors hover:underline"
             >
               Forgot Password?
-            </button>
-          </div>
+        </button>
+      </div>
 
           <!-- Submit Button -->
           <button 
@@ -89,19 +89,19 @@
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-transparent text-slate-900 font-medium">or</span>
             </div>
-          </div>
+      </div>
 
           <!-- Register Link -->
           <div class="text-center">
             <span class="text-slate-900 text-sm">Don't have an account? </span>
             <a routerLink="/register" class="text-slate-800 hover:text-slate-500 font-bold transition-colors underline">Register</a>
-          </div>
+      </div>
         </form>
       </div>
-    </div>
   </div>
+</div>
 
-  <!-- Forgot Password Modal -->
+<!-- Forgot Password Modal -->
   <div *ngIf="showForgotPasswordModal" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
     <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
@@ -125,14 +125,14 @@
           (click)="sendForgotPasswordOtp()" 
           [disabled]="isSendingOtp"
         >
-          <span *ngIf="!isSendingOtp">Send OTP</span>
-          <span *ngIf="isSendingOtp">Sending...</span>
-        </button>
-      </div>
+        <span *ngIf="!isSendingOtp">Send OTP</span>
+        <span *ngIf="isSendingOtp">Sending...</span>
+      </button>
     </div>
   </div>
+  </div>
 
-  <!-- OTP Modal -->
+<!-- OTP Modal -->
   <div *ngIf="showOtpModal" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
     <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
@@ -155,14 +155,14 @@
           (click)="verifyOtp()" 
           [disabled]="isVerifyingOtp"
         >
-          <span *ngIf="!isVerifyingOtp">Verify OTP</span>
-          <span *ngIf="isVerifyingOtp">Verifying...</span>
-        </button>
-      </div>
+        <span *ngIf="!isVerifyingOtp">Verify OTP</span>
+        <span *ngIf="isVerifyingOtp">Verifying...</span>
+      </button>
     </div>
   </div>
+  </div>
 
-  <!-- Reset Password Modal -->
+<!-- Reset Password Modal -->
   <div *ngIf="showResetModal" class="fixed inset-0 flex items-center justify-center z-50">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
     <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
@@ -192,39 +192,82 @@
           (click)="resetPassword()" 
           [disabled]="isResettingPassword"
         >
-          <span *ngIf="!isResettingPassword">Reset Password</span>
-          <span *ngIf="isResettingPassword">Resetting...</span>
-        </button>
-      </div>
+        <span *ngIf="!isResettingPassword">Reset Password</span>
+        <span *ngIf="isResettingPassword">Resetting...</span>
+      </button>
     </div>
   </div>
+  </div>
 
-  <!-- CAPTCHA Modal -->
-  <div *ngIf="showCaptchaModal" class="fixed inset-0 flex items-center justify-center z-50">
+<!-- CAPTCHA Modal -->
+  <div *ngIf="showCaptchaModal" class="fixed inset-0 flex items-center justify-center z-50 p-4">
     <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
-    <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
+    <div class="relative bg-white bg-opacity-20 backdrop-blur-lg rounded-2xl shadow-xl overflow-hidden p-8 max-w-md w-full border border-white/30">
       <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl"></div>
       <div class="relative z-10">
-        <div class="flex justify-between items-center mb-3">
-          <h4 class="text-lg font-bold text-slate-900 drop-shadow-lg">Security Check</h4>
-          <button class="text-slate-900 hover:text-slate-500 text-xl transition-colors" (click)="showCaptchaModal = false">&times;</button>
+        <!-- Header -->
+        <div class="text-center mb-6">
+          <h4 class="text-2xl font-bold text-gray-800 mb-2">Security Check</h4>
+          <p class="text-gray-600 text-sm">Please complete this verification to continue</p>
         </div>
-        <div class="mb-3 text-slate-500 text-center text-sm">{{ captchaQuestion }}</div>
-        <input 
-          type="text" 
-          [(ngModel)]="captchaInput" 
-          placeholder="Answer" 
-          class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 mb-3 text-sm"
-        />
-        <div class="text-red-300 text-xs mb-2" *ngIf="captchaError">{{ captchaError }}</div>
+
+        <!-- Close Button -->
         <button 
-          class="w-full bg-white/25 backdrop-blur-sm hover:bg-white/35 text-slate-900 font-bold py-2 rounded-lg transition-all duration-300 border-2 border-white/30 hover:border-white/50 text-sm" 
-          (click)="verifyCaptcha()" 
-          [disabled]="isVerifyingCaptcha"
+          class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl transition-colors" 
+          (click)="showCaptchaModal = false"
         >
-          <span *ngIf="!isVerifyingCaptcha">Verify</span>
-          <span *ngIf="isVerifyingCaptcha">Verifying...</span>
+          &times;
         </button>
+
+        <!-- CAPTCHA Question -->
+        <div class="bg-white bg-opacity-70 border border-gray-200 rounded-lg p-4 mb-6 text-center">
+          <div class="text-lg font-semibold text-gray-800 mb-2">Question:</div>
+          <div class="text-2xl font-bold text-blue-600">{{ captchaQuestion }}</div>
+        </div>
+
+        <!-- Answer Input -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">Your Answer</label>
+          <input 
+            type="text" 
+            [(ngModel)]="captchaInput" 
+            placeholder="Enter your answer" 
+            class="w-full px-4 py-3 bg-white bg-opacity-70 border border-gray-200 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-lg text-center font-semibold"
+            (keyup.enter)="verifyCaptcha()"
+            [disabled]="isVerifyingCaptcha"
+          />
+        </div>
+
+        <!-- Error Message -->
+        <div *ngIf="captchaError" class="flex items-center gap-2 text-red-500 bg-red-50 border border-red-200 rounded-lg p-3 mb-4 animate-shake">
+          <i data-lucide="alert-circle" class="w-5 h-5"></i>
+          <span class="text-sm">{{ captchaError }}</span>
+        </div>
+
+        <!-- Verify Button -->
+        <button 
+          class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" 
+          (click)="verifyCaptcha()" 
+          [disabled]="isVerifyingCaptcha || !captchaInput.trim()"
+        >
+          <div class="flex items-center justify-center gap-2">
+            <span *ngIf="!isVerifyingCaptcha">Verify Answer</span>
+            <span *ngIf="isVerifyingCaptcha">Verifying...</span>
+            <i *ngIf="isVerifyingCaptcha" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+          </div>
+        </button>
+
+        <!-- Refresh CAPTCHA -->
+        <div class="text-center mt-4">
+          <button 
+            class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors" 
+            (click)="generateCaptcha()"
+            [disabled]="isVerifyingCaptcha"
+          >
+            <i data-lucide="refresh-cw" class="w-4 h-4 inline mr-1"></i>
+            New Question
+          </button>
+        </div>
       </div>
     </div>
   </div>

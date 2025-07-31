@@ -539,11 +539,14 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-    public com.Ojt.Ecommerce.entity.UserOrder updateOrderStatus(Long orderId, String statusStr, Long refundId) {
-        Optional<UserOrder> optionalOrder = repo.findById(orderId);
-        if (optionalOrder.isEmpty()) return null;
+    public UserOrderListDTO updateOrderStatus(Long orderId, String statusStr, Long refundId) {
+        try {
+            Optional<UserOrder> optionalOrder = repo.findById(orderId);
+            if (optionalOrder.isEmpty()) {
+                throw new RuntimeException("Order not found with ID: " + orderId);
+            }
 
-        UserOrder order = optionalOrder.get();
+            UserOrder order = optionalOrder.get();
 
         StatusType type = StatusType.valueOf(statusStr.toUpperCase());
         Status status = statusRepository.findByName(type)
@@ -596,7 +599,11 @@ public class OrderService {
 
         notificationService.createNotificationForUser(order.getUser().getEmail(), message, notiType, link,notiCate);
 
-        return order;
+        // Return DTO instead of entity to avoid Hibernate proxy serialization issues
+        return convertToDTO(order);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating order status: " + e.getMessage(), e);
+        }
     }
 
     private UserOrderListDTO convertToDTO(UserOrder order) {

@@ -485,10 +485,10 @@
           </span>
         </div>
         <div class="footer-right">
-          <button type="button" class="btn btn-cancel-modal" data-bs-dismiss="modal">
+          <button type="button" class="btn btn-cancel-modal" (click)="closeUserModal()">
             Cancel
           </button>
-          <button type="button" class="btn btn-confirm-selection" (click)="confirmUserSelection()" data-bs-dismiss="modal">
+          <button type="button" class="btn btn-confirm-selection" (click)="confirmUserSelection()">
             <i class="fas fa-check"></i>
             Confirm Selection
           </button>

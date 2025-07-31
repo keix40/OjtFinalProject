@@ -17,6 +17,7 @@ import { CartItem } from '../services/cart.service';
 import { HttpClient } from '@angular/common/http';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener } from '@angular/core';
+import { ColorUtilityService } from '../services/color-utility.service';
 
 interface ProductImage {
   id: number;
@@ -173,7 +174,8 @@ export class UserProductDetailComponent implements OnInit {
     private wishlistService: WishlistService,
     private discountService: DiscountService,
     private http:HttpClient,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private colorUtilityService: ColorUtilityService
   ) {}
 
   ngOnInit(): void {
@@ -540,9 +542,21 @@ checkFirstTimeBuyerDiscount(): void {
   }
 
   isColorAttribute(attrName: string): boolean {
-    if (!attrName) return false;
-    const name = attrName.toLowerCase().trim();
-    return ['color', 'colors', 'colour', 'colours'].includes(name);
+    return this.colorUtilityService.isColorAttribute(attrName);
+  }
+
+  /**
+   * Get hex color code for a color name
+   */
+  getColorHex(colorName: string): string {
+    return this.colorUtilityService.getColorHex(colorName);
+  }
+
+  /**
+   * Get display name for a color
+   */
+  getColorDisplayName(colorName: string): string {
+    return this.colorUtilityService.getColorDisplayName(colorName);
   }
 
   // Attribute value disabling logic for user product detail

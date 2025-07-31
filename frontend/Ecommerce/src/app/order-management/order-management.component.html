@@ -432,8 +432,8 @@
             <div class="flex justify-between font-semibold">
               <span class="text-slate-700">TOTAL</span>
               <span class="text-teal-600">
-                {{ getRefundedTotal(selectedOrder) | number:'1.2-2' }} ks
-                <span *ngIf="selectedOrder.total !== getRefundedTotal(selectedOrder)" class="text-xs text-gray-400 line-through ml-2">{{ selectedOrder.total | number:'1.2-2' }} ks</span>
+                <!-- {{ getRefundedTotal(selectedOrder) | number:'1.2-2' }} ks -->
+                <span *ngIf="selectedOrder.total !== getRefundedTotal(selectedOrder)" class="text-teal-600">{{ selectedOrder.total | number:'1.2-2' }} ks</span>
                 <!-- Show refund badge and amount if money refund -->
                 <span *ngIf="getMoneyRefundStatus(selectedOrder).show" class="block text-xs text-green-600 mt-1">
                   -{{ getMoneyRefundStatus(selectedOrder).amount | number:'1.2-2' }} ks refunded

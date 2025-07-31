@@ -560,7 +560,29 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
       },
       error: (err) => {
         console.error('Error updating order status:', err);
-        Swal.fire('Error!', 'Failed to update order status.', 'error');
+        
+        // Better error handling
+        let errorMessage = 'Failed to update order status.';
+        
+        if (err.status === 500) {
+          if (err.error && err.error.message) {
+            errorMessage = err.error.message;
+          } else {
+            errorMessage = 'Server error occurred. Please try again later.';
+          }
+        } else if (err.status === 404) {
+          errorMessage = 'Order not found.';
+        } else if (err.status === 400) {
+          if (err.error && err.error.message) {
+            errorMessage = err.error.message;
+          } else {
+            errorMessage = 'Invalid request. Please check the status value.';
+          }
+        } else if (err.error && err.error.message) {
+          errorMessage = err.error.message;
+        }
+        
+        Swal.fire('Error!', errorMessage, 'error');
       }
     });
   }

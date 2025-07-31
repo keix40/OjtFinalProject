@@ -276,7 +276,7 @@ export class DiscountInsertComponent implements OnInit {
   }
 
   loadAllUsers() {
-    this.userService.getVipCustomers().subscribe({
+    this.userService.getCustomers().subscribe({
       next: (users) => {
         this.allUsers = users;
         this.filterUsersBySearch();

@@ -134,16 +134,8 @@
       </h2>
     </div>
     <div class="p-6">
-      <!-- Loading state for tiers -->
-      <div *ngIf="isLoadingTiers" class="flex items-center justify-center py-12">
-        <div class="flex items-center gap-3 text-gray-600">
-          <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
-          <span>Loading VIP tiers...</span>
-        </div>
-      </div>
-      
-      <!-- Tiers content -->
-      <div *ngIf="!isLoadingTiers" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <!-- Tiers content -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div *ngFor="let tier of vipTiersForOverview; trackBy: trackByTierId" class="flex flex-col items-center justify-between bg-white rounded-xl shadow p-6 h-full">
           <div class="flex items-center justify-center w-14 h-14 rounded-xl mb-3" [ngClass]="tier.color + ' bg-gray-100/50'">
             <i [attr.data-lucide]="tier.icon" class="w-7 h-7"></i>
@@ -165,17 +157,17 @@
     <div class="relative" (mouseleave)="showTierDropdown = false">
       <button type="button"
         class="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold shadow-md bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white transition-all duration-150 glassmorphism focus:outline-none focus:ring-2 focus:ring-blue-300 text-base"
-        (click)="showTierDropdown = !showTierDropdown" [disabled]="isLoadingTiers">
+        (click)="showTierDropdown = !showTierDropdown">
         <i data-lucide="settings" class="w-5 h-5"></i>
         <span>Manage VIP Tiers</span>
         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
       </button>
       <div *ngIf="showTierDropdown" class="absolute left-0 mt-2 w-48 bg-white/80 glassmorphism rounded-lg shadow-lg border border-gray-200 z-50 animate-fade-in">
-        <button (click)="openAddTierModal(); showTierDropdown = false" class="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-2 rounded-t-lg" [disabled]="isSubmittingTier">
+        <button (click)="openAddTierModal(); showTierDropdown = false" class="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-2 rounded-t-lg">
           <i data-lucide="plus-circle" class="w-5 h-5 text-blue-600"></i>
           Add VIP Tier
         </button>
-        <button (click)="openTierListModal(); showTierDropdown = false" class="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-2 rounded-b-lg" [disabled]="isSubmittingTier">
+        <button (click)="openTierListModal(); showTierDropdown = false" class="w-full text-left px-4 py-3 hover:bg-blue-50 flex items-center gap-2 rounded-b-lg">
           <i data-lucide="list" class="w-5 h-5 text-gray-700"></i>
           VIP Tier List
         </button>
@@ -190,27 +182,27 @@
         <div class="md:col-span-2">
         <div class="relative">
             <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4"></i>
-            <input type="text" [formControl]="searchControl" placeholder="Search customers..." class="w-full pl-10 pr-3 py-2 glassmorphism-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [disabled]="isLoadingCustomers" />
+            <input type="text" [formControl]="searchControl" placeholder="Search customers..." class="w-full pl-10 pr-3 py-2 glassmorphism-light rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>
-        <select [(ngModel)]="tierFilter" (change)="applyFilters()" class="glassmorphism-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [disabled]="isLoadingTiers">
+        <select [(ngModel)]="tierFilter" (change)="applyFilters()" class="glassmorphism-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">All Tiers</option>
           <option *ngFor="let tier of tiers" [value]="tier.name.toLowerCase()">{{ tier.name }}</option>
         </select>
-        <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="glassmorphism-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" [disabled]="isLoadingCustomers">
+        <select [(ngModel)]="statusFilter" (change)="applyFilters()" class="glassmorphism-light rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
           <option value="">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
         </select>
         <div class="flex rounded-lg glassmorphism-light p-1">
-          <button type="button" class="flex-1 px-3 py-1 rounded text-sm font-medium" [ngClass]="{'bg-blue-500 text-white': viewMode === 'cards', 'text-gray-700 hover:bg-white/50': viewMode !== 'cards'}" (click)="setViewMode('cards')" [disabled]="isLoadingCustomers">
+          <button type="button" class="flex-1 px-3 py-1 rounded text-sm font-medium" [ngClass]="{'bg-blue-500 text-white': viewMode === 'cards', 'text-gray-700 hover:bg-white/50': viewMode !== 'cards'}" (click)="setViewMode('cards')">
             <i data-lucide="grid" class="w-4 h-4 mx-auto"></i>
           </button>
-          <button type="button" class="flex-1 px-3 py-1 rounded text-sm font-medium" [ngClass]="{'bg-blue-500 text-white': viewMode === 'table', 'text-gray-700 hover:bg-white/50': viewMode !== 'table'}" (click)="setViewMode('table')" [disabled]="isLoadingCustomers">
+          <button type="button" class="flex-1 px-3 py-1 rounded text-sm font-medium" [ngClass]="{'bg-blue-500 text-white': viewMode === 'table', 'text-gray-700 hover:bg-white/50': viewMode !== 'table'}" (click)="setViewMode('table')">
             <i data-lucide="list" class="w-4 h-4 mx-auto"></i>
           </button>
         </div>
-        <button type="button" class="glassmorphism-light rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="clearFilters()" [disabled]="isLoadingCustomers">
+        <button type="button" class="glassmorphism-light rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="clearFilters()">
           Clear Filters
         </button>
     </div>
@@ -225,25 +217,17 @@
             VIP Customers (<span>{{ filteredCustomers.length }}</span>)
           </h2>
           <div class="flex gap-2">
-            <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="refreshData()" [disabled]="isRefreshingData">
-              <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 inline" [class.animate-spin]="isRefreshingData"></i>
-              {{ isRefreshingData ? 'Refreshing...' : 'Refresh' }}
+            <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="refreshData()">
+              <i data-lucide="refresh-cw" class="w-4 h-4 mr-2 inline"></i>
+              Refresh
             </button>
             
           </div>
         </div>
       </div>
       <div class="p-6">
-        <!-- Loading state for customers -->
-        <div *ngIf="isLoadingCustomers" class="flex items-center justify-center py-12">
-          <div class="flex items-center gap-3 text-gray-600">
-            <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
-            <span>Loading VIP customers...</span>
-          </div>
-        </div>
-        
         <!-- Cards View -->
-        <div *ngIf="!isLoadingCustomers && viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div *ngIf="viewMode === 'cards'" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div *ngFor="let customer of paginatedCustomers; trackBy: trackByCustomerId" class="glassmorphism-light rounded-xl p-6 border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 group">
             <div class="flex items-start justify-between mb-4">
               <div class="flex items-center gap-3">
@@ -305,20 +289,20 @@
           </div>
         </div>
         <!-- Table View -->
-        <div *ngIf="!isLoadingCustomers && viewMode === 'table'" class="overflow-x-auto">
+        <div *ngIf="viewMode === 'table'" class="overflow-x-auto">
           <!-- Bulk Actions and Export -->
           <div class="flex flex-wrap items-center justify-between mb-4 gap-2">
             <div class="flex gap-2">
-              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length || isLoadingCustomers" (click)="bulkDelete()">
+              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length" (click)="bulkDelete()">
                 <i data-lucide="trash" class="w-4 h-4 mr-1 inline text-red-600"></i>
                 Delete Selected
               </button>
-              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length || isLoadingCustomers" (click)="bulkChangeStatus()">
+              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length" (click)="bulkChangeStatus()">
                 <i data-lucide="power" class="w-4 h-4 mr-1 inline"></i>
                 Toggle Status
         </button>
       </div>
-            <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="exportVipCustomers()" [disabled]="isLoadingCustomers">
+            <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="exportVipCustomers()">
               <i data-lucide="download" class="w-4 h-4 mr-1 inline"></i>
               Export CSV
             </button>

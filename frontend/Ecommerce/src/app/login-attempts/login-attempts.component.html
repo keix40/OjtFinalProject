@@ -90,6 +90,28 @@
             <option value="30d">Last 30 Days</option>
             <option value="custom">Custom Range</option>
           </select>
+          
+          <!-- Custom Date Range Inputs -->
+          <div *ngIf="selectedTimeRange === 'custom'" class="custom-date-inputs">
+            <div class="date-input-group">
+              <label class="date-label">From:</label>
+              <input 
+                type="datetime-local" 
+                class="form-control date-input" 
+                [(ngModel)]="customDateFrom"
+                (change)="onTimeRangeChange()"
+              >
+            </div>
+            <div class="date-input-group">
+              <label class="date-label">To:</label>
+              <input 
+                type="datetime-local" 
+                class="form-control date-input" 
+                [(ngModel)]="customDateTo"
+                (change)="onTimeRangeChange()"
+              >
+            </div>
+          </div>
         </div>
   
         <div class="filter-group">
@@ -121,6 +143,11 @@
       </div>
   
       <div class="controls-right">
+        <button class="btn btn-clear-all" (click)="clearAllFilters()" title="Clear all filters" [class.active]="hasActiveFilters()">
+          <i class="fas fa-times"></i>
+          Clear All
+          <span *ngIf="hasActiveFilters()" class="filter-indicator">●</span>
+        </button>
         <button class="btn btn-export" (click)="exportData()">
           <i class="fas fa-download"></i>
           Export
@@ -283,15 +310,40 @@
     <table class="table">
       <thead>
         <tr>
-          <th>Username</th>
-          <th>IP Address</th>
-          <th>Location</th>
-          <th>Attempts</th>
-          <th>Status</th>
-          <th>Threat Level</th>
-          <th>Timestamp</th>
+          <th class="sortable" (click)="sort('username')">
+            Username
+            <i class="fas" [ngClass]="getSortIcon('username')"></i>
+          </th>
+          <th class="sortable" (click)="sort('ipAddress')">
+            IP Address
+            <i class="fas" [ngClass]="getSortIcon('ipAddress')"></i>
+          </th>
+          <th class="sortable" (click)="sort('location')">
+            Location
+            <i class="fas" [ngClass]="getSortIcon('location')"></i>
+          </th>
+          <th class="sortable" (click)="sort('attemptCount')">
+            Attempts
+            <i class="fas" [ngClass]="getSortIcon('attemptCount')"></i>
+          </th>
+          <th class="sortable" (click)="sort('timeframe')">
+            Timeframe
+            <i class="fas" [ngClass]="getSortIcon('timeframe')"></i>
+          </th>
+          <th class="sortable" (click)="sort('status')">
+            Status
+            <i class="fas" [ngClass]="getSortIcon('status')"></i>
+          </th>
+          <th class="sortable" (click)="sort('threatLevel')">
+            Threat Level
+            <i class="fas" [ngClass]="getSortIcon('threatLevel')"></i>
+          </th>
+          <th class="sortable" (click)="sort('timestamp')">
+            Timestamp
+            <i class="fas" [ngClass]="getSortIcon('timestamp')"></i>
+          </th>
           <th>Actions</th>
-          <th>Detailed Log</th> <!-- NEW COLUMN -->
+          <th>Detailed Log</th>
         </tr>
       </thead>
       <tbody>
@@ -307,7 +359,10 @@
           </td>
           <td>
             <span class="attempts-count">{{ attempt.attemptCount }}</span>
-            <span *ngIf="attempt.timeframe" class="attempts-timeframe">in {{ attempt.timeframe }}</span>
+          </td>
+          <td>
+            <span *ngIf="attempt.timeframe" class="timeframe-value">{{ attempt.timeframe }}</span>
+            <span *ngIf="!attempt.timeframe" class="text-gray-400">-</span>
           </td>
           <td>
             <span class="status-badge" [ngClass]="attempt.status">
@@ -580,13 +635,34 @@
           <table class="table min-w-[600px] md:min-w-full text-xs md:text-sm">
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>Username</th>
-                <th>IP Address</th>
-                <th>Location</th>
-                <th>Status</th>
-                <th>Threat</th>
-                <th>Attempts</th>
+                <th class="sortable" (click)="sort('timestamp', sessionActivityAttempts)">
+                  Timestamp
+                  <i class="fas" [ngClass]="getSortIcon('timestamp')"></i>
+                </th>
+                <th class="sortable" (click)="sort('username', sessionActivityAttempts)">
+                  Username
+                  <i class="fas" [ngClass]="getSortIcon('username')"></i>
+                </th>
+                <th class="sortable" (click)="sort('ipAddress', sessionActivityAttempts)">
+                  IP Address
+                  <i class="fas" [ngClass]="getSortIcon('ipAddress')"></i>
+                </th>
+                <th class="sortable" (click)="sort('location', sessionActivityAttempts)">
+                  Location
+                  <i class="fas" [ngClass]="getSortIcon('location')"></i>
+                </th>
+                <th class="sortable" (click)="sort('status', sessionActivityAttempts)">
+                  Status
+                  <i class="fas" [ngClass]="getSortIcon('status')"></i>
+                </th>
+                <th class="sortable" (click)="sort('threatLevel', sessionActivityAttempts)">
+                  Threat
+                  <i class="fas" [ngClass]="getSortIcon('threatLevel')"></i>
+                </th>
+                <th class="sortable" (click)="sort('attemptCount', sessionActivityAttempts)">
+                  Attempts
+                  <i class="fas" [ngClass]="getSortIcon('attemptCount')"></i>
+                </th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -646,11 +722,26 @@
           <table class="table min-w-[600px] md:min-w-full text-xs md:text-sm">
             <thead>
               <tr>
-                <th>Timestamp</th>
-                <th>Status</th>
-                <th>Threat</th>
-                <th>Attempts</th>
-                <th>Location</th>
+                <th class="sortable" (click)="sort('timestamp', filteredDetailedLog)">
+                  Timestamp
+                  <i class="fas" [ngClass]="getSortIcon('timestamp')"></i>
+                </th>
+                <th class="sortable" (click)="sort('status', filteredDetailedLog)">
+                  Status
+                  <i class="fas" [ngClass]="getSortIcon('status')"></i>
+                </th>
+                <th class="sortable" (click)="sort('threatLevel', filteredDetailedLog)">
+                  Threat
+                  <i class="fas" [ngClass]="getSortIcon('threatLevel')"></i>
+                </th>
+                <th class="sortable" (click)="sort('attemptCount', filteredDetailedLog)">
+                  Attempts
+                  <i class="fas" [ngClass]="getSortIcon('attemptCount')"></i>
+                </th>
+                <th class="sortable" (click)="sort('location', filteredDetailedLog)">
+                  Location
+                  <i class="fas" [ngClass]="getSortIcon('location')"></i>
+                </th>
                 <th>User Agent</th>
               </tr>
             </thead>

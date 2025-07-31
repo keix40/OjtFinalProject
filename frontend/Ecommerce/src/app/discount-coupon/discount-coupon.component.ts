@@ -106,6 +106,16 @@ isSuccess: boolean = false;
       startDate: formValue.startDate ? formValue.startDate + 'T00:00:00' : null,
       endDate: formValue.endDate ? formValue.endDate + 'T00:00:00' : null,
     };
+    if (formValue.discountType === 'PERCENTAGE') {
+      payload.discount_percent = formValue.discountValue;
+      payload.discount_amount = 0;
+    } else {
+      payload.discount_amount = formValue.discountValue;
+      payload.discount_percent = 0;
+    }
+    
+    // Remove the generic discountValue field as backend expects specific fields
+    delete payload.discountValue;
     payload.minimumSpend = formValue.minimumAmount;
     if (isCoupon) {
       // For coupon, send as array

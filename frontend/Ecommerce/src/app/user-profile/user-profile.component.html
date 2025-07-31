@@ -86,8 +86,8 @@
       <div class="content-card">
 
           <!-- Personal Info Section -->
-          <div *ngIf="activeSection === 'personal-info'" class="content-section">
-            <app-user-personal-info [userDetails]="userDetails"></app-user-personal-info>
+                   <div *ngIf="activeSection === 'personal-info'" class="content-section">
+              <app-user-personal-info [userDetails]="userDetails" [vipTierInfo]="vipTierInfo"></app-user-personal-info>
           </div>
 
           <!-- Orders Section -->
@@ -110,10 +110,6 @@
               <app-user-reviews></app-user-reviews>
           </div>
 
-          <!-- Personal Info Section -->
-          <div *ngIf="activeSection === 'personal-info'" class="content-section">
-              <app-user-personal-info [userDetails]="userDetails" [vipTierInfo]="vipTierInfo"></app-user-personal-info>
-          </div>
 
 
           <!-- Addresses Section -->

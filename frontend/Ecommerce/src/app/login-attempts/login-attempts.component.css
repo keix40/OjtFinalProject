@@ -247,6 +247,43 @@
     gap: 8px;
   }
   
+  .custom-date-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+  }
+  
+  .date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .date-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+  
+  .date-input {
+    padding: 6px 8px;
+    border: 1px solid var(--gray-300);
+    border-radius: 4px;
+    font-size: 12px;
+    background: white;
+  }
+  
+  .date-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+  }
+  
   .filter-label {
     font-weight: 500;
     color: var(--gray-700);
@@ -314,6 +351,37 @@
   .btn-export:hover, .btn-refresh:hover {
     background: var(--gray-50);
     border-color: var(--gray-400);
+  }
+  
+  .btn-clear-all {
+    background: var(--white);
+    border: 1px solid var(--gray-300);
+    color: var(--gray-600);
+    padding: 8px 16px;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-clear-all:hover {
+    background: var(--red-50);
+    border-color: var(--red-300);
+    color: var(--red-600);
+  }
+  
+  .btn-clear-all.active {
+    background: var(--red-50);
+    border-color: var(--red-300);
+    color: var(--red-600);
+  }
+  
+  .filter-indicator {
+    color: var(--red-500);
+    font-size: 12px;
+    margin-left: 4px;
   }
   
   /* Threat Indicators */
@@ -652,6 +720,39 @@
   .attempts-timeframe {
     font-size: 12px;
     color: var(--gray-500);
+  }
+  
+  .timeframe-value {
+    font-size: 14px;
+    color: var(--gray-700);
+    font-weight: 500;
+  }
+  
+  /* Enhanced sortable header styles */
+  .table th.sortable {
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    transition: all 0.2s ease;
+    padding-right: 20px;
+  }
+  
+  .table th.sortable:hover {
+    background-color: rgba(37, 99, 235, 0.05);
+    color: var(--primary-color);
+  }
+  
+  .table th.sortable i {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    transition: all 0.2s ease;
+  }
+  
+  .table th.sortable:hover i {
+    color: var(--primary-color);
   }
   
   .action-buttons {

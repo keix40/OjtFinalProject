@@ -335,7 +335,15 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   addToBlacklist(): void {
+    // Prevent multiple clicks
+    if (this.loading) {
+      return;
+    }
+
     if (this.blacklistForm.valid) {
+      this.loading = true;
+      this.cdr.markForCheck();
+      
       const formValue = this.blacklistForm.value;
       
       // Create the blacklist entry data
@@ -361,10 +369,14 @@ export class BlacklistComponent implements OnInit, OnDestroy {
               this.toastr.success('Entry updated successfully');
               this.loadData();
               this.resetForm();
+              this.loading = false;
+              this.cdr.markForCheck();
             },
             error: (error) => {
               this.toastr.error('Failed to update entry');
               console.error('Error updating entry:', error);
+              this.loading = false;
+              this.cdr.markForCheck();
             }
           });
       } else {
@@ -382,14 +394,22 @@ export class BlacklistComponent implements OnInit, OnDestroy {
                 this.toastr.success('Entry added to blacklist successfully');
                 this.loadData();
                 this.resetForm();
+                this.loading = false;
+                this.cdr.markForCheck();
               }
             },
             error: (error) => {
               this.toastr.error('Failed to add entry to blacklist');
               console.error('Error adding entry:', error);
+              this.loading = false;
+              this.cdr.markForCheck();
             }
           });
       }
+    } else {
+      // Show validation errors
+      this.markFormGroupTouched();
+      this.toastr.error('Please fill in all required fields');
     }
   }
 
@@ -415,40 +435,49 @@ export class BlacklistComponent implements OnInit, OnDestroy {
             // addedBy will be set automatically by backend to current authenticated user
           }));
 
-          // Add all related entries
-          let completed = 0;
-          relatedEntries.forEach(entry => {
-            this.blacklistService.addEntry(entry)
-              .pipe(takeUntil(this.destroy$))
-              .subscribe({
-                next: () => {
-                  completed++;
-                  if (completed === relatedEntries.length) {
-                    this.toastr.success(`Entry and ${relatedEntries.length} related accounts added to blacklist`);
-                    this.loadData();
-                    this.blacklistForm.reset();
-                    this.showEditModal = false;
-                    this.cdr.markForCheck();
-                  }
-                },
-                error: (error) => {
-                  console.error('[BlacklistComponent] Error adding related entry:', error);
-                  completed++;
-                  if (completed === relatedEntries.length) {
-                    this.toastr.warning('Main entry added, but some related accounts failed to block');
-                    this.loadData();
-                    this.blacklistForm.reset();
-                    this.showEditModal = false;
-                    this.cdr.markForCheck();
-                  }
-                }
-              });
+          // Use forkJoin for parallel execution instead of sequential
+          const relatedEntryObservables = relatedEntries.map(entry => 
+            this.blacklistService.addEntry(entry).pipe(
+              catchError(error => {
+                console.error('[BlacklistComponent] Error adding related entry:', error);
+                return of(null); // Return null for failed entries
+              })
+            )
+          );
+
+          forkJoin(relatedEntryObservables).subscribe({
+            next: (results) => {
+              const successfulEntries = results.filter(result => result !== null).length;
+              const failedEntries = results.length - successfulEntries;
+              
+              if (failedEntries === 0) {
+                this.toastr.success(`Entry and ${successfulEntries} related accounts added to blacklist`);
+              } else {
+                this.toastr.warning(`Entry added, ${successfulEntries} related accounts blocked, ${failedEntries} failed`);
+              }
+              
+              this.loadData();
+              this.blacklistForm.reset();
+              this.showEditModal = false;
+              this.loading = false;
+              this.cdr.markForCheck();
+            },
+            error: (error) => {
+              console.error('[BlacklistComponent] Error in bulk related entries:', error);
+              this.toastr.warning('Main entry added, but related accounts failed to block');
+              this.loadData();
+              this.blacklistForm.reset();
+              this.showEditModal = false;
+              this.loading = false;
+              this.cdr.markForCheck();
+            }
           });
         } else {
           this.toastr.success('Entry added to blacklist successfully (no related accounts found)');
           this.loadData();
           this.blacklistForm.reset();
           this.showEditModal = false;
+          this.loading = false;
           this.cdr.markForCheck();
         }
       },
@@ -458,6 +487,7 @@ export class BlacklistComponent implements OnInit, OnDestroy {
         this.loadData();
         this.blacklistForm.reset();
         this.showEditModal = false;
+        this.loading = false;
         this.cdr.markForCheck();
       }
     });
@@ -466,6 +496,13 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   private findRelatedAccounts(targetType: string, targetValue: string): Observable<any[]> {
     // Call backend API to find related accounts
     return this.blacklistService.findRelatedAccounts(targetType, targetValue);
+  }
+
+  private markFormGroupTouched(): void {
+    Object.keys(this.blacklistForm.controls).forEach(key => {
+      const control = this.blacklistForm.get(key);
+      control?.markAsTouched();
+    });
   }
 
   // Similar updates for other methods that modify state

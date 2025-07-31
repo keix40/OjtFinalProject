@@ -98,19 +98,24 @@
             <div *ngFor="let attrName of objectKeys(attributeValuesMap)">
               <h3 class="text-lg font-semibold text-gray-800 mb-3 capitalize">{{ attrName }}:</h3>
               <div class="flex flex-wrap gap-3">
-                <ng-container *ngIf="attrName.toLowerCase() === 'color'; else regularOptions">
+                <ng-container *ngIf="isColorAttribute(attrName); else regularOptions">
                   <button
                     *ngFor="let value of attributeValuesMap[attrName]"
-                    class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all"
+                    class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all relative group"
                     [class.border-blue-500]="selectedAttributes[attrName] === value"
                     [class.border-gray-300]="selectedAttributes[attrName] !== value"
                     [class.opacity-50]="isAttributeValueDisabled(attrName, value)"
                     [class.grayscale]="isAttributeValueDisabled(attrName, value)"
                     [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
                     (click)="toggleAttribute(attrName, value)"
-                    [disabled]="isAttributeValueDisabled(attrName, value)">
-                    <span class="w-8 h-8 rounded-full" [ngStyle]="{'background-color': value.toLowerCase()}"></span>
-                    <span class="sr-only">{{ value }}</span>
+                    [disabled]="isAttributeValueDisabled(attrName, value)"
+                    [title]="getColorDisplayName(value)">
+                    <span class="w-8 h-8 rounded-full" [ngStyle]="{'background-color': getColorHex(value)}"></span>
+                    <span class="sr-only">{{ getColorDisplayName(value) }}</span>
+                    <!-- Tooltip -->
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      {{ getColorDisplayName(value) }}
+                    </div>
                   </button>
                 </ng-container>
                 <ng-template #regularOptions>

@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { ReviewService } from '../../services/review.service';
 import { PermissionService } from '../../services/permission.service';
 import { PermissionConstants } from '../../constants/permission.constants';
+import { ColorUtilityService } from '../../services/color-utility.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 
 interface ProductImage {
@@ -89,7 +90,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     private router: Router,
     private reviewService: ReviewService,
     private cdr: ChangeDetectorRef,
-    permissionService: PermissionService
+    permissionService: PermissionService,
+    private colorUtilityService: ColorUtilityService
   ) {
     this.permissionService = permissionService;
   }
@@ -297,6 +299,27 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
       });
     });
     return Array.from(values);
+  }
+
+  /**
+   * Check if an attribute name represents a color
+   */
+  isColorAttribute(attrName: string): boolean {
+    return this.colorUtilityService.isColorAttribute(attrName);
+  }
+
+  /**
+   * Get hex color code for a color name
+   */
+  getColorHex(colorName: string): string {
+    return this.colorUtilityService.getColorHex(colorName);
+  }
+
+  /**
+   * Get display name for a color
+   */
+  getColorDisplayName(colorName: string): string {
+    return this.colorUtilityService.getColorDisplayName(colorName);
   }
 
   toggleAttribute(attrName: string, value: string): void {

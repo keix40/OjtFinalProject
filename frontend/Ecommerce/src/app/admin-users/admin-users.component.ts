@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewChecked } from '@angular/core';
+import { Router } from '@angular/router';
 import { ImageService } from '../services/image.service';
 import { AdminUserService, AdminUser } from '../services/admin-user.service';
 import { PermissionCategoryService, PermissionCategory } from '../services/permission-category.service';
@@ -15,15 +16,7 @@ interface Permission {
   description: string;
 }
 
-interface AdminActivity {
-  id: string;
-  type: string;
-  action: string;
-  description: string;
-  timestamp: Date;
-  ipAddress: string;
-  userAgent: string;
-}
+
 
 @Component({
   selector: 'app-admin-users',
@@ -44,18 +37,13 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
   editingAdmin: AdminUser | null = null;
   editFormData: { name?: string; email?: string; status?: string; roleName?: string } = {};
 
-  // Activity methods
-  selectedAdminForActivity: AdminUser | null = null;
-  adminActivities: any[] = [];
+  // Activity methods - removed since we now navigate to activity logs page
 
   // Filter properties
   searchTerm = '';
   roleFilter = '';
   statusFilter = '';
   statuses: string[] = ['active', 'inactive', 'suspended'];
-  activityFilter = '';
-  activityDateFrom = '';
-  activityDateTo = '';
 
   // UI state
   viewMode: 'table' | 'cards' = 'table';
@@ -96,7 +84,8 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     private permissionCategoryService: PermissionCategoryService,
     private roleService: RoleService,
     public permissionService: PermissionService,
-    public authService: AuthService
+    public authService: AuthService,
+    private router: Router
   ) {
     this.PermissionConstants = PermissionConstants;
     // Get current user's role level from JWT
@@ -448,14 +437,13 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
 
   // Activity methods
   viewAdminActivity(admin: AdminUser): void {
-    this.selectedAdminForActivity = admin;
-    this.adminUserService.getAdminActivities(admin.id).subscribe({
-      next: activities => {
-        this.adminActivities = activities;
-        // Open activity modal (implement modal logic as needed)
-        alert('Loaded ' + activities.length + ' activities for ' + admin.name);
-      },
-      error: err => alert('Failed to load activities: ' + (err.error?.message || err.message))
+    // Navigate to activity logs page with user filter
+    this.router.navigate(['/users/activity'], {
+      queryParams: {
+        userId: admin.id.toString(),
+        userName: admin.name,
+        userRole: admin.role
+      }
     });
   }
 
@@ -497,17 +485,7 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     return icons[status as keyof typeof icons] || 'fas fa-question-circle';
   }
 
-  getActivityIcon(type: string): string {
-    const icons = {
-      login: 'fas fa-sign-in-alt',
-      logout: 'fas fa-sign-out-alt',
-      create: 'fas fa-plus',
-      update: 'fas fa-edit',
-      delete: 'fas fa-trash',
-      security: 'fas fa-shield-alt'
-    };
-    return icons[type as keyof typeof icons] || 'fas fa-info-circle';
-  }
+
 
   getTimeAgo(date: string | Date | undefined): string {
     if (!date) return '';

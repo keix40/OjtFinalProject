@@ -669,4 +669,84 @@ strong {
   backface-visibility: visible !important;
   opacity: 1 !important;
   filter: none !important;
+}
+
+/* Enhanced Color Swatch Styles */
+.color-swatch {
+  position: relative;
+  transition: all 0.2s ease-in-out;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.color-swatch.selected {
+  box-shadow: 0 0 0 3px #0d6efd, 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Color Swatch Button Styles */
+.color-swatch-btn {
+  position: relative;
+  transition: all 0.2s ease-in-out;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.color-swatch-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.color-swatch-btn.selected {
+  box-shadow: 0 0 0 3px #0d6efd, 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Tooltip Styles */
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+  margin-bottom: 8px;
+}
+
+.tooltip.show {
+  opacity: 1;
+}
+
+/* Variant Thumbnail Styles */
+.variant-thumb {
+  min-width: 120px;
+  max-width: 150px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.variant-thumb:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.variant-thumb.selected {
+  border-color: #0d6efd !important;
+  background-color: #f8f9ff !important;
+  box-shadow: 0 0 0 2px #0d6efd, 0 4px 8px rgba(0, 0, 0, 0.15);
 } 
