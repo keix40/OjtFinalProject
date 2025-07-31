@@ -64,7 +64,7 @@ export const PermissionConstants = {
   CUSTOMERS_BLACKLIST: 'customers.blacklist',
   CUSTOMERS_UPDATE: 'customers.update',
   CUSTOMERS_DELETE: 'customers.delete',
-  
+  CUSTOMERS_VIEW_DETAILS: 'customers.view_details',
 
    //admin
    ADMIN_USERS_VIEW: 'admin_users.view',

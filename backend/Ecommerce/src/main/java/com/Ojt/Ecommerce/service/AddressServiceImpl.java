@@ -58,7 +58,7 @@ public class AddressServiceImpl implements AddressService{
                 .stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
-    private AddressDTO convertToDTO(Address address) {
+    public AddressDTO convertToDTO(Address address) {
 
         AddressDTO dto = new AddressDTO();
         dto.setId(address.getId());
@@ -77,7 +77,7 @@ public class AddressServiceImpl implements AddressService{
     }
 
     @Override
-    public Long updateAddress(Long id, AddressDTO dto) {
+    public com.Ojt.Ecommerce.entity.Address updateAddress(Long id, AddressDTO dto) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
 
@@ -98,8 +98,7 @@ public class AddressServiceImpl implements AddressService{
         address.setType(dto.getType());
         address.setUpdateDate(LocalDateTime.now());
 
-        addressRepository.save(address);
-        return address.getId();
+        return addressRepository.save(address);
     }
 
     @Override

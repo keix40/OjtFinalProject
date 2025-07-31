@@ -1,12 +1,13 @@
 package com.Ojt.Ecommerce.controller;
 
-import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import com.Ojt.Ecommerce.dto.LoginAttemptDTO;
 import com.Ojt.Ecommerce.dto.PagedResponse;
 import com.Ojt.Ecommerce.service.LoginAttemptService;
 import com.Ojt.Ecommerce.service.SecurityPolicyService;
 import com.Ojt.Ecommerce.entity.SecurityPolicyRule;
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
+import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,9 @@ public class LoginAttemptController {
     @Autowired
     private SecurityPolicyService securityPolicyService;
 
+    @Autowired
+    private com.Ojt.Ecommerce.repository.LoginAttemptRepository loginAttemptRepository;
+
     // ✅ Get all login attempts
     @GetMapping
     @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
@@ -38,28 +42,24 @@ public class LoginAttemptController {
 
     // ✅ Filter by status (e.g., failed, successful)
     @GetMapping("/status/{status}")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getByStatus(@PathVariable String status) {
         return ResponseEntity.ok(loginAttemptService.getByStatus(status));
     }
 
     // ✅ Filter by threat level (e.g., critical, medium)
     @GetMapping("/threat/{level}")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getByThreatLevel(@PathVariable String level) {
         return ResponseEntity.ok(loginAttemptService.getByThreatLevel(level));
     }
 
     // ✅ Search by username/IP/location
     @GetMapping("/search")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> search(@RequestParam String keyword) {
         return ResponseEntity.ok(loginAttemptService.search(keyword));
     }
 
     // ✅ Filter by time range
     @GetMapping("/range")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getByTimeRange(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
@@ -68,6 +68,7 @@ public class LoginAttemptController {
     }
 
     // ✅ Save a new login attempt
+    @LogActivity(actionType = "CREATE", entityType = "LOGIN_ATTEMPT", description = "Created login attempt", severityLevel = "LOW")
     @PostMapping
     @RequiresPermission(value = SECURITY_UPDATE_ATTEMPTS, level = "advanced")
     public ResponseEntity<Void> save(@RequestBody LoginAttemptDTO dto) {
@@ -77,7 +78,6 @@ public class LoginAttemptController {
 
     // 🛡️ (Optional future) Block/whitelist IP – will implement in Step 10
     @GetMapping("/filter")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> filterAndSearch(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String threatLevel,
@@ -94,7 +94,6 @@ public class LoginAttemptController {
     }
 
     @GetMapping("/paged")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<PagedResponse<LoginAttemptDTO>> getPagedAttempts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -134,7 +133,6 @@ public class LoginAttemptController {
 
     // ✅ Get all login attempts by sessionId
     @GetMapping("/session/{sessionId}")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getBySessionId(@PathVariable String sessionId) {
         return ResponseEntity.ok(loginAttemptService.getBySessionId(sessionId));
     }
@@ -156,7 +154,6 @@ public class LoginAttemptController {
     }
 
     @GetMapping("/is-blocked")
-    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<?> isBlocked(@RequestParam String ip) {
         try {
             boolean blocked = loginAttemptService.isIPBlocked(ip);

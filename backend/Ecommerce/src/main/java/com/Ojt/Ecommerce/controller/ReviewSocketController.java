@@ -15,6 +15,7 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -32,8 +33,11 @@ public class ReviewSocketController {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+
+
     private static final String MEDIA_UPLOAD_DIR = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/review/";
 
+    @LogActivity(actionType = "CREATE", entityType = "REVIEW", description = "Created review", severityLevel = "MEDIUM")
     @PostMapping(value = "/review", produces = MediaType.APPLICATION_JSON_VALUE)
     public void handleReview(
             @RequestParam("productId") Long productId,

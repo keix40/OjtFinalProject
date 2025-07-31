@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { PermissionCategoryService } from '../services/permission-category.service';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { PermissionConstants } from '../constants/permission.constants';
+import { Observable } from 'rxjs';
 
 interface Role {
   id: number;
@@ -114,15 +115,7 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   expandedPreviewCategories: { [index: number]: boolean } = {};
 
   // Add currentUser property for role level checks in the template
-  currentUser: any = {
-    id: 1,
-    name: 'Current User',
-    role: {
-      id: 1,
-      name: 'ADMIN',
-      level: 6
-    }
-  };
+  currentUser: any = null;
 
   // Call this when opening a new preview to expand all categories by default
   ngOnChanges() {
@@ -177,25 +170,20 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   ngOnInit(): void {
+    // First, extract user information from JWT token
+    this.initializeCurrentUserFromToken();
+    
     // Use the correct permission constants
     this.canCreateRole = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
     this.canEditRolePermission = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
     this.canDeleteRole = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
     this.canAssignPermissions = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
     
+    // Load data after user is initialized
     this.loadRoles();
     this.loadPermissions();
     this.loadAllUsers();
     this.loadPermissionCategories();
-
-    // Extract roleLevel from JWT and set currentUser dynamically
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      this.currentUser = this.currentUser || {};
-      this.currentUser.role = this.currentUser.role || {};
-      this.currentUser.role.level = payload.roleLevel;
-    }
 
     // Dynamically load permission templates from roles
     this.roleService.getAllRoles().subscribe((roles: any[]) => {
@@ -307,6 +295,8 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
         // Load user counts for each role
         this.loadUserCountsForRoles();
         this.filterRoles();
+        // Clear selected role if it becomes inaccessible
+        this.clearInaccessibleSelectedRole();
       },
       error: (err) => console.error('Error loading roles:', err)
     });
@@ -514,14 +504,26 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
 
   // Filter methods
   filterRoles(): void {
-    this.filteredRoles = this.allRoles.filter(role =>
-      role.name.toLowerCase().includes(this.roleSearchTerm.toLowerCase()) ||
-      role.description.toLowerCase().includes(this.roleSearchTerm.toLowerCase())
-    );
+    // Show all roles, but they will be disabled in the UI if not accessible
+    if (!this.roleSearchTerm.trim()) {
+      this.filteredRoles = this.allRoles;
+    } else {
+      const searchTerm = this.roleSearchTerm.toLowerCase();
+      this.filteredRoles = this.allRoles.filter(role =>
+        role.name.toLowerCase().includes(searchTerm) ||
+        role.description.toLowerCase().includes(searchTerm)
+      );
+    }
   }
 
   // Role selection and management
   selectRole(role: Role): void {
+    // Prevent selecting roles with higher levels than current user
+    if (!this.canSelectRole(role)) {
+      console.log('Cannot select role with higher level:', role.name, 'Level:', role.level, 'User level:', this.currentUser.role.level);
+      return;
+    }
+
     this.selectedRole = role;
 
     this.permissionCheckState.clear();
@@ -896,8 +898,130 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   canEditRole(role: Role): boolean {
-    // Add logic to check if current user can edit this role
-    return role.status === 'active';
+    // Users can edit roles with equal or lower levels than their own
+    // This allows ADMIN (level 6) to edit ADMIN role, MANAGER (level 5) to edit MANAGER role, etc.
+    if (!this.currentUser || !this.currentUser.role) return false;
+    return this.currentUser.role.level >= role.level && role.status === 'active';
+  }
+
+  canViewRole(role: Role): boolean {
+    // Users can ONLY view roles with equal or lower levels than their own
+    if (!this.currentUser || !this.currentUser.role) return false;
+    return this.currentUser.role.level >= role.level;
+  }
+
+  canManageRole(role: Role): boolean {
+    // Users can manage (edit/delete) roles with equal or lower levels than their own
+    // This allows ADMIN (level 6) to manage ADMIN role, MANAGER (level 5) to manage MANAGER role, etc.
+    if (!this.currentUser || !this.currentUser.role) return false;
+    return this.currentUser.role.level >= role.level;
+  }
+
+  canSelectRole(role: Role): boolean {
+    // Users can ONLY select roles with equal or lower levels than their own
+    if (!this.currentUser || !this.currentUser.role) return false;
+    return this.currentUser.role.level >= role.level;
+  }
+
+  // NEW: Completely filter out roles that user cannot access
+  getAccessibleRoles(): Role[] {
+    // Return all roles - don't filter out higher level roles
+    return this.allRoles;
+  }
+
+  // NEW: Initialize current user from JWT token
+  initializeCurrentUserFromToken(): void {
+    const token = localStorage.getItem('token');
+    console.log('Token found:', !!token);
+    
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('JWT Payload:', payload);
+        console.log('JWT Payload keys:', Object.keys(payload));
+        
+        // Check if required fields exist
+        if (payload.id && payload.sub && payload.roles && payload.roleLevel !== undefined) {
+          this.currentUser = {
+            id: payload.id,
+            name: payload.sub,
+            role: {
+              id: payload.id,
+              name: payload.roles,
+              level: payload.roleLevel
+            }
+          };
+          console.log('Current User initialized successfully:', this.currentUser);
+        } else {
+          console.error('Missing required fields in JWT payload');
+          console.log('Available fields:', {
+            id: payload.id,
+            sub: payload.sub,
+            roles: payload.roles,
+            roleLevel: payload.roleLevel
+          });
+          // Set fallback with available data
+          this.currentUser = {
+            id: payload.id || 0,
+            name: payload.sub || 'Unknown User',
+            role: {
+              id: payload.id || 0,
+              name: payload.roles || 'UNKNOWN',
+              level: payload.roleLevel || 0
+            }
+          };
+        }
+      } catch (error) {
+        console.error('Error parsing JWT token:', error);
+        // If token parsing fails, set a minimal user object
+        this.currentUser = {
+          id: 0,
+          name: 'Parse Error',
+          role: {
+            id: 0,
+            name: 'PARSE_ERROR',
+            level: 0
+          }
+        };
+      }
+    } else {
+      console.error('No access token found in localStorage');
+      // If no token, set a minimal user object
+      this.currentUser = {
+        id: 0,
+        name: 'No Token',
+        role: {
+          id: 0,
+          name: 'NO_TOKEN',
+          level: 0
+        }
+      };
+    }
+    
+    // Ensure currentUser is never null
+    if (!this.currentUser) {
+      this.currentUser = {
+        id: 0,
+        name: 'Fallback User',
+        role: {
+          id: 0,
+          name: 'FALLBACK',
+          level: 0
+        }
+      };
+    }
+    
+    console.log('Final currentUser:', this.currentUser);
+  }
+
+  // NEW: Clear selected role if it becomes inaccessible
+  clearInaccessibleSelectedRole(): void {
+    if (this.selectedRole && !this.canViewRole(this.selectedRole)) {
+      console.log('Clearing inaccessible selected role:', this.selectedRole.name);
+      this.selectedRole = null;
+      this.permissionCheckState.clear();
+      this.assignedUsersList = [];
+    }
   }
 
   getPermissionLevel(role: Role): string {
@@ -1028,6 +1152,20 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   openAssignDialog(currentModal?: any): void {
+    console.log('Debug: Current user role level:', this.currentUser.role.level);
+    console.log('Debug: Has USERS_ASSIGN_ROLE permission:', this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE));
+    console.log('Debug: Selected role:', this.selectedRole);
+    
+    if (!this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE)) {
+      alert('You do not have permission to assign roles to users.');
+      return;
+    }
+    
+    if (!this.selectedRole || !this.canManageRole(this.selectedRole)) {
+      alert('You cannot assign users to roles with equal or higher level than your own.');
+      return;
+    }
+    
     if (currentModal) {
       currentModal.close();
     }
@@ -1064,6 +1202,24 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   saveUserAssignments(): void {
+    console.log('=== ROLE ASSIGNMENT DEBUG ===');
+    console.log('Debug: Attempting to save user assignments');
+    console.log('Debug: Current user ID:', this.currentUser.id);
+    console.log('Debug: Current user role level:', this.currentUser.role.level);
+    console.log('Debug: Selected role level:', this.selectedRole?.level);
+    console.log('Debug: Has USERS_ASSIGN_ROLE permission:', this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE));
+    console.log('Debug: Selected users for assignment:', this.selectedUsersForAssignment);
+    
+    if (!this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE)) {
+      alert('You do not have permission to assign roles to users.');
+      return;
+    }
+    
+    if (!this.selectedRole || !this.canManageRole(this.selectedRole)) {
+      alert('You cannot assign users to roles with higher level than your own.');
+      return;
+    }
+    
     if (!this.selectedRole) return;
     const userIdsToAssign = Object.keys(this.selectedUsersForAssignment)
       .filter(key => this.selectedUsersForAssignment[+key])
@@ -1074,22 +1230,246 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
       return;
     }
 
+    console.log('Debug: User IDs to assign:', userIdsToAssign);
+    console.log('Debug: Current user will be affected:', userIdsToAssign.includes(this.currentUser.id));
+
     const assignmentObservables = userIdsToAssign.map(userId =>
       this.roleService.assignRoleToUser(userId, this.selectedRole!.id)
     );
 
     forkJoin(assignmentObservables).subscribe({
-      next: () => {
-        alert('Users assigned successfully!');
+      next: (responses) => {
+        console.log('Debug: Role assignment successful');
+        console.log('Debug: Assignment responses:', responses);
+        
+        // Check if current user is among the assigned users
+        const currentUserAssigned = userIdsToAssign.includes(this.currentUser.id);
+        console.log('Debug: Current user was affected:', currentUserAssigned);
+        
+        // Check if any response contains a new token (indicating current user was affected)
+        let newTokenReceived = false;
+        responses.forEach((response: any) => {
+          try {
+            if (typeof response === 'string') {
+              const parsedResponse = JSON.parse(response);
+              if (parsedResponse.userAffected && parsedResponse.newToken) {
+                console.log('Debug: New token received from backend');
+                // Update the token in localStorage
+                localStorage.setItem('token', parsedResponse.newToken);
+                newTokenReceived = true;
+                
+                // Verify the new token
+                this.verifyNewToken(parsedResponse.newToken);
+                
+                // Re-initialize current user from the new token
+                this.initializeCurrentUserFromToken();
+                
+                // Refresh permissions
+                this.refreshUserPermissions();
+              }
+            }
+          } catch (error) {
+            console.log('Debug: Response is not JSON, treating as plain text');
+          }
+        });
+        
+        if (currentUserAssigned && !newTokenReceived) {
+          console.log('Debug: Current user affected but no new token received, using fallback');
+          // If current user's role was changed but no new token received, use fallback
+          this.refreshCurrentUserData();
+        }
+        
+        if (currentUserAssigned) {
+          // Show special notification for current user role change
+          this.showRoleChangeNotification();
+        }
+        
+        // Refresh the assigned users list
         this.loadAssignedUsers(this.selectedRole!.id);
+        
+        // Update user counts for all roles
+        this.loadUserCountsForRoles();
+        
+        // Clear selection
         this.selectedUsersForAssignment = {};
+        
+        // Show success message
+        const message = currentUserAssigned 
+          ? `Users assigned successfully! Your role has been changed to ${this.selectedRole?.name || 'Unknown Role'}.`
+          : 'Users assigned successfully!';
+        this.showSuccessMessage(message);
+        
+        console.log('=== ROLE ASSIGNMENT COMPLETE ===');
       },
       error: (err) => {
-        console.error('Error assigning users:', err);
-        alert('An error occurred while assigning users.');
+        console.error('Debug: Error assigning users:', err);
+        this.showErrorMessage('An error occurred while assigning users.');
       }
     });
     this.closeAssignDialog();
+  }
+
+  // NEW: Method to show role change notification
+  showRoleChangeNotification(): void {
+    if (!this.selectedRole) return;
+    
+    const oldRoleLevel = this.currentUser.role.level;
+    const newRoleLevel = this.selectedRole.level;
+    
+    let message = `Your role has been changed to ${this.selectedRole.name}. `;
+    
+    if (newRoleLevel > oldRoleLevel) {
+      message += 'You now have higher privileges.';
+    } else if (newRoleLevel < oldRoleLevel) {
+      message += 'Your privileges have been reduced.';
+    } else {
+      message += 'Your privileges remain the same.';
+    }
+    
+    message += '\n\nPlease refresh the page to see all changes take effect.';
+    
+    if (confirm(message + '\n\nWould you like to refresh the page now?')) {
+      window.location.reload();
+    }
+  }
+
+  // NEW: Method to show success message
+  showSuccessMessage(message: string): void {
+    // You can replace this with a proper toast notification library
+    alert(message);
+  }
+
+  // NEW: Method to show error message
+  showErrorMessage(message: string): void {
+    // You can replace this with a proper toast notification library
+    alert('Error: ' + message);
+  }
+
+  // NEW: Method to refresh current user's data after role change
+  refreshCurrentUserData(): void {
+    console.log('Refreshing current user data...');
+    
+    // First, try to refresh the JWT token to get updated permissions
+    this.refreshJWTToken().subscribe({
+      next: (tokenResponse) => {
+        if (tokenResponse && tokenResponse.accessToken) {
+          // Update the token in localStorage
+          localStorage.setItem('token', tokenResponse.accessToken);
+          console.log('JWT token refreshed successfully');
+          
+          // Re-initialize current user from the new token
+          this.initializeCurrentUserFromToken();
+          
+          // Refresh permissions
+          this.refreshUserPermissions();
+        } else {
+          // Fallback: get fresh user data from backend
+          this.refreshUserDataFromBackend();
+        }
+      },
+      error: (err) => {
+        console.error('Error refreshing JWT token:', err);
+        console.log('JWT refresh failed, using fallback method...');
+        
+        // Try to get fresh user data from backend
+        this.refreshUserDataFromBackend();
+        
+        // If that also fails, suggest page reload
+        setTimeout(() => {
+          if (confirm('Unable to refresh your data automatically. Would you like to reload the page to see your updated role?')) {
+            this.forcePageReload();
+          }
+        }, 2000);
+      }
+    });
+  }
+
+  // NEW: Method to refresh JWT token
+  refreshJWTToken(): Observable<any> {
+    return this.authService.refreshToken();
+  }
+
+  // NEW: Method to force page reload for fresh data
+  forcePageReload(): void {
+    console.log('Forcing page reload to get fresh data...');
+    window.location.reload();
+  }
+
+  // NEW: Fallback method to refresh user data from backend
+  refreshUserDataFromBackend(): void {
+    this.authService.getAllUsers().subscribe({
+      next: (users: any[]) => {
+        const updatedUser = users.find(u => u.id === this.currentUser.id);
+        if (updatedUser) {
+          console.log('Updated user data:', updatedUser);
+          
+          // Update current user with fresh data
+          this.currentUser = {
+            id: updatedUser.id,
+            name: updatedUser.name || updatedUser.email,
+            role: {
+              id: updatedUser.role?.id || updatedUser.roleId,
+              name: updatedUser.role?.name || updatedUser.roleName,
+              level: updatedUser.role?.level || updatedUser.roleLevel
+            }
+          };
+          
+          // Update localStorage with new user info
+          this.updateLocalStorageUserInfo(updatedUser);
+          
+          // Refresh permissions
+          this.refreshUserPermissions();
+          
+          console.log('Current user data refreshed:', this.currentUser);
+        }
+      },
+      error: (err) => {
+        console.error('Error refreshing user data:', err);
+      }
+    });
+  }
+
+  // NEW: Method to update localStorage with fresh user info
+  updateLocalStorageUserInfo(userData: any): void {
+    try {
+      // Get current token
+      const token = localStorage.getItem('token');
+      if (token) {
+        // Decode current token
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        
+        // Update payload with new role information
+        const updatedPayload = {
+          ...payload,
+          roles: userData.role?.name || userData.roleName,
+          roleLevel: userData.role?.level || userData.roleLevel,
+          roleId: userData.role?.id || userData.roleId
+        };
+        
+        // Note: We can't modify the JWT token directly as it's signed
+        // Instead, we'll store the updated user info separately
+        localStorage.setItem('currentUserInfo', JSON.stringify(updatedPayload));
+        
+        console.log('Updated user info stored in localStorage');
+      }
+    } catch (error) {
+      console.error('Error updating localStorage user info:', error);
+    }
+  }
+
+  // NEW: Method to refresh user permissions
+  refreshUserPermissions(): void {
+    // Refresh permissions from the permission service
+    this.permissionService.refreshPermissions().subscribe({
+      next: (permissions: string[]) => {
+        console.log('Permissions refreshed:', permissions);
+        // Update permission service with new permissions
+        this.permissionService.setPermissions(permissions);
+      },
+      error: (err: any) => {
+        console.error('Error refreshing permissions:', err);
+      }
+    });
   }
 
   getRolePermissionCount(role: Role): number {
@@ -1179,36 +1559,150 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
   }
 
   toggleDropdown(role: Role): void {
-    if (this.currentUser.role.level > role.level) {
+    if (this.canSelectRole(role)) {
       this.openDropdownId = this.openDropdownId === role.id ? null : role.id;
     }
   }
 
   onEditRole(role: Role): void {
-    if (this.currentUser.role.level > role.level) {
+    if (this.canManageRole(role)) {
       this.editRole(role);
       this.openDropdownId = null;
     }
   }
 
   onDuplicateRole(role: Role): void {
-    if (this.currentUser.role.level > role.level) {
+    if (this.canManageRole(role)) {
       this.duplicateRole(role);
       this.openDropdownId = null;
     }
   }
 
   onToggleRoleStatus(role: Role): void {
-    if (this.currentUser.role.level > role.level) {
+    if (this.canManageRole(role)) {
       this.toggleRoleStatus(role);
       this.openDropdownId = null;
     }
   }
 
   onDeleteRole(role: Role): void {
-    if (this.currentUser.role.level > role.level) {
+    if (this.canManageRole(role)) {
       this.deleteRole(role);
       this.openDropdownId = null;
     }
+  }
+
+  // Debug method to check permissions
+  debugPermissions(): void {
+    console.log('=== DEBUG PERMISSIONS ===');
+    console.log('Current User:', this.currentUser);
+    console.log('Current User Role Level:', this.currentUser.role.level);
+    console.log('USERS_ASSIGN_ROLE permission:', this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE));
+    console.log('ROLES_CREATE permission:', this.permissionService.hasPermission(PermissionConstants.ROLES_CREATE));
+    console.log('ROLES_UPDATE permission:', this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE));
+    console.log('ROLES_DELETE permission:', this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE));
+    console.log('All Roles:', this.allRoles);
+    console.log('Accessible Roles:', this.getAccessibleRoles());
+    console.log('Filtered Roles:', this.filteredRoles);
+    console.log('Selected Role:', this.selectedRole);
+    console.log('Can View Selected Role:', this.selectedRole ? this.canViewRole(this.selectedRole) : 'N/A');
+    console.log('Can Manage Selected Role:', this.selectedRole ? this.canManageRole(this.selectedRole) : 'N/A');
+    console.log('=======================');
+  }
+
+  debugJWT(): void {
+    console.log('=== DEBUG JWT TOKEN ===');
+    const token = localStorage.getItem('token');
+    const accessToken = localStorage.getItem('accessToken');
+    console.log('Token (token):', !!token);
+    console.log('Token (accessToken):', !!accessToken);
+    
+    if (token) {
+      console.log('Token length:', token.length);
+      console.log('Token parts:', token.split('.').length);
+      
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('JWT Payload:', payload);
+        console.log('JWT Payload keys:', Object.keys(payload));
+        console.log('JWT Payload values:', {
+          id: payload.id,
+          sub: payload.sub,
+          roles: payload.roles,
+          roleLevel: payload.roleLevel
+        });
+      } catch (error) {
+        console.error('Error parsing JWT:', error);
+      }
+    }
+    
+    console.log('Current User State:', this.currentUser);
+    console.log('=======================');
+  }
+
+  // NEW: Method to verify and log the new token information
+  verifyNewToken(newToken: string): void {
+    try {
+      const payload = JSON.parse(atob(newToken.split('.')[1]));
+      console.log('Verified New Token Payload:', payload);
+      console.log('Verified New Token ID:', payload.id);
+      console.log('Verified New Token Sub:', payload.sub);
+      console.log('Verified New Token Roles:', payload.roles);
+      console.log('Verified New Token Role Level:', payload.roleLevel);
+      
+      // Compare with old token information
+      this.compareTokenInformation(payload);
+    } catch (error) {
+      console.error('Error verifying new token payload:', error);
+    }
+  }
+
+  // NEW: Method to compare old and new token information
+  compareTokenInformation(newPayload: any): void {
+    const oldToken = localStorage.getItem('token');
+    if (oldToken) {
+      try {
+        const oldPayload = JSON.parse(atob(oldToken.split('.')[1]));
+        console.log('=== TOKEN COMPARISON ===');
+        console.log('Old Role Level:', oldPayload.roleLevel);
+        console.log('New Role Level:', newPayload.roleLevel);
+        console.log('Old Roles:', oldPayload.roles);
+        console.log('New Roles:', newPayload.roles);
+        console.log('Role Level Changed:', oldPayload.roleLevel !== newPayload.roleLevel);
+        console.log('Roles Changed:', oldPayload.roles !== newPayload.roles);
+        console.log('=======================');
+      } catch (error) {
+        console.error('Error comparing token information:', error);
+      }
+    }
+  }
+
+  // NEW: Method to test role assignment functionality
+  testRoleAssignment(): void {
+    console.log('=== TESTING ROLE ASSIGNMENT ===');
+    console.log('Current User ID:', this.currentUser.id);
+    console.log('Current User Role Level:', this.currentUser.role.level);
+    console.log('Current User Role Name:', this.currentUser.role.name);
+    console.log('Selected Role ID:', this.selectedRole?.id);
+    console.log('Selected Role Level:', this.selectedRole?.level);
+    console.log('Selected Role Name:', this.selectedRole?.name);
+    console.log('Can Manage Selected Role:', this.canManageRole(this.selectedRole!));
+    console.log('Has USERS_ASSIGN_ROLE Permission:', this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE));
+    console.log('Current Token:', localStorage.getItem('token')?.substring(0, 50) + '...');
+    console.log('==============================');
+  }
+
+  // NEW: Method to manually trigger role assignment test
+  triggerRoleAssignmentTest(): void {
+    if (!this.selectedRole) {
+      alert('Please select a role first');
+      return;
+    }
+    
+    this.testRoleAssignment();
+    
+    // Simulate assigning the current user to the selected role
+    this.selectedUsersForAssignment[this.currentUser.id] = true;
+    this.saveUserAssignments();
   }
 }

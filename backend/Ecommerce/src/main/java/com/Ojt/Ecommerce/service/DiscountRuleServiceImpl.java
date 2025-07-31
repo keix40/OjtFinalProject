@@ -21,7 +21,6 @@ public class DiscountRuleServiceImpl implements DiscountRuleService {
 
     @Override
     public void createDiscountRules(DiscountRequestDTO dto, Discount discount) {
-        System.out.println("[DiscountRuleService] Starting createDiscountRules for target type: " + dto.getTargetType());
         String targetType = dto.getTargetType().toUpperCase();
         switch (targetType) {
             case "GLOBAL":
@@ -354,8 +353,10 @@ public class DiscountRuleServiceImpl implements DiscountRuleService {
             String[] vipTierIdStrings = dto.getVipTierIds().split(",");
             for (String vipTierIdStr : vipTierIdStrings) {
                 Long vipTierId = Long.parseLong(vipTierIdStr.trim());
+                
                 VipTier vipTier = vipTierRepository.findById(vipTierId)
                     .orElseThrow(() -> new RuntimeException("VIP Tier not found: " + vipTierId));
+                
                 DiscountRule rule = new DiscountRule();
                 rule.setTargetType(DiscountEventEnum.VIP_TIER);
                 rule.setDiscount(discount);
@@ -367,6 +368,7 @@ public class DiscountRuleServiceImpl implements DiscountRuleService {
         else if (dto.getVipTierId() != null && !dto.getVipTierId().trim().isEmpty()) {
             VipTier vipTier = vipTierRepository.findById(Long.parseLong(dto.getVipTierId().trim()))
                 .orElseThrow(() -> new RuntimeException("VIP Tier not found: " + dto.getVipTierId()));
+            
             DiscountRule rule = new DiscountRule();
             rule.setTargetType(DiscountEventEnum.VIP_TIER);
             rule.setDiscount(discount);

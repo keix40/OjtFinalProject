@@ -34,8 +34,12 @@ export class RoleService {
   
 
   assignRoleToUser(userId: number, roleId: number): Observable<any> {
+    const token = localStorage.getItem('token');
+    const headers = { 'Authorization': `Bearer ${token}` };
+    
     return this.http.put(`${API_URL}/auth/user/${userId}/assign-role?roleId=${roleId}`, {}, {
-      responseType: 'text'  // 👈 Add this line
+      headers: headers,
+      responseType: 'text'
     });
   }
   

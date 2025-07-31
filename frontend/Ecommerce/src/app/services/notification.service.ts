@@ -2,11 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
+import { environment } from '../../environments/environment';
 
 export interface NotificationData {
   message: string;
   link?: string;
   type?: 'success' | 'error' | 'info' | 'warning';
+  timestamp?: string;
 }
 
 export interface Notification {
@@ -19,6 +21,8 @@ export interface Notification {
   read: boolean;
   timestamp: string;
   link?: string;
+  userType?: string; // Now expects string like "ADMIN", "MANAGER", etc.
+  userEmail?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -35,47 +39,51 @@ export class NotificationService {
   }
 
   show(notification: NotificationData) {
-    this.notificationSubject.next(notification);
+    const notificationWithTimestamp = {
+      ...notification,
+      timestamp: notification.timestamp || new Date().toISOString()
+    };
+    this.notificationSubject.next(notificationWithTimestamp);
   }
 
   showSuccess(message: string, link?: string) {
-    this.show({ message, type: 'success', link });
+    this.show({ message, type: 'success', link, timestamp: new Date().toISOString() });
   }
 
   showError(message: string, link?: string) {
-    this.show({ message, type: 'error', link });
+    this.show({ message, type: 'error', link, timestamp: new Date().toISOString() });
   }
 
   showInfo(message: string, link?: string) {
-    this.show({ message, type: 'info', link });
+    this.show({ message, type: 'info', link, timestamp: new Date().toISOString() });
   }
 
   showWarning(message: string, link?: string) {
-    this.show({ message, type: 'warning', link });
+    this.show({ message, type: 'warning', link, timestamp: new Date().toISOString() });
   }
 
 
   // Get notifications specifically for admin users only
   getAdminOnlyNotifications(): Observable<Notification[]> {
-    return this.http.get<Notification[]>('/api/notifications/admin-only');
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/admin-only`);
   }
 
   // Role-based notification methods
   getNotificationsByRole(roleName: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`/api/notifications/role/${roleName}`);
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/role/${roleName}`);
   }
 
   getNotificationsByRoleAndCategory(roleName: string, category: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`/api/notifications/role/${roleName}/category/${category}`);
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/role/${roleName}/category/${category}`);
   }
 
   getNotificationsByRoleAndType(roleName: string, type: string): Observable<Notification[]> {
-    return this.http.get<Notification[]>(`/api/notifications/role/${roleName}/type/${type}`);
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/role/${roleName}/type/${type}`);
   }
 
   // Get notifications for current user based on their role
   getCurrentUserNotifications(): Observable<Notification[]> {
-    return this.http.get<Notification[]>('/api/notifications/current-user');
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/current-user`);
   }
 
   // Get role-specific notifications based on current user's role
@@ -158,7 +166,7 @@ export class NotificationService {
   // Get notifications for current user with role-based filtering
   getCurrentUserRoleNotifications(): Observable<Notification[]> {
     // Use the correct endpoint that any authenticated user can access
-    return this.http.get<Notification[]>('/api/notifications/current-user/role-specific');
+    return this.http.get<Notification[]>(`${environment.apiUrl}/notifications/current-user/role-specific`);
   }
 
   // Get notifications for specific role with category filtering
@@ -205,7 +213,22 @@ export class NotificationService {
 
   // Create sample notifications for testing
   createSampleNotifications(): Observable<any> {
-    return this.http.post<any>('/api/notifications/test/create-sample', {});
+    return this.http.post<any>(`${environment.apiUrl}/notifications/test/create-sample`, {});
+  }
+
+  // Delete notification
+  deleteNotification(id: number): Observable<any> {
+    return this.http.delete<any>(`/api/notifications/${id}`);
+  }
+
+  // Mark notification as read
+  markAsRead(id: number): Observable<any> {
+    return this.http.post<any>(`/api/notifications/${id}/read`, {});
+  }
+
+  // Mark notification as unread
+  markAsUnread(id: number): Observable<any> {
+    return this.http.post<any>(`/api/notifications/${id}/unread`, {});
   }
 
 } 

@@ -5,6 +5,7 @@ import { AuthService } from '../../auth/auth.service';
 import { Router } from '@angular/router';
 import { UserDetails } from '../user-details';
 import { HttpClient } from '@angular/common/http';
+import { VipTierInfo } from '../../services/vip-tier.service';
 
 declare var bootstrap: any;
 @Component({
@@ -15,6 +16,7 @@ declare var bootstrap: any;
 })
 export class UserPersonalInfoComponent implements OnInit, OnChanges {
   @Input() userDetails: UserDetails | null = null;
+  @Input() vipTierInfo: VipTierInfo | null = null;
 
   personalInfoForm!: FormGroup;
   otpForm!: FormGroup;
@@ -272,14 +274,8 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       profileImage: profileImageUrl || this.userDetails?.profileImage || '',
     };
 
-    // Debug: Show exactly what's being sent
-    console.log('=== FRONTEND DEBUG ===');
-    console.log('Current user details:', this.userDetails);
-    console.log('Form values:', this.personalInfoForm.value);
-    console.log('Sending updated data:', updatedData);
-    console.log('Name changed?', this.userDetails?.name !== updatedData.name);
-    console.log('From:', this.userDetails?.name, 'To:', updatedData.name);
-    console.log('=== END FRONTEND DEBUG ===');
+    // Short debug
+    console.log('Updating user:', updatedData);
 
     this.authService.updateUserDetails(updatedData).subscribe({
       next: (response: any) => {
@@ -404,5 +400,71 @@ isPhoneNumberChanged(): boolean {
   const currentPhone = this.personalInfoForm.get('phoneNumber')?.value;
   const originalPhone = this.originalDetails?.phoneNumber;
   return currentPhone && originalPhone && currentPhone !== originalPhone;
+}
+
+getProgressPercentage(): number {
+  console.log('getProgressPercentage called with vipTierInfo:', this.vipTierInfo);
+  
+  if (!this.vipTierInfo?.currentTier) {
+    console.log('No current tier, returning 0');
+    return 0;
+  }
+  
+  const currentPoints = this.vipTierInfo?.currentPoints || 0;
+  const currentTierMinPoints = this.vipTierInfo?.currentTier?.minPoints || 0;
+  
+  console.log('Current points:', currentPoints, 'Current tier min points:', currentTierMinPoints);
+  
+  // If there's no next tier, show 100% progress
+  if (!this.vipTierInfo?.nextTier) {
+    console.log('No next tier, returning 100');
+    return 100;
+  }
+  
+  const nextTierMinPoints = this.vipTierInfo?.nextTier?.minPoints || 0;
+  const totalRange = nextTierMinPoints - currentTierMinPoints;
+  const userProgress = currentPoints - currentTierMinPoints;
+  
+  console.log('Next tier min points:', nextTierMinPoints, 'Total range:', totalRange, 'User progress:', userProgress);
+  
+  if (totalRange <= 0) {
+    console.log('Total range <= 0, returning 100');
+    return 100;
+  }
+  
+  const percentage = Math.min(100, Math.max(0, (userProgress / totalRange) * 100));
+  console.log('Calculated percentage:', percentage);
+  return percentage;
+}
+
+getVipTierClass(): string {
+  if (!this.vipTierInfo?.currentTier?.color) {
+    return 'text-gray-800';
+  }
+  
+  // Use the color directly from the database if it's already a Tailwind class
+  const color = this.vipTierInfo.currentTier.color;
+  
+  // If it's already a Tailwind class (starts with 'text-'), use it directly
+  if (color.startsWith('text-')) {
+    return color;
+  }
+  
+  // Otherwise, map color names to Tailwind classes
+  const colorMap: { [key: string]: string } = {
+    'blue': 'text-blue-600',
+    'green': 'text-green-600',
+    'yellow': 'text-yellow-600',
+    'red': 'text-red-600',
+    'purple': 'text-purple-600',
+    'pink': 'text-pink-600',
+    'indigo': 'text-indigo-600',
+    'gray': 'text-gray-600',
+    'silver': 'text-gray-600',
+    'gold': 'text-yellow-600',
+    'platinum': 'text-gray-800'
+  };
+  
+  return colorMap[color.toLowerCase()] || 'text-gray-800';
 }
 }

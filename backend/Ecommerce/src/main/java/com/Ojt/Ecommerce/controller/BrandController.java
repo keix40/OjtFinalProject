@@ -165,7 +165,10 @@ public class BrandController {
                 }
                 Path path = uploadPath.resolve(filename);
                 Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                existing.setImage(IMAGE_PATH_DB_PREFIX + filename);
+                String newImagePath = IMAGE_PATH_DB_PREFIX + filename;
+                existing.setImage(newImagePath);
+                // Update DTO with new image path for activity logging
+                dto.setImage(newImagePath);
             }
 
             Brand updated = service.saveBrand(existing);
@@ -191,7 +194,7 @@ public class BrandController {
         }
     }
 
-    @LogActivity(actionType = "DELETE", entityType = "BRAND", description = "Deleted brand", severityLevel = "HIGH", entityIdParam = "id")
+    @LogActivity(actionType = "DELETE", entityType = "BRAND", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     @RequiresPermission(value = BRANDS_DELETE, level = "advanced")
     public ResponseEntity<?> deleteBrand(@PathVariable Long id) {

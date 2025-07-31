@@ -48,6 +48,8 @@ public class DiscountServiceImpl implements DiscountService {
             discountRuleService.createDiscountRules(dto, discount);
             System.out.println("[DiscountService] Finished creating discount rules.");
             sendDiscountNotificationToAllUsers(dto,discount.getId());
+            sendAdminNotificationForDiscountCreation(dto, discount.getId());
+
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -66,6 +68,7 @@ public class DiscountServiceImpl implements DiscountService {
 
             discountRuleService.createDiscountRules(dto, discount);
             sendDiscountNotificationToAllUsers(dto,discount.getId());
+            sendAdminNotificationForDiscountCreation(dto, discount.getId());
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -80,6 +83,7 @@ public class DiscountServiceImpl implements DiscountService {
             if (conflictResolutions == null || conflictResolutions.isEmpty()) {
                 discountRuleService.createDiscountRules(dto, discount);
                 sendDiscountNotificationToAllUsers(dto, discount.getId());
+                sendAdminNotificationForDiscountCreation(dto, discount.getId());
                 return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
             }
 
@@ -95,6 +99,7 @@ public class DiscountServiceImpl implements DiscountService {
 
             discountRuleService.createDiscountRules(dto, discount);
             sendDiscountNotificationToAllUsers(dto, discount.getId());
+            sendAdminNotificationForDiscountCreation(dto, discount.getId());
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -1739,41 +1744,34 @@ public class DiscountServiceImpl implements DiscountService {
     }
 
     @Override
-    public ResponseEntity<?> updateDiscount(Long id, DiscountRequestDTO dto) {
-        try {
-            // Find the existing discount
-            Discount existingDiscount = discountRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Discount not found with id: " + id));
+    public com.Ojt.Ecommerce.entity.Discount updateDiscount(Long id, DiscountRequestDTO dto) {
+        // Find the existing discount
+        Discount existingDiscount = discountRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Discount not found with id: " + id));
 
-            // Update discount properties
-            existingDiscount.setName(dto.getName());
-            existingDiscount.setDescription(dto.getDescription());
-            existingDiscount.setDiscountType(DiscountType.valueOf(dto.getDiscountType()));
-            
-            // Convert percentage to decimal format for storage
-            if (dto.getDiscountType().equals("PERCENTAGE")) {
-                // Convert percentage to decimal (e.g., 1% -> 0.01, 10% -> 0.10)
-                double percentageValue = dto.getDiscount_percent();
-                double decimalValue = percentageValue / 100.0;
-                existingDiscount.setDiscountValue(decimalValue);
-            } else {
-                // Fixed amount remains unchanged
-                existingDiscount.setDiscountValue(dto.getDiscount_amount());
-            }
-            
-            existingDiscount.setDescription(dto.getDescription());
-            existingDiscount.setStartDate(dto.getStartDate().toLocalDate());
-            existingDiscount.setEndDate(dto.getEndDate().toLocalDate());
-            existingDiscount.setStatus(dto.isStatus());
-
-            // Save the updated discount
-            discountRepository.save(existingDiscount);
-            System.out.println("description :"+ dto.getDescription());
-            return ResponseEntity.ok(Map.of("message", "Discount updated successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        // Update discount properties
+        existingDiscount.setName(dto.getName());
+        existingDiscount.setDescription(dto.getDescription());
+        existingDiscount.setDiscountType(DiscountType.valueOf(dto.getDiscountType()));
+        
+        // Convert percentage to decimal format for storage
+        if (dto.getDiscountType().equals("PERCENTAGE")) {
+            // Convert percentage to decimal (e.g., 1% -> 0.01, 10% -> 0.10)
+            double percentageValue = dto.getDiscount_percent();
+            double decimalValue = percentageValue / 100.0;
+            existingDiscount.setDiscountValue(decimalValue);
+        } else {
+            // Fixed amount remains unchanged
+            existingDiscount.setDiscountValue(dto.getDiscount_amount());
         }
+        
+        existingDiscount.setDescription(dto.getDescription());
+        existingDiscount.setStartDate(dto.getStartDate().toLocalDate());
+        existingDiscount.setEndDate(dto.getEndDate().toLocalDate());
+        existingDiscount.setStatus(dto.isStatus());
 
+        // Save and return the updated discount
+        return discountRepository.save(existingDiscount);
     }
 
     @Override
@@ -1908,17 +1906,45 @@ public class DiscountServiceImpl implements DiscountService {
         }
 
         String notificationMessage = "🔥 \"" + dto.getName() + "\" is live: " + discountValueText + "! Click here to view products.";
-        String type = "discount";
+        String type = "create";
+        String notiCate = "discount";
         String link = "/userproductlist?discountId=" + discountId;
 
         userRepository.findAll().forEach(user -> {
             try {
-                notificationService.createNotificationForUser(user.getEmail(), notificationMessage, type, link);
+                notificationService.createNotificationForUser(user.getEmail(), notificationMessage, type, link,notiCate);
             } catch (Exception e) {
                 System.err.println("[Notification] Failed to send notification to " + user.getEmail() + ": " + e.getMessage());
                 e.printStackTrace();
             }
         });
+    }
+
+    private void sendAdminNotificationForDiscountCreation(DiscountRequestDTO dto, Long discountId) {
+        try {
+            String discountValueText;
+            if ("PERCENTAGE".equalsIgnoreCase(dto.getDiscountType())) {
+                double percent = dto.getDiscount_percent();
+                discountValueText = percent + "% off";
+            } else {
+                discountValueText = dto.getDiscount_amount() + " MMK off";
+            }
+
+            /*String notificationMessage = "🎯 New discount created: \"" + dto.getName() + "\" - " + discountValueText +
+                                      " | Target: " + dto.getTargetType() + " | Duration: " + 
+                                      dto.getStartDate().toLocalDate() + " to " + dto.getEndDate().toLocalDate();
+            
+            String type = "create";
+            String category = "discount";
+            String link = "admindiscount-management";
+
+            notificationService.sendNotificationToAdmin(notificationMessage, category, type, link); */
+            
+            System.out.println("[DiscountService] Admin notification sent for discount: " + dto.getName());
+        } catch (Exception e) {
+            System.err.println("[DiscountService] Failed to send admin notification: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     // Remove only the specific conflict by targetType and targetId

@@ -402,15 +402,16 @@ public class OrderService {
             // Send notification to customer
             String customerMessage = "Your order " + order.getOrderCode() + " has been placed.";
             String customerLink = "/profile/" + user.getId() + "?section=orders&orderId=" + order.getId();
-            String customerType = "order";
-            notificationService.createNotificationForUser(order.getUser().getEmail(), customerMessage, customerType, customerLink);
-            notificationService.sendNotification(user.getEmail(), "Your order was successful");
-            
-            // Send notification to current user if they are Admin or Manager
-            String adminManagerMessage = "New order placed: " + order.getOrderCode() + " by " + user.getEmail();
-            String adminManagerType = "order_created";
-            String adminManagerLink = "/admin/orders/" + savedOrder.getId();
-            notificationService.sendNotificationToCurrentUserIfAdminOrManager(user.getEmail(), adminManagerMessage, adminManagerType, adminManagerLink);
+            String customerType = "pending";
+            String notiCate = "order";
+            notificationService.createNotificationForUser(order.getUser().getEmail(), customerMessage, customerType, notiCate, customerLink);
+
+            String ManagerMessage = "New order placed: " + order.getOrderCode() + " by " + user.getEmail();
+            String ManagerType = "created";
+            String ManagerCate = "order";
+            String ManagerLink = "/admin/orders/" + savedOrder.getId();
+            notificationService.sendNotificationToAdmin(ManagerMessage, ManagerCate, ManagerType, ManagerLink);
+            notificationService.sendNotificationToManager(ManagerMessage, ManagerCate, ManagerType, ManagerLink);
             // Log user activity for dashboard active users metric (order)
             userActivityService.logActivity(user.getId(), "order");
             // Broadcast dashboard metrics after order creation
@@ -538,9 +539,9 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-    public boolean updateOrderStatus(Long orderId, String statusStr, Long refundId) {
+    public com.Ojt.Ecommerce.entity.UserOrder updateOrderStatus(Long orderId, String statusStr, Long refundId) {
         Optional<UserOrder> optionalOrder = repo.findById(orderId);
-        if (optionalOrder.isEmpty()) return false;
+        if (optionalOrder.isEmpty()) return null;
 
         UserOrder order = optionalOrder.get();
 
@@ -569,28 +570,33 @@ public class OrderService {
         repo.save(order);
 
         String statusMessage;
+        String notiType;
         switch (type) {
             case SHIPPED:
                 statusMessage = "has been shipped.";
+                notiType = "pending";
                 break;
             case DELIVERED:
                 statusMessage = "has been delivered.";
+                notiType = "pending";
                 break;
             case CANCELLED:
                 statusMessage = "has been cancelled.";
+                notiType = "failed";
                 break;
             default:
                 statusMessage = "has been placed.";
+                notiType = "pending";
                 break;
         }
 
         String message = "Your order " + order.getOrderCode() + " " + statusMessage;
         String link = "/profile/" + order.getUser().getId() + "?section=orders&orderId=" + order.getId();
-        String notiType = "order";
+        String notiCate = "order";
 
-        notificationService.createNotificationForUser(order.getUser().getEmail(), message, notiType, link);
+        notificationService.createNotificationForUser(order.getUser().getEmail(), message, notiType, link,notiCate);
 
-        return true;
+        return order;
     }
 
     private UserOrderListDTO convertToDTO(UserOrder order) {

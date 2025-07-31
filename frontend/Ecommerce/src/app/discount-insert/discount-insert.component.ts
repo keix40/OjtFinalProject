@@ -243,7 +243,7 @@ export class DiscountInsertComponent implements OnInit {
 
   loadVipTiers() {
     this.isLoadingVipTiers = true;
-    this.vipTierService.getAll().subscribe({
+    this.vipTierService.getAllVipTiers().subscribe({
       next: (tiers) => {
         this.vipTiers = tiers;
         this.isLoadingVipTiers = false;

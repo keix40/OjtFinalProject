@@ -55,6 +55,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   productSalesData: any[] = [];
   deliveryServiceData: any[] = [];
 
+  // Modal properties for chart data
+  showChartModal = false;
+  modalType: 'brand' | 'category' | 'product' | 'delivery' = 'brand';
+  modalTitle = '';
+  modalData: any[] = [];
+  totalModalValue = 0;
+
   // fetchOnlineAdminCount(): void {
   //   this.adminUserService.getAdminUsersOnlineStatus().subscribe(statusMap => {
   //     this.onlineAdminCount = Object.values(statusMap).filter((s: any) => s.isOnline).length;
@@ -332,7 +339,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'total-sales',
         title: 'Total Sales',
-        value: `$${this.formatNumber(totalSales)}`,
+        value: this.formatNumber(totalSales),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales, prevTotalSales),
         isPositive: totalSales >= prevTotalSales,
         chartData: trend.map(d => ({ value: d.total })),
@@ -342,7 +350,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'revenue',
         title: 'Revenue',
-        value: `$${this.formatNumber(Math.floor(totalSales * 0.72))}`,
+        value: this.formatNumber(Math.floor(totalSales * 0.72)),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales * 0.72, prevRevenue),
         isPositive: (totalSales * 0.72) >= prevRevenue,
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
@@ -398,7 +407,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'total-sales',
         title: 'Total Sales',
-        value: `$${this.formatNumber(totalSales)}`,
+        value: this.formatNumber(totalSales),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales, prevTotalSales),
         isPositive: totalSales >= prevTotalSales,
         chartData: trend.map(d => ({ value: d.total })),
@@ -408,7 +418,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'revenue',
         title: 'Revenue',
-        value: `$${this.formatNumber(Math.floor(totalSales * 0.72))}`,
+        value: this.formatNumber(Math.floor(totalSales * 0.72)),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales * 0.72, prevRevenue),
         isPositive: (totalSales * 0.72) >= prevRevenue,
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
@@ -428,7 +439,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'avg-order',
         title: 'Avg Order',
-        value: this.orderCount > 0 ? `$${this.formatNumber(Math.floor(totalSales / this.orderCount))}` : '$0',
+        value: this.orderCount > 0 ? this.formatNumber(Math.floor(totalSales / this.orderCount)) : '0',
+        currency: 'MMK',
         change: this.getPercentChange(this.orderCount > 0 ? Math.floor(totalSales / this.orderCount) : 0, prevAvgOrder),
         isPositive: (this.orderCount > 0 ? Math.floor(totalSales / this.orderCount) : 0) >= prevAvgOrder,
         chartData: trend.map(d => ({ value: d.orderCount > 0 ? Math.floor(d.total / d.orderCount) : 0 })),
@@ -1055,17 +1067,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         plugins: {
           legend: { display: false },
           tooltip: {
-            callbacks: {
-              label: (context: any) => {
-                const val = context.parsed.y;
-                let formatted = val >= 1_000_000
-                  ? `$${(val / 1_000_000).toFixed(1)}M`
-                  : val >= 1_000
-                    ? `$${(val / 1_000).toFixed(1)}k`
-                    : `$${val}`;
-                return `${context.dataset.label}: ${formatted}`;
+                          callbacks: {
+                label: (context: any) => {
+                  const val = context.parsed.y;
+                  let formatted = val >= 1_000_000
+                    ? `$${(val / 1_000_000).toFixed(1)}M`
+                    : val >= 1_000
+                      ? `$${(val / 1_000).toFixed(1)}k`
+                      : `$${val}`;
+                  return `${context.dataset.label}: ${formatted}`;
+                }
               }
-            }
           }
         },
         scales: {
@@ -1232,21 +1244,42 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('updateCustomerAcqChart called');
     console.log('customerAcquisitionData:', this.customerAcquisitionData);
     
-    // Use real customer acquisition data from backend
-    let acquisitionData;
-    if (this.customerAcquisitionData.length > 0) {
-      acquisitionData = this.customerAcquisitionData.map(d => ({
-        period: this.getFormattedLabel(d.period),
-        acquired: d.acquired || 0,
-        churned: d.churned || 0,
-        retained: d.retained || 0
-      }));
-      console.log('Processed acquisitionData:', acquisitionData);
-    } else {
-      // Fallback to empty data if no real data available
-      acquisitionData = [{ period: 'No Data', acquired: 0, churned: 0, retained: 0 }];
-      console.log('Using fallback data:', acquisitionData);
+    // Generate 7-day range with current date in 5th position (middle)
+    const currentDate = new Date();
+    const acquisitionData = [];
+    
+    // Generate dates: 4 days before current date + current date + 2 days after
+    for (let i = -4; i <= 2; i++) {
+      const date = new Date(currentDate);
+      date.setDate(currentDate.getDate() + i);
+      
+      const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+      const formattedDate = this.getFormattedLabel(dateStr);
+      
+      // Try to find matching data from backend, otherwise use zero values
+      const backendData = this.customerAcquisitionData.find(d => {
+        let period = d.period;
+        if (this.currentTimeFrame === 'day') {
+          if (/^\d{1,2}$/.test(period)) {
+            const now = new Date();
+            const day = parseInt(period);
+            const month = now.getMonth();
+            const year = now.getFullYear();
+            period = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+          }
+        }
+        return this.getFormattedLabel(period) === formattedDate;
+      });
+      
+      acquisitionData.push({
+        period: formattedDate,
+        acquired: backendData?.acquired || 0,
+        churned: backendData?.churned || 0,
+        retained: backendData?.retained || 0
+      });
     }
+    
+    console.log('Generated 7-day range with current date in 5th position:', acquisitionData);
     
     const dataKeys: string[] = [];
     const colors: string[] = [];
@@ -1291,10 +1324,163 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     });
     
-    this.createEnhancedChart('customerAcquisitionChart', acquisitionData, dataKeys, colors, 'area');
+    this.createCustomerAcquisitionChart(acquisitionData, dataKeys, colors);
     
     // Create pie chart for customer distribution
     this.createCustomerDistributionPieChart();
+  }
+  
+  createCustomerAcquisitionChart(data: any[], dataKeys: string[], colors: string[]): void {
+    console.log('createCustomerAcquisitionChart called with:', { data, dataKeys, colors });
+    
+    const canvas = document.getElementById('customerAcquisitionChart') as HTMLCanvasElement;
+    if (!canvas) {
+      console.error('customerAcquisitionChart canvas not found');
+      return;
+    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      console.error('Could not get 2D context for customerAcquisitionChart');
+      return;
+    }
+    
+    // Destroy existing chart if it exists
+    if (this.charts['customerAcquisitionChart']) {
+      console.log('Destroying existing customerAcquisitionChart');
+      this.charts['customerAcquisitionChart'].destroy();
+    }
+    
+    // Data is already in correct order with current date in 5th position
+    const customLabels = data.map((d: any) => d.period);
+    const customData = [...data];
+    
+    const datasets = dataKeys.map((key, index) => {
+      const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+      gradient.addColorStop(0, colors[index] + '40');
+      gradient.addColorStop(1, colors[index] + '05');
+      
+      const dataValues = customData.map((d: any) => {
+        const value = d[key];
+        console.log(`Data point for ${key}:`, value, typeof value);
+        return value;
+      });
+      
+      const dataset = {
+        label: key.charAt(0).toUpperCase() + key.slice(1),
+        data: dataValues,
+        borderColor: colors[index],
+        backgroundColor: 'area' === 'area' ? gradient : 'transparent',
+        borderWidth: 3,
+        fill: 'area' === 'area',
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointBackgroundColor: colors[index],
+        pointBorderWidth: 2,
+        pointBorderColor: '#ffffff',
+        pointStyle: 'circle',
+        borderDash: [],
+        borderDashOffset: 0,
+      };
+      
+      console.log(`Created dataset for ${key}:`, dataset);
+      console.log(`Data values for ${key}:`, dataValues);
+      return dataset;
+    });
+    
+    console.log('Final datasets:', datasets);
+    console.log('Custom Labels:', customLabels);
+    console.log('Custom Data length:', customData.length);
+    
+    // Check if we have enough data points for lines
+    if (customData.length < 2) {
+      console.warn('Not enough data points for line chart. Need at least 2 points.');
+    }
+    
+    this.charts['customerAcquisitionChart'] = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: customLabels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              pointStyle: 'circle',
+              font: { size: 12, weight: 'bold' }
+            }
+          },
+          tooltip: {
+            usePointStyle: true,
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            titleColor: '#374151',
+            bodyColor: '#374151',
+            borderColor: '#e5e7eb',
+            borderWidth: 1,
+            padding: 12,
+            titleFont: { size: 14, weight: 600 },
+            bodyFont: { size: 13 },
+            callbacks: {
+              label: (context: any) => {
+                return `${context.dataset.label}: ${this.formatNumber(context.parsed.y)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: true,
+              color: '#f1f5f9',
+              drawTicks: true
+            },
+            ticks: {
+              color: '#94a3b8',
+              font: { size: 11, weight: 'bold' },
+              maxTicksLimit: 8
+            }
+          },
+          y: {
+            grid: {
+              color: '#f1f5f9',
+              drawTicks: true
+            },
+            ticks: {
+              color: '#94a3b8',
+              font: { size: 11, weight: 'bold' },
+              callback: (value: any) => {
+                return this.formatNumber(value);
+              },
+              maxTicksLimit: 6
+            }
+          }
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index'
+        },
+        animation: {
+          duration: 1500,
+          easing: 'easeInOutQuart'
+        }
+      }
+    });
+    
+    console.log(`Customer Acquisition Chart created:`, this.charts['customerAcquisitionChart']);
+    
+    // Force chart update
+    setTimeout(() => {
+      if (this.charts['customerAcquisitionChart']) {
+        this.charts['customerAcquisitionChart'].update();
+        console.log(`Customer Acquisition Chart updated`);
+      }
+    }, 100);
   }
   
   createCustomerDistributionPieChart() {
@@ -1512,43 +1698,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              padding: 8,
-              usePointStyle: true,
-              pointStyle: 'circle',
-              font: {
-                size: 9,
-                weight: 400,
-                family: 'Inter, system-ui, sans-serif'
-              },
-              color: '#374151',
-              generateLabels: function(chart: any) {
-                const data = chart.data;
-                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
-                  return data.labels.map((label: string, i: number) => {
-                    const dataset = data.datasets[0];
-                    const value = dataset.data[i] as number;
-                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
-                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
-                    
-                    // Truncate long labels and show only percentage
-                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
-                    
-                    return {
-                      text: `${shortLabel} ${percentage}%`,
-                      fillStyle: dataset.backgroundColor[i],
-                      strokeStyle: dataset.backgroundColor[i],
-                      lineWidth: 0,
-                      pointStyle: 'circle',
-                      hidden: false,
-                      index: i
-                    };
-                  });
-                }
-                return [];
-              }
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1676,43 +1826,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              padding: 8,
-              usePointStyle: true,
-              pointStyle: 'circle',
-              font: {
-                size: 9,
-                weight: 400,
-                family: 'Inter, system-ui, sans-serif'
-              },
-              color: '#374151',
-              generateLabels: function(chart: any) {
-                const data = chart.data;
-                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
-                  return data.labels.map((label: string, i: number) => {
-                    const dataset = data.datasets[0];
-                    const value = dataset.data[i] as number;
-                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
-                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
-                    
-                    // Truncate long labels and show only percentage
-                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
-                    
-                    return {
-                      text: `${shortLabel} ${percentage}%`,
-                      fillStyle: dataset.backgroundColor[i],
-                      strokeStyle: dataset.backgroundColor[i],
-                      lineWidth: 0,
-                      pointStyle: 'circle',
-                      hidden: false,
-                      index: i
-                    };
-                  });
-                }
-                return [];
-              }
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -1840,43 +1954,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              padding: 8,
-              usePointStyle: true,
-              pointStyle: 'circle',
-              font: {
-                size: 9,
-                weight: 400,
-                family: 'Inter, system-ui, sans-serif'
-              },
-              color: '#374151',
-              generateLabels: function(chart: any) {
-                const data = chart.data;
-                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
-                  return data.labels.map((label: string, i: number) => {
-                    const dataset = data.datasets[0];
-                    const value = dataset.data[i] as number;
-                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
-                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
-                    
-                    // Truncate long labels and show only percentage
-                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
-                    
-                    return {
-                      text: `${shortLabel} ${percentage}%`,
-                      fillStyle: dataset.backgroundColor[i],
-                      strokeStyle: dataset.backgroundColor[i],
-                      lineWidth: 0,
-                      pointStyle: 'circle',
-                      hidden: false,
-                      index: i
-                    };
-                  });
-                }
-                return [];
-              }
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -2004,43 +2082,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         maintainAspectRatio: false,
         plugins: {
           legend: {
-            position: 'bottom',
-            labels: {
-              padding: 8,
-              usePointStyle: true,
-              pointStyle: 'circle',
-              font: {
-                size: 9,
-                weight: 400,
-                family: 'Inter, system-ui, sans-serif'
-              },
-              color: '#374151',
-              generateLabels: function(chart: any) {
-                const data = chart.data;
-                if (data.labels && data.labels.length && data.datasets && data.datasets.length) {
-                  return data.labels.map((label: string, i: number) => {
-                    const dataset = data.datasets[0];
-                    const value = dataset.data[i] as number;
-                    const total = dataset.data.reduce((a: number, b: any) => a + (b as number), 0);
-                    const percentage = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
-                    
-                    // Truncate long labels and show only percentage
-                    const shortLabel = label.length > 8 ? label.substring(0, 8) + '...' : label;
-                    
-                    return {
-                      text: `${shortLabel} ${percentage}%`,
-                      fillStyle: dataset.backgroundColor[i],
-                      strokeStyle: dataset.backgroundColor[i],
-                      lineWidth: 0,
-                      pointStyle: 'circle',
-                      hidden: false,
-                      index: i
-                    };
-                  });
-                }
-                return [];
-              }
-            }
+            display: false
           },
           tooltip: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -2314,5 +2356,80 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.createUserCharts(this.userMetricsData);
     }, 0);
+  }
+
+  // Modal methods
+  openChartModal(type: 'brand' | 'category' | 'product' | 'delivery'): void {
+    this.modalType = type;
+    
+    // Set modal title based on type
+    const titles = {
+      brand: 'Brand Sales Details',
+      category: 'Category Sales Details', 
+      product: 'Product Sales Details',
+      delivery: 'Delivery Service Details'
+    };
+    this.modalTitle = titles[type];
+    
+    // Get data based on type
+    let data: any[] = [];
+    switch (type) {
+      case 'brand':
+        data = this.brandSalesData;
+        break;
+      case 'category':
+        data = this.categorySalesData;
+        break;
+      case 'product':
+        data = this.productSalesData;
+        break;
+      case 'delivery':
+        data = this.deliveryServiceData;
+        break;
+    }
+    
+    // Filter out zero values and calculate percentages
+    const filteredData = data.filter(item => item.value > 0);
+    const total = filteredData.reduce((sum, item) => sum + item.value, 0);
+    
+    this.modalData = filteredData.map(item => ({
+      ...item,
+      percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0'
+    }));
+    
+    this.totalModalValue = total;
+    this.showChartModal = true;
+  }
+
+  closeChartModal(): void {
+    this.showChartModal = false;
+    this.modalData = [];
+    this.totalModalValue = 0;
+  }
+
+  trackByItem(index: number, item: any): any {
+    return item.name;
+  }
+
+  exportModalData(): void {
+    // Create CSV content
+    const headers = ['Name', 'Value', 'Percentage', 'Color'];
+    const csvContent = [
+      headers.join(','),
+      ...this.modalData.map(item => 
+        `"${item.name}",${item.value},${item.percentage}%,${item.color}`
+      )
+    ].join('\n');
+    
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${this.modalTitle.toLowerCase().replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   }
 }

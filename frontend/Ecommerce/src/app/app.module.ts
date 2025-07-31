@@ -100,6 +100,7 @@ import { ReturnDetailComponent } from './return-detail/return-detail.component';
 import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
 import { UserProductListComponent } from './user-product-list/user-product-list';
 
+
 @NgModule({
   declarations: [
     AppComponent,

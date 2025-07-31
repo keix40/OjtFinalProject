@@ -75,10 +75,23 @@ export class AddressService {
   }
 
   updateAddress(id: number, address: Address): Observable<Address> {
-    return this.http.put<Address>(`${this.apiUrl}/updateAddress/${id}`, address);
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    console.log('Updating address with ID:', id);
+    console.log('Address data:', address);
+    return this.http.put<any>(`${this.apiUrl}/updateAddress/${id}`, address, { headers })
+      .pipe(
+        catchError(this.handleError)
+      );
   }
 
   deleteAddress(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/deleteAddress/${id}`);
+    const token = localStorage.getItem('token');
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+    return this.http.delete<void>(`${this.apiUrl}/deleteAddress/${id}`, { headers });
   }
 } 

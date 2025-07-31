@@ -53,20 +53,26 @@ public class ReviewService {
         review.setRating(msg.getRating());
         
         Review savedReview = repo.save(review);
-
-        // Send notification to current user if they are Customer Support or Admin
-        String notificationMessage = "New review submitted for product: " + review.getProduct().getProductName() + 
-                                   " by " + review.getUser().getName() + " (Rating: " + msg.getRating() + "/5)";
-        String notificationType = "review_submitted";
-        String notificationLink = "/admin/reviews/" + savedReview.getId();
         
-        notificationService.sendNotificationToCurrentUserIfRole(
-            review.getUser().getEmail(), 
-            notificationMessage, 
-            notificationType, 
-            notificationLink
+        // Send notification to admin and customer support
+        String reviewMessage = String.format(
+            "New product review submitted by %s\n" +
+            "Product: %s\n" +
+            "Rating: %d/5 stars\n" +
+            "Comment: %s",
+            review.getUser().getEmail(),
+            review.getProduct().getProductName(),
+            review.getRating(),
+            review.getComment().length() > 100 ? review.getComment().substring(0, 100) + "..." : review.getComment()
         );
-
+        
+        notificationService.sendToAdminAndCustomerSupport(
+            reviewMessage,
+            "review",
+            "submitted",
+            "/admin/reviews"
+        );
+        
         return savedReview;
     }
 
@@ -105,20 +111,26 @@ public class ReviewService {
         }
 
         Review savedReview = repo.save(review);
-
-        // Send notification to current user if they are Customer Support or Admin
-        String notificationMessage = "New review submitted for product: " + review.getProduct().getProductName() + 
-                                   " by " + review.getUser().getName() + " (Rating: " + rating + "/5)";
-        String notificationType = "review_submitted";
-        String notificationLink = "/admin/reviews/" + savedReview.getId();
         
-        notificationService.sendNotificationToCurrentUserIfRole(
-            review.getUser().getEmail(), 
-            notificationMessage, 
-            notificationType, 
-            notificationLink
+        // Send notification to admin and customer support
+        String reviewMessage = String.format(
+            "New product review submitted by %s\n" +
+            "Product: %s\n" +
+            "Rating: %d/5 stars\n" +
+            "Comment: %s",
+            review.getUser().getEmail(),
+            review.getProduct().getProductName(),
+            review.getRating(),
+            review.getComment().length() > 100 ? review.getComment().substring(0, 100) + "..." : review.getComment()
         );
-
+        
+        notificationService.sendToAdminAndCustomerSupport(
+            reviewMessage,
+            "review",
+            "submitted",
+            "/admin/reviews"
+        );
+        
         return savedReview;
     }
 

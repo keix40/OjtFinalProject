@@ -7,6 +7,7 @@ import com.Ojt.Ecommerce.repository.ContactMessageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 @RestController
 @RequestMapping("/api/contact")
@@ -16,6 +17,9 @@ public class ContactController {
     @Autowired
     private ContactMessageRepository contactRepo;
 
+
+
+    @LogActivity(actionType = "CREATE", entityType = "CONTACT", description = "Created contact message", severityLevel = "MEDIUM")
     @PostMapping
     public ResponseEntity<String> handleContactForm(@RequestBody ContactRequest request) {
         ContactMessage message = new ContactMessage();

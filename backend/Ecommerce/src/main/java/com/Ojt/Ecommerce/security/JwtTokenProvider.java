@@ -71,6 +71,7 @@ public class JwtTokenProvider implements InitializingBean {
                 .claim("profileImage", user.getProfileImage())
                 .claim("orderCount", user.getOrderCount())
                 .claim("vipTier", vipTierName) // <-- Add this line
+                .claim("totalPoints", user.getTotalPoints() != null ? user.getTotalPoints() : 0) // <-- Add totalPoints
                 .claim("roleLevel", user.getRole().getLevel())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
@@ -86,6 +87,11 @@ public class JwtTokenProvider implements InitializingBean {
     public String getRolesFromToken(String token) {
         Claims claims = parseClaims(token);
         return claims.get("roles", String.class);
+    }
+
+    public String getPhoneNumberFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get("phoneNumber", String.class);
     }
 
 

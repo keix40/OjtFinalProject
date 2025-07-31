@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
 import java.util.List;
@@ -36,8 +37,10 @@ class SubmitReturnRequest {
 public class ReturnRequestController {
 
     private final ReturnRequestService returnRequestService;
+    private final com.Ojt.Ecommerce.repository.ReturnRequestRepository returnRequestRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    @LogActivity(actionType = "CREATE", entityType = "RETURN_REQUEST", description = "Submitted return request", severityLevel = "MEDIUM")
     @PostMapping(value = "/submit", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ReturnRequestDTO> submitReturnRequest(
             @RequestPart("data") String data,
@@ -56,12 +59,17 @@ public class ReturnRequestController {
         return ResponseEntity.ok(returnRequestService.getReturnsByOrder(orderId));
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "RETURN_REQUEST", description = "Cancelled return request", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/cancel/{id}")
-    public ResponseEntity<String> cancelReturn(@PathVariable Long id) {
+    public ResponseEntity<?> cancelReturn(@PathVariable Long id) {
         boolean cancelled = returnRequestService.cancelReturnRequest(id);
-        return cancelled
-                ? ResponseEntity.ok("Cancelled successfully.")
-                : ResponseEntity.badRequest().body("Return request is not in PENDING status or already cancelled.");
+        if (cancelled) {
+            // Return the updated return request entity for logging
+            com.Ojt.Ecommerce.entity.ReturnRequest updatedReturnRequest = returnRequestRepository.findById(id).orElse(null);
+            return ResponseEntity.ok(updatedReturnRequest);
+        } else {
+            return ResponseEntity.badRequest().body("Return request is not in PENDING status or already cancelled.");
+        }
     }
 
     @GetMapping("/getallrequest")
@@ -76,31 +84,43 @@ public class ReturnRequestController {
         return ResponseEntity.ok(returnRequestService.findRequestById(id));
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "RETURN_REQUEST", description = "Approved return request", severityLevel = "HIGH", entityIdParam = "data.returnRequestId", logChanges = true)
     @PostMapping("/approve")
     @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Approve return request")
-    public ResponseEntity<String> approveReturnRequest(@RequestBody ApproveRejectRequest data) {
+    public ResponseEntity<?> approveReturnRequest(@RequestBody ApproveRejectRequest data) {
         returnRequestService.approveReturnRequest(data.getReturnRequestId(), data.getAdminRemark());
-        return ResponseEntity.ok("Return request approved.");
+        // Return the updated return request entity for logging
+        com.Ojt.Ecommerce.entity.ReturnRequest updatedReturnRequest = returnRequestRepository.findById(data.getReturnRequestId()).orElse(null);
+        return ResponseEntity.ok(updatedReturnRequest);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "RETURN_REQUEST", description = "Rejected return request", severityLevel = "HIGH", entityIdParam = "data.returnRequestId", logChanges = true)
     @PostMapping("/reject")
     @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Reject return request")
-    public ResponseEntity<String> rejectReturnRequest(@RequestBody ApproveRejectRequest data) {
+    public ResponseEntity<?> rejectReturnRequest(@RequestBody ApproveRejectRequest data) {
         returnRequestService.rejectReturnRequest(data.getReturnRequestId(), data.getAdminRemark());
-        return ResponseEntity.ok("Return request rejected.");
+        // Return the updated return request entity for logging
+        com.Ojt.Ecommerce.entity.ReturnRequest updatedReturnRequest = returnRequestRepository.findById(data.getReturnRequestId()).orElse(null);
+        return ResponseEntity.ok(updatedReturnRequest);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "RETURN_REQUEST", description = "Processed replacement for return request", severityLevel = "HIGH", entityIdParam = "data.returnRequestId", logChanges = true)
     @PostMapping("/replacement")
     @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Process replacement for return request")
-    public ResponseEntity<String> processReplacement(@RequestBody ReplacementRequest data) {
+    public ResponseEntity<?> processReplacement(@RequestBody ReplacementRequest data) {
         returnRequestService.processReplacement(data.getReturnRequestId(), data.getAdminRemark());
-        return ResponseEntity.ok("Replacement processed.");
+        // Return the updated return request entity for logging
+        com.Ojt.Ecommerce.entity.ReturnRequest updatedReturnRequest = returnRequestRepository.findById(data.getReturnRequestId()).orElse(null);
+        return ResponseEntity.ok(updatedReturnRequest);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "RETURN_REQUEST", description = "Processed refund for return request", severityLevel = "HIGH", entityIdParam = "dto.returnRequestId", logChanges = true)
     @PostMapping("/refund")
     @RequiresPermission(value = REFUND_UPDATE, level = "basic", description = "Process refund for return request")
-    public ResponseEntity<String> processRefund(@RequestBody RefundDTO dto){
+    public ResponseEntity<?> processRefund(@RequestBody RefundDTO dto){
         returnRequestService.processRefund(dto);
-        return ResponseEntity.ok("Refund processed.");
+        // Return the updated return request entity for logging
+        com.Ojt.Ecommerce.entity.ReturnRequest updatedReturnRequest = returnRequestRepository.findById(dto.getReturnRequestId()).orElse(null);
+        return ResponseEntity.ok(updatedReturnRequest);
     }
 }

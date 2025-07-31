@@ -1363,4 +1363,38 @@ hasVipDiscountForProduct(product: ProductDTO): boolean {
     }
   }
 
+  /**
+   * Returns VIP discount display text for a product
+   */
+  getVipDiscountDisplay(product: ProductDTO): string {
+    const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+    if (!userVipTier) {
+      console.log('No VIP tier found for user');
+      return '';
+    }
+    
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    
+    console.log('VIP discount check:', {
+      userVipTier,
+      vipDiscount,
+      activeDiscounts: this.activeDiscounts.length,
+      productId: product.id,
+      originalPrice: product.price,
+      finalPrice: this.getFinalDiscountedPrice(product)
+    });
+    
+    // Check if VIP discount exists and is applicable to this product
+    if (vipDiscount && vipDiscount.discount_percent) {
+      // Check if the product has a different final price (indicating discount was applied)
+      const finalPrice = this.getFinalDiscountedPrice(product);
+      if (finalPrice !== product.price) {
+        return `${userVipTier.charAt(0).toUpperCase() + userVipTier.slice(1)} Tier ${vipDiscount.discount_percent}% OFF`;
+      }
+    }
+    return '';
+  }
+
 }

@@ -5,6 +5,7 @@ import com.Ojt.Ecommerce.service.RevenueTargetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import java.util.Map;
 import java.util.Optional;
@@ -16,6 +17,9 @@ public class RevenueTargetController {
     @Autowired
     private RevenueTargetService revenueTargetService;
 
+    @Autowired
+    private com.Ojt.Ecommerce.repository.RevenueTargetRepository revenueTargetRepository;
+
     @GetMapping
     public ResponseEntity<?> getTarget(@RequestParam String periodType, @RequestParam String periodValue) {
         Optional<RevenueTarget> target = revenueTargetService.getTarget(periodType, periodValue);
@@ -26,6 +30,7 @@ public class RevenueTargetController {
         }
     }
 
+    @LogActivity(actionType = "CREATE", entityType = "REVENUE_TARGET", description = "Created revenue target", severityLevel = "MEDIUM")
     @PostMapping
     public ResponseEntity<?> setTarget(@RequestBody Map<String, Object> payload) {
         String periodType = (String) payload.get("periodType");
