@@ -6,9 +6,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.time.LocalDateTime;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +19,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.Collections;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,39 +29,36 @@ import org.springframework.web.multipart.MultipartFile;
 import com.Ojt.Ecommerce.dto.CategoryBrandPair;
 import com.Ojt.Ecommerce.dto.ProductDTO;
 import com.Ojt.Ecommerce.dto.ProductImageDTO;
+import com.Ojt.Ecommerce.dto.TrendingProductDTO;
 import com.Ojt.Ecommerce.dto.VariantAttributeDTO;
 import com.Ojt.Ecommerce.dto.VariantDTO;
-import com.Ojt.Ecommerce.dto.TrendingProductDTO;
 import com.Ojt.Ecommerce.entity.AttributeValue;
 import com.Ojt.Ecommerce.entity.Brand;
 import com.Ojt.Ecommerce.entity.Category;
-import com.Ojt.Ecommerce.entity.Product;
-import com.Ojt.Ecommerce.entity.ProductHasCategory;
+import com.Ojt.Ecommerce.entity.Discount;
+import com.Ojt.Ecommerce.entity.DiscountRule;
 import com.Ojt.Ecommerce.entity.EventProduct;
 import com.Ojt.Ecommerce.entity.Events;
-import com.Ojt.Ecommerce.entity.ProductDiscount;
-import com.Ojt.Ecommerce.entity.Discount;
+import com.Ojt.Ecommerce.entity.Product;
+import com.Ojt.Ecommerce.entity.ProductHasCategory;
 import com.Ojt.Ecommerce.entity.ProductImage;
 import com.Ojt.Ecommerce.entity.ProductVariant;
+import com.Ojt.Ecommerce.entity.Review;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.entity.VariantAttributeValue;
-import com.Ojt.Ecommerce.entity.Review;
-import com.Ojt.Ecommerce.entity.DiscountRule;
 import com.Ojt.Ecommerce.repository.AttributeValueRepository;
 import com.Ojt.Ecommerce.repository.BrandRepository;
 import com.Ojt.Ecommerce.repository.CategoryRepository;
+import com.Ojt.Ecommerce.repository.DiscountRepository;
+import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
+import com.Ojt.Ecommerce.repository.EventProductRepository;
 import com.Ojt.Ecommerce.repository.ProductHasCategoryRepository;
 import com.Ojt.Ecommerce.repository.ProductImageRepository;
 import com.Ojt.Ecommerce.repository.ProductRepository;
 import com.Ojt.Ecommerce.repository.ProductVariantRepository;
 import com.Ojt.Ecommerce.repository.ReviewRepository;
 import com.Ojt.Ecommerce.repository.VariantAttributeValueRepository;
-import com.Ojt.Ecommerce.repository.EventProductRepository;
-import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
-import com.Ojt.Ecommerce.repository.DiscountRepository;
 import com.Ojt.Ecommerce.util.ProductCodeGeneratorUtil;
-import com.Ojt.Ecommerce.service.EmailService;
-import com.Ojt.Ecommerce.service.UserService;
 
 @Service
 public class ProductService {
@@ -1545,6 +1543,62 @@ public class ProductService {
     
     public List<Discount> getAllDiscounts() {
         return discountRepo.findAll();
+    }
+
+    public List<Map<String, Object>> getProductReportWithVariants() {
+        List<Map<String, Object>> reportData = new ArrayList<>();
+        // Only get products with status not equal to 2 (not deleted)
+        List<Product> products = proRepo.findAllProduct();
+        
+        for (Product product : products) {
+            // Add main product data
+            Map<String, Object> productData = new HashMap<>();
+            productData.put("id", product.getId());
+            productData.put("productCode", product.getProductCode());
+            productData.put("productName", product.getProductName());
+            productData.put("description", product.getDescription());
+            productData.put("quantity", product.getQuantity());
+            productData.put("price", product.getPrice());
+            productData.put("createDate", product.getCreateDate());
+            productData.put("status", product.getStatus());
+            productData.put("hasVariants", false);
+            productData.put("variants", new ArrayList<>());
+            
+            // Get variants for this product
+            List<ProductVariant> variants = variantRepo.findByProduct(product);
+            if (!variants.isEmpty()) {
+                productData.put("hasVariants", true);
+                List<Map<String, Object>> variantDataList = new ArrayList<>();
+                
+                for (ProductVariant variant : variants) {
+                    Map<String, Object> variantData = new HashMap<>();
+                    variantData.put("id", variant.getId());
+                    variantData.put("sku", variant.getStockKeeping());
+                    variantData.put("price", variant.getPrice());
+                    variantData.put("stock", variant.getStock());
+                    
+                    // Get variant attributes
+                    List<VariantAttributeValue> variantAttributes = variantAttributeValueRepo.findByProductVariant(variant);
+                    List<Map<String, Object>> attributes = new ArrayList<>();
+                    
+                    for (VariantAttributeValue vav : variantAttributes) {
+                        Map<String, Object> attrData = new HashMap<>();
+                        attrData.put("attributeName", vav.getAttributeValue().getAttribute().getName());
+                        attrData.put("value", vav.getAttributeValue().getValue());
+                        attributes.add(attrData);
+                    }
+                    
+                    variantData.put("attributes", attributes);
+                    variantDataList.add(variantData);
+                }
+                
+                productData.put("variants", variantDataList);
+            }
+            
+            reportData.add(productData);
+        }
+        
+        return reportData;
     }
 
 }

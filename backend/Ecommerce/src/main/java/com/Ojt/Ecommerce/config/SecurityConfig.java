@@ -79,6 +79,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/newsletter/**").permitAll()
                         .requestMatchers("/events/**").permitAll()
                         .requestMatchers("/event/**").permitAll()
+                        .requestMatchers("/api/product-reports/**").permitAll()
+
 
                         .anyRequest().authenticated()
 

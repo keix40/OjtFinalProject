@@ -348,4 +348,10 @@ public class ProductController {
         }
     }
 
+    @GetMapping("/report/with-variants")
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
+    public ResponseEntity<List<Map<String, Object>>> getProductReportWithVariants() {
+        return ResponseEntity.ok(service.getProductReportWithVariants());
+    }
+
 }

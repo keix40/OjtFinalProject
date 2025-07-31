@@ -1,105 +1,231 @@
-<div class="login-bg flex items-center justify-center min-h-screen">
-  <div class="login-card">
-    <div class="login-avatar">
-      <img src="/assets/images/britium-logo.png" alt="Britium Logo" class="login-logo" />
-    </div>
-    <h2 class="login-title">Sign In</h2>
-    <p class="login-subtitle">Welcome back! Please login to your account.</p>
-    <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="login-form">
-      <div class="login-group">
-        <label for="email" class="login-label">Email</label>
-        <input type="email" id="email" name="email" formControlName="email" required class="login-input" placeholder="Enter your email" />
+<div class="min-h-screen flex items-center justify-center bg-cover bg-center bg-no-repeat bg-fixed relative overflow-hidden" style="background-image: url('/assets/images/photo_2025-07-30_19-50-37.jpg');">
+  <div class="absolute inset-0 bg-black/50"></div>
+  
+  <div class="relative z-10 w-full max-w-md mx-4">
+    <!-- Login Card with Enhanced Glassmorphism Effect -->
+    <div class="bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl border border-white/30 p-4 relative overflow-hidden">
+      <!-- Additional glass effect overlay -->
+      <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl"></div>
+      
+      <!-- Content wrapper -->
+      <div class="relative z-10">
+        <!-- Logo Section -->
+        <div class="text-center mb-4">
+          <div class="inline-flex items-center justify-center w-12 h-12 bg-white/25 backdrop-blur-sm rounded-full shadow-lg mb-2 border border-white/40">
+            <img src="/assets/images/britium-logo.png" alt="Britium Logo" class="w-6 h-6" />
+          </div>
+          <h2 class="text-2xl font-bold text-slate-900 mb-1 drop-shadow-lg">Welcome Back</h2>
+          <p class="text-slate-900 text-sm">Sign in to your account</p>
+        </div>
+
+        <!-- Login Form -->
+        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="space-y-3">
+          <!-- Email Field -->
+          <div>
+            <label for="email" class="block text-sm font-semibold text-slate-900 mb-1 drop-shadow-md">Email Address</label>
+            <div class="relative group">
+              <input 
+                type="email" 
+                id="email" 
+                formControlName="email" 
+                required 
+                class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-800 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 text-sm"
+                placeholder="Enter your email"
+              />
+              <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                <svg class="h-4 w-4 text-slate-800 group-hover:text-slate-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div>
+            <label for="password" class="block text-sm font-semibold text-slate-900 mb-1 drop-shadow-md">Password</label>
+            <div class="relative group">
+              <input 
+                [type]="showPassword ? 'text' : 'password'" 
+                id="password" 
+                formControlName="password" 
+                required 
+                class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-800 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 text-sm pr-10"
+                placeholder="Enter your password"
+              />
+              <button 
+                type="button" 
+                (click)="togglePasswordVisibility()" 
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-800 hover:text-slate-500 transition-colors"
+              >
+                <i class="fas text-sm" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Forgot Password -->
+          <div class="flex justify-end">
+            <button 
+              type="button" 
+              (click)="openForgotModal()" 
+              class="text-slate-900 hover:text-slate-500 text-sm font-medium transition-colors hover:underline"
+            >
+              Forgot Password?
+            </button>
+          </div>
+
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            class="w-full bg-white/25 backdrop-blur-sm hover:bg-white/35 text-slate-900 font-bold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-white/20 border-2 border-white/30 hover:border-white/50 text-sm"
+          >
+            Sign In
+          </button>
+
+          <!-- Divider -->
+          <div class="relative my-3">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-slate-900/30"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-transparent text-slate-900 font-medium">or</span>
+            </div>
+          </div>
+
+          <!-- Register Link -->
+          <div class="text-center">
+            <span class="text-slate-900 text-sm">Don't have an account? </span>
+            <a routerLink="/register" class="text-slate-800 hover:text-slate-500 font-bold transition-colors underline">Register</a>
+          </div>
+        </form>
       </div>
-      <div class="login-group relative">
-        <label for="password" class="login-label">Password</label>
-        <input [type]="showPassword ? 'text' : 'password'" id="password" name="password" formControlName="password" required class="login-input pr-10" placeholder="Enter your password" />
-        <button type="button" (click)="togglePasswordVisibility()" class="login-toggle">
-          <i class="fas" [class.fa-eye]="!showPassword" [class.fa-eye-slash]="showPassword"></i>
+    </div>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div *ngIf="showForgotPasswordModal" class="fixed inset-0 flex items-center justify-center z-50">
+    <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
+    <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
+      <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl"></div>
+      <div class="relative z-10">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-lg font-bold text-slate-900 drop-shadow-lg">Forgot Password</h4>
+          <button class="text-slate-900 hover:text-slate-500 text-xl transition-colors" (click)="showForgotPasswordModal = false">&times;</button>
+        </div>
+        <input 
+          type="email" 
+          [(ngModel)]="forgotEmail" 
+          (ngModelChange)="onForgotEmailChange()" 
+          placeholder="Enter your email" 
+          class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 mb-3 text-sm"
+        />
+        <div *ngIf="submittedForgot && forgotEmailError" class="text-red-300 text-xs mb-2">{{ forgotEmailError }}</div>
+        <div class="text-red-300 text-xs mb-2" *ngIf="forgotError">{{ forgotError }}</div>
+        <button 
+          class="w-full bg-white/25 backdrop-blur-sm hover:bg-white/35 text-slate-900 font-bold py-2 rounded-lg transition-all duration-300 border-2 border-white/30 hover:border-white/50 text-sm" 
+          (click)="sendForgotPasswordOtp()" 
+          [disabled]="isSendingOtp"
+        >
+          <span *ngIf="!isSendingOtp">Send OTP</span>
+          <span *ngIf="isSendingOtp">Sending...</span>
         </button>
       </div>
-      <div class="login-row">
-        <label class="login-checkbox">
-          <input type="checkbox" class="login-checkbox-input" />
-          Remember me
-        </label>
-        <button type="button" class="login-link" (click)="openForgotModal()">Forgot Password?</button>
+    </div>
+  </div>
+
+  <!-- OTP Modal -->
+  <div *ngIf="showOtpModal" class="fixed inset-0 flex items-center justify-center z-50">
+    <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
+    <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
+      <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl"></div>
+      <div class="relative z-10">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-lg font-bold text-slate-900 drop-shadow-lg">Enter OTP</h4>
+          <button class="text-slate-900 hover:text-slate-500 text-xl transition-colors" (click)="showOtpModal = false">&times;</button>
+        </div>
+        <input 
+          type="text" 
+          [(ngModel)]="enteredOtp" 
+          (ngModelChange)="onOtpChange()" 
+          placeholder="Enter OTP" 
+          class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 mb-3 text-sm"
+        />
+        <div class="text-red-300 text-xs mb-2" *ngIf="submittedOtp && otpError">{{ otpError }}</div>
+        <button 
+          class="w-full bg-white/25 backdrop-blur-sm hover:bg-white/35 text-slate-900 font-bold py-2 rounded-lg transition-all duration-300 border-2 border-white/30 hover:border-white/50 text-sm" 
+          (click)="verifyOtp()" 
+          [disabled]="isVerifyingOtp"
+        >
+          <span *ngIf="!isVerifyingOtp">Verify OTP</span>
+          <span *ngIf="isVerifyingOtp">Verifying...</span>
+        </button>
       </div>
-      <button type="submit" class="login-btn">Sign In</button>
-      <div class="login-divider">
-        <span>or</span>
+    </div>
+  </div>
+
+  <!-- Reset Password Modal -->
+  <div *ngIf="showResetModal" class="fixed inset-0 flex items-center justify-center z-50">
+    <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
+    <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
+      <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl"></div>
+      <div class="relative z-10">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-lg font-bold text-slate-900 drop-shadow-lg">Reset Password</h4>
+          <button class="text-slate-900 hover:text-slate-500 text-xl transition-colors" (click)="showResetModal = false">&times;</button>
+        </div>
+        <input 
+          type="password" 
+          [(ngModel)]="newPassword" 
+          placeholder="New Password" 
+          class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 mb-2 text-sm"
+        />
+        <div class="text-red-300 text-xs mb-2" *ngIf="resetPasswordError">{{ resetPasswordError }}</div>
+        <input 
+          type="password" 
+          [(ngModel)]="confirmPassword" 
+          placeholder="Confirm Password" 
+          class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 mb-3 text-sm"
+        />
+        <div class="text-red-300 text-xs mb-2" *ngIf="resetConfirmPasswordError">{{ resetConfirmPasswordError }}</div>
+        <div class="text-red-300 text-xs mb-2" *ngIf="resetError">{{ resetError }}</div>
+        <button 
+          class="w-full bg-white/25 backdrop-blur-sm hover:bg-white/35 text-slate-900 font-bold py-2 rounded-lg transition-all duration-300 border-2 border-white/30 hover:border-white/50 text-sm" 
+          (click)="resetPassword()" 
+          [disabled]="isResettingPassword"
+        >
+          <span *ngIf="!isResettingPassword">Reset Password</span>
+          <span *ngIf="isResettingPassword">Resetting...</span>
+        </button>
       </div>
-      <div class="text-center login-footer">
-        Don't have an account?
-        <a routerLink="/register" class="login-link">Register</a>
+    </div>
+  </div>
+
+  <!-- CAPTCHA Modal -->
+  <div *ngIf="showCaptchaModal" class="fixed inset-0 flex items-center justify-center z-50">
+    <div class="absolute inset-0 backdrop-blur-sm bg-black/40"></div>
+    <div class="relative bg-white/15 backdrop-blur-sm rounded-2xl shadow-xl p-4 w-full max-w-xs mx-4 border border-white/30">
+      <div class="absolute inset-0 bg-gradient-to-br from-white/10 to-white/5 rounded-2xl"></div>
+      <div class="relative z-10">
+        <div class="flex justify-between items-center mb-3">
+          <h4 class="text-lg font-bold text-slate-900 drop-shadow-lg">Security Check</h4>
+          <button class="text-slate-900 hover:text-slate-500 text-xl transition-colors" (click)="showCaptchaModal = false">&times;</button>
+        </div>
+        <div class="mb-3 text-slate-500 text-center text-sm">{{ captchaQuestion }}</div>
+        <input 
+          type="text" 
+          [(ngModel)]="captchaInput" 
+          placeholder="Answer" 
+          class="w-full px-3 py-2 bg-white/20 backdrop-blur-sm border-2 border-white/30 rounded-lg text-slate-900 placeholder-slate-500 focus:outline-none focus:border-white/60 focus:bg-white/25 transition-all duration-300 mb-3 text-sm"
+        />
+        <div class="text-red-300 text-xs mb-2" *ngIf="captchaError">{{ captchaError }}</div>
+        <button 
+          class="w-full bg-white/25 backdrop-blur-sm hover:bg-white/35 text-slate-900 font-bold py-2 rounded-lg transition-all duration-300 border-2 border-white/30 hover:border-white/50 text-sm" 
+          (click)="verifyCaptcha()" 
+          [disabled]="isVerifyingCaptcha"
+        >
+          <span *ngIf="!isVerifyingCaptcha">Verify</span>
+          <span *ngIf="isVerifyingCaptcha">Verifying...</span>
+        </button>
       </div>
-    </form>
-    <ng-container *ngTemplateOutlet="forgotModal"></ng-container>
-    <ng-container *ngTemplateOutlet="otpModal"></ng-container>
-    <ng-container *ngTemplateOutlet="resetModal"></ng-container>
-    <ng-container *ngTemplateOutlet="captchaModal"></ng-container>
+    </div>
   </div>
 </div>
-
-<!-- Forgot Password Modal -->
-<ng-template #forgotModal>
-  <div *ngIf="showForgotPasswordModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-    <div class="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl p-6 w-full max-w-xs">
-      <h4 class="text-lg font-bold mb-2 text-gray-800">Forgot Password</h4>
-      <input type="email" [(ngModel)]="forgotEmail" (ngModelChange)="onForgotEmailChange()" placeholder="Enter your email" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
-      <div *ngIf="submittedForgot && forgotEmailError" class="text-red-500 text-xs mb-1">{{ forgotEmailError }}</div>
-      <div class="text-red-500 text-xs mb-1" *ngIf="forgotError">{{ forgotError }}</div>
-      <button class="w-full py-2 rounded-lg bg-blue-500 text-white font-bold shadow hover:bg-blue-600 transition" (click)="sendForgotPasswordOtp()" [disabled]="isSendingOtp">
-        <span *ngIf="!isSendingOtp">Send OTP</span>
-        <span *ngIf="isSendingOtp">Sending...</span>
-      </button>
-    </div>
-  </div>
-</ng-template>
-<!-- OTP Modal -->
-<ng-template #otpModal>
-  <div *ngIf="showOtpModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-    <div class="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl p-6 w-full max-w-xs">
-      <h4 class="text-lg font-bold mb-2 text-gray-800">Enter OTP</h4>
-      <input type="text" [(ngModel)]="enteredOtp" (ngModelChange)="onOtpChange()" placeholder="Enter OTP" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
-      <div class="text-red-500 text-xs mb-1" *ngIf="submittedOtp && otpError">{{ otpError }}</div>
-      <button class="w-full py-2 rounded-lg bg-blue-500 text-white font-bold shadow hover:bg-blue-600 transition" (click)="verifyOtp()" [disabled]="isVerifyingOtp">
-        <span *ngIf="!isVerifyingOtp">Verify OTP</span>
-        <span *ngIf="isVerifyingOtp">Verifying...</span>
-      </button>
-    </div>
-  </div>
-</ng-template>
-<!-- Reset Password Modal -->
-<ng-template #resetModal>
-  <div *ngIf="showResetModal" class="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-    <div class="bg-white/80 backdrop-blur-lg rounded-xl shadow-xl p-6 w-full max-w-xs">
-      <h4 class="text-lg font-bold mb-2 text-gray-800">Reset Password</h4>
-      <input type="password" [(ngModel)]="newPassword" placeholder="New Password" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
-      <div class="text-red-500 text-xs mb-1" *ngIf="resetPasswordError">{{ resetPasswordError }}</div>
-      <input type="password" [(ngModel)]="confirmPassword" placeholder="Confirm Password" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
-      <div class="text-red-500 text-xs mb-1" *ngIf="resetConfirmPasswordError">{{ resetConfirmPasswordError }}</div>
-      <div class="text-red-500 text-xs mb-1" *ngIf="resetError">{{ resetError }}</div>
-      <button class="w-full py-2 rounded-lg bg-green-500 text-white font-bold shadow hover:bg-green-600 transition" (click)="resetPassword()" [disabled]="isResettingPassword">
-        <span *ngIf="!isResettingPassword">Reset Password</span>
-        <span *ngIf="isResettingPassword">Resetting...</span>
-      </button>
-    </div>
-  </div>
-</ng-template>
-<!-- CAPTCHA Modal -->
-<ng-template #captchaModal>
-  <div *ngIf="showCaptchaModal" class="fixed inset-0 z-40 flex items-center justify-center">
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-xs mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
-      <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="showCaptchaModal = false">&times;</button>
-      <h4 class="text-lg font-bold mb-2 text-gray-800">Security Check</h4>
-      <div class="mb-2 text-gray-700">{{ captchaQuestion }}</div>
-      <input type="text" [(ngModel)]="captchaInput" placeholder="Answer" class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300 text-gray-800 placeholder-gray-400 shadow-sm mb-2" />
-      <div class="text-red-500 text-xs mb-1" *ngIf="captchaError">{{ captchaError }}</div>
-      <button class="w-full py-2 rounded-lg bg-blue-500 text-white font-bold shadow hover:bg-blue-600 transition" (click)="verifyCaptcha()" [disabled]="isVerifyingCaptcha">
-        <span *ngIf="!isVerifyingCaptcha">Verify</span>
-        <span *ngIf="isVerifyingCaptcha">Verifying...</span>
-      </button>
-    </div>
-  </div>
-</ng-template>

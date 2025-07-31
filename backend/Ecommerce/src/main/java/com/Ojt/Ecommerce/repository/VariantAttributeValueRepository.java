@@ -1,8 +1,11 @@
 package com.Ojt.Ecommerce.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.Ojt.Ecommerce.entity.ProductVariant;
 import com.Ojt.Ecommerce.entity.VariantAttributeValue;
-import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 import java.util.List;
 

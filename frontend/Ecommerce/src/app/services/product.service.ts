@@ -125,4 +125,25 @@ export class ProductService {
     return this.http.get<ProductDTO[]>(`${this.baseUrl}/live-search?keyword=${encodeURIComponent(keyword)}`);
   }
   
+  getProductReportWithVariants(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/report/with-variants`);
+  }
+
+  // Product Report endpoints
+  exportProductReportToExcel(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/product-reports/excel`, { responseType: 'blob' });
+  }
+
+  exportSelectedProductsToExcel(productIds: number[]): Observable<Blob> {
+    return this.http.post(`http://localhost:8080/api/product-reports/excel/selected`, productIds, { responseType: 'blob' });
+  }
+
+  exportProductReportToPDF(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/product-reports/pdf`, { responseType: 'blob' });
+  }
+
+  exportSelectedProductsToPDF(productIds: number[]): Observable<Blob> {
+    return this.http.post(`http://localhost:8080/api/product-reports/pdf/selected`, productIds, { responseType: 'blob' });
+  }
+  
 }

@@ -8,9 +8,7 @@ import { ModalService } from '../services/modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmModelComponent } from '../confirm-model/confirm-model.component';
 import Swal from 'sweetalert2';
-import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+// Removed ExcelJS, XLSX, and jsPDF imports since we're using Jasper Reports
 import { ImageService } from '../services/image.service';
 import { Router } from '@angular/router';
 import { PermissionService } from '../services/permission.service';
@@ -20,7 +18,6 @@ import { Attribute, AttributeValue } from '../attribute';
 import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
 declare var $: any;
 declare var lucide: any;
-
 
 // Update ProductImage type for productImages array to include variantId
 export interface ProductImage {
@@ -45,6 +42,24 @@ export interface ProductList {
   productImages: ProductImage[];
   brandId?: number;
   categoryId?: number;
+  variants?: Variant[];
+}
+
+// Add Variant interfaces
+interface VariantAttribute {
+  attributeId: number;
+  attributeName: string;
+  valueId: number;
+  value: string;
+}
+
+interface Variant {
+  id: number;
+  sku: string;
+  price: number;
+  stock: number;
+  images: ProductImage[];
+  attributes: VariantAttribute[];
 }
 
 @Component({
@@ -80,9 +95,9 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   editAttributeValue: string = '';
   expandedAttributeId: number | null = null;
 
-  
   public PermissionConstants = PermissionConstants;
   public permissionService: PermissionService;
+  
   constructor(
     private productService: ProductService,
     private cateService: CategoryService,
@@ -429,93 +444,60 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
       });
   }
   
-  // Export to Excel
-  exportToExcel(): void {
-    this.exportToExcelInternal(this.products);
-  }
-
-  // Export selected products to Excel
-  exportSelectedToExcel(): void {
-    const selectedProducts = this.selectedProducts;
-    if (selectedProducts.length === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'No Products Selected',
-        text: 'Please select at least one product to export.',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
-    }
-    this.exportToExcelInternal(selectedProducts);
-  }
-
-  // Internal Excel export method
-  private exportToExcelInternal(productsToExport: ProductList[]): void {
+  // Export to Excel using backend service
+  async exportToExcel(): Promise<void> {
     try {
-      // Prepare data for export
-      const exportData = productsToExport.map(product => ({
-        'Product Name': product.productName,
-        'SKU': product.productCode,
-        'Price (MMK)': product.price,
-        'Stock': product.quantity,
-        'Status': this.getStatusText(product),
-        'Description': product.description,
-        'Created Date': new Date(product.createDate).toLocaleDateString(),
-        'Updated Date': new Date(product.updateDate).toLocaleDateString()
-      }));
+      Swal.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we generate your Excel report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
 
-      // Create workbook and worksheet
-      const workbook = XLSX.utils.book_new();
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      this.productService.exportProductReportToExcel().subscribe({
+                next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          // Determine file extension based on blob type
+          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
+          link.download = `Britium_Gallery_Product_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
+          link.click();
+          window.URL.revokeObjectURL(url);
 
-      // Set column widths
-      const columnWidths = [
-        { wch: 30 }, // Product Name
-        { wch: 15 }, // SKU
-        { wch: 12 }, // Price
-        { wch: 8 },  // Stock
-        { wch: 12 }, // Status
-        { wch: 40 }, // Description
-        { wch: 12 }, // Created Date
-        { wch: 12 }  // Updated Date
-      ];
-      worksheet['!cols'] = columnWidths;
-
-      // Add worksheet to workbook
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Products');
-
-      // Generate filename with current date
-      const fileName = `products_${new Date().toISOString().split('T')[0]}.xlsx`;
-
-      // Save file
-      XLSX.writeFile(workbook, fileName);
-
-      const productCount = productsToExport.length;
       Swal.fire({
         icon: 'success',
         title: 'Export Successful!',
-        text: `${productCount} product(s) exported to ${fileName}`,
-        timer: 2000,
+            text: 'Product report has been exported successfully.',
+            timer: 3000,
         showConfirmButton: false
+          });
+        },
+        error: (error) => {
+          console.error('Excel export error:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'There was an error exporting the product report to Excel.',
+            confirmButtonColor: '#3085d6'
+          });
+        }
       });
     } catch (error) {
       console.error('Excel export error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Export Failed',
-        text: 'There was an error exporting the products to Excel.',
+        text: 'There was an error exporting the product report to Excel.',
         confirmButtonColor: '#3085d6'
       });
     }
   }
 
-  // Export to PDF
-  exportToPDF(): void {
-    this.exportToPDFInternal(this.products);
-  }
-
-  // Export selected products to PDF
-  exportSelectedToPDF(): void {
+  // Export selected products to Excel (using backend service)
+  async exportSelectedToExcel(): Promise<void> {
     const selectedProducts = this.selectedProducts;
     if (selectedProducts.length === 0) {
       Swal.fire({
@@ -526,82 +508,183 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
       });
       return;
     }
-    this.exportToPDFInternal(selectedProducts);
-  }
 
-  // Internal PDF export method
-  private exportToPDFInternal(productsToExport: ProductList[]): void {
     try {
-      const doc = new jsPDF();
-      
-      // Add title
-      doc.setFontSize(20);
-      doc.text('Product Management Report', 14, 22);
-      
-      // Add date and product count
-      doc.setFontSize(12);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 32);
-      doc.text(`Total Products: ${productsToExport.length}`, 14, 40);
-      
-      // Prepare table data
-      const tableData = productsToExport.map(product => [
-        product.productName,
-        product.productCode,
-        `${product.price} MMK`,
-        product.quantity.toString(),
-        this.getStatusText(product)
-      ]);
-
-      // Add table
-      (doc as any).autoTable({
-        head: [['Product Name', 'SKU', 'Price', 'Stock', 'Status']],
-        body: tableData,
-        startY: 50,
-        styles: {
-          fontSize: 10,
-          cellPadding: 3
-        },
-        headStyles: {
-          fillColor: [13, 110, 253],
-          textColor: 255,
-          fontStyle: 'bold'
-        },
-        alternateRowStyles: {
-          fillColor: [248, 249, 250]
-        },
-        columnStyles: {
-          0: { cellWidth: 50 }, // Product Name
-          1: { cellWidth: 25 }, // SKU
-          2: { cellWidth: 25 }, // Price
-          3: { cellWidth: 20 }, // Stock
-          4: { cellWidth: 25 }  // Status
+      Swal.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we generate your Excel report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
         }
       });
 
-      // Generate filename with current date
-      const fileName = `products_${new Date().toISOString().split('T')[0]}.pdf`;
+      // Get selected product IDs
+      const selectedProductIds = selectedProducts.map(p => p.id);
 
-      // Save file
-      doc.save(fileName);
+      this.productService.exportSelectedProductsToExcel(selectedProductIds).subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          // Determine file extension based on blob type
+          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
+          link.download = `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
+          link.click();
+          window.URL.revokeObjectURL(url);
 
-      const productCount = productsToExport.length;
+          Swal.fire({
+            icon: 'success',
+            title: 'Export Successful!',
+            text: `Selected ${selectedProducts.length} product(s) have been exported successfully.`,
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
+        error: (error) => {
+          console.error('Excel export error:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'There was an error exporting the selected products to Excel.',
+            confirmButtonColor: '#3085d6'
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Excel export error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'There was an error exporting the selected products to Excel.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
+  }
+
+  // Removed old helper methods - now using backend service
+
+  // Removed ExcelJS internal export method - now using backend service
+
+  // Export to PDF using backend service
+  async exportToPDF(): Promise<void> {
+    try {
+      Swal.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we generate your PDF report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      this.productService.exportProductReportToPDF().subscribe({
+                next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          // Determine file extension based on blob type
+          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
+          link.download = `Britium_Gallery_Product_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+
       Swal.fire({
         icon: 'success',
         title: 'Export Successful!',
-        text: `${productCount} product(s) exported to ${fileName}`,
-        timer: 2000,
+            text: 'Product report has been exported successfully.',
+            timer: 3000,
         showConfirmButton: false
+          });
+        },
+        error: (error) => {
+          console.error('PDF export error:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'There was an error exporting the product report to PDF.',
+            confirmButtonColor: '#3085d6'
+          });
+        }
       });
     } catch (error) {
       console.error('PDF export error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Export Failed',
-        text: 'There was an error exporting the products to PDF.',
+        text: 'There was an error exporting the product report to PDF.',
         confirmButtonColor: '#3085d6'
       });
     }
   }
+
+  // Export selected products to PDF (using backend service)
+  async exportSelectedToPDF(): Promise<void> {
+    const selectedProducts = this.selectedProducts;
+    if (selectedProducts.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Products Selected',
+        text: 'Please select at least one product to export.',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
+    try {
+      Swal.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we generate your PDF report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Get selected product IDs
+      const selectedProductIds = selectedProducts.map(p => p.id);
+
+      this.productService.exportSelectedProductsToPDF(selectedProductIds).subscribe({
+        next: (blob: Blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          // Determine file extension based on blob type
+          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
+          link.download = `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
+          link.click();
+          window.URL.revokeObjectURL(url);
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Export Successful!',
+            text: `Selected ${selectedProducts.length} product(s) have been exported successfully.`,
+            timer: 3000,
+            showConfirmButton: false
+          });
+        },
+        error: (error) => {
+          console.error('PDF export error:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Export Failed',
+            text: 'There was an error exporting the selected products to PDF.',
+            confirmButtonColor: '#3085d6'
+          });
+        }
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'There was an error exporting the selected products to PDF.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
+  }
+
+  // Removed jsPDF internal export method - now using backend service
 
   // Helper method to get status text
   private getStatusText(product: ProductList): string {
@@ -658,6 +741,157 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     return ['color', 'colors', 'colour', 'colours'].includes(name);
   }
 
+  // Helper method to check if a value is a hex color code
+  isHexColor(value: string): boolean {
+    if (!value) return false;
+    const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+    return hexRegex.test(value.trim());
+  }
+
+  // Helper method to test color attribute detection
+  testColorAttribute(attrName: string, attrValue: string): boolean {
+    return this.isColorAttribute(attrName) && this.isHexColor(attrValue);
+  }
+
+  // Helper method to format variant attributes with color circles
+  formatVariantAttributes(attributes: any[]): string {
+    if (!attributes || attributes.length === 0) return 'No attributes';
+    
+    return attributes.map((attr: any) => {
+      const attrName = attr.attributeName || attr.attribute_name;
+      const attrValue = attr.value;
+      
+      // Check if it's a color attribute with hex value
+      if (this.testColorAttribute(attrName, attrValue)) {
+        // Create a colored circle using Unicode character with color styling
+        const colorCircle = '●';
+        return `${attrName}: ${colorCircle} ${attrValue}`;
+      }
+      
+      return `${attrName}: ${attrValue}`;
+    }).join(', ');
+  }
+
+  // Helper method to format variant attributes for HTML display with color circles
+  formatVariantAttributesHTML(attributes: any[]): string {
+    if (!attributes || attributes.length === 0) return 'No attributes';
+    
+    return attributes.map((attr: any) => {
+      const attrName = attr.attributeName || attr.attribute_name;
+      const attrValue = attr.value;
+      
+      // Check if it's a color attribute with hex value
+      if (this.testColorAttribute(attrName, attrValue)) {
+        const colorCircle = this.createColorCircle(attrValue, 12);
+        return `${attrName}: ${colorCircle} ${attrValue}`;
+      }
+      
+      return `${attrName}: ${attrValue}`;
+    }).join(', ');
+  }
+
+  // Helper method to create color circle HTML for display
+  createColorCircle(hexColor: string, size: number = 16): string {
+    return `<div style="
+      display: inline-block;
+      width: ${size}px;
+      height: ${size}px;
+      border-radius: 50%;
+      background-color: ${hexColor};
+      border: 1px solid #ccc;
+      margin-right: 4px;
+      vertical-align: middle;
+    "></div>`;
+  }
+
+  // Helper method to create colored circle for Excel/PDF
+  createColoredCircle(hexColor: string): string {
+    // For Excel/PDF, we'll use a Unicode circle with color information
+    // Note: Excel/PDF don't support actual colored Unicode characters
+    // So we'll use the circle symbol and rely on the hex code for color reference
+    return '●';
+  }
+
+  // Helper method to create rich text with colored circles for Excel
+  createRichTextWithColoredCircles(attributes: any[]): any {
+    if (!attributes || attributes.length === 0) {
+      return { richText: [{ text: 'No attributes' }] };
+    }
+
+    const richTextParts: any[] = [];
+    
+    attributes.forEach((attr, index) => {
+      const attrName = attr.attributeName || attr.attribute_name;
+      const attrValue = attr.value;
+      
+      // Add attribute name
+      richTextParts.push({ text: `${attrName}: ` });
+      
+      // Check if it's a color attribute with hex value
+      if (this.testColorAttribute(attrName, attrValue)) {
+        // Add colored circle (we'll use a special character that Excel can style)
+        richTextParts.push({ 
+          text: '●',
+          font: { color: { rgb: attrValue } }
+        });
+        richTextParts.push({ text: ` ${attrValue}` });
+      } else {
+        richTextParts.push({ text: attrValue });
+      }
+      
+      // Add separator if not last attribute
+      if (index < attributes.length - 1) {
+        richTextParts.push({ text: ', ' });
+      }
+    });
+
+    return { richText: richTextParts };
+  }
+
+  // Helper method to format variant attributes with actual colored circles
+  formatVariantAttributesWithColors(attributes: any[]): string {
+    if (!attributes || attributes.length === 0) return 'No attributes';
+    
+    return attributes.map((attr: any) => {
+      const attrName = attr.attributeName || attr.attribute_name;
+      const attrValue = attr.value;
+      
+      // Check if it's a color attribute with hex value
+      if (this.testColorAttribute(attrName, attrValue)) {
+        // For now, just show the hex code without circle since Excel doesn't support colored Unicode
+        return `${attrName}: ${attrValue}`;
+      }
+      
+      return `${attrName}: ${attrValue}`;
+    }).join(', ');
+  }
+
+  // Helper method to create a more visible color indicator
+  createColorIndicator(hexColor: string): string {
+    // Use a different Unicode character that might be more visible
+    return '●'; // Black circle
+  }
+
+  // Helper method to format variant attributes with ExcelJS colors
+  formatVariantAttributesWithExcelJSColors(attributes: any[]): string {
+    if (!attributes || attributes.length === 0) return 'No attributes';
+    
+    return attributes.map((attr: any) => {
+      const attrName = attr.attributeName || attr.attribute_name;
+      const attrValue = attr.value;
+      
+      // Check if it's a color attribute with hex value
+      if (this.testColorAttribute(attrName, attrValue)) {
+        // For now, just show the hex code since colored circles are complex in Excel
+        return `${attrName}: ${attrValue}`;
+      }
+      
+      return `${attrName}: ${attrValue}`;
+    }).join(', ');
+  }
+
+  // Removed ExcelJS color-related methods - now using backend service
+
   openCreateAttributeValueModal() {
     const modalRef = this.ngbModel.open(CreateAttributeValueComponent);
     modalRef.componentInstance.createMode = true;
@@ -666,3 +900,4 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     });
   }
 }
+

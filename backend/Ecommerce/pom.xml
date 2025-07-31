@@ -49,11 +49,11 @@
 		</dependency>
 
 		<!-- ✅ Change this -->
-		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-			<version>8.4.0</version> <!-- ✅ as of July 2025 -->
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>com.mysql</groupId>-->
+<!--			<artifactId>mysql-connector-j</artifactId>-->
+<!--			<version>8.4.0</version> &lt;!&ndash; ✅ as of July 2025 &ndash;&gt;-->
+<!--		</dependency>-->
 
 
 		<dependency>
@@ -131,17 +131,6 @@
 			<artifactId>reflections</artifactId>
 			<version>0.10.2</version>
 		</dependency>
-		<dependency>
-			<groupId>org.reflections</groupId>
-			<artifactId>reflections</artifactId>
-			<version>0.10.2</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.twilio.sdk</groupId>
-			<artifactId>twilio</artifactId>
-			<version>8.31.1</version>
-		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -150,7 +139,7 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Apache POI for Excel generation -->
+		<!-- Apache POI for Excel and PDF generation -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
