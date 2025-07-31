@@ -3,9 +3,11 @@ package com.Ojt.Ecommerce.controller;
 import com.Ojt.Ecommerce.entity.Appeal;
 import com.Ojt.Ecommerce.service.AppealService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +20,11 @@ public class AppealController {
 
     private final AppealService appealService;
 
+    @Autowired
+    private com.Ojt.Ecommerce.repository.AppealRepository appealRepository;
+
     // Submit new appeal - completely public endpoint for blacklisted users
+    @LogActivity(actionType = "CREATE", entityType = "APPEAL", description = "Created appeal", severityLevel = "MEDIUM")
     @PostMapping("/submit")
     public ResponseEntity<?> submitAppeal(@RequestBody Map<String, Object> appealData) {
         try {
@@ -64,6 +70,7 @@ public class AppealController {
     }
 
     // Review appeal (admin only)
+    @LogActivity(actionType = "UPDATE", entityType = "APPEAL", description = "Reviewed appeal", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PostMapping("/{id}/review")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> reviewAppeal(

@@ -332,7 +332,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'total-sales',
         title: 'Total Sales',
-        value: `$${this.formatNumber(totalSales)}`,
+        value: this.formatNumber(totalSales),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales, prevTotalSales),
         isPositive: totalSales >= prevTotalSales,
         chartData: trend.map(d => ({ value: d.total })),
@@ -342,7 +343,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'revenue',
         title: 'Revenue',
-        value: `$${this.formatNumber(Math.floor(totalSales * 0.72))}`,
+        value: this.formatNumber(Math.floor(totalSales * 0.72)),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales * 0.72, prevRevenue),
         isPositive: (totalSales * 0.72) >= prevRevenue,
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
@@ -398,7 +400,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'total-sales',
         title: 'Total Sales',
-        value: `$${this.formatNumber(totalSales)}`,
+        value: this.formatNumber(totalSales),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales, prevTotalSales),
         isPositive: totalSales >= prevTotalSales,
         chartData: trend.map(d => ({ value: d.total })),
@@ -408,7 +411,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'revenue',
         title: 'Revenue',
-        value: `$${this.formatNumber(Math.floor(totalSales * 0.72))}`,
+        value: this.formatNumber(Math.floor(totalSales * 0.72)),
+        currency: 'MMK',
         change: this.getPercentChange(totalSales * 0.72, prevRevenue),
         isPositive: (totalSales * 0.72) >= prevRevenue,
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
@@ -428,7 +432,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'avg-order',
         title: 'Avg Order',
-        value: this.orderCount > 0 ? `$${this.formatNumber(Math.floor(totalSales / this.orderCount))}` : '$0',
+        value: this.orderCount > 0 ? this.formatNumber(Math.floor(totalSales / this.orderCount)) : '0',
+        currency: 'MMK',
         change: this.getPercentChange(this.orderCount > 0 ? Math.floor(totalSales / this.orderCount) : 0, prevAvgOrder),
         isPositive: (this.orderCount > 0 ? Math.floor(totalSales / this.orderCount) : 0) >= prevAvgOrder,
         chartData: trend.map(d => ({ value: d.orderCount > 0 ? Math.floor(d.total / d.orderCount) : 0 })),
@@ -1055,17 +1060,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         plugins: {
           legend: { display: false },
           tooltip: {
-            callbacks: {
-              label: (context: any) => {
-                const val = context.parsed.y;
-                let formatted = val >= 1_000_000
-                  ? `$${(val / 1_000_000).toFixed(1)}M`
-                  : val >= 1_000
-                    ? `$${(val / 1_000).toFixed(1)}k`
-                    : `$${val}`;
-                return `${context.dataset.label}: ${formatted}`;
+                          callbacks: {
+                label: (context: any) => {
+                  const val = context.parsed.y;
+                  let formatted = val >= 1_000_000
+                    ? `$${(val / 1_000_000).toFixed(1)}M`
+                    : val >= 1_000
+                      ? `$${(val / 1_000).toFixed(1)}k`
+                      : `$${val}`;
+                  return `${context.dataset.label}: ${formatted}`;
+                }
               }
-            }
           }
         },
         scales: {

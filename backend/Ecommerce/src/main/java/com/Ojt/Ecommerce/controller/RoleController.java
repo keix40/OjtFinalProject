@@ -13,6 +13,7 @@ import com.Ojt.Ecommerce.repository.UserRepository;
 import org.springframework.http.ResponseEntity;
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import com.Ojt.Ecommerce.annotations.RequiresPermission;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 
 @RestController
@@ -30,12 +31,17 @@ public class RoleController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.Ojt.Ecommerce.repository.RoleRepository roleRepository;
+
+    @LogActivity(actionType = "CREATE", entityType = "ROLE", description = "Created role", severityLevel = "MEDIUM")
     @PostMapping
     @RequiresPermission(value = ROLES_CREATE, level = "advanced", description = "Create a new role")
     public Role createRole(@RequestBody Role role) {
         return roleService.createRole(role);
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "ROLE", description = "Updated role", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/{id}")
     @RequiresPermission(value = ROLES_UPDATE, level = "advanced", description = "Update an existing role")
     public ResponseEntity<?> updateRole(@PathVariable Long id, @RequestBody Role role, @RequestHeader("Authorization") String token) {
@@ -50,6 +56,7 @@ public class RoleController {
         return ResponseEntity.ok(updated);
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "ROLE", description = "Deleted role", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     @RequiresPermission(value = ROLES_DELETE, level = "critical", description = "Delete a role")
     public void deleteRole(@PathVariable Long id) {

@@ -109,12 +109,42 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
 
   ngOnInit(): void {
     // Set currentUser from JWT
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('jwtToken') || localStorage.getItem('token');
+    const token = localStorage.getItem('token');
     if (token) {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      this.currentUser = this.currentUser || {};
-      this.currentUser.role = this.currentUser.role || {};
-      this.currentUser.role.level = payload.roleLevel;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        this.currentUser = {
+          id: payload.id || 0,
+          name: payload.sub || 'Unknown User',
+          role: {
+            id: payload.id || 0,
+            name: payload.roles || 'UNKNOWN',
+            level: payload.roleLevel || 0
+          }
+        };
+      } catch (error) {
+        console.error('Error parsing JWT token:', error);
+        this.currentUser = {
+          id: 0,
+          name: 'Parse Error',
+          role: {
+            id: 0,
+            name: 'PARSE_ERROR',
+            level: 0
+          }
+        };
+      }
+    } else {
+      console.error('No token found in localStorage');
+      this.currentUser = {
+        id: 0,
+        name: 'No Token',
+        role: {
+          id: 0,
+          name: 'NO_TOKEN',
+          level: 0
+        }
+      };
     }
     this.permissionCategoryService.getPermissionCategories().subscribe(categories => {
       this.permissionCategories = categories;
@@ -536,9 +566,60 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
   }
 
   getRoleLevel(admin: any): number {
-    if (admin && admin.role && typeof admin.role === 'object' && 'level' in admin.role) {
-      return admin.role.level;
+    // Map role names to levels
+    const roleLevels: { [key: string]: number } = {
+      'super_admin': 7,
+      'admin': 6,
+      'manager': 5,
+      'sales/marketing': 4,
+      'moderator': 3,
+      'support': 2,
+      'user': 1
+    };
+    return roleLevels[admin.role] || 1;
+  }
+
+  // Helper methods for conditional actions
+  canEditAdmin(admin: any): boolean {
+    return this.permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) && 
+           this.currentUser.role.level > this.getRoleLevel(admin);
+  }
+
+  canDeleteAdmin(admin: any): boolean {
+    return this.permissionService.hasPermission(PermissionConstants.ADMIN_USERS_DELETE) && 
+           this.currentUser.role.level > this.getRoleLevel(admin);
+  }
+
+  canToggleAdminStatus(admin: any): boolean {
+    return this.permissionService.hasPermission(PermissionConstants.ADMIN_USERS_UPDATE) && 
+           this.currentUser.role.level > this.getRoleLevel(admin);
+  }
+
+  // Conditional action methods
+  handleEditAdmin(admin: AdminUser): void {
+    if (this.canEditAdmin(admin)) {
+      this.editAdmin(admin);
+      this.openDropdownId = null;
     }
-    return 0;
+  }
+
+  handleDeleteAdmin(admin: AdminUser): void {
+    if (this.canDeleteAdmin(admin)) {
+      this.deleteAdmin(admin);
+      this.openDropdownId = null;
+    }
+  }
+
+  handleToggleAdminStatus(admin: AdminUser): void {
+    if (this.canToggleAdminStatus(admin)) {
+      this.toggleAdminStatus(admin);
+      this.openDropdownId = null;
+    }
+  }
+
+  handleToggleDropdown(admin: any): void {
+    if (this.currentUser.role.level > this.getRoleLevel(admin)) {
+      this.openDropdownId = this.openDropdownId === admin.id ? null : admin.id;
+    }
   }
 }

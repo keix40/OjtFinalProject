@@ -605,16 +605,36 @@ public class ProductService {
                 ProductVariant variant = updatedVariants.stream().filter(v -> v.getStockKeeping().equals(sku)).findFirst().orElse(null);
                 if (variant == null) continue;
 
-                // Remove and re-insert attribute values
-                variantAttributeValueRepo.deleteByProductVariant(variant);
+                // Update attribute values using a controlled approach to avoid JPA conflicts
+                List<VariantAttributeValue> existingVavs = variantAttributeValueRepo.findByProductVariant(variant);
+                
+                // Create a set of incoming attribute value IDs
+                Set<Long> incomingValueIds = variantDTO.getAttributes().stream()
+                        .map(VariantAttributeDTO::getValueId)
+                        .collect(Collectors.toSet());
+                
+                // Delete only the attribute values that are no longer present
+                for (VariantAttributeValue existingVav : existingVavs) {
+                    if (!incomingValueIds.contains(existingVav.getAttributeValue().getId())) {
+                        variantAttributeValueRepo.delete(existingVav);
+                    }
+                }
+                
+                // Add only new attribute values that don't already exist
+                Set<Long> existingValueIds = existingVavs.stream()
+                        .map(vav -> vav.getAttributeValue().getId())
+                        .collect(Collectors.toSet());
+                
                 for (VariantAttributeDTO attr : variantDTO.getAttributes()) {
-                    AttributeValue attrValue = attrValueRepo.findById(attr.getValueId()).orElse(null);
-                    if (attrValue != null) {
-                        VariantAttributeValue vav = VariantAttributeValue.builder()
-                                .productVariant(variant)
-                                .attributeValue(attrValue)
-                                .build();
-                        variantAttributeValueRepo.save(vav);
+                    if (!existingValueIds.contains(attr.getValueId())) {
+                        AttributeValue attrValue = attrValueRepo.findById(attr.getValueId()).orElse(null);
+                        if (attrValue != null) {
+                            VariantAttributeValue vav = VariantAttributeValue.builder()
+                                    .productVariant(variant)
+                                    .attributeValue(attrValue)
+                                    .build();
+                            variantAttributeValueRepo.save(vav);
+                        }
                     }
                 }
 
@@ -674,8 +694,8 @@ public class ProductService {
                 }
             }
 
-//            // Instead of setProductVariants, mutate the existing list
-//            product.getProductVariants().clear();
+            // Clear existing variants and add updated ones to avoid duplication
+            product.getProductVariants().clear();
             product.getProductVariants().addAll(updatedVariants);
         }
 

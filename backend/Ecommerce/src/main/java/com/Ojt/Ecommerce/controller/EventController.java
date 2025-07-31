@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.Ojt.Ecommerce.dto.EventDTO;
 import com.Ojt.Ecommerce.service.EventService;
+import com.Ojt.Ecommerce.annotations.LogActivity;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,18 +24,29 @@ import lombok.RequiredArgsConstructor;
 public class EventController {
 
     private final EventService eventService;
+    private final com.Ojt.Ecommerce.repository.EventRepository eventRepository;
 
+    @LogActivity(actionType = "CREATE", entityType = "EVENT", description = "Created promotional event", severityLevel = "MEDIUM")
     @PostMapping("/create")
     public ResponseEntity<?> createEvent(@RequestPart("data") EventDTO eventDTO,
                                          @RequestPart(value = "image", required = false) MultipartFile imageFile) {
         return ResponseEntity.ok(eventService.createEvent(eventDTO, imageFile));
     }
 
+    @LogActivity(actionType = "UPDATE", entityType = "EVENT", description = "Updated promotional event", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Long id,
                                          @RequestPart("data") EventDTO eventDTO,
                                          @RequestPart(value = "image", required = false) MultipartFile imageFile) {
-        return ResponseEntity.ok(eventService.updateEvent(id, eventDTO, imageFile));
+        Object result = eventService.updateEvent(id, eventDTO, imageFile);
+        // Ensure we return the actual Event entity for logging
+        if (result instanceof com.Ojt.Ecommerce.entity.Events) {
+            return ResponseEntity.ok(result);
+        } else {
+            // If service returns something else, fetch the updated entity
+            com.Ojt.Ecommerce.entity.Events updatedEvent = eventRepository.findById(id).orElse(null);
+            return ResponseEntity.ok(updatedEvent);
+        }
     }
 
     @GetMapping("/list")
@@ -57,6 +69,7 @@ public class EventController {
         return ResponseEntity.ok(eventService.getEventById(id));
     }
 
+    @LogActivity(actionType = "DELETE", entityType = "EVENT", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @PutMapping("/delete/{id}")
     public Object deleteEvent(@PathVariable Long id) {
         return eventService.deleteEvent(id);

@@ -538,9 +538,9 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-    public boolean updateOrderStatus(Long orderId, String statusStr, Long refundId) {
+    public com.Ojt.Ecommerce.entity.UserOrder updateOrderStatus(Long orderId, String statusStr, Long refundId) {
         Optional<UserOrder> optionalOrder = repo.findById(orderId);
-        if (optionalOrder.isEmpty()) return false;
+        if (optionalOrder.isEmpty()) return null;
 
         UserOrder order = optionalOrder.get();
 
@@ -566,31 +566,7 @@ public class OrderService {
         orderStatusRepository.save(orderStatus);
 
         order.setUpdatedDate(LocalDateTime.now());
-        repo.save(order);
-
-        String statusMessage;
-        switch (type) {
-            case SHIPPED:
-                statusMessage = "has been shipped.";
-                break;
-            case DELIVERED:
-                statusMessage = "has been delivered.";
-                break;
-            case CANCELLED:
-                statusMessage = "has been cancelled.";
-                break;
-            default:
-                statusMessage = "has been placed.";
-                break;
-        }
-
-        String message = "Your order " + order.getOrderCode() + " " + statusMessage;
-        String link = "/profile/" + order.getUser().getId() + "?section=orders&orderId=" + order.getId();
-        String notiType = "order";
-
-        notificationService.createNotificationForUser(order.getUser().getEmail(), message, notiType, link);
-
-        return true;
+        return repo.save(order);
     }
 
     private UserOrderListDTO convertToDTO(UserOrder order) {

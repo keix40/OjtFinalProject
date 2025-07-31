@@ -88,7 +88,8 @@ public class DiscountController {
     @LogActivity(actionType = "UPDATE", entityType = "DISCOUNT", description = "Updated discount", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
     @PutMapping("/{id}")
     public ResponseEntity<?> updateDiscount(@PathVariable Long id, @RequestBody DiscountRequestDTO dto) {
-        return discountService.updateDiscount(id, dto);
+        com.Ojt.Ecommerce.entity.Discount updatedDiscount = discountService.updateDiscount(id, dto);
+        return ResponseEntity.ok(updatedDiscount);
     }
 
     @GetMapping
@@ -126,7 +127,7 @@ public class DiscountController {
         return ResponseEntity.ok(Map.of("minSpend", minSpend));
     }
 
-    @LogActivity(actionType = "DELETE", entityType = "DISCOUNT", description = "Deleted discount", severityLevel = "HIGH", entityIdParam = "id")
+    @LogActivity(actionType = "DELETE", entityType = "DISCOUNT", description = "", severityLevel = "HIGH", entityIdParam = "id")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteDiscount(@PathVariable Long id) {
         discountRepository.deleteById(id);
