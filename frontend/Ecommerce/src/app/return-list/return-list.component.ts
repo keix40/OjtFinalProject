@@ -7,8 +7,10 @@ import { saveAs } from 'file-saver';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import ExcelJS from 'exceljs';
+import { PriceFormatService } from '../services/price-format.service';
 declare var $: any;
 declare var lucide: any;
+import Swal from 'sweetalert2';
 
 interface RefundRequest {
   returnRequestId: number;
@@ -166,7 +168,10 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     return Math.ceil(this.filteredReturns.length / this.pageSize);
   }
 
-  constructor(private returnService: ReturnService) {}
+  constructor(
+    private returnService: ReturnService,
+    private priceFormatService: PriceFormatService
+  ) {}
 
   ngOnInit() {
     this.fetchReturns();
@@ -256,101 +261,197 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   exportExcel(type: 'all' | 'selected') {
-    const exportData = (type === 'all' ? this.dataSource.data : this.selectedRows);
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet('Returns');
+    try {
+      const returnsToExport = type === 'all' ? this.dataSource.data : this.selectedRows;
+      
+      if (returnsToExport.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Data to Export',
+          text: 'There are no return requests to export.',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
 
-    // Define columns
-    worksheet.columns = [
-      { header: 'Order ID', key: 'orderCode', width: 16 },
-      { header: 'Date', key: 'requestedAt', width: 18 },
-      { header: 'Customer', key: 'userName', width: 22 },
-      { header: 'Products', key: 'products', width: 32 },
-      { header: 'Reason', key: 'reasonForReturn', width: 22 },
-      { header: 'Return Detail', key: 'returnDetail', width: 28 },
-      { header: 'Status', key: 'status', width: 14 },
-    ];
-
-    // Add rows
-    exportData.forEach((row: any) => {
-      worksheet.addRow({
-        orderCode: row.orderCode ?? '',
-        requestedAt: row.requestedAt ? new Date(row.requestedAt).toLocaleDateString() : '',
-        userName: row.userName ?? '',
-        products: row.products ? row.products.map((p: any) => p.productName).join(', ') : '',
-        reasonForReturn: row.reasonForReturn ?? '',
-        returnDetail: row.returnDetail ?? '',
-        status: row.status ?? ''
-      });
-    });
-
-    // Style header
-    worksheet.getRow(1).eachCell((cell: any) => {
-      cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: '1976D2' } // Blue
-      };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
-      cell.border = {
-        top: { style: 'thin' },
-        left: { style: 'thin' },
-        bottom: { style: 'thin' },
-        right: { style: 'thin' }
-      };
-    });
-
-    // Style rows (alternating color)
-    worksheet.eachRow((row: any, rowNumber: any) => {
-      if (rowNumber === 1) return;
-      row.eachCell((cell: any) => {
-        cell.border = {
-          top: { style: 'thin' },
-          left: { style: 'thin' },
-          bottom: { style: 'thin' },
-          right: { style: 'thin' }
-        };
-        cell.alignment = { vertical: 'middle', horizontal: 'left' };
-        if (rowNumber % 2 === 0) {
-          cell.fill = {
-            type: 'pattern',
-            pattern: 'solid',
-            fgColor: { argb: 'F4F6FA' } // Light gray
-          };
+      // Show loading
+      Swal.fire({
+        title: 'Generating CSV Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
         }
       });
-    });
 
-    workbook.xlsx.writeBuffer().then((buffer: any) => {
-      const fileName = type === 'all' ? 'return-requests-all.xlsx' : 'return-requests-selected.xlsx';
-      saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fileName);
-    });
+      if (type === 'selected') {
+        const returnIds = this.selectedRows.map(returnRequest => returnRequest.id);
+        this.returnService.exportSelectedReturnsToCSV(returnIds).subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Return CSV export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Return report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Return CSV export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the return report to CSV. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      } else {
+        this.returnService.exportReturnReportToCSV().subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Return CSV export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Return report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Return CSV export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the return report to CSV. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Return CSV export error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'There was an error exporting to CSV. Please try again.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
   }
 
   exportPDF(type: 'all' | 'selected') {
-    const exportData = (type === 'all' ? this.dataSource.data : this.selectedRows).map((row: any) => [
-      String(row.orderCode ?? ''),
-      row.requestedAt ? new Date(row.requestedAt).toLocaleDateString() : '',
-      String(row.userName ?? ''),
-      row.products ? row.products.map((p: any) => p.productName).join(', ') : '',
-      String(row.reasonForReturn ?? ''),
-      String(row.returnDetail ?? ''),
-      String(row.status ?? '')
-    ]);
-    const doc = new jsPDF();
-    autoTable(doc, {
-      head: [['Order ID', 'Date', 'Customer', 'Product', 'Reason', 'Return Detail', 'Status']],
-      body: exportData,
-      styles: { fontSize: 9, cellPadding: 3 },
-      headStyles: { fillColor: [25, 118, 210], textColor: 255, fontStyle: 'bold', halign: 'center' },
-      alternateRowStyles: { fillColor: [244, 246, 250] },
-      startY: 20,
-      margin: { left: 10, right: 10 },
-      tableLineColor: [200, 200, 200],
-      tableLineWidth: 0.1
-    });
-    doc.save(type === 'all' ? 'return-requests-all.pdf' : 'return-requests-selected.pdf');
+    try {
+      const returnsToExport = type === 'all' ? this.dataSource.data : this.selectedRows;
+      
+      if (returnsToExport.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Data to Export',
+          text: 'There are no return requests to export.',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: 'Generating PDF Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      if (type === 'selected') {
+        const returnIds = this.selectedRows.map(returnRequest => returnRequest.id);
+        this.returnService.exportSelectedReturnsToPDF(returnIds).subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Return PDF export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Return report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Return PDF export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the return report to PDF. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      } else {
+        this.returnService.exportReturnReportToPDF().subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Return PDF export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Return report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Return PDF export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the return report to PDF. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Return PDF export error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'There was an error exporting to PDF. Please try again.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
   }
 
   onExportOption(event: Event) {
@@ -410,9 +511,24 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getProductNames(row: ReturnRequestDTO): string {
-    if (row.products && row.products.length > 0) {
-      return row.products.map(p => p.productName).join(', ');
-    }
-    return '-';
+    if (!row.products || row.products.length === 0) return 'No products';
+    return row.products.map((p: any) => p.productName).join(', ');
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

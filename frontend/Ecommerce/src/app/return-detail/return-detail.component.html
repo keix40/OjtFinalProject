@@ -20,8 +20,8 @@
             </div>
             <div class="flex flex-wrap gap-4 text-sm text-slate-700">
               <div><span class="font-semibold">Qty:</span> {{ p.quantity }}</div>
-              <div><span class="font-semibold">Unit Price:</span> {{ p.unitPrice | number:'1.0-0' }} MMK</div>
-              <div><span class="font-semibold">Total:</span> {{ p.totalAmount | number:'1.0-0' }} MMK</div>
+                              <div><span class="font-semibold">Unit Price:</span> {{ formatPriceOnly(p.unitPrice) }} MMK</div>
+                              <div><span class="font-semibold">Total:</span> {{ formatPriceOnly(p.totalAmount) }} MMK</div>
             </div>
             <div *ngIf="p.productRemark" class="text-xs text-rose-600 mt-1"><span class="font-semibold">Remark:</span> {{ p.productRemark }}</div>
           </div>
@@ -115,7 +115,7 @@
         <ng-container *ngIf="returnDetail.refundStatus === 'MONEY_REFUND'">
           <div>
             <span class="font-semibold text-gray-600">Amount:</span>
-            <span class="font-mono">{{ returnDetail.refundAmount }} MMK</span>
+                            <span class="font-mono">{{ formatPriceOnly(returnDetail.refundAmount ?? 0) }} MMK</span>
           </div>
           <div>
             <span class="font-semibold text-gray-600">Card:</span>

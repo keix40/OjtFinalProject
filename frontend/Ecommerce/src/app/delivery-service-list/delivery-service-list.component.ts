@@ -264,13 +264,25 @@ export class DeliveryServiceListComponent implements OnInit {
     console.log('Address payload:', addressPayload);
     this.addressService.updateAddress(addressPayload.id!, addressPayload).subscribe({
       next: (updatedAddress) => {
-        // Now update delivery service
+        // Now update delivery service - exclude date fields from address to avoid parsing errors
         const deliveryPayload: DeliveryService = {
           id: this.selectedServiceId!,
           name: this.updateForm.value.name,
           feePerKm: this.updateForm.value.feePerKm,
           phoneNumber: this.updateForm.value.phoneNumber,
-          baseAddress: { ...updatedAddress }
+          baseAddress: {
+            id: updatedAddress.id,
+            address: updatedAddress.address,
+            city: updatedAddress.city,
+            state: updatedAddress.state,
+            postalCode: updatedAddress.postalCode,
+            country: updatedAddress.country,
+            latitude: updatedAddress.latitude,
+            longitude: updatedAddress.longitude,
+            type: updatedAddress.type,
+            userId: updatedAddress.userId
+            // Exclude createUpdate and updateDate fields to avoid JSON parsing errors
+          }
         };
         this.deliveryServiceService.update(this.selectedServiceId!, deliveryPayload).subscribe({
           next: () => {
@@ -286,7 +298,8 @@ export class DeliveryServiceListComponent implements OnInit {
               showConfirmButton: true
             });
           },
-          error: () => {
+          error: (error) => {
+            console.error('Error updating delivery service:', error);
             this.updateLoading = false;
             Swal.fire({
               icon: 'error',
@@ -297,7 +310,8 @@ export class DeliveryServiceListComponent implements OnInit {
           }
         });
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error updating address:', error);
         this.updateLoading = false;
         Swal.fire({
           icon: 'error',

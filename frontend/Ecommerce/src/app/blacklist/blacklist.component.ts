@@ -1297,4 +1297,39 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   private enableBodyScroll(): void {
     document.body.classList.remove('modal-open');
   }
+
+  // Number formatting methods with thousand separators
+  formatNumberWithSeparator(value: number): string {
+    if (value === null || value === undefined) return '0';
+    return Math.round(value).toLocaleString('en-US');
+  }
+
+  formatDecimalWithSeparator(value: number, decimals: number = 2): string {
+    if (value === null || value === undefined) return '0.00';
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
+
+  formatCurrencyWithSeparator(value: number, currency: string = 'MMK'): string {
+    if (value === null || value === undefined) return `0 ${currency}`;
+    const formatted = Math.round(value).toLocaleString('en-US');
+    return `${formatted} ${currency}`;
+  }
+
+  // Modal scroll helper methods
+  scrollModalToTop(): void {
+    const modalContent = document.querySelector('.scrollbar-hide') as HTMLElement;
+    if (modalContent) {
+      modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  scrollModalToBottom(): void {
+    const modalContent = document.querySelector('.scrollbar-hide') as HTMLElement;
+    if (modalContent) {
+      modalContent.scrollTo({ top: modalContent.scrollHeight, behavior: 'smooth' });
+    }
+  }
 }

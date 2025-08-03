@@ -98,7 +98,23 @@ export class CreateDeliveryServiceComponent {
   openAddAddressModal(editMode = false) {
     this.showAddAddressModal = true;
     this.isEditMode = editMode;
-    this.addressForm.reset({ addressType: 'SHIPPING' });
+    
+    if (editMode && this.selectedAddress) {
+      // Populate form with existing address data for editing
+      this.addressForm.patchValue({
+        address: this.selectedAddress.address,
+        city: this.selectedAddress.city,
+        state: this.selectedAddress.state,
+        postalCode: this.selectedAddress.postalCode,
+        country: this.selectedAddress.country,
+        latitude: this.selectedAddress.latitude,
+        longitude: this.selectedAddress.longitude,
+        addressType: this.selectedAddress.type || 'SHIPPING'
+      });
+    } else {
+      this.addressForm.reset({ addressType: 'SHIPPING' });
+    }
+    
     setTimeout(() => this.initMap(), 100);
   }
 
@@ -126,35 +142,67 @@ export class CreateDeliveryServiceComponent {
         type: formValue.addressType,
         userId: null
       };
-      this.addressService.addAddress(addressToAdd as any).subscribe({
-        next: (res: any) => {
-          // Try to extract addressId from response (if backend returns it)
-          let newAddressId: number | null = null;
-          if (res && typeof res === 'object' && res.id) {
-            newAddressId = res.id;
-          } else if (typeof res === 'string') {
-            // Try to parse id from string if possible
-            const match = res.match(/id\s*[:=]\s*(\d+)/i);
-            if (match) newAddressId = +match[1];
-          }
-          this.addressService.getAddresses().subscribe(addresses => {
-            this.addresses = addresses || [];
-            if (this.addresses.length > 0) {
-              this.selectedAddressIndex = this.addresses.length - 1;
-              this.setShippingFromSelected();
-              // Use the last address as the new one if id not found
-              if (!newAddressId) {
-                newAddressId = this.addresses[this.selectedAddressIndex]?.id;
-              }
-              this.addressId = newAddressId;
+      if (this.isEditMode && this.selectedAddress) {
+        this.addressService.updateAddress(this.selectedAddress.id!, addressToAdd as any).subscribe({
+          next: (res: any) => {
+            // Try to extract addressId from response (if backend returns it)
+            let newAddressId: number | null = null;
+            if (res && typeof res === 'object' && res.id) {
+              newAddressId = res.id;
+            } else if (typeof res === 'string') {
+              // Try to parse id from string if possible
+              const match = res.match(/id\s*[:=]\s*(\d+)/i);
+              if (match) newAddressId = +match[1];
             }
-          });
-          this.closeAddAddressModal();
-        },
-        error: (error) => {
-          this.notification.showError('Failed to add address. Please try again.');
-        }
-      });
+            this.addressService.getAddresses().subscribe(addresses => {
+              this.addresses = addresses || [];
+              if (this.addresses.length > 0) {
+                this.selectedAddressIndex = this.addresses.length - 1;
+                this.setShippingFromSelected();
+                // Use the last address as the new one if id not found
+                if (!newAddressId) {
+                  newAddressId = this.addresses[this.selectedAddressIndex]?.id;
+                }
+                this.addressId = newAddressId;
+              }
+            });
+            this.closeAddAddressModal();
+          },
+          error: (error) => {
+            this.notification.showError('Failed to update address. Please try again.');
+          }
+        });
+      } else {
+        this.addressService.addAddress(addressToAdd as any).subscribe({
+          next: (res: any) => {
+            // Try to extract addressId from response (if backend returns it)
+            let newAddressId: number | null = null;
+            if (res && typeof res === 'object' && res.id) {
+              newAddressId = res.id;
+            } else if (typeof res === 'string') {
+              // Try to parse id from string if possible
+              const match = res.match(/id\s*[:=]\s*(\d+)/i);
+              if (match) newAddressId = +match[1];
+            }
+            this.addressService.getAddresses().subscribe(addresses => {
+              this.addresses = addresses || [];
+              if (this.addresses.length > 0) {
+                this.selectedAddressIndex = this.addresses.length - 1;
+                this.setShippingFromSelected();
+                // Use the last address as the new one if id not found
+                if (!newAddressId) {
+                  newAddressId = this.addresses[this.selectedAddressIndex]?.id;
+                }
+                this.addressId = newAddressId;
+              }
+            });
+            this.closeAddAddressModal();
+          },
+          error: (error) => {
+            this.notification.showError('Failed to add address. Please try again.');
+          }
+        });
+      }
     } else {
       Object.keys(this.addressForm.controls).forEach(key => {
         const control = this.addressForm.get(key);
@@ -170,9 +218,17 @@ export class CreateDeliveryServiceComponent {
       this.map.invalidateSize();
       return;
     }
-    const defaultLat = 21.9162;
-    const defaultLng = 95.9560;
-    this.createMap(defaultLat, defaultLng);
+    
+    let lat = 21.9162;
+    let lng = 95.9560;
+    
+    // If in edit mode and we have a selected address, use its coordinates
+    if (this.isEditMode && this.selectedAddress) {
+      lat = this.selectedAddress.latitude;
+      lng = this.selectedAddress.longitude;
+    }
+    
+    this.createMap(lat, lng);
   }
 
   createMap(lat: number, lng: number) {

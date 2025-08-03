@@ -96,15 +96,15 @@
                               {{ getVipDiscountDisplay(product) }}
                             </span>
                             <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)" class="text-muted text-decoration-line-through mb-1">
-                              {{ product.price }} MMK
+                              {{ formatPriceOnly(product.price) }} MMK
                             </span>
                             <span class="font-bold text-lg text-neutral-900">
-                              {{ getFinalDiscountedPrice(product) }} MMK
+                              {{ formatPriceOnly(getFinalDiscountedPrice(product)) }} MMK
                             </span>
                           </div>
                         </ng-container>
                         <ng-template #noProduct>
-                          <div class="font-bold text-lg text-neutral-900">{{ item.price }} MMK</div>
+                          <div class="font-bold text-lg text-neutral-900">{{ formatPriceOnly(item.price) }} MMK</div>
                         </ng-template>
                       </div>
                     </div>
@@ -204,11 +204,11 @@
               <!-- Price Section -->
               <div class="flex items-center space-x-2">
                 <span *ngIf="getRelatedProductDiscount(product)" class="text-sm text-gray-500 line-through">
-                  {{ product.price }} MMK
+                  {{ formatPriceOnly(product.price) }} MMK
                 </span>
                 <span class="text-base font-bold" 
                       [ngClass]="getRelatedProductDiscount(product) ? 'text-red-600' : 'text-gray-900'">
-                  {{ getRelatedProductFinalPrice(product) }} MMK
+                  {{ formatPriceOnly(getRelatedProductFinalPrice(product)) }} MMK
                 </span>
               </div>
             </div>
@@ -241,7 +241,7 @@
         <div class="space-y-4 mb-6">
           <div class="flex justify-between text-neutral-600">
             <span>Subtotal ({{ cartItems.length }} items)</span>
-            <span class="animate-pulse">{{ getSubtotal()}} MMK</span>
+            <span class="animate-pulse">{{ formatPriceOnly(getSubtotal())}} MMK</span>
           </div>
           <!-- Discount Savings Row -->
           <div class="flex items-center justify-between text-green-600" *ngIf="isFirstTimeBuyerDiscount">
@@ -253,13 +253,13 @@
           </div>
           <div class="flex justify-between text-green-600" *ngIf="getTotalDiscount() > 0 && !isFirstTimeBuyerDiscount">
             <span>Discount</span>
-            <span>-{{ getTotalDiscount()}}MMK</span>
+            <span>-{{ formatPriceOnly(getTotalDiscount())}} MMK</span>
           </div>
           <div class="border-t border-neutral-200 pt-4">
-            <div class="flex justify-between text-xl font-bold ">
-              <span>Total</span>
-              <span class="text-neutral-900">{{ getOrderTotal()}} MMK</span>
-            </div>
+                      <div class="flex justify-between text-xl font-bold ">
+            <span>Total</span>
+            <span class="text-neutral-900">{{ formatPriceOnly(getOrderTotal())}} MMK</span>
+          </div>
           </div>
         </div>
         <!-- Promo Code -->
@@ -317,7 +317,7 @@
                       {{ couponDiscount }}% off
                     </span>
                     <span *ngIf="couponDiscountType === 'FIXED'">
-                      Save {{ couponDiscount }} MMK
+                      Save {{ formatPriceOnly(couponDiscount) }} MMK
                     </span>
                   </div>
                 </div>

@@ -63,4 +63,20 @@ export class CategoryService {
     return this.http.put(`${this.baseUrl}/addsubcategories`, dto, { responseType: 'text' });
   }
   
+  // Export methods using Jasper Reports
+  exportCategoryReportToPDF(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/category-reports/pdf`, { responseType: 'blob' });
+  }
+
+  exportSelectedCategoriesToPDF(categoryIds: number[]): Observable<Blob> {
+    return this.http.post(`http://localhost:8080/api/category-reports/pdf/selected`, categoryIds, { responseType: 'blob' });
+  }
+
+  exportCategoryReportToCSV(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/category-reports/csv`, { responseType: 'blob' });
+  }
+
+  exportSelectedCategoriesToCSV(categoryIds: number[]): Observable<Blob> {
+    return this.http.post(`http://localhost:8080/api/category-reports/csv/selected`, categoryIds, { responseType: 'blob' });
+  }
 }

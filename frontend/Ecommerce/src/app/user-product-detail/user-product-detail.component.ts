@@ -17,6 +17,7 @@ import { CartItem } from '../services/cart.service';
 import { HttpClient } from '@angular/common/http';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener } from '@angular/core';
+import { PriceFormatService } from '../services/price-format.service';
 
 interface ProductImage {
   id: number;
@@ -173,7 +174,8 @@ export class UserProductDetailComponent implements OnInit {
     private wishlistService: WishlistService,
     private discountService: DiscountService,
     private http:HttpClient,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit(): void {
@@ -2026,5 +2028,22 @@ checkFirstTimeBuyerDiscount(): void {
     // Test the loadRelatedProducts method
     console.log('Testing loadRelatedProducts...');
     this.loadRelatedProducts();
+  }
+
+  // Price formatting methods
+  formatPrice(price: number): string {
+    return this.priceFormatService.formatPrice(price);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

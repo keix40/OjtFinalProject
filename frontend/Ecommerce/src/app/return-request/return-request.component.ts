@@ -3,6 +3,7 @@ import { OrderService } from '../services/order.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { UserOrderListDTO, OrderProductDTO } from '../user-order';
 import { ReturnService } from '../services/return.service';
+import { PriceFormatService } from '../services/price-format.service';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -25,7 +26,8 @@ export class ReturnRequestComponent implements OnInit {
   constructor(
     private orderService: OrderService,
     public activeModal: NgbActiveModal,
-    private returnService : ReturnService
+    private returnService : ReturnService,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit() {
@@ -130,10 +132,26 @@ export class ReturnRequestComponent implements OnInit {
   }
 
   removeFile(index: number) {
-    if (this.previewUrls && this.previewUrls.length > index) {
-      URL.revokeObjectURL(this.previewUrls[index]);
-      this.files.splice(index, 1);
+    this.files.splice(index, 1);
+    if (this.previewUrls) {
       this.previewUrls.splice(index, 1);
     }
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

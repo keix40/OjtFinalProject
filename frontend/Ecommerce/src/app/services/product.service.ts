@@ -129,13 +129,13 @@ export class ProductService {
     return this.http.get<any[]>(`${this.baseUrl}/report/with-variants`);
   }
 
-  // Product Report endpoints
-  exportProductReportToExcel(): Observable<Blob> {
-    return this.http.get(`http://localhost:8080/api/product-reports/excel`, { responseType: 'blob' });
+  // Product Report endpoints - Jasper Reports (CSV/PDF like order management)
+  exportProductReportToCSV(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/product-reports/csv`, { responseType: 'blob' });
   }
 
-  exportSelectedProductsToExcel(productIds: number[]): Observable<Blob> {
-    return this.http.post(`http://localhost:8080/api/product-reports/excel/selected`, productIds, { responseType: 'blob' });
+  exportSelectedProductsToCSV(productIds: number[]): Observable<Blob> {
+    return this.http.post(`http://localhost:8080/api/product-reports/csv/selected`, productIds, { responseType: 'blob' });
   }
 
   exportProductReportToPDF(): Observable<Blob> {
@@ -144,6 +144,15 @@ export class ProductService {
 
   exportSelectedProductsToPDF(productIds: number[]): Observable<Blob> {
     return this.http.post(`http://localhost:8080/api/product-reports/pdf/selected`, productIds, { responseType: 'blob' });
+  }
+
+  // Additional methods for consistency with order management
+  exportAllProductsToCSV(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/product-reports/csv`, { responseType: 'blob' });
+  }
+
+  exportAllProductsToPDF(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/product-reports/pdf`, { responseType: 'blob' });
   }
   
 }

@@ -358,11 +358,11 @@
                   <div class="flex items-center justify-end gap-2">
                     <!-- Original price -->
                     <span *ngIf="getProductDiscount(product.id)" class="text-xs text-gray-400 line-through">
-                      {{ product.price }} MMK
+                      {{ formatPriceOnly(product.price) }} MMK
                     </span>
                     <!-- Final price -->
                     <span class="font-bold text-blue-700 text-base">
-                      {{ getFinalDiscountedPrice(product) }} MMK
+                      {{ formatPriceOnly(getFinalDiscountedPrice(product)) }} MMK
                     </span>
                   </div>
                 </ng-container>
@@ -375,12 +375,12 @@
           <div class="space-y-4 mb-8">
             <div class="flex justify-between text-gray-600">
               <span>Subtotal</span>
-              <span>{{ getSubtotal() | number : '1.0-0' }} MMK</span>
+              <span>{{ formatPriceOnly(getSubtotal()) }} MMK</span>
             </div>
 
           <div class="flex justify-between text-gray-600">
              <span>Shipping cost</span>
-               <span class="text-green-600 font-medium">{{ getDeliveryCost() | number : '1.0-0' }} MMK</span>
+               <span class="text-green-600 font-medium">{{ formatPriceOnly(getDeliveryCost()) }} MMK</span>
             </div>
           
 
@@ -389,10 +389,10 @@
               <span >Discount</span>
               <span>
                 <ng-container *ngIf="isFirstTimeBuyerDiscount && orderPreview?.discountAmount > 0">
-                  <small>(First time buyer 10%)</small> -{{ orderPreview.discountAmount | number:'1.0-0' }} MMK
+                  <small>(First time buyer 10%)</small> -{{ formatPriceOnly(orderPreview.discountAmount) }} MMK
                 </ng-container>
                 <ng-container *ngIf="!isFirstTimeBuyerDiscount">
-                  -{{ getTotalDiscount() | number:'1.0-0' }} MMK
+                  -{{ formatPriceOnly(getTotalDiscount()) }} MMK
                 </ng-container>
               </span>
             </div>
@@ -430,7 +430,7 @@
             <div class="border-t border-gray-100 pt-4">
               <div class="flex justify-between text-xl font-bold text-gray-900">
                 <span>Total</span>
-                <span class="text-blue-600">{{ getTotal() | number:'1.0-0' }} MMK</span>
+                <span class="text-blue-600">{{ formatPriceOnly(getTotal()) }} MMK</span>
               </div>
             </div>
           </div>

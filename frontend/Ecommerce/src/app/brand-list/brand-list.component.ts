@@ -34,7 +34,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
   failedImages = new Set<number>();
 
   // Export dropdown states
-  excelDropdownOpen = false;
+  csvDropdownOpen = false;
   pdfDropdownOpen = false;
 
   // Track if the modal is open
@@ -257,10 +257,10 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // Export functionality
-  toggleExcelDropdown(): void {
-    this.excelDropdownOpen = !this.excelDropdownOpen;
-    if (this.excelDropdownOpen) {
+  // Export functionality using Jasper Reports
+  toggleCsvDropdown(): void {
+    this.csvDropdownOpen = !this.csvDropdownOpen;
+    if (this.csvDropdownOpen) {
       this.pdfDropdownOpen = false;
     }
   }
@@ -268,63 +268,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
   togglePdfDropdown(): void {
     this.pdfDropdownOpen = !this.pdfDropdownOpen;
     if (this.pdfDropdownOpen) {
-      this.excelDropdownOpen = false;
-    }
-  }
-
-  exportToExcel(type: 'all' | 'selected' = 'all'): void {
-    try {
-      const brandsToExport = type === 'selected' ? this.selectedBrands : this.filteredBrands;
-      
-      if (brandsToExport.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'No Data to Export',
-          text: 'There are no brands to export.',
-          confirmButtonColor: '#3085d6'
-        });
-        return;
-      }
-
-      const exportData = brandsToExport.map(brand => ({
-        'Brand ID': brand.id,
-        'Brand Name': brand.name,
-        'Image URL': brand.image || 'N/A',
-        'Categories': brand.categories.map(cat => cat.name).join(', ') || 'N/A',
-        'Category Count': brand.categories.length
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Brands');
-
-      // Auto-size columns
-      const columnWidths = [
-        { wch: 10 }, // Brand ID
-        { wch: 25 }, // Brand Name
-        { wch: 40 }, // Image URL
-        { wch: 30 }, // Categories
-        { wch: 15 }  // Category Count
-      ];
-      worksheet['!cols'] = columnWidths;
-
-      const fileName = `brands_${type}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      XLSX.writeFile(workbook, fileName);
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Export Successful',
-        text: `Brands exported to ${fileName}`,
-        confirmButtonColor: '#3085d6'
-      });
-    } catch (error) {
-      console.error('Excel export error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Export Failed',
-        text: 'There was an error exporting to Excel. Please try again.',
-        confirmButtonColor: '#3085d6'
-      });
+      this.csvDropdownOpen = false;
     }
   }
 
@@ -342,56 +286,181 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      const doc = new jsPDF('landscape', 'mm', 'a4');
-      
-      // Add title
-      doc.setFontSize(18);
-      doc.text('Brand Management Report', 14, 20);
-      doc.setFontSize(12);
-      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-      doc.text(`Total Brands: ${brandsToExport.length}`, 14, 40);
-
-      // Prepare table data
-      const tableData = brandsToExport.map(brand => [
-        brand.id.toString(),
-        brand.name,
-        brand.categories.map(cat => cat.name).join(', ') || 'N/A',
-        brand.categories.length.toString()
-      ]);
-
-      // Add table
-      (doc as any).autoTable({
-        head: [['Brand ID', 'Brand Name', 'Categories', 'Category Count']],
-        body: tableData,
-        startY: 50,
-        styles: {
-          fontSize: 8,
-          cellPadding: 2
-        },
-        headStyles: {
-          fillColor: [30, 46, 63],
-          textColor: 255
-        },
-        alternateRowStyles: {
-          fillColor: [245, 245, 245]
+      // Show loading
+      Swal.fire({
+        title: 'Generating PDF Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
         }
       });
 
-      const fileName = `brands_${type}_${new Date().toISOString().split('T')[0]}.pdf`;
-      doc.save(fileName);
+      if (type === 'selected') {
+        const brandIds = this.selectedBrands.map(brand => brand.id);
+        this.brandService.exportSelectedBrandsToPDF(brandIds).subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Brand PDF export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Brand_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+            link.click();
+            window.URL.revokeObjectURL(url);
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Export Successful',
-        text: `Brands exported to ${fileName}`,
-        confirmButtonColor: '#3085d6'
-      });
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Brand report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Brand PDF export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the brand report to PDF. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      } else {
+        this.brandService.exportBrandReportToPDF().subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Brand PDF export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Brand_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Brand report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Brand PDF export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the brand report to PDF. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      }
     } catch (error) {
-      console.error('PDF export error:', error);
+      console.error('Brand PDF export error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Export Failed',
         text: 'There was an error exporting to PDF. Please try again.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
+  }
+
+  exportToCSV(type: 'all' | 'selected' = 'all'): void {
+    try {
+      const brandsToExport = type === 'selected' ? this.selectedBrands : this.filteredBrands;
+      
+      if (brandsToExport.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Data to Export',
+          text: 'There are no brands to export.',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: 'Generating CSV Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      if (type === 'selected') {
+        const brandIds = this.selectedBrands.map(brand => brand.id);
+        this.brandService.exportSelectedBrandsToCSV(brandIds).subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Brand CSV export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Brand_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Brand report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Brand CSV export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the brand report to CSV. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      } else {
+        this.brandService.exportBrandReportToCSV().subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Brand CSV export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Brand_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Brand report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Brand CSV export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the brand report to CSV. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Brand CSV export error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'There was an error exporting to CSV. Please try again.',
         confirmButtonColor: '#3085d6'
       });
     }

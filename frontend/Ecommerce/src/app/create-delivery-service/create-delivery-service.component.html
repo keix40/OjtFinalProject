@@ -58,7 +58,7 @@
             </svg>
             Base Address <span class="text-red-500">*</span>
           </label>
-          <button type="button" (click)="openAddAddressModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg font-semibold hover:bg-slate-700 transition">
+          <button type="button" (click)="openAddAddressModal(selectedAddress ? true : false)" class="inline-flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg font-semibold hover:bg-slate-700 transition">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -88,7 +88,7 @@
 <div *ngIf="showAddAddressModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
   <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
-      <h3 class="text-2xl font-bold text-gray-900">Add New Address</h3>
+      <h3 class="text-2xl font-bold text-gray-900">{{ isEditMode ? 'Edit Address' : 'Add New Address' }}</h3>
       <button type="button" class="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200" (click)="closeAddAddressModal()">
         <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -151,7 +151,7 @@
         Cancel
       </button>
       <button type="button" class="flex-1 px-6 py-3 bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-semibold transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" (click)="submitAddressForm()" [disabled]="addressForm.invalid">
-        Save Address
+        {{ isEditMode ? 'Update Address' : 'Save Address' }}
       </button>
     </div>
   </div>

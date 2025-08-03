@@ -40,14 +40,14 @@
         <td class="py-2 px-2 text-center">{{ product.quantity }}</td>
         <td class="py-2 px-2 text-right">
           <ng-container *ngIf="order?.userDiscountId">
-            <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="line-through text-gray-400 mr-1">{{ product.originalPrice }} MMK</span>
-            <span>{{ product.unitPrice }} MMK</span>
+                            <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="line-through text-gray-400 mr-1">{{ formatPriceOnly(product.originalPrice) }} MMK</span>
+                <span>{{ formatPriceOnly(product.unitPrice) }} MMK</span>
           </ng-container>
-          <ng-container *ngIf="!order?.userDiscountId">
-            <span>{{ product.unitPrice }} MMK</span>
-          </ng-container>
+                      <ng-container *ngIf="!order?.userDiscountId">
+              <span>{{ formatPriceOnly(product.unitPrice) }} MMK</span>
+            </ng-container>
         </td>
-        <td class="py-2 px-2 text-right">{{ (product.quantity * product.unitPrice)}} MMK</td>
+                  <td class="py-2 px-2 text-right">{{ formatPriceOnly(product.quantity * product.unitPrice)}} MMK</td>
       </tr>
     </tbody>
   </table>
@@ -55,20 +55,20 @@
     <div class="w-full max-w-xs">
       <div class="flex justify-between py-1">
         <span class="text-gray-600">Subtotal</span>
-        <span>{{ order?.subtotal}} MMK</span>
+        <span>{{ formatPriceOnly(order?.subtotal) }} MMK</span>
       </div>
       <div class="flex justify-between py-1" *ngIf="order?.deliveryFee > 0">
         <span class="text-gray-600">Delivery Fee</span>
-        <span>{{ order?.deliveryFee}} MMK</span>
+        <span>{{ formatPriceOnly(order?.deliveryFee) }} MMK</span>
       </div>
       <div class="flex justify-between py-1" *ngIf="order?.userDiscountId">
         <span class="text-gray-600">Discount</span>
-        <span>-{{ calculatedDiscountAmount }} MMK</span>
+        <span>-{{ formatPriceOnly(calculatedDiscountAmount) }} MMK</span>
       </div>
       <div class="border-t border-gray-200 my-2"></div>
       <div class="flex justify-between py-1 font-bold text-lg">
         <span>Total</span>
-        <span>{{ order?.total}} MMK</span>
+        <span>{{ formatPriceOnly(order?.total) }} MMK</span>
       </div>
     </div>
   </div>

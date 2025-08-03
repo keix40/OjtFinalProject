@@ -269,7 +269,7 @@
                     <ng-template #noCategory><span class="inline-block bg-slate-100 text-slate-400 rounded px-2 py-1 text-xs">None</span></ng-template>
                   </td>
                   <td class="px-2 py-2">
-                    <span class="font-semibold">{{ product.price | number }}</span> <span class="text-xs text-slate-400">MMK</span>
+                    <span class="font-semibold">{{ formatPriceOnly(product.price) }} MMK</span>
                   </td>
                 </tr>
                 <tr *ngIf="filteredProducts.length === 0">

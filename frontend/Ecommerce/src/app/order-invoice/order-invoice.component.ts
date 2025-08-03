@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { PriceFormatService } from '../services/price-format.service';
 // import { OrderService } from '../services/order.service'; // Uncomment if you want to fetch from service
 
 @Component({
@@ -13,7 +14,10 @@ export class OrderInvoiceComponent implements OnInit {
 
   // constructor(private orderService: OrderService) {}
 
-  constructor(public activeModal: NgbActiveModal) {}
+  constructor(
+    public activeModal: NgbActiveModal,
+    private priceFormatService: PriceFormatService
+  ) {}
 
   ngOnInit(): void {
     // If you want to fetch by ID, do it here
@@ -40,5 +44,22 @@ export class OrderInvoiceComponent implements OnInit {
       return sum;
     }, 0);
     return Math.round(discount);
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

@@ -75,8 +75,8 @@
             <span class="text-sm text-gray-500">({{ totalReviews }} reviews)</span>
           </div>
           <div class="flex items-center space-x-3 mb-4">
-            <span *ngIf="getFinalDiscountedPrice() !== (selectedVariant?.price || product.price)" class="text-lg text-gray-400 line-through">{{ selectedVariant?.price || product.price }} MMK</span>
-            <span class="text-2xl font-bold text-blue-700">{{ getFinalDiscountedPrice() }} MMK</span>
+            <span *ngIf="getFinalDiscountedPrice() !== (selectedVariant?.price || product.price)" class="text-lg text-gray-400 line-through">{{ formatPriceOnly(selectedVariant?.price || product.price) }} <span class="text-sm font-normal">MMK</span></span>
+            <span class="text-2xl font-bold text-blue-700">{{ formatPriceOnly(getFinalDiscountedPrice()) }} <span class="text-sm font-normal">MMK</span></span>
             <span *ngIf="product?.hasDiscount && !isFirstTimeBuyerDiscount" class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-bold ml-2">{{ getDiscountDisplayText() }}</span>
           </div>
           <!-- <div class="text-gray-700 mb-4">{{ product.description }}</div> -->
@@ -517,15 +517,15 @@
                 <div class="flex flex-col space-y-1">
                   <div *ngIf="getRelatedProductDiscountedPrice(product) !== product.price; else originalPrice" class="space-y-1">
                     <span class="text-base sm:text-lg font-bold text-red-600">
-                      {{ getRelatedProductDiscountedPrice(product) }} <span class="text-xs font-normal">MMK</span>
+                      {{ formatPriceOnly(getRelatedProductDiscountedPrice(product)) }} <span class="text-xs font-normal">MMK</span>
                     </span>
                     <span class="text-xs sm:text-sm text-gray-400 line-through">
-                      {{ product.price }} <span class="text-xs font-normal">MMK</span>
+                      {{ formatPriceOnly(product.price) }} <span class="text-xs font-normal">MMK</span>
                     </span>
                   </div>
                   <ng-template #originalPrice>
                     <span class="text-base sm:text-lg font-bold text-gray-900">
-                      {{ product.price }} <span class="text-xs font-normal">MMK</span>
+                      {{ formatPriceOnly(product.price) }} <span class="text-xs font-normal">MMK</span>
                     </span>
                   </ng-template>
                 </div>

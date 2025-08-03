@@ -11,6 +11,7 @@ import { DiscountService } from '../services/discount.service';
 import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
 import { HttpClient } from '@angular/common/http';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-cart-page',
@@ -53,7 +54,8 @@ export class CartPageComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private discountService: DiscountService,
     private productService: ProductService,
-    private http: HttpClient
+    private http: HttpClient,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit() {
@@ -1328,5 +1330,22 @@ getVipTierDiscountAmount(): number {
     // Test the loadRelatedProducts method
     console.log('Testing loadRelatedProducts...');
     this.loadRelatedProducts();
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

@@ -10,6 +10,7 @@ import { ProductService} from '../services/product.service';
 import { ProductDTO } from '../product';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { PriceFormatService } from '../services/price-format.service';
 declare var lucide: any;
 import { UserService } from '../services/user.service';
 
@@ -175,7 +176,8 @@ export class DiscountEventManagementComponent implements OnInit {
     private modalService: NgbModal,
     private productService: ProductService, // <-- Inject ProductService
     public permissionService: PermissionService,
-    private userService: UserService
+    private userService: UserService,
+    private priceFormatService: PriceFormatService
   ) {
     this.editForm = this.fb.group({
       name: ['', Validators.required],
@@ -688,8 +690,29 @@ onDiscountTypeChange() {
   }
 
   openUserDetailsModal() {
-    this.modalService.open(this.userDetailsModalRef, { size: 'xl', centered: true, backdrop: 'static' });
+    if (this.userDetailsModalRef) {
+      this.modalService.open(this.userDetailsModalRef, {
+        size: 'lg',
+        backdrop: 'static',
+        keyboard: false
+      });
+    }
   }
 
-    
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
+  }
 }

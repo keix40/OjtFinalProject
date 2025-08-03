@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import { ImageService } from '../services/image.service';
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
+import { PriceFormatService } from '../services/price-format.service';
 
 interface WishlistItem {
   id: number;
@@ -48,7 +49,8 @@ export class WishlistComponent implements OnInit {
     private productService: ProductService,
     private router: Router,
     private cartService: CartService,
-    public imageService: ImageService
+    public imageService: ImageService,
+    private priceFormatService: PriceFormatService
   ) { }
 
   ngOnInit(): void {
@@ -154,7 +156,24 @@ export class WishlistComponent implements OnInit {
   if (item.discountType === 'PERCENTAGE') {
     return `${Math.round(item.discountValue * 100)}% OFF`;
   } else {
-    return `${item.discountValue} MMK OFF`;
+    return `${this.formatPriceOnly(item.discountValue)} MMK OFF`;
   }
 }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
+  }
 } 

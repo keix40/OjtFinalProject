@@ -9,6 +9,7 @@ import { ReviewService } from '../../services/review.service';
 import { PermissionService } from '../../services/permission.service';
 import { PermissionConstants } from '../../constants/permission.constants';
 import { animate, style, transition, trigger } from '@angular/animations';
+import { PriceFormatService } from '../../services/price-format.service';
 
 interface ProductImage {
   id: number;
@@ -90,7 +91,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     private router: Router,
     private reviewService: ReviewService,
     private cdr: ChangeDetectorRef,
-    permissionService: PermissionService
+    permissionService: PermissionService,
+    private priceFormatService: PriceFormatService
   ) {
     this.permissionService = permissionService;
   }
@@ -645,6 +647,23 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
       const productId = this.route.snapshot.paramMap.get('id');
       this.router.navigate(['/product-edit', productId]);
     }
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }
 

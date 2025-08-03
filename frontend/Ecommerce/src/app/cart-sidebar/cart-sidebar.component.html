@@ -63,11 +63,11 @@
               <!-- Original price -->
               <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)"
                     class="text-xs text-gray-400 line-through">
-                {{ product.price }} MMK
+                {{ formatPriceOnly(product.price) }} <span class="text-xs font-normal">MMK</span>
               </span>
               <!-- Final price -->
               <span class="font-bold text-blue-700 text-base ms-1">
-                {{ getDiscountedPrice(product) }} MMK
+                {{ formatPriceOnly(getDiscountedPrice(product)) }} <span class="text-sm font-normal">MMK</span>
               </span>
             </div>
             <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-sm text-neutral-500 mb-2">
@@ -124,7 +124,7 @@
       <div class="space-y-2 mb-4">
         <div class="flex items-center justify-between text-neutral-700">
           <span>Subtotal</span>
-          <span>{{ getSubtotal() }} MMK</span>
+          <span>{{ formatPriceOnly(getSubtotal()) }} <span class="text-sm font-normal">MMK</span></span>
         </div>
         <!-- Discount Savings -->
         <div *ngIf="getTotalSavings() > 0"  class="flex items-center justify-between text-green-600">
@@ -132,14 +132,14 @@
             <span *ngIf="isFirstTimeBuyerDiscount">Discount Savings</span>
             <span *ngIf="!isFirstTimeBuyerDiscount">Discount Savings</span>
           </span>
-          <span *ngIf="isFirstTimeBuyerDiscount" class="font-semibold"><small>(First time buyer 10%)</small>-{{ getTotalSavings() }} MMK</span>
-          <span *ngIf="!isFirstTimeBuyerDiscount" class="font-semibold">-{{ getTotalSavings() }} MMK</span>
+          <span *ngIf="isFirstTimeBuyerDiscount" class="font-semibold"><small>(First time buyer 10%)</small>-{{ formatPriceOnly(getTotalSavings()) }} <span class="text-sm font-normal">MMK</span></span>
+          <span *ngIf="!isFirstTimeBuyerDiscount" class="font-semibold">-{{ formatPriceOnly(getTotalSavings()) }} <span class="text-sm font-normal">MMK</span></span>
         </div>
       </div>
       <div class="border-t border-neutral-200 pt-4 mb-4">
         <div class="flex items-center justify-between">
           <span class="font-bold text-lg text-neutral-900">Total</span>
-          <span class="font-bold text-xl text-blue-600">{{ getTotal() }} MMK</span>
+          <span class="font-bold text-xl text-blue-600">{{ formatPriceOnly(getTotal()) }} <span class="text-sm font-normal">MMK</span></span>
         </div>
       </div>
       <div class="flex flex-col gap-3">

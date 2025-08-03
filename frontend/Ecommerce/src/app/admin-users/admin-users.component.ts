@@ -31,7 +31,7 @@ interface AdminActivity {
   standalone: false,
   styleUrls: ['./admin-users.component.css']
 })
-export class AdminUsersComponent implements OnInit, AfterViewChecked {
+export class AdminUsersComponent implements OnInit{
   // Data properties
   allAdmins: AdminUser[] = [];
   filteredAdmins: AdminUser[] = [];
@@ -215,11 +215,11 @@ export class AdminUsersComponent implements OnInit, AfterViewChecked {
     });
   }
 
-  ngAfterViewChecked() {
-    if ((window as any)['lucide']) {
-      (window as any)['lucide'].createIcons();
-    }
-  }
+  // ngAfterViewChecked() {
+  //   if ((window as any)['lucide']) {
+  //     (window as any)['lucide'].createIcons();
+  //   }
+  // }
 
   // Statistics getters
   get totalAdmins(): number {

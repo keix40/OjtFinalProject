@@ -31,7 +31,7 @@ export class CategoryListComponent implements OnInit {
   // Additions for template compatibility
   searchTerm: string = '';
   selectedCategories: any[] = [];
-  excelDropdownOpen = false;
+  csvDropdownOpen = false;
   pdfDropdownOpen = false;
   showCreateCategoryModal: boolean = false;
   // Pagination properties
@@ -191,42 +191,198 @@ export class CategoryListComponent implements OnInit {
     });
   }
 
-  exportToExcel(type: 'all' | 'selected' = 'all') {
-    const exportData = (type === 'all' ? this.flatCategories : this.selectedCategories).map(cat => ({
-      'Category ID': cat.id,
-      'Category Name': cat.name,
-      'Parent ID': cat.parentId,
-      'Level': cat.level
-    }));
-    const worksheet = XLSX.utils.json_to_sheet(exportData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Categories');
-    XLSX.writeFile(workbook, `categories_${new Date().toISOString().split('T')[0]}.xlsx`);
+  exportToPDF(type: 'all' | 'selected' = 'all') {
+    try {
+      const categoriesToExport = type === 'all' ? this.flatCategories : this.selectedCategories;
+      
+      if (categoriesToExport.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Data to Export',
+          text: 'There are no categories to export.',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: 'Generating PDF Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      if (type === 'selected') {
+        const categoryIds = this.selectedCategories.map(cat => cat.id);
+        this.categoryService.exportSelectedCategoriesToPDF(categoryIds).subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Category PDF export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Category_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Category report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Category PDF export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the category report to PDF. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      } else {
+        this.categoryService.exportCategoryReportToPDF().subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Category PDF export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Category_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Category report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Category PDF export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the category report to PDF. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Category PDF export error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'There was an error exporting to PDF. Please try again.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
   }
 
-  exportToPDF(type: 'all' | 'selected' = 'all') {
-    const doc = new jsPDF('landscape', 'mm', 'a4');
-    doc.setFontSize(18);
-    doc.text('Category Management Report', 14, 20);
-    doc.setFontSize(12);
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
-    doc.text(`Total Categories: ${this.flatCategories.length}`, 14, 40);
-    const exportData = (type === 'all' ? this.flatCategories : this.selectedCategories);
-    const tableData = exportData.map(cat => [
-      cat.id.toString(),
-      cat.name,
-      cat.parentId ? cat.parentId.toString() : '-',
-      cat.level.toString()
-    ]);
-    (doc as any).autoTable({
-      head: [['Category ID', 'Category Name', 'Parent ID', 'Level']],
-      body: tableData,
-      startY: 50,
-      styles: { fontSize: 8, cellPadding: 2 },
-      headStyles: { fillColor: [30, 46, 63], textColor: 255 },
-      alternateRowStyles: { fillColor: [245, 245, 245] }
-    });
-    doc.save(`categories_${new Date().toISOString().split('T')[0]}.pdf`);
+  exportToCSV(type: 'all' | 'selected' = 'all') {
+    try {
+      const categoriesToExport = type === 'all' ? this.flatCategories : this.selectedCategories;
+      
+      if (categoriesToExport.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Data to Export',
+          text: 'There are no categories to export.',
+          confirmButtonColor: '#3085d6'
+        });
+        return;
+      }
+
+      // Show loading
+      Swal.fire({
+        title: 'Generating CSV Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      if (type === 'selected') {
+        const categoryIds = this.selectedCategories.map(cat => cat.id);
+        this.categoryService.exportSelectedCategoriesToCSV(categoryIds).subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Category CSV export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Category_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Category report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Category CSV export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the category report to CSV. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      } else {
+        this.categoryService.exportCategoryReportToCSV().subscribe({
+          next: (blob: Blob) => {
+            console.log('✓ Category CSV export successful. Blob size:', blob.size, 'bytes');
+            
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Britium_Gallery_Category_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+
+            Swal.fire({
+              icon: 'success',
+              title: 'Export Successful!',
+              text: 'Category report has been exported successfully.',
+              timer: 3000,
+              showConfirmButton: false
+            });
+          },
+          error: (error) => {
+            console.error('❌ Category CSV export error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Export Failed',
+              text: 'There was an error exporting the category report to CSV. Please try again.',
+              confirmButtonColor: '#3085d6'
+            });
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Category CSV export error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
+        text: 'There was an error exporting to CSV. Please try again.',
+        confirmButtonColor: '#3085d6'
+      });
+    }
   }
 
   onSearch() {
