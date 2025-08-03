@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -48,7 +48,7 @@
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-
+		<!-- ✅ Change this -->
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
@@ -119,7 +119,7 @@
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
-		
+
 		<!-- Jackson Java 8 Date/Time Support -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
@@ -150,7 +150,42 @@
 			<optional>true</optional>
 		</dependency>
 
-		<!-- Apache POI for Excel generation -->
+		<!-- Jasper Reports for professional report generation -->
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports</artifactId>
+			<version>6.20.6</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-fonts</artifactId>
+			<version>6.20.6</version>
+		</dependency>
+		<!-- Additional Jasper Reports dependencies -->
+		<dependency>
+			<groupId>net.sf.jasperreports</groupId>
+			<artifactId>jasperreports-javaflow</artifactId>
+			<version>6.20.6</version>
+		</dependency>
+		<!-- Additional dependencies for Jasper Reports -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-text</artifactId>
+			<version>1.10.0</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-collections4</artifactId>
+			<version>4.4</version>
+		</dependency>
+
+		<!-- Apache POI for Excel and PDF generation -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
@@ -159,6 +194,16 @@
 		<dependency>
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
+			<version>5.2.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.xmlbeans</groupId>
+			<artifactId>xmlbeans</artifactId>
+			<version>5.1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-scratchpad</artifactId>
 			<version>5.2.5</version>
 		</dependency>
 
@@ -174,11 +219,11 @@
 			<version>8.31.1</version>
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>org.postgresql</groupId>-->
-<!--			<artifactId>postgresql</artifactId>-->
-<!--			<scope>runtime</scope>-->
-<!--		</dependency>-->
+		<!--		<dependency>-->
+		<!--			<groupId>org.postgresql</groupId>-->
+		<!--			<artifactId>postgresql</artifactId>-->
+		<!--			<scope>runtime</scope>-->
+		<!--		</dependency>-->
 		<!-- Apache HttpClient dependencies removed: now using Java's built-in HttpClient -->
 	</dependencies>
 
