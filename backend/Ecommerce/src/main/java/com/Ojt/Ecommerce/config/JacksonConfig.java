@@ -1,7 +1,10 @@
 package com.Ojt.Ecommerce.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import org.springframework.context.annotation.Bean;
@@ -26,15 +29,20 @@ public class JacksonConfig {
         // Register JavaTimeModule for Java 8 date/time types
         JavaTimeModule javaTimeModule = new JavaTimeModule();
         
-        // Configure LocalDate serialization
-        javaTimeModule.addSerializer(LocalDate.class, 
-            new LocalDateSerializer(DateTimeFormatter.ofPattern(DATE_FORMAT)));
+        // Configure LocalDate serialization and deserialization
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+        javaTimeModule.addSerializer(LocalDate.class, new LocalDateSerializer(dateFormatter));
+        javaTimeModule.addDeserializer(LocalDate.class, new LocalDateDeserializer(dateFormatter));
         
-        // Configure LocalDateTime serialization
-        javaTimeModule.addSerializer(LocalDateTime.class, 
-            new LocalDateTimeSerializer(DateTimeFormatter.ofPattern(DATETIME_FORMAT)));
+        // Configure LocalDateTime serialization and deserialization
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(DATETIME_FORMAT);
+        javaTimeModule.addSerializer(LocalDateTime.class, new LocalDateTimeSerializer(dateTimeFormatter));
+        javaTimeModule.addDeserializer(LocalDateTime.class, new LocalDateTimeDeserializer(dateTimeFormatter));
         
         objectMapper.registerModule(javaTimeModule);
+        
+        // Disable writing dates as timestamps
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         
         // Configure to ignore unknown properties
         objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);

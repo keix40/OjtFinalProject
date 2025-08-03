@@ -5,6 +5,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -24,8 +26,38 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
+    // Special handler for report generation exceptions to return blob instead of JSON
+    @ExceptionHandler(ReportGenerationException.class)
+    public ResponseEntity<ByteArrayResource> handleReportGenerationException(ReportGenerationException ex) {
+        System.err.println("❌ Report Generation Exception: " + ex.getMessage());
+        return ResponseEntity.status(500)
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .body(new ByteArrayResource("Error generating report".getBytes()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGenericException(Exception ex) {
+        // Check if this is a report-related exception by looking at the stack trace
+        StackTraceElement[] stackTrace = ex.getStackTrace();
+        boolean isReportException = false;
+        
+        for (StackTraceElement element : stackTrace) {
+            if (element.getClassName().contains("ProductReportController") || 
+                element.getClassName().contains("JasperReportService")) {
+                isReportException = true;
+                break;
+            }
+        }
+        
+        // If it's a report exception, return blob response
+        if (isReportException) {
+            System.err.println("❌ Report Exception caught in GlobalExceptionHandler: " + ex.getMessage());
+            return ResponseEntity.status(500)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(new ByteArrayResource("Error generating report".getBytes()));
+        }
+        
+        // Otherwise, return JSON response for other exceptions
         Map<String, Object> errorDetails = new HashMap<>();
         errorDetails.put("timestamp", LocalDateTime.now());
         errorDetails.put("message", "Something went wrong: " + ex.getMessage());
