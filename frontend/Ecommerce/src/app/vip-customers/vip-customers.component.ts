@@ -770,6 +770,15 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   refreshData(): void {
     this.loadVipCustomers();
     this.loadTiers();
+    
+    // Reload growth stats
+    this.vipStatsService.getCustomersGrowth()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: data => this.customersGrowth = data,
+        error: error => console.error('Error refreshing customers growth:', error)
+      });
+    
     console.log('Data refreshed - Loyalty score will update automatically');
     // Icons will be initialized in loadVipCustomers() and loadTiers()
   }

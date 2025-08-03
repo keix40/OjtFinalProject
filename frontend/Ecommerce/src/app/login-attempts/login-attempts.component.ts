@@ -88,6 +88,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   detailedLogContext: LoginAttempt | null = null;
   filteredDetailedLog: LoginAttempt[] = [];
 
+  // Ban confirmation modal state
+  showBanConfirmationModal: boolean = false;
+  banConfirmationData: { ip: string; username: string; success: boolean; message: string; action: 'ban' | 'whitelist' } | null = null;
+
   // Subscriptions
   private realTimeSubscription?: Subscription
 
@@ -195,25 +199,57 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     // Use filtered attempts for summary view
     const dataToUse = this.filteredAttempts.length > 0 ? this.filteredAttempts : this.loginAttempts;
     
-    // Aggregate by username, IP, location
-    const map = new Map<string, { count: number, last: LoginAttempt }>();
+    // Group by username, IP, location, and session (15-minute windows)
+    const sessionMap = new Map<string, { count: number, first: LoginAttempt, last: LoginAttempt, sessionId: string }>();
+    
     for (const attempt of dataToUse) {
-      const key = `${attempt.username}|${attempt.ipAddress}|${attempt.location}`;
-      if (!map.has(key)) {
-        map.set(key, { count: 1, last: attempt });
-      } else {
-        const entry = map.get(key)!;
-        entry.count += 1;
-        // Update last if this attempt is newer
-        if (new Date(attempt.timestamp) > new Date(entry.last.timestamp)) {
-          entry.last = attempt;
+      const baseKey = `${attempt.username}|${attempt.ipAddress}|${attempt.location}`;
+      const attemptTime = new Date(attempt.timestamp);
+      
+      // Check if this attempt belongs to an existing session (within 15 minutes of last attempt)
+      let sessionFound = false;
+      for (const [key, session] of sessionMap.entries()) {
+        if (key.startsWith(baseKey)) {
+          const lastAttemptTime = new Date(session.last.timestamp);
+          const timeDiff = Math.abs(attemptTime.getTime() - lastAttemptTime.getTime()) / (1000 * 60); // minutes
+          
+          if (timeDiff <= 15) {
+            // Add to existing session
+            session.count += 1;
+            session.last = attempt;
+            sessionFound = true;
+            break;
+          }
         }
       }
+      
+      if (!sessionFound) {
+        // Create new session
+        const sessionId = `${baseKey}|${attemptTime.getTime()}`;
+        sessionMap.set(sessionId, {
+          count: 1,
+          first: attempt,
+          last: attempt,
+          sessionId: sessionId
+        });
+      }
     }
-    this.summaryAttempts = Array.from(map.values()).map(({ count, last }) => ({
-      ...last,
-      attemptCount: count
-    }));
+    
+    this.summaryAttempts = Array.from(sessionMap.values()).map(({ count, first, last, sessionId }) => {
+      // Calculate timeframe for this session
+      const firstTime = new Date(first.timestamp);
+      const lastTime = new Date(last.timestamp);
+      const timeDiff = Math.abs(lastTime.getTime() - firstTime.getTime()) / (1000 * 60); // minutes
+      
+      return {
+        ...last,
+        attemptCount: count,
+        sessionId: sessionId,
+        sessionStart: first.timestamp,
+        sessionEnd: last.timestamp,
+        timeframe: count > 1 ? `${timeDiff} min` : '1 min'
+      };
+    });
   }
 
   setViewMode(mode: 'summary' | 'detailed') {
@@ -370,11 +406,21 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     }
 
     // Determine which array to sort
-    const arrayToSort = dataArray || this.filteredAttempts
+    // Since the table is showing summaryAttempts, we need to sort that array
+    const arrayToSort = dataArray || this.summaryAttempts
+
+    // Check if array exists and has items
+    if (!arrayToSort || arrayToSort.length === 0) {
+      return
+    }
 
     arrayToSort.sort((a, b) => {
       let aValue: any = a[field as keyof LoginAttempt]
       let bValue: any = b[field as keyof LoginAttempt]
+
+      // Handle null/undefined values
+      if (aValue === null || aValue === undefined) aValue = ""
+      if (bValue === null || bValue === undefined) bValue = ""
 
       if (field === "timestamp") {
         aValue = new Date(aValue).getTime()
@@ -387,6 +433,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
         // Ensure numeric comparison for attempt count
         aValue = Number(aValue) || 0
         bValue = Number(bValue) || 0
+      } else if (typeof aValue === 'string' && typeof bValue === 'string') {
+        // Case-insensitive string comparison
+        aValue = aValue.toLowerCase()
+        bValue = bValue.toLowerCase()
       }
 
       if (aValue < bValue) return this.sortDirection === "asc" ? -1 : 1
@@ -519,10 +569,30 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
           message: `IP ${attempt.ipAddress} has been blocked`,
         })
 
+        // Show success confirmation modal
+        this.banConfirmationData = {
+          ip: attempt.ipAddress,
+          username: attempt.username || 'Unknown',
+          success: true,
+          message: `IP ${attempt.ipAddress} has been successfully banned for 15 minutes.`,
+          action: 'ban'
+        };
+        this.showBanConfirmationModal = true;
+
         console.log("Blocked IP:", attempt.ipAddress)
       },
       error: (err) => {
         console.error('Block IP error:', err);
+        
+        // Show error confirmation modal
+        this.banConfirmationData = {
+          ip: attempt.ipAddress,
+          username: attempt.username || 'Unknown',
+          success: false,
+          message: `Failed to ban IP ${attempt.ipAddress}. Please try again.`,
+          action: 'ban'
+        };
+        this.showBanConfirmationModal = true;
       }
     });
   }
@@ -537,6 +607,16 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       type: "success",
       message: `IP ${attempt.ipAddress} has been whitelisted`,
     })
+
+    // Show whitelist confirmation modal
+    this.banConfirmationData = {
+      ip: attempt.ipAddress,
+      username: attempt.username || 'Unknown',
+      success: true,
+      message: `IP ${attempt.ipAddress} has been successfully whitelisted.`,
+      action: 'whitelist'
+    };
+    this.showBanConfirmationModal = true;
 
     console.log("Whitelisted IP:", attempt.ipAddress)
   }
@@ -738,32 +818,43 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     const recent = this.loginAttempts.filter((a) => new Date(a.timestamp) >= last24h)
     const previous = this.loginAttempts.filter((a) => new Date(a.timestamp) >= last48h && new Date(a.timestamp) < last24h)
 
+    const successfulCurrent = recent.filter((a) => a.status === "successful").length
+    const successfulPrevious = previous.filter((a) => a.status === "successful").length
+    const failedCurrent = recent.filter((a) => a.status === "failed").length
+    const failedPrevious = previous.filter((a) => a.status === "failed").length
+    const blockedCurrent = new Set(recent.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size
+    const blockedPrevious = new Set(previous.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size
+    const lockedCurrent = recent.filter((a) => a.status === "blocked").length
+    const lockedPrevious = previous.filter((a) => a.status === "blocked").length
+
     this.statistics = {
-      successfulLogins: recent.filter((a) => a.status === "successful").length,
-      failedLogins: recent.filter((a) => a.status === "failed").length,
-      blockedIPs: new Set(recent.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
-      lockedAccounts: recent.filter((a) => a.status === "blocked").length,
-      successfulLoginsChange: this.calculatePercentageChange(
-        recent.filter((a) => a.status === "successful").length,
-        previous.filter((a) => a.status === "successful").length,
-      ),
-      failedLoginsChange: this.calculatePercentageChange(
-        recent.filter((a) => a.status === "failed").length,
-        previous.filter((a) => a.status === "failed").length,
-      ),
-      blockedIPsChange: this.calculatePercentageChange(
-        new Set(recent.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
-        new Set(previous.filter((a) => a.isBlocked).map((a) => a.ipAddress)).size,
-      ),
-      lockedAccountsChange: this.calculatePercentageChange(
-        recent.filter((a) => a.status === "blocked").length,
-        previous.filter((a) => a.status === "blocked").length,
-      ),
+      successfulLogins: successfulCurrent,
+      failedLogins: failedCurrent,
+      blockedIPs: blockedCurrent,
+      lockedAccounts: lockedCurrent,
+      successfulLoginsChange: this.calculatePercentageChange(successfulCurrent, successfulPrevious),
+      failedLoginsChange: this.calculatePercentageChange(failedCurrent, failedPrevious),
+      blockedIPsChange: this.calculatePercentageChange(blockedCurrent, blockedPrevious),
+      lockedAccountsChange: this.calculatePercentageChange(lockedCurrent, lockedPrevious),
     }
+
+    // Debug logging to verify calculations
+    console.log('Statistics Calculation:', {
+      successful: { current: successfulCurrent, previous: successfulPrevious, change: this.statistics.successfulLoginsChange },
+      failed: { current: failedCurrent, previous: failedPrevious, change: this.statistics.failedLoginsChange },
+      blocked: { current: blockedCurrent, previous: blockedPrevious, change: this.statistics.blockedIPsChange },
+      locked: { current: lockedCurrent, previous: lockedPrevious, change: this.statistics.lockedAccountsChange }
+    })
   }
 
   private calculatePercentageChange(current: number, previous: number): number {
-    if (previous === 0) return current > 0 ? 100 : 0
+    // Handle zero baseline case
+    if (previous === 0) {
+      if (current === 0) return 0  // 0 → 0 = 0% change
+      if (current > 0) return 100  // 0 → any positive = +100% (new activity)
+    }
+    
+    // Standard percentage change formula
     return Math.round(((current - previous) / previous) * 100)
   }
 
@@ -843,5 +934,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     this.showDetailedLogModal = false;
     this.detailedLogContext = null;
     this.filteredDetailedLog = [];
+  }
+
+  closeBanConfirmationModal(): void {
+    this.showBanConfirmationModal = false;
+    this.banConfirmationData = null;
   }
 }

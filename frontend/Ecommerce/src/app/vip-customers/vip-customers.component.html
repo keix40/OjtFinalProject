@@ -6,6 +6,9 @@
     </div>
     <h1 class="text-3xl font-bold text-gray-900 mb-2">VIP Customers</h1>
     <p class="text-gray-600">Manage high-value customers and build lasting loyalty relationships</p>
+    <button (click)="refreshData()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+      Refresh Data
+    </button>
   </div>
 
   <!-- Stats Cards -->
@@ -14,7 +17,7 @@
       <div class="w-12 h-12 bg-amber-100/80 rounded-xl flex items-center justify-center mx-auto mb-3">
         <i data-lucide="crown" class="w-6 h-6 text-amber-600"></i>
       </div>
-      <div class="text-2xl font-bold text-gray-900 mb-1">{{ customersGrowth?.currentMonth ?? totalVipCustomers }}</div>
+      <div class="text-2xl font-bold text-gray-900 mb-1">{{ totalVipCustomers }}</div>
       <div class="text-sm text-gray-600 mb-2">Total VIP Customers</div>
       <div class="flex items-center justify-center gap-1 text-xs" [ngClass]="{'text-green-600': customersGrowth?.growthPercent >= 0, 'text-red-600': customersGrowth?.growthPercent < 0}">
         <i data-lucide="trending-up" class="w-3 h-3" *ngIf="customersGrowth?.growthPercent >= 0"></i>
@@ -24,6 +27,7 @@
         </ng-container>
         <ng-template #noCustomerGrowth>-</ng-template>
       </div>
+
     </div>
     <div class="glassmorphism rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 p-6 text-center">
       <div class="w-12 h-12 bg-green-100/80 rounded-xl flex items-center justify-center mx-auto mb-3">
@@ -64,10 +68,11 @@
       </div>
       <div class="text-2xl font-bold text-gray-900 mb-1">{{ loyaltyScore }}%</div>
       <div class="text-sm text-gray-600 mb-2">Loyalty Score</div>
-      <div class="flex items-center justify-center gap-1 text-xs text-green-600">
-        <i data-lucide="trending-up" class="w-3 h-3"></i>
+      <div class="flex items-center justify-center gap-1 text-xs" [ngClass]="{'text-green-600': loyaltyScoreGrowth !== null && loyaltyScoreGrowth >= 0, 'text-red-600': loyaltyScoreGrowth !== null && loyaltyScoreGrowth < 0}">
+        <i data-lucide="trending-up" class="w-3 h-3" *ngIf="loyaltyScoreGrowth !== null && loyaltyScoreGrowth >= 0"></i>
+        <i data-lucide="trending-down" class="w-3 h-3" *ngIf="loyaltyScoreGrowth !== null && loyaltyScoreGrowth < 0"></i>
         <ng-container *ngIf="loyaltyScoreGrowth !== null; else noGrowth">
-          <span [ngClass]="{'text-green-600': loyaltyScoreGrowth >= 0, 'text-red-600': loyaltyScoreGrowth < 0}">
+          <span>
             {{ loyaltyScoreGrowth >= 0 ? '+' : ''}}{{ loyaltyScoreGrowth }}% this quarter
           </span>
         </ng-container>

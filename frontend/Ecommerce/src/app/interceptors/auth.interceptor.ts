@@ -47,6 +47,24 @@ export class AuthInterceptor implements HttpInterceptor {
       catchError((error: HttpErrorResponse) => {
         console.log('[AuthInterceptor] Error caught:', error.status, error.error);
         
+        // Handle IP ban responses (403 with banned flag)
+        if (error.status === 403 && error.error?.banned) {
+          console.log('[AuthInterceptor] IP ban response detected:', error.error);
+          // IP is banned, set flags and redirect
+          localStorage.setItem('ipBanned', 'true');
+          localStorage.setItem('ipBanMessage', error.error.message || '');
+          localStorage.setItem('ipBanIP', error.error.ip || '');
+          
+          // Redirect to IP ban page
+          this.router.navigate(['/ip-banned'], {
+            queryParams: {
+              message: error.error.message,
+              ip: error.error.ip
+            }
+          });
+          return throwError(() => error);
+        }
+        
         // Handle blacklist responses (403 with blocked flag)
         if (error.status === 403 && error.error?.blocked) {
           console.log('[AuthInterceptor] Blacklist response detected:', error.error);

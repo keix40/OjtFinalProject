@@ -1,5 +1,15 @@
 <app-header></app-header>
-<app-breadcrumb [items]="breadcrumbItems"></app-breadcrumb>
+<div class="bg-white border-b border-gray-100">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <nav class="flex items-center space-x-2 text-sm" aria-label="Breadcrumb">
+      <a routerLink="/home" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Home</a>
+      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      </svg>
+      <span class="text-gray-900 font-medium" aria-current="page">Products</span>
+    </nav>
+  </div>
+</div>
 <!-- First Time Buyer Discount Minimal Popup (Top Center, Subtle) -->
 <div *ngIf="showFirstTimeBuyerPopup" class="fixed left-1/2 top-20 z-50 transform -translate-x-1/2 w-full max-w-sm">
   <div class="relative flex items-center gap-3 px-5 py-3 rounded-xl shadow-md bg-gray-50 border border-gray-200 text-gray-800 animate-bounce-in">

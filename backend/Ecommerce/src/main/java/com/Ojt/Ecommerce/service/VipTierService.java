@@ -12,6 +12,7 @@ public interface VipTierService {
     VipTier updateTier(Long id, VipTier tier);
     void deleteTier(Long id);
     int countVipCustomersInMonth(YearMonth month);
+    int countTotalVipCustomersAtEndOfMonth(YearMonth month);
     double sumVipRevenueInYear(int year);
     double getVipAvgOrderValue();
     double getRegularAvgOrderValue();

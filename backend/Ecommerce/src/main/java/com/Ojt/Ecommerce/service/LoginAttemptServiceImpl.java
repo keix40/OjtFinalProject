@@ -281,16 +281,20 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     public LoginAttemptDTO enrichAttemptWithStats(LoginAttemptDTO dto) {
         String ip = dto.getIpAddress();
 
-        // 🕒 Get the last 10 login attempts from this IP
-        List<LoginAttempt> recentAttempts = repository
-                .findTop10ByIpAddressOrderByTimestampDesc(ip);
+        // 🕒 Get all attempts from this IP in the last 15 minutes (respecting ban period)
+        LocalDateTime fifteenMinutesAgo = LocalDateTime.now().minusMinutes(15);
+        List<LoginAttempt> recentAttempts = repository.findAll().stream()
+                .filter(a -> a.getIpAddress().equals(ip))
+                .filter(a -> a.getTimestamp().isAfter(fifteenMinutesAgo))
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp())) // Sort by newest first
+                .collect(Collectors.toList());
 
         int count = recentAttempts.size();
         dto.setAttemptCount(count);
 
         if (count > 1) {
-            // 📏 Calculate the time difference between first and last attempt
-            LocalDateTime first = recentAttempts.get(count - 1).getTimestamp();
+            // 📏 Calculate the time difference between first and last attempt within the 15-min window
+            LocalDateTime first = recentAttempts.get(recentAttempts.size() - 1).getTimestamp();
             LocalDateTime last = recentAttempts.get(0).getTimestamp();
             long minutes = java.time.Duration.between(first, last).toMinutes();
 

@@ -39,4 +39,9 @@ public interface UserService {
     List<CustomerSummaryDTO> getCustomersForReport();
 
     List<CustomerSummaryDTO> getAllVipCustomers();
+
+    // New Users methods for dashboard
+    int getNewUsersCount(String timeFrame);
+    
+    List<java.util.Map<String, Object>> getNewUsersTrends(String timeFrame);
 }

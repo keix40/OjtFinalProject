@@ -89,4 +89,13 @@ export class DashboardService {
   getDeliveryServiceData(timeFrame: string): Observable<any[]> {
     return this.http.get<any[]>(`http://localhost:8080/order/analytics/delivery-services?timeFrame=${timeFrame}`);
   }
+
+  // New Users endpoints
+  getNewUsersCount(timeFrame: string): Observable<number> {
+    return this.http.get<number>(`http://localhost:8080/order/new-users-count?timeFrame=${timeFrame}`);
+  }
+
+  getNewUsersTrends(timeFrame: string): Observable<any[]> {
+    return this.http.get<any[]>(`http://localhost:8080/order/new-users-trends?timeFrame=${timeFrame}`);
+  }
 } 

@@ -6,7 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { DashboardService } from '../services/dashboard.service';
 import { RevenueTargetService } from '../services/revenue-target.service';
 import { addDays, format, parseISO } from 'date-fns';
-import { getISOWeek } from 'date-fns';
+import { Observable, from, of } from 'rxjs';
+import { switchMap, mergeMap, map, filter, take, catchError } from 'rxjs/operators';
+
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { UserService } from '../services/user.service';
@@ -19,12 +21,11 @@ import { UserService } from '../services/user.service';
   standalone: false
 })
 export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
-  currentTimeFrame: 'hour'|'day'|'week'|'month'|'year' = 'day';
-  timeFrames = ['hour', 'day', 'week', 'month', 'year'] as const;
+  currentTimeFrame: 'hour'|'day'|'month'|'year' = 'day';
+  timeFrames = ['hour', 'day', 'month', 'year'] as const;
   timeFrameLabels: Record<string, string> = {
     hour: 'Hourly',
     day: 'Daily',
-    week: 'Weekly',
     month: 'Monthly',
     year: 'Yearly'
   };
@@ -42,12 +43,17 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   bounceRate: number = 0;
   previousMetrics: any = {};
   revenueTarget: number = 0;
+  targetType: string = 'day'; // Track which target type is being displayed
   onlineAdminCount: number = 0;
   users: any[] = [];
   engagementAnalytics: any = {};
   engagementTrends: any[] = [];
   customerSegmentation: any[] = [];
   customerAcquisitionData: any[] = [];
+  newUsersCount: number = 0;
+  newUsersTrends: any[] = [];
+  sessionTrends: any[] = [];
+  bounceRateTrends: any[] = [];
 
   // Sales Analytics Data
   brandSalesData: any[] = [];
@@ -121,6 +127,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    console.log('🚀 Dashboard component initialized');
     Chart.register(...registerables);
     this.setupWebSocket();
     this.userService.getCustomers().subscribe(users => {
@@ -129,12 +136,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.refreshDashboard();
       this.updateUserMetrics();
     });
+    
+    // Set up periodic refresh every 30 seconds that respects current time frame
     this.updateInterval = setInterval(() => {
-      if (!this.wsConnected) {
-        this.refreshDashboard();
-        this.updateUserMetrics();
-      }
-    }, 30000);
+      console.log('🔄 Periodic refresh triggered for timeFrame:', this.currentTimeFrame);
+      this.refreshDashboard();
+    }, 30000); // 30 seconds
   }
 
   setupWebSocket(): void {
@@ -146,10 +153,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         this.wsConnected = true;
         this.dashboardSub = this.stompClient!.subscribe('/topic/dashboard-metrics', (message: IMessage) => {
           const trend = JSON.parse(message.body);
-          this.salesTrendData = trend.map((d: any) => ({ ...d, period: d.label }));
-          // Optionally, update other metrics if needed
-          this.updateDashboardFromWebSocket(trend);
-          this.updateSalesTrendChart();
+          // Only update if the WebSocket data matches the current time frame
+          // Since WebSocket currently broadcasts with "day" time frame, we'll ignore it
+          // when user is viewing "hour" time frame to prevent data inconsistency
+          console.log('📡 WebSocket update received, current timeFrame:', this.currentTimeFrame);
+          // For now, we'll ignore WebSocket updates to prevent time frame conflicts
+          // this.salesTrendData = trend.map((d: any) => ({ ...d, period: d.label }));
+          // this.updateDashboardFromWebSocket(trend);
+          // this.updateSalesTrendChart();
         });
       },
       onStompError: () => {
@@ -169,23 +180,40 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   refreshDashboard(): void {
+    console.log('🔄 refreshDashboard called with timeFrame:', this.currentTimeFrame);
+    
     this.dashboardService.getTotalSales().subscribe(totalSales => {
+      console.log('📊 Total sales fetched:', totalSales);
+      
       this.dashboardService.getSalesTrend(this.currentTimeFrame).subscribe(trend => {
-        console.log('Sales Trend Data:', trend); // Log the trend data for debugging
+        console.log('📈 Sales trend data for', this.currentTimeFrame, ':', trend);
         // Map backend 'label' to 'period' for chart compatibility
         this.salesTrendData = trend.map(d => ({ ...d, period: d.label }));
+        console.log('📊 Mapped sales trend data:', this.salesTrendData);
+        
         this.dashboardService.getOrderCount().subscribe(orderCount => {
           this.orderCount = orderCount;
+          console.log('📦 Order count:', orderCount);
+          
           this.dashboardService.getActiveUsers(this.currentTimeFrame).subscribe(activeUserCount => {
             this.activeUserCount = activeUserCount;
+            console.log('👥 Active users for', this.currentTimeFrame, ':', activeUserCount);
+            
             this.dashboardService.getCustomersCount().subscribe(customersCount => {
               this.customersCount = customersCount;
+              console.log('👤 Customers count:', customersCount);
+              
               this.dashboardService.getPreviousMetrics(this.currentTimeFrame).subscribe(prev => {
                 this.previousMetrics = prev;
+                console.log('📊 Previous metrics for', this.currentTimeFrame, ':', prev);
+                
                 this.updateDashboard(totalSales, trend);
                 this.updateSalesTrendChart();
-                this.revenueTargetService.getTarget(this.currentTimeFrame, this.getCurrentPeriodValue()).subscribe(res => {
+                // Smart target fetching - get the best available target for current time frame
+                this.getBestAvailableTarget().subscribe(res => {
                   this.revenueTarget = res.targetAmount || 0;
+                  this.targetType = res.fallbackType || this.currentTimeFrame; // Track which target type is being used
+                  console.log(`🎯 Target selected: ${this.targetType} (${this.revenueTarget}) for ${this.currentTimeFrame} time frame`);
                   this.updateRevenueTargetChart();
                   
                   // Fetch session and bounce rate data
@@ -197,6 +225,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                       // Fetch session trends for charts
                       this.dashboardService.getSessionTrends(this.currentTimeFrame).subscribe({
                         next: (trends) => {
+                          this.sessionTrends = trends;
                           this.updateUserMetricsWithTrends(trends);
                         },
                         error: (error) => {
@@ -269,6 +298,38 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                     }
                   });
 
+                  // Fetch new users data
+                  this.dashboardService.getNewUsersCount(this.currentTimeFrame).subscribe({
+                    next: (newUsersCount: number) => {
+                      console.log('New users count received:', newUsersCount);
+                      this.newUsersCount = newUsersCount;
+                    },
+                    error: (error: any) => {
+                      console.error('Error fetching new users count:', error);
+                      this.newUsersCount = 0;
+                    }
+                  });
+
+                  this.dashboardService.getNewUsersTrends(this.currentTimeFrame).subscribe({
+                    next: (newUsersTrends: any[]) => {
+                      console.log('New users trends received:', newUsersTrends);
+                      this.newUsersTrends = newUsersTrends;
+                      this.updateUserMetrics();
+                      // Also update the user growth chart with the new data
+                      setTimeout(() => {
+                        this.updateUserGrowthChart();
+                      }, 100);
+                    },
+                    error: (error: any) => {
+                      console.error('Error fetching new users trends:', error);
+                      this.updateUserMetrics();
+                      // Still update the chart even if there's an error
+                      setTimeout(() => {
+                        this.updateUserGrowthChart();
+                      }, 100);
+                    }
+                  });
+
                   // Refresh sales analytics charts
                   this.createSalesAnalyticsCharts();
                 });
@@ -281,14 +342,41 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // this.fetchOnlineAdminCount();
   }
 
-  // Replace nested subscriptions with forkJoin
-
   ngAfterViewInit(): void {
-    // Create charts after view is initialized
+    // Ensure DOM is ready before creating charts
     setTimeout(() => {
-      this.createCustomerDistributionPieChart();
-      this.createSalesAnalyticsCharts();
+      this.initializeDashboardCharts();
     }, 100);
+  }
+
+  private initializeDashboardCharts(): void {
+    console.log('Initializing dashboard charts...');
+    
+    // Check if we have data to create charts
+    if (this.topMetricsData.length > 0) {
+      console.log('Top metrics data available, creating charts...');
+      this.createTopMetricsCharts();
+    } else {
+      console.log('No top metrics data available yet');
+    }
+    
+    if (this.salesMetricsData.length > 0) {
+      console.log('Sales metrics data available, creating charts...');
+      this.createSalesCharts(this.salesMetricsData, 0);
+    } else {
+      console.log('No sales metrics data available yet');
+    }
+    
+    if (this.userMetricsData.length > 0) {
+      console.log('User metrics data available, creating charts...');
+      this.createUserCharts(this.userMetricsData);
+    } else {
+      console.log('No user metrics data available yet');
+    }
+    
+    // Create other charts
+    this.createCustomerCharts();
+    this.createSalesAnalyticsCharts();
   }
 
   ngOnDestroy(): void {
@@ -318,15 +406,36 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  changeTimeFrame(frame: 'hour'|'day'|'week'|'month'|'year'): void {
+  changeTimeFrame(frame: 'hour'|'day'|'month'|'year'): void {
+    console.log('Changing time frame to:', frame);
+    console.log('Previous time frame was:', this.currentTimeFrame);
+    
     this.currentTimeFrame = frame;
+    
+    console.log('Refreshing dashboard with new time frame:', this.currentTimeFrame);
     this.refreshDashboard();
-    this.updateSalesTrendChart();
-    this.updateUserMetrics();
-    this.createSalesAnalyticsCharts();
+  }
+
+  private forceRefreshCharts(): void {
+    console.log('Force refreshing all charts...');
+    
+    // Clear existing charts
+    Object.keys(this.charts).forEach(chartId => {
+      if (this.charts[chartId]) {
+        this.charts[chartId].destroy();
+        delete this.charts[chartId];
+      }
+    });
+    
+    // Recreate charts after a short delay
+    setTimeout(() => {
+      this.initializeDashboardCharts();
+    }, 200);
   }
 
   updateDashboard(totalSales: number, trend: any[]): void {
+    console.log('🔄 updateDashboard called with:', { totalSales, trendLength: trend.length, timeFrame: this.currentTimeFrame });
+    
     // Use real totalSales, orderCount, activeUserCount, customersCount, and trend for all metrics and chart data
     const prev = this.previousMetrics || {};
     const prevTotalSales = prev.totalSales || 0;
@@ -335,6 +444,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const prevAvgOrder = prev.avgOrder || 0;
     const prevActiveUsers = prev.activeUsers || 0;
     const prevCustomers = prev.customers || 0;
+    
+    console.log('📊 Previous metrics:', { prevTotalSales, prevRevenue, prevOrders, prevActiveUsers, prevCustomers });
+    
     this.topMetricsData = [
       {
         id: 'total-sales',
@@ -371,13 +483,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         id: 'conversion',
         title: 'Conversion',
-        value: this.activeUserCount > 0 ? (Math.round((this.orderCount / this.activeUserCount) * 100) + '%') : '0%',
+        value: this.getRate(this.orderCount, this.activeUserCount).toFixed(1) + '%',
         change: this.getPercentChange(
-          this.activeUserCount > 0 ? (this.orderCount / this.activeUserCount) * 100 : 0,
-          prevActiveUsers > 0 ? (prevOrders / prevActiveUsers) * 100 : 0
+          this.getRate(this.orderCount, this.activeUserCount),
+          this.getRate(prevOrders, prevActiveUsers)
         ),
-        isPositive: (this.activeUserCount > 0 ? (this.orderCount / this.activeUserCount) : 0) >= (prevActiveUsers > 0 ? (prevOrders / prevActiveUsers) : 0),
-        chartData: trend.map(d => ({ value: d.activeUserCount > 0 ? (d.orderCount / d.activeUserCount) * 100 : 0 })),
+        isPositive: this.getRate(this.orderCount, this.activeUserCount) >= this.getRate(prevOrders, prevActiveUsers),
+        chartData: trend.map(d => ({ value: this.getRate(d.orderCount || 0, d.activeUserCount || 1) })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#ef4444'
       },
@@ -450,46 +562,71 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     ];
     // Re-create charts with the new data
     setTimeout(() => {
-      this.createTopMetricsCharts();
-      this.createSalesCharts(this.salesMetricsData, totalSales);
+      console.log('🎨 Creating charts with data:', {
+        topMetricsCount: this.topMetricsData.length,
+        salesMetricsCount: this.salesMetricsData.length,
+        timeFrame: this.currentTimeFrame
+      });
+      
+      // Log chart data for debugging
+      this.topMetricsData.forEach(metric => {
+        console.log(`📊 Chart data for ${metric.id}:`, {
+          title: metric.title,
+          dataLength: metric.chartData?.length,
+          labelsLength: metric.chartLabels?.length,
+          sampleData: metric.chartData?.slice(0, 3)
+        });
+      });
+      
+      this.forceRefreshCharts();
     }, 100);
   }
 
   private createTopMetricsCharts(): void {
+    console.log('Creating top metrics charts with data:', this.topMetricsData);
+    
     this.topMetricsData.forEach((metric, index) => {
       setTimeout(() => {
-        this.createMiniChart('chart-' + metric.id, metric.chartData, metric.chartColor, 'line', metric.chartLabels);
-      }, index * 100);
+        if (metric.chartData && metric.chartData.length > 0) {
+          console.log(`Creating chart for ${metric.id} with ${metric.chartData.length} data points`);
+          this.createMiniChart('chart-' + metric.id, metric.chartData, metric.chartColor, 'line', metric.chartLabels);
+        } else {
+          console.warn(`No chart data for metric ${metric.id}`);
+        }
+      }, index * 150);
     });
   }
 
   private createSalesCharts(salesData: any[], avgSales: number): void {
     this.salesMetricsData.forEach((metric, index) => {
       setTimeout(() => {
-        this.createMiniChart('chart-sm-' + metric.id, metric.chartData, metric.chartColor, 'area');
-        this.createMiniChart('chart-sm-line-' + metric.id, metric.chartData, metric.chartColor, 'line');
-      }, index * 150);
+        if (metric.chartData && metric.chartData.length > 0) {
+          this.createMiniChart('chart-sm-' + metric.id, metric.chartData, metric.chartColor, 'area');
+          this.createMiniChart('chart-sm-line-' + metric.id, metric.chartData, metric.chartColor, 'line');
+        }
+      }, index * 200);
     });
 
     setTimeout(() => {
       this.updateSalesTrendChart();
-
       this.updateRevenueTargetChart();
-    }, 300);
+    }, 500);
   }
 
   private createUserCharts(userData: any[]): void {
     this.userMetricsData.forEach((metric, index) => {
       setTimeout(() => {
-        this.createMiniChart('chart-user-' + metric.id, metric.chartData, metric.chartColor, 'area');
-        this.createMiniChart('chart-user-line-' + metric.id, metric.chartData, metric.chartColor, 'line');
-      }, index * 150);
+        if (metric.chartData && metric.chartData.length > 0) {
+          this.createMiniChart('chart-user-' + metric.id, metric.chartData, metric.chartColor, 'area');
+          this.createMiniChart('chart-user-line-' + metric.id, metric.chartData, metric.chartColor, 'line');
+        }
+      }, index * 200);
     });
 
     setTimeout(() => {
       this.updateUserGrowthChart();
       this.updateEngagementChart();
-    }, 400);
+    }, 600);
   }
 
   private createCustomerCharts(): void {
@@ -509,43 +646,185 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.loadDeliveryServiceData();
   }
 
-  private createMiniChart(canvasId: string, data: any[], color: string, type = 'line', labels?: string[]): void {
-    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    if (this.charts[canvasId]) {
-      this.charts[canvasId].destroy();
+  private ensureCanvasReady(canvasId: string, maxAttempts: number = 10): Promise<HTMLCanvasElement | null> {
+    return new Promise((resolve) => {
+      let attempts = 0;
+      const checkCanvas = () => {
+        const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+        if (canvas) {
+          resolve(canvas);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          setTimeout(checkCanvas, 100);
+        } else {
+          console.warn(`Canvas ${canvasId} not found after ${maxAttempts} attempts`);
+          resolve(null);
+        }
+      };
+      checkCanvas();
+    });
+  }
+
+  private debugChartCreation(canvasId: string, data: any[]): void {
+    console.log(`=== Debug Chart Creation for ${canvasId} ===`);
+    console.log('Canvas element:', document.getElementById(canvasId));
+    console.log('Data:', data);
+    console.log('Data length:', data?.length);
+    console.log('Data type:', typeof data);
+    console.log('Is array:', Array.isArray(data));
+    
+    if (Array.isArray(data) && data.length > 0) {
+      console.log('First item:', data[0]);
+      console.log('First item type:', typeof data[0]);
+      console.log('First item keys:', data[0] ? Object.keys(data[0]) : 'N/A');
     }
-    // Create a vertical gradient for the area fill
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, color + '80'); // More opaque at the top
-    gradient.addColorStop(1, color + '10'); // More transparent at the bottom
-    // Ensure labels are string[]
-    const chartLabels = (labels || data.map((_, i) => i)).map(l => l.toString());
-    this.charts[canvasId] = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: chartLabels,
-        datasets: [{
-          data: data.map(d => d.value),
-          borderColor: color,
-          backgroundColor: gradient,
-          fill: true,
-          tension: 0.5, // Smooth curve
-          pointRadius: 0,
-          borderWidth: 2,
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { x: { display: false }, y: { display: false } },
-        elements: { line: { borderJoinStyle: 'round' } },
-        animation: false,
-        responsive: false,
-        maintainAspectRatio: false
+    
+    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+    if (canvas) {
+      console.log('Canvas dimensions:', canvas.width, 'x', canvas.height);
+      console.log('Canvas style:', canvas.style.cssText);
+      console.log('Canvas parent:', canvas.parentElement);
+    }
+    console.log('=====================================');
+  }
+
+  private isChartJsAvailable(): boolean {
+    return typeof Chart !== 'undefined' && Chart !== null;
+  }
+
+  private createMiniChartWithRetry(canvasId: string, data: any[], color: string, type = 'line', labels?: string[], retryCount = 0): void {
+    const maxRetries = 3;
+    
+    // Check if Chart.js is available
+    if (!this.isChartJsAvailable()) {
+      console.error('Chart.js is not available');
+      return;
+    }
+    
+    this.ensureCanvasReady(canvasId).then(canvas => {
+      if (!canvas) {
+        if (retryCount < maxRetries) {
+          console.log(`Retrying chart creation for ${canvasId}, attempt ${retryCount + 1}`);
+          setTimeout(() => {
+            this.createMiniChartWithRetry(canvasId, data, color, type, labels, retryCount + 1);
+          }, 200);
+        } else {
+          console.warn(`Failed to create chart for ${canvasId} after ${maxRetries} attempts`);
+        }
+        return;
+      }
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.warn(`Could not get 2D context for ${canvasId}`);
+        return;
+      }
+
+      // Destroy existing chart if it exists
+      if (this.charts[canvasId]) {
+        this.charts[canvasId].destroy();
+      }
+
+      // Validate and normalize data
+      let normalizedData: number[] = [];
+      if (Array.isArray(data) && data.length > 0) {
+        normalizedData = data.map(item => {
+          if (typeof item === 'number') {
+            return item;
+          } else if (item && typeof item === 'object' && 'value' in item) {
+            return Number(item.value) || 0;
+          } else {
+            return 0;
+          }
+        });
+      }
+
+      // If no valid data, create a simple flat line
+      if (normalizedData.length === 0) {
+        normalizedData = [0, 0, 0, 0, 0, 0, 0, 0];
+      }
+
+      // Ensure we have at least 2 data points for a line chart
+      if (normalizedData.length === 1) {
+        normalizedData = [normalizedData[0], normalizedData[0]];
+      }
+
+      // Set canvas dimensions for better rendering
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+
+      // Create a vertical gradient for the area fill
+      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      gradient.addColorStop(0, color + '80'); // More opaque at the top
+      gradient.addColorStop(1, color + '10'); // More transparent at the bottom
+
+      // Generate labels if not provided
+      const chartLabels = labels || normalizedData.map((_, i) => i.toString());
+
+      try {
+        this.charts[canvasId] = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: chartLabels,
+            datasets: [{
+              data: normalizedData,
+              borderColor: color,
+              backgroundColor: type === 'area' ? gradient : 'transparent',
+              fill: type === 'area',
+              tension: 0.4, // Smooth curve
+              pointRadius: 0,
+              borderWidth: 2,
+              borderJoinStyle: 'round',
+              borderCapStyle: 'round',
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+              legend: { display: false },
+              tooltip: { enabled: false }
+            },
+            scales: { 
+              x: { 
+                display: false,
+                grid: { display: false }
+              }, 
+              y: { 
+                display: false,
+                grid: { display: false }
+              } 
+            },
+            elements: { 
+              line: { borderJoinStyle: 'round' },
+              point: { radius: 0 }
+            },
+            animation: false,
+            interaction: {
+              intersect: false,
+              mode: 'index'
+            }
+          }
+        });
+        console.log(`Successfully created chart for ${canvasId}`);
+      } catch (error) {
+        console.error(`Error creating chart for ${canvasId}:`, error);
+        if (retryCount < maxRetries) {
+          setTimeout(() => {
+            this.createMiniChartWithRetry(canvasId, data, color, type, labels, retryCount + 1);
+          }, 300);
+        }
       }
     });
+  }
+
+  private createMiniChart(canvasId: string, data: any[], color: string, type = 'line', labels?: string[]): void {
+    this.createMiniChartWithRetry(canvasId, data, color, type, labels);
   }
 
   private createEnhancedChart(canvasId: string, data: any[], dataKeys: string[], colors: string[], type = 'line'): void {
@@ -735,17 +1014,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         }
         break;
-      case 'week':
-        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        weekDays.forEach((day, index) => {
-          const isWeekend = index >= 5;
-          const multiplier = isWeekend ? 1.5 : 1.0;
-          data.push({
-            period: day,
-            sales: Math.floor((Math.random() * 40000 + 60000) * multiplier),
-          });
-        });
-        break;
+
       case 'month':
         for (let i = 29; i >= 0; i--) {
           const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
@@ -813,18 +1082,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           });
         }
         break;
-      case 'week':
-        const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        weekDays.forEach((day, index) => {
-          const isWeekend = index >= 5;
-          const multiplier = isWeekend ? 1.4 : 1.0;
-          data.push({
-            period: day,
-            activeUsers: Math.floor((Math.random() * 1500 + 2500) * multiplier),
-            newUsers: Math.floor((Math.random() * 200 + 300) * multiplier),
-          });
-        });
-        break;
+
       case 'month':
         for (let i = 29; i >= 0; i--) {
           const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
@@ -1014,8 +1272,20 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   getPercentChange(current: number, previous: number): number {
-    if (previous === 0) return 0;
-    return ((current - previous) / Math.abs(previous)) * 100;
+    if (previous === 0) {
+      // If previous was 0 and current is not 0, it's a 100% increase
+      return current > 0 ? 100 : 0;
+    }
+    const change = ((current - previous) / previous) * 100;
+    // Cap at 100% to avoid extreme values
+    return Math.max(-100, Math.min(100, change));
+  }
+
+  getRate(current: number, total: number): number {
+    if (total === 0) return 0;
+    const rate = (current / total) * 100;
+    // Rates should be capped at 100%
+    return Math.min(100, Math.max(0, rate));
   }
 
   updateRevenueTargetChart() {
@@ -1043,8 +1313,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     ];
     if (targetData.length > 0) {
+      const targetLabel = this.targetType !== this.currentTimeFrame ? 
+        `Target (${this.targetType})` : 'Target';
       datasets.push({
-        label: 'Target',
+        label: targetLabel,
         data: targetData,
         borderColor: '#64748b',
         fill: false,
@@ -1131,75 +1403,89 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   updateUserGrowthChart() {
-    // Use real trends for active users and new users
+    console.log('🔄 updateUserGrowthChart called');
+    console.log('📊 salesTrendData for chart:', this.salesTrendData);
+    console.log('👥 newUsersTrends for chart:', this.newUsersTrends);
+    
+    // Use real trends for active users from salesTrendData
     const activeUserTrend = this.salesTrendData.map(d => ({ period: d.label || d.period, activeUsers: d.activeUserCount || 0 }));
-    // For new users, use the same trend as in updateUserMetrics
+    console.log('📈 Active User Trend for chart:', activeUserTrend);
+    
+    // For new users, use the backend trends data if available, otherwise generate from users array
     let newUserTrend: { period: string, newUsers: number }[] = [];
-    const now = new Date();
-    if (this.currentTimeFrame === 'hour') {
-      for (let h = 0; h < 24; h++) {
-        const label = h.toString().padStart(2, '0') + ':00';
-        const count = this.users.filter(u => {
-          const d = new Date(u.joinDate);
-          return d.getFullYear() === now.getFullYear() &&
-                 d.getMonth() === now.getMonth() &&
-                 d.getDate() === now.getDate() &&
-                 d.getHours() === h;
-        }).length;
-        newUserTrend.push({ period: label, newUsers: count });
+    
+    if (this.newUsersTrends && this.newUsersTrends.length > 0) {
+      // Use real backend data
+      console.log('✅ Using real new users trends for chart');
+      newUserTrend = this.newUsersTrends.map(trend => ({
+        period: trend.period || '',
+        newUsers: trend.newUsers || 0
+      }));
+      console.log('👥 New User Trend for chart:', newUserTrend);
+    } else {
+      // Fallback to generated data if backend data is not available
+      console.log('⚠️ No new users trends for chart, using fallback data');
+      const now = new Date();
+      if (this.currentTimeFrame === 'hour') {
+        for (let h = 0; h < 24; h++) {
+          const label = h.toString().padStart(2, '0') + ':00';
+          const count = this.users.filter(u => {
+            const d = new Date(u.joinDate);
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth() === now.getMonth() &&
+                   d.getDate() === now.getDate() &&
+                   d.getHours() === h;
+          }).length;
+          newUserTrend.push({ period: label, newUsers: count });
+        }
+      } else if (this.currentTimeFrame === 'day') {
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        for (let d = 1; d <= daysInMonth; d++) {
+          const label = d.toString().padStart(2, '0');
+          const count = this.users.filter(u => {
+            const dateObj = new Date(u.joinDate);
+            return dateObj.getFullYear() === now.getFullYear() &&
+                   dateObj.getMonth() === now.getMonth() &&
+                   dateObj.getDate() === d;
+          }).length;
+          newUserTrend.push({ period: label, newUsers: count });
+        }
+      } else if (this.currentTimeFrame === 'month') {
+        for (let m = 0; m < 12; m++) {
+          const label = (m + 1).toString().padStart(2, '0');
+          const count = this.users.filter(u => {
+            const d = new Date(u.joinDate);
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth() === m;
+          }).length;
+          newUserTrend.push({ period: label, newUsers: count });
+        }
+      } else if (this.currentTimeFrame === 'year') {
+        const years = Array.from(new Set(this.users.map(u => new Date(u.joinDate).getFullYear()))).sort();
+        years.forEach(y => {
+          const count = this.users.filter(u => new Date(u.joinDate).getFullYear() === y).length;
+          newUserTrend.push({ period: y.toString(), newUsers: count });
+        });
       }
-    } else if (this.currentTimeFrame === 'day') {
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
-        const label = d.toString().padStart(2, '0');
-        const count = this.users.filter(u => {
-          const dateObj = new Date(u.joinDate);
-          return dateObj.getFullYear() === now.getFullYear() &&
-                 dateObj.getMonth() === now.getMonth() &&
-                 dateObj.getDate() === d;
-        }).length;
-        newUserTrend.push({ period: label, newUsers: count });
-      }
-    } else if (this.currentTimeFrame === 'week') {
-      const weeks: { [key: string]: number } = {};
-      this.users.forEach(u => {
-        const d = new Date(u.joinDate);
-        const year = d.getFullYear();
-        const week = getISOWeek(d);
-        const key = `${year}-W${week}`;
-        weeks[key] = (weeks[key] || 0) + 1;
-      });
-      const currentYear = now.getFullYear();
-      const currentWeek = getISOWeek(now);
-      const minWeek = Math.max(1, currentWeek - 7);
-      for (let w = minWeek; w <= currentWeek; w++) {
-        const key = `${currentYear}-W${w}`;
-        const count = weeks[key] || 0;
-        newUserTrend.push({ period: `W${w}`, newUsers: count });
-      }
-    } else if (this.currentTimeFrame === 'month') {
-      for (let m = 0; m < 12; m++) {
-        const label = (m + 1).toString().padStart(2, '0');
-        const count = this.users.filter(u => {
-          const d = new Date(u.joinDate);
-          return d.getFullYear() === now.getFullYear() &&
-                 d.getMonth() === m;
-        }).length;
-        newUserTrend.push({ period: label, newUsers: count });
-      }
-    } else if (this.currentTimeFrame === 'year') {
-      const years = Array.from(new Set(this.users.map(u => new Date(u.joinDate).getFullYear()))).sort();
-      years.forEach(y => {
-        const count = this.users.filter(u => new Date(u.joinDate).getFullYear() === y).length;
-        newUserTrend.push({ period: y.toString(), newUsers: count });
+    }
+    
+    // Merge trends for chart - ensure both arrays have the same length
+    const maxLength = Math.max(activeUserTrend.length, newUserTrend.length);
+    const mergedTrend = [];
+    
+    for (let i = 0; i < maxLength; i++) {
+      const activeData = activeUserTrend[i] || { period: '', activeUsers: 0 };
+      const newUserData = newUserTrend[i] || { period: '', newUsers: 0 };
+      
+      mergedTrend.push({
+        period: this.getFormattedLabel(activeData.period || newUserData.period),
+        activeUsers: activeData.activeUsers,
+        newUsers: newUserData.newUsers
       });
     }
-    // Merge trends for chart
-    const mergedTrend = activeUserTrend.map((a, i) => ({
-      period: this.getFormattedLabel(a.period),
-      activeUsers: a.activeUsers,
-      newUsers: newUserTrend[i] ? newUserTrend[i].newUsers : 0
-    }));
+    
+    console.log('📊 Merged trend data for chart:', mergedTrend);
+    
     const dataKeys = [];
     const colors = [];
     if (this.showActiveUsers) {
@@ -1210,6 +1496,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       dataKeys.push('newUsers');
       colors.push('#10b981');
     }
+    
+    console.log('🎨 Chart dataKeys:', dataKeys);
+    console.log('🎨 Chart colors:', colors);
+    
     this.createEnhancedChart('userGrowthChart', mergedTrend, dataKeys, colors, 'area');
   }
 
@@ -1241,45 +1531,97 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   updateCustomerAcqChart() {
-    console.log('updateCustomerAcqChart called');
-    console.log('customerAcquisitionData:', this.customerAcquisitionData);
+    console.log('updateCustomerAcqChart called for timeFrame:', this.currentTimeFrame);
+    console.log('customerAcquisitionData from backend:', this.customerAcquisitionData);
     
-    // Generate 7-day range with current date in 5th position (middle)
-    const currentDate = new Date();
-    const acquisitionData = [];
+    // Use real data from backend if available, otherwise generate fallback data
+    let acquisitionData = [];
     
-    // Generate dates: 4 days before current date + current date + 2 days after
-    for (let i = -4; i <= 2; i++) {
-      const date = new Date(currentDate);
-      date.setDate(currentDate.getDate() + i);
-      
-      const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
-      const formattedDate = this.getFormattedLabel(dateStr);
-      
-      // Try to find matching data from backend, otherwise use zero values
-      const backendData = this.customerAcquisitionData.find(d => {
-        let period = d.period;
-        if (this.currentTimeFrame === 'day') {
-          if (/^\d{1,2}$/.test(period)) {
-            const now = new Date();
-            const day = parseInt(period);
-            const month = now.getMonth();
-            const year = now.getFullYear();
-            period = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+    if (this.customerAcquisitionData && this.customerAcquisitionData.length > 0) {
+      // Use real data from backend
+      console.log('Using real customer acquisition data from backend');
+      acquisitionData = this.customerAcquisitionData.map(item => ({
+        period: item.period || item.label || '',
+        acquired: item.acquired || 0,
+        churned: item.churned || 0,
+        retained: item.retained || 0
+      }));
+    } else {
+      // Generate fallback data based on current time frame
+      console.log('No real data available, generating fallback data');
+      switch (this.currentTimeFrame) {
+        case 'hour':
+          // Generate 24 hours of data
+          const now = new Date();
+          for (let i = 0; i < 24; i++) {
+            const hour = new Date(now);
+            hour.setHours(now.getHours() - 23 + i);
+            const hourStr = `${hour.getHours().toString().padStart(2, '0')}:00`;
+            
+            acquisitionData.push({
+              period: hourStr,
+              acquired: 0,
+              churned: 0,
+              retained: 0
+            });
           }
-        }
-        return this.getFormattedLabel(period) === formattedDate;
-      });
-      
-      acquisitionData.push({
-        period: formattedDate,
-        acquired: backendData?.acquired || 0,
-        churned: backendData?.churned || 0,
-        retained: backendData?.retained || 0
-      });
+          break;
+          
+        case 'day':
+          // Generate 7-day range with current date in 5th position (middle)
+          const currentDate = new Date();
+          for (let i = -4; i <= 2; i++) {
+            const date = new Date(currentDate);
+            date.setDate(currentDate.getDate() + i);
+            
+            const dateStr = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+            const formattedDate = this.getFormattedLabel(dateStr);
+            
+            acquisitionData.push({
+              period: formattedDate,
+              acquired: 0,
+              churned: 0,
+              retained: 0
+            });
+          }
+          break;
+          
+        case 'month':
+          // Generate 12 months of data
+          for (let i = 0; i < 12; i++) {
+            const month = new Date();
+            month.setMonth(month.getMonth() - 11 + i);
+            const monthStr = `${month.getFullYear()}-${(month.getMonth() + 1).toString().padStart(2, '0')}`;
+            const formattedMonth = this.getFormattedLabel(monthStr);
+            
+            acquisitionData.push({
+              period: formattedMonth,
+              acquired: 0,
+              churned: 0,
+              retained: 0
+            });
+          }
+          break;
+          
+        case 'year':
+          // Generate 5 years of data
+          const currentYear = new Date().getFullYear();
+          for (let i = 0; i < 5; i++) {
+            const year = currentYear - 4 + i;
+            const yearStr = year.toString();
+            
+            acquisitionData.push({
+              period: yearStr,
+              acquired: 0,
+              churned: 0,
+              retained: 0
+            });
+          }
+          break;
+      }
     }
     
-    console.log('Generated 7-day range with current date in 5th position:', acquisitionData);
+    console.log(`Final acquisition data for ${this.currentTimeFrame}:`, acquisitionData);
     
     const dataKeys: string[] = [];
     const colors: string[] = [];
@@ -1351,7 +1693,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     
     // Data is already in correct order with current date in 5th position
-    const customLabels = data.map((d: any) => d.period);
+    const customLabels = data.map((d: any) => this.getFormattedLabel(d.period));
     const customData = [...data];
     
     const datasets = dataKeys.map((key, index) => {
@@ -2116,9 +2458,24 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   // Format label for chart x-axis based on current time frame
   getFormattedLabel(label: string): string {
     if (this.currentTimeFrame === 'hour') {
-      // label: '2025-07-05 02' => '02:00'
-      const parts = label.split(' ');
-      return parts.length > 1 ? parts[1] + ':00' : label;
+      // Handle different hour formats from backend
+      if (label.includes(' ')) {
+        const parts = label.split(' ');
+        if (parts.length >= 2) {
+          const timePart = parts[1];
+          // Handle formats like "02:00" or "02"
+          if (timePart.includes(':')) {
+            return timePart; // Return "02:00"
+          } else {
+            return timePart + ':00'; // Return "02:00"
+          }
+        }
+      }
+      // If it's just a number like "2", convert to "02:00"
+      if (/^\d{1,2}$/.test(label)) {
+        return label.padStart(2, '0') + ':00';
+      }
+      return label;
     } else if (this.currentTimeFrame === 'day') {
       // label: '2025-07-05' => 'Jul 05'
       const date = new Date(label);
@@ -2126,10 +2483,6 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
       }
       return label;
-    } else if (this.currentTimeFrame === 'week') {
-      // label: '2025-27' => 'W27'
-      const week = label.split('-')[1];
-      return 'W' + week;
     } else if (this.currentTimeFrame === 'month') {
       // label: '2025-07' => 'Jul'
       const parts = label.split('-');
@@ -2162,9 +2515,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (this.currentTimeFrame) {
       case 'day':
         return now.toISOString().slice(0, 10); // YYYY-MM-DD
-      case 'week':
-        const week = this.getWeekNumber(now);
-        return `${now.getFullYear()}-W${week}`;
+
       case 'month':
         return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
       case 'year':
@@ -2174,128 +2525,189 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private getWeekNumber(date: Date): number {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    // Set to UTC 00:00 of the date to get local week number
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  // Smart target fetching - gets the best available target for current time frame
+  private getBestAvailableTarget(): Observable<any> {
+    const now = new Date();
+    const currentDay = now.toISOString().slice(0, 10);
+    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    const currentYear = `${now.getFullYear()}`;
+
+    // Try to get target for current time frame first
+    return this.revenueTargetService.getTarget(this.currentTimeFrame, this.getCurrentPeriodValue()).pipe(
+      switchMap(res => {
+        if (res.targetAmount && res.targetAmount > 0) {
+          // Target exists for current time frame
+          return of(res);
+        } else {
+          // No target for current time frame, try fallback hierarchy
+          return this.getFallbackTarget();
+        }
+      })
+    );
   }
+
+  // Get fallback target based on hierarchy
+  private getFallbackTarget(): Observable<any> {
+    const now = new Date();
+    const currentDay = now.toISOString().slice(0, 10);
+    const currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    const currentYear = `${now.getFullYear()}`;
+
+    // Fallback hierarchy: year -> month -> day
+    const fallbackSequence = [
+      { periodType: 'year', periodValue: currentYear },
+      { periodType: 'month', periodValue: currentMonth },
+      { periodType: 'day', periodValue: currentDay }
+    ];
+
+    // Remove current time frame from fallback sequence
+    const filteredSequence = fallbackSequence.filter(item => 
+      !(item.periodType === this.currentTimeFrame && item.periodValue === this.getCurrentPeriodValue())
+    );
+
+    // Try each fallback target
+    return from(filteredSequence).pipe(
+      mergeMap(item => 
+        this.revenueTargetService.getTarget(item.periodType, item.periodValue).pipe(
+          map(res => ({ ...res, fallbackType: item.periodType }))
+        )
+      ),
+      filter(res => res.targetAmount && res.targetAmount > 0),
+      take(1),
+      catchError(() => of({ targetAmount: 0 }))
+    );
+  }
+
+
 
   // Add this method to dynamically update userMetricsData for Active Users and New Users
   private updateUserMetrics(): void {
+    console.log('🔄 updateUserMetrics called');
+    console.log('📊 salesTrendData:', this.salesTrendData);
+    console.log('👥 newUsersTrends:', this.newUsersTrends);
+    
     // Use real trend data for active users from salesTrendData
     const activeUserTrend = this.salesTrendData.map(d => d.activeUserCount || 0);
-    const prevActive = activeUserTrend.length > 1 ? { activeUsers: activeUserTrend[activeUserTrend.length - 2] } : { activeUsers: 0 };
-    // Real new user count for summary card and trend
-    const now = new Date();
+    console.log('📈 activeUserTrend:', activeUserTrend);
+    
+    // Get current and previous values from the trend data
+    const currentActiveUsers = activeUserTrend.length > 0 ? activeUserTrend[activeUserTrend.length - 1] : 0;
+    const previousActiveUsers = activeUserTrend.length > 1 ? activeUserTrend[activeUserTrend.length - 2] : 0;
+    console.log('👤 Current Active Users:', currentActiveUsers);
+    console.log('👤 Previous Active Users:', previousActiveUsers);
+    
+    // Use real new users data from backend - get current day's new users from trend
     let newUserCount = 0;
     let newUserTrend: { value: number, label: string }[] = [];
-    if (this.currentTimeFrame === 'hour') {
-      // 24 hours of today
-      for (let h = 0; h < 24; h++) {
-        const count = this.users.filter(u => {
-          const d = new Date(u.joinDate);
-          return d.getFullYear() === now.getFullYear() &&
-                 d.getMonth() === now.getMonth() &&
-                 d.getDate() === now.getDate() &&
-                 d.getHours() === h;
-        }).length;
-        newUserTrend.push({ value: count, label: h.toString().padStart(2, '0') + ':00' });
-        if (h === now.getHours()) newUserCount = count;
-      }
-      // If current hour is 0, show latest nonzero
-      if (newUserCount === 0) {
-        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
-        if (last) newUserCount = last.value;
-      }
-    } else if (this.currentTimeFrame === 'day') {
-      // Each day of this month
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      for (let d = 1; d <= daysInMonth; d++) {
-        const count = this.users.filter(u => {
-          const dateObj = new Date(u.joinDate);
-          return dateObj.getFullYear() === now.getFullYear() &&
-                 dateObj.getMonth() === now.getMonth() &&
-                 dateObj.getDate() === d;
-        }).length;
-        newUserTrend.push({ value: count, label: d.toString().padStart(2, '0') });
-        if (d === now.getDate()) newUserCount = count;
-      }
-      // If current day is 0, show latest nonzero
-      if (newUserCount === 0) {
-        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
-        if (last) newUserCount = last.value;
-      }
-    } else if (this.currentTimeFrame === 'week') {
-      // Group by ISO week of the year
-      const weeks: { [key: string]: number } = {};
-      this.users.forEach(u => {
-        const d = new Date(u.joinDate);
-        const year = d.getFullYear();
-        const week = getISOWeek(d);
-        const key = `${year}-W${week}`;
-        weeks[key] = (weeks[key] || 0) + 1;
-      });
-      // Show at least the last 8 weeks of the current year
-      const currentYear = now.getFullYear();
-      const currentWeek = getISOWeek(now);
-      const minWeek = Math.max(1, currentWeek - 7);
-      for (let w = minWeek; w <= currentWeek; w++) {
-        const key = `${currentYear}-W${w}`;
-        const count = weeks[key] || 0;
-        newUserTrend.push({ value: count, label: `W${w}` });
-        if (w === currentWeek) newUserCount = count;
-      }
-      // If current week is 0, show latest nonzero
-      if (newUserCount === 0) {
-        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
-        if (last) newUserCount = last.value;
-      }
-    } else if (this.currentTimeFrame === 'month') {
-      // Each month of this year
-      for (let m = 0; m < 12; m++) {
-        const count = this.users.filter(u => {
-          const d = new Date(u.joinDate);
-          return d.getFullYear() === now.getFullYear() &&
-                 d.getMonth() === m;
-        }).length;
-        newUserTrend.push({ value: count, label: (m + 1).toString().padStart(2, '0') });
-        if (m === now.getMonth()) newUserCount = count;
-      }
-      if (newUserCount === 0) {
-        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
-        if (last) newUserCount = last.value;
-      }
-    } else if (this.currentTimeFrame === 'year') {
-      // Last 5 years (or all years in data)
-      const years = Array.from(new Set(this.users.map(u => new Date(u.joinDate).getFullYear()))).sort();
-      years.forEach(y => {
-        const count = this.users.filter(u => new Date(u.joinDate).getFullYear() === y).length;
-        newUserTrend.push({ value: count, label: y.toString() });
-        if (y === now.getFullYear()) newUserCount = count;
-      });
-      if (newUserCount === 0) {
-        const last = newUserTrend.slice().reverse().find(t => t.value > 0);
-        if (last) newUserCount = last.value;
+    
+    // Use real new users trends if available, otherwise fallback to generated data
+    if (this.newUsersTrends && this.newUsersTrends.length > 0) {
+      console.log('✅ Using real new users trends from backend');
+      newUserTrend = this.newUsersTrends.map(trend => ({
+        value: trend.newUsers || 0,
+        label: trend.period || ''
+      }));
+      // Get current day's new users count from trends
+      newUserCount = newUserTrend.length > 0 ? newUserTrend[newUserTrend.length - 1].value : 0;
+      console.log('👥 New User Trend (processed):', newUserTrend);
+      console.log('👥 Current New Users Count:', newUserCount);
+    } else {
+      console.log('⚠️ No new users trends from backend, using fallback data');
+      // Fallback to generated data if backend data is not available
+      const now = new Date();
+      
+      if (this.currentTimeFrame === 'hour') {
+        // 24 hours of today
+        for (let h = 0; h < 24; h++) {
+          const count = this.users.filter(u => {
+            const d = new Date(u.joinDate);
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth() === now.getMonth() &&
+                   d.getDate() === now.getDate() &&
+                   d.getHours() === h;
+          }).length;
+          newUserTrend.push({ value: count, label: h.toString().padStart(2, '0') + ':00' });
+          if (h === now.getHours()) newUserCount = count;
+        }
+      } else if (this.currentTimeFrame === 'day') {
+        // Each day of this month
+        const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        for (let d = 1; d <= daysInMonth; d++) {
+          const count = this.users.filter(u => {
+            const dateObj = new Date(u.joinDate);
+            return dateObj.getFullYear() === now.getFullYear() &&
+                   dateObj.getMonth() === now.getMonth() &&
+                   dateObj.getDate() === d;
+          }).length;
+          newUserTrend.push({ value: count, label: d.toString().padStart(2, '0') });
+          if (d === now.getDate()) newUserCount = count;
+        }
+      } else if (this.currentTimeFrame === 'month') {
+        // Each month of this year
+        for (let m = 0; m < 12; m++) {
+          const count = this.users.filter(u => {
+            const d = new Date(u.joinDate);
+            return d.getFullYear() === now.getFullYear() &&
+                   d.getMonth() === m;
+          }).length;
+          newUserTrend.push({ value: count, label: (m + 1).toString().padStart(2, '0') });
+          if (m === now.getMonth()) newUserCount = count;
+        }
+      } else if (this.currentTimeFrame === 'year') {
+        // Last 5 years (or all years in data)
+        const years = Array.from(new Set(this.users.map(u => new Date(u.joinDate).getFullYear()))).sort();
+        years.forEach(y => {
+          const count = this.users.filter(u => new Date(u.joinDate).getFullYear() === y).length;
+          newUserTrend.push({ value: count, label: y.toString() });
+          if (y === now.getFullYear()) newUserCount = count;
+        });
       }
     }
+
+    // Get previous new users count for percentage calculation
+    const previousNewUsers = newUserTrend.length > 1 ? newUserTrend[newUserTrend.length - 2].value : 0;
+    console.log('👥 Previous New Users Count:', previousNewUsers);
+
+    // Use real session trends if available, otherwise generate fallback data
+    let sessionTrend: { value: number, label: string }[] = [];
+    if (this.sessionTrends && this.sessionTrends.length > 0) {
+      sessionTrend = this.sessionTrends.map((trend: any) => ({
+        value: trend.totalSessions || 0,
+        label: trend.period || ''
+      }));
+    } else {
+      // Generate fallback session trend data
+      sessionTrend = this.generateSessionTrendData();
+    }
+    
+    // Use real bounce rate trends if available, otherwise generate fallback data
+    let bounceRateTrend: { value: number, label: string }[] = [];
+    if (this.bounceRateTrends && this.bounceRateTrends.length > 0) {
+      bounceRateTrend = this.bounceRateTrends.map((trend: any) => ({
+        value: trend.bounceRate || 0,
+        label: trend.period || ''
+      }));
+    } else {
+      // Generate fallback bounce rate trend data
+      bounceRateTrend = this.generateBounceRateTrendData();
+    }
+
     this.userMetricsData = [
       {
         id: 'active-users',
         title: 'Active Users',
-        value: this.formatNumber(this.activeUserCount),
-        change: this.getPercentChange(this.activeUserCount, prevActive.activeUsers),
-        isPositive: this.activeUserCount >= prevActive.activeUsers,
+        value: this.formatNumber(currentActiveUsers), // Use current from trend data
+        change: this.getPercentChange(currentActiveUsers, previousActiveUsers),
+        isPositive: currentActiveUsers >= previousActiveUsers,
         chartData: activeUserTrend.map(value => ({ value })),
         chartColor: '#3b82f6'
       },
       {
         id: 'new-users',
         title: 'New Users',
-        value: this.formatNumber(newUserCount),
-        change: 0, // Could be improved with previous period logic
-        isPositive: true,
+        value: this.formatNumber(newUserCount), // Use current from trend data
+        change: this.getPercentChange(newUserCount, previousNewUsers), // Use correct previous value
+        isPositive: newUserCount >= previousNewUsers,
         chartData: newUserTrend,
         chartColor: '#10b981'
       },
@@ -2305,7 +2717,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         value: this.formatNumber(this.sessionCount),
         change: 0, // Could be improved with previous period logic
         isPositive: true,
-        chartData: [], // Will be populated with session trends
+        chartData: sessionTrend,
         chartColor: '#f59e0b'
       },
       {
@@ -2314,11 +2726,100 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         value: this.bounceRate.toFixed(1) + '%',
         change: 0, // Could be improved with previous period logic
         isPositive: this.bounceRate < 50, // Lower is better
-        chartData: [], // Will be populated with bounce rate trends
+        chartData: bounceRateTrend,
         chartColor: '#ef4444'
       }
     ];
-    this.createUserCharts(this.userMetricsData);
+    
+    console.log('📊 Final userMetricsData:', this.userMetricsData);
+    
+    // Create user charts with a delay to ensure DOM is ready
+    setTimeout(() => {
+      this.createUserCharts(this.userMetricsData);
+    }, 200);
+  }
+
+  private generateSessionTrendData(): { value: number, label: string }[] {
+    const now = new Date();
+    const trend: { value: number, label: string }[] = [];
+    
+    if (this.currentTimeFrame === 'hour') {
+      // Generate 24 hours of session data
+      for (let h = 0; h < 24; h++) {
+        const baseSessions = this.sessionCount / 24; // Distribute sessions across hours
+        const multiplier = this.getHourlyMultiplier(h);
+        const sessions = Math.round(baseSessions * multiplier);
+        trend.push({ value: sessions, label: h.toString().padStart(2, '0') + ':00' });
+      }
+    } else if (this.currentTimeFrame === 'day') {
+      // Generate daily session data
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const baseSessions = this.sessionCount / daysInMonth;
+        const multiplier = 0.8 + Math.random() * 0.4; // Random variation
+        const sessions = Math.round(baseSessions * multiplier);
+        trend.push({ value: sessions, label: d.toString().padStart(2, '0') });
+      }
+
+    } else if (this.currentTimeFrame === 'month') {
+      // Generate monthly session data
+      for (let m = 1; m <= 12; m++) {
+        const baseSessions = this.sessionCount / 12;
+        const multiplier = 0.6 + Math.random() * 0.8; // Random variation
+        const sessions = Math.round(baseSessions * multiplier);
+        trend.push({ value: sessions, label: m.toString().padStart(2, '0') });
+      }
+    } else if (this.currentTimeFrame === 'year') {
+      // Generate yearly session data
+      for (let y = now.getFullYear() - 4; y <= now.getFullYear(); y++) {
+        const baseSessions = this.sessionCount / 5;
+        const multiplier = 0.5 + Math.random() * 1.0; // Random variation
+        const sessions = Math.round(baseSessions * multiplier);
+        trend.push({ value: sessions, label: y.toString() });
+      }
+    }
+    
+    return trend;
+  }
+
+  private generateBounceRateTrendData(): { value: number, label: string }[] {
+    const now = new Date();
+    const trend: { value: number, label: string }[] = [];
+    const baseBounceRate = this.bounceRate;
+    
+    if (this.currentTimeFrame === 'hour') {
+      // Generate 24 hours of bounce rate data
+      for (let h = 0; h < 24; h++) {
+        const variation = (Math.random() - 0.5) * 20; // ±10% variation
+        const bounceRate = Math.max(0, Math.min(100, baseBounceRate + variation));
+        trend.push({ value: bounceRate, label: h.toString().padStart(2, '0') + ':00' });
+      }
+    } else if (this.currentTimeFrame === 'day') {
+      // Generate daily bounce rate data
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      for (let d = 1; d <= daysInMonth; d++) {
+        const variation = (Math.random() - 0.5) * 15; // ±7.5% variation
+        const bounceRate = Math.max(0, Math.min(100, baseBounceRate + variation));
+        trend.push({ value: bounceRate, label: d.toString().padStart(2, '0') });
+      }
+
+    } else if (this.currentTimeFrame === 'month') {
+      // Generate monthly bounce rate data
+      for (let m = 1; m <= 12; m++) {
+        const variation = (Math.random() - 0.5) * 10; // ±5% variation
+        const bounceRate = Math.max(0, Math.min(100, baseBounceRate + variation));
+        trend.push({ value: bounceRate, label: m.toString().padStart(2, '0') });
+      }
+    } else if (this.currentTimeFrame === 'year') {
+      // Generate yearly bounce rate data
+      for (let y = now.getFullYear() - 4; y <= now.getFullYear(); y++) {
+        const variation = (Math.random() - 0.5) * 8; // ±4% variation
+        const bounceRate = Math.max(0, Math.min(100, baseBounceRate + variation));
+        trend.push({ value: bounceRate, label: y.toString() });
+      }
+    }
+    
+    return trend;
   }
 
   private updateUserMetricsWithTrends(sessionTrends: any[]): void {
@@ -2431,5 +2932,57 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
+  }
+
+  private createFallbackChart(canvasId: string, data: any[], color: string): void {
+    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
+    if (!canvas) return;
+    
+    // Create a simple SVG fallback
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    svg.setAttribute('viewBox', '0 0 100 30');
+    
+    // Clear canvas and append SVG
+    canvas.innerHTML = '';
+    canvas.appendChild(svg);
+    
+    // Create a simple line chart
+    if (data && data.length > 0) {
+      const normalizedData = data.map(item => {
+        if (typeof item === 'number') return item;
+        if (item && typeof item === 'object' && 'value' in item) return Number(item.value) || 0;
+        return 0;
+      });
+      
+      if (normalizedData.length > 1) {
+        const maxValue = Math.max(...normalizedData);
+        const minValue = Math.min(...normalizedData);
+        const range = maxValue - minValue || 1;
+        
+        const points = normalizedData.map((value, index) => {
+          const x = (index / (normalizedData.length - 1)) * 100;
+          const y = 30 - ((value - minValue) / range) * 25;
+          return `${x},${y}`;
+        }).join(' ');
+        
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M ${points}`);
+        path.setAttribute('stroke', color);
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('fill', 'none');
+        svg.appendChild(path);
+      }
+    }
+  }
+
+  private resizeCharts(): void {
+    Object.keys(this.charts).forEach(chartId => {
+      const chart = this.charts[chartId];
+      if (chart) {
+        chart.resize();
+      }
+    });
   }
 }

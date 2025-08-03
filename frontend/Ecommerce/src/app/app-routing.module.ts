@@ -70,6 +70,7 @@ import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.componen
 import { BlacklistComponent } from './blacklist/blacklist.component';
 import { BlacklistBlockedComponent } from './blacklist/blacklist-blocked.component';
 import { LoginAttemptsComponent } from './login-attempts/login-attempts.component';
+import { IpBannedComponent } from './ip-banned/ip-banned.component';
 
 // Discount Components
 import { DiscountEventManagementComponent } from './discount-management/discount-management.component';
@@ -194,6 +195,7 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent, canActivate: [LoggedInGuard], data: { breadcrumb: 'Register', role: 'customer' } },
   { path: 'verify-otp', component: VerifyOtpComponent, data: { role: 'customer' } },
   { path: 'blacklist-blocked', component: BlacklistBlockedComponent, data: { role: 'customer' } },
+  { path: 'ip-banned', component: IpBannedComponent, data: { role: 'customer' } },
   { path: 'banned', component: BannedPageComponent, data: { role: 'customer' } },
   { path: 'home', component: HomeComponent, canActivate: [AuthGuard, BlacklistGuard] ,},
   { path: 'about-us', component: AboutUsComponent, data: { breadcrumb: 'About Us', role: 'customer' } },

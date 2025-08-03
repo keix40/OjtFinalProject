@@ -58,10 +58,17 @@ public class VipTierServiceImpl implements VipTierService {
         // Example: count users with VIP tier and createdDate in range
         return (int) userRepository.findAll().stream()
             .filter(u -> u.getRole() != null && u.getRole().getName().equalsIgnoreCase("CUSTOMER"))
-            .filter(u -> u.getTier() != null && !u.getTier().equalsIgnoreCase("Regular"))
+            .filter(u -> !u.getTier().equalsIgnoreCase("Regular")) // getTier() always returns a string, never null
             .filter(u -> u.getCreatedDate() != null &&
                 !u.getCreatedDate().isBefore(start) && !u.getCreatedDate().isAfter(end))
             .count();
+    }
+
+    @Override
+    public int countTotalVipCustomersAtEndOfMonth(YearMonth month) {
+        // Use native query to match database exactly
+        String endDate = month.atEndOfMonth().toString(); // Format: YYYY-MM-DD
+        return userRepository.countVipCustomersAtEndOfMonth(endDate);
     }
 
     @Override
@@ -69,7 +76,7 @@ public class VipTierServiceImpl implements VipTierService {
         // Example: sum totalSpent for VIP customers in the given year
         return userRepository.findAll().stream()
             .filter(u -> u.getRole() != null && u.getRole().getName().equalsIgnoreCase("CUSTOMER"))
-            .filter(u -> u.getTier() != null && !u.getTier().equalsIgnoreCase("Regular"))
+            .filter(u -> !u.getTier().equalsIgnoreCase("Regular")) // getTier() always returns a string, never null
             .filter(u -> u.getOrders() != null)
             .flatMap(u -> u.getOrders().stream())
             .filter(o -> o.getOrderDate() != null && o.getOrderDate().getYear() == year)
@@ -82,7 +89,7 @@ public class VipTierServiceImpl implements VipTierService {
     public double getVipAvgOrderValue() {
         List<User> vips = userRepository.findAll().stream()
             .filter(u -> u.getRole() != null && u.getRole().getName().equalsIgnoreCase("CUSTOMER"))
-            .filter(u -> u.getTier() != null && !u.getTier().equalsIgnoreCase("Regular"))
+            .filter(u -> !u.getTier().equalsIgnoreCase("Regular")) // getTier() always returns a string, never null
             .toList();
         double total = vips.stream().mapToDouble(u -> {
             if (u.getOrders() == null) return 0;

@@ -20,11 +20,6 @@ export class UserCategoryListComponent implements OnInit {
   loading = false;
   error = '';
 
-  breadcrumbItems: { label: string, link?: string }[] = [
-    { label: 'Home', link: '/home' },
-    { label: 'Category' }
-  ];
-
   constructor(private categoryService: CategoryService, private router: Router, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {

@@ -49,11 +49,11 @@
 		</dependency>
 
 
-<!--		<dependency>-->
-<!--			<groupId>com.mysql</groupId>-->
-<!--			<artifactId>mysql-connector-j</artifactId>-->
-<!--			<version>8.4.0</version> &lt;!&ndash; ✅ as of July 2025 &ndash;&gt;-->
-<!--		</dependency>-->
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<version>8.4.0</version> <!-- ✅ as of July 2025 -->
+		</dependency>
 
 
 		<dependency>
@@ -174,11 +174,11 @@
 			<version>8.31.1</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<scope>runtime</scope>
-		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>org.postgresql</groupId>-->
+<!--			<artifactId>postgresql</artifactId>-->
+<!--			<scope>runtime</scope>-->
+<!--		</dependency>-->
 		<!-- Apache HttpClient dependencies removed: now using Java's built-in HttpClient -->
 	</dependencies>
 

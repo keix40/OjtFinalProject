@@ -19,11 +19,6 @@ export class UserBrandListComponent implements OnInit {
   loading = false;
   error = '';
 
-  breadcrumbItems: { label: string, link?: string }[] = [
-    { label: 'Home', link: '/home' },
-    { label: 'Brand' }
-  ];
-
   constructor(private brandService: BrandService, private router: Router) {}
 
   ngOnInit(): void {

@@ -61,8 +61,9 @@ public class VipTierController {
 
     @GetMapping("/stats/customers-growth")
     public Map<String, Object> getVipCustomersGrowth() {
-        int currentMonth = vipTierService.countVipCustomersInMonth(YearMonth.now());
-        int lastMonth = vipTierService.countVipCustomersInMonth(YearMonth.now().minusMonths(1));
+        // Use total VIP customers at end of each month instead of new customers created
+        int currentMonth = vipTierService.countTotalVipCustomersAtEndOfMonth(YearMonth.now());
+        int lastMonth = vipTierService.countTotalVipCustomersAtEndOfMonth(YearMonth.now().minusMonths(1));
         double growth = lastMonth == 0 ? 100 : ((currentMonth - lastMonth) / (double) lastMonth) * 100;
         return Map.of("currentMonth", currentMonth, "lastMonth", lastMonth, "growthPercent", Math.round(growth));
     }
@@ -88,4 +89,6 @@ public class VipTierController {
         Map<String, Object> result = vipTierService.getLoyaltyScoreGrowth();
         return result;
     }
+    
+
 } 

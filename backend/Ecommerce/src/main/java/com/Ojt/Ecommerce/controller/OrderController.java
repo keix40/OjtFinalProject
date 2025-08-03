@@ -178,7 +178,7 @@ public class OrderController {
             case "month": start = now.minusMonths(1); break;
             case "year": start = now.minusYears(1); break;
             case "day":
-            default: start = now.minusDays(30); break;
+            default: start = now.minusDays(7); break; // Show last 7 days for day time frame
         }
 
         // Get active users per period - we need to count unique users per time period
@@ -329,9 +329,9 @@ public class OrderController {
             default:
                 formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-                // Generate all 30 days with zero values first
-                for (int i = 0; i < 30; i++) {
-                    LocalDateTime dayStart = now.minusDays(30 - i).withHour(0).withMinute(0).withSecond(0);
+                // Generate all 7 days with zero values first
+                for (int i = 0; i < 7; i++) {
+                    LocalDateTime dayStart = now.minusDays(7 - i).withHour(0).withMinute(0).withSecond(0);
                     String key = dayStart.format(formatter);
                     groupedTotal.put(key, 0.0);
                     groupedCount.put(key, 0);
@@ -364,8 +364,8 @@ public class OrderController {
                     groupedCustomers.put(entry.getKey(), entry.getValue().size());
                 }
                 // Count unique active users by day
-                for (int i = 0; i < 30; i++) {
-                    LocalDateTime periodStart = now.minusDays(30 - i).withHour(0).withMinute(0).withSecond(0);
+                for (int i = 0; i < 7; i++) {
+                    LocalDateTime periodStart = now.minusDays(7 - i).withHour(0).withMinute(0).withSecond(0);
                     LocalDateTime periodEnd = periodStart.plusDays(1);
                     String key = periodStart.format(formatter);
                     int uniqueUsers = userActivityService.countActiveUsers(periodStart, periodEnd);
@@ -385,6 +385,15 @@ public class OrderController {
                 return map;
             })
             .collect(Collectors.toList());
+        
+        // Debug logging for day time frame
+        if (timeFrame.equals("day")) {
+            System.out.println("📊 Day Time Frame Sales Trend Data:");
+            System.out.println("  - Time Range: " + start + " to " + now);
+            System.out.println("  - Total Days: " + result.size());
+            System.out.println("  - Data Points: " + result.stream().mapToDouble(r -> (Double) r.get("total")).sum());
+        }
+        
         return ResponseEntity.ok(result);
     }
 
@@ -471,7 +480,7 @@ public class OrderController {
             case "month": start = now.minusMonths(1); break;
             case "year": start = now.minusYears(1); break;
             case "day":
-            default: start = now.minusDays(1); break;
+            default: start = now.withHour(0).withMinute(0).withSecond(0); break; // Current day only
         }
         int count = userActivityService.countActiveUsers(start, now);
         return ResponseEntity.ok(count);
@@ -517,18 +526,38 @@ public class OrderController {
         List<UserOrderListDTO> prevOrders = orders.stream()
             .filter(o -> o.getOrderDate() != null && o.getOrderDate().isAfter(start) && o.getOrderDate().isBefore(end))
             .toList();
-        double prevTotalSales = prevOrders.stream().mapToDouble(o -> {
-            // You may need to sum product line items if not available directly
-            return 0.0; // Placeholder, update with your logic
-        }).sum();
+        double prevTotalSales = prevOrders.stream().mapToDouble(o -> o.getTotal() != null ? o.getTotal() : 0).sum();
         int prevOrderCount = prevOrders.size();
         double prevRevenue = prevTotalSales * 0.72;
         double prevAvgOrder = prevOrderCount > 0 ? prevTotalSales / prevOrderCount : 0;
+        
+        // Calculate previous active users for the same period
+        int prevActiveUsers = userActivityService.countActiveUsers(start, end);
+        
+        // Calculate previous customers (unique users who placed orders)
+        int prevCustomers = (int) prevOrders.stream()
+            .filter(o -> o.getUser() != null)
+            .mapToLong(o -> o.getUser().getId())
+            .distinct()
+            .count();
+        
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("totalSales", prevTotalSales);
         result.put("revenue", prevRevenue);
         result.put("orders", prevOrderCount);
         result.put("avgOrder", prevAvgOrder);
+        result.put("activeUsers", prevActiveUsers);
+        result.put("customers", prevCustomers);
+        
+        // Debug logging
+        System.out.println("🔍 Previous Metrics for " + timeFrame + ":");
+        System.out.println("  - Period: " + start + " to " + end);
+        System.out.println("  - Orders found: " + prevOrders.size());
+        System.out.println("  - Total Sales: " + prevTotalSales);
+        System.out.println("  - Revenue: " + prevRevenue);
+        System.out.println("  - Active Users: " + prevActiveUsers);
+        System.out.println("  - Customers: " + prevCustomers);
+        
         return ResponseEntity.ok(result);
     }
 
@@ -603,6 +632,21 @@ public class OrderController {
     public ResponseEntity<List<Map<String, Object>>> getCustomerAcquisition(@RequestParam(defaultValue = "day") String timeFrame) {
         List<Map<String, Object>> acquisition = sessionService.getCustomerAcquisition(timeFrame);
         return ResponseEntity.ok(acquisition);
+    }
+
+    // New Users endpoints
+    @GetMapping("/new-users-count")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<Integer> getNewUsersCount(@RequestParam(defaultValue = "day") String timeFrame) {
+        int newUsersCount = userService.getNewUsersCount(timeFrame);
+        return ResponseEntity.ok(newUsersCount);
+    }
+
+    @GetMapping("/new-users-trends")
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
+    public ResponseEntity<List<Map<String, Object>>> getNewUsersTrends(@RequestParam(defaultValue = "day") String timeFrame) {
+        List<Map<String, Object>> newUsersTrends = userService.getNewUsersTrends(timeFrame);
+        return ResponseEntity.ok(newUsersTrends);
     }
 
     // Analytics endpoints for pie charts

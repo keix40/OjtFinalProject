@@ -484,4 +484,133 @@ public class UserServiceImpl implements UserService {
                     return dto;
                 }).toList();
     }
+
+    @Override
+    public int getNewUsersCount(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start;
+        
+        switch (timeFrame.toLowerCase()) {
+            case "hour":
+                start = now.minusHours(24);
+                break;
+            case "day":
+                start = now.minusDays(7);
+                break;
+            case "month":
+                start = now.minusMonths(1);
+                break;
+            case "year":
+                start = now.minusYears(1);
+                break;
+            default:
+                start = now.minusDays(7);
+                break;
+        }
+        
+        return userRepository.countByCreatedDateBetweenAndRole_Name(start, now, "customer");
+    }
+
+    @Override
+    public List<Map<String, Object>> getNewUsersTrends(String timeFrame) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime start;
+        List<Map<String, Object>> trends = new ArrayList<>();
+        
+        System.out.println("🔍 getNewUsersTrends called with timeFrame: " + timeFrame);
+        System.out.println("📅 Current time: " + now);
+        
+        switch (timeFrame.toLowerCase()) {
+            case "hour":
+                start = now.minusHours(24);
+                System.out.println("⏰ Hour mode - generating 24 hours of data");
+                for (int i = 0; i < 24; i++) {
+                    LocalDateTime hourStart = now.minusHours(23 - i);
+                    LocalDateTime hourEnd = hourStart.plusHours(1);
+                    int count = userRepository.countByCreatedDateBetweenAndRole_Name(hourStart, hourEnd, "customer");
+                    
+                    Map<String, Object> trend = new HashMap<>();
+                    trend.put("period", hourStart.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
+                    trend.put("newUsers", count);
+                    trends.add(trend);
+                    
+                    System.out.println("  Hour " + hourStart.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")) + ": " + count + " new users");
+                }
+                break;
+                
+            case "day":
+                start = now.minusDays(7);
+                System.out.println("📅 Day mode - generating 7 days of data");
+                for (int i = 0; i < 7; i++) {
+                    LocalDateTime dayStart = now.minusDays(6 - i).withHour(0).withMinute(0).withSecond(0);
+                    LocalDateTime dayEnd = dayStart.plusDays(1);
+                    int count = userRepository.countByCreatedDateBetweenAndRole_Name(dayStart, dayEnd, "customer");
+                    
+                    Map<String, Object> trend = new HashMap<>();
+                    trend.put("period", dayStart.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd")));
+                    trend.put("newUsers", count);
+                    trends.add(trend);
+                    
+                    System.out.println("  Day " + dayStart.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd")) + ": " + count + " new users");
+                }
+                break;
+                
+            case "month":
+                start = now.minusMonths(12);
+                System.out.println("📅 Month mode - generating 12 months of data");
+                for (int i = 0; i < 12; i++) {
+                    LocalDateTime monthStart = now.minusMonths(11 - i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+                    LocalDateTime monthEnd = monthStart.plusMonths(1);
+                    int count = userRepository.countByCreatedDateBetweenAndRole_Name(monthStart, monthEnd, "customer");
+                    
+                    Map<String, Object> trend = new HashMap<>();
+                    trend.put("period", monthStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM")));
+                    trend.put("newUsers", count);
+                    trends.add(trend);
+                    
+                    System.out.println("  Month " + monthStart.format(java.time.format.DateTimeFormatter.ofPattern("MMM")) + ": " + count + " new users");
+                }
+                break;
+                
+            case "year":
+                start = now.minusYears(5);
+                System.out.println("📅 Year mode - generating 5 years of data");
+                for (int i = 0; i < 5; i++) {
+                    LocalDateTime yearStart = now.minusYears(4 - i).withDayOfYear(1).withHour(0).withMinute(0).withSecond(0);
+                    LocalDateTime yearEnd = yearStart.plusYears(1);
+                    int count = userRepository.countByCreatedDateBetweenAndRole_Name(yearStart, yearEnd, "customer");
+                    
+                    Map<String, Object> trend = new HashMap<>();
+                    trend.put("period", yearStart.format(java.time.format.DateTimeFormatter.ofPattern("yyyy")));
+                    trend.put("newUsers", count);
+                    trends.add(trend);
+                    
+                    System.out.println("  Year " + yearStart.format(java.time.format.DateTimeFormatter.ofPattern("yyyy")) + ": " + count + " new users");
+                }
+                break;
+                
+            default:
+                // Default to daily for 7 days
+                start = now.minusDays(7);
+                System.out.println("📅 Default mode - generating 7 days of data");
+                for (int i = 0; i < 7; i++) {
+                    LocalDateTime dayStart = now.minusDays(6 - i).withHour(0).withMinute(0).withSecond(0);
+                    LocalDateTime dayEnd = dayStart.plusDays(1);
+                    int count = userRepository.countByCreatedDateBetweenAndRole_Name(dayStart, dayEnd, "customer");
+                    
+                    Map<String, Object> trend = new HashMap<>();
+                    trend.put("period", dayStart.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd")));
+                    trend.put("newUsers", count);
+                    trends.add(trend);
+                    
+                    System.out.println("  Day " + dayStart.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd")) + ": " + count + " new users");
+                }
+                break;
+        }
+        
+        System.out.println("📊 Total trends generated: " + trends.size());
+        System.out.println("📋 Final trends data: " + trends);
+        
+        return trends;
+    }
 }

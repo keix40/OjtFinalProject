@@ -28,4 +28,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmailWithRole(@Param("email") String email);
     
     Optional<User> findByPhoneNumber(String phoneNumber);
+
+    // New Users methods for dashboard
+    int countByCreatedDateBetweenAndRole_Name(java.time.LocalDateTime start, java.time.LocalDateTime end, String roleName);
+    
+    // VIP customer count methods using native queries to match database exactly
+    @Query(value = "SELECT COUNT(*) FROM users u " +
+                   "JOIN role r ON u.role_id = r.id " +
+                   "WHERE r.name = 'CUSTOMER' " +
+                   "AND u.total_points >= 10000 " +
+                   "AND u.created_date <= LAST_DAY(:endDate)", nativeQuery = true)
+    int countVipCustomersAtEndOfMonth(@Param("endDate") String endDate);
 }

@@ -20,6 +20,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
+import com.Ojt.Ecommerce.config.IPBanFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,6 +35,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final JwtAuthenticationEntryPoint entryPoint;
     private final UserDetailsServiceImpl userDetailsService;
+    private final IPBanFilter ipBanFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -86,6 +88,7 @@ public class SecurityConfig {
 
                 );
 
+        http.addFilterBefore(ipBanFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
