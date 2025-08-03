@@ -791,10 +791,9 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     // Icons will be initialized in loadVipCustomers() and loadTiers()
     
     // Also initialize icons after a short delay to ensure they appear
-    setTimeout(() => {
-      
-      this.isRefreshingData = false;
-    }, 1000);
+    // setTimeout(() => {
+    //   this.isRefreshingData = false;
+    // }, 1000);
   }
 
   exportVipCustomers(): void {
