@@ -406,12 +406,21 @@ public class OrderController {
                 } catch (NumberFormatException ignored) {}
             }
         }
-        com.Ojt.Ecommerce.entity.UserOrder updatedOrder = service.updateOrderStatus(orderId, status, refundId);
-
-        if (updatedOrder != null) {
+        try {
+            UserOrderListDTO updatedOrder = service.updateOrderStatus(orderId, status, refundId);
             return ResponseEntity.ok(updatedOrder);
-        } else {
-            return ResponseEntity.badRequest().body("Invalid order ID or status.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "message", e.getMessage(),
+                "timestamp", LocalDateTime.now().toString(),
+                "status", 400
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "message", "Something went wrong: " + e.getMessage(),
+                "timestamp", LocalDateTime.now().toString(),
+                "status", 500
+            ));
         }
     }
 

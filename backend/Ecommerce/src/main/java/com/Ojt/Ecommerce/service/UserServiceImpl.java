@@ -319,7 +319,6 @@ public class UserServiceImpl implements UserService {
 
         if (changed) {
             userRepository.save(user);
-            notificationService.sendNotification(user.getEmail(), "Your profile was updated successfully!");
         }
 
         return modelMapper.map(user, RegisterRequest.class);

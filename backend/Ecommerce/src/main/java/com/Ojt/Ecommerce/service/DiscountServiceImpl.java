@@ -48,6 +48,8 @@ public class DiscountServiceImpl implements DiscountService {
             discountRuleService.createDiscountRules(dto, discount);
             System.out.println("[DiscountService] Finished creating discount rules.");
             sendDiscountNotificationToAllUsers(dto,discount.getId());
+            sendAdminNotificationForDiscountCreation(dto, discount.getId());
+
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -66,6 +68,7 @@ public class DiscountServiceImpl implements DiscountService {
 
             discountRuleService.createDiscountRules(dto, discount);
             sendDiscountNotificationToAllUsers(dto,discount.getId());
+            sendAdminNotificationForDiscountCreation(dto, discount.getId());
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -80,6 +83,7 @@ public class DiscountServiceImpl implements DiscountService {
             if (conflictResolutions == null || conflictResolutions.isEmpty()) {
                 discountRuleService.createDiscountRules(dto, discount);
                 sendDiscountNotificationToAllUsers(dto, discount.getId());
+                sendAdminNotificationForDiscountCreation(dto, discount.getId());
                 return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
             }
 
@@ -95,6 +99,7 @@ public class DiscountServiceImpl implements DiscountService {
 
             discountRuleService.createDiscountRules(dto, discount);
             sendDiscountNotificationToAllUsers(dto, discount.getId());
+            sendAdminNotificationForDiscountCreation(dto, discount.getId());
             return ResponseEntity.ok(Map.of("message", "Discount created successfully"));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -1901,17 +1906,45 @@ public class DiscountServiceImpl implements DiscountService {
         }
 
         String notificationMessage = "🔥 \"" + dto.getName() + "\" is live: " + discountValueText + "! Click here to view products.";
-        String type = "discount";
+        String type = "create";
+        String notiCate = "discount";
         String link = "/userproductlist?discountId=" + discountId;
 
         userRepository.findAll().forEach(user -> {
             try {
-                notificationService.createNotificationForUser(user.getEmail(), notificationMessage, type, link);
+                notificationService.createNotificationForUser(user.getEmail(), notificationMessage, type, link,notiCate);
             } catch (Exception e) {
                 System.err.println("[Notification] Failed to send notification to " + user.getEmail() + ": " + e.getMessage());
                 e.printStackTrace();
             }
         });
+    }
+
+    private void sendAdminNotificationForDiscountCreation(DiscountRequestDTO dto, Long discountId) {
+        try {
+            String discountValueText;
+            if ("PERCENTAGE".equalsIgnoreCase(dto.getDiscountType())) {
+                double percent = dto.getDiscount_percent();
+                discountValueText = percent + "% off";
+            } else {
+                discountValueText = dto.getDiscount_amount() + " MMK off";
+            }
+
+            /*String notificationMessage = "🎯 New discount created: \"" + dto.getName() + "\" - " + discountValueText +
+                                      " | Target: " + dto.getTargetType() + " | Duration: " + 
+                                      dto.getStartDate().toLocalDate() + " to " + dto.getEndDate().toLocalDate();
+            
+            String type = "create";
+            String category = "discount";
+            String link = "admindiscount-management";
+
+            notificationService.sendNotificationToAdmin(notificationMessage, category, type, link); */
+            
+            System.out.println("[DiscountService] Admin notification sent for discount: " + dto.getName());
+        } catch (Exception e) {
+            System.err.println("[DiscountService] Failed to send admin notification: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     // Remove only the specific conflict by targetType and targetId

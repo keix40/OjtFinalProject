@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,6 +46,7 @@ import com.Ojt.Ecommerce.service.ActivityLogService;
 import com.Ojt.Ecommerce.util.IpLocationUtil;
 import com.Ojt.Ecommerce.service.BlacklistServiceImpl;
 import com.Ojt.Ecommerce.entity.BlacklistEntry;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -135,6 +137,7 @@ public class AuthController {
             ));
         }
         boolean requireOtpCaptcha = loginAttemptService.isOtpCaptchaRequired(ip);
+        System.out.println("[LoginAttempt] IP: " + ip + ", requireOtpCaptcha: " + requireOtpCaptcha);
 
         // Blacklist enforcement: check if user is blacklisted by email
         try {
@@ -169,6 +172,7 @@ public class AuthController {
             );
             // If password is correct, check if OTP/CAPTCHA is required
             if (requireOtpCaptcha) {
+                System.out.println("[LoginAttempt] OTP/CAPTCHA required for IP: " + ip + ", email: " + email);
                 // Generate a login OTP (not email verification OTP)
                 String otp = String.format("%06d", new java.util.Random().nextInt(999999));
                 OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
@@ -180,6 +184,7 @@ public class AuthController {
                 otpVerification.setType("login"); // <-- distinguish from email verification
                 otpVerificationRepository.save(otpVerification);
                 emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
+                System.out.println("[LoginAttempt] Generated login OTP: " + otp + " for email: " + email);
                 return ResponseEntity.status(401).body(Map.of(
                     "otpRequired", true,
                     "captchaRequired", true,
@@ -233,7 +238,7 @@ public class AuthController {
             // --- Broadcast real-time activity feed event ---
             // In AuthController.java, after a successful login:
             String activityMsg = "Successful login for " + email + " from IP " + ip;
-            notificationService.sendNotificationToAllAdmins(activityMsg, "login_attempt", null);
+           /* notificationService.sendNotificationToAllAdmins(activityMsg, "login_attempt", null);
             List<User> admins = userRepository.findByRoleId(1L);
             for (User admin : admins) {
                 messagingTemplate.convertAndSendToUser(
@@ -245,7 +250,7 @@ public class AuthController {
                                 "message", activityMsg
                         )
                 );
-            }
+            } */
             // Reset OTP/CAPTCHA for this IP
             loginAttemptService.handleSuccessfulLogin(ip);
             String accessToken = jwtTokenProvider.generateToken(user);
@@ -410,6 +415,110 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "OTP verified successfully."));
     }
 
+    @PostMapping("/verify-login-otp")
+    public ResponseEntity<?> verifyLoginOtp(@RequestBody OtpRequest request, HttpServletRequest httpRequest) {
+        String email = request.getEmail().trim().toLowerCase();
+        String otp = request.getOtp();
+        
+        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("No OTP request found for this email."));
+        
+        // Check if this is a login OTP
+        if (!"login".equals(otpVerification.getType())) {
+            throw new CustomException("Invalid OTP type for login verification.");
+        }
+        
+        // Verify OTP correctness and expiry
+        if (!otpVerification.getOtpCode().equals(otp)) {
+            throw new CustomException("Invalid OTP.");
+        }
+        if (otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new CustomException("OTP has expired.");
+        }
+        
+        // Get user and authenticate
+        User user = userRepository.findByEmailWithRole(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        
+        // Create authentication and generate tokens
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+            user.getEmail(), null, Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        
+        // Log user activity for dashboard active users metric
+        userActivityService.logActivity(user.getId(), "login");
+        
+        // Update lastLogin timestamp
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
+        
+        // Generate tokens
+        String accessToken = jwtTokenProvider.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user.getId());
+        
+        // Clear the OTP after successful verification
+        otpVerificationRepository.delete(otpVerification);
+        
+        // Log activity
+        String ip = IpLocationUtil.extractClientIp(httpRequest);
+        String sessionId = null;
+        var session = httpRequest.getSession();
+        if (session != null) {
+            Object shortSessionId = session.getAttribute("shortSessionId");
+            if (shortSessionId == null) {
+                shortSessionId = generateShortSessionId();
+                session.setAttribute("shortSessionId", shortSessionId);
+            }
+            sessionId = shortSessionId.toString();
+        }
+        
+        // Manual activity logging for login OTP verification
+        java.time.LocalDateTime startTime = java.time.LocalDateTime.now();
+        java.time.LocalDateTime endTime = java.time.LocalDateTime.now();
+        java.time.Duration duration = java.time.Duration.between(startTime, endTime);
+        long durationMillis = duration.toMillis();
+        
+        String realIp = IpLocationUtil.extractClientIp(httpRequest);
+        String userLocation = IpLocationUtil.getUserLocation(realIp);
+        
+        Map<String, Object> detailsMap = new java.util.HashMap<>();
+        detailsMap.put("SessionId", sessionId);
+        detailsMap.put("Location", userLocation);
+        detailsMap.put("Duration", durationMillis + "ms");
+        detailsMap.put("StartTime", startTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss")));
+        detailsMap.put("EndTime", endTime.format(java.time.format.DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm:ss")));
+        String detailsJson;
+        try {
+            detailsJson = new ObjectMapper().writeValueAsString(detailsMap);
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+            detailsJson = "{\"SessionId\":\"" + sessionId + "\",\"Location\":\"" + userLocation + "\",\"Duration\":\"" + durationMillis + "ms\"}";
+        }
+
+        ActivityLog log = activityLogService.createActivityLog(
+            user.getId(),
+            user.getName(),
+            user.getRole() != null ? user.getRole().getName() : "UNKNOWN",
+            "LOGIN_OTP_VERIFICATION",
+            "USER",
+            String.valueOf(user.getId()),
+            "User login OTP verification",
+            "LOW",
+            realIp,
+            httpRequest.getHeader("User-Agent"),
+            sessionId
+        );
+        log.setDetails(detailsJson);
+        activityLogService.createActivityLog(log);
+        
+        // Return tokens for successful login OTP verification     
+        return ResponseEntity.ok(Map.of(
+            "accessToken", accessToken,
+            "refreshToken", refreshToken.getToken(),
+            "message", "Login OTP verified successfully."
+        ));
+    }
+
     @PostMapping("/resend-otp")
     public ResponseEntity<?> resendOtp(@RequestBody EmailRequest request) {
         String email = request.getEmail();
@@ -480,6 +589,7 @@ public class AuthController {
     @PostMapping("/send-reset-otp")
     public ResponseEntity<?> sendResetOtp(@RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
+        System.out.println("[DEBUG] send-reset-otp called with email: " + email);
         System.out.println("email is :"+email);
 
         if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
@@ -491,9 +601,6 @@ public class AuthController {
             throw new CustomException("No account found with this email.");
         }
 
-        if (!userOpt.get().isVerified()) {
-            throw new CustomException("No account found with this email.");
-        }
 
         // Generate OTP
         String otp = String.format("%06d", new Random().nextInt(999999));
@@ -520,9 +627,6 @@ public class AuthController {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("User not found"));
 
-        if (!user.isVerified()) {
-            throw new CustomException("User email is not verified.");
-        }
 
         // ✅ Generate OTP
         String otp = String.format("%06d", new Random().nextInt(999999));
@@ -555,8 +659,8 @@ public class AuthController {
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP found for this email"));
 
-        if (!otpVerification.isVerified() || otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
-            throw new CustomException("OTP not verified or expired");
+        if ( otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
+            throw new CustomException("OTP expired");
         }
 
         // ✅ Set new password
@@ -607,9 +711,6 @@ public class AuthController {
         if (userOpt.isEmpty()) {
             throw new CustomException("No account found with this email.");
         }
-        if (userOpt.get().isVerified()) {
-            throw new CustomException("Email is already verified.");
-        }
         // Generate OTP
         String otp = String.format("%06d", new Random().nextInt(999999));
         // Save to DB
@@ -619,6 +720,7 @@ public class AuthController {
         otpVerification.setOtpCode(otp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
         otpVerification.setVerified(false);
+        otpVerification.setType("login"); // Set type to login
         otpVerificationRepository.save(otpVerification);
         emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
         return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));

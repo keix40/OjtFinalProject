@@ -5,11 +5,12 @@ import { Router, RouterModule } from '@angular/router';
 import { FooterComponent } from '../footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
+import { BreadcrumbComponent } from '../breadcrumb.component';
 
 @Component({
   selector: 'app-user-brand-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent, BreadcrumbComponent],
   templateUrl: './user-brand-list.component.html',
   styleUrl: './user-brand-list.component.css'
 })
@@ -17,6 +18,11 @@ export class UserBrandListComponent implements OnInit {
   brands: BrandListDTO[] = [];
   loading = false;
   error = '';
+
+  breadcrumbItems: { label: string, link?: string }[] = [
+    { label: 'Home', link: '/home' },
+    { label: 'Brand' }
+  ];
 
   constructor(private brandService: BrandService, private router: Router) {}
 

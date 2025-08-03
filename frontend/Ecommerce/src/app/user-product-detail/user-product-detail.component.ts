@@ -17,7 +17,7 @@ import { CartItem } from '../services/cart.service';
 import { HttpClient } from '@angular/common/http';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener } from '@angular/core';
-import { PriceFormatService } from '../services/price-format.service';
+import { ColorUtilityService } from '../services/color-utility.service';
 
 interface ProductImage {
   id: number;
@@ -175,7 +175,7 @@ export class UserProductDetailComponent implements OnInit {
     private discountService: DiscountService,
     private http:HttpClient,
     private modalService: NgbModal,
-    private priceFormatService: PriceFormatService
+    private colorUtilityService: ColorUtilityService
   ) {}
 
   ngOnInit(): void {
@@ -542,9 +542,21 @@ checkFirstTimeBuyerDiscount(): void {
   }
 
   isColorAttribute(attrName: string): boolean {
-    if (!attrName) return false;
-    const name = attrName.toLowerCase().trim();
-    return ['color', 'colors', 'colour', 'colours'].includes(name);
+    return this.colorUtilityService.isColorAttribute(attrName);
+  }
+
+  /**
+   * Get hex color code for a color name
+   */
+  getColorHex(colorName: string): string {
+    return this.colorUtilityService.getColorHex(colorName);
+  }
+
+  /**
+   * Get display name for a color
+   */
+  getColorDisplayName(colorName: string): string {
+    return this.colorUtilityService.getColorDisplayName(colorName);
   }
 
   // Attribute value disabling logic for user product detail
@@ -1497,6 +1509,41 @@ checkFirstTimeBuyerDiscount(): void {
     return vipDiscount ? vipDiscount.discount_percent : null;
   }
 
+  /**
+   * Returns VIP discount display text for the current product
+   */
+  getVipDiscountDisplay(): string {
+    const userVipTier = this.authService.getUserVipTier && this.authService.getUserVipTier();
+    if (!userVipTier) {
+      console.log('No VIP tier found for user');
+      return '';
+    }
+    
+    const vipDiscount = this.activeDiscounts.find(d =>
+      (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
+    );
+    
+    console.log('VIP discount check:', {
+      userVipTier,
+      vipDiscount,
+      activeDiscounts: this.activeDiscounts.length,
+      productId: this.product?.id,
+      originalPrice: this.selectedVariant?.price || this.product?.price,
+      finalPrice: this.getFinalDiscountedPrice()
+    });
+    
+    // Check if VIP discount exists and is applicable to this product
+    if (vipDiscount && vipDiscount.discount_percent) {
+      // Check if the product has a different final price (indicating discount was applied)
+      const finalPrice = this.getFinalDiscountedPrice();
+      const originalPrice = this.selectedVariant?.price || this.product?.price;
+      if (finalPrice !== originalPrice) {
+        return `${userVipTier.charAt(0).toUpperCase() + userVipTier.slice(1)} Tier ${vipDiscount.discount_percent}% OFF`;
+      }
+    }
+    return '';
+  }
+
   getDiscountSavings(): number {
     const originalPrice = this.selectedVariant?.price || this.product?.price || 0;
     const discountedPrice = this.getFinalDiscountedPrice();
@@ -1516,17 +1563,16 @@ checkFirstTimeBuyerDiscount(): void {
     console.log('CategoryBrandPairs:', this.product?.categoryBrandPairs);
     console.log('CategoryBrandArray:', this.product?.categoryBrandArray);
     
-    // Try multiple ways to get category and brand IDs
-    if (this.product?.categoryBrandArray?.length) {
-      this.product.categoryBrandArray.forEach((pair: any) => {
+    if (this.product?.categoryBrandPairs?.length) {
+      this.product.categoryBrandPairs.forEach((pair: any) => {
         if (pair.categoryId) categoryIds.push(pair.categoryId);
         if (pair.brandId) brandIds.push(pair.brandId);
       });
     }
     
-    // Fallback: try categoryBrandPairs if categoryBrandArray is empty
-    if (categoryIds.length === 0 && brandIds.length === 0 && this.product?.categoryBrandPairs?.length) {
-      this.product.categoryBrandPairs.forEach((pair: any) => {
+    // Fallback: try to get from categoryBrandArray if categoryBrandPairs is empty
+    if (categoryIds.length === 0 && brandIds.length === 0 && this.product?.categoryBrandArray?.length) {
+      this.product.categoryBrandArray.forEach((pair: any) => {
         if (pair.categoryId) categoryIds.push(pair.categoryId);
         if (pair.brandId) brandIds.push(pair.brandId);
       });
@@ -1537,23 +1583,14 @@ checkFirstTimeBuyerDiscount(): void {
       brandIds.push(this.product.brand.id);
     }
     
-    // Additional fallback: try to extract from product properties
-    if (this.product?.categories?.length) {
-      this.product.categories.forEach((category: any) => {
-        if (category.id && !categoryIds.includes(category.id)) {
-          categoryIds.push(category.id);
-        }
-      });
-    }
-    
     console.log('Category IDs:', categoryIds);
     console.log('Brand IDs:', brandIds);
     
     // Check if we have valid category or brand IDs
     if (categoryIds.length === 0 && brandIds.length === 0) {
-      console.log('No category or brand IDs found for related products, trying fallback...');
-      // Fallback: load trending or featured products
-      this.loadFallbackRelatedProducts();
+      console.log('No category or brand IDs found for related products');
+      this.relatedProducts = [];
+      this.isLoadingRelatedProducts = false;
       return;
     }
 
@@ -1566,74 +1603,15 @@ checkFirstTimeBuyerDiscount(): void {
           this.relatedProducts = this.shuffleArray(products).slice(0, 5);
           console.log('Related products loaded:', this.relatedProducts.length);
         } else {
-          console.log('No related products found from backend, trying fallback...');
-          this.loadFallbackRelatedProducts();
+          console.log('No related products found from backend');
+          this.relatedProducts = [];
         }
         this.isLoadingRelatedProducts = false;
       },
       error: (error) => {
         console.error('Failed to load related products:', error);
-        this.loadFallbackRelatedProducts();
-      }
-    });
-  }
-
-  // Fallback method to load trending or featured products
-  loadFallbackRelatedProducts() {
-    console.log('Loading fallback related products...');
-    const userId = this.authService.getUserId();
-    
-    // Try to get featured products first
-    this.productService.getFeaturedProducts(userId || undefined).subscribe({
-      next: (products) => {
-        if (products && products.length > 0) {
-          // Filter out the current product and get 5 random products
-          const filteredProducts = products.filter((p: any) => p.id !== this.product.id);
-          this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 5);
-          console.log('Fallback related products loaded (featured):', this.relatedProducts.length);
-        } else {
-          // If no featured products, try trending products
-          this.productService.getTrendingProducts().subscribe({
-            next: (trendingProducts) => {
-              if (trendingProducts && trendingProducts.length > 0) {
-                const filteredProducts = trendingProducts.filter((p: any) => p.id !== this.product.id);
-                this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 5);
-                console.log('Fallback related products loaded (trending):', this.relatedProducts.length);
-              } else {
-                console.log('No fallback products available');
-                this.relatedProducts = [];
-              }
-              this.isLoadingRelatedProducts = false;
-            },
-            error: (error) => {
-              console.error('Failed to load trending products:', error);
-              this.relatedProducts = [];
-              this.isLoadingRelatedProducts = false;
-            }
-          });
-        }
+        this.relatedProducts = [];
         this.isLoadingRelatedProducts = false;
-      },
-      error: (error) => {
-        console.error('Failed to load featured products:', error);
-        // Try trending products as last resort
-        this.productService.getTrendingProducts().subscribe({
-          next: (trendingProducts) => {
-            if (trendingProducts && trendingProducts.length > 0) {
-              const filteredProducts = trendingProducts.filter((p: any) => p.id !== this.product.id);
-              this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 5);
-              console.log('Fallback related products loaded (trending):', this.relatedProducts.length);
-            } else {
-              this.relatedProducts = [];
-            }
-            this.isLoadingRelatedProducts = false;
-          },
-          error: (trendingError) => {
-            console.error('Failed to load trending products:', trendingError);
-            this.relatedProducts = [];
-            this.isLoadingRelatedProducts = false;
-          }
-        });
       }
     });
   }
@@ -1971,7 +1949,10 @@ checkFirstTimeBuyerDiscount(): void {
 
   showReviewFormAndScroll() {
     this.showReviewForm = true;
-    this.scrollToReviewForm();
+    this.activeTab = 'reviews';
+    setTimeout(() => {
+      this.scrollToReviewForm();
+    }, 100);
   }
 
   // Add to Cart Button State Management
@@ -2011,39 +1992,5 @@ checkFirstTimeBuyerDiscount(): void {
     });
     
     return allAttributeNames.size;
-  }
-
-  // Debug method for related products
-  debugRelatedProducts() {
-    console.log('=== RELATED PRODUCTS DEBUG ===');
-    console.log('Product:', this.product);
-    console.log('Related Products:', this.relatedProducts);
-    console.log('Is Loading:', this.isLoadingRelatedProducts);
-    console.log('Product ID:', this.product?.id);
-    console.log('Category Brand Array:', this.product?.categoryBrandArray);
-    console.log('Category Brand Pairs:', this.product?.categoryBrandPairs);
-    console.log('Categories:', this.product?.categories);
-    console.log('Brand:', this.product?.brand);
-    
-    // Test the loadRelatedProducts method
-    console.log('Testing loadRelatedProducts...');
-    this.loadRelatedProducts();
-  }
-
-  // Price formatting methods
-  formatPrice(price: number): string {
-    return this.priceFormatService.formatPrice(price);
-  }
-
-  formatPriceOnly(price: number): string {
-    return this.priceFormatService.formatPriceOnly(price);
-  }
-
-  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string): string {
-    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType);
-  }
-
-  formatDiscountText(discountValue: number, discountType: string): string {
-    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

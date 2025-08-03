@@ -120,11 +120,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   revenueGrowth: any = null;
   avgOrderValueComparison: any = null;
 
-  // Loading states
-  isLoadingCustomers = false;
-  isLoadingTiers = false;
-  isSubmittingTier = false;
-  isRefreshingData = false;
+
 
   // Performance optimization
   private destroy$ = new Subject<void>();
@@ -209,11 +205,8 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   loadTiersAndThenCustomers(): void {
-    this.isLoadingTiers = true;
-    this.isLoadingCustomers = true;
-    
     // Load tiers and customers in parallel since backend handles filtering
-    this.vipTierService.getAll()
+    this.vipTierService.getAllVipTiers()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: tiers => {
@@ -228,12 +221,10 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
           }
           
           // Initialize icons immediately after tiers are loaded
-          
-          this.isLoadingTiers = false;
+          this.initializeIcons();
         },
         error: error => {
           console.error('Error loading tiers:', error);
-          this.isLoadingTiers = false;
         }
       });
     
@@ -391,12 +382,10 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
           this.applyFilters();
           
           // Initialize icons after customers are loaded
-          
-          this.isLoadingCustomers = false;
+          this.initializeIcons();
         },
         error: error => {
           console.error('Error loading VIP customers:', error);
-          this.isLoadingCustomers = false;
         }
       });
   }
@@ -551,14 +540,24 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
 
   // Filter methods
   applyFilters(): void {
+    // Get the lowest tier to exclude from VIP customers
+    const lowestTier = this.tiers.length > 0 ? 
+      this.tiers.reduce((lowest, tier) => tier.minPoints < lowest.minPoints ? tier : lowest).name : 
+      'Regular';
+
     this.filteredCustomers = this.allCustomers.filter(customer => {
+      // Exclude customers with the lowest tier (Regular customers)
+      if (customer.tier.toLowerCase() === lowestTier.toLowerCase()) {
+        return false;
+      }
+
       const matchesSearch = !this.searchTerm || 
         customer.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         customer.email.toLowerCase().includes(this.searchTerm.toLowerCase());
 
       const matchesTier = !this.tierFilter || customer.tier.toLowerCase() === this.tierFilter.toLowerCase();
       const matchesStatus = !this.statusFilter || customer.status === this.statusFilter;
-      // Remove matchesSegment
+      
       return matchesSearch && matchesTier && matchesStatus;
     });
 
@@ -786,7 +785,6 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
 
 
   refreshData(): void {
-    this.isRefreshingData = true;
     this.loadVipCustomers();
     this.loadTiers();
     console.log('Data refreshed - Loyalty score will update automatically');
@@ -887,7 +885,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.showTierListModal = false;
   }
   loadTiers() {
-    this.vipTierService.getAll().subscribe(tiers => {
+    this.vipTierService.getAllVipTiers().subscribe(tiers => {
       this.tiers = tiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
       
       // Filter out the lowest tier for VIP Tiers Overview display

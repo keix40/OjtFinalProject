@@ -388,11 +388,13 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     // Helper: Get failed attempts for IP in last X minutes
     private int getRecentFailedAttempts(String ip, int minutes) {
         LocalDateTime since = LocalDateTime.now().minusMinutes(minutes);
-        return (int) repository.findAll().stream()
+        int count = (int) repository.findAll().stream()
             .filter(a -> a.getIpAddress().equals(ip))
             .filter(a -> a.getStatus().equalsIgnoreCase("failed"))
             .filter(a -> a.getTimestamp().isAfter(since))
             .count();
+        System.out.println("[LoginAttempt] getRecentFailedAttempts for IP: " + ip + ", window: " + minutes + "min, count: " + count + ", since: " + since);
+        return count;
     }
 
     // Helper: Get last successful login IP for user
@@ -407,12 +409,19 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
 
     // Call this on each failed login attempt
     public void handleFailedLogin(String username, String ip, String location) {
+        System.out.println("[LoginAttempt] handleFailedLogin called for IP: " + ip + ", username: " + username);
         List<SecurityPolicyRule> rules = securityPolicyService.getAllRules();
+        System.out.println("[LoginAttempt] Found " + rules.size() + " security policy rules");
+        for (SecurityPolicyRule rule : rules) {
+            System.out.println("[LoginAttempt] Rule: " + rule.getAction() + ", attempts: " + rule.getAttempts() + ", window: " + rule.getWindowMinutes() + "min");
+        }
         for (SecurityPolicyRule rule : rules) {
             int fails = getRecentFailedAttempts(ip, rule.getWindowMinutes());
+            System.out.println("[LoginAttempt] Rule: " + rule.getAction() + ", attempts: " + rule.getAttempts() + ", window: " + rule.getWindowMinutes() + "min, current fails: " + fails);
             switch (rule.getAction()) {
                 case "email_alert":
                     if (fails == rule.getAttempts()) {
+                        System.out.println("[LoginAttempt] Email alert triggered for IP: " + ip);
                         String lastSuccessIp = getLastSuccessIp(username);
                         if (lastSuccessIp == null || !lastSuccessIp.equals(ip)) {
                             emailService.sendEmail(username, "Suspicious Login Attempt", "A suspicious login attempt was detected from " + location + ". If this wasn't you, please secure your account.");
@@ -421,13 +430,19 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                     break;
                 case "require_otp":
                     if (fails == rule.getAttempts()) {
+                        System.out.println("[LoginAttempt] OTP requirement triggered for IP: " + ip + " (fails: " + fails + ", threshold: " + rule.getAttempts() + ")");
                         otpCaptchaRequired.put(ip, LocalDateTime.now().plusMinutes(rule.getWindowMinutes()));
+                        System.out.println("[LoginAttempt] Added IP " + ip + " to otpCaptchaRequired map until: " + LocalDateTime.now().plusMinutes(rule.getWindowMinutes()));
+                        System.out.println("[LoginAttempt] Current map size: " + otpCaptchaRequired.size());
                         emailService.sendEmail(username, "Security Alert: Extra Verification Required", "Multiple failed login attempts detected. OTP and CAPTCHA will be required for your next login from this device.");
                         // TODO: Notify admin (implement as needed)
+                    } else {
+                        System.out.println("[LoginAttempt] OTP requirement not triggered yet for IP: " + ip + " (fails: " + fails + ", threshold: " + rule.getAttempts() + ")");
                     }
                     break;
                 case "ban_ip":
                     if (fails >= rule.getAttempts()) {
+                        System.out.println("[LoginAttempt] IP ban triggered for IP: " + ip);
                         int banMinutes = 24 * 60; // default 24h
                         try {
                             if (rule.getExtraData() != null) {
@@ -472,7 +487,12 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
     // Check if OTP/CAPTCHA is required for this IP
     public boolean isOtpCaptchaRequired(String ip) {
         LocalDateTime until = otpCaptchaRequired.get(ip);
-        return until != null && until.isAfter(LocalDateTime.now());
+        boolean required = until != null && until.isAfter(LocalDateTime.now());
+        System.out.println("[LoginAttempt] isOtpCaptchaRequired for IP: " + ip + ", until: " + until + ", required: " + required);
+        System.out.println("[LoginAttempt] Current time: " + LocalDateTime.now());
+        System.out.println("[LoginAttempt] otpCaptchaRequired map size: " + otpCaptchaRequired.size());
+        System.out.println("[LoginAttempt] All IPs in map: " + otpCaptchaRequired.keySet());
+        return required;
     }
 
 }

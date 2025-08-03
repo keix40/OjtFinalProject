@@ -86,35 +86,37 @@
       <div class="content-card">
 
           <!-- Personal Info Section -->
-          <div *ngIf="activeSection === 'personal-info'" class="content-section">
-            <app-user-personal-info [userDetails]="userDetails"></app-user-personal-info>
+                   <div *ngIf="activeSection === 'personal-info'" class="content-section">
+              <app-user-personal-info [userDetails]="userDetails" [vipTierInfo]="vipTierInfo"></app-user-personal-info>
           </div>
 
           <!-- Orders Section -->
           <div *ngIf="activeSection === 'orders'" class="content-section">
               <app-user-orders></app-user-orders>
           </div>
-          
+
           <!-- Wishlist Section -->
           <div *ngIf="activeSection === 'wishlist'" class="content-section">
               <app-user-wishlist></app-user-wishlist>
           </div>
-          
+
           <!-- Payment Methods Section -->
           <div *ngIf="activeSection === 'payment'" class="content-section">
               <app-user-payment-methods></app-user-payment-methods>
           </div>
-          
+
           <!-- My Reviews Section -->
           <div *ngIf="activeSection === 'reviews'" class="content-section">
               <app-user-reviews></app-user-reviews>
           </div>
-                    
+
+
+
           <!-- Addresses Section -->
           <div *ngIf="activeSection === 'addresses'" class="content-section">
               <app-user-addresses></app-user-addresses>
           </div>
-          
+
           <!-- Notifications Section -->
           <div *ngIf="activeSection === 'notifications'" class="content-section">
               <app-user-notifications></app-user-notifications>

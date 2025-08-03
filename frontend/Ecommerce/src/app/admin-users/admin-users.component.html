@@ -404,70 +404,7 @@
       </div>
     </ng-template>
   
-    <!-- Admin Activity Modal -->
-    <ng-template #activityModalTemplate>
-      <div *ngIf="selectedAdminForActivity" class="fixed inset-0 z-40 flex items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-xl shadow-lg w-full max-w-3xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
-          <button class="absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="selectedAdminForActivity = null">&times;</button>
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fas fa-history me-2"></i>
-              Activity Log - {{ selectedAdminForActivity.name }}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="activity-filters mb-3">
-              <div class="row">
-                <div class="col-md-4">
-                  <select class="form-select form-select-sm" [(ngModel)]="activityFilter">
-                    <option value="">All Activities</option>
-                    <option value="login">Login/Logout</option>
-                    <option value="create">Create</option>
-                    <option value="update">Update</option>
-                    <option value="delete">Delete</option>
-                    <option value="security">Security</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <input type="date" class="form-control form-control-sm" [(ngModel)]="activityDateFrom">
-                </div>
-                <div class="col-md-4">
-                  <input type="date" class="form-control form-control-sm" [(ngModel)]="activityDateTo">
-                </div>
-              </div>
-            </div>
-  
-            <div class="activity-timeline">
-              <div *ngFor="let activity of adminActivities" class="activity-item">
-                <div class="activity-icon" [ngClass]="'activity-' + activity.type">
-                  <i [class]="getActivityIcon(activity.type)"></i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-header">
-                    <strong>{{ activity.action }}</strong>
-                    <span class="activity-time">{{ activity.timestamp | date:'MMM dd, HH:mm:ss' }}</span>
-                  </div>
-                  <div class="activity-description">{{ activity.description }}</div>
-                  <div class="activity-meta">
-                    <span class="meta-item">
-                      <i class="fas fa-globe me-1"></i>{{ activity.ipAddress }}
-                    </span>
-                    <span class="meta-item">
-                      <i class="fas fa-desktop me-1"></i>{{ activity.userAgent }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          </div>
-        </div>
-      </div>
-    </ng-template>
+
 
 <!-- Edit Admin Overlay -->
 <ng-template #editAdminModalTemplate>
@@ -511,5 +448,4 @@
 
 <!-- Render Modals with ngTemplateOutlet -->
 <ng-container *ngIf="selectedAdminForPermissions" [ngTemplateOutlet]="permissionsModalTemplate"></ng-container>
-<ng-container *ngIf="selectedAdminForActivity" [ngTemplateOutlet]="activityModalTemplate"></ng-container>
 <ng-container *ngIf="editingAdmin" [ngTemplateOutlet]="editAdminModalTemplate"></ng-container>

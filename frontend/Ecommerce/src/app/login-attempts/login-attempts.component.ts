@@ -63,6 +63,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   searchTerm = ""
   sortField = "timestamp"
   sortDirection: "asc" | "desc" = "desc"
+  
+  // Custom date range properties
+  customDateFrom = ""
+  customDateTo = ""
 
   // Pagination properties
   currentPage = 1
@@ -188,9 +192,12 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   }
 
   buildSummaryView(): void {
+    // Use filtered attempts for summary view
+    const dataToUse = this.filteredAttempts.length > 0 ? this.filteredAttempts : this.loginAttempts;
+    
     // Aggregate by username, IP, location
     const map = new Map<string, { count: number, last: LoginAttempt }>();
-    for (const attempt of this.loginAttempts) {
+    for (const attempt of dataToUse) {
       const key = `${attempt.username}|${attempt.ipAddress}|${attempt.location}`;
       if (!map.has(key)) {
         map.set(key, { count: 1, last: attempt });
@@ -250,6 +257,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     // Time range filter
     const now = new Date()
     let timeLimit: Date
+    let timeUpperLimit: Date | null = null
 
     switch (this.selectedTimeRange) {
       case "1h":
@@ -264,11 +272,25 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       case "30d":
         timeLimit = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
         break
+      case "custom":
+        if (this.customDateFrom && this.customDateTo) {
+          timeLimit = new Date(this.customDateFrom)
+          timeUpperLimit = new Date(this.customDateTo)
+        } else {
+          timeLimit = new Date(0)
+        }
+        break
       default:
         timeLimit = new Date(0)
     }
 
-    filtered = filtered.filter((attempt) => new Date(attempt.timestamp) >= timeLimit)
+    // Apply time filter
+    filtered = filtered.filter((attempt) => {
+      const attemptDate = new Date(attempt.timestamp)
+      const isAfterLowerLimit = attemptDate >= timeLimit
+      const isBeforeUpperLimit = timeUpperLimit ? attemptDate <= timeUpperLimit : true
+      return isAfterLowerLimit && isBeforeUpperLimit
+    })
 
     // Status filter
     if (this.selectedStatus !== "all") {
@@ -295,9 +317,17 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     this.totalPages = Math.ceil(this.filteredAttempts.length / this.itemsPerPage)
     this.currentPage = 1
     this.updatePaginatedAttempts()
+    
+    // Rebuild summary view with filtered data
+    this.buildSummaryView()
   }
 
   onTimeRangeChange(): void {
+    // Clear custom date inputs if switching away from custom range
+    if (this.selectedTimeRange !== 'custom') {
+      this.customDateFrom = '';
+      this.customDateTo = '';
+    }
     this.applyFilters()
   }
 
@@ -314,8 +344,24 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     this.applyFilters()
   }
 
+  clearAllFilters(): void {
+    this.searchTerm = ""
+    this.selectedTimeRange = "24h"
+    this.selectedStatus = "all"
+    this.customDateFrom = ""
+    this.customDateTo = ""
+    this.applyFilters()
+  }
+
+  hasActiveFilters(): boolean {
+    return this.searchTerm !== "" || 
+           this.selectedStatus !== "all" || 
+           this.selectedTimeRange !== "24h" ||
+           (this.customDateFrom !== "" || this.customDateTo !== "");
+  }
+
   // Sorting
-  sort(field: string): void {
+  sort(field: string, dataArray?: LoginAttempt[]): void {
     if (this.sortField === field) {
       this.sortDirection = this.sortDirection === "asc" ? "desc" : "asc"
     } else {
@@ -323,13 +369,24 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       this.sortDirection = "desc"
     }
 
-    this.filteredAttempts.sort((a, b) => {
+    // Determine which array to sort
+    const arrayToSort = dataArray || this.filteredAttempts
+
+    arrayToSort.sort((a, b) => {
       let aValue: any = a[field as keyof LoginAttempt]
       let bValue: any = b[field as keyof LoginAttempt]
 
       if (field === "timestamp") {
         aValue = new Date(aValue).getTime()
         bValue = new Date(bValue).getTime()
+      } else if (field === "timeframe") {
+        // Handle timeframe sorting by converting to minutes for comparison
+        aValue = this.convertTimeframeToMinutes(aValue)
+        bValue = this.convertTimeframeToMinutes(bValue)
+      } else if (field === "attemptCount") {
+        // Ensure numeric comparison for attempt count
+        aValue = Number(aValue) || 0
+        bValue = Number(bValue) || 0
       }
 
       if (aValue < bValue) return this.sortDirection === "asc" ? -1 : 1
@@ -337,7 +394,37 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       return 0
     })
 
-    this.updatePaginatedAttempts()
+    // Only update pagination if we're sorting the main filtered attempts
+    if (!dataArray) {
+      this.updatePaginatedAttempts()
+    }
+  }
+
+  getSortIcon(field: string): string {
+    if (this.sortField !== field) {
+      return 'fa-sort text-gray-400'
+    }
+    return this.sortDirection === 'asc' ? 'fa-sort-up text-blue-600' : 'fa-sort-down text-blue-600'
+  }
+
+  private convertTimeframeToMinutes(timeframe: string): number {
+    if (!timeframe) return 0
+    
+    const match = timeframe.match(/(\d+)\s*(min|hour|day|week|month|year)s?/i)
+    if (!match) return 0
+    
+    const value = parseInt(match[1])
+    const unit = match[2].toLowerCase()
+    
+    switch (unit) {
+      case 'min': return value
+      case 'hour': return value * 60
+      case 'day': return value * 60 * 24
+      case 'week': return value * 60 * 24 * 7
+      case 'month': return value * 60 * 24 * 30
+      case 'year': return value * 60 * 24 * 365
+      default: return 0
+    }
   }
 
   // Pagination

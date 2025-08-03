@@ -8,6 +8,7 @@ import { PermissionConstants } from '../../constants/permission.constants';
 import { DashboardService } from '../../services/dashboard.service';
 import { UserService } from '../../services/user.service';
 import { AdminInboxService } from '../../services/admin-inbox.service';
+import { VipTierService } from '../../services/vip-tier.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -32,6 +33,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   adminCount: number = 0;
   suspiciousLogins: number = 0;
   recentSecurityEvents: number = 0;
+  tiers: any[] = []; // Store VIP tiers for filtering
   sidebarVisible: boolean = window.innerWidth >= 640; // Show sidebar by default on desktop
   sidebarCollapsed: boolean = true; // Start with collapsed sidebar
   currentMenu: string | null = null;
@@ -87,7 +89,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     private adminUserService: AdminUserService,
     private dashboardService: DashboardService,
     private userService: UserService,
-    private adminInboxService: AdminInboxService
+    private adminInboxService: AdminInboxService,
+    private vipTierService: VipTierService
   ) { }
 
   toggleSidebar() {
@@ -114,7 +117,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     this.handleResize();
     this.loadUserInfo();
     this.loadCustomerCount();
-    this.loadVipCount();
+    this.loadTiersAndVipCount();
     document.addEventListener('click', this.handleDocumentClick.bind(this));
     
     // Set up periodic refresh of counts (every 5 minutes)
@@ -217,10 +220,33 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     });
   }
 
+  private loadTiersAndVipCount() {
+    // First load tiers, then load VIP count with filtering
+    this.vipTierService.getAllVipTiers().subscribe({
+      next: (tiers) => {
+        this.tiers = tiers.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+        this.loadVipCount();
+      },
+      error: (error) => {
+        console.error('Failed to load tiers:', error);
+        this.tiers = [];
+        this.loadVipCount();
+      }
+    });
+  }
+
   private loadVipCount() {
     this.userService.getVipCustomers().subscribe({
       next: (customers) => {
-        this.vipCount = customers.length;
+        // Get the lowest tier to exclude from VIP customers
+        const lowestTier = this.tiers.length > 0 ? 
+          this.tiers.reduce((lowest: any, tier: any) => tier.minPoints < lowest.minPoints ? tier : lowest).name : 
+          'Regular';
+
+        // Filter out customers with the lowest tier (Regular customers)
+        this.vipCount = customers.filter((customer: any) => 
+          customer.tier.toLowerCase() !== lowestTier.toLowerCase()
+        ).length;
       },
       error: (error) => {
         console.error('Failed to load VIP count:', error);
@@ -232,7 +258,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   // Method to refresh all counts
   refreshCounts() {
     this.loadCustomerCount();
-    this.loadVipCount();
+    this.loadTiersAndVipCount();
   }
 
   getProfileImageUrl(): string {

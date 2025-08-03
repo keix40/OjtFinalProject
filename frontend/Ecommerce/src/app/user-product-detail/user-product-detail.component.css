@@ -803,3 +803,58 @@ body.modal-open {
   overflow: hidden;
 }
 
+/* Variant Thumbnail Styles */
+.variant-thumb {
+  min-width: 120px;
+  max-width: 150px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.variant-thumb:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.variant-thumb.selected {
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+}
+
+/* Color Swatch Styles */
+.color-swatch {
+  position: relative;
+  transition: all 0.2s ease-in-out;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.color-swatch.selected {
+  box-shadow: 0 0 0 3px #3b82f6, 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Tooltip Styles */
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease-in-out;
+  z-index: 10;
+}
+
+.tooltip.show {
+  opacity: 1;
+}
+

@@ -1,4 +1,5 @@
 import { Component, OnInit, AfterViewInit, ElementRef, HostListener } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ActivityLogService, ActivityLogFilter, ActivityLogResponse, ActivityStatistics } from '../services/activity-log.service';
 import { environment } from '../../environments/environment';
 
@@ -66,6 +67,8 @@ export class ActivityLogsComponent implements OnInit {
   showExportDropdown = false;
   showExportSuccess = false;
   exportSuccessMessage = '';
+  showUserFilterNotification = false;
+  userFilterNotificationMessage = '';
 
   // Pagination
   currentPage = 1;
@@ -112,10 +115,37 @@ export class ActivityLogsComponent implements OnInit {
 
   constructor(
     private activityLogService: ActivityLogService,
-    private elementRef: ElementRef
+    private elementRef: ElementRef,
+    private route: ActivatedRoute,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
+    // Handle query parameters for filtering
+    this.route.queryParams.subscribe(params => {
+      if (params['userId']) {
+        this.filters.userId = params['userId'];
+        console.log('Filtering by user ID:', params['userId']);
+        
+        // Show notification for user filter
+        if (params['userName']) {
+          this.showUserFilterNotification = true;
+          this.userFilterNotificationMessage = `Showing activity logs for ${params['userName']} (${params['userRole'] || 'User'})`;
+          
+          // Auto-hide notification after 5 seconds
+          setTimeout(() => {
+            this.showUserFilterNotification = false;
+          }, 5000);
+        }
+      }
+      if (params['userName']) {
+        console.log('User name from query params:', params['userName']);
+      }
+      if (params['userRole']) {
+        console.log('User role from query params:', params['userRole']);
+      }
+    });
+
     this.loadActivityLogs();
     this.loadStatistics();
     this.setDefaultDateRange();
@@ -438,7 +468,29 @@ export class ActivityLogsComponent implements OnInit {
     };
     this.selectedDateRange = '';
     this.setDefaultDateRange();
+    this.showUserFilterNotification = false;
     this.applyFilters();
+    
+    // Clear query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true
+    });
+  }
+
+  clearUserFilter(): void {
+    this.filters.userId = '';
+    this.showUserFilterNotification = false;
+    this.applyFilters();
+    
+    // Clear user-related query parameters
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { userId: null, userName: null, userRole: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true
+    });
   }
 
   hasActiveFilters(): boolean {

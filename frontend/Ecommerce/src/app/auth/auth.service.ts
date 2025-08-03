@@ -172,6 +172,10 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.baseUrl}/verify-otp`, { email, otp });
   }
 
+  verifyLoginOtp(email: string, otp: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.baseUrl}/verify-login-otp`, { email, otp });
+  }
+
   resendOtp(email: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/resend-otp`, { email });
   }

@@ -1,89 +1,192 @@
-/* Custom styles for register component */
-/* Most styling is now handled by Tailwind CSS classes */
+.body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
 
-/* Custom scrollbar for modals if needed */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+.bold-form {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
 }
 
-/* Ensure proper font loading */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+.form-header h2 {
+  text-align: center;
+  font-size: 22px;
+  color: #0b0217;
+  margin-bottom: 1.5rem;
+}
 
-/* Custom focus styles for better accessibility */
-input:focus {
+.input-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.input-group label {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.input-group input {
+  width: 90%;
+  height: 40px;
+  border: none;
+  border-bottom: 1.5px solid #aaa;
+  padding: 0 35px 0 10px;
+  transition: border-color 0.3s ease;
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #7d2ae8;
+}
+
+.icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #707070;
+  cursor: pointer;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  margin-bottom: 1rem;
+}
+
+.checkbox-group input {
+  margin-right: 8px;
+  accent-color: #7d2ae8;
+}
+
+.btn {
+  background: #7d2ae8;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #5a1fc1;
+}
+
+.form-footer {
+  text-align: center;
+  font-size: 12px;
+  margin-top: 1rem;
+}
+
+.input-group {
+  margin-bottom: 15px;
+  position: relative;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.styled-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23666" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+}
+
+.styled-select:focus {
+  border-color: #007bff;
   outline: none;
 }
 
-/* Smooth transitions for all interactive elements */
-* {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
 }
 
-/* Custom animation for form elements */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.modal-content {
+  background-color: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
-/* Apply animation to the main form container */
-.min-h-screen > div > div {
-  animation: fadeInUp 0.6s ease-out;
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+  color: #333;
 }
 
-/* Ensure proper backdrop blur support */
-@supports (backdrop-filter: blur(10px)) {
-  .backdrop-blur-xl {
-    backdrop-filter: blur(24px);
-  }
+
+.modal-content input[type="text"],
+.modal-content input[type="number"],
+.modal-content input[type="email"] {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
 }
 
-/* Fallback for browsers that don't support backdrop-filter */
-@supports not (backdrop-filter: blur(10px)) {
-  .backdrop-blur-xl {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
-}
 
-/* Custom file input styling */
-input[type="file"]::-webkit-file-upload-button {
-  background: rgba(255, 255, 255, 0.25);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 9999px;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: rgb(15, 23, 42);
+.modal-content button {
+  padding: 8px 16px;
+  margin-right: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
-  transition: all 0.3s;
+  font-size: 1rem;
+  transition: background-color 0.3s ease;
 }
 
-input[type="file"]::-webkit-file-upload-button:hover {
-  background: rgba(255, 255, 255, 0.35);
-  border-color: rgba(255, 255, 255, 0.5);
+.modal-content button:hover {
+  background-color: #0056b3;
 }
 
-/* Custom radio and checkbox styling */
-input[type="radio"],
-input[type="checkbox"] {
-  accent-color: rgb(15, 23, 42);
+
+.error {
+  color: #cc0000;
+  margin-top: 10px;
 }
 
-/* Responsive grid adjustments */
-@media (max-width: 768px) {
-  .grid-cols-1.md\:grid-cols-2 {
-    grid-template-columns: 1fr;
-  }
+.success {
+  color: #007700;
+  margin-top: 10px;
 }

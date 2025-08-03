@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.controller;
 
 import com.Ojt.Ecommerce.dto.NotificationRequestDTO;
+import com.Ojt.Ecommerce.dto.NotificationDTO;
 import com.Ojt.Ecommerce.entity.Notification;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.repository.NotificationRepository;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api/notifications")
@@ -35,8 +37,9 @@ public class NotificationController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping
-    public List<Notification> getUserNotifications(@AuthenticationPrincipal UserDetails user) {
-        return notificationService.getUserOnlyNotifications(user.getUsername());
+    public List<NotificationDTO> getUserNotifications(@AuthenticationPrincipal UserDetails user) {
+        List<Notification> notifications = notificationService.getCustomerNotificationsByEmail(user.getUsername());
+        return notifications.stream().map(NotificationDTO::new).collect(Collectors.toList());
     }
 
     /**
@@ -44,10 +47,11 @@ public class NotificationController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/user-only")
-    public ResponseEntity<List<Notification>> getUserOnlyNotifications(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<List<NotificationDTO>> getUserOnlyNotifications(@AuthenticationPrincipal UserDetails user) {
         try {
-            List<Notification> notifications = notificationService.getUserOnlyNotifications(user.getUsername());
-            return ResponseEntity.ok(notifications);
+            List<Notification> notifications = notificationService.getCustomerNotificationsByEmail(user.getUsername());
+            List<NotificationDTO> dtos = notifications.stream().map(NotificationDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ArrayList<>());
         }
@@ -193,10 +197,24 @@ public class NotificationController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/current-user")
-    public ResponseEntity<List<Notification>> getCurrentUserNotifications(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<NotificationDTO>> getCurrentUserNotifications(@AuthenticationPrincipal UserDetails userDetails) {
         try {
-            List<Notification> notifications = notificationService.getCurrentUserNotifications(userDetails.getUsername());
-            return ResponseEntity.ok(notifications);
+            User user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+            
+            String roleName = user.getRole().getName();
+            String userEmail = userDetails.getUsername();
+            
+            // For customer role, pass the email to get user-specific notifications
+            List<Notification> notifications;
+            if ("CUSTOMER".equalsIgnoreCase(roleName)) {
+                notifications = notificationService.getNotificationsByRole(roleName, userEmail);
+            } else {
+                notifications = notificationService.getNotificationsByRole(roleName);
+            }
+            
+            List<NotificationDTO> dtos = notifications.stream().map(NotificationDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ArrayList<>());
         }
@@ -207,10 +225,11 @@ public class NotificationController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/role-permissions/{roleName}")
-    public ResponseEntity<List<Notification>> getNotificationsByRolePermissions(@PathVariable String roleName) {
+    public ResponseEntity<List<NotificationDTO>> getNotificationsByRolePermissions(@PathVariable String roleName) {
         try {
-            List<Notification> notifications = notificationService.getNotificationsByRolePermissions(roleName);
-            return ResponseEntity.ok(notifications);
+            List<Notification> notifications = notificationService.getNotificationsByRole(roleName);
+            List<NotificationDTO> dtos = notifications.stream().map(NotificationDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ArrayList<>());
         }
@@ -221,14 +240,15 @@ public class NotificationController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/current-user/role-specific")
-    public ResponseEntity<List<Notification>> getCurrentUserRoleSpecificNotifications(@AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<List<NotificationDTO>> getCurrentUserRoleSpecificNotifications(@AuthenticationPrincipal UserDetails userDetails) {
         try {
             User user = userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new RuntimeException("User not found"));
             
             String roleName = user.getRole().getName();
-            List<Notification> notifications = notificationService.getNotificationsByRolePermissions(roleName);
-            return ResponseEntity.ok(notifications);
+            List<Notification> notifications = notificationService.getNotificationsByRole(roleName);
+            List<NotificationDTO> dtos = notifications.stream().map(NotificationDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ArrayList<>());
         }
@@ -239,7 +259,7 @@ public class NotificationController {
      */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/current-user/category/{category}")
-    public ResponseEntity<List<Notification>> getCurrentUserCategoryNotifications(
+    public ResponseEntity<List<NotificationDTO>> getCurrentUserCategoryNotifications(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable String category) {
         try {
@@ -248,7 +268,8 @@ public class NotificationController {
             
             String roleName = user.getRole().getName();
             List<Notification> notifications = notificationService.getNotificationsByRoleAndCategory(roleName, category);
-            return ResponseEntity.ok(notifications);
+            List<NotificationDTO> dtos = notifications.stream().map(NotificationDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ArrayList<>());
         }
@@ -258,40 +279,13 @@ public class NotificationController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/admin-only")
-    public ResponseEntity<List<Notification>> getAdminOnlyNotifications() {
+    public ResponseEntity<List<NotificationDTO>> getAdminOnlyNotifications() {
         try {
-            List<Notification> notifications = notificationService.getAdminOnlyNotifications();
-            return ResponseEntity.ok(notifications);
+            List<Notification> notifications = notificationService.getAdminNotifications();
+            List<NotificationDTO> dtos = notifications.stream().map(NotificationDTO::new).collect(Collectors.toList());
+            return ResponseEntity.ok(dtos);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(new ArrayList<>());
         }
     }
-
-    /**
-     * Create sample notifications for testing
-     */
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/test/create-sample")
-    public ResponseEntity<?> createSampleNotifications() {
-        try {
-            // Create sample notifications for different roles
-            notificationService.sendNotificationToCurrentUserIfAdminOrManager(
-                "admin@example.com", // Replace with actual admin email
-                "Test order notification", 
-                "order_created", 
-                "/admin/orders/123"
-            );
-            
-            notificationService.sendNotificationToAdminOnly(
-                "Test admin notification", 
-                "admin_only", 
-                "/admin/dashboard"
-            );
-            
-            return ResponseEntity.ok(Map.of("message", "Sample notifications created successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
-        }
-    }
-
 }

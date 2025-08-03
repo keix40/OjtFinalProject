@@ -74,10 +74,17 @@
             </div>
             <span class="text-sm text-gray-500">({{ totalReviews }} reviews)</span>
           </div>
-          <div class="flex items-center space-x-3 mb-4">
-            <span *ngIf="getFinalDiscountedPrice() !== (selectedVariant?.price || product.price)" class="text-lg text-gray-400 line-through">{{ formatPriceOnly(selectedVariant?.price || product.price) }} <span class="text-sm font-normal">MMK</span></span>
-            <span class="text-2xl font-bold text-blue-700">{{ formatPriceOnly(getFinalDiscountedPrice()) }} <span class="text-sm font-normal">MMK</span></span>
-            <span *ngIf="product?.hasDiscount && !isFirstTimeBuyerDiscount" class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-bold ml-2">{{ getDiscountDisplayText() }}</span>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <span *ngIf="getFinalDiscountedPrice() !== (selectedVariant?.price || product.price)" class="text-lg text-gray-400 line-through">{{ selectedVariant?.price || product.price }} MMK</span>
+              <span class="text-2xl font-bold text-blue-700">{{ getFinalDiscountedPrice() }} MMK</span>
+              <span *ngIf="product?.hasDiscount && !isFirstTimeBuyerDiscount" class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-bold ml-2">{{ getDiscountDisplayText() }}</span>
+            </div>
+            <!-- VIP Discount Badge (Right Side) -->
+            <div *ngIf="getVipDiscountDisplay()" 
+                 class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+              {{ getVipDiscountDisplay() }}
+            </div>
           </div>
           <!-- <div class="text-gray-700 mb-4">{{ product.description }}</div> -->
           <div class="flex items-center space-x-4 mb-4">
@@ -94,16 +101,21 @@
                 <ng-container *ngIf="isColorAttribute(attrName); else regularOptions">
                   <button
                     *ngFor="let value of attributeValuesMap[attrName]"
-                    class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all"
+                    class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all relative group"
                     [class.border-blue-500]="selectedAttributes[attrName] === value"
                     [class.border-gray-300]="selectedAttributes[attrName] !== value"
                     [class.opacity-50]="isAttributeValueDisabled(attrName, value)"
                     [class.grayscale]="isAttributeValueDisabled(attrName, value)"
                     [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
                     (click)="toggleAttribute(attrName, value)"
-                    [disabled]="isAttributeValueDisabled(attrName, value)">
-                    <span class="w-8 h-8 rounded-full" [ngStyle]="{'background-color': value.toLowerCase()}"></span>
-                    <span class="sr-only">{{ value }}</span>
+                    [disabled]="isAttributeValueDisabled(attrName, value)"
+                    [title]="getColorDisplayName(value)">
+                    <span class="w-8 h-8 rounded-full" [ngStyle]="{'background-color': getColorHex(value)}"></span>
+                    <span class="sr-only">{{ getColorDisplayName(value) }}</span>
+                    <!-- Tooltip -->
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                      {{ getColorDisplayName(value) }}
+                    </div>
                   </button>
                 </ng-container>
                 <ng-template #regularOptions>
@@ -517,15 +529,15 @@
                 <div class="flex flex-col space-y-1">
                   <div *ngIf="getRelatedProductDiscountedPrice(product) !== product.price; else originalPrice" class="space-y-1">
                     <span class="text-base sm:text-lg font-bold text-red-600">
-                      {{ formatPriceOnly(getRelatedProductDiscountedPrice(product)) }} <span class="text-xs font-normal">MMK</span>
+                      {{ getRelatedProductDiscountedPrice(product) }} <span class="text-xs font-normal">MMK</span>
                     </span>
                     <span class="text-xs sm:text-sm text-gray-400 line-through">
-                      {{ formatPriceOnly(product.price) }} <span class="text-xs font-normal">MMK</span>
+                      {{ product.price }} <span class="text-xs font-normal">MMK</span>
                     </span>
                   </div>
                   <ng-template #originalPrice>
                     <span class="text-base sm:text-lg font-bold text-gray-900">
-                      {{ formatPriceOnly(product.price) }} <span class="text-xs font-normal">MMK</span>
+                      {{ product.price }} <span class="text-xs font-normal">MMK</span>
                     </span>
                   </ng-template>
                 </div>
@@ -543,11 +555,6 @@
           </div>
           <h3 class="text-lg font-semibold text-gray-900 mb-2">No related products found</h3>
           <p class="text-sm text-gray-600">We couldn't find any products related to this item.</p>
-          <button 
-            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            (click)="debugRelatedProducts()">
-            Debug Related Products
-          </button>
         </div>
       </div>
     </div>

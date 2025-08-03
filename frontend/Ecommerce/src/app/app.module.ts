@@ -64,7 +64,6 @@ import { QuillModule } from 'ngx-quill';
 import { NotificationComponent } from './notification/notification.component';
 import { HeaderComponent } from './header/header.component';
 import { BreadcrumbComponent } from './breadcrumb.component';
-
 import { BrandListComponent } from './brand-list/brand-list.component';
 import { BannedPageComponent } from './banned-page.component';
 import { NotifcationService } from './notifcation.service';
@@ -90,6 +89,16 @@ import { FooterComponent } from './footer/footer.component';
 import { VipTiersAdminComponent } from './vip-customers/vip-tiers-admin.component';
 import { UserCouponListComponent } from './user-profile/user-coupon-list/user-coupon-list.component';
 import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
+import { HomeComponent } from './home/home.component';
+import { CategoryListComponent } from './category-list/category-list.component';
+import { CategoryUpdateComponent } from './category-update/category-update.component';
+import { CategoryAddSubcategoryComponent } from './category-add-subcategory/category-add-subcategory.component';
+import { BrandUpdateComponent } from './brand-update/brand-update.component';
+import { CreateAttributeValueComponent } from './create-attribute-value/create-attribute-value.component';
+import { ConfirmModelComponent } from './confirm-model/confirm-model.component';
+import { ReturnDetailComponent } from './return-detail/return-detail.component';
+import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
+import { UserProductListComponent } from './user-product-list/user-product-list';
 
 
 @NgModule({
@@ -97,7 +106,6 @@ import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
     AppComponent,
     LoginComponent,
     RegisterComponent,
-    CreateDeliveryServiceComponent,
     UserOrdersComponent,
     UserWishlistComponent,
     UserPaymentMethodsComponent,
@@ -133,7 +141,6 @@ import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
     ReturnRequestComponent,
     ReturnListComponent,
     BrandListComponent,
-    DeliveryServiceListComponent,
     OrderInvoiceComponent,
     AdminPolicyComponent,
     AdminPolicyEditComponent, 
@@ -141,11 +148,11 @@ import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
     DiscountAdminComponent,
     AdminProfileComponent,
     UserProfileComponent, 
-    CreateDeliveryServiceComponent,
-    DeliveryServiceListComponent,
     UserCouponListComponent,
     AdminInboxComponent,
-
+    CreateDeliveryServiceComponent,
+    DeliveryServiceListComponent,
+    ConfirmModelComponent
   ],
   imports: [
     BrowserModule,
@@ -168,6 +175,15 @@ import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
     // Quill Editor
     QuillModule.forRoot(),
     // Standalone components
+    UserProductListComponent,
+    HomeComponent,
+    CategoryListComponent,
+    CategoryUpdateComponent,
+    CategoryAddSubcategoryComponent,
+    BrandUpdateComponent,
+    CreateAttributeValueComponent,
+    ReturnDetailComponent,
+    RevenueTargetAdminComponent,
     CartSidebarComponent,
     ProductDetailComponent,
     VerifyOtpComponent,
@@ -184,6 +200,8 @@ import { AdminInboxComponent } from './admin-inbox/admin-inbox.component';
     WishlistComponent,
     UserBrandListComponent,
     UserPolicyComponent,
+    VipTiersAdminComponent,
+    BlacklistComponent,
     ToastrModule.forRoot({
       timeOut: 3000,
       positionClass: 'toast-top-right',

@@ -790,9 +790,13 @@
           <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" (click)="closeEditModal()">
             <i data-lucide="x" class="w-4 h-4 inline-block mr-1"></i>Cancel
           </button>
-          <button class="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors flex items-center" (click)="addToBlacklist()">
-            <i data-lucide="ban" class="w-4 h-4 inline-block mr-1"></i>
-            <span>{{ isEditMode ? 'Update Entry' : 'Add to Blacklist' }}</span>
+          <button 
+            class="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed" 
+            (click)="addToBlacklist()"
+            [disabled]="loading || !blacklistForm.valid">
+            <i data-lucide="loader-2" class="w-4 h-4 inline-block mr-1 animate-spin" *ngIf="loading"></i>
+            <i data-lucide="ban" class="w-4 h-4 inline-block mr-1" *ngIf="!loading"></i>
+            <span>{{ loading ? 'Processing...' : (isEditMode ? 'Update Entry' : 'Add to Blacklist') }}</span>
           </button>
         </div>
       </div>

@@ -287,7 +287,7 @@
               Apply
             </button>
                 </div>
-                <div *ngIf="hasProductDiscount()" class="text-xs text-red-500 mt-1">
+                <div *ngIf="hasProductDiscount() || isFirstTimeBuyerDiscount" class="text-xs text-red-500 mt-1">
               Promo code cannot be used with product discounts.
             </div>
           

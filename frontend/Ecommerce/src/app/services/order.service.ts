@@ -33,7 +33,7 @@ export class OrderService {
   }
 
   updateOrderStatus(orderId: number, status: string): Observable<any>{
-    return this.http.put(`${this.baseUrl}/updatestatus/${orderId}`, { status }, { responseType: 'text' });
+    return this.http.put(`${this.baseUrl}/updatestatus/${orderId}`, { status });
   }
 
   getOrderById(orderId: number): Observable<UserOrderListDTO> {

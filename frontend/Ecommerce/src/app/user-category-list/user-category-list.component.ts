@@ -4,13 +4,14 @@ import { Category } from '../category';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
+import { BreadcrumbComponent } from '../breadcrumb.component';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-user-category-list',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, HeaderComponent, FooterComponent, BreadcrumbComponent],
   templateUrl: './user-category-list.component.html',
   styleUrls: ['./user-category-list.component.css']
 })
@@ -18,6 +19,11 @@ export class UserCategoryListComponent implements OnInit {
   categories: Category[] = [];
   loading = false;
   error = '';
+
+  breadcrumbItems: { label: string, link?: string }[] = [
+    { label: 'Home', link: '/home' },
+    { label: 'Category' }
+  ];
 
   constructor(private categoryService: CategoryService, private router: Router, private sanitizer: DomSanitizer) {}
 

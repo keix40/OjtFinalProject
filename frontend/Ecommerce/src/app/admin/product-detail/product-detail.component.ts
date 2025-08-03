@@ -3,13 +3,13 @@ import { Component, OnInit, ViewChild, HostListener, AfterViewInit, ElementRef, 
 import { ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../services/product.service';
 import { CommonModule } from '@angular/common';
-import { NgbCarouselModule, NgbModal, NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCarouselModule, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { ReviewService } from '../../services/review.service';
 import { PermissionService } from '../../services/permission.service';
 import { PermissionConstants } from '../../constants/permission.constants';
+import { ColorUtilityService } from '../../services/color-utility.service';
 import { animate, style, transition, trigger } from '@angular/animations';
-import { PriceFormatService } from '../../services/price-format.service';
 
 interface ProductImage {
   id: number;
@@ -51,7 +51,7 @@ interface Product {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, NgbCarouselModule, NgbModalModule],
+  imports: [CommonModule, NgbCarouselModule],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.css']
 })
@@ -69,11 +69,10 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   totalReviews: number = 0;
   ratingBreakdown: { [key: number]: number } = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   @ViewChild('imagePreviewModal') imagePreviewModalTemplate: any;
-  @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate: any;
+  @ViewChild('mediaPreviewModal') mediaPreviewModalTemplate!: ElementRef;
   isModalOpen = false;
   public PermissionConstants = PermissionConstants;
-  public permissionService: PermissionService;
-  mediaModalRef: any;
+  public permissionService: PermissionService;  mediaModalRef: any;
   mediaModalCurrentReview: any;
   mediaModalCurrentType: 'image' | 'video' = 'image';
   mediaModalCurrentIndex: number = 0;
@@ -92,7 +91,7 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     private reviewService: ReviewService,
     private cdr: ChangeDetectorRef,
     permissionService: PermissionService,
-    private priceFormatService: PriceFormatService
+    private colorUtilityService: ColorUtilityService
   ) {
     this.permissionService = permissionService;
   }
@@ -130,13 +129,6 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
 
   objectKeys(obj: any): string[] {
     return Object.keys(obj);
-  }
-
-  // Add color attribute detection method
-  isColorAttribute(attrName: string): boolean {
-    if (!attrName) return false;
-    const name = attrName.toLowerCase().trim();
-    return ['color', 'colors', 'colour', 'colours'].includes(name);
   }
 
   loadProductDetails(productId: string): void {
@@ -309,6 +301,27 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     return Array.from(values);
   }
 
+  /**
+   * Check if an attribute name represents a color
+   */
+  isColorAttribute(attrName: string): boolean {
+    return this.colorUtilityService.isColorAttribute(attrName);
+  }
+
+  /**
+   * Get hex color code for a color name
+   */
+  getColorHex(colorName: string): string {
+    return this.colorUtilityService.getColorHex(colorName);
+  }
+
+  /**
+   * Get display name for a color
+   */
+  getColorDisplayName(colorName: string): string {
+    return this.colorUtilityService.getColorDisplayName(colorName);
+  }
+
   toggleAttribute(attrName: string, value: string): void {
     const attrNames = Object.keys(this.attributeValuesMap);
     const attrIndex = attrNames.indexOf(attrName);
@@ -415,14 +428,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   }
 
   getAllMedia(review: any): { type: 'image' | 'video', url: string }[] {
-    const images = (review.imageUrls || []).map((url: string) => ({ 
-      type: 'image' as const, 
-      url: url.startsWith('http') ? url : `http://localhost:8080${url}` 
-    }));
-    const videos = (review.videoUrls || []).map((url: string) => ({ 
-      type: 'video' as const, 
-      url: url.startsWith('http') ? url : `http://localhost:8080${url}` 
-    }));
+    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
+    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
     return [...images, ...videos];
   }
 
@@ -449,84 +456,30 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   }
 
   openMediaModal(review: any, type: 'image' | 'video', index: number) {
-    console.log('=== OPENING MEDIA MODAL ===');
-    console.log('Review:', review);
-    console.log('Type:', type);
-    console.log('Index:', index);
-    
-    // Validate input
-    if (!review) {
-      console.error('No review provided to openMediaModal');
-      return;
-    }
-    
     this.mediaModalCurrentReview = review;
     this.mediaModalCurrentType = type;
     this.mediaModalCurrentIndex = index;
-    
-    console.log('Set current review:', this.mediaModalCurrentReview);
-    console.log('Set current type:', this.mediaModalCurrentType);
-    console.log('Set current index:', this.mediaModalCurrentIndex);
-    
-    // Update the URL immediately
     this.updateMediaModalTypeAndUrl();
-    
-    // Close existing modal if open
     if (this.mediaModalRef) {
-      console.log('Closing existing modal');
       this.mediaModalRef.close();
     }
-    
     // Ensure DOM is updated before opening modal
     this.cdr.detectChanges();
-    
-    // Check if template is available
-    console.log('Template available:', !!this.mediaPreviewModalTemplate);
-    if (!this.mediaPreviewModalTemplate) {
-      console.error('Media preview modal template not found!');
-      // Fallback: open in new tab
-      if (this.mediaModalCurrentUrl) {
-        window.open(this.mediaModalCurrentUrl, '_blank');
-      }
-      return;
-    }
-    
-    // Open modal with proper configuration
     setTimeout(() => {
-      try {
-        console.log('Attempting to open modal...');
-        this.mediaModalRef = this.modalService.open(this.mediaPreviewModalTemplate, {
-          centered: true,
-          backdrop: 'static',
-          keyboard: true,
-          windowClass: 'media-preview-modal',
-          scrollable: false,
-          size: 'lg',
-          beforeDismiss: () => {
-            console.log('Modal is being dismissed');
-            return true;
-          }
-        });
-        
-        console.log('Modal opened successfully:', this.mediaModalRef);
-        
-        // Handle modal result
-        this.mediaModalRef.result.finally(() => {
-          console.log('Modal closed');
-          this.mediaModalRef = null;
-          this.mediaModalCurrentReview = null;
-          this.mediaModalCurrentIndex = 0;
-          this.mediaModalCurrentUrl = '';
-          this.mediaModalCurrentType = 'image';
-        });
-      } catch (error) {
-        console.error('Error opening modal:', error);
-        // Fallback: open in new tab
-        if (this.mediaModalCurrentUrl) {
-          window.open(this.mediaModalCurrentUrl, '_blank');
-        }
-      }
-    }, 100);
+      this.mediaModalRef = this.modalService.open(this.mediaPreviewModalTemplate, {
+        centered: true,
+        backdrop: 'static',
+        keyboard: true,
+        windowClass: 'media-preview-modal',
+        scrollable: false
+      });
+      this.mediaModalRef.result.finally(() => {
+        this.mediaModalRef = null;
+        this.mediaModalCurrentReview = null;
+        this.mediaModalCurrentIndex = 0;
+        this.mediaModalCurrentUrl = '';
+      });
+    }, 0);
   }
 
   closeMediaModal() {
@@ -537,37 +490,17 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
 
   getMediaModalArray(): { type: 'image' | 'video', url: string }[] {
     if (!this.mediaModalCurrentReview) return [];
-    
-    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ 
-      type: 'image' as const, 
-      url: url.startsWith('http') ? url : `http://localhost:8080${url}` 
-    }));
-    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ 
-      type: 'video' as const, 
-      url: url.startsWith('http') ? url : `http://localhost:8080${url}` 
-    }));
-    
+    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
+    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
     return [...images, ...videos];
   }
   
   updateMediaModalTypeAndUrl() {
     const arr = this.getMediaModalArray();
-    console.log('Media array:', arr);
-    console.log('Current index:', this.mediaModalCurrentIndex);
-    
     if (arr[this.mediaModalCurrentIndex]) {
       this.mediaModalCurrentType = arr[this.mediaModalCurrentIndex].type;
       this.mediaModalCurrentUrl = arr[this.mediaModalCurrentIndex].url;
-      console.log('Updated modal URL:', this.mediaModalCurrentUrl, 'Type:', this.mediaModalCurrentType);
-    } else {
-      console.warn('No media found at index:', this.mediaModalCurrentIndex, 'Array length:', arr.length);
-      // Set default values
-      this.mediaModalCurrentUrl = '';
-      this.mediaModalCurrentType = 'image';
     }
-    
-    // Force change detection
-    this.cdr.detectChanges();
   }
   
   get mediaModalCanGoLeft(): boolean {
@@ -586,33 +519,12 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     if (!this.mediaModalCanGoLeft) return;
     this.mediaModalCurrentIndex--;
     this.updateMediaModalTypeAndUrl();
-    this.cdr.detectChanges();
   }
   
   mediaModalNext() {
     if (!this.mediaModalCanGoRight) return;
     this.mediaModalCurrentIndex++;
     this.updateMediaModalTypeAndUrl();
-    this.cdr.detectChanges();
-  }
-
-  // Add methods to handle console logging from template
-  logError(message: string, data?: any) {
-    console.error(message, data);
-  }
-
-  logInfo(message: string, data?: any) {
-    console.log(message, data);
-  }
-
-  // Test method for modal functionality
-  testModal() {
-    console.log('Test modal button clicked');
-    const testReview = {
-      imageUrls: ['/uploads/test-image.jpg'],
-      videoUrls: []
-    };
-    this.openMediaModal(testReview, 'image', 0);
   }
 
   toggleDropdown(reviewId: number): void {
@@ -647,23 +559,6 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
       const productId = this.route.snapshot.paramMap.get('id');
       this.router.navigate(['/product-edit', productId]);
     }
-  }
-
-  // Price formatting methods
-  formatPrice(price: number, currency: string = 'MMK'): string {
-    return this.priceFormatService.formatPrice(price, currency);
-  }
-
-  formatPriceOnly(price: number): string {
-    return this.priceFormatService.formatPriceOnly(price);
-  }
-
-  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
-    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
-  }
-
-  formatDiscountText(discountValue: number, discountType: string): string {
-    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }
 
