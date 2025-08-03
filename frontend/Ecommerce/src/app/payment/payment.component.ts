@@ -13,6 +13,7 @@ import { ProductDTO } from '../product';
 import { ImageService } from '../services/image.service';
 import { CardService } from '../services/card.service';
 import Swal from 'sweetalert2';
+import { PriceFormatService } from '../services/price-format.service';
 
 interface Card {
   id: number;
@@ -80,7 +81,8 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
     private discountService: DiscountService,
     private productService: ProductService,
     public imageService: ImageService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private priceFormatService: PriceFormatService
   ) {
     this.cardForm = this.fb.group({
       cardNumber: ['', [
@@ -672,5 +674,22 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
       this.appliedCouponName = '';
       console.log('Coupon cleared successfully');
     }
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

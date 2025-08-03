@@ -84,10 +84,10 @@
                     </ng-template>
                   </ng-container>
                 </div>
-                <p class="text-xs text-gray-500">Qty: {{item.quantity}} × {{item.price | number:'1.0-0'}} MMK</p>
+                <p class="text-xs text-gray-500">Qty: {{item.quantity}} × {{formatPriceOnly(item.price)}} MMK</p>
               </div>
               <div class="text-right">
-                <p class="text-sm font-medium text-gray-900">{{(item.price * item.quantity) | number:'1.0-0'}} MMK</p>
+                <p class="text-sm font-medium text-gray-900">{{formatPriceOnly(item.price * item.quantity)}} MMK</p>
               </div>
             </div>
           </div>
@@ -98,15 +98,15 @@
           <div class="space-y-2">
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Subtotal</span>
-              <span class="font-medium text-gray-900">{{ getSubtotal() | number:'1.0-0' }} MMK</span>
+              <span class="font-medium text-gray-900">{{ formatPriceOnly(getSubtotal()) }} MMK</span>
             </div>
             <div class="flex justify-between items-center">
               <span class="text-gray-600">Shipping</span>
-              <span class="font-medium text-gray-900">{{ getDeliveryCost() | number:'1.0-0' }} MMK</span>
+              <span class="font-medium text-gray-900">{{ formatPriceOnly(getDeliveryCost()) }} MMK</span>
             </div>
             <div *ngIf="orderDetails?.discountAmount > 0" class="flex justify-between items-center">
               <span class="text-gray-600">Discount</span>
-              <span class="font-medium text-green-600">-{{ orderDetails.discountAmount | number:'1.0-0' }} MMK</span>
+              <span class="font-medium text-green-600">-{{ formatPriceOnly(orderDetails.discountAmount) }} MMK</span>
             </div>
           </div>
           
@@ -114,7 +114,7 @@
           <div class="border-t border-gray-200 pt-3 mt-3">
             <div class="flex justify-between items-center">
               <span class="text-lg font-bold text-gray-900">Total</span>
-              <span class="text-xl font-bold text-blue-600">{{ getTotal() | number:'1.0-0' }} MMK</span>
+              <span class="text-xl font-bold text-blue-600">{{ formatPriceOnly(getTotal()) }} MMK</span>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { CartService } from '../services/cart.service';
 import { ImageService } from '../services/image.service';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-order-confirm',
@@ -17,7 +18,8 @@ export class OrderConfirmComponent implements OnInit {
     public activeModal: NgbActiveModal,
     private router: Router,
     private cartService: CartService,
-    public imageService: ImageService
+    public imageService: ImageService,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit() {
@@ -51,5 +53,22 @@ export class OrderConfirmComponent implements OnInit {
   closeAndNavigate() {
     this.activeModal.close();
     this.router.navigate(['/userproductlist']);
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

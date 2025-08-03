@@ -67,4 +67,20 @@ export class BrandService {
     return this.http.get<BrandDTO>(`${this.baseUrl}/getbrandbyid/${id}`);
   }
   
+  // Export methods using Jasper Reports
+  exportBrandReportToPDF(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/brand-reports/pdf`, { responseType: 'blob' });
+  }
+
+  exportSelectedBrandsToPDF(brandIds: number[]): Observable<Blob> {
+    return this.http.post(`http://localhost:8080/api/brand-reports/pdf/selected`, brandIds, { responseType: 'blob' });
+  }
+
+  exportBrandReportToCSV(): Observable<Blob> {
+    return this.http.get(`http://localhost:8080/api/brand-reports/csv`, { responseType: 'blob' });
+  }
+
+  exportSelectedBrandsToCSV(brandIds: number[]): Observable<Blob> {
+    return this.http.post(`http://localhost:8080/api/brand-reports/csv/selected`, brandIds, { responseType: 'blob' });
+  }
 }

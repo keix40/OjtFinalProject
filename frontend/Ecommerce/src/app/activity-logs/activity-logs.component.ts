@@ -42,7 +42,7 @@ export interface ActivityLog {
   standalone: false,
   styleUrls: ['./activity-logs.component.css']
 })
-export class ActivityLogsComponent implements OnInit, AfterViewInit {
+export class ActivityLogsComponent implements OnInit {
   // Data properties
   allLogs: ActivityLog[] = [];
   filteredLogs: ActivityLog[] = [];
@@ -157,25 +157,25 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
     }, 30000);
   }
 
-  ngAfterViewInit(): void {
-    this.initializeIcons();
-  }
+  // ngAfterViewInit(): void {
+  //   this.initializeIcons();
+  // }
 
-  private initializeIcons(): void {
-    if (typeof window !== 'undefined' && (window as any).lucide) {
-      (window as any).lucide.createIcons();
-    } else if (typeof lucide !== 'undefined') {
-      lucide.createIcons();
-    }
+  // private initializeIcons(): void {
+  //   if (typeof window !== 'undefined' && (window as any).lucide) {
+  //     (window as any).lucide.createIcons();
+  //   } else if (typeof lucide !== 'undefined') {
+  //     lucide.createIcons();
+  //   }
     
-    setTimeout(() => {
-      if (typeof window !== 'undefined' && (window as any).lucide) {
-        (window as any).lucide.createIcons();
-      } else if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
-    }, 100);
-  }
+  //   setTimeout(() => {
+  //     if (typeof window !== 'undefined' && (window as any).lucide) {
+  //       (window as any).lucide.createIcons();
+  //     } else if (typeof lucide !== 'undefined') {
+  //       lucide.createIcons();
+  //     }
+  //   }, 100);
+  // }
 
   loadActivityLogs(): void {
     this.isLoading = true;
@@ -236,9 +236,9 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
         
         this.isLoading = false;
         
-      setTimeout(() => {
-        this.initializeIcons();
-      }, 100);
+      // setTimeout(() => {
+      //   this.initializeIcons();
+      // }, 100);
       },
       error: (error) => {
         console.error('Error loading activity logs:', error);
@@ -427,9 +427,9 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
     
     this.isLoading = false;
     
-    setTimeout(() => {
-      this.initializeIcons();
-    }, 50);
+    // setTimeout(() => {
+    //   this.initializeIcons();
+    // }, 50);
   }
 
   private updatePaginatedLogs(): void {
@@ -533,16 +533,16 @@ export class ActivityLogsComponent implements OnInit, AfterViewInit {
   // View methods
   setViewMode(mode: 'detailed' | 'compact'): void {
     this.viewMode = mode;
-    setTimeout(() => {
-      this.initializeIcons();
-    }, 50);
+    // setTimeout(() => {
+    //   this.initializeIcons();
+    // }, 50);
   }
 
   viewLogDetails(log: ActivityLog): void {
     this.selectedLog = log;
-    setTimeout(() => {
-      this.initializeIcons();
-    }, 100);
+    // setTimeout(() => {
+    //   this.initializeIcons();
+    // }, 100);
   }
 
   toggleExportDropdown(): void {
@@ -878,9 +878,9 @@ IP Address: ${log.ipAddress}
     setTimeout(() => {
       this.loadActivityLogs();
       this.loadStatistics();
-      setTimeout(() => {
-        this.initializeIcons();
-      }, 100);
+      // setTimeout(() => {
+      //   this.initializeIcons();
+      // }, 100);
     }, 500);
   }
 

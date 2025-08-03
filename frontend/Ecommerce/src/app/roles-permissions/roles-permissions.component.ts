@@ -73,7 +73,7 @@ interface User {
     ]),
   ]
 })
-export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterViewChecked {
+export class RolesPermissionsComponent implements OnInit{
   public PermissionConstants = PermissionConstants;
   // Data properties
   allRoles: Role[] = [];
@@ -204,17 +204,17 @@ export class RolesPermissionsComponent implements OnInit, AfterViewInit, AfterVi
     }
   }
 
-  ngAfterViewInit(): void {
-    if ((window as any)['lucide']) {
-      (window as any)['lucide'].createIcons();
-    }
-  }
+  // ngAfterViewInit(): void {
+  //   if ((window as any)['lucide']) {
+  //     (window as any)['lucide'].createIcons();
+  //   }
+  // }
 
-  ngAfterViewChecked(): void {
-    if ((window as any)['lucide']) {
-      (window as any)['lucide'].createIcons();
-    }
-  }
+  // ngAfterViewChecked(): void {
+  //   if ((window as any)['lucide']) {
+  //     (window as any)['lucide'].createIcons();
+  //   }
+  // }
 
   loadPermissionCategories(): void {
     this.permissionCategoryService.getPermissionCategories().subscribe({

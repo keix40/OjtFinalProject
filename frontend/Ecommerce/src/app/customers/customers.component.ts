@@ -6,6 +6,7 @@ import jsPDF from 'jspdf'; // For PDF export
 import autoTable from 'jspdf-autotable'; // For PDF table export
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { PriceFormatService } from '../services/price-format.service';
 
 interface Customer {
   id: string;
@@ -34,7 +35,7 @@ interface Address {
   templateUrl: './customers.component.html',
   styleUrls: ['./customers.component.css']
 })
-export class CustomersComponent implements OnInit, AfterViewChecked {
+export class CustomersComponent implements OnInit {
   // Data properties
   customers: Customer[] = [];
   filteredCustomers: Customer[] = [];
@@ -265,7 +266,8 @@ export class CustomersComponent implements OnInit, AfterViewChecked {
   constructor(
     public imageService: ImageService,
     private userService: UserService,
-    permissionService: PermissionService
+    permissionService: PermissionService,
+    private priceFormatService: PriceFormatService
   ) {
     this.permissionService = permissionService;
   }
@@ -274,11 +276,11 @@ export class CustomersComponent implements OnInit, AfterViewChecked {
     this.loadCustomers();
   }
 
-  ngAfterViewChecked() {
-    if ((window as any)['lucide']) {
-      (window as any)['lucide'].createIcons();
-    }
-  }
+  // ngAfterViewChecked() {
+  //   if ((window as any)['lucide']) {
+  //     (window as any)['lucide'].createIcons();
+  //   }
+  // }
 
   loadCustomers(): void {
     this.userService.getCustomers().subscribe((data: any[]) => {
@@ -536,5 +538,58 @@ export class CustomersComponent implements OnInit, AfterViewChecked {
 
   trackByCustomerId(index: number, customer: Customer): string {
     return customer.id;
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
+  }
+
+  // Number formatting methods with thousand separators
+  formatNumberWithSeparator(value: number): string {
+    if (value === null || value === undefined) return '0';
+    return Math.round(value).toLocaleString('en-US');
+  }
+
+  formatDecimalWithSeparator(value: number, decimals: number = 2): string {
+    if (value === null || value === undefined) return '0.00';
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
+
+  formatCurrencyWithSeparator(value: number, currency: string = 'MMK'): string {
+    if (value === null || value === undefined) return `0 ${currency}`;
+    const formatted = Math.round(value).toLocaleString('en-US');
+    return `${formatted} ${currency}`;
+  }
+
+  // Modal scroll helper method
+  scrollModalToTop(): void {
+    const modalContent = document.querySelector('.scrollbar-hide') as HTMLElement;
+    if (modalContent) {
+      modalContent.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  // Modal scroll helper method
+  scrollModalToBottom(): void {
+    const modalContent = document.querySelector('.scrollbar-hide') as HTMLElement;
+    if (modalContent) {
+      modalContent.scrollTo({ top: modalContent.scrollHeight, behavior: 'smooth' });
+    }
   }
 }

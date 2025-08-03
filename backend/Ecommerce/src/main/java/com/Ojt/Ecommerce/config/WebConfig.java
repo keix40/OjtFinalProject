@@ -46,7 +46,7 @@ public class WebConfig implements WebMvcConfigurer {
                                "x-client-ip", "X-Client-IP", "X-Forwarded-For", "X-Forwarded-Proto", "X-Forwarded-Host")
                 .exposedHeaders("Authorization", "Content-Type")
                 .allowCredentials(true)
-                .maxAge(3600); // Cache preflight requests for 1 hour
+                .maxAge(3600);
     }
 
     @Override

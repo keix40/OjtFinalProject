@@ -541,6 +541,10 @@ public class OrderController {
             .distinct()
             .count();
         
+        // Get previous session stats - calculate for the previous period
+        int prevSessions = sessionService.getTotalSessionsCountForPeriod(start, end);
+        double prevBounceRate = sessionService.getBounceRateForPeriod(start, end);
+
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("totalSales", prevTotalSales);
         result.put("revenue", prevRevenue);
@@ -548,6 +552,8 @@ public class OrderController {
         result.put("avgOrder", prevAvgOrder);
         result.put("activeUsers", prevActiveUsers);
         result.put("customers", prevCustomers);
+        result.put("sessions", prevSessions);
+        result.put("bounceRate", prevBounceRate);
         
         // Debug logging
         System.out.println("🔍 Previous Metrics for " + timeFrame + ":");
@@ -579,14 +585,18 @@ public class OrderController {
     @GetMapping("/bounce-rate")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Double> getBounceRate(@RequestParam(defaultValue = "day") String timeFrame) {
+        System.out.println("🎯 OrderController: getBounceRate called with timeFrame: " + timeFrame);
         double bounceRate = sessionService.getBounceRate(timeFrame);
+        System.out.println("🎯 OrderController: Returning bounce rate: " + bounceRate + "%");
         return ResponseEntity.ok(bounceRate);
     }
 
     @GetMapping("/session-stats")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Map<String, Object>> getSessionStats(@RequestParam(defaultValue = "day") String timeFrame) {
+        System.out.println("⭐ OrderController: getSessionStats called with timeFrame: " + timeFrame);
         Map<String, Object> stats = sessionService.getSessionStats(timeFrame);
+        System.out.println("⭐ OrderController: Returning stats: " + stats);
         return ResponseEntity.ok(stats);
     }
 

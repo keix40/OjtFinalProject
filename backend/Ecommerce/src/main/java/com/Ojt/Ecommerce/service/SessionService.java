@@ -4,10 +4,13 @@ import com.Ojt.Ecommerce.entity.UserSession;
 import com.Ojt.Ecommerce.repository.UserSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,8 +23,9 @@ public class SessionService {
     private static final int SESSION_TIMEOUT_MINUTES = 30; // 30 minutes of inactivity
     
     /**
-     * Start a new session for a user
+     * Start a new session for a user or resume existing session
      */
+    @Transactional
     public UserSession startSession(Long userId, String sessionId, String userAgent, String ipAddress) {
         // Handle anonymous users
         Long sessionUserId = userId;
@@ -29,28 +33,88 @@ public class SessionService {
             sessionUserId = -1L; // Use -1 for anonymous users
         }
         
-        // End any existing active sessions for this user
-        endUserSessions(sessionUserId);
+        System.out.println("Starting session - userId: " + sessionUserId + ", sessionId: " + sessionId);
         
-        UserSession session = new UserSession(sessionUserId, sessionId, userAgent, ipAddress);
-        return userSessionRepository.save(session);
+        try {
+            // First, check if this session already exists (regardless of end time)
+            Optional<UserSession> existingSession = userSessionRepository.findBySessionId(sessionId);
+            if (existingSession.isPresent()) {
+                UserSession session = existingSession.get();
+                System.out.println("Found existing session: " + session.getId() + ", endTime: " + session.getEndTime());
+                
+                // If session is active, just update last activity
+                if (session.getEndTime() == null) {
+                    session.setLastActivity(LocalDateTime.now());
+                    System.out.println("Updating existing active session");
+                    return userSessionRepository.save(session);
+                } else {
+                    // Session exists but is ended, delete it and create new one
+                    System.out.println("Session exists but is ended, deleting old session and creating new one");
+                    userSessionRepository.deleteBySessionId(sessionId);
+                    // Force flush to ensure deletion is committed
+                    userSessionRepository.flush();
+                }
+            }
+            
+            // Check if there's an active session for this user with a different sessionId
+            List<UserSession> activeUserSessions = userSessionRepository.findByUserIdAndEndTimeIsNull(sessionUserId);
+            for (UserSession activeSession : activeUserSessions) {
+                System.out.println("Ending old session for user: " + activeSession.getSessionId());
+                activeSession.endSession();
+                userSessionRepository.save(activeSession);
+            }
+            
+            // Create new session
+            UserSession newSession = new UserSession(sessionUserId, sessionId, userAgent, ipAddress);
+            System.out.println("Creating new session with ID: " + sessionId);
+            return userSessionRepository.save(newSession);
+            
+        } catch (Exception e) {
+            System.err.println("Error in startSession: " + e.getMessage());
+            e.printStackTrace();
+            
+            // If it's a constraint violation, try to force delete and retry
+            if (e.getMessage().contains("constraint") || e.getMessage().contains("UKbjoac5vd2jt3pnrfrdeb49014")) {
+                System.out.println("Constraint violation detected, attempting to force cleanup...");
+                try {
+                    // Force delete any existing session with this ID
+                    userSessionRepository.deleteBySessionId(sessionId);
+                    userSessionRepository.flush();
+                    
+                    // Create new session
+                    UserSession newSession = new UserSession(sessionUserId, sessionId, userAgent, ipAddress);
+                    return userSessionRepository.save(newSession);
+                } catch (Exception retryException) {
+                    System.err.println("Retry failed: " + retryException.getMessage());
+                    throw new RuntimeException("Failed to start session after retry: " + retryException.getMessage());
+                }
+            }
+            
+            throw new RuntimeException("Failed to start session: " + e.getMessage());
+        }
     }
     
     /**
      * Record a page view for an existing session
      */
+    @Transactional
     public void recordPageView(String sessionId) {
         Optional<UserSession> sessionOpt = userSessionRepository.findBySessionIdAndEndTimeIsNull(sessionId);
         if (sessionOpt.isPresent()) {
             UserSession session = sessionOpt.get();
             session.incrementPageCount();
             userSessionRepository.save(session);
+        } else {
+            // If session doesn't exist, log it but don't create a new one
+            // This could happen if the session was ended but frontend still tries to record page view
+            System.out.println("Warning: Attempted to record page view for non-existent or ended session: " + sessionId);
         }
     }
     
     /**
      * End a session
      */
+    @Transactional
     public void endSession(String sessionId) {
         Optional<UserSession> sessionOpt = userSessionRepository.findBySessionIdAndEndTimeIsNull(sessionId);
         if (sessionOpt.isPresent()) {
@@ -63,6 +127,7 @@ public class SessionService {
     /**
      * End all active sessions for a user
      */
+    @Transactional
     public void endUserSessions(Long userId) {
         List<UserSession> activeSessions = userSessionRepository.findByUserIdAndEndTimeIsNull(userId);
         for (UserSession session : activeSessions) {
@@ -75,57 +140,183 @@ public class SessionService {
      * Get active sessions count for a time period
      */
     public int getActiveSessionsCount(String timeFrame) {
+        LocalDateTime start;
+        LocalDateTime end;
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
-        return userSessionRepository.countActiveSessions(start, now);
+
+        switch (timeFrame) {
+            case "hour":
+                start = now.minusHours(1);
+                end = now;
+                break;
+            case "day":
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1); // End of current day
+                break;
+            case "week":
+                start = now.minusWeeks(1);
+                end = now;
+                break;
+            case "month":
+                start = LocalDate.now().withDayOfMonth(1).atStartOfDay(); // Start of current month
+                end = YearMonth.from(now).atEndOfMonth().atTime(23, 59, 59, 999999999); // End of current month
+                break;
+            case "year":
+                start = LocalDate.now().withDayOfYear(1).atStartOfDay(); // Start of current year
+                end = LocalDate.now().with(TemporalAdjusters.lastDayOfYear()).atTime(23, 59, 59, 999999999); // End of current year
+                break;
+            default:
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1);
+                break;
+        }
+        
+        return userSessionRepository.countActiveSessions(start, end);
     }
     
     /**
      * Get total sessions count for a time period
      */
     public int getTotalSessionsCount(String timeFrame) {
+        LocalDateTime start;
+        LocalDateTime end;
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
-        return userSessionRepository.countTotalSessions(start, now);
+
+        switch (timeFrame) {
+            case "hour":
+                start = now.minusHours(1);
+                end = now;
+                break;
+            case "day":
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1); // End of current day
+                break;
+            case "week":
+                start = now.minusWeeks(1);
+                end = now;
+                break;
+            case "month":
+                start = LocalDate.now().withDayOfMonth(1).atStartOfDay(); // Start of current month
+                end = YearMonth.from(now).atEndOfMonth().atTime(23, 59, 59, 999999999); // End of current month
+                break;
+            case "year":
+                start = LocalDate.now().withDayOfYear(1).atStartOfDay(); // Start of current year
+                end = LocalDate.now().with(TemporalAdjusters.lastDayOfYear()).atTime(23, 59, 59, 999999999); // End of current year
+                break;
+            default:
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1);
+                break;
+        }
+        
+        int count = userSessionRepository.countTotalSessions(start, end);
+        return count;
+    }
+    
+    public int getTotalSessionsCountForPeriod(LocalDateTime start, LocalDateTime end) {
+        return userSessionRepository.countTotalSessions(start, end);
     }
     
     /**
      * Calculate bounce rate for a time period
      */
     public double getBounceRate(String timeFrame) {
+        Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
+        LocalDateTime start = timeRange.get("start");
+        LocalDateTime end = timeRange.get("end");
+        
+        return calculateBounceRateForPeriod(start, end, timeFrame);
+    }
+    
+    public double getBounceRateForPeriod(LocalDateTime start, LocalDateTime end) {
+        return calculateBounceRateForPeriod(start, end, "custom");
+    }
+    
+    private double calculateBounceRateForPeriod(LocalDateTime start, LocalDateTime end, String timeFrame) {
+        int totalSessions = userSessionRepository.countTotalSessions(start, end);
+        int bounceSessions = userSessionRepository.countBounceSessions(start, end);
+        
+        System.out.println("🔍 Bounce Rate Debug for " + timeFrame + ":");
+        System.out.println("   Start: " + start);
+        System.out.println("   End: " + end);
+        System.out.println("   Total Sessions: " + totalSessions);
+        System.out.println("   Bounce Sessions: " + bounceSessions);
+        
+        if (totalSessions == 0) {
+            System.out.println("   Result: 0.0 (no sessions)");
+            return 0.0;
+        }
+        
+        double bounceRate = (double) bounceSessions / totalSessions * 100.0;
+        System.out.println("   Bounce Rate: " + bounceRate + "%");
+        return bounceRate;
+    }
+    
+    /**
+     * Helper method to get start and end times for a time frame
+     */
+    private Map<String, LocalDateTime> getTimeRange(String timeFrame) {
+        LocalDateTime start;
+        LocalDateTime end;
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
+
+        switch (timeFrame) {
+            case "hour":
+                start = now.minusHours(1);
+                end = now;
+                break;
+            case "day":
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1); // End of current day
+                break;
+            case "week":
+                start = now.minusWeeks(1);
+                end = now;
+                break;
+            case "month":
+                start = LocalDate.now().withDayOfMonth(1).atStartOfDay(); // Start of current month
+                end = YearMonth.from(now).atEndOfMonth().atTime(23, 59, 59, 999999999); // End of current month
+                break;
+            case "year":
+                start = LocalDate.now().withDayOfYear(1).atStartOfDay(); // Start of current year
+                end = LocalDate.now().with(TemporalAdjusters.lastDayOfYear()).atTime(23, 59, 59, 999999999); // End of current year
+                break;
+            default:
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1);
+                break;
+        }
         
-        int totalSessions = userSessionRepository.countTotalSessions(start, now);
-        if (totalSessions == 0) return 0.0;
-        
-        int bounceSessions = userSessionRepository.countBounceSessions(start, now);
-        return (double) bounceSessions / totalSessions * 100.0;
+        Map<String, LocalDateTime> result = new HashMap<>();
+        result.put("start", start);
+        result.put("end", end);
+        return result;
     }
     
     /**
      * Get session trends for dashboard
      */
     public List<Map<String, Object>> getSessionTrends(String timeFrame) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
+        Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
+        LocalDateTime start = timeRange.get("start");
+        LocalDateTime end = timeRange.get("end");
         
         List<Object[]> results;
         switch (timeFrame) {
             case "hour":
-                results = userSessionRepository.getSessionStatsByHour(start, now);
+                results = userSessionRepository.getSessionStatsByHour(start, end);
                 return processHourlyResults(results);
             case "week":
-                results = userSessionRepository.getSessionStatsByWeek(start, now);
+                results = userSessionRepository.getSessionStatsByWeek(start, end);
                 return processWeeklyResults(results);
             case "month":
-                results = userSessionRepository.getSessionStatsByMonth(start, now);
+                results = userSessionRepository.getSessionStatsByMonth(start, end);
                 return processMonthlyResults(results);
             case "year":
-                results = userSessionRepository.getSessionStatsByMonth(start, now);
+                results = userSessionRepository.getSessionStatsByMonth(start, end);
                 return processYearlyResults(results);
             default: // day
-                results = userSessionRepository.getSessionStatsByDate(start, now);
+                results = userSessionRepository.getSessionStatsByDate(start, end);
                 return processDailyResults(results);
         }
     }
@@ -134,20 +325,91 @@ public class SessionService {
      * Get session statistics for dashboard metrics
      */
     public Map<String, Object> getSessionStats(String timeFrame) {
+        System.out.println("🔍 getSessionStats called with timeFrame: " + timeFrame);
+        LocalDateTime start;
+        LocalDateTime end;
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
+
+        switch (timeFrame) {
+            case "hour":
+                start = now.minusHours(1);
+                end = now;
+                break;
+            case "day":
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1); // End of current day
+                break;
+            case "week":
+                start = now.minusWeeks(1);
+                end = now;
+                break;
+            case "month":
+                start = LocalDate.now().withDayOfMonth(1).atStartOfDay(); // Start of current month
+                end = YearMonth.from(now).atEndOfMonth().atTime(23, 59, 59, 999999999); // End of current month
+                break;
+            case "year":
+                start = LocalDate.now().withDayOfYear(1).atStartOfDay(); // Start of current year
+                end = LocalDate.now().with(TemporalAdjusters.lastDayOfYear()).atTime(23, 59, 59, 999999999); // End of current year
+                break;
+            default:
+                start = LocalDate.now().atStartOfDay();
+                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1);
+                break;
+        }
         
-        int totalSessions = userSessionRepository.countTotalSessions(start, now);
-        int bounceSessions = userSessionRepository.countBounceSessions(start, now);
-        int activeSessions = userSessionRepository.countActiveSessions(start, now);
+        System.out.println("📅 Time range: " + start + " to " + end);
+
+        // Get session counts
+        int totalSessions = userSessionRepository.countTotalSessions(start, end);
+        int bounceSessions = userSessionRepository.countBounceSessions(start, end);
+        int activeSessions = userSessionRepository.countActiveSessions(start, end);
         
+        System.out.println("📊 Raw counts - Total: " + totalSessions + ", Bounce: " + bounceSessions + ", Active: " + activeSessions);
+        
+        // Calculate bounce rate
         double bounceRate = totalSessions > 0 ? (double) bounceSessions / totalSessions * 100.0 : 0.0;
+        
+        // Get session trends for the time period
+        List<Object[]> trends;
+        switch (timeFrame) {
+            case "hour":
+                trends = userSessionRepository.getSessionStatsByHour(start, end);
+                break;
+            case "week":
+                trends = userSessionRepository.getSessionStatsByWeek(start, end);
+                break;
+            case "month":
+                trends = userSessionRepository.getSessionStatsByMonth(start, end);
+                break;
+            case "year":
+                trends = userSessionRepository.getSessionStatsByMonth(start, end);
+                break;
+            default: // day
+                trends = userSessionRepository.getSessionStatsByDate(start, end);
+                break;
+        }
+        
+        // Calculate total sessions from trends to verify data
+        int trendTotalSessions = 0;
+        if (!trends.isEmpty()) {
+            for (Object[] trend : trends) {
+                trendTotalSessions += ((Number) trend[1]).intValue(); // totalSessions is at index 1
+            }
+            // If trends show sessions but direct count doesn't, use trend data
+            if (trendTotalSessions > 0 && totalSessions == 0) {
+                totalSessions = trendTotalSessions;
+                // Recalculate bounce rate with new total
+                bounceRate = totalSessions > 0 ? (double) bounceSessions / totalSessions * 100.0 : 0.0;
+            }
+        }
         
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalSessions", totalSessions);
         stats.put("activeSessions", activeSessions);
         stats.put("bounceSessions", bounceSessions);
         stats.put("bounceRate", Math.round(bounceRate * 100.0) / 100.0); // Round to 2 decimal places
+        
+        System.out.println("📤 Returning stats: " + stats);
         
         return stats;
     }
@@ -156,16 +418,17 @@ public class SessionService {
      * Get engagement analytics for dashboard
      */
     public Map<String, Object> getEngagementAnalytics(String timeFrame) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
+        Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
+        LocalDateTime start = timeRange.get("start");
+        LocalDateTime end = timeRange.get("end");
         
         // Get total page views and engagement metrics
-        int totalPageViews = userSessionRepository.countTotalPageViews(start, now);
-        int totalSessions = userSessionRepository.countTotalSessions(start, now);
+        int totalPageViews = userSessionRepository.countTotalPageViews(start, end);
+        int totalSessions = userSessionRepository.countTotalSessions(start, end);
         double avgPageViewsPerSession = totalSessions > 0 ? (double) totalPageViews / totalSessions : 0.0;
         
         // Calculate engagement score (based on page views and session duration)
-        double engagementScore = calculateEngagementScore(start, now);
+        double engagementScore = calculateEngagementScore(start, end);
         
         Map<String, Object> analytics = new HashMap<>();
         analytics.put("totalPageViews", totalPageViews);
@@ -180,25 +443,26 @@ public class SessionService {
      * Get engagement trends for dashboard chart
      */
     public List<Map<String, Object>> getEngagementTrends(String timeFrame) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
+        Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
+        LocalDateTime start = timeRange.get("start");
+        LocalDateTime end = timeRange.get("end");
         
         List<Object[]> results;
         switch (timeFrame) {
             case "hour":
-                results = userSessionRepository.getEngagementStatsByHour(start, now);
+                results = userSessionRepository.getEngagementStatsByHour(start, end);
                 return processEngagementHourlyResults(results);
             case "week":
-                results = userSessionRepository.getEngagementStatsByWeek(start, now);
+                results = userSessionRepository.getEngagementStatsByWeek(start, end);
                 return processEngagementWeeklyResults(results);
             case "month":
-                results = userSessionRepository.getEngagementStatsByMonth(start, now);
+                results = userSessionRepository.getEngagementStatsByMonth(start, end);
                 return processEngagementMonthlyResults(results);
             case "year":
-                results = userSessionRepository.getEngagementStatsByMonth(start, now);
+                results = userSessionRepository.getEngagementStatsByMonth(start, end);
                 return processEngagementYearlyResults(results);
             default: // day
-                results = userSessionRepository.getEngagementStatsByDate(start, now);
+                results = userSessionRepository.getEngagementStatsByDate(start, end);
                 return processEngagementDailyResults(results);
         }
     }
@@ -242,8 +506,9 @@ public class SessionService {
      */
     public List<Map<String, Object>> getCustomerSegmentation(String timeFrame) {
         try {
-            LocalDateTime now = LocalDateTime.now();
-            LocalDateTime start = getStartTime(now, timeFrame);
+            Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
+            LocalDateTime start = timeRange.get("start");
+            LocalDateTime end = timeRange.get("end");
             
             // Check user stats first
             List<Object[]> userStats = userSessionRepository.getUserStats();
@@ -329,30 +594,31 @@ public class SessionService {
      * Get customer acquisition data for the specified time frame
      */
     public List<Map<String, Object>> getCustomerAcquisition(String timeFrame) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime start = getStartTime(now, timeFrame);
+        Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
+        LocalDateTime start = timeRange.get("start");
+        LocalDateTime end = timeRange.get("end");
         
         System.out.println("Getting customer acquisition data for timeFrame: " + timeFrame);
         System.out.println("Start time: " + start);
-        System.out.println("End time: " + now);
+        System.out.println("End time: " + end);
         
         List<Object[]> results;
         switch (timeFrame) {
             case "hour":
-                results = userSessionRepository.getCustomerAcquisitionStatsByHour(start, now);
+                results = userSessionRepository.getCustomerAcquisitionStatsByHour(start, end);
                 break;
             case "week":
-                results = userSessionRepository.getCustomerAcquisitionStatsByWeek(start, now);
+                results = userSessionRepository.getCustomerAcquisitionStatsByWeek(start, end);
                 break;
             case "month":
-                results = userSessionRepository.getCustomerAcquisitionStatsByMonth(start, now);
+                results = userSessionRepository.getCustomerAcquisitionStatsByMonth(start, end);
                 break;
             case "year":
-                results = userSessionRepository.getCustomerAcquisitionStatsByMonth(start, now); // Use monthly for yearly
+                results = userSessionRepository.getCustomerAcquisitionStatsByMonth(start, end); // Use monthly for yearly
                 break;
             case "day":
             default:
-                results = userSessionRepository.getCustomerAcquisitionStats(start, now);
+                results = userSessionRepository.getCustomerAcquisitionStats(start, end);
                 break;
         }
         
@@ -392,17 +658,7 @@ public class SessionService {
         return processedResults;
     }
     
-    // Helper methods
-    private LocalDateTime getStartTime(LocalDateTime now, String timeFrame) {
-        switch (timeFrame) {
-            case "hour": return now.minusHours(24); // Last 24 hours for hourly data
-            case "week": return now.minusWeeks(1);
-            case "month": return now.minusMonths(1);
-            case "year": return now.minusYears(1);
-            case "day":
-            default: return now.minusDays(7); // Last 7 days for daily data to match processing
-        }
-    }
+
     
     private List<Map<String, Object>> processDailyResults(List<Object[]> results) {
         // Build a map from date string to result row

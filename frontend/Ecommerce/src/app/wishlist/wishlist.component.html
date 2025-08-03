@@ -104,8 +104,8 @@
                     
                     <!-- Price Section -->
                     <div class="flex items-center space-x-3 mb-3">
-                      <span class="text-xl font-bold text-black">{{ item.price }} MMK</span>
-                      <span *ngIf="item.hasDiscount && item.originalPrice" class="text-lg text-gray-400 line-through">{{ item.originalPrice }} MMK</span>
+                                      <span class="text-xl font-bold text-black">{{ formatPriceOnly(item.price) }} MMK</span>
+                <span *ngIf="item.hasDiscount && item.originalPrice" class="text-lg text-gray-400 line-through">{{ formatPriceOnly(item.originalPrice) }} MMK</span>
                     </div>
 
                     <!-- Added Date -->

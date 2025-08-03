@@ -11,6 +11,7 @@ import { DiscountService } from '../services/discount.service';
 import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
 import { HttpClient } from '@angular/common/http';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-cart-page',
@@ -53,7 +54,8 @@ export class CartPageComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private discountService: DiscountService,
     private productService: ProductService,
-    private http: HttpClient
+    private http: HttpClient,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit() {
@@ -591,7 +593,11 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   loadRelatedProducts() {
+    console.log('Loading related products for cart...');
+    console.log('Cart items:', this.cartItems);
+    
     if (this.cartItems.length === 0) {
+      console.log('No cart items, clearing related products');
       this.relatedProducts = [];
       return;
     }
@@ -602,9 +608,12 @@ export class CartPageComponent implements OnInit, OnDestroy {
     const excludeProductIds: number[] = [];
 
     this.cartItems.forEach(item => {
-      excludeProductIds.push(item.productId || item.id);
+      const productId = item.productId || item.id;
+      excludeProductIds.push(productId);
       
-      const product = this.productDetails.get(item.productId || item.id);
+      const product = this.productDetails.get(productId);
+      console.log(`Product details for ${productId}:`, product);
+      
       if (product && product.categoryBrandArray) {
         product.categoryBrandArray.forEach(pair => {
           if (pair.categoryId) {
@@ -622,22 +631,92 @@ export class CartPageComponent implements OnInit, OnDestroy {
     const uniqueBrandIds = [...new Set(brandIds)];
     const uniqueExcludeProductIds = [...new Set(excludeProductIds)];
 
+    console.log('Unique category IDs:', uniqueCategoryIds);
+    console.log('Unique brand IDs:', uniqueBrandIds);
+    console.log('Exclude product IDs:', uniqueExcludeProductIds);
+
     if (uniqueCategoryIds.length === 0 && uniqueBrandIds.length === 0) {
-      this.relatedProducts = [];
+      console.log('No category or brand IDs found, loading fallback products...');
+      this.loadFallbackCartRelatedProducts();
       return;
     }
 
     this.productService.getRelatedProducts(uniqueCategoryIds, uniqueBrandIds, 0, uniqueExcludeProductIds)
       .subscribe({
         next: (products) => {
-          // Randomly select 4 products
-          this.relatedProducts = this.shuffleArray(products).slice(0, 4);
+          console.log('Backend returned related products for cart:', products?.length || 0);
+          if (products && products.length > 0) {
+            // Randomly select 4 products
+            this.relatedProducts = this.shuffleArray(products).slice(0, 4);
+            console.log('Cart related products loaded:', this.relatedProducts.length);
+          } else {
+            console.log('No related products found, loading fallback...');
+            this.loadFallbackCartRelatedProducts();
+          }
         },
         error: (error) => {
           console.error('Error loading related products:', error);
-          this.relatedProducts = [];
+          this.loadFallbackCartRelatedProducts();
         }
       });
+  }
+
+  // Fallback method for cart related products
+  loadFallbackCartRelatedProducts() {
+    console.log('Loading fallback cart related products...');
+    const userId = this.authService.getUserId();
+    
+    // Try to get featured products first
+    this.productService.getFeaturedProducts(userId || undefined).subscribe({
+      next: (products) => {
+        if (products && products.length > 0) {
+          // Filter out products already in cart
+          const cartProductIds = this.cartItems.map(item => item.productId || item.id);
+          const filteredProducts = products.filter((p: any) => !cartProductIds.includes(p.id));
+          this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 4);
+          console.log('Fallback cart related products loaded (featured):', this.relatedProducts.length);
+        } else {
+          // If no featured products, try trending products
+          this.productService.getTrendingProducts().subscribe({
+            next: (trendingProducts) => {
+              if (trendingProducts && trendingProducts.length > 0) {
+                const cartProductIds = this.cartItems.map(item => item.productId || item.id);
+                const filteredProducts = trendingProducts.filter((p: any) => !cartProductIds.includes(p.id));
+                this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 4);
+                console.log('Fallback cart related products loaded (trending):', this.relatedProducts.length);
+              } else {
+                console.log('No fallback cart products available');
+                this.relatedProducts = [];
+              }
+            },
+            error: (error) => {
+              console.error('Failed to load trending products for cart:', error);
+              this.relatedProducts = [];
+            }
+          });
+        }
+      },
+      error: (error) => {
+        console.error('Failed to load featured products for cart:', error);
+        // Try trending products as last resort
+        this.productService.getTrendingProducts().subscribe({
+          next: (trendingProducts) => {
+            if (trendingProducts && trendingProducts.length > 0) {
+              const cartProductIds = this.cartItems.map(item => item.productId || item.id);
+              const filteredProducts = trendingProducts.filter((p: any) => !cartProductIds.includes(p.id));
+              this.relatedProducts = this.shuffleArray(filteredProducts).slice(0, 4);
+              console.log('Fallback cart related products loaded (trending):', this.relatedProducts.length);
+            } else {
+              this.relatedProducts = [];
+            }
+          },
+          error: (trendingError) => {
+            console.error('Failed to load trending products for cart:', trendingError);
+            this.relatedProducts = [];
+          }
+        });
+      }
+    });
   }
 
   // Separate method for cart item related products
@@ -1267,13 +1346,39 @@ getVipTierDiscountAmount(): number {
   // Public method to test backend connectivity
   public testBackendConnection(): void {
     console.log('Testing backend connection...');
-    this.http.get('http://localhost:8080/api/coupons/test', { responseType: 'text' }).subscribe({
-      next: (response) => {
-        console.log('Backend connection successful:', response);
-      },
-      error: (error) => {
-        console.log('Backend connection failed:', error);
-      }
+    this.http.get('http://localhost:8080/product/productlist').subscribe({
+      next: (response) => console.log('Backend connection successful:', response),
+      error: (error) => console.error('Backend connection failed:', error)
     });
+  }
+
+  // Debug method for cart related products
+  debugCartRelatedProducts() {
+    console.log('=== CART RELATED PRODUCTS DEBUG ===');
+    console.log('Cart Items:', this.cartItems);
+    console.log('Related Products:', this.relatedProducts);
+    console.log('Product Details Map:', this.productDetails);
+    console.log('Cart Items Length:', this.cartItems.length);
+    
+    // Test the loadRelatedProducts method
+    console.log('Testing loadRelatedProducts...');
+    this.loadRelatedProducts();
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

@@ -42,17 +42,18 @@
           <!-- Price -->
           <div class="space-y-2">
             <label class="block text-sm font-medium text-slate-700">
-              <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-2"></i>
+              <!-- <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-2"></i>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> -->
               Price
             </label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">$</span>
+              <!-- <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"></span> -->
               <input 
                 type="number" 
                 class="w-full pl-8 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" 
                 formControlName="price"
-                min="0.01" 
-                placeholder="0.00">
+                min="0" 
+                placeholder="Enter price">
             </div>
             <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="text-red-500 text-sm flex items-center gap-1">
               <i data-lucide="alert-circle" class="w-4 h-4"></i>

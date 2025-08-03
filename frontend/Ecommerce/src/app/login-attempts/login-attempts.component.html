@@ -474,8 +474,8 @@
   <!-- Details Modal -->
   <div class="modal fade" id="detailsModal" tabindex="-1" *ngIf="selectedAttemptDetails">
     <div class="modal-dialog modal-lg">
-      <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md">
-        <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between">
+      <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md max-h-[90vh] flex flex-col">
+        <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between flex-shrink-0">
           <h5 class="modal-title flex items-center gap-2 text-xl font-semibold text-blue-900">
             <i class="fas fa-info-circle text-blue-500"></i> Login Attempt Details
           </h5>
@@ -483,7 +483,7 @@
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="modal-body p-4 md:p-8">
+        <div class="modal-body p-4 md:p-8 flex-1 overflow-y-auto scrollbar-hide" style="max-height: calc(90vh - 140px);">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Timestamp -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
@@ -608,8 +608,8 @@
 <!-- Session Activity Log Modal -->
 <div class="modal fade" id="sessionActivityModal" tabindex="-1" *ngIf="showSessionActivityModal">
   <div class="modal-dialog w-full max-w-2xl md:max-w-4xl lg:max-w-5xl mx-auto">
-    <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md">
-      <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+    <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md max-h-[90vh] flex flex-col">
+      <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between px-4 py-3 md:px-6 md:py-4 flex-shrink-0">
         <h5 class="modal-title flex items-center gap-2 text-lg md:text-xl font-semibold text-blue-900">
           <i class="fas fa-list text-blue-500"></i> Session Activity Log
         </h5>
@@ -617,7 +617,7 @@
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="modal-body p-2 md:p-4 lg:p-8 overflow-x-auto">
+      <div class="modal-body p-2 md:p-4 lg:p-8 overflow-x-auto flex-1 overflow-y-auto scrollbar-hide" style="max-height: calc(90vh - 140px);">
         <div class="mb-4 flex flex-wrap gap-2 items-center">
           <span class="font-mono text-blue-700 break-all">Session: {{ sessionActivitySessionId }}</span>
           <button *ngIf="sessionActivitySessionId" class="btn btn-xs btn-danger ml-2" (click)="blockSession(sessionActivitySessionId!)"><i class="fas fa-ban"></i> Block Session</button>
@@ -684,7 +684,7 @@
           </table>
         </div>
       </div>
-      <div class="modal-footer flex gap-2 flex-wrap justify-end px-4 py-3 md:px-6 md:py-4">
+      <div class="modal-footer flex gap-2 flex-wrap justify-end px-4 py-3 md:px-6 md:py-4 flex-shrink-0">
         <button type="button" class="btn btn-secondary" (click)="closeSessionActivity()"><i class="fas fa-times"></i> Close</button>
       </div>
     </div>
@@ -698,8 +698,8 @@
 <div class="modal fade" id="detailedLogModal" tabindex="-1" [ngClass]="{'show d-block': showDetailedLogModal}" style="z-index:60;">
   <div class="fixed inset-0 z-40 flex items-center justify-center">
     <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-6 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
-      <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-3xl bg-white/90">
+    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto border border-slate-200 z-50 max-h-[90vh] flex flex-col">
+      <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-3xl bg-white/90 flex-shrink-0">
         <h5 class="modal-title flex items-center gap-2 text-lg md:text-2xl font-bold text-blue-900">
           <i class="fas fa-list text-blue-500"></i>
           <span>Detailed Log for</span>
@@ -709,7 +709,7 @@
         </h5>
         <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition flex items-center justify-center absolute top-4 right-4 text-gray-400 hover:text-red-500 text-2xl" (click)="closeDetailedLogModal()" aria-label="Close">&times;</button>
       </div>
-      <div class="modal-body p-4 md:p-8 overflow-x-auto">
+      <div class="modal-body p-4 md:p-8 overflow-x-auto flex-1 overflow-y-auto scrollbar-hide" style="max-height: calc(90vh - 140px);">
         <div class="table-responsive">
           <table class="table min-w-[600px] md:min-w-full text-xs md:text-sm">
             <thead>

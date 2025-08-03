@@ -6,6 +6,7 @@ import { ModalService } from '../services/modal.service';
 import { ReturnService } from '../services/return.service';
 import { AuthService } from '../auth/auth.service';
 import { PolicyService } from '../services/policy.service';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-order-tracking',
@@ -35,7 +36,8 @@ export class OrderTrackingComponent {
     private modalService: ModalService,
     private returnService: ReturnService,
     private policyService: PolicyService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit(): void {
@@ -345,14 +347,34 @@ export class OrderTrackingComponent {
   
   shouldShowCancelOrder(): boolean {
     if (!this.order) return false;
-    // Only show if order is delivered and within 7 days
-    if (this.order.status !== 'DELIVERED') return false;
-    const deliveredDate = this.getDeliveredDate();
-    if (!deliveredDate) return false;
-    const now = new Date();
-    const diffDays = (now.getTime() - deliveredDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (diffDays > 7) return false;
+    
+    // Don't show if order is already cancelled or returned
+    if (this.isStopStatus(this.order.status)) return false;
+    
+    // Don't show if order is delivered
+    if (this.order.status === 'DELIVERED') return false;
+    
+    // Don't show if there's already a return request
+    if (this.order.returnRequests && this.order.returnRequests.length > 0) return false;
+    
     return true;
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }
   

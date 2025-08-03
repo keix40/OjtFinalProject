@@ -43,5 +43,21 @@ export class ReturnService {
   processReplacement(data: { returnRequestId: number; adminRemark?: string }) {
     return this.http.post(`${this.baseUrl}/replacement`, data, { responseType: 'text' });
   }  
-  
+
+  // Jasper Reports Export Methods
+  exportReturnReportToPDF(): Observable<Blob> {
+    return this.http.get('http://localhost:8080/api/return-reports/pdf', { responseType: 'blob' });
+  }
+
+  exportSelectedReturnsToPDF(returnIds: number[]): Observable<Blob> {
+    return this.http.post('http://localhost:8080/api/return-reports/pdf/selected', returnIds, { responseType: 'blob' });
+  }
+
+  exportReturnReportToCSV(): Observable<Blob> {
+    return this.http.get('http://localhost:8080/api/return-reports/csv', { responseType: 'blob' });
+  }
+
+  exportSelectedReturnsToCSV(returnIds: number[]): Observable<Blob> {
+    return this.http.post('http://localhost:8080/api/return-reports/csv/selected', returnIds, { responseType: 'blob' });
+  }
 }

@@ -19,6 +19,7 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { OnInit, ChangeDetectorRef, AfterViewInit } from '@angular/core';
 import { FooterComponent } from '../footer/footer.component';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-user-product-list',
@@ -137,7 +138,8 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
     private eventService: EventService,
     private http: HttpClient,
     private route: ActivatedRoute,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit(): void {
@@ -1279,8 +1281,7 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
   }
 
   formatPrice(value: number): string {
-    if (value == null) return '';
-    return Number.isInteger(value) ? value.toString() : value.toFixed(2);
+    return this.priceFormatService.formatPriceOnly(value);
   }
 
   hasVipDiscount(): boolean {

@@ -832,7 +832,6 @@ body, .tracking-bg {
   background: none;
   padding: 0;
 }
-
 /* Ensure all elements respect width constraints and prevent word breaking */
 .policy-content * {
   max-width: 100%;
@@ -952,3 +951,4 @@ body, .tracking-bg {
   -ms-overflow-style: none;  /* Internet Explorer 10+ */
   scrollbar-width: none;  /* Firefox */
 }
+

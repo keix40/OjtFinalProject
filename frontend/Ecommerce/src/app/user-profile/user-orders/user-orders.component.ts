@@ -4,6 +4,7 @@ import { OrderService } from '../../services/order.service';
 import { UserOrderListDTO } from '../../user-order';
 import { AuthService } from '../../auth/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { PriceFormatService } from '../../services/price-format.service';
 
 @Component({
   selector: 'app-user-orders',
@@ -44,7 +45,8 @@ export class UserOrdersComponent implements OnInit, AfterViewChecked {
     private orderService: OrderService,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit(): void {
@@ -272,6 +274,23 @@ export class UserOrdersComponent implements OnInit, AfterViewChecked {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
     }
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 
 }

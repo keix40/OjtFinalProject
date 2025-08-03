@@ -38,6 +38,9 @@ public class ProductDTO {
     // For category-brand pair deletion
     private List<CategoryBrandPair> categoryBrandPairsMarkedForDeletion;
     
+    // For variant deletion
+    private List<Long> removedVariantIds;
+    
     // Discount fields
     private Boolean hasDiscount;
     private String discountType;

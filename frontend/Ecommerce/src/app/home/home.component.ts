@@ -20,6 +20,7 @@ import { VerifyOtpComponent } from '../auth/verify-otp/verify-otp.component';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { EventService } from '../services/event.service';
 import { EventDTO } from '../event-dto';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-home',
@@ -57,8 +58,9 @@ export class HomeComponent implements OnInit {
     private notifcationService : NotifcationService,
     private discountService: DiscountService,
     private http: HttpClient, // Inject HttpClient
-       private sanitizer: DomSanitizer,
-       private eventService: EventService
+    private sanitizer: DomSanitizer,
+    private eventService: EventService,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit(): void {
@@ -381,13 +383,7 @@ export class HomeComponent implements OnInit {
       return '';
     }
     
-    if (product.discountType === 'PERCENTAGE') {
-      // Convert decimal to percentage (e.g., 0.1 -> 10%, 0.25 -> 25%)
-      const percentage = Math.round(product.discountValue * 100);
-      return `${percentage}% OFF`;
-    } else {
-      return `${Math.round(product.discountValue)} MMK OFF`;
-    }
+    return this.priceFormatService.formatDiscountText(product.discountValue, product.discountType);
   }
 
   getDiscountedPrice(product: any): number {
@@ -406,6 +402,14 @@ export class HomeComponent implements OnInit {
     return Math.round(discountedPrice);
   }
 
+  formatPrice(price: number): string {
+    return this.priceFormatService.formatPrice(price);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
   goToAllProducts() {
     this.router.navigate(['/userproductlist']);
   }
@@ -418,15 +422,10 @@ export class HomeComponent implements OnInit {
         new Date(d.endDate) >= now
       );
       if (activeDiscount) {
-        let discountValueText = '';
-        if (activeDiscount.discountType === 'PERCENTAGE') {
-          const percent = (activeDiscount.discountValue <= 1 && activeDiscount.discountValue !== 0)
-            ? activeDiscount.discountValue * 100
-            : activeDiscount.discountValue;
-          discountValueText = `${percent}% off`;
-        } else {
-          discountValueText = `${activeDiscount.discountValue} MMK off`;
-        }
+        const discountValueText = this.priceFormatService.formatDiscountText(
+          activeDiscount.discountValue, 
+          activeDiscount.discountType
+        );
         
         const notificationMessage = `🔥 "${activeDiscount.name}" is live: ${discountValueText}! Click here to view products.`;
         

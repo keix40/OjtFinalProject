@@ -52,24 +52,24 @@
 
   <!-- Export Dropdowns -->
   <div class="flex gap-2 mb-4">
-    <!-- Excel Export Dropdown -->
+    <!-- CSV Export Dropdown -->
     <div class="relative">
       <button 
-        (click)="toggleExcelDropdown()"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors shadow-sm">
+        (click)="toggleCsvDropdown()"
+        class="inline-flex items-center gap-2 px-4 py-2.5 text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
           <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
         </svg>
-        Export Excel
-        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': excelDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        Export CSV
+        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': csvDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
         </svg>
       </button>
-      <div *ngIf="excelDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
+      <div *ngIf="csvDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
         <button 
           class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-          (click)="exportToExcel(); excelDropdownOpen = false">
-          <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+          (click)="exportToCSV('all'); csvDropdownOpen = false">
+          <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
           </svg>
           Export All Orders
@@ -77,8 +77,8 @@
         <button 
           class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           [disabled]="selectedOrders.length === 0"
-          (click)="exportSelected(); excelDropdownOpen = false">
-          <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+          (click)="exportToCSV('selected'); csvDropdownOpen = false">
+          <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
           </svg>
           Export Selected ({{ selectedOrders.length }})
@@ -101,7 +101,7 @@
       <div *ngIf="pdfDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
         <button 
           class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-          (click)="exportToPDF(); pdfDropdownOpen = false">
+          (click)="exportToPDF('all'); pdfDropdownOpen = false">
           <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
           </svg>
@@ -110,7 +110,7 @@
         <button 
           class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           [disabled]="selectedOrders.length === 0"
-          (click)="exportToPDF(); pdfDropdownOpen = false">
+          (click)="exportToPDF('selected'); pdfDropdownOpen = false">
           <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
           </svg>
@@ -160,11 +160,11 @@
           </td>
           <td class="px-4 py-3 text-right">
             <ng-container *ngIf="order.userDiscountId || order.discountAmount > 0; else noDiscount">
-              <span class="line-through text-gray-400 mr-2">{{ (getBeforeDiscountProductTotal(order) + (order.deliveryFee || 0)) | number:'1.2-2' }}</span>
-              <span class="font-semi text-slate-800">{{ (getAfterDiscountProductTotal(order) + (order.deliveryFee || 0)) | number:'1.2-2' }} ks</span>
+              <span class="line-through text-gray-400 mr-2">{{ formatPriceOnly(getBeforeDiscountProductTotal(order) + (order.deliveryFee || 0)) }} MMK</span>
+              <span class="font-semi text-slate-800">{{ formatPriceOnly(getAfterDiscountProductTotal(order) + (order.deliveryFee || 0)) }} MMK</span>
             </ng-container>
             <ng-template #noDiscount>
-              <span>{{ getRefundedTotal(order) | number:'1.2-2' }} ks</span>
+              <span>{{ formatPriceOnly(getRefundedTotal(order)) }} MMK</span>
             </ng-template>
           </td>
           <td class="px-4 py-3">
@@ -297,7 +297,7 @@
             <span *ngIf="getDiscountInfo(selectedOrder)">
               Code: <span class="font-bold">{{ getDiscountInfo(selectedOrder).code }}</span> -
               {{ getDiscountInfo(selectedOrder).name }}
-              <span *ngIf="selectedOrder.discountAmount">| Amount: <span class="font-bold">-{{ selectedOrder.discountAmount | number:'1.0-0' }} ks</span></span>
+              <span *ngIf="selectedOrder.discountAmount">| Amount: <span class="font-bold">-{{ formatPriceOnly(selectedOrder.discountAmount) }} MMK</span></span>
             </span>
             <span *ngIf="!getDiscountInfo(selectedOrder)">Discount ID: {{ selectedOrder.userDiscountId }}</span>
           </div>
@@ -402,10 +402,10 @@
                 </td>
                 <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
                 <td class="px-3 py-2 text-right">
-                  <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="line-through text-gray-400 mr-1" title="Original Price">{{ product.originalPrice | number:'1.2-2' }}</span>
-                  <span title="Discounted Price">{{ product.unitPrice | number:'1.2-2' }}</span>
+                  <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="line-through text-gray-400 mr-1" title="Original Price">{{ formatPriceOnly(product.originalPrice) }} MMK</span>
+                  <span title="Discounted Price">{{ formatPriceOnly(product.unitPrice) }} MMK</span>
                 </td>
-                <td class="px-3 py-2 text-right">{{ (product.quantity * product.unitPrice) | number:'1.2-2' }}</td>
+                <td class="px-3 py-2 text-right">{{ formatPriceOnly(product.quantity * product.unitPrice) }} MMK</td>
               </tr>
             </tbody>
           </table>
@@ -416,27 +416,27 @@
             <div class="flex justify-between">
               <span class="text-slate-600">Subtotal</span>
               <span class="text-slate-700">
-                <span *ngIf="selectedOrder.discountAmount > 0" class="line-through text-gray-400 mr-2">{{ (selectedOrder.subtotal + selectedOrder.discountAmount) | number:'1.2-2' }} ks</span>
-                {{ selectedOrder.subtotal | number:'1.2-2' }} ks
+                <span *ngIf="selectedOrder.discountAmount > 0" class="line-through text-gray-400 mr-2">{{ formatPriceOnly(selectedOrder.subtotal + selectedOrder.discountAmount) }} MMK</span>
+                {{ formatPriceOnly(selectedOrder.subtotal) }} MMK
               </span>
             </div>
             <div class="flex justify-between" *ngIf="selectedOrder.deliveryFee > 0">
               <span class="text-slate-600">Delivery Fee</span>
-              <span class="text-slate-700">{{ selectedOrder.deliveryFee | number:'1.2-2' }} ks</span>
+              <span class="text-slate-700">{{ formatPriceOnly(selectedOrder.deliveryFee) }} MMK</span>
             </div>
             <div class="flex justify-between" *ngIf="selectedOrder.discountAmount > 0">
               <span class="text-slate-600">Discount <span *ngIf="selectedOrder.discountCode">({{ selectedOrder.discountCode }})</span></span>
-              <span class="text-rose-600">-{{ selectedOrder.discountAmount | number:'1.2-2' }} ks</span>
+              <span class="text-rose-600">-{{ formatPriceOnly(selectedOrder.discountAmount) }} MMK</span>
             </div>
             <div class="border-t border-slate-200 my-2"></div>
             <div class="flex justify-between font-semibold">
               <span class="text-slate-700">TOTAL</span>
               <span class="text-teal-600">
                 <!-- {{ getRefundedTotal(selectedOrder) | number:'1.2-2' }} ks -->
-                <span *ngIf="selectedOrder.total !== getRefundedTotal(selectedOrder)" class="text-teal-600">{{ selectedOrder.total | number:'1.2-2' }} ks</span>
+                <span *ngIf="selectedOrder.total !== getRefundedTotal(selectedOrder)" class=" ">{{ formatPriceOnly(selectedOrder.total) }} MMK</span>
                 <!-- Show refund badge and amount if money refund -->
                 <span *ngIf="getMoneyRefundStatus(selectedOrder).show" class="block text-xs text-green-600 mt-1">
-                  -{{ getMoneyRefundStatus(selectedOrder).amount | number:'1.2-2' }} ks refunded
+                  -{{ formatPriceOnly(getMoneyRefundStatus(selectedOrder).amount) }} MMK refunded
                 </span>
               </span>
             </div>
@@ -498,7 +498,7 @@
                     </div>
                     <div>
                       <span class="font-medium text-slate-600">Total Amount:</span>
-                      <span class="text-slate-800 ml-2">{{ p.totalAmount }} ks</span>
+                      <span class="text-slate-800 ml-2">{{ formatPriceOnly(p.totalAmount) }} MMK</span>
                     </div>
                   </div>
                 </ng-container>
@@ -518,7 +518,7 @@
                     </div>
                     <div>
                       <span class="font-medium text-slate-600">Total Amount:</span>
-                      <span class="text-slate-800 ml-2">{{ returnRequest.totalAmount }} ks</span>
+                      <span class="text-slate-800 ml-2">{{ formatPriceOnly(returnRequest.totalAmount) }} MMK</span>
                     </div>
                   </div>
                 </ng-template>
@@ -550,7 +550,7 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div>
                   <span class="font-medium text-slate-600">Refund Amount:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.refundAmount }} ks</span>
+                  <span class="text-slate-800 ml-2">{{ formatPriceOnly(returnRequest.refundAmount) }} MMK</span>
                 </div>
                 <div>
                   <span class="font-medium text-slate-600">Refund Type:</span>

@@ -8,6 +8,7 @@ import com.Ojt.Ecommerce.dto.UserDTO;
 import com.Ojt.Ecommerce.dto.AdminCreateUserRequest;
 import com.Ojt.Ecommerce.dto.AddressDTO;
 import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
+import com.Ojt.Ecommerce.dto.SessionRequestDTO;
 import com.Ojt.Ecommerce.entity.AddressType;
 import com.Ojt.Ecommerce.entity.Role;
 import com.Ojt.Ecommerce.entity.User;
@@ -243,31 +244,56 @@ public class UserController {
     @DeleteMapping("/{id}")
     @RequiresPermission(value = USERS_DELETE, level = "advanced", description = "Delete user")
     public ResponseEntity<?> deleteUser(@PathVariable Long id, @RequestHeader("Authorization") String token) {
-        // Why: JPA cascade only works if you load the entity first. This ensures related entities are deleted as well.
-        User targetUser = userRepository.findById(id).orElseThrow();
+        try {
+            // Why: JPA cascade only works if you load the entity first. This ensures related entities are deleted as well.
+            User targetUser = userRepository.findById(id).orElse(null);
+            if (targetUser == null) {
+                return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+            }
 
-        // Get acting user from token
-        String actingUserEmail = jwtTokenProvider.getEmailFromToken(token.replace("Bearer ", ""));
-        User actingUser = userRepository.findByEmail(actingUserEmail).orElseThrow();
+            // Get acting user from token
+            String actingUserEmail = jwtTokenProvider.getEmailFromToken(token.replace("Bearer ", ""));
+            User actingUser = userRepository.findByEmail(actingUserEmail).orElse(null);
+            if (actingUser == null) {
+                return ResponseEntity.status(404).body(Map.of("error", "Acting user not found"));
+            }
 
-        // Role hierarchy check
-        int actingLevel = actingUser.getRole().getLevel();
-        int targetLevel = targetUser.getRole().getLevel();
-        if (actingLevel <= targetLevel) {
-            return ResponseEntity.status(403).body("You cannot delete a user with an equal or higher role.");
+            // Role hierarchy check
+            int actingLevel = actingUser.getRole().getLevel();
+            int targetLevel = targetUser.getRole().getLevel();
+            if (actingLevel <= targetLevel) {
+                return ResponseEntity.status(403).body(Map.of("error", "You cannot delete a user with an equal or higher role."));
+            }
+
+            userRepository.delete(targetUser);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to delete user: " + e.getMessage()));
         }
-
-        userRepository.delete(targetUser);
-        return ResponseEntity.ok().build();
     }
 
     // Update user status endpoint (for activate/deactivate action)
     @PatchMapping("/{id}/status")
     public ResponseEntity<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
-        User user = userRepository.findById(id).orElseThrow();
-        user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.valueOf(body.get("status")));
-        userRepository.save(user);
-        return ResponseEntity.ok().build();
+        try {
+            User user = userRepository.findById(id).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+            }
+            
+            String status = body.get("status");
+            if (status == null || status.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "status is required"));
+            }
+            
+            user.setStatus(com.Ojt.Ecommerce.entity.UserStatus.valueOf(status));
+            userRepository.save(user);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid status value"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to update user status: " + e.getMessage()));
+        }
     }
 
     // Fix existing users with null status
@@ -290,49 +316,168 @@ public class UserController {
 
     // Get user details endpoint (for view details modal)
     @GetMapping("/{id}")
-    public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
-        User user = userRepository.findById(id).orElseThrow();
-        return ResponseEntity.ok(new UserDTO(user));
+    public ResponseEntity<?> getUserById(@PathVariable Long id) {
+        try {
+            User user = userRepository.findById(id).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+            }
+            return ResponseEntity.ok(new UserDTO(user));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to get user: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/user/activity")
     public ResponseEntity<?> logUserActivity(@RequestBody Map<String, Object> payload) {
-        Long userId = Long.valueOf(payload.get("userId").toString());
-        String type = payload.get("type").toString();
-        userActivityService.logActivity(userId, type);
-        return ResponseEntity.ok().build();
+        try {
+            Object userIdObj = payload.get("userId");
+            Object typeObj = payload.get("type");
+            
+            if (userIdObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
+            }
+            
+            if (typeObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "type is required"));
+            }
+            
+            Long userId = Long.valueOf(userIdObj.toString());
+            String type = typeObj.toString();
+            
+            userActivityService.logActivity(userId, type);
+            return ResponseEntity.ok().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid userId format"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to log activity: " + e.getMessage()));
+        }
     }
 
     // Session management endpoints
     @PostMapping("/session/start")
     public ResponseEntity<?> startSession(@RequestBody Map<String, Object> payload) {
-        Long userId = Long.valueOf(payload.get("userId").toString());
-        String sessionId = payload.get("sessionId").toString();
-        String userAgent = payload.get("userAgent").toString();
-        String ipAddress = payload.get("ipAddress").toString();
+        try {
+            // Log the incoming payload for debugging
+            System.out.println("=== SESSION START REQUEST ===");
+            System.out.println("Received session start payload: " + payload);
+            System.out.println("Payload type: " + (payload != null ? payload.getClass().getSimpleName() : "null"));
+            if (payload != null) {
+                System.out.println("Payload keys: " + payload.keySet());
+                System.out.println("Payload values: " + payload.values());
+            }
+            System.out.println("=============================");
+            
+            // Validate payload
+            if (payload == null) {
+                System.out.println("ERROR: Payload is null");
+                return ResponseEntity.badRequest().body(Map.of("error", "Request body is required"));
+            }
 
-        // Handle anonymous users (userId = 0)
-        if (userId == 0) {
-            // For anonymous users, we can use a special identifier or null
-            sessionService.startSession(null, sessionId, userAgent, ipAddress);
-        } else {
-            sessionService.startSession(userId, sessionId, userAgent, ipAddress);
+            // Safely extract and validate values
+            Object userIdObj = payload.get("userId");
+            Long userId = null;
+            if (userIdObj != null) {
+                try {
+                    userId = Long.valueOf(userIdObj.toString());
+                    if (userId < 0) {
+                        return ResponseEntity.badRequest().body(Map.of("error", "userId must be non-negative"));
+                    }
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body(Map.of("error", "Invalid userId format"));
+                }
+            }
+            
+            Object sessionIdObj = payload.get("sessionId");
+            String sessionId = null;
+            if (sessionIdObj != null) {
+                sessionId = sessionIdObj.toString().trim();
+                System.out.println("Extracted sessionId: '" + sessionId + "'");
+            } else {
+                System.out.println("ERROR: sessionId is null in payload");
+            }
+            
+            Object userAgentObj = payload.get("userAgent");
+            String userAgent = userAgentObj != null ? userAgentObj.toString().trim() : "Unknown";
+            
+            Object ipAddressObj = payload.get("ipAddress");
+            String ipAddress = ipAddressObj != null ? ipAddressObj.toString().trim() : "Unknown";
+
+            // Validate required fields
+            if (sessionId == null || sessionId.isEmpty()) {
+                System.out.println("SessionId validation failed. sessionId: '" + sessionId + "'");
+                System.out.println("Full payload keys: " + payload.keySet());
+                return ResponseEntity.badRequest().body(Map.of("error", "sessionId is required"));
+            }
+
+            // Validate sessionId format (basic validation)
+            if (!sessionId.matches("^[a-zA-Z0-9_-]+$")) {
+                System.out.println("SessionId format validation failed: " + sessionId);
+                return ResponseEntity.badRequest().body(Map.of("error", "Invalid sessionId format"));
+            }
+
+            System.out.println("Processing session start - userId: " + userId + ", sessionId: " + sessionId);
+
+            // Handle anonymous users (userId = 0 or null)
+            if (userId == null || userId == 0) {
+                sessionService.startSession(null, sessionId, userAgent, ipAddress);
+            } else {
+                sessionService.startSession(userId, sessionId, userAgent, ipAddress);
+            }
+            
+            System.out.println("Session started successfully");
+            return ResponseEntity.ok(Map.of("message", "Session started successfully"));
+        } catch (Exception e) {
+            System.err.println("Error in startSession: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to start session: " + e.getMessage()));
         }
-        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/session/page-view")
     public ResponseEntity<?> recordPageView(@RequestBody Map<String, Object> payload) {
-        String sessionId = payload.get("sessionId").toString();
-        sessionService.recordPageView(sessionId);
-        return ResponseEntity.ok().build();
+        try {
+            Object sessionIdObj = payload.get("sessionId");
+            String sessionId = sessionIdObj != null ? sessionIdObj.toString() : null;
+            
+            if (sessionId == null || sessionId.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "sessionId is required"));
+            }
+            
+            sessionService.recordPageView(sessionId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to record page view: " + e.getMessage()));
+        }
     }
 
     @PostMapping("/session/end")
     public ResponseEntity<?> endSession(@RequestBody Map<String, Object> payload) {
-        String sessionId = payload.get("sessionId").toString();
-        sessionService.endSession(sessionId);
-        return ResponseEntity.ok().build();
+        try {
+            Object sessionIdObj = payload.get("sessionId");
+            String sessionId = sessionIdObj != null ? sessionIdObj.toString() : null;
+            
+            if (sessionId == null || sessionId.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "sessionId is required"));
+            }
+            
+            sessionService.endSession(sessionId);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to end session: " + e.getMessage()));
+        }
+    }
+
+    // Test endpoint to verify session is working
+    @PostMapping("/session/test")
+    public ResponseEntity<?> testSession(@RequestBody Map<String, Object> payload) {
+        System.out.println("=== SESSION TEST ENDPOINT ===");
+        System.out.println("Test payload received: " + payload);
+        return ResponseEntity.ok(Map.of(
+            "message", "Session test endpoint working",
+            "receivedPayload", payload,
+            "timestamp", System.currentTimeMillis()
+        ));
     }
 
     // Get user total points endpoint

@@ -155,18 +155,27 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.isAuthenticated = this.authService.isLoggedIn();
         this.userId = this.authService.getUserId();
         
-        // Track sessions for ALL users (authenticated and anonymous)
-        if (this.isAuthenticated && this.userId) {
-          this.userActivityService.logPageView(this.userId);
-          // Start session for authenticated user
-          this.sessionService.startSession(this.userId);
-        } else {
-          // Start session for anonymous user
-          this.sessionService.startSession();
-        }
+        // Ensure session is initialized before starting
+        this.sessionService.ensureSessionInitialized();
         
-        // Record page view for session tracking
-        this.sessionService.recordPageView();
+        // Test connection first
+        this.sessionService.testConnection();
+        
+        // Add a small delay to ensure everything is properly initialized
+        setTimeout(() => {
+          // Track sessions for ALL users (authenticated and anonymous)
+          if (this.isAuthenticated && this.userId) {
+            this.userActivityService.logPageView(this.userId);
+            // Start session for authenticated user
+            this.sessionService.startSession(this.userId);
+          } else {
+            // Start session for anonymous user
+            this.sessionService.startSession();
+          }
+          
+          // Record page view for session tracking
+          this.sessionService.recordPageView();
+        }, 100);
       }
     });
     this.startTypewriter();

@@ -37,7 +37,7 @@
       </div>
       <div>
         <div class="text-xs text-slate-500">Total</div>
-        <div class="text-slate-700">{{ order?.total | number:'1.2-2' }} ks</div>
+        <div class="text-slate-700">{{ formatPriceOnly(order?.total) }} MMK</div>
       </div>
     </div>
   </div>

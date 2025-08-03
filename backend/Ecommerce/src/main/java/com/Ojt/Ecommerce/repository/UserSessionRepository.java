@@ -16,6 +16,12 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     // Find active session by session ID
     Optional<UserSession> findBySessionIdAndEndTimeIsNull(String sessionId);
     
+    // Find session by session ID (regardless of end time)
+    Optional<UserSession> findBySessionId(String sessionId);
+    
+    // Delete session by session ID (for cleanup)
+    void deleteBySessionId(String sessionId);
+    
     // Find active sessions by user ID
     List<UserSession> findByUserIdAndEndTimeIsNull(Long userId);
     
@@ -23,55 +29,55 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     List<UserSession> findByUserIdAndStartTimeBetween(Long userId, LocalDateTime start, LocalDateTime end);
     
     // Count active sessions within time range
-    @Query("SELECT COUNT(DISTINCT us.userId) FROM UserSession us WHERE us.startTime BETWEEN :start AND :end AND us.endTime IS NULL")
+    @Query(value = "SELECT COUNT(DISTINCT user_id) FROM user_sessions WHERE start_time BETWEEN :start AND :end AND end_time IS NULL", nativeQuery = true)
     int countActiveSessions(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
     // Count total sessions within time range
-    @Query("SELECT COUNT(us) FROM UserSession us WHERE us.startTime BETWEEN :start AND :end")
+    @Query(value = "SELECT COUNT(*) FROM user_sessions WHERE start_time BETWEEN :start AND :end", nativeQuery = true)
     int countTotalSessions(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
-    // Count bounce sessions within time range
-    @Query("SELECT COUNT(us) FROM UserSession us WHERE us.startTime BETWEEN :start AND :end AND us.isBounce = true")
+    // Count bounce sessions within time range (sessions with page_count <= 1)
+    @Query(value = "SELECT COUNT(*) FROM user_sessions WHERE start_time BETWEEN :start AND :end AND page_count <= 1", nativeQuery = true)
     int countBounceSessions(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
     // Get sessions grouped by time period for trends
-    @Query("SELECT DATE(us.startTime) as date, COUNT(us) as totalSessions, " +
-           "COUNT(CASE WHEN us.isBounce = true THEN 1 END) as bounceSessions, " +
-           "COUNT(DISTINCT us.userId) as uniqueUsers " +
-           "FROM UserSession us " +
-           "WHERE us.startTime BETWEEN :start AND :end " +
-           "GROUP BY DATE(us.startTime) " +
-           "ORDER BY date")
+    @Query(value = "SELECT DATE(start_time) as date, COUNT(*) as totalSessions, " +
+           "COUNT(CASE WHEN page_count <= 1 THEN 1 END) as bounceSessions, " +
+           "COUNT(DISTINCT user_id) as uniqueUsers " +
+           "FROM user_sessions " +
+           "WHERE start_time BETWEEN :start AND :end " +
+           "GROUP BY DATE(start_time) " +
+           "ORDER BY date", nativeQuery = true)
     List<Object[]> getSessionStatsByDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
     // Get sessions grouped by hour for hourly trends
-    @Query("SELECT DATE(us.startTime) as date, HOUR(us.startTime) as hour, " +
-           "COUNT(us) as totalSessions, " +
-           "COUNT(CASE WHEN us.isBounce = true THEN 1 END) as bounceSessions " +
-           "FROM UserSession us " +
-           "WHERE us.startTime BETWEEN :start AND :end " +
-           "GROUP BY DATE(us.startTime), HOUR(us.startTime) " +
-           "ORDER BY date, hour")
+    @Query(value = "SELECT DATE(start_time) as date, HOUR(start_time) as hour, " +
+           "COUNT(*) as totalSessions, " +
+           "COUNT(CASE WHEN page_count <= 1 THEN 1 END) as bounceSessions " +
+           "FROM user_sessions " +
+           "WHERE start_time BETWEEN :start AND :end " +
+           "GROUP BY DATE(start_time), HOUR(start_time) " +
+           "ORDER BY date, hour", nativeQuery = true)
     List<Object[]> getSessionStatsByHour(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
     // Get sessions grouped by week for weekly trends
-    @Query("SELECT YEARWEEK(us.startTime) as week, " +
-           "COUNT(us) as totalSessions, " +
-           "COUNT(CASE WHEN us.isBounce = true THEN 1 END) as bounceSessions " +
-           "FROM UserSession us " +
-           "WHERE us.startTime BETWEEN :start AND :end " +
-           "GROUP BY YEARWEEK(us.startTime) " +
-           "ORDER BY week")
+    @Query(value = "SELECT YEARWEEK(start_time) as week, " +
+           "COUNT(*) as totalSessions, " +
+           "COUNT(CASE WHEN page_count <= 1 THEN 1 END) as bounceSessions " +
+           "FROM user_sessions " +
+           "WHERE start_time BETWEEN :start AND :end " +
+           "GROUP BY YEARWEEK(start_time) " +
+           "ORDER BY week", nativeQuery = true)
     List<Object[]> getSessionStatsByWeek(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
     // Get sessions grouped by month for monthly trends
-    @Query("SELECT YEAR(us.startTime) as year, MONTH(us.startTime) as month, " +
-           "COUNT(us) as totalSessions, " +
-           "COUNT(CASE WHEN us.isBounce = true THEN 1 END) as bounceSessions " +
-           "FROM UserSession us " +
-           "WHERE us.startTime BETWEEN :start AND :end " +
-           "GROUP BY YEAR(us.startTime), MONTH(us.startTime) " +
-           "ORDER BY year, month")
+    @Query(value = "SELECT YEAR(start_time) as year, MONTH(start_time) as month, " +
+           "COUNT(*) as totalSessions, " +
+           "COUNT(CASE WHEN page_count <= 1 THEN 1 END) as bounceSessions " +
+           "FROM user_sessions " +
+           "WHERE start_time BETWEEN :start AND :end " +
+           "GROUP BY YEAR(start_time), MONTH(start_time) " +
+           "ORDER BY year, month", nativeQuery = true)
     List<Object[]> getSessionStatsByMonth(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
     
     // Clean up old sessions (for maintenance)
@@ -141,8 +147,8 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     // Get customer acquisition statistics
     @Query(value = "SELECT DATE(us.start_time) as date, " +
            "COUNT(DISTINCT us.user_id) as acquired, " +
-           "COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as churned, " +
-           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as retained " +
+           "COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as churned, " +
+           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as retained " +
            "FROM user_sessions us " +
            "WHERE us.start_time BETWEEN :start AND :end " +
            "AND us.user_id != -1 " +
@@ -153,8 +159,8 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     // Get customer acquisition statistics by hour
     @Query(value = "SELECT DATE(us.start_time) as date, HOUR(us.start_time) as hour, " +
            "COUNT(DISTINCT us.user_id) as acquired, " +
-           "COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as churned, " +
-           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as retained " +
+           "COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as churned, " +
+           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as retained " +
            "FROM user_sessions us " +
            "WHERE us.start_time BETWEEN :start AND :end " +
            "AND us.user_id != -1 " +
@@ -165,8 +171,8 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     // Get customer acquisition statistics by week
     @Query(value = "SELECT YEARWEEK(us.start_time) as week, " +
            "COUNT(DISTINCT us.user_id) as acquired, " +
-           "COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as churned, " +
-           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as retained " +
+           "COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as churned, " +
+           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as retained " +
            "FROM user_sessions us " +
            "WHERE us.start_time BETWEEN :start AND :end " +
            "AND us.user_id != -1 " +
@@ -177,8 +183,8 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     // Get customer acquisition statistics by month
     @Query(value = "SELECT YEAR(us.start_time) as year, MONTH(us.start_time) as month, " +
            "COUNT(DISTINCT us.user_id) as acquired, " +
-           "COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as churned, " +
-           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.is_bounce = true THEN 1 END) as retained " +
+           "COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as churned, " +
+           "COUNT(DISTINCT us.user_id) - COUNT(CASE WHEN us.page_count <= 1 THEN 1 END) as retained " +
            "FROM user_sessions us " +
            "WHERE us.start_time BETWEEN :start AND :end " +
            "AND us.user_id != -1 " +

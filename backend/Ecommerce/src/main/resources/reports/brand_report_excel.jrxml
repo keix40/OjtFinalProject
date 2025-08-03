@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="Brand Report Excel" pageWidth="595" pageHeight="842" columnWidth="555"
+              leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20"
+              uuid="b2c3d4e5-f6a7-8901-bcde-f23456789012">
+    
+    <property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="net.sf.jasperreports.export.xls.freeze.row" value="3"/>
+	<property name="net.sf.jasperreports.export.xls.one.page.per.sheet" value="false"/>
+    
+	<title>
+        <band height="60" splitType="Stretch">
+			<staticText>
+                <reportElement x="0" y="0" width="555" height="30" uuid="c3d4e5f6-a7b8-9012-cdef-345678901234"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="20" isBold="true"/>
+				</textElement>
+				<text><![CDATA[BRITIUM GALLERY]]></text>
+			</staticText>
+			<staticText>
+                <reportElement x="0" y="30" width="555" height="30" uuid="d4e5f6a7-b8c9-0123-def4-567890123456"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="14" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Brand Management Report]]></text>
+			</staticText>
+		</band>
+	</title>
+    
+	<columnHeader>
+		<band height="30" splitType="Stretch">
+			<staticText>
+                <reportElement x="0" y="0" width="70" height="30" uuid="e5f6a7b8-c9d0-1234-ef56-789012345678"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Brand ID]]></text>
+			</staticText>
+			<staticText>
+                <reportElement x="70" y="0" width="150" height="30" uuid="f6a7b8c9-d0e1-2345-f678-901234567890"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Brand Name]]></text>
+			</staticText>
+			<staticText>
+                <reportElement x="220" y="0" width="200" height="30" uuid="a7b8c9d0-e1f2-3456-7890-123456789012"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="10" isBold="true"/>
+                </textElement>
+                <text><![CDATA[Description]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="420" y="0" width="70" height="30" uuid="b8c9d0e1-f2a3-4567-8901-234567890123"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+                <text><![CDATA[Create Date]]></text>
+			</staticText>
+			<staticText>
+                <reportElement x="490" y="0" width="65" height="30" uuid="c9d0e1f2-a3b4-5678-9012-345678901234"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="10" isBold="true"/>
+				</textElement>
+                <text><![CDATA[Status]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+    
+	<detail>
+		<band height="20" splitType="Prevent">
+			<textField isBlankWhenNull="true">
+                <reportElement x="0" y="0" width="70" height="20" uuid="d0e1f2a3-b4c5-6789-0123-456789012345"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{brandId}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+                <reportElement x="70" y="0" width="150" height="20" uuid="e1f2a3b4-c5d6-7890-1234-567890123456"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{brandName}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+                <reportElement x="220" y="0" width="200" height="20" uuid="f2a3b4c5-d6e7-8901-2345-678901234567"/>
+				<textElement textAlignment="Left" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+                <textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+            </textField>
+            <textField isBlankWhenNull="true">
+                <reportElement x="420" y="0" width="70" height="20" uuid="a3b4c5d6-e7f8-9012-3456-789012345678"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{createDate}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+                <reportElement x="490" y="0" width="65" height="20" uuid="b4c5d6e7-f8a9-0123-4567-890123456789"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="9"/>
+				</textElement>
+                <textFieldExpression><![CDATA[$F{status}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+</jasperReport> 

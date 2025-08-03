@@ -360,7 +360,7 @@
               <td class="px-3 py-2 text-gray-700 truncate max-w-[120px]" title="{{ product.productCode }}">{{ product.productCode }}</td>
               <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].brandName || '-' }}</td>
               <td class="px-3 py-2 text-gray-700">{{ product.categoryBrandArray[0].cateName || '-' }}</td>
-              <td class="px-3 py-2 text-blue-700 font-semibold text-right">{{ product.price | number:'1.0-0' }}</td>
+              <td class="px-3 py-2 text-blue-700 font-semibold text-right">{{ formatPriceOnly(product.price) }} MMK</td>
               <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
             </tr>
           </tbody>

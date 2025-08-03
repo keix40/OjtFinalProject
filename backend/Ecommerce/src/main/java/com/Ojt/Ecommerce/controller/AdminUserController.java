@@ -172,12 +172,30 @@ public class AdminUserController {
     // Log admin activity endpoint
     @PostMapping("/activity")
     public ResponseEntity<?> logAdminActivity(@RequestBody Map<String, Object> payload) {
-        Long userId = Long.valueOf(payload.get("userId").toString());
-        String type = payload.get("type").toString();
-        userActivityService.logActivity(userId, type);
-        // Broadcast updated online status to all subscribers
-        Map<Long, Map<String, Object>> status = getAdminUsersOnlineStatus();
-        messagingTemplate.convertAndSend("/topic/admin-online-status", status);
-        return ResponseEntity.ok().build();
+        try {
+            Object userIdObj = payload.get("userId");
+            Object typeObj = payload.get("type");
+            
+            if (userIdObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "userId is required"));
+            }
+            
+            if (typeObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "type is required"));
+            }
+            
+            Long userId = Long.valueOf(userIdObj.toString());
+            String type = typeObj.toString();
+            
+            userActivityService.logActivity(userId, type);
+            // Broadcast updated online status to all subscribers
+            Map<Long, Map<String, Object>> status = getAdminUsersOnlineStatus();
+            messagingTemplate.convertAndSend("/topic/admin-online-status", status);
+            return ResponseEntity.ok().build();
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid userId format"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to log activity: " + e.getMessage()));
+        }
     }
 } 

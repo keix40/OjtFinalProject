@@ -43,4 +43,21 @@ export class OrderService {
   calculateFeeByDistance(deliveryServiceId: number, addressId: number): Observable<number> {
     return this.http.get<number>(`${this.baseUrl}/calculateFeeByDistance?deliveryServiceId=${deliveryServiceId}&addressId=${addressId}`);
   }
+
+  // Jasper Reports Export Methods
+  exportOrderReportToPDF(): Observable<Blob> {
+    return this.http.get('http://localhost:8080/api/order-reports/pdf', { responseType: 'blob' });
+  }
+
+  exportSelectedOrdersToPDF(orderIds: number[]): Observable<Blob> {
+    return this.http.post('http://localhost:8080/api/order-reports/pdf/selected', orderIds, { responseType: 'blob' });
+  }
+
+  exportOrderReportToCSV(): Observable<Blob> {
+    return this.http.get('http://localhost:8080/api/order-reports/csv', { responseType: 'blob' });
+  }
+
+  exportSelectedOrdersToCSV(orderIds: number[]): Observable<Blob> {
+    return this.http.post('http://localhost:8080/api/order-reports/csv/selected', orderIds, { responseType: 'blob' });
+  }
 }

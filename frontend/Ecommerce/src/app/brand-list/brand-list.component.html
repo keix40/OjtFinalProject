@@ -50,25 +50,25 @@
               Add Brand
           </button>
 
-          <!-- Excel Export Dropdown -->
+          <!-- CSV Export Dropdown -->
           <div class="relative">
             <button 
-              (click)="toggleExcelDropdown()"
-              class="inline-flex items-center gap-2 px-4 py-2.5 text-green-600 bg-white border border-green-200 rounded-lg hover:bg-green-50 transition-colors shadow-sm">
+              (click)="toggleCsvDropdown()"
+              class="inline-flex items-center gap-2 px-4 py-2.5 text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
               <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
               </svg>
-              Export Excel
-              <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': excelDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              Export CSV
+              <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': csvDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
               </svg>
             </button>
             
-            <div *ngIf="excelDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
+            <div *ngIf="csvDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
               <button 
                 class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-                (click)="exportToExcel('all'); excelDropdownOpen = false">
-                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                (click)="exportToCSV('all'); csvDropdownOpen = false">
+                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
                 </svg>
                 Export All Brands
@@ -76,8 +76,8 @@
               <button 
                 class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 [disabled]="selectedBrands.length === 0"
-                (click)="exportToExcel('selected'); excelDropdownOpen = false">
-                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                (click)="exportToCSV('selected'); csvDropdownOpen = false">
+                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                 </svg>
                 Export Selected ({{ selectedBrands.length }})

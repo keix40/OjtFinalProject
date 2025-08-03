@@ -7,6 +7,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { UserService } from '../services/user.service';
 import { VipTier, VipTierService } from '../services/vip-tier.service';
 import { VipStatsService } from '../services/vip-stats.service';
+import { PriceFormatService } from '../services/price-format.service';
 import { Subject } from 'rxjs';
 import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
@@ -131,7 +132,8 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     public imageService: ImageService,
     private userService: UserService,
     private vipTierService: VipTierService,
-    private vipStatsService: VipStatsService
+    private vipStatsService: VipStatsService,
+    private priceFormatService: PriceFormatService
   ) {
     this.vipForm = this.fb.group({
       customerSearch: ['', Validators.required],
@@ -322,20 +324,35 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   }
 
   ngAfterViewInit(): void {
-    this.initializeIcons();
+    
   }
 
   // Initialize Lucide icons
   initializeIcons(): void {
-    // Use setTimeout to ensure DOM is ready, but with a shorter delay
+    // Try to initialize icons immediately
+    if ((window as any)['lucide'] && (window as any)['lucide'].createIcons) {
+      (window as any)['lucide'].createIcons();
+    }
+    
+    // Also try with a small delay to ensure DOM is fully ready
     setTimeout(() => {
       if ((window as any)['lucide'] && (window as any)['lucide'].createIcons) {
         (window as any)['lucide'].createIcons();
       }
-    }, 10);
+    }, 50);
+    
+    // Additional attempt with longer delay for dynamic content
+    setTimeout(() => {
+      if ((window as any)['lucide'] && (window as any)['lucide'].createIcons) {
+        (window as any)['lucide'].createIcons();
+      }
+    }, 200);
   }
 
-  ngAfterViewChecked(): void {}
+  ngAfterViewChecked(): void {
+    // Initialize icons on every view check to ensure they appear
+    
+  }
 
   loadVipCustomers(): void {
     this.userService.getVipCustomers()
@@ -548,7 +565,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.updatePagination();
     
     // Initialize icons after filtering
-    this.initializeIcons();
+    
   }
 
   clearFilters(): void {
@@ -569,7 +586,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.paginatedCustomers = this.filteredCustomers.slice(startIndex, endIndex);
     
     // Initialize icons after pagination update
-    this.initializeIcons();
+    
   }
 
   goToPage(page: number): void {
@@ -626,7 +643,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   setViewMode(mode: 'table' | 'cards'): void {
     this.viewMode = mode;
     // Initialize icons after view mode change
-    this.initializeIcons();
+    
   }
 
   // Customer management methods
@@ -656,7 +673,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   viewCustomerDetails(customer: VipCustomer): void {
     this.selectedCustomerDetails = customer;
     this.showCustomerModal = true;
-    this.initializeIcons();
+    
   }
 
   editCustomer(customer: VipCustomer): void {
@@ -731,7 +748,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.allCustomers = this.allCustomers.filter(c => !this.selectedCustomers.includes(c.userId.toString()));
     this.applyFilters();
     this.selectedCustomers = [];
-    this.initializeIcons();
+    
   }
 
   bulkChangeStatus(): void {
@@ -744,7 +761,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     );
     this.applyFilters();
     this.selectedCustomers = [];
-    this.initializeIcons();
+    
   }
 
   // Utility methods
@@ -781,6 +798,11 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     
     console.log('Data refreshed - Loyalty score will update automatically');
     // Icons will be initialized in loadVipCustomers() and loadTiers()
+    
+    // Also initialize icons after a short delay to ensure they appear
+    // setTimeout(() => {
+    //   this.isRefreshingData = false;
+    // }, 1000);
   }
 
   exportVipCustomers(): void {
@@ -856,7 +878,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   openAddTierModal() {
     this.showAddTierModal = true;
     this.showTierListModal = false;
-    this.initializeIcons();
+    
   }
   closeAddTierModal() {
     this.showAddTierModal = false;
@@ -865,7 +887,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   openTierListModal() {
     this.showTierListModal = true;
     this.showAddTierModal = false;
-    this.initializeIcons();
+    
   }
   closeTierListModal() {
     this.showTierListModal = false;
@@ -882,7 +904,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
         this.vipTiersForOverview = [];
       }
       
-      this.initializeIcons();
+      
     });
   }
   onTierSubmit() {
@@ -942,5 +964,36 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     return Math.round(Math.max(-50, Math.min(50, change))); // Limit between -50% and +50%
   }
 
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
 
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
+  }
+
+  // Format min points with thousand separators
+  formatMinPoints(points: number): string {
+    if (points === null || points === undefined || isNaN(points)) {
+      return '0';
+    }
+    return Math.round(points).toLocaleString('en-US');
+  }
+
+  // Format numbers with thousand separators
+  formatNumber(num: number): string {
+    if (num === null || num === undefined || isNaN(num)) {
+      return '0';
+    }
+    return Math.round(num).toLocaleString('en-US');
+  }
 }

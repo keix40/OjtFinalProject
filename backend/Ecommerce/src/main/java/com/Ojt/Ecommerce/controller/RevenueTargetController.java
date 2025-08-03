@@ -33,10 +33,22 @@ public class RevenueTargetController {
     @LogActivity(actionType = "CREATE", entityType = "REVENUE_TARGET", description = "Created revenue target", severityLevel = "MEDIUM")
     @PostMapping
     public ResponseEntity<?> setTarget(@RequestBody Map<String, Object> payload) {
-        String periodType = (String) payload.get("periodType");
-        String periodValue = (String) payload.get("periodValue");
-        Double targetAmount = Double.valueOf(payload.get("targetAmount").toString());
-        RevenueTarget target = revenueTargetService.setTarget(periodType, periodValue, targetAmount);
-        return ResponseEntity.ok(target);
+        try {
+            String periodType = (String) payload.get("periodType");
+            String periodValue = (String) payload.get("periodValue");
+            
+            Object targetAmountObj = payload.get("targetAmount");
+            if (targetAmountObj == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "targetAmount is required"));
+            }
+            
+            Double targetAmount = Double.valueOf(targetAmountObj.toString());
+            RevenueTarget target = revenueTargetService.setTarget(periodType, periodValue, targetAmount);
+            return ResponseEntity.ok(target);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid targetAmount format"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("error", "Failed to set target: " + e.getMessage()));
+        }
     }
 } 

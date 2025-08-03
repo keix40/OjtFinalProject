@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-return-detail',
@@ -45,7 +46,8 @@ export class ReturnDetailComponent implements OnInit {
     private orderService: OrderService,
     private route: ActivatedRoute,
     private modalService: NgbModal,
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private priceFormatService: PriceFormatService
   ) {}
   public PermissionConstants = PermissionConstants;
 
@@ -55,7 +57,7 @@ export class ReturnDetailComponent implements OnInit {
 
   private getTotalAmountFromProducts(products: any[]): number {
     if (!products || products.length === 0) return 0;
-    return products.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+    return products.reduce((sum, p) => sum + ((p.totalAmount ?? 0) || 0), 0);
   }
 
   loadRequestDetail(){
@@ -300,5 +302,22 @@ export class ReturnDetailComponent implements OnInit {
         Swal.fire('Error', `Test failed: ${error.error || error.message || 'Unknown error'}`, 'error');
       }
     });
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

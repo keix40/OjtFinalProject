@@ -16,6 +16,7 @@ import { PermissionConstants } from '../constants/permission.constants';
 import { AttributeService } from '../services/attribute.service';
 import { Attribute, AttributeValue } from '../attribute';
 import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
+import { PriceFormatService } from '../services/price-format.service';
 declare var $: any;
 declare var lucide: any;
 
@@ -80,7 +81,7 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   selectAll: boolean = false;
   
   // Dropdown states
-  excelDropdownOpen: boolean = false;
+  csvDropdownOpen: boolean = false;
   pdfDropdownOpen: boolean = false;
 
   currentPage: number = 1;
@@ -106,7 +107,8 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     public imageService: ImageService,
     private router: Router,
     private attributeService: AttributeService,
-    permissionService: PermissionService
+    permissionService: PermissionService,
+    private priceFormatService: PriceFormatService
   ) {
     this.PermissionConstants = PermissionConstants;
     this.permissionService = permissionService;
@@ -135,19 +137,19 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   private handleDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     if (!target.closest('.relative')) {
-      this.excelDropdownOpen = false;
+      this.csvDropdownOpen = false;
       this.pdfDropdownOpen = false;
     }
   }
 
-  toggleExcelDropdown(): void {
-    this.excelDropdownOpen = !this.excelDropdownOpen;
-    if (this.excelDropdownOpen) this.pdfDropdownOpen = false;
+  toggleCsvDropdown(): void {
+    this.csvDropdownOpen = !this.csvDropdownOpen;
+    if (this.csvDropdownOpen) this.pdfDropdownOpen = false;
   }
 
   togglePdfDropdown(): void {
     this.pdfDropdownOpen = !this.pdfDropdownOpen;
-    if (this.pdfDropdownOpen) this.excelDropdownOpen = false;
+    if (this.pdfDropdownOpen) this.csvDropdownOpen = false;
   }
 
   // Edit functionality
@@ -445,59 +447,57 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
   }
   
   // Export to Excel using backend service
-  async exportToExcel(): Promise<void> {
+  async exportToCSV(): Promise<void> {
     try {
       Swal.fire({
-        title: 'Generating Report...',
-        text: 'Please wait while we generate your Excel report...',
+        title: 'Generating CSV Report...',
+        text: 'Please wait while we prepare your report.',
         allowOutsideClick: false,
         didOpen: () => {
           Swal.showLoading();
         }
       });
 
-      this.productService.exportProductReportToExcel().subscribe({
-                next: (blob: Blob) => {
+      this.productService.exportAllProductsToCSV().subscribe({
+        next: (blob: Blob) => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          // Determine file extension based on blob type
-          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
-          link.download = `Britium_Gallery_Product_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
+          link.download = `Britium_Gallery_All_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
           link.click();
           window.URL.revokeObjectURL(url);
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Export Successful!',
-            text: 'Product report has been exported successfully.',
+          Swal.fire({
+            icon: 'success',
+            title: 'Export Successful!',
+            text: 'All products have been exported successfully.',
             timer: 3000,
-        showConfirmButton: false
+            showConfirmButton: false
           });
         },
-        error: (error) => {
-          console.error('Excel export error:', error);
+        error: (error: any) => {
+          console.error('CSV export error:', error);
           Swal.fire({
             icon: 'error',
             title: 'Export Failed',
-            text: 'There was an error exporting the product report to Excel.',
+            text: 'There was an error exporting all products to CSV.',
             confirmButtonColor: '#3085d6'
           });
         }
       });
     } catch (error) {
-      console.error('Excel export error:', error);
+      console.error('CSV export error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Export Failed',
-        text: 'There was an error exporting the product report to Excel.',
+        text: 'There was an error exporting to CSV. Please try again.',
         confirmButtonColor: '#3085d6'
       });
     }
   }
 
-  // Export selected products to Excel (using backend service)
-  async exportSelectedToExcel(): Promise<void> {
+  // Export selected products to CSV (using backend service)
+  async exportSelectedToCSV(): Promise<void> {
     const selectedProducts = this.selectedProducts;
     if (selectedProducts.length === 0) {
       Swal.fire({
@@ -511,8 +511,8 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
 
     try {
       Swal.fire({
-        title: 'Generating Report...',
-        text: 'Please wait while we generate your Excel report...',
+        title: 'Generating CSV Report...',
+        text: 'Please wait while we prepare your report.',
         allowOutsideClick: false,
         didOpen: () => {
           Swal.showLoading();
@@ -522,14 +522,12 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
       // Get selected product IDs
       const selectedProductIds = selectedProducts.map(p => p.id);
 
-      this.productService.exportSelectedProductsToExcel(selectedProductIds).subscribe({
+      this.productService.exportSelectedProductsToCSV(selectedProductIds).subscribe({
         next: (blob: Blob) => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          // Determine file extension based on blob type
-          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
-          link.download = `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
+          link.download = `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
           link.click();
           window.URL.revokeObjectURL(url);
 
@@ -541,22 +539,22 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
             showConfirmButton: false
           });
         },
-        error: (error) => {
-          console.error('Excel export error:', error);
+        error: (error: any) => {
+          console.error('CSV export error:', error);
           Swal.fire({
             icon: 'error',
             title: 'Export Failed',
-            text: 'There was an error exporting the selected products to Excel.',
+            text: 'There was an error exporting the selected products to CSV.',
             confirmButtonColor: '#3085d6'
           });
         }
       });
     } catch (error) {
-      console.error('Excel export error:', error);
+      console.error('CSV export error:', error);
       Swal.fire({
         icon: 'error',
         title: 'Export Failed',
-        text: 'There was an error exporting the selected products to Excel.',
+        text: 'There was an error exporting the selected products to CSV.',
         confirmButtonColor: '#3085d6'
       });
     }
@@ -579,12 +577,12 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
       });
 
       this.productService.exportProductReportToPDF().subscribe({
-                next: (blob: Blob) => {
+        next: (blob: Blob) => {
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          // Determine file extension based on blob type
-          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
+          // Use .pdf extension for PDF files
+          const fileExtension = '.pdf';
           link.download = `Britium_Gallery_Product_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
           link.click();
           window.URL.revokeObjectURL(url);
@@ -649,8 +647,8 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
           const url = window.URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          // Determine file extension based on blob type
-          const fileExtension = blob.type.includes('spreadsheetml') ? '.xlsx' : '.csv';
+          // Use .pdf extension for PDF files
+          const fileExtension = '.pdf';
           link.download = `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
           link.click();
           window.URL.revokeObjectURL(url);
@@ -898,6 +896,23 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     modalRef.componentInstance.attributeSaved.subscribe(() => {
       this.loadAttributes();
     });
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }
 

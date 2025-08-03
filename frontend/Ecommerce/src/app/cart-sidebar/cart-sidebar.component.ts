@@ -8,6 +8,7 @@ import { HttpClient } from '@angular/common/http';
 import { DiscountService } from '../services/discount.service';
 import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-cart-sidebar',
@@ -36,7 +37,8 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
     public imageService: ImageService,
     private http: HttpClient, // Add HttpClient for preview API
     private discountService: DiscountService,
-    private productService: ProductService
+    private productService: ProductService,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit() {
@@ -392,5 +394,22 @@ getTotal(): number {
       return `${userVipTier.charAt(0).toUpperCase() + userVipTier.slice(1)} Tier ${percent}% OFF`;
     }
     return '';
+  }
+
+  // Price formatting methods
+  formatPrice(price: number): string {
+    return this.priceFormatService.formatPrice(price);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 } 

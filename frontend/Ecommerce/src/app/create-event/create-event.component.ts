@@ -9,6 +9,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { ActivatedRoute } from '@angular/router';
+import { PriceFormatService } from '../services/price-format.service';
 declare var lucide: any;
 
 function toDatetimeLocal(date: Date): string {
@@ -102,7 +103,8 @@ export class CreateEventComponent implements OnInit {
     private discountService: DiscountService,
     private productService: ProductService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit() {
@@ -419,5 +421,22 @@ export class CreateEventComponent implements OnInit {
         error: handleError
       });
     }
+  }
+
+  // Price formatting methods
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

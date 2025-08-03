@@ -13,6 +13,7 @@ import { DiscountService } from '../services/discount.service';
 import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
 import { DeliveryServiceService, DeliveryService } from '../services/delivery-service-service.service';
+import { PriceFormatService } from '../services/price-format.service';
 
 @Component({
   selector: 'app-checkout',
@@ -103,10 +104,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   productDetails: Map<number, ProductDTO> = new Map();
   Math = Math; // Make Math available in template
 
-  constructor(
+    constructor(
     
     private router: Router,
-   
+  
     private cartService: CartService,
     public imageService: ImageService
   ,
@@ -117,7 +118,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     private http: HttpClient, // Add HttpClient for preview API
     private discountService: DiscountService,
     private productService: ProductService,
-    private deliveryServiceService: DeliveryServiceService
+    private deliveryServiceService: DeliveryServiceService,
+    private priceFormatService: PriceFormatService
   ) {
     this.addressForm = this.fb.group({
       address: ['', Validators.required],
@@ -946,5 +948,22 @@ getTotalDiscount() {
   // Check if there's a coupon applied from cart page
   hasCartPageCoupon(): boolean {
     return this.promoSuccess && this.couponDiscount > 0;
+  }
+
+  // Price formatting methods
+  formatPrice(price: number): string {
+    return this.priceFormatService.formatPrice(price);
+  }
+
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
+  }
+
+  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType);
+  }
+
+  formatDiscountText(discountValue: number, discountType: string): string {
+    return this.priceFormatService.formatDiscountText(discountValue, discountType);
   }
 }

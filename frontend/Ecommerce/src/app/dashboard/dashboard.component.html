@@ -40,16 +40,16 @@
                   {{ metric.value }}<span *ngIf="metric.currency" class="text-sm font-normal text-slate-600 ml-1">{{ metric.currency }}</span>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
-                    @if (metric.isPositive) {
-                      <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
-                    } @else {
-                      <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
-                    }
-                    <span class="text-xs font-semibold text-emerald-600">
-                      {{ metric.isPositive ? '+' : '' }}{{ metric.change.toFixed(1) }}%
-                    </span>
-                  </div>
+                                      <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
+                      @if (metric.change >= 0) {
+                        <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
+                      } @else {
+                        <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
+                      }
+                      <span class="text-xs font-semibold" [ngClass]="metric.change >= 0 ? 'text-emerald-600' : 'text-red-600'">
+                        {{ metric.change >= 0 ? '+' : '' }}{{ metric.change.toFixed(1) }}%
+                      </span>
+                    </div>
                   <span class="text-xs text-slate-500">vs last period</span>
                 </div>
               </div>
@@ -122,7 +122,7 @@
                       } @else {
                         <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
                       }
-                      <span class="text-xs font-semibold text-emerald-600">
+                      <span class="text-xs font-semibold" [ngClass]="{'text-emerald-600': metric.isPositive, 'text-red-600': !metric.isPositive}">
                         {{ metric.isPositive ? '+' : '' }}{{ metric.change.toFixed(1) }}%
                       </span>
                     </div>
@@ -317,7 +317,7 @@
                       } @else {
                         <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
                       }
-                      <span class="text-xs font-semibold text-emerald-600">
+                      <span class="text-xs font-semibold" [ngClass]="{'text-emerald-600': metric.isPositive, 'text-red-600': !metric.isPositive}">
                         {{ metric.isPositive ? '+' : '' }}{{ metric.change.toFixed(1) }}%
                       </span>
                     </div>

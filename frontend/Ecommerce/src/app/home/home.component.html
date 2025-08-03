@@ -295,15 +295,15 @@
                     <div class="flex items-center justify-between">
                         <div *ngIf="product.hasDiscount; else originalPrice" class="flex flex-col">
                             <span class="text-xl font-bold text-red-600">
-                                {{ getDiscountedPrice(product) }} <span class="text-sm font-normal">MMK</span>
+                                {{ formatPriceOnly(getDiscountedPrice(product)) }} <span class="text-sm font-normal">MMK</span>
                             </span>
                             <span class="text-sm font-medium text-gray-400 line-through">
-                                {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                                {{ formatPriceOnly(product.price) }} <span class="text-sm font-normal">MMK</span>
                             </span>
                         </div>
                         <ng-template #originalPrice>
                         <span class="text-xl font-bold text-gray-900">
-                            {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                            {{ formatPriceOnly(product.price) }} <span class="text-sm font-normal">MMK</span>
                         </span>
                         </ng-template>
                     </div>
@@ -409,15 +409,15 @@
                     <div class="flex items-center justify-between">
                         <div *ngIf="product.hasDiscount; else originalPrice" class="flex flex-col">
                             <span class="text-xl font-bold text-red-600">
-                                {{ getDiscountedPrice(product) }} <span class="text-sm font-normal">MMK</span>
+                                {{ formatPriceOnly(getDiscountedPrice(product)) }} <span class="text-sm font-normal">MMK</span>
                             </span>
                             <span class="text-sm font-medium text-gray-400 line-through">
-                                {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                                {{ formatPriceOnly(product.price) }} <span class="text-sm font-normal">MMK</span>
                             </span>
                         </div>
                         <ng-template #originalPrice>
                         <span class="text-xl font-bold text-gray-900">
-                            {{ product.price }} <span class="text-sm font-normal">MMK</span>
+                            {{ formatPriceOnly(product.price) }} <span class="text-sm font-normal">MMK</span>
                         </span>
                         </ng-template>
                     </div>

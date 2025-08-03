@@ -682,6 +682,17 @@ public class ProductService {
                     variantRepo.save(existing);
                 }
             }
+            
+            // Also soft-delete variants that are explicitly marked for deletion
+            if (dto.getRemovedVariantIds() != null && !dto.getRemovedVariantIds().isEmpty()) {
+                for (Long removedId : dto.getRemovedVariantIds()) {
+                    ProductVariant variantToDelete = variantRepo.findById(removedId.intValue()).orElse(null);
+                    if (variantToDelete != null && variantToDelete.getProduct().getId().equals(productId)) {
+                        variantToDelete.setStatus(0);
+                        variantRepo.save(variantToDelete);
+                    }
+                }
+            }
 
             // Clear existing variants and add updated ones to avoid duplication
             product.getProductVariants().clear();

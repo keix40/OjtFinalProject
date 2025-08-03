@@ -1,6 +1,7 @@
  import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
@@ -44,7 +45,13 @@ export class DashboardService {
   }
 
   getSessionStats(timeFrame: string): Observable<any> {
-    return this.http.get<any>(`http://localhost:8080/order/session-stats?timeFrame=${timeFrame}`);
+    console.log('🔄 DashboardService: Fetching session stats for timeFrame:', timeFrame);
+    return this.http.get<any>(`http://localhost:8080/order/session-stats?timeFrame=${timeFrame}`).pipe(
+      tap({
+        next: (response: any) => console.log('📊 DashboardService: Received session stats:', response),
+        error: (error: any) => console.error('❌ DashboardService: Error fetching session stats:', error)
+      })
+    );
   }
 
   getSessionTrends(timeFrame: string): Observable<any[]> {
