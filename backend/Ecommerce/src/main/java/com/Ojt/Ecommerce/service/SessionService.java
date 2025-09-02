@@ -188,28 +188,36 @@ public class SessionService {
                 end = now;
                 break;
             case "day":
+                // Match SQL: WHERE DATE(start_time) = CURDATE()
                 start = LocalDate.now().atStartOfDay();
-                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1); // End of current day
+                end = LocalDate.now().atTime(23, 59, 59, 999999999); // End of current day
                 break;
             case "week":
                 start = now.minusWeeks(1);
                 end = now;
                 break;
             case "month":
+                // Match SQL: WHERE YEAR(start_time) = YEAR(CURDATE()) AND MONTH(start_time) = MONTH(CURDATE())
                 start = LocalDate.now().withDayOfMonth(1).atStartOfDay(); // Start of current month
                 end = YearMonth.from(now).atEndOfMonth().atTime(23, 59, 59, 999999999); // End of current month
                 break;
             case "year":
+                // Match SQL: WHERE YEAR(start_time) = YEAR(CURDATE())
                 start = LocalDate.now().withDayOfYear(1).atStartOfDay(); // Start of current year
                 end = LocalDate.now().with(TemporalAdjusters.lastDayOfYear()).atTime(23, 59, 59, 999999999); // End of current year
                 break;
             default:
                 start = LocalDate.now().atStartOfDay();
-                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1);
+                end = LocalDate.now().atTime(23, 59, 59, 999999999);
                 break;
         }
         
+        System.out.println("🔍 getTotalSessionsCount called for timeFrame: " + timeFrame);
+        System.out.println("📅 Time range: " + start + " to " + end);
+        
         int count = userSessionRepository.countTotalSessions(start, end);
+        System.out.println("📊 Total Sessions Count: " + count);
+        
         return count;
     }
     
@@ -221,11 +229,18 @@ public class SessionService {
      * Calculate bounce rate for a time period
      */
     public double getBounceRate(String timeFrame) {
+        System.out.println("🔍 getBounceRate called for timeFrame: " + timeFrame);
+        
         Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
         LocalDateTime start = timeRange.get("start");
         LocalDateTime end = timeRange.get("end");
         
-        return calculateBounceRateForPeriod(start, end, timeFrame);
+        System.out.println("📅 Time range: " + start + " to " + end);
+        
+        double bounceRate = calculateBounceRateForPeriod(start, end, timeFrame);
+        System.out.println("📊 Bounce Rate: " + bounceRate + "%");
+        
+        return bounceRate;
     }
     
     public double getBounceRateForPeriod(LocalDateTime start, LocalDateTime end) {
@@ -266,24 +281,27 @@ public class SessionService {
                 end = now;
                 break;
             case "day":
+                // Match SQL: WHERE DATE(start_time) = CURDATE()
                 start = LocalDate.now().atStartOfDay();
-                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1); // End of current day
+                end = LocalDate.now().atTime(23, 59, 59, 999999999); // End of current day
                 break;
             case "week":
                 start = now.minusWeeks(1);
                 end = now;
                 break;
             case "month":
+                // Match SQL: WHERE YEAR(start_time) = YEAR(CURDATE()) AND MONTH(start_time) = MONTH(CURDATE())
                 start = LocalDate.now().withDayOfMonth(1).atStartOfDay(); // Start of current month
                 end = YearMonth.from(now).atEndOfMonth().atTime(23, 59, 59, 999999999); // End of current month
                 break;
             case "year":
+                // Match SQL: WHERE YEAR(start_time) = YEAR(CURDATE())
                 start = LocalDate.now().withDayOfYear(1).atStartOfDay(); // Start of current year
                 end = LocalDate.now().with(TemporalAdjusters.lastDayOfYear()).atTime(23, 59, 59, 999999999); // End of current year
                 break;
             default:
                 start = LocalDate.now().atStartOfDay();
-                end = LocalDate.now().plusDays(1).atStartOfDay().minusNanos(1);
+                end = LocalDate.now().atTime(23, 59, 59, 999999999);
                 break;
         }
         
@@ -505,23 +523,35 @@ public class SessionService {
      * Get customer segmentation for dashboard
      */
     public List<Map<String, Object>> getCustomerSegmentation(String timeFrame) {
+        System.out.println("🔄 SessionService: getCustomerSegmentation called with timeFrame: " + timeFrame);
+        System.out.println("🔄 SessionService: Method entry - starting VIP tier data processing");
         try {
             Map<String, LocalDateTime> timeRange = getTimeRange(timeFrame);
             LocalDateTime start = timeRange.get("start");
             LocalDateTime end = timeRange.get("end");
+            System.out.println("📊 SessionService: Time range - Start: " + start + ", End: " + end);
             
             // Check user stats first
             List<Object[]> userStats = userSessionRepository.getUserStats();
             if (!userStats.isEmpty()) {
                 Object[] stats = userStats.get(0);
-                System.out.println("User Stats - Total: " + stats[0] + ", With Points: " + stats[1] + ", Min Points: " + stats[2] + ", Max Points: " + stats[3]);
+                System.out.println("📊 SessionService: User Stats - Total: " + stats[0] + ", With Points: " + stats[1] + ", Min Points: " + stats[2] + ", Max Points: " + stats[3]);
             }
             
             // Get VIP tier data from database - use correct method that matches VIP customer page
+            System.out.println("📊 SessionService: Calling getCorrectVipTierStats() from database...");
             List<Object[]> results = userSessionRepository.getCorrectVipTierStats();
-            System.out.println("Correct VIP Tier Results: " + results.size() + " rows");
+            System.out.println("📊 SessionService: Correct VIP Tier Results: " + results.size() + " rows");
             for (Object[] row : results) {
-                System.out.println("Tier: " + row[0] + ", Count: " + row[1]);
+                System.out.println("📊 SessionService: Tier: " + row[0] + ", Count: " + row[1]);
+            }
+            
+            // Also test the simpler method to compare
+            System.out.println("📊 SessionService: Testing getVipTierStatsSimple() for comparison...");
+            List<Object[]> simpleResults = userSessionRepository.getVipTierStatsSimple();
+            System.out.println("📊 SessionService: Simple VIP Tier Results: " + simpleResults.size() + " rows");
+            for (Object[] row : simpleResults) {
+                System.out.println("📊 SessionService: Simple Tier: " + row[0] + ", Count: " + row[1]);
             }
             
             List<Map<String, Object>> segmentation = new ArrayList<>();
@@ -538,9 +568,12 @@ public class SessionService {
             // Add more colors for future tiers as needed
             
             // Process results and create tier data
+            System.out.println("📊 SessionService: Processing " + results.size() + " tier results");
             for (Object[] row : results) {
                 String tierName = row[0].toString();
                 int userCount = ((Number) row[1]).intValue();
+                
+                System.out.println("📊 SessionService: Processing tier - Name: " + tierName + ", Count: " + userCount);
                 
                 Map<String, Object> tier = new HashMap<>();
                 tier.put("name", tierName);
@@ -548,28 +581,49 @@ public class SessionService {
                 tier.put("value", userCount);
                 
                 segmentation.add(tier);
+                System.out.println("📊 SessionService: Added tier to segmentation: " + tier);
             }
+            
+            System.out.println("📊 SessionService: Initial segmentation size: " + segmentation.size());
             
             // Always ensure all tiers from vip_tiers table are present
             Map<String, Integer> tierCounts = new HashMap<>();
             for (Map<String, Object> tier : segmentation) {
                 tierCounts.put((String) tier.get("name"), (Integer) tier.get("value"));
             }
+            System.out.println("📊 SessionService: Tier counts mapping: " + tierCounts);
             
             // Get all tiers from vip_tiers table to ensure completeness
+            System.out.println("📊 SessionService: Calling getAllVipTiers() from database...");
             List<Object[]> allTiers = userSessionRepository.getAllVipTiers();
+            System.out.println("📊 SessionService: All tiers from database: " + allTiers.size() + " tiers");
+            for (Object[] tierRow : allTiers) {
+                System.out.println("📊 SessionService: Database tier - Name: " + tierRow[0] + ", Min Points: " + tierRow[1]);
+            }
+            
             List<Map<String, Object>> completeSegmentation = new ArrayList<>();
             
             for (Object[] tierRow : allTiers) {
                 String tierName = tierRow[0].toString();
-                completeSegmentation.add(createTier(tierName, tierColors.getOrDefault(tierName, "#708090"), 
-                    tierCounts.getOrDefault(tierName, 0)));
+                int tierCount = tierCounts.getOrDefault(tierName, 0);
+                String tierColor = tierColors.getOrDefault(tierName, "#708090");
+                
+                System.out.println("📊 SessionService: Creating complete tier - Name: " + tierName + ", Count: " + tierCount + ", Color: " + tierColor);
+                
+                Map<String, Object> completeTier = createTier(tierName, tierColor, tierCount);
+                completeSegmentation.add(completeTier);
+                
+                System.out.println("📊 SessionService: Added complete tier: " + completeTier);
             }
             
+            System.out.println("📊 SessionService: Final completeSegmentation size: " + completeSegmentation.size());
+            for (Map<String, Object> tier : completeSegmentation) {
+                System.out.println("📊 SessionService: Final Tier - " + tier.get("name") + ": " + tier.get("value") + " users, Color: " + tier.get("color"));
+            }
             return completeSegmentation;
         } catch (Exception e) {
             // Log the error and return default data
-            System.err.println("Error getting customer segmentation: " + e.getMessage());
+            System.err.println("❌ SessionService: Error getting customer segmentation: " + e.getMessage());
             e.printStackTrace();
             
             List<Map<String, Object>> defaultSegmentation = new ArrayList<>();
@@ -578,15 +632,18 @@ public class SessionService {
             defaultSegmentation.add(createTier("Gold", "#FFD700", 0));
             defaultSegmentation.add(createTier("Platinum", "#E5E4E2", 0));
             
+            System.out.println("📊 SessionService: Returning default segmentation due to error");
             return defaultSegmentation;
         }
     }
     
     private Map<String, Object> createTier(String name, String color, int value) {
+        System.out.println("📊 SessionService: Creating tier object - Name: " + name + ", Color: " + color + ", Value: " + value);
         Map<String, Object> tier = new HashMap<>();
         tier.put("name", name);
         tier.put("color", color);
         tier.put("value", value);
+        System.out.println("📊 SessionService: Created tier object: " + tier);
         return tier;
     }
     

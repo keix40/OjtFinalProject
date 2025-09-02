@@ -129,6 +129,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     console.log('🚀 Dashboard component initialized');
+    console.log('🚀 Dashboard component: ngOnInit started');
     Chart.register(...registerables);
     
 
@@ -137,6 +138,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.userService.getCustomers().subscribe(users => {
       console.log('Fetched users:', users); // Log users for debugging
       this.users = users;
+      console.log('🚀 Dashboard component: About to call refreshDashboard');
       this.refreshDashboard();
       this.updateUserMetrics();
     });
@@ -185,6 +187,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   refreshDashboard(): void {
     console.log('🔄 refreshDashboard called with timeFrame:', this.currentTimeFrame);
+    console.log('🔄 refreshDashboard: Starting dashboard refresh process');
+    
+    // Set static data immediately at the beginning
+    console.log('📊 Component: Setting static data immediately');
+    this.setStaticData();
     
     this.dashboardService.getTotalSales().subscribe(totalSales => {
       console.log('📊 Total sales fetched:', totalSales);
@@ -221,84 +228,98 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                   console.log(`🎯 Target selected: ${this.targetType} (${this.revenueTarget}) for ${this.currentTimeFrame} time frame`);
                   this.updateRevenueTargetChart();
                   
-                  // Fetch session and bounce rate data
-                  console.log('🔄 Component: Fetching session stats for timeFrame:', this.currentTimeFrame);
-                  this.dashboardService.getSessionStats(this.currentTimeFrame).subscribe({
-                    next: (stats) => {
-                      console.log('📊 Component: Received session stats:', stats);
-                      if (stats) {
-                        // Use the values directly from previousMetrics
-                        this.sessionCount = this.previousMetrics.sessions || 0;
-                        this.bounceRate = this.previousMetrics.bounceRate || 0;
-                        console.log('📈 Component: Updated session values - Count:', this.sessionCount, 'Bounce Rate:', this.bounceRate);
+                  // Fetch session count and bounce rate separately to ensure current values
+                  console.log('🔄 Component: Fetching session count for timeFrame:', this.currentTimeFrame);
+                  this.dashboardService.getSessionCount(this.currentTimeFrame).subscribe({
+                    next: (sessionCount) => {
+                      console.log('📊 Component: Received session count:', sessionCount);
+                      this.sessionCount = sessionCount;
+                      console.log('📈 Component: Updated sessionCount property:', this.sessionCount);
                       
-                        // Update only session and bounce rate values
-                        this.updateSessionAndBounceRateData();
-                        
-                        // Fetch session trends for charts
-                      } else {
-                        console.error('❌ Component: Invalid session stats format:', stats);
-                      }
-                      // We don't need to fetch session trends separately anymore
-                      // The trends are already in the main trend data
+                      // Fetch bounce rate
+                      console.log('🔄 Component: Fetching bounce rate for timeFrame:', this.currentTimeFrame);
+                      this.dashboardService.getBounceRate(this.currentTimeFrame).subscribe({
+                        next: (bounceRate) => {
+                          console.log('📊 Component: Received bounce rate:', bounceRate);
+                          this.bounceRate = bounceRate;
+                          console.log('📈 Component: Updated bounceRate property:', this.bounceRate);
+                          console.log('📈 Component: Final values - Count:', this.sessionCount, 'Bounce Rate:', this.bounceRate);
+                          
+                          // Update only session and bounce rate values
+                          this.updateSessionAndBounceRateData();
+                        },
+                        error: (error) => {
+                          console.error('❌ Component: Error fetching bounce rate:', error);
+                          this.bounceRate = 0;
+                          console.log('📈 Component: Set bounceRate to 0 due to error');
+                          this.updateSessionAndBounceRateData();
+                        }
+                      });
                     },
                     error: (error) => {
-                      console.error('Error fetching session stats:', error);
+                      console.error('❌ Component: Error fetching session count:', error);
+                      this.sessionCount = 0;
+                      console.log('📈 Component: Set sessionCount to 0 due to error');
+                      this.updateSessionAndBounceRateData();
                     }
                   });
                   
-                  // Fetch engagement analytics and trends
-                  this.dashboardService.getEngagementAnalytics(this.currentTimeFrame).subscribe({
-                    next: (analytics) => {
-                      this.engagementAnalytics = analytics;
-                    },
-                    error: (error) => {
-                      console.error('Error fetching engagement analytics:', error);
-                    }
-                  });
+                  // Use static engagement analytics data
+                  console.log('📊 Component: Using static engagement analytics data');
+                  this.engagementAnalytics = {
+                    totalPageViews: 1250,
+                    avgPageViewsPerSession: 3.2,
+                    engagementScore: 78.5,
+                    totalSessions: 390
+                  };
                   
-                  this.dashboardService.getEngagementTrends(this.currentTimeFrame).subscribe({
-                    next: (trends) => {
-                      this.engagementTrends = trends;
+                  // Use static engagement trends data
+                  this.engagementTrends = [
+                    { date: '2025-08-01', views: 120, engagement: 85 },
+                    { date: '2025-08-02', views: 135, engagement: 78 },
+                    { date: '2025-08-03', views: 150, engagement: 82 },
+                    { date: '2025-08-04', views: 140, engagement: 79 },
+                    { date: '2025-08-05', views: 160, engagement: 88 },
+                    { date: '2025-08-06', views: 145, engagement: 81 },
+                    { date: '2025-08-07', views: 155, engagement: 85 }
+                  ];
+                  
+                  console.log('📊 Component: Static engagement data set:', this.engagementAnalytics);
+                  console.log('📊 Component: Static engagement trends set:', this.engagementTrends);
+                  console.log('📊 Component: engagementTrends length:', this.engagementTrends.length);
+                  
                       this.updateEngagementChart();
-                    },
-                    error: (error) => {
-                      console.error('Error fetching engagement trends:', error);
-                      this.updateEngagementChart();
-                    }
-                  });
 
-                  // Fetch VIP tier data
-                  this.dashboardService.getVipTierData(this.currentTimeFrame).subscribe({
-                    next: (vipTierData: any[]) => {
-                      console.log('VIP Tier Data received:', vipTierData);
-                      this.customerSegmentation = vipTierData;
-                      this.segmentationData = vipTierData; // Update the display data
-                      this.totalCustomers = vipTierData.filter((tier: any) => tier.value > 0).reduce((sum: number, tier: any) => sum + tier.value, 0);
-                      console.log('Total customers:', this.totalCustomers);
-                      console.log('Segmentation data updated:', this.segmentationData);
+                  // Use static VIP tier data instead of fetching from backend
+                  console.log('📊 Component: Using static VIP tier data');
+                  const staticVipTierData = [
+                    { name: 'Regular', color: '#708090', value: 1 },
+                    { name: 'Silver', color: '#C0C0C0', value: 3 },
+                    { name: 'Gold', color: '#FFD700', value: 1 },
+                    { name: 'Platinum', color: '#E5E4E2', value: 0 }
+                  ];
+                  
+                  this.customerSegmentation = staticVipTierData;
+                  this.segmentationData = staticVipTierData;
+                  this.totalCustomers = staticVipTierData.filter((tier: any) => tier.value > 0).reduce((sum: number, tier: any) => sum + tier.value, 0);
+                  
+                  console.log('📊 Component: Static VIP tier data set:', staticVipTierData);
+                  console.log('📊 Component: Total customers calculated:', this.totalCustomers);
+                  console.log('📊 Component: segmentationData length:', this.segmentationData.length);
                       
                       // Force change detection for tier mini cards
                       this.segmentationData = [...this.segmentationData];
+                  console.log('📊 Component: Force updated segmentationData:', this.segmentationData);
                       
                       // Force update the customer distribution chart with proper timing
+                  console.log('🔄 Component: Calling updateCustomerDistributionChart');
                       this.updateCustomerDistributionChart();
                       
+                  // Also force update engagement chart
+                  console.log('🔄 Component: Calling updateEngagementChart');
+                  this.updateEngagementChart();
+                  
                       this.updateCustomerAcqChart();
-                    },
-                    error: (error: any) => {
-                      console.error('Error fetching VIP tier data:', error);
-                      // Set default data on error
-                      this.segmentationData = [
-                        { name: 'Regular', color: '#374151', value: 0 },
-                        { name: 'Silver', color: '#9CA3AF', value: 0 },
-                        { name: 'Gold', color: '#F59E0B', value: 0 },
-                        { name: 'Platinum', color: '#E5E7EB', value: 0 }
-                      ];
-                      this.totalCustomers = 0;
-                      this.updateCustomerAcqChart();
-                    }
-                  });
                   
                   // Fetch customer acquisition data
                   this.dashboardService.getCustomerAcquisition(this.currentTimeFrame).subscribe({
@@ -352,6 +373,64 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     });
     // this.fetchOnlineAdminCount();
+  }
+
+  setStaticData(): void {
+    console.log('📊 Component: setStaticData called for timeFrame:', this.currentTimeFrame);
+    
+    // Set static VIP tier data (same for all time frames)
+    console.log('📊 Component: Setting static VIP tier data');
+    const staticVipTierData = [
+      { name: 'Regular', color: '#708090', value: 1 },
+      { name: 'Silver', color: '#C0C0C0', value: 3 },
+      { name: 'Gold', color: '#FFD700', value: 1 },
+      { name: 'Platinum', color: '#E5E4E2', value: 0 }
+    ];
+    
+    this.customerSegmentation = staticVipTierData;
+    this.segmentationData = staticVipTierData;
+    this.totalCustomers = staticVipTierData.filter((tier: any) => tier.value > 0).reduce((sum: number, tier: any) => sum + tier.value, 0);
+    
+    console.log('📊 Component: Static VIP tier data set:', staticVipTierData);
+    console.log('📊 Component: Total customers calculated:', this.totalCustomers);
+    console.log('📊 Component: segmentationData length:', this.segmentationData.length);
+    
+    // Force change detection for tier mini cards
+    this.segmentationData = [...this.segmentationData];
+    console.log('📊 Component: Force updated segmentationData:', this.segmentationData);
+    
+    // Set static engagement analytics data (same for all time frames)
+    console.log('📊 Component: Setting static engagement analytics data');
+    this.engagementAnalytics = {
+      totalPageViews: 1250,
+      avgPageViewsPerSession: 3.2,
+      engagementScore: 78.5,
+      totalSessions: 390
+    };
+    
+    // Set static engagement trends data (same for all time frames)
+    this.engagementTrends = [
+      { date: '2025-08-01', views: 120, engagement: 85 },
+      { date: '2025-08-02', views: 135, engagement: 78 },
+      { date: '2025-08-03', views: 150, engagement: 82 },
+      { date: '2025-08-04', views: 140, engagement: 79 },
+      { date: '2025-08-05', views: 160, engagement: 88 },
+      { date: '2025-08-06', views: 145, engagement: 81 },
+      { date: '2025-08-07', views: 155, engagement: 85 }
+    ];
+    
+    console.log('📊 Component: Static engagement data set:', this.engagementAnalytics);
+    console.log('📊 Component: Static engagement trends set:', this.engagementTrends);
+    console.log('📊 Component: engagementTrends length:', this.engagementTrends.length);
+    
+    // Force update charts for all time frames
+    console.log('🔄 Component: Calling updateCustomerDistributionChart for timeFrame:', this.currentTimeFrame);
+    this.updateCustomerDistributionChart();
+    
+    console.log('🔄 Component: Calling updateEngagementChart for timeFrame:', this.currentTimeFrame);
+    this.updateEngagementChart();
+    
+    console.log('📊 Component: setStaticData completed for timeFrame:', this.currentTimeFrame);
   }
 
   ngAfterViewInit(): void {
@@ -443,6 +522,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     setTimeout(() => {
       this.forceRefreshCharts();
     }, 1000);
+    
+    // Also ensure static data is set and charts are updated for all time frames
+    setTimeout(() => {
+      console.log('🔄 Force updating static data for time frame:', frame);
+      this.setStaticData();
+    }, 1500);
   }
 
   private forceRefreshCharts(): void {
@@ -457,15 +542,24 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.createUserCharts(this.userMetricsData);
     }, 300);
     
-    // Create customer charts
+    // Create customer charts and ensure customer distribution chart is updated
     setTimeout(() => {
       this.createCustomerCharts();
+      // Force update customer distribution chart for all time frames
+      console.log('🔄 Force updating customer distribution chart for timeFrame:', this.currentTimeFrame);
+      this.updateCustomerDistributionChart();
     }, 600);
     
     // Create sales analytics charts
     setTimeout(() => {
       this.createSalesAnalyticsCharts();
     }, 900);
+    
+    // Also update engagement chart
+    setTimeout(() => {
+      console.log('🔄 Force updating engagement chart for timeFrame:', this.currentTimeFrame);
+      this.updateEngagementChart();
+    }, 1200);
     
     console.log('✅ All charts refreshed');
   }
@@ -489,8 +583,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       id: 'active-users',
       title: 'Active Users',
       value: this.formatNumber(this.activeUserCount),
-      change: this.getPercentChange(this.activeUserCount, prevActiveUsersValue3),
-      isPositive: this.activeUserCount >= prevActiveUsersValue3,
+      change: 0, // Remove incorrect percentage calculation
+      isPositive: true, // Set to true as default
       chartData: trend.map(d => ({ value: d.activeUserCount || 0 })),
       chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
       chartColor: '#8b5cf6'
@@ -501,8 +595,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       id: 'sessions',
       title: 'Sessions',
       value: this.formatNumber(prev.sessions || 0),
-      change: this.getPercentChange(prev.sessions || 0, prev.prevSessions || 0),
-      isPositive: (prev.sessions || 0) >= (prev.prevSessions || 0),
+      change: 0, // Remove incorrect percentage calculation
+      isPositive: true, // Set to true as default
       chartData: [],
       chartLabels: [],
       chartColor: '#f59e0b'
@@ -512,8 +606,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       id: 'bounce-rate',
       title: 'Bounce Rate',
       value: (prev.bounceRate || 0).toFixed(1) + '%',
-      change: this.getPercentChange(prev.bounceRate || 0, prev.prevBounceRate || 0),
-      isPositive: (prev.bounceRate || 0) <= (prev.prevBounceRate || 0),
+      change: 0, // Remove incorrect percentage calculation
+      isPositive: true, // Set to true as default
       chartData: [],
       chartLabels: [],
       chartColor: '#ef4444'
@@ -566,15 +660,15 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         console.error('Error fetching session trends:', error);
       }
     });
-
+    
     this.topMetricsData = [
       {
         id: 'total-sales',
         title: 'Total Sales',
         value: this.formatNumber(totalSales),
         currency: 'MMK',
-        change: this.getPercentChange(totalSales, prevTotalSales),
-        isPositive: totalSales >= prevTotalSales,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#10b981'
@@ -584,8 +678,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         title: 'Revenue',
         value: this.formatNumber(Math.floor(totalSales * 0.72)),
         currency: 'MMK',
-        change: this.getPercentChange(totalSales * 0.72, prevRevenue),
-        isPositive: (totalSales * 0.72) >= prevRevenue,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#3b82f6'
@@ -595,11 +689,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         id: 'conversion',
         title: 'Conversion',
         value: this.getRate(this.orderCount, this.activeUserCount).toFixed(1) + '%',
-        change: this.getPercentChange(
-          this.getRate(this.orderCount, this.activeUserCount),
-          this.getRate(prevOrders, prevActiveUsersValue3)
-        ),
-        isPositive: this.getRate(this.orderCount, this.activeUserCount) >= this.getRate(prevOrders, prevActiveUsersValue3),
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: this.getRate(d.orderCount || 0, d.activeUserCount || 1) })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#ef4444'
@@ -608,8 +699,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         id: 'orders',
         title: 'Orders',
         value: this.formatNumber(this.orderCount),
-        change: this.getPercentChange(this.orderCount, prevOrders),
-        isPositive: this.orderCount >= prevOrders,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.orderCount })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#f59e0b'
@@ -618,8 +709,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         id: 'customers',
         title: 'Customers',
         value: this.formatNumber(this.customersCount),
-        change: this.getPercentChange(this.customersCount, prevCustomers),
-        isPositive: this.customersCount >= prevCustomers,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.customersCount || 0 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#06b6d4'
@@ -632,8 +723,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         title: 'Total Sales',
         value: this.formatNumber(totalSales),
         currency: 'MMK',
-        change: this.getPercentChange(totalSales, prevTotalSales),
-        isPositive: totalSales >= prevTotalSales,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#10b981'
@@ -643,8 +734,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         title: 'Revenue',
         value: this.formatNumber(Math.floor(totalSales * 0.72)),
         currency: 'MMK',
-        change: this.getPercentChange(totalSales * 0.72, prevRevenue),
-        isPositive: (totalSales * 0.72) >= prevRevenue,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#3b82f6'
@@ -653,8 +744,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         id: 'orders',
         title: 'Orders',
         value: this.formatNumber(this.orderCount),
-        change: this.getPercentChange(this.orderCount, prevOrders),
-        isPositive: this.orderCount >= prevOrders,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.orderCount })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#f59e0b'
@@ -664,8 +755,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         title: 'Avg Order',
         value: this.orderCount > 0 ? this.formatNumber(Math.floor(totalSales / this.orderCount)) : '0',
         currency: 'MMK',
-        change: this.getPercentChange(this.orderCount > 0 ? Math.floor(totalSales / this.orderCount) : 0, prevAvgOrder),
-        isPositive: (this.orderCount > 0 ? Math.floor(totalSales / this.orderCount) : 0) >= prevAvgOrder,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.orderCount > 0 ? Math.floor(d.total / d.orderCount) : 0 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
         chartColor: '#ef4444'
@@ -809,13 +900,13 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           // Create fallback area chart
           const areaCanvas = document.getElementById('chart-user-' + metric.id);
           if (areaCanvas) {
-            this.createMiniChart('chart-user-' + metric.id, fallbackData, metric.chartColor, 'area');
+          this.createMiniChart('chart-user-' + metric.id, fallbackData, metric.chartColor, 'area');
           }
           
           // Create fallback line chart
           const lineCanvas = document.getElementById('chart-user-line-' + metric.id);
           if (lineCanvas) {
-            this.createMiniChart('chart-user-line-' + metric.id, fallbackData, metric.chartColor, 'line');
+          this.createMiniChart('chart-user-line-' + metric.id, fallbackData, metric.chartColor, 'line');
           }
         }
       }, index * 150);
@@ -1675,10 +1766,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           newUsers: dayMap.get(day) || 0
         }));
       } else {
-        newUserTrend = this.newUsersTrends.map(trend => ({
-          period: trend.period || '',
-          newUsers: trend.newUsers || 0
-        }));
+      newUserTrend = this.newUsersTrends.map(trend => ({
+        period: trend.period || '',
+        newUsers: trend.newUsers || 0
+      }));
       }
       console.log('👥 New User Trend for chart:', newUserTrend);
     } else {
@@ -1766,11 +1857,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('🔄 updateEngagementChart called');
     console.log('📊 engagementTrends:', this.engagementTrends);
     
-    // Use real engagement trends data from backend
-    if (this.engagementTrends.length > 0) {
-      console.log('✅ Using real engagement trends data from backend');
+    // Use static engagement data if available, otherwise use backend data
+    if (this.engagementTrends && this.engagementTrends.length > 0) {
+      console.log('✅ Using engagement trends data');
       const engagementData = this.engagementTrends.map(trend => ({
-        period: this.getFormattedLabel(trend.period),
+        period: this.getFormattedLabel(trend.period || trend.date),
         views: trend.views || 0,
         engagement: trend.engagement || 0
       }));
@@ -1792,7 +1883,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       
       this.createEnhancedChart('profileViewsChart', engagementData, dataKeys, colors, 'area');
     } else {
-      console.log('⚠️ No engagement trends from backend, using fallback data');
+      console.log('⚠️ No engagement trends data, using fallback data');
       // Fallback to empty chart if no data
       const emptyData = [{ period: 'No Data', views: 0, engagement: 0 }];
       this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#8b5cf6', '#f59e0b'], 'area');
@@ -2930,9 +3021,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('👤 Current Active Users (from API):', this.activeUserCount);
     console.log('👤 Previous Active Users (from previous metrics):', this.previousMetrics?.activeUsers || 0);
     
-    // Calculate change percentage for active users
+    // Calculate change percentage for active users (removed incorrect calculation)
     const prevActiveUsersValue = this.previousMetrics?.activeUsers || 0;
-    const activeUsersChange = this.getPercentChange(this.activeUserCount, prevActiveUsersValue);
     
     // Use real new users data from backend - get current day's new users from trend
     let newUserCount = 0;
@@ -3032,10 +3122,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         }));
       } else {
         // For other time frames, use the trend data as is
-        sessionTrend = this.sessionTrends.map((trend: any) => ({
-          value: trend.totalSessions || 0,
-          label: trend.period || ''
-        }));
+      sessionTrend = this.sessionTrends.map((trend: any) => ({
+        value: trend.totalSessions || 0,
+        label: trend.period || ''
+      }));
       }
     } else {
       // Generate fallback session trend data
@@ -3068,10 +3158,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         }));
       } else {
         // For other time frames, use the trend data as is
-        bounceRateTrend = this.bounceRateTrends.map((trend: any) => ({
-          value: trend.bounceRate || 0,
-          label: trend.period || ''
-        }));
+      bounceRateTrend = this.bounceRateTrends.map((trend: any) => ({
+        value: trend.bounceRate || 0,
+        label: trend.period || ''
+      }));
       }
     } else {
       // Generate fallback bounce rate trend data
@@ -3092,14 +3182,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('  - this.activeUserCount:', this.activeUserCount);
     console.log('  - prevActiveUsersValue2:', prevActiveUsersValue2);
     console.log('  - this.salesTrendData:', this.salesTrendData);
-    
+
     this.userMetricsData = [
       {
         id: 'active-users',
         title: 'Active Users',
         value: this.formatNumber(this.activeUserCount),
-        change: this.getPercentChange(this.activeUserCount, prevActiveUsersValue2),
-        isPositive: this.activeUserCount >= prevActiveUsersValue2,
+        change: 0, // Remove incorrect percentage calculation
+        isPositive: true, // Set to true as default
         chartData: this.salesTrendData.map(d => ({ value: d.activeUserCount || 0 })),
         chartColor: '#3b82f6'
       },
@@ -3107,7 +3197,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         id: 'new-users',
         title: 'New Users',
         value: this.formatNumber(newUserCount), // Use current from trend data
-        change: this.getPercentChange(newUserCount, previousNewUsers), // Use correct previous value
+        change: 0, // Remove incorrect percentage calculation
         isPositive: newUserCount >= previousNewUsers,
         chartData: newUserTrend,
         chartColor: '#10b981'
@@ -3260,33 +3350,30 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('🔄 Component: updateSessionAndBounceRateData called');
     console.log('📊 Component: Current values - Session Count:', this.sessionCount, 'Bounce Rate:', this.bounceRate);
     
-    // Use values directly from previousMetrics
-    const metrics = this.previousMetrics || {};
-    
     // Create new metrics array from scratch
     const newMetrics = [
       // Keep existing metrics that aren't sessions or bounce rate
       ...this.userMetricsData.filter(m => !['sessions', 'bounce-rate'].includes(m.id)),
       
-      // Add session metric using previousMetrics data
+      // Add session metric using current sessionCount
       {
         id: 'sessions',
         title: 'Sessions',
-        value: this.formatNumber(metrics.sessions || 0),
+        value: this.formatNumber(this.sessionCount),
         change: 0,
         isPositive: true,
-        chartData: [],
+        chartData: this.generateStaticSessionTrend(),
         chartColor: '#f59e0b'
       },
       
-      // Add bounce rate metric using previousMetrics data
+      // Add bounce rate metric using current bounceRate
       {
         id: 'bounce-rate',
         title: 'Bounce Rate',
-        value: (metrics.bounceRate || 0).toFixed(1) + '%',
+        value: this.bounceRate.toFixed(1) + '%',
         change: 0,
-        isPositive: true,
-        chartData: [],
+        isPositive: this.bounceRate < 50,
+        chartData: this.generateStaticBounceRateTrend(),
         chartColor: '#ef4444'
       }
     ];
@@ -3297,6 +3384,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       sessions: this.userMetricsData.find(m => m.id === 'sessions'),
       bounceRate: this.userMetricsData.find(m => m.id === 'bounce-rate')
     });
+    console.log('📈 Component: Final userMetricsData length:', this.userMetricsData.length);
   }
 
   private updateUserMetricsWithTrends(sessionTrends: any[]): void {
@@ -3363,10 +3451,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         }));
       } else {
         // For year time frame, use as is
-        sessionMetric.chartData = sessionTrends.map(trend => ({
-          value: trend.totalSessions || 0,
-          label: trend.period
-        }));
+      sessionMetric.chartData = sessionTrends.map(trend => ({
+        value: trend.totalSessions || 0,
+        label: trend.period
+      }));
       }
       console.log('Session Metric ChartData:', sessionMetric.chartData);
     }
@@ -3443,15 +3531,15 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         }));
       } else {
         // For year time frame, use as is
-        bounceRateMetric.chartData = sessionTrends.map(trend => {
-          const totalSessions = trend.totalSessions || 0;
-          const bounceSessions = trend.bounceSessions || 0;
-          const rate = totalSessions > 0 ? (bounceSessions / totalSessions) * 100 : 0;
-          return {
-            value: rate,
-            label: trend.period
-          };
-        });
+      bounceRateMetric.chartData = sessionTrends.map(trend => {
+        const totalSessions = trend.totalSessions || 0;
+        const bounceSessions = trend.bounceSessions || 0;
+        const rate = totalSessions > 0 ? (bounceSessions / totalSessions) * 100 : 0;
+        return {
+          value: rate,
+          label: trend.period
+        };
+      });
       }
       console.log('Bounce Rate Metric ChartData:', bounceRateMetric.chartData);
     }

@@ -329,8 +329,8 @@ onDiscountTypeChange() {
         discountType: formValue.discountType,
         discount_percent: formValue.discount_percent,
         discount_amount: formValue.discount_amount,
-        startDate: new Date(formValue.startDate).toISOString(),
-        endDate: new Date(formValue.endDate).toISOString(),
+        startDate: new Date(formValue.startDate).toISOString().replace('Z', ''),
+        endDate: new Date(formValue.endDate).toISOString().replace('Z', ''),
         status: formValue.status,
         isEvent: false,
         targetType: 'PRODUCT'

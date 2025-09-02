@@ -33,7 +33,13 @@ export class DashboardService {
 
   // Session and Bounce Rate endpoints
   getSessionCount(timeFrame: string): Observable<number> {
-    return this.http.get<number>(`http://localhost:8080/order/session-count?timeFrame=${timeFrame}`);
+    console.log('🔄 DashboardService: Fetching session count for timeFrame:', timeFrame);
+    return this.http.get<number>(`http://localhost:8080/order/session-count?timeFrame=${timeFrame}`).pipe(
+      tap({
+        next: (response: number) => console.log('📊 DashboardService: Received session count:', response),
+        error: (error: any) => console.error('❌ DashboardService: Error fetching session count:', error)
+      })
+    );
   }
 
   getActiveSessions(timeFrame: string): Observable<number> {
@@ -41,7 +47,13 @@ export class DashboardService {
   }
 
   getBounceRate(timeFrame: string): Observable<number> {
-    return this.http.get<number>(`http://localhost:8080/order/bounce-rate?timeFrame=${timeFrame}`);
+    console.log('🔄 DashboardService: Fetching bounce rate for timeFrame:', timeFrame);
+    return this.http.get<number>(`http://localhost:8080/order/bounce-rate?timeFrame=${timeFrame}`).pipe(
+      tap({
+        next: (response: number) => console.log('📊 DashboardService: Received bounce rate:', response),
+        error: (error: any) => console.error('❌ DashboardService: Error fetching bounce rate:', error)
+      })
+    );
   }
 
   getSessionStats(timeFrame: string): Observable<any> {
@@ -73,7 +85,19 @@ export class DashboardService {
   }
 
   getVipTierData(timeFrame: string): Observable<any[]> {
-    return this.http.get<any[]>(`http://localhost:8080/order/vip-tier-data?timeFrame=${timeFrame}`);
+    console.log('🔄 DashboardService: Fetching VIP tier data for timeFrame:', timeFrame);
+    return this.http.get<any[]>(`http://localhost:8080/order/vip-tier-data?timeFrame=${timeFrame}`).pipe(
+      tap({
+        next: (response: any[]) => {
+          console.log('📊 DashboardService: Received VIP tier data:', response);
+          console.log('📊 DashboardService: VIP tier data length:', response.length);
+          response.forEach((tier, index) => {
+            console.log(`📊 DashboardService: Tier ${index + 1}:`, tier);
+          });
+        },
+        error: (error: any) => console.error('❌ DashboardService: Error fetching VIP tier data:', error)
+      })
+    );
   }
 
   getCustomerAcquisition(timeFrame: string): Observable<any[]> {

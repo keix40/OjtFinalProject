@@ -9,6 +9,7 @@ import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +37,9 @@ public class BlacklistController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String riskLevel,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
         try {
             // Validate page and pageSize
             if (page < 0) {
@@ -48,8 +51,16 @@ public class BlacklistController {
                     .body(Map.of("message", "Page size must be positive"));
             }
 
+            // Create sort object
+            Sort sort = Sort.unsorted();
+            if (sortBy != null && !sortBy.trim().isEmpty()) {
+                Sort.Direction direction = "desc".equalsIgnoreCase(sortOrder) ? 
+                    Sort.Direction.DESC : Sort.Direction.ASC;
+                sort = Sort.by(direction, sortBy);
+            }
+
             Page<BlacklistEntry> entriesPage = blacklistService.getEntries(
-                search, category, status, riskLevel, PageRequest.of(page, pageSize));
+                search, category, status, riskLevel, PageRequest.of(page, pageSize, sort));
             
             Map<String, Object> response = Map.of(
                 "entries", entriesPage.getContent(),

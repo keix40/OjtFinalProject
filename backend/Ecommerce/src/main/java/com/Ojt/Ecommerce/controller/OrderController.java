@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.controller;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -518,8 +519,9 @@ public class OrderController {
                 break;
             case "day":
             default:
-                end = now.minusDays(1);
-                start = end.minusDays(1);
+                // For previous day, use the same logic as current day but shifted back by 1 day
+                end = LocalDate.now().minusDays(1).atTime(23, 59, 59, 999999999);
+                start = LocalDate.now().minusDays(1).atStartOfDay();
                 break;
         }
         // Filter orders in previous period
@@ -571,7 +573,9 @@ public class OrderController {
     @GetMapping("/session-count")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<Integer> getSessionCount(@RequestParam(defaultValue = "day") String timeFrame) {
+        System.out.println("🎯 OrderController: getSessionCount called with timeFrame: " + timeFrame);
         int count = sessionService.getTotalSessionsCount(timeFrame);
+        System.out.println("🎯 OrderController: Returning session count: " + count);
         return ResponseEntity.ok(count);
     }
 
@@ -633,8 +637,23 @@ public class OrderController {
     @GetMapping("/vip-tier-data")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<List<Map<String, Object>>> getVipTierData(@RequestParam(defaultValue = "day") String timeFrame) {
-        List<Map<String, Object>> vipTierData = sessionService.getCustomerSegmentation(timeFrame);
-        return ResponseEntity.ok(vipTierData);
+        System.out.println("🎯 OrderController: getVipTierData called with timeFrame: " + timeFrame);
+        System.out.println("🎯 OrderController: About to call sessionService.getCustomerSegmentation...");
+        
+        try {
+            List<Map<String, Object>> vipTierData = sessionService.getCustomerSegmentation(timeFrame);
+            System.out.println("📊 OrderController: VIP Tier Data returned: " + vipTierData.size() + " tiers");
+            for (Map<String, Object> tier : vipTierData) {
+                System.out.println("📊 OrderController: Tier - " + tier.get("name") + ": " + tier.get("value") + " users");
+            }
+            System.out.println("🎯 OrderController: Returning VIP tier data successfully");
+            return ResponseEntity.ok(vipTierData);
+        } catch (Exception e) {
+            System.err.println("❌ OrderController: Error in getVipTierData: " + e.getMessage());
+            e.printStackTrace();
+            // Return empty list on error
+            return ResponseEntity.ok(new ArrayList<>());
+        }
     }
 
     @GetMapping("/customer-acquisition")
@@ -879,15 +898,69 @@ public class OrderController {
             long brandCount = service.getBrandCount();
             debugInfo.put("brandCount", brandCount);
             
-            debugInfo.put("status", "success");
-            debugInfo.put("message", "Debug data retrieved successfully");
+            // Test data for different time frames
+            LocalDateTime now = LocalDateTime.now();
+            Map<String, Object> timeFrameData = new HashMap<>();
+            
+            // Test hour
+            LocalDateTime hourStart = now.minusHours(1);
+            List<Object[]> hourBrandData = service.getBrandSalesData(hourStart, now);
+            timeFrameData.put("hour", Map.of(
+                "brandCount", hourBrandData.size(),
+                "totalOrders", hourBrandData.stream().mapToLong(row -> (Long) row[1]).sum()
+            ));
+            
+            // Test day
+            LocalDateTime dayStart = now.minusDays(1);
+            List<Object[]> dayBrandData = service.getBrandSalesData(dayStart, now);
+            timeFrameData.put("day", Map.of(
+                "brandCount", dayBrandData.size(),
+                "totalOrders", dayBrandData.stream().mapToLong(row -> (Long) row[1]).sum()
+            ));
+            
+            // Test month
+            LocalDateTime monthStart = now.minusMonths(1);
+            List<Object[]> monthBrandData = service.getBrandSalesData(monthStart, now);
+            timeFrameData.put("month", Map.of(
+                "brandCount", monthBrandData.size(),
+                "totalOrders", monthBrandData.stream().mapToLong(row -> (Long) row[1]).sum()
+            ));
+            
+            // Test year
+            LocalDateTime yearStart = now.minusYears(1);
+            List<Object[]> yearBrandData = service.getBrandSalesData(yearStart, now);
+            timeFrameData.put("year", Map.of(
+                "brandCount", yearBrandData.size(),
+                "totalOrders", yearBrandData.stream().mapToLong(row -> (Long) row[1]).sum()
+            ));
+            
+            debugInfo.put("timeFrameData", timeFrameData);
             
         } catch (Exception e) {
-            debugInfo.put("status", "error");
-            debugInfo.put("message", "Error: " + e.getMessage());
-            debugInfo.put("exception", e.getClass().getSimpleName());
+            debugInfo.put("error", e.getMessage());
         }
         
         return ResponseEntity.ok(debugInfo);
+    }
+    
+    @GetMapping("/test/vip-tier")
+    public ResponseEntity<Map<String, Object>> testVipTier() {
+        System.out.println("🧪 Test: Testing VIP tier data endpoint");
+        Map<String, Object> testResult = new HashMap<>();
+        
+        try {
+            List<Map<String, Object>> vipTierData = sessionService.getCustomerSegmentation("day");
+            testResult.put("success", true);
+            testResult.put("tierCount", vipTierData.size());
+            testResult.put("tiers", vipTierData);
+            System.out.println("🧪 Test: VIP tier test successful - " + vipTierData.size() + " tiers");
+        } catch (Exception e) {
+            testResult.put("success", false);
+            testResult.put("error", e.getMessage());
+            System.err.println("🧪 Test: VIP tier test failed - " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return ResponseEntity.ok(testResult);
     }
 }

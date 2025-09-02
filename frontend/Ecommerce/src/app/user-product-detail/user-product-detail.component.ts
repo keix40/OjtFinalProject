@@ -18,6 +18,7 @@ import { HttpClient } from '@angular/common/http';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener } from '@angular/core';
 import { ColorUtilityService } from '../services/color-utility.service';
+import { PriceFormatService } from '../services/price-format.service';
 
 interface ProductImage {
   id: number;
@@ -175,7 +176,8 @@ export class UserProductDetailComponent implements OnInit {
     private discountService: DiscountService,
     private http:HttpClient,
     private modalService: NgbModal,
-    private colorUtilityService: ColorUtilityService
+    private colorUtilityService: ColorUtilityService,
+    private priceFormatService: PriceFormatService
   ) {}
 
   ngOnInit(): void {
@@ -1980,17 +1982,25 @@ checkFirstTimeBuyerDiscount(): void {
   }
 
   getTotalRequiredAttributes(): number {
-    if (!this.product?.variants || this.product.variants.length === 0) {
-      return 0;
-    }
-    
-    const allAttributeNames = new Set<string>();
-    this.product.variants.forEach((variant: any) => {
-      variant.attributes.forEach((attr: any) => {
-        allAttributeNames.add(attr.attributeName);
-      });
-    });
-    
-    return allAttributeNames.size;
+    return Object.keys(this.attributeValuesMap).length;
+  }
+
+  /**
+   * Formats a price with thousand separators and currency
+   * @param price - The price to format
+   * @param currency - The currency symbol (default: 'MMK')
+   * @returns Formatted price string
+   */
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  /**
+   * Formats a price without currency symbol
+   * @param price - The price to format
+   * @returns Formatted price string without currency
+   */
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
   }
 }

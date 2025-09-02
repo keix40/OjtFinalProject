@@ -45,6 +45,8 @@ export interface BlacklistFilters {
   riskLevel?: string;
   page?: number;
   pageSize?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface AutoRules {

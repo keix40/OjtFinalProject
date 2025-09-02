@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.dto;
 
 import com.Ojt.Ecommerce.entity.DiscountType;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -18,7 +19,9 @@ public class DiscountRequestDTO {
     private double discount_amount;
     private String discountType;
     private DiscountType discountTypeForCoupon;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS")
     private LocalDateTime endDate;
     private Boolean autoApply;
     private boolean status;

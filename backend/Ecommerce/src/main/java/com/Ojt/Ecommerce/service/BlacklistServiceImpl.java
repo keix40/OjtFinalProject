@@ -14,6 +14,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -123,6 +124,44 @@ public class BlacklistServiceImpl implements BlacklistService {
 
         List<BlacklistEntry> filtered = blacklistRepository.findWithFilters(
             search, categoryEnum, statusEnum, riskLevelEnum);
+        
+        // Apply sorting if specified
+        if (pageable.getSort().isSorted()) {
+            Sort.Order order = pageable.getSort().iterator().next();
+            String sortField = order.getProperty();
+            boolean ascending = order.getDirection() == Sort.Direction.ASC;
+            
+            filtered.sort((a, b) -> {
+                int result = 0;
+                switch (sortField) {
+                    case "addedDate":
+                        result = a.getAddedDate().compareTo(b.getAddedDate());
+                        break;
+                    case "targetValue":
+                        result = a.getTargetValue().compareToIgnoreCase(b.getTargetValue());
+                        break;
+                    case "category":
+                        result = a.getCategory().compareTo(b.getCategory());
+                        break;
+                    case "status":
+                        result = a.getStatus().compareTo(b.getStatus());
+                        break;
+                    case "riskLevel":
+                        result = a.getRiskLevel().compareTo(b.getRiskLevel());
+                        break;
+                    case "incidentCount":
+                        result = Integer.compare(a.getIncidentCount(), b.getIncidentCount());
+                        break;
+                    default:
+                        result = a.getAddedDate().compareTo(b.getAddedDate()); // Default sort by addedDate
+                        break;
+                }
+                return ascending ? result : -result;
+            });
+        } else {
+            // Default sort by addedDate descending (newest first)
+            filtered.sort((a, b) -> b.getAddedDate().compareTo(a.getAddedDate()));
+        }
         
         // Handle empty list case
         if (filtered.isEmpty()) {

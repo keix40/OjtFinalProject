@@ -9,6 +9,7 @@ import { ReviewService } from '../../services/review.service';
 import { PermissionService } from '../../services/permission.service';
 import { PermissionConstants } from '../../constants/permission.constants';
 import { ColorUtilityService } from '../../services/color-utility.service';
+import { PriceFormatService } from '../../services/price-format.service';
 import { animate, style, transition, trigger } from '@angular/animations';
 
 interface ProductImage {
@@ -91,7 +92,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
     private reviewService: ReviewService,
     private cdr: ChangeDetectorRef,
     permissionService: PermissionService,
-    private colorUtilityService: ColorUtilityService
+    private colorUtilityService: ColorUtilityService,
+    private priceFormatService: PriceFormatService
   ) {
     this.permissionService = permissionService;
   }
@@ -555,10 +557,29 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   }
 
   goToEditProduct(): void {
-    if (this.product && this.route.snapshot.paramMap.get('id')) {
-      const productId = this.route.snapshot.paramMap.get('id');
+    const productId = this.route.snapshot.paramMap.get('id');
+    if (productId) {
       this.router.navigate(['/product-edit', productId]);
     }
+  }
+
+  /**
+   * Formats a price with thousand separators and currency
+   * @param price - The price to format
+   * @param currency - The currency symbol (default: 'MMK')
+   * @returns Formatted price string
+   */
+  formatPrice(price: number, currency: string = 'MMK'): string {
+    return this.priceFormatService.formatPrice(price, currency);
+  }
+
+  /**
+   * Formats a price without currency symbol
+   * @param price - The price to format
+   * @returns Formatted price string without currency
+   */
+  formatPriceOnly(price: number): string {
+    return this.priceFormatService.formatPriceOnly(price);
   }
 }
 

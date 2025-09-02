@@ -38,6 +38,10 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   categoryFilter = "";
   statusFilter = "";
   riskFilter = "";
+  
+  // Sorting properties
+  sortBy = "addedDate";
+  sortOrder: 'asc' | 'desc' = 'desc';
 
   // UI state
   viewMode: "table" | "cards" = "table";
@@ -189,7 +193,9 @@ export class BlacklistComponent implements OnInit, OnDestroy {
         status: this.statusFilter,
         riskLevel: this.riskFilter,
         page: this.currentPage - 1,
-        pageSize: this.itemsPerPage
+        pageSize: this.itemsPerPage,
+        sortBy: this.sortBy,
+        sortOrder: this.sortOrder
       }).pipe(
         catchError(() => of({ entries: [], total: 0, totalPages: 0, currentPage: 0 }))
       )
@@ -246,6 +252,13 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   applyFilters(): void {
+    this.currentPage = 1;
+    this.loadData();
+  }
+
+  updateSorting(sortBy: string, sortOrder: 'asc' | 'desc'): void {
+    this.sortBy = sortBy;
+    this.sortOrder = sortOrder;
     this.currentPage = 1;
     this.loadData();
   }
@@ -1353,6 +1366,13 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     if (value === null || value === undefined) return `0 ${currency}`;
     const formatted = Math.round(value).toLocaleString('en-US');
     return `${formatted} ${currency}`;
+  }
+
+  formatTrendPercentage(value: number): string {
+    if (value === null || value === undefined) return '0';
+    if (value === 0) return '0';
+    if (value > 0) return `+${value}`;
+    return `${value}`; // Negative values will show with their natural minus sign
   }
 
   // Modal scroll helper methods
