@@ -216,13 +216,33 @@ export class ColorUtilityService {
   getColorDisplayName(colorName: string): string {
     if (!colorName) return '';
     
-    // If it's already a hex code, return a generic name
+    // If it's a hex code, try to find the color name
     if (this.isHexCode(colorName)) {
+      const foundColorName = this.getColorNameFromHex(colorName);
+      if (foundColorName) {
+        return foundColorName.charAt(0).toUpperCase() + foundColorName.slice(1).toLowerCase();
+      }
       return 'Custom Color';
     }
     
     // Return the original name with proper capitalization
     return colorName.charAt(0).toUpperCase() + colorName.slice(1).toLowerCase();
+  }
+
+  /**
+   * Get color name from hex code (reverse lookup)
+   */
+  private getColorNameFromHex(hexCode: string): string | null {
+    const normalizedHex = hexCode.toUpperCase();
+    
+    // Find the color name that matches this hex code
+    for (const [colorName, hex] of Object.entries(this.colorMap)) {
+      if (hex.toUpperCase() === normalizedHex) {
+        return colorName;
+      }
+    }
+    
+    return null;
   }
 
   /**

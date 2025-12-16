@@ -273,25 +273,50 @@ public class EventServiceImpl implements EventService {
         List<EventDTO> heroEvents = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
         
+        log.info("[EventService] Getting active events for hero. Current time: {}", now);
+        log.info("[EventService] Total events in database: {}", allEvents.size());
+        
         // First, try to get non-default active events
+        // Include events that are:
+        // 1. Status = 1 (active)
+        // 2. Not default (isDefault != 1)
+        // 3. Haven't ended yet (endDate >= now) - show future events too
         List<Events> nonDefaultActiveEvents = allEvents.stream()
-            .filter(event -> event.getStatus() == 1 && 
-                           event.getIsDefault() != 1 &&
-                           now.isAfter(event.getStartDate()) && 
-                           now.isBefore(event.getEndDate()))
+            .filter(event -> {
+                boolean statusOk = event.getStatus() == 1;
+                boolean notDefault = event.getIsDefault() != 1;
+                boolean notEnded = !now.isAfter(event.getEndDate());
+                boolean isActive = statusOk && notDefault && notEnded;
+                log.info("[EventService] Event '{}': status={}, notDefault={}, notEnded={}, isActive={}, startDate={}, endDate={}", 
+                    event.getName(), statusOk, notDefault, notEnded, isActive, event.getStartDate(), event.getEndDate());
+                return isActive;
+            })
             .sorted(Comparator.comparing(Events::getSlideNo))
             .collect(Collectors.toList());
         
+        log.info("[EventService] Non-default active events found: {}", nonDefaultActiveEvents.size());
+        
         // If no non-default active events exist, get default events
+        // Include events that are:
+        // 1. Status = 1 (active)
+        // 2. Is default (isDefault == 1)
+        // 3. Haven't ended yet (endDate >= now) - show future events too
         List<Events> eventsToUse = nonDefaultActiveEvents.isEmpty() ? 
             allEvents.stream()
-                .filter(event -> event.getStatus() == 1 && 
-                               event.getIsDefault() == 1 &&
-                               now.isAfter(event.getStartDate()) && 
-                               now.isBefore(event.getEndDate()))
+                .filter(event -> {
+                    boolean statusOk = event.getStatus() == 1;
+                    boolean isDefault = event.getIsDefault() == 1;
+                    boolean notEnded = !now.isAfter(event.getEndDate());
+                    boolean isActive = statusOk && isDefault && notEnded;
+                    log.info("[EventService] Default Event '{}': status={}, isDefault={}, notEnded={}, isActive={}, startDate={}, endDate={}", 
+                        event.getName(), statusOk, isDefault, notEnded, isActive, event.getStartDate(), event.getEndDate());
+                    return isActive;
+                })
                 .sorted(Comparator.comparing(Events::getSlideNo))
                 .collect(Collectors.toList()) : 
             nonDefaultActiveEvents;
+        
+        log.info("[EventService] Events to use for hero: {}", eventsToUse.size());
         
         // Convert to DTOs
         for (Events event : eventsToUse) {
@@ -314,9 +339,11 @@ public class EventServiceImpl implements EventService {
                 .discountId(discountId)
                 .productIds(productIds)
                 .build();
+            log.info("[EventService] Adding event to hero list: {}", dto.getName());
             heroEvents.add(dto);
         }
         
+        log.info("[EventService] Returning {} hero events", heroEvents.size());
         return heroEvents;
     }
 

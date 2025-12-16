@@ -652,8 +652,8 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
-              icon: 'success',
+      Swal.fire({
+        icon: 'success',
               title: 'Export Successful!',
         text: 'Detailed order report has been exported successfully.',
               timer: 3000,
@@ -701,8 +701,8 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
       // Create PDF using jsPDF
       this.createDetailedPDF(pdfData);
 
-            Swal.fire({
-              icon: 'success',
+      Swal.fire({
+        icon: 'success',
               title: 'Export Successful!',
         text: 'Detailed order report has been exported successfully.',
               timer: 3000,
@@ -711,13 +711,13 @@ export class OrderManagementComponent implements OnInit, AfterViewInit {
 
     } catch (error) {
       console.error('Order PDF export error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Export Failed',
+      Swal.fire({
+        icon: 'error',
+        title: 'Export Failed',
         text: 'There was an error exporting to PDF. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
+        confirmButtonColor: '#3085d6'
+      });
+    }
   }
 
   // Generate detailed CSV data

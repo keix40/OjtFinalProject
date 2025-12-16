@@ -154,8 +154,8 @@ export class HomeComponent implements OnInit {
     const userId = undefined; // For now, use undefined to get latest products
     this.productService.getFeaturedProducts(userId).subscribe({
       next: (products) => {
-        // Limit to 5 products to ensure they fit in one row
-        this.featuredProducts = products.slice(0, 5);
+        // Limit to 4 products to match trending section layout
+        this.featuredProducts = products.slice(0, 4);
         console.log('Featured products loaded:', this.featuredProducts);
         
         // Debug discount information
@@ -233,15 +233,40 @@ export class HomeComponent implements OnInit {
   }
 
   loadEvents() {
+    console.log('[HomeComponent] Loading events...');
     this.eventService.getActiveEventsForHero().subscribe({
       next: (events) => {
+        console.log('[HomeComponent] Raw events received:', events);
+        console.log('[HomeComponent] Events type:', typeof events);
+        console.log('[HomeComponent] Events array check:', Array.isArray(events));
+        console.log('[HomeComponent] Events length:', events?.length);
+        
+        // Handle different response formats
+        if (events && typeof events === 'object' && !Array.isArray(events)) {
+          // If response is wrapped in an object, try to extract the array
+          const possibleArray = (events as any).data || (events as any).events || (events as any).content;
+          if (Array.isArray(possibleArray)) {
+            events = possibleArray;
+          }
+        }
+        
         this.events = Array.isArray(events) ? events.filter(e => !!e) : [];
+        console.log('[HomeComponent] Filtered events:', this.events);
+        console.log('[HomeComponent] Final events length:', this.events.length);
+        
+        if (this.events.length > 0) {
+          console.log('[HomeComponent] Events loaded successfully:', this.events.map(e => ({ id: e.id, name: e.name, startDate: e.startDate, endDate: e.endDate, status: e.status })));
+        } else {
+          console.warn('[HomeComponent] No events found after filtering');
+        }
+        
         if (this.events.length > 1) {
           this.startAutoSlide();
         }
       },
       error: (error) => {
-        console.error('Error loading events:', error);
+        console.error('[HomeComponent] Error loading events:', error);
+        console.error('[HomeComponent] Error details:', JSON.stringify(error, null, 2));
         this.events = [];
       }
     });
@@ -463,11 +488,20 @@ export class HomeComponent implements OnInit {
   }
 
   getEventImageUrl(event: EventDTO): string {
-    if (!event.eventImage) return '/assets/images/no-image.png';
+    if (!event.eventImage) {
+      return '/assets/images/no-image.png';
+    }
     if (event.eventImage.startsWith('http') || event.eventImage.startsWith('data:')) {
       return event.eventImage;
     }
     return 'http://localhost:8080' + event.eventImage;
+  }
+
+  onImageError(event: Event): void {
+    const target = event.target as HTMLImageElement;
+    if (target) {
+      target.src = '/assets/images/no-image.png';
+    }
   }
 
   getButtonText(event: EventDTO): string {

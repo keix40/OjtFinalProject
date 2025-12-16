@@ -1,132 +1,159 @@
 <app-header></app-header>
-<div class="bg-white border-b border-gray-100">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-    <nav class="flex items-center space-x-2 text-sm" aria-label="Breadcrumb">
-      <a routerLink="/home" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Home</a>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+<div class="bg-gradient-to-br from-slate-50 via-white to-slate-100 border-b border-slate-200/50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <nav class="flex items-center space-x-3 text-sm" aria-label="Breadcrumb">
+      <a routerLink="/home" class="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-light">Home</a>
+      <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"></path>
       </svg>
-      <a routerLink="/userproductlist" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Products</a>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+      <a routerLink="/userproductlist" class="text-slate-600 hover:text-slate-900 transition-colors duration-300 font-light">Products</a>
+      <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"></path>
       </svg>
-      <span class="text-gray-900 font-medium" aria-current="page">{{ product.productName }}</span>
+      <span class="text-slate-900 font-medium" aria-current="page">{{ product.productName }}</span>
     </nav>
   </div>
 </div>
 <!-- Main Content -->
-<div *ngIf="product" class="bg-gray-50 min-h-screen">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div *ngIf="product" class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen relative overflow-hidden">
+  <!-- Luxury Background Pattern -->
+  <div class="absolute inset-0 opacity-[0.02]">
+    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0); background-size: 20px 20px;"></div>
+  </div>
+  
+  <!-- Floating Elements -->
+  <div class="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-amber-200/10 to-amber-300/10 rounded-full blur-xl animate-pulse"></div>
+  <div class="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-br from-slate-200/10 to-slate-300/10 rounded-full blur-xl animate-pulse delay-1000"></div>
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
       <!-- Left: Image Gallery -->
-      <div class="bg-white rounded-2xl shadow p-6 flex flex-col items-center" 
+      <div class="space-y-6">
+        <!-- Main Image Section -->
+        <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 relative overflow-hidden" 
            tabindex="0" 
            (keydown)="onImageGalleryKeyDown($event)">
-        <div class="w-full flex justify-center mb-4 relative">
+          <!-- Subtle gradient overlay -->
+          <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-white/40 to-slate-50/60 rounded-3xl"></div>
+          
+          <div class="relative z-10 w-full flex justify-center relative">
           <!-- Main Product Image -->
           <img [src]="selectedImage" 
-               class="w-full max-w-md h-80 object-contain rounded-xl border border-gray-100 bg-white main-product-image" 
+                 class="w-full max-w-lg h-96 object-cover rounded-2xl bg-white/70 shadow-lg main-product-image" 
                alt="Main Product Image"
                [@fadeIn]>
           
           <!-- Left Arrow -->
           <button *ngIf="getCurrentVariantImages().length > 1 && currentImageIndex > 0"
-                  class="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-200 transition-all duration-200 hover:scale-110 z-10"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center shadow-xl border border-slate-200/50 transition-all duration-300 hover:scale-110 z-10"
                   (click)="previousImage()"
                   title="Previous Image">
-            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
             </svg>
           </button>
           
           <!-- Right Arrow -->
           <button *ngIf="getCurrentVariantImages().length > 1 && currentImageIndex < getCurrentVariantImages().length - 1"
-                  class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg border border-gray-200 transition-all duration-200 hover:scale-110 z-10"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center shadow-xl border border-slate-200/50 transition-all duration-300 hover:scale-110 z-10"
                   (click)="nextImage()"
                   title="Next Image">
-            <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"/>
             </svg>
           </button>
           
           <!-- Image Counter -->
           <div *ngIf="getCurrentVariantImages().length > 1" 
-               class="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded-md text-xs font-medium">
+                 class="absolute bottom-4 right-4 bg-slate-900/80 backdrop-blur-sm text-white px-3 py-2 rounded-xl text-sm font-light">
             {{ currentImageIndex + 1 }} / {{ getCurrentVariantImages().length }}
           </div>
           
           <!-- Variant Indicator -->
           <div *ngIf="selectedVariant && getVariantImages(selectedVariant).length > 0" 
-               class="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded-md text-xs font-medium">
-            {{ getVariantAttributesText(selectedVariant) }}
+                 class="absolute top-4 left-4">
+              <span class="inline-block w-6 h-6 rounded-full" [ngStyle]="{ 'background-color': getColorHex(getSelectedColorValue()) }"></span>
+              <span class="sr-only">{{ getVariantDisplayText(selectedVariant) }}</span>
+            </div>
           </div>
         </div>
         
-        <!-- Thumbnail Navigation -->
-        <div class="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide">
+        <!-- Thumbnail Navigation Section -->
+        <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-6 relative overflow-hidden">
+          <!-- Subtle gradient overlay -->
+          <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-white/40 to-slate-50/60 rounded-3xl"></div>
+          
+          <div class="relative z-10 flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
           <img *ngFor="let image of getCurrentVariantImages(); let i = index; trackBy: trackByImageId"
                [src]="image.url"
-               class="w-14 h-14 rounded-lg object-cover border-2 cursor-pointer transition-all duration-200 hover:scale-105 hover:border-blue-400 bg-white thumbnail-transition"
-               [class.border-blue-500]="selectedImage === image.url"
-               [class.border-gray-200]="selectedImage !== image.url"
+                 class="w-16 h-16 rounded-xl object-cover border-2 cursor-pointer transition-all duration-300 hover:scale-105 bg-white/70 shadow-lg thumbnail-transition"
+                 [class.border-slate-800]="selectedImage === image.url"
+                 [class.border-slate-200]="selectedImage !== image.url"
                (click)="onThumbnailClick(image, i)"
                alt="Thumbnail">
+          </div>
         </div>
       </div>
       <!-- Right: Product Info -->
-      <div class="bg-white rounded-2xl shadow p-8 flex flex-col justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-black mb-2">{{ product.productName }}</h1>
-          <div class="flex items-center mb-2">
-            <div class="flex items-center space-x-1 mr-2">
+      <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 flex flex-col justify-between relative overflow-hidden">
+        <!-- Subtle gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-white/40 to-slate-50/60 rounded-3xl"></div>
+        
+        <div class="relative z-10">
+          <h1 class="text-4xl font-light text-slate-900 mb-4 tracking-wide">{{ product.productName }}</h1>
+          <div class="flex items-center mb-6">
+            <div class="flex items-center space-x-1 mr-3">
               <ng-container *ngFor="let star of createArray(5)">
-                <svg class="w-5 h-5" [ngClass]="star <= getDisplayRating() ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-5 h-5" [ngClass]="star <= getDisplayRating() ? 'text-amber-400' : 'text-slate-300'" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                 </svg>
               </ng-container>
             </div>
-            <span class="text-sm text-gray-500">({{ totalReviews }} reviews)</span>
+            <span class="text-sm text-slate-600 font-light">({{ totalReviews }} reviews)</span>
           </div>
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-3">
-              <span *ngIf="getFinalDiscountedPrice() !== (selectedVariant?.price || product.price)" class="text-lg text-gray-400 line-through">{{ formatPrice(selectedVariant?.price || product.price) }}</span>
-              <span class="text-2xl font-bold text-blue-700">{{ formatPrice(getFinalDiscountedPrice()) }}</span>
-              <span *ngIf="product?.hasDiscount && !isFirstTimeBuyerDiscount" class="px-2 py-0.5 rounded bg-blue-100 text-blue-700 text-xs font-bold ml-2">{{ getDiscountDisplayText() }}</span>
+          <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center space-x-4">
+              <span *ngIf="getFinalDiscountedPrice() !== (selectedVariant?.price || product.price)" class="text-xl text-slate-400 line-through font-light">{{ formatPrice(selectedVariant?.price || product.price) }}</span>
+              <span class="text-3xl font-light text-slate-900 tracking-wide">{{ formatPrice(getFinalDiscountedPrice()) }}</span>
+              <span *ngIf="product?.hasDiscount && !isFirstTimeBuyerDiscount" class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-sm font-medium">{{ getDiscountDisplayText() }}</span>
             </div>
             <!-- VIP Discount Badge (Right Side) -->
             <div *ngIf="getVipDiscountDisplay()" 
-                 class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                 class="text-sm font-medium text-slate-700 bg-slate-100 px-3 py-1 rounded-full">
               {{ getVipDiscountDisplay() }}
             </div>
           </div>
           <!-- <div class="text-gray-700 mb-4">{{ product.description }}</div> -->
-          <div class="flex items-center space-x-4 mb-4">
-            <span class="text-gray-600 font-medium">Brand:</span>
-            <span class="text-black">{{ getBrandName() }}</span>
-            <span class="text-gray-600 font-medium">Categories:</span>
-            <span class="text-black">{{ categoryNames }}</span>
+          <div class="flex items-center space-x-6 mb-8">
+            <div class="flex items-center space-x-2">
+              <span class="text-slate-600 font-medium text-sm">Brand:</span>
+              <span class="text-slate-900 font-light">{{ getBrandName() }}</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-slate-600 font-medium text-sm">Categories:</span>
+              <span class="text-slate-900 font-light">{{ categoryNames }}</span>
+            </div>
           </div>
           <!-- Variant Attribute Selectors -->
-          <div *ngIf="attributeValuesMap" class="space-y-4 mb-6">
+          <div *ngIf="attributeValuesMap" class="space-y-6 mb-8">
             <div *ngFor="let attrName of objectKeys(attributeValuesMap)">
-              <h3 class="text-lg font-semibold text-gray-800 mb-3 capitalize">{{ attrName }}:</h3>
+              <h3 class="text-lg font-medium text-slate-800 mb-4 capitalize tracking-wide">{{ attrName }}:</h3>
               <div class="flex flex-wrap gap-3">
                 <ng-container *ngIf="isColorAttribute(attrName); else regularOptions">
                   <button
                     *ngFor="let value of attributeValuesMap[attrName]"
-                    class="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 flex items-center justify-center transition-all relative group"
-                    [class.border-blue-500]="selectedAttributes[attrName] === value"
-                    [class.border-gray-300]="selectedAttributes[attrName] !== value"
+                    class="w-12 h-12 md:w-14 md:h-14 rounded-full border-2 flex items-center justify-center transition-all duration-300 relative group shadow-lg"
+                    [class.border-slate-800]="selectedAttributes[attrName] === value"
+                    [class.border-slate-200]="selectedAttributes[attrName] !== value"
                     [class.opacity-50]="isAttributeValueDisabled(attrName, value)"
                     [class.grayscale]="isAttributeValueDisabled(attrName, value)"
                     [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
                     (click)="toggleAttribute(attrName, value)"
                     [disabled]="isAttributeValueDisabled(attrName, value)"
                     [title]="getColorDisplayName(value)">
-                    <span class="w-8 h-8 rounded-full" [ngStyle]="{'background-color': getColorHex(value)}"></span>
+                    <span class="w-10 h-10 rounded-full shadow-inner" [ngStyle]="{'background-color': getColorHex(value)}"></span>
                     <span class="sr-only">{{ getColorDisplayName(value) }}</span>
                     <!-- Tooltip -->
-                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-slate-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-10">
                       {{ getColorDisplayName(value) }}
                     </div>
                   </button>
@@ -134,14 +161,17 @@
                 <ng-template #regularOptions>
                   <button
                     *ngFor="let value of attributeValuesMap[attrName]"
-                    class="px-4 py-2 rounded-lg font-medium transition-all"
-                    [class.bg-blue-600]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    class="px-6 py-3 rounded-xl font-medium transition-all duration-300 border"
+                    [class.bg-slate-800]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
                     [class.text-white]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
-                    [class.bg-gray-100]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
-                    [class.text-gray-700]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
-                    [class.hover:bg-blue-50]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
-                    [class.bg-gray-200]="isAttributeValueDisabled(attrName, value)"
-                    [class.text-gray-400]="isAttributeValueDisabled(attrName, value)"
+                    [class.border-slate-800]="selectedAttributes[attrName] === value && !isAttributeValueDisabled(attrName, value)"
+                    [class.bg-white]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                    [class.text-slate-700]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                    [class.border-slate-200]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                    [class.hover:border-slate-300]="selectedAttributes[attrName] !== value && !isAttributeValueDisabled(attrName, value)"
+                    [class.bg-slate-100]="isAttributeValueDisabled(attrName, value)"
+                    [class.text-slate-400]="isAttributeValueDisabled(attrName, value)"
+                    [class.border-slate-100]="isAttributeValueDisabled(attrName, value)"
                     [class.cursor-not-allowed]="isAttributeValueDisabled(attrName, value)"
                     (click)="toggleAttribute(attrName, value)"
                     [disabled]="isAttributeValueDisabled(attrName, value)">
@@ -151,46 +181,51 @@
               </div>
             </div>
           </div>
-          <div class="flex items-center space-x-4 mb-6">
-            <span class="text-gray-600 font-medium">Quantity:</span>
-            <div class="flex items-center border border-blue-100 rounded-lg bg-white">
-              <button class="w-8 h-8 flex items-center justify-center rounded-l-lg text-blue-600 hover:bg-blue-50" (click)="decreaseQty()">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+          <div class="flex items-center space-x-4 mb-8">
+            <span class="text-slate-600 font-medium text-sm">Quantity:</span>
+            <div class="flex items-center border border-slate-200 rounded-xl bg-white shadow-sm">
+              <button class="w-10 h-10 flex items-center justify-center rounded-l-xl text-slate-600 hover:bg-slate-50 transition-colors duration-200" (click)="decreaseQty()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 12H4"></path></svg>
               </button>
-              <span class="w-10 text-center text-lg font-bold">{{ quantity }}</span>
-              <button class="w-8 h-8 flex items-center justify-center rounded-r-lg text-blue-600 hover:bg-blue-50" (click)="increaseQty()">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              <span class="w-12 text-center text-lg font-light">{{ quantity }}</span>
+              <button class="w-10 h-10 flex items-center justify-center rounded-r-xl text-slate-600 hover:bg-slate-50 transition-colors duration-200" (click)="increaseQty()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"></path></svg>
               </button>
             </div>
           </div>
           <!-- Add to Cart and Wishlist Buttons -->
-          <div class="flex items-center space-x-3 mb-4">
+          <div class="flex items-center space-x-4 mb-6">
             <button 
-              class="flex-1 h-12 font-bold rounded-lg transition-all duration-200 shadow focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center space-x-2"
-              [class.bg-blue-700]="!isAddToCartDisabled()"
-              [class.hover:bg-blue-800]="!isAddToCartDisabled()"
+              class="flex-1 h-14 font-medium rounded-xl transition-all duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-300 flex items-center justify-center space-x-3"
+              [class.bg-gradient-to-r]="!isAddToCartDisabled()"
+              [class.from-slate-800]="!isAddToCartDisabled()"
+              [class.to-slate-900]="!isAddToCartDisabled()"
+              [class.hover:from-slate-700]="!isAddToCartDisabled()"
+              [class.hover:to-slate-800]="!isAddToCartDisabled()"
               [class.text-white]="!isAddToCartDisabled()"
-              [class.bg-gray-400]="isAddToCartDisabled()"
-              [class.text-gray-600]="isAddToCartDisabled()"
+              [class.bg-slate-200]="isAddToCartDisabled()"
+              [class.text-slate-400]="isAddToCartDisabled()"
               [class.cursor-not-allowed]="isAddToCartDisabled()"
               [class.cursor-pointer]="!isAddToCartDisabled()"
+              [class.transform]="!isAddToCartDisabled()"
+              [class.hover:scale-[1.02]]="!isAddToCartDisabled()"
               (click)="!isAddToCartDisabled() && addToCartWithRipple($event)"
               [disabled]="isAddToCartDisabled()">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m8 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01"/>
               </svg>
-              <span>{{ getAddToCartButtonText() }}</span>
+              <span class="text-sm tracking-wide">{{ getAddToCartButtonText() }}</span>
             </button>
-            <button class="w-12 h-12 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-lg transition-all duration-200 shadow focus:outline-none focus:ring-2 focus:ring-blue-400 flex items-center justify-center" (click)="toggleWishlistWithPulse()" [class.text-red-500]="wishlist.has(product.id)" [class.border-red-300]="wishlist.has(product.id)">
+            <button class="w-14 h-14 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-all duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-slate-300 flex items-center justify-center" (click)="toggleWishlistWithPulse()" [class.text-red-500]="wishlist.has(product.id)" [class.border-red-300]="wishlist.has(product.id)">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
               </svg>
             </button>
           </div>
-          <ul class="mt-2 space-y-1">
-            <li *ngFor="let feature of product.features" class="flex items-center text-sm text-gray-700">
-              <svg class="w-4 h-4 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-              {{ feature }}
+          <ul class="mt-6 space-y-3">
+            <li *ngFor="let feature of product.features" class="flex items-center text-sm text-slate-700">
+              <svg class="w-4 h-4 text-slate-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+              <span class="font-light">{{ feature }}</span>
             </li>
           </ul>
         </div>
@@ -198,74 +233,83 @@
     </div>
 
     <!-- Tabs Section -->
-    <div class="mt-10">
-      <div class="bg-white rounded-2xl shadow p-4">
-        <div class="flex border-b border-gray-200 mb-6">
-          <button class="px-6 py-3 text-base font-semibold text-gray-700 focus:outline-none" [ngClass]="{'border-b-2 border-blue-600 text-blue-700': activeTab === 'description'}" (click)="activeTab = 'description'">Description</button>
-          <!-- <button class="px-6 py-3 text-base font-semibold text-gray-700 focus:outline-none" [ngClass]="{'border-b-2 border-blue-600 text-blue-700': activeTab === 'specs'}" (click)="activeTab = 'specs'">Specifications</button> -->
-          <button class="px-6 py-3 text-base font-semibold text-gray-700 focus:outline-none" [ngClass]="{'border-b-2 border-blue-600 text-blue-700': activeTab === 'reviews'}" (click)="activeTab = 'reviews'">Reviews</button>
+    <div class="mt-16">
+      <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 relative overflow-hidden">
+        <!-- Subtle gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-white/40 to-slate-50/60 rounded-3xl"></div>
+        
+        <div class="relative z-10">
+          <div class="flex border-b border-slate-200/50 mb-8">
+            <button class="px-8 py-4 text-lg font-light text-slate-700 focus:outline-none transition-all duration-300" [ngClass]="{'border-b-2 border-slate-800 text-slate-900': activeTab === 'description'}" (click)="activeTab = 'description'">Description</button>
+            <!-- <button class="px-8 py-4 text-lg font-light text-slate-700 focus:outline-none transition-all duration-300" [ngClass]="{'border-b-2 border-slate-800 text-slate-900': activeTab === 'specs'}" (click)="activeTab = 'specs'">Specifications</button> -->
+            <button class="px-8 py-4 text-lg font-light text-slate-700 focus:outline-none transition-all duration-300" [ngClass]="{'border-b-2 border-slate-800 text-slate-900': activeTab === 'reviews'}" (click)="activeTab = 'reviews'">Reviews</button>
         </div>
         <div *ngIf="activeTab === 'description'">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">Product Description</h2>
-          <p class="text-gray-700 leading-relaxed">{{ product.description }}</p>
+            <h2 class="text-2xl font-light text-slate-900 mb-6 tracking-wide">Product Description</h2>
+            <p class="text-slate-700 leading-relaxed font-light text-lg">{{ product.description }}</p>
         </div>
         <div *ngIf="activeTab === 'specs'">
-          <h2 class="text-xl font-bold text-gray-900 mb-4">Specifications</h2>
-          <ul class="list-disc pl-6 text-gray-700">
-            <li *ngFor="let spec of product.specifications">{{ spec }}</li>
+            <h2 class="text-2xl font-light text-slate-900 mb-6 tracking-wide">Specifications</h2>
+            <ul class="space-y-3 text-slate-700">
+              <li *ngFor="let spec of product.specifications" class="flex items-center">
+                <svg class="w-4 h-4 text-slate-600 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/>
+                </svg>
+                <span class="font-light">{{ spec }}</span>
+              </li>
           </ul>
         </div>
         <div *ngIf="activeTab === 'reviews'">
           <!-- Overall Rating Summary -->
-          <div class="bg-blue-50 rounded-xl p-4 mb-6 border border-blue-100">
+            <div class="bg-slate-50/80 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-slate-200/50">
             <div class="text-center">
-              <div class="text-3xl font-bold text-gray-900 mb-2">{{ getDisplayRating() }}/5</div>
-              <div class="flex justify-center space-x-1 mb-2">
+                <div class="text-4xl font-light text-slate-900 mb-3 tracking-wide">{{ getDisplayRating() }}/5</div>
+                <div class="flex justify-center space-x-1 mb-3">
                 <ng-container *ngFor="let star of createArray(5)">
-                  <svg class="w-6 h-6" [class.text-yellow-400]="star <= getDisplayRating()" [class.text-gray-300]="star > getDisplayRating()" fill="currentColor" viewBox="0 0 20 20">
+                    <svg class="w-7 h-7" [class.text-amber-400]="star <= getDisplayRating()" [class.text-slate-300]="star > getDisplayRating()" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                   </svg>
                 </ng-container>
               </div>
-              <div class="text-sm text-gray-600">{{ totalReviews }} reviews</div>
+                <div class="text-sm text-slate-600 font-light">{{ totalReviews }} reviews</div>
             </div>
           </div>
           <!-- Rating Breakdown -->
-          <div class="bg-white rounded-xl p-4 mb-6 border border-gray-200 shadow-sm">
-            <h4 class="text-base font-semibold text-gray-900 mb-3">Rating Breakdown</h4>
-            <div class="space-y-2">
-              <div *ngFor="let rating of [5,4,3,2,1]" class="flex items-center space-x-3">
-                <span class="text-sm text-gray-600 w-4">{{ rating }}</span>
-                <div class="flex-1 bg-gray-200 rounded-full h-2">
-                  <div class="bg-yellow-400 h-2 rounded-full transition-all duration-300" 
+            <div class="bg-white/70 backdrop-blur-sm rounded-2xl p-6 mb-8 border border-slate-200/50 shadow-sm">
+              <h4 class="text-lg font-medium text-slate-900 mb-4 tracking-wide">Rating Breakdown</h4>
+              <div class="space-y-3">
+                <div *ngFor="let rating of [5,4,3,2,1]" class="flex items-center space-x-4">
+                  <span class="text-sm text-slate-600 w-4 font-light">{{ rating }}</span>
+                  <div class="flex-1 bg-slate-200 rounded-full h-2">
+                    <div class="bg-amber-400 h-2 rounded-full transition-all duration-300" 
                        [style.width.%]="totalReviews > 0 ? (ratingBreakdown[rating] / totalReviews) * 100 : 0"></div>
                 </div>
-                <span class="text-sm text-gray-600 w-8 text-right">{{ ratingBreakdown[rating] || 0 }}</span>
+                  <span class="text-sm text-slate-600 w-8 text-right font-light">{{ ratingBreakdown[rating] || 0 }}</span>
               </div>
             </div>
           </div>
           <!-- Write Review Button -->
-          <div class="text-center mb-6" *ngIf="!showReviewForm && !editingReviewId">
+            <div class="text-center mb-8" *ngIf="!showReviewForm && !editingReviewId">
             <button 
-              class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg transition-all duration-200 shadow-sm flex items-center space-x-2 mx-auto write-review-btn"
+                class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-medium px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-3 mx-auto transform hover:scale-[1.02] write-review-btn"
               (click)="showReviewFormAndScroll()">
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
               </svg>
-              <span>Write a Review</span>
+                <span class="text-sm tracking-wide">Write a Review</span>
             </button>
           </div>
 
           <!-- Review Form (inline, not external component) -->
-          <div class="bg-white rounded-xl shadow p-4 mb-8 review-form-container" *ngIf="showReviewForm || editingReviewId">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">{{ editingReviewId ? 'Edit Review' : 'Write a Review' }}</h3>
-            <div class="flex items-center mb-3">
-              <span class="text-gray-700 font-medium mr-2">Rating:</span>
+            <div class="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg p-6 mb-8 border border-slate-200/50 review-form-container" *ngIf="showReviewForm || editingReviewId">
+              <h3 class="text-xl font-light text-slate-900 mb-6 tracking-wide">{{ editingReviewId ? 'Edit Review' : 'Write a Review' }}</h3>
+              <div class="flex items-center mb-4">
+                <span class="text-slate-700 font-medium mr-3 text-sm">Rating:</span>
               <div class="flex space-x-1">
                 <ng-container *ngFor="let r of [1,2,3,4,5]">
-                  <svg class="w-6 h-6 cursor-pointer transition-colors duration-200"
-                       [class.text-yellow-400]="newRating >= r"
-                       [class.text-gray-300]="newRating < r"
+                    <svg class="w-6 h-6 cursor-pointer transition-colors duration-300"
+                         [class.text-amber-400]="newRating >= r"
+                         [class.text-slate-300]="newRating < r"
                        fill="currentColor" viewBox="0 0 20 20"
                        (mouseenter)="newRating = r"
                        (mouseleave)="newRating = newRating"
@@ -275,7 +319,7 @@
                 </ng-container>
               </div>
             </div>
-            <textarea [(ngModel)]="newReview" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all duration-200 outline-none resize-none text-sm mb-3" rows="3" placeholder="Share your experience with this product..."></textarea>
+              <textarea [(ngModel)]="newReview" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:border-slate-300 focus:ring-2 focus:ring-slate-100 transition-all duration-300 outline-none resize-none text-sm mb-4 font-light" rows="3" placeholder="Share your experience with this product..."></textarea>
             
             <!-- Existing Media Section (when editing) -->
             <div *ngIf="editingReviewId && existingReviewMedia.length > 0" class="mb-3">
@@ -326,50 +370,50 @@
                 </ng-container>
               </div>
             </div>
-            <div class="flex justify-end space-x-2">
+              <div class="flex justify-end space-x-3">
               <button *ngIf="editingReviewId" 
-                      class="bg-gray-500 hover:bg-gray-600 text-white font-semibold px-5 py-2 rounded-lg transition-all duration-200 shadow-sm text-sm" 
+                        class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium px-6 py-3 rounded-xl transition-all duration-300 shadow-sm text-sm" 
                       (click)="cancelEdit()">
                 Cancel
               </button>
-              <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg transition-all duration-200 shadow-sm flex items-center space-x-2 text-sm" (click)="submitReview()">
+                <button class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-medium px-6 py-3 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2 text-sm transform hover:scale-[1.02]" (click)="submitReview()">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                 </svg>
                 <span>{{ editingReviewId ? 'Update Review' : 'Submit Review' }}</span>
               </button>
             </div>
           </div>
           <!-- Review List with Media -->
-          <div class="space-y-5 mt-8">
-            <div *ngIf="!reviews.length" class="text-center py-8 text-gray-500 bg-white rounded-xl border border-gray-200">
-              <svg class="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            <div class="space-y-6 mt-8">
+              <div *ngIf="!reviews.length" class="text-center py-12 text-slate-500 bg-white/70 backdrop-blur-sm rounded-2xl border border-slate-200/50">
+                <svg class="w-12 h-12 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
               </svg>
-              <p class="text-base font-medium">No reviews yet</p>
-              <p class="text-xs">Be the first to share your experience!</p>
+                <p class="text-lg font-light">No reviews yet</p>
+                <p class="text-sm font-light">Be the first to share your experience!</p>
             </div>
             <div *ngFor="let review of reviews | slice:0:3; trackBy: trackByReviewId" 
-                 class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-300 relative"
+                   class="bg-white/70 backdrop-blur-sm border border-slate-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 relative"
                  [@slideIn]>
-              <div class="flex items-start justify-between mb-2">
-                <div class="flex items-center space-x-2">
+                <div class="flex items-start justify-between mb-4">
+                  <div class="flex items-center space-x-3">
                   <img [src]="'http://localhost:8080' + review.userImage"
-                       class="w-8 h-8 rounded-full object-cover border border-gray-200"
-                       alt="User Avatar" width="32" height="32">
+                         class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm"
+                         alt="User Avatar" width="40" height="40">
                   <div>
-                    <div class="font-semibold text-gray-900 text-sm">{{ review.username }}</div>
+                      <div class="font-medium text-slate-900 text-sm">{{ review.username }}</div>
                     <div class="flex items-center space-x-1">
                       <ng-container *ngFor="let star of createArray(5)">
-                        <svg class="w-3 h-3" [ngClass]="star <= review.rating ? 'text-yellow-400' : 'text-gray-300'" fill="currentColor" viewBox="0 0 20 20">
+                          <svg class="w-3 h-3" [ngClass]="star <= review.rating ? 'text-amber-400' : 'text-slate-300'" fill="currentColor" viewBox="0 0 20 20">
                           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                         </svg>
                       </ng-container>
                     </div>
                   </div>
                 </div>
-                <div class="flex items-center space-x-2">
-                  <div class="text-gray-400 text-xs">{{ review.timestamp | date:'short' }}</div>
+                  <div class="flex items-center space-x-3">
+                    <div class="text-slate-500 text-xs font-light">{{ review.timestamp | date:'short' }}</div>
                   <!-- Menu Button for User's Own Reviews -->
                   <div *ngIf="isCurrentUserReview(review)" class="relative">
                     <button 
@@ -404,7 +448,7 @@
                   </div>
                 </div>
               </div>
-              <div class="text-gray-700 mb-2 text-sm">{{ review.comment }}</div>
+                <div class="text-slate-700 mb-4 text-sm font-light leading-relaxed">{{ review.comment }}</div>
               <!-- Media Grid -->
               <div *ngIf="getAllMedia(review).length" class="flex gap-2 mt-2">
                 <ng-container *ngFor="let media of getMediaPreview(review); let i = index; trackBy: trackByMediaUrl">
@@ -439,13 +483,14 @@
                 </ng-container>
               </div>
             </div>
-            <div *ngIf="reviews.length > 3" class="text-center mt-6">
-              <button class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 shadow flex items-center space-x-2 mx-auto text-base" (click)="goToAllReviews()">
+              <div *ngIf="reviews.length > 3" class="text-center mt-8">
+                <button class="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-medium px-8 py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-3 mx-auto text-sm tracking-wide transform hover:scale-[1.02]" (click)="goToAllReviews()">
                 <span>See More Reviews</span>
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5l7 7-7 7"></path>
                 </svg>
               </button>
+              </div>
             </div>
           </div>
         </div>
@@ -453,44 +498,47 @@
     </div>
 
     <!-- Related Products Section -->
-    <div *ngIf="!isLoadingRelatedProducts && relatedProducts.length > 0" class="mt-10">
-      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+    <div *ngIf="!isLoadingRelatedProducts && relatedProducts.length > 0" class="mt-16">
+      <div class="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden relative">
+        <!-- Subtle gradient overlay -->
+        <div class="absolute inset-0 bg-gradient-to-br from-white/60 via-white/40 to-slate-50/60"></div>
+        
         <!-- Header -->
-        <div class="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
+        <div class="relative z-10 px-8 py-6 border-b border-slate-200/50 bg-gradient-to-r from-slate-50/80 to-white/80">
           <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <div class="w-2 h-6 bg-blue-600 rounded-full"></div>
-              <h2 class="text-xl font-bold text-gray-900">Related Products</h2>
-              <span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">
+            <div class="flex items-center space-x-4">
+              <div class="w-2 h-8 bg-slate-800 rounded-full"></div>
+              <h2 class="text-2xl font-light text-slate-900 tracking-wide">Related Products</h2>
+              <span class="px-3 py-1 bg-slate-100 text-slate-700 text-sm font-medium rounded-full">
                 {{ relatedProducts.length }}
               </span>
             </div>
             <div class="flex items-center space-x-2">
-              <span class="text-xs text-gray-500">You might also like</span>
+              <span class="text-sm text-slate-600 font-light">You might also like</span>
             </div>
           </div>
         </div>
         
         <!-- Loading State -->
-        <div *ngIf="isLoadingRelatedProducts" class="text-center py-12">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 mb-4">
-            <svg class="w-6 h-6 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
+        <div *ngIf="isLoadingRelatedProducts" class="relative z-10 text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-6">
+            <svg class="w-8 h-8 text-slate-600 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           </div>
-          <p class="text-gray-600">Finding products you might like...</p>
+          <p class="text-slate-600 font-light">Finding products you might like...</p>
         </div>
 
         <!-- Related Products Grid - Responsive 5 columns -->
-        <div *ngIf="!isLoadingRelatedProducts && relatedProducts.length > 0" class="p-4 sm:p-6">
+        <div *ngIf="!isLoadingRelatedProducts && relatedProducts.length > 0" class="relative z-10 p-6 sm:p-8">
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             <div *ngFor="let product of relatedProducts; trackBy: trackByProductId" 
-                 class="group relative bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-200 cursor-pointer transform hover:scale-105" 
+                 class="group relative bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-slate-200/50 cursor-pointer transform hover:scale-105" 
                  (click)="goToProductDetail(product.id)"
                  [@scaleIn]>
               <!-- Product Image Container -->
-              <div class="relative overflow-hidden bg-gray-50">
+              <div class="relative overflow-hidden bg-slate-50">
                 <img [src]="getProductImageUrl(product)" 
                      [alt]="product.productName" 
                      class="w-full h-32 sm:h-36 md:h-40 object-cover group-hover:scale-110 transition-transform duration-500"
@@ -498,58 +546,58 @@
                 
                 <!-- Discount Badge -->
                 <div *ngIf="hasRelatedProductDiscount(product)" 
-                     class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-md text-xs font-bold z-10 shadow-lg">
+                     class="absolute top-3 left-3 bg-slate-800 text-white px-3 py-1 rounded-lg text-xs font-medium z-10 shadow-lg">
                   {{ getRelatedProductDiscountText(product) }}
                 </div>
                 
                 <!-- Wishlist Button -->
-                <button class="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all duration-200 opacity-0 group-hover:opacity-100 z-10 transform hover:scale-110"
+                <button class="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-all duration-300 opacity-0 group-hover:opacity-100 z-10 transform hover:scale-110"
                         (click)="addToWishlistFromRelated(product, $event)">
-                  <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                  <svg class="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
                   </svg>
                 </button>
                 
                 <!-- Quick View Overlay -->
                 <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100">
-                  <span class="text-white font-medium text-sm bg-black/70 px-3 py-1 rounded-full">Quick View</span>
+                  <span class="text-white font-medium text-sm bg-slate-900/80 backdrop-blur-sm px-4 py-2 rounded-xl">Quick View</span>
                 </div>
               </div>
               
               <!-- Product Info -->
-              <div class="p-3 sm:p-4">
+              <div class="p-4 sm:p-5">
                 <!-- Product Name -->
-                <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300 text-xs sm:text-sm leading-tight min-h-[2rem] sm:min-h-[2.5rem]">
+                <h3 class="font-medium text-slate-900 mb-3 line-clamp-2 group-hover:text-slate-700 transition-colors duration-300 text-sm leading-tight min-h-[2.5rem]">
                   {{ product.productName }}
                 </h3>
                 
                 <!-- Rating -->
-                <div class="flex items-center mb-2 sm:mb-3">
+                <div class="flex items-center mb-3">
                   <div class="flex items-center space-x-0.5">
                     <ng-container *ngFor="let star of [1,2,3,4,5]">
                       <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" 
-                           [ngClass]="star <= (product.averageRating || 0) ? 'text-yellow-400' : 'text-gray-300'" 
+                           [ngClass]="star <= (product.averageRating || 0) ? 'text-amber-400' : 'text-slate-300'" 
                            fill="currentColor" 
                            viewBox="0 0 20 20">
                         <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                       </svg>
                     </ng-container>
                   </div>
-                  <span class="text-xs text-gray-500 ml-1">({{ product.reviewCount || 0 }})</span>
+                  <span class="text-xs text-slate-500 ml-2 font-light">({{ product.reviewCount || 0 }})</span>
                 </div>
                 
                 <!-- Price -->
                 <div class="flex flex-col space-y-1">
                   <div *ngIf="getRelatedProductDiscountedPrice(product) !== product.price; else originalPrice" class="space-y-1">
-                    <span class="text-base sm:text-lg font-bold text-red-600">
+                    <span class="text-base sm:text-lg font-light text-slate-900">
                       {{ formatPrice(getRelatedProductDiscountedPrice(product)) }}
                     </span>
-                    <span class="text-xs sm:text-sm text-gray-400 line-through">
+                    <span class="text-xs sm:text-sm text-slate-400 line-through font-light">
                       {{ formatPrice(product.price) }}
                     </span>
                   </div>
                   <ng-template #originalPrice>
-                    <span class="text-base sm:text-lg font-bold text-gray-900">
+                    <span class="text-base sm:text-lg font-light text-slate-900">
                       {{ formatPrice(product.price) }}
                     </span>
                   </ng-template>
@@ -560,14 +608,14 @@
         </div>
         
         <!-- No Related Products Found -->
-        <div *ngIf="!isLoadingRelatedProducts && relatedProducts.length === 0" class="text-center py-12 text-gray-500">
-          <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+        <div *ngIf="!isLoadingRelatedProducts && relatedProducts.length === 0" class="relative z-10 text-center py-16 text-slate-500">
+          <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
             </svg>
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 mb-2">No related products found</h3>
-          <p class="text-sm text-gray-600">We couldn't find any products related to this item.</p>
+          <h3 class="text-xl font-light text-slate-900 mb-3 tracking-wide">No related products found</h3>
+          <p class="text-sm text-slate-600 font-light">We couldn't find any products related to this item.</p>
         </div>
       </div>
     </div>

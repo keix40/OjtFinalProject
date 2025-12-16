@@ -840,6 +840,36 @@ checkFirstTimeBuyerDiscount(): void {
     return variant.attributes.map(attr => attr.value).join(' / ');
   }
 
+  getVariantDisplayText(variant: Variant): string {
+    if (!variant?.attributes) return '';
+    return variant.attributes.map(attr => {
+      // Check if this is a color attribute
+      if (this.isColorAttribute(attr.attributeName)) {
+        return this.getColorDisplayName(attr.value);
+      }
+      return attr.value;
+    }).join(' / ');
+  }
+
+  /**
+   * Resolve the currently selected color value (can be name or hex)
+   */
+  getSelectedColorValue(): string {
+    // Prefer explicitly selected attributes first (common keys: color/Color)
+    const explicit = (this.selectedAttributes &&
+      (this.selectedAttributes['color'] || this.selectedAttributes['Color'])) as string | undefined;
+    if (explicit) return explicit;
+
+    // Fallback to the selected variant's color attribute, if any
+    const variant = this.selectedVariant as Variant | undefined;
+    if (variant && (variant as any).attributes) {
+      const colorAttr = (variant as any).attributes.find((a: any) => this.isColorAttribute(a.attributeName));
+      if (colorAttr) return colorAttr.value as string;
+    }
+
+    return '';
+  }
+
   addToWishlist() {
     const userId = this.authService.getUserId && this.authService.getUserId();
     if (!userId) {
