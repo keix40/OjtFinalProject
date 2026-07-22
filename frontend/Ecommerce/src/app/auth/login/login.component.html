@@ -45,6 +45,8 @@
                 </svg>
               </div>
             </div>
+            <p *ngIf="submittedLogin && email?.errors?.['required']" class="text-red-500 text-xs">Email is required.</p>
+            <p *ngIf="submittedLogin && email?.errors?.['email']" class="text-red-500 text-xs">Enter a valid email address.</p>
           </div>
 
           <!-- Password Field -->
@@ -71,6 +73,8 @@
                 </svg>
               </button>
             </div>
+            <p *ngIf="submittedLogin && password?.errors?.['required']" class="text-red-500 text-xs">Password is required.</p>
+            <p *ngIf="loginError" class="text-red-500 text-sm">{{ loginError }}</p>
           </div>
 
           <!-- Forgot Password -->

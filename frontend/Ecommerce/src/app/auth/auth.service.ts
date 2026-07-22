@@ -59,6 +59,10 @@ export class AuthService {
 
 
   saveToken(token: string) {
+    if (!token || token === 'null' || token === 'undefined') {
+      localStorage.removeItem('token');
+      return;
+    }
     localStorage.setItem('token', token);
   }
 
@@ -80,7 +84,14 @@ export class AuthService {
 
 
   getToken(): string | null {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    if (!token || token === 'null' || token === 'undefined') {
+      if (token === 'null' || token === 'undefined') {
+        localStorage.removeItem('token');
+      }
+      return null;
+    }
+    return token;
   }
 
   isLoggedIn(): boolean {

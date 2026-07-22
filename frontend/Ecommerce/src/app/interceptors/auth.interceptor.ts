@@ -87,10 +87,21 @@ export class AuthInterceptor implements HttpInterceptor {
           return throwError(() => error);
         }
         
-        // Handle other errors
+        // Handle other errors — only force logout on 401 when a real session existed
         if (error.status === 401) {
-          this.authService.logout();
-          this.router.navigate(['/login']);
+          const hadValidToken = !!this.authService.getToken();
+          const onLoginPage = this.router.url.startsWith('/login');
+          const isAuthEndpoint = request.url.includes('/api/auth/login')
+            || request.url.includes('/api/auth/verify')
+            || request.url.includes('/api/auth/refresh');
+
+          if (hadValidToken && !onLoginPage && !isAuthEndpoint) {
+            this.authService.logout();
+            this.router.navigate(['/login']);
+          } else if (!hadValidToken) {
+            // Clear stale invalid token strings without bouncing the user
+            localStorage.removeItem('token');
+          }
         }
         
         return throwError(() => error);

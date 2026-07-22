@@ -68,7 +68,7 @@ export class LoginComponent implements OnInit {
     this.loginForm = this.fb.group({
   email: ['', [
     Validators.required,
-    Validators.pattern(/^[a-zA-Z0-9._%+-]+@gmail\.com$/)
+    Validators.email
   ]],
   password: ['', Validators.required]
 });
@@ -88,6 +88,7 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
   // ---------- LOGIN ----------
   submitLogin() {
   this.submittedLogin = true;
+  this.loginError = '';
 
   if (this.loginForm.invalid) return;
 
@@ -108,15 +109,21 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         this.showCaptchaModal = true;
         return;
       }
+      if (!res.accessToken) {
+        this.loginError = 'Login succeeded but no access token was returned.';
+        return;
+      }
       this.auth.saveToken(res.accessToken);
-      localStorage.setItem('refreshToken', res.refreshToken);
+      if (res.refreshToken) {
+        localStorage.setItem('refreshToken', res.refreshToken);
+      }
 
       // Call backend to check first time buyer eligibility
       this.http.get('/api/notifications/check-first-time-buyer').subscribe();
 
       const decoded = this.auth.getDecodedToken(); // Only declare once
       const permissionString = decoded?.permissions || '';
-      const permissionArray = permissionString.split(',').map((p: string) => p.trim());
+      const permissionArray = permissionString.split(',').map((p: string) => p.trim()).filter(Boolean);
 
       this.permissionService.setPermissions(permissionArray);
       // Also set in localStorage for consistency
@@ -171,7 +178,7 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         const email = this.loginForm.get('email')?.value;
         this.router.navigate(['/verify-otp'], { queryParams: { email } });
       } else {
-        this.loginError = 'Invalid email or password.';
+        this.loginError = err?.error?.message || 'Invalid email or password.';
       }
     }
   });
@@ -219,7 +226,7 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
 
  sendForgotPasswordOtp() {
   this.submittedForgot = true;
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   // Revalidate after submit
   if (!this.forgotEmail) {
@@ -227,7 +234,7 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     return;
   }
   if (!emailRegex.test(this.forgotEmail)) {
-    this.forgotError = 'Enter a valid Gmail address.';
+    this.forgotError = 'Enter a valid email address.';
     return;
   }
 
@@ -346,14 +353,14 @@ get password() {
 }
 
 onForgotEmailChange() {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
   // If the user has clicked submit at least once
   if (this.submittedForgot) {
     if (!this.forgotEmail) {
       this.forgotError = 'Email is required.';
     } else if (!emailRegex.test(this.forgotEmail)) {
-      this.forgotError = 'Enter a valid Gmail address.';
+      this.forgotError = 'Enter a valid email address.';
     } else {
       this.forgotError = '';
     }

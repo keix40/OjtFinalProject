@@ -34,8 +34,11 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Fetch stored notifications from backend
+    // Fetch stored notifications from backend only when logged in
     setTimeout(() => this.animationState = 'open', 10);
+    if (!this.authService.isLoggedIn()) {
+      return;
+    }
     this.notifSub = this.notifService.getStoredNotifications().subscribe({
       next: (stored) => {
         this.notifications = (stored || [])
