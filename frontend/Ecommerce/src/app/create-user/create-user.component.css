@@ -156,3 +156,37 @@
 .create-user-page .fas, .create-user-page .far { font-family: inherit; }
 
 .create-user-page .container { max-width: none; padding: 0; margin: 0; }
+
+.create-user-page input[type='checkbox'],
+.create-user-page input[type='radio'] {
+  accent-color: var(--lux-ink) !important;
+  color: var(--lux-ink) !important;
+}
+.create-user-page .text-purple-500,
+.create-user-page .text-green-500,
+.create-user-page .text-orange-500,
+.create-user-page .text-blue-500 {
+  color: var(--lux-champagne-deep) !important;
+}
+.create-user-page .focus\:ring-blue-500:focus,
+.create-user-page .focus\:border-blue-500:focus {
+  --tw-ring-color: var(--lux-champagne-soft) !important;
+  border-color: var(--lux-champagne) !important;
+  box-shadow: 0 0 0 3px var(--lux-champagne-soft) !important;
+}
+.create-user-page .hover\:bg-blue-700:hover {
+  background: var(--lux-espresso) !important;
+}
+.create-user-page h3 {
+  font-family: var(--lux-font-serif);
+  font-weight: 500;
+  color: var(--lux-ink) !important;
+}
+.create-user-page .create-user-body .lg\:grid-cols-3 {
+  align-items: start;
+}
+@media (max-width: 1024px) {
+  .create-user-page .create-user-body .grid {
+    gap: 1rem;
+  }
+}

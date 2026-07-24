@@ -1,50 +1,73 @@
-<div class="fixed inset-0 z-40 flex items-center justify-center">
-
-<div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div> 
-
-<div class="w-full max-w-xl mx-auto bg-white rounded-xl shadow-2xl p-6 md:p-8 relative overflow-y-auto scrollbar-hide" style="max-height:90vh;">
-  <div class="flex items-center justify-between mb-6">
-    <h2 class="text-2xl font-bold text-black">{{ createMode ? 'Create New Attribute' : 'Edit Attribute' }}</h2>
-    <button type="button" class="text-slate-400 hover:text-slate-600 text-2xl" (click)="closeModal()">&times;</button>
-  </div>
-  <form (ngSubmit)="saveAttribute()" autocomplete="off">
-    <div class="mb-6">
-      <label class="block text-base font-medium text-slate-700 mb-2">Attribute Name *</label>
-      <input [(ngModel)]="formAttributeName" name="attributeName" required (ngModelChange)="checkIfColorAttribute()" class="block w-full px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base" placeholder="Enter attribute name" />
-    </div>
-    <div class="mb-6">
-      <label class="block text-base font-medium text-slate-700 mb-2">Attribute Values *</label>
-      <div class="flex gap-2 mb-2">
-        <input *ngIf="isColorAttribute" type="color" [(ngModel)]="newValue" name="newValueColor" class="w-12 h-12 p-1 border border-slate-200 rounded-lg cursor-pointer" />
-        <input [(ngModel)]="newValue" name="newValue" class="flex-1 px-4 py-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-base" placeholder="Enter value and press +" (keyup.enter)="addValue()" />
-        <button type="button" class="w-12 h-12 flex items-center justify-center bg-gray-600 text-white rounded-lg text-2xl hover:bg-gray-700 transition-all" (click)="addValue()">
-          +
-        </button>
+<div class="admin-modal-backdrop">
+  <div class="admin-modal admin-modal--lg relative" role="dialog" aria-modal="true" aria-labelledby="attr-modal-title">
+    <button type="button" class="admin-modal-close" (click)="closeModal()" aria-label="Close">&times;</button>
+    <form (ngSubmit)="saveAttribute()" autocomplete="off" class="flex flex-col min-h-0 flex-1 overflow-hidden">
+      <div class="admin-modal__header">
+        <h2 id="attr-modal-title" class="admin-modal__title">{{ createMode ? 'Create New Attribute' : 'Edit Attribute' }}</h2>
       </div>
-      <div *ngIf="formValues.length > 0" class="space-y-2">
-        <div *ngFor="let val of formValues; let i = index" class="flex items-center gap-2">
-          <ng-container *ngIf="editingValueId !== i; else editValueTpl">
-            <div *ngIf="isColorAttribute" class="w-6 h-6 rounded-md border border-slate-200" [style.backgroundColor]="val.value"></div>
-            <span
-              class="flex-1 px-3 py-2 bg-slate-100 rounded text-base cursor-pointer"
-              (click)="startEditValue(val, i)"
-              title="Click to edit"
-            >{{ val.value }}</span>
-            <button type="button" class="text-red-600 hover:underline text-xs" (click)="removeValue(i)">Remove</button>
-          </ng-container>
-          <ng-template #editValueTpl>
-            <input *ngIf="isColorAttribute" type="color" [(ngModel)]="editValue" [name]="'editColor' + i" class="w-10 h-10 p-1 border border-slate-200 rounded-lg cursor-pointer" />
-            <input [(ngModel)]="editValue" [name]="'editValue' + i" class="flex-1 px-3 py-2 border border-slate-300 rounded text-base" />
-            <button type="button" class="text-green-600 hover:underline text-xs" (click)="saveEditValue(i)">Save</button>
-            <button type="button" class="text-slate-600 hover:underline text-xs" (click)="cancelEditValue()">Cancel</button>
-          </ng-template>
+      <div class="admin-modal__body space-y-5">
+        <div>
+          <label class="lux-field-label" for="attr-name">Attribute Name *</label>
+          <input
+            id="attr-name"
+            [(ngModel)]="formAttributeName"
+            name="attributeName"
+            required
+            (ngModelChange)="checkIfColorAttribute()"
+            class="lux-input"
+            placeholder="Enter attribute name"
+          />
+        </div>
+
+        <div>
+          <label class="lux-field-label" for="attr-value">Attribute Values *</label>
+          <div class="lux-input-add">
+            <input
+              *ngIf="isColorAttribute"
+              type="color"
+              [(ngModel)]="newValue"
+              name="newValueColor"
+              class="lux-input-add__swatch"
+              aria-label="Pick color"
+            />
+            <input
+              id="attr-value"
+              [(ngModel)]="newValue"
+              name="newValue"
+              class="lux-input lux-input-add__field"
+              placeholder="Enter value and press +"
+              (keyup.enter)="addValue()"
+            />
+            <button type="button" class="lux-btn lux-btn--primary lux-input-add__btn" (click)="addValue()" aria-label="Add value">+</button>
+          </div>
+
+          <div *ngIf="formValues.length > 0" class="lux-chip-list">
+            <div *ngFor="let val of formValues; let i = index" class="lux-chip-row">
+              <ng-container *ngIf="editingValueId !== i; else editValueTpl">
+                <span *ngIf="isColorAttribute" class="lux-chip-swatch" [style.backgroundColor]="val.value"></span>
+                <button type="button" class="lux-chip" (click)="startEditValue(val, i)" title="Click to edit">{{ val.value }}</button>
+                <button type="button" class="lux-btn lux-btn--ghost lux-btn--sm" (click)="removeValue(i)">Remove</button>
+              </ng-container>
+              <ng-template #editValueTpl>
+                <input *ngIf="isColorAttribute" type="color" [(ngModel)]="editValue" [name]="'editColor' + i" class="lux-input-add__swatch" />
+                <input [(ngModel)]="editValue" [name]="'editValue' + i" class="lux-input lux-input-add__field" />
+                <button type="button" class="lux-btn lux-btn--secondary lux-btn--sm" (click)="saveEditValue(i)">Save</button>
+                <button type="button" class="lux-btn lux-btn--ghost lux-btn--sm" (click)="cancelEditValue()">Cancel</button>
+              </ng-template>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="flex gap-4 mt-8">
-      <button type="button" class="flex-1 py-3 rounded-lg border border-slate-200 text-lg font-medium text-slate-700 bg-white hover:bg-slate-50 transition" (click)="closeModal()">Cancel</button>
-      <button type="submit" class="flex-1 py-3 rounded-lg text-lg font-medium text-white bg-blue-500 hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed" [disabled]="!formAttributeName.trim() || formValues.length === 0">{{ createMode ? 'Save Attribute' : 'Save Changes' }}</button>
-    </div>
-  </form>
-</div>
+      <div class="admin-modal__footer">
+        <button type="button" class="lux-btn lux-btn--ghost" (click)="closeModal()">Cancel</button>
+        <button
+          type="submit"
+          class="lux-btn lux-btn--primary"
+          [disabled]="!formAttributeName.trim() || formValues.length === 0"
+        >
+          {{ createMode ? 'Save Attribute' : 'Save Changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
 </div>

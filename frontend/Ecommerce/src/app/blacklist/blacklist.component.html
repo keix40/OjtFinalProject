@@ -7,177 +7,85 @@
   <div class="blacklist-body">
 
   <!-- Security Statistics -->
-  <div class="w-full mb-8">
-    <div class="admin-kpi-grid">
-      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
-        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-rose-100 mb-4">
-          <i data-lucide="ban" class="w-9 h-9 text-rose-600"></i>
-        </div>
-        <h3 class="text-4xl font-extrabold text-rose-700 mb-1 number-formatted">{{ formatNumberWithSeparator(stats?.totalActive || 0) }}</h3>
-        <p class="text-slate-700 text-lg font-medium">Total Blacklisted</p>
-        <div class="flex items-center gap-1 text-sm" [ngClass]="{
-          'text-rose-600': stats?.trends?.entriesTrendDirection === 'up',
-          'text-green-600': stats?.trends?.entriesTrendDirection === 'down',
-          'text-gray-600': stats?.trends?.entriesTrendDirection === 'stable'
-        }">
-          <i [attr.data-lucide]="getTrendIcon(stats?.trends?.entriesTrendDirection)" class="w-4 h-4"></i>
-          <span>{{ formatTrendPercentage(stats?.trends?.entriesTrend || 0) }}% vs last month</span>
-        </div>
-       
-      </div>
-      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4">
-        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-blue-100 mb-4">
-          <i data-lucide="shield" class="w-9 h-9 text-blue-600"></i>
-        </div>
-        <h3 class="text-4xl font-extrabold text-blue-700 mb-1 number-formatted">{{ formatNumberWithSeparator(fraudPrevented) }}</h3>
-        <p class="text-slate-700 text-lg font-medium">Fraud Attempts Blocked</p>
-        <div class="flex items-center gap-1 text-sm" [ngClass]="{
-          'text-blue-600': stats?.trends?.fraudTrendDirection === 'up',
-          'text-green-600': stats?.trends?.fraudTrendDirection === 'down',
-          'text-gray-600': stats?.trends?.fraudTrendDirection === 'stable'
-        }">
-          <i [attr.data-lucide]="getTrendIcon(stats?.trends?.fraudTrendDirection)" class="w-4 h-4"></i>
-          <span>{{ formatTrendPercentage(stats?.trends?.fraudTrend || 0) }}% vs last month</span>
-        </div>
-      </div>
-      <div class="flex flex-col items-center justify-center bg-white rounded-2xl shadow-md border border-gray-100 min-h-[220px] py-10 px-4 cursor-pointer hover:shadow-lg transition" (click)="openAppealManagementModal()">
-        <div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-yellow-100 mb-4">
-          <i data-lucide="gavel" class="w-9 h-9 text-yellow-600"></i>
-        </div>
-        <h3 class="text-4xl font-extrabold text-yellow-700 mb-1 number-formatted">{{ formatNumberWithSeparator(pendingAppeals) }}</h3>
-        <p class="text-slate-700 text-lg font-medium">Pending Appeals</p>
-        <div class="flex items-center gap-1 text-sm text-yellow-600 mt-2">
-          <i data-lucide="clock" class="w-4 h-4"></i>
-          <span>{{ formatNumberWithSeparator(avgAppealTime) }}h avg response</span>
-        </div>
-      </div>
+  <div class="admin-kpi-grid mb-6">
+    <div class="admin-kpi">
+      <div class="admin-kpi__label">Total Blacklisted</div>
+      <div class="admin-kpi__value">{{ formatNumberWithSeparator(stats?.totalActive || 0) }}</div>
+      <div class="admin-kpi__meta">{{ formatTrendPercentage(stats?.trends?.entriesTrend || 0) }}% vs last month</div>
     </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi__label">Fraud Attempts Blocked</div>
+      <div class="admin-kpi__value">{{ formatNumberWithSeparator(fraudPrevented) }}</div>
+      <div class="admin-kpi__meta">{{ formatTrendPercentage(stats?.trends?.fraudTrend || 0) }}% vs last month</div>
+    </div>
+    <button type="button" class="admin-kpi admin-kpi--interactive text-left" (click)="openAppealManagementModal()">
+      <div class="admin-kpi__label">Pending Appeals</div>
+      <div class="admin-kpi__value">{{ formatNumberWithSeparator(pendingAppeals) }}</div>
+      <div class="admin-kpi__meta">{{ formatNumberWithSeparator(avgAppealTime) }}h avg response</div>
+    </button>
   </div>
 
-  <!-- Filters & Auto-Block Rules -->
-  <div class="w-full mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="col-span-1 lg:col-span-3">
-      <div class="rounded-2xl shadow-md border border-slate-200 bg-white w-full">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-          <i data-lucide="filter" class="w-5 h-5 text-slate-600"></i>
-          <h5 class="text-lg font-semibold text-slate-700">Search & Filter Blacklist</h5>
-        </div>
-        <div class="px-6 py-4">
-          <div class="flex flex-col md:flex-row md:items-end gap-4">
-            <div class="flex-1">
-              <label class="block text-sm font-medium text-slate-600 mb-1">Search</label>
-              <div class="relative">
-                <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-slate-400"></i>
-                <input 
-                  type="text" 
-                  class="pl-9 pr-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-800 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" 
-                  placeholder="Email, IP, device ID..."
-                  [(ngModel)]="searchTerm"
-                  (input)="applyFilters()"
-                >
-              </div>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-600 mb-1">Category</label>
-              <select class="rounded-lg border border-slate-200 bg-white text-slate-800 px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" [(ngModel)]="categoryFilter" (change)="applyFilters()">
-                <option value="">All Categories</option>
-                <option value="fraud">Fraud</option>
-                <option value="spam">Spam</option>
-                <option value="abuse">Abuse</option>
-                <option value="chargeback">Chargeback</option>
-                <option value="fake_account">Fake Account</option>
-                <option value="policy_violation">Policy Violation</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-600 mb-1">Status</label>
-              <select class="rounded-lg border border-slate-200 bg-white text-slate-800 px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" [(ngModel)]="statusFilter" (change)="applyFilters()">
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="appealed">Under Appeal</option>
-                <option value="expired">Expired</option>
-                <option value="lifted">Lifted</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-slate-600 mb-1">Risk Level</label>
-              <select class="rounded-lg border border-slate-200 bg-white text-slate-800 px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 outline-none transition-all shadow-sm" [(ngModel)]="riskFilter" (change)="applyFilters()">
-                <option value="">All Levels</option>
-                <option value="critical">Critical</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
-              </select>
-            </div>
-            <div class="flex flex-col gap-2">
-              <label class="block text-sm font-medium text-slate-600 mb-1">Actions</label>
-              <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all" (click)="clearFilters()">
-                <i data-lucide="x" class="w-4 h-4 text-slate-600"></i>
-                Clear
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+  <lux-filter-bar>
+    <div primary class="lux-filter-row">
+      <lux-field label="Search" inputId="bl-search">
+        <input
+          id="bl-search"
+          type="text"
+          class="lux-input"
+          placeholder="Email, IP, device ID…"
+          [(ngModel)]="searchTerm"
+          (input)="applyFilters()"
+        />
+      </lux-field>
+      <lux-field label="Category" inputId="bl-category">
+        <select id="bl-category" class="lux-select" [(ngModel)]="categoryFilter" (change)="applyFilters()">
+          <option value="">All Categories</option>
+          <option value="fraud">Fraud</option>
+          <option value="spam">Spam</option>
+          <option value="abuse">Abuse</option>
+          <option value="chargeback">Chargeback</option>
+          <option value="fake_account">Fake Account</option>
+          <option value="policy_violation">Policy Violation</option>
+        </select>
+      </lux-field>
+      <lux-field label="Status" inputId="bl-status">
+        <select id="bl-status" class="lux-select" [(ngModel)]="statusFilter" (change)="applyFilters()">
+          <option value="">All Status</option>
+          <option value="active">Active</option>
+          <option value="appealed">Under Appeal</option>
+          <option value="expired">Expired</option>
+          <option value="lifted">Lifted</option>
+        </select>
+      </lux-field>
+      <lux-field label="Risk Level" inputId="bl-risk">
+        <select id="bl-risk" class="lux-select" [(ngModel)]="riskFilter" (change)="applyFilters()">
+          <option value="">All Levels</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </lux-field>
     </div>
-    <div>
-      <!-- <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
-        <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
-          <i data-lucide="bot" class="w-5 h-5 text-slate-600"></i>
-          <h5 class="text-lg font-semibold text-slate-700">Auto-Block Rules</h5>
-        </div>
-        <div class="px-6 py-4 flex flex-col gap-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="font-semibold text-slate-700">Failed Payments</span>
-              <span class="block text-xs text-slate-400">3+ failed payments in 24h</span>
-            </div>
-            <label class="inline-flex items-center cursor-pointer">
-              <input type="checkbox" class="form-checkbox accent-rose-600 w-5 h-5" [(ngModel)]="autoRules.failedPayments" (change)="updateAutoRule('failedPayments')">
-            </label>
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="font-semibold text-slate-700">Chargeback Pattern</span>
-              <span class="block text-xs text-slate-400">2+ chargebacks in 30 days</span>
-            </div>
-            <label class="inline-flex items-center cursor-pointer">
-              <input type="checkbox" class="form-checkbox accent-yellow-600 w-5 h-5" [(ngModel)]="autoRules.chargebacks" (change)="updateAutoRule('chargebacks')">
-            </label>
-          </div>
-          <div class="flex items-center justify-between">
-            <div>
-              <span class="font-semibold text-slate-700">Suspicious Activity</span>
-              <span class="block text-xs text-slate-400">Multiple accounts from same IP</span>
-            </div>
-            <label class="inline-flex items-center cursor-pointer">
-              <input type="checkbox" class="form-checkbox accent-blue-600 w-5 h-5" [(ngModel)]="autoRules.suspiciousActivity" (change)="updateAutoRule('suspiciousActivity')">
-            </label>
-          </div>
-          <button class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all mt-2 w-full" (click)="manageAutoRules()">
-            <i data-lucide="settings" class="w-4 h-4 text-blue-600"></i>
-            Manage Rules
-          </button>
-        </div>
-      </div> -->
+    <div secondary>
+      <lux-button variant="ghost" (pressed)="clearFilters()">Clear</lux-button>
     </div>
-  </div>
+  </lux-filter-bar>
 
   <!-- Blacklist Entries -->
-  <div class="w-full">
-    <div class="rounded-2xl shadow-md border border-slate-200 bg-white">
-      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h5 class="text-lg font-semibold text-slate-700"><i data-lucide="list" class="w-5 h-5 mr-2 text-slate-600"></i>Blacklist Entries ({{ (filteredEntries && filteredEntries.length) || 0 }})</h5>
+  <div class="w-full mt-4">
+    <div class="page-panel">
+      <div class="px-5 py-4 border-b border-fog flex items-center justify-between flex-wrap gap-3">
+        <h5 class="pm-section-title m-0">Blacklist Entries ({{ (filteredEntries && filteredEntries.length) || 0 }})</h5>
         <div class="flex items-center gap-2">
-          <div class="bulk-actions me-3" *ngIf="selectedEntries.length > 0">
-            <span class="selected-count text-sm text-gray-600 mr-2">{{ selectedEntries.length }} selected</span>
+          <div class="bulk-actions" *ngIf="selectedEntries.length > 0">
+            <span class="selected-count text-sm text-stone mr-2">{{ selectedEntries.length }} selected</span>
             <div class="relative inline-block text-left">
               <button 
-                class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-lg font-semibold flex items-center gap-2 shadow-sm transition-all"
+                class="lux-btn lux-btn--primary"
                 type="button"
                 (click)="toggleBulkActionsDropdown()"
               >
-                <i data-lucide="cog" class="w-4 h-4"></i>
                 Bulk Actions
                 <i data-lucide="chevron-down" class="w-4 h-4"></i>
               </button>
@@ -630,213 +538,122 @@
   </div>
 
   <!-- Add to Blacklist Modal -->
-  <div *ngIf="showEditModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-      <div class="p-6 border-b border-gray-200 flex-shrink-0">
-        <div class="flex items-center justify-between">
-          <h5 class="text-xl font-semibold flex items-center gap-2">
-            <i data-lucide="ban" class="w-5 h-5 text-rose-600"></i>
-            {{ isEditMode ? 'Edit Blacklist Entry' : 'Add to Blacklist' }}
-          </h5>
-          <button class="text-gray-400 hover:text-gray-600" (click)="closeEditModal()">
-            <i data-lucide="x" class="w-6 h-6"></i>
-          </button>
-        </div>
+  <div *ngIf="showEditModal" class="admin-modal-backdrop" (click)="closeEditModal()">
+    <div class="admin-modal admin-modal--lg relative" role="dialog" aria-modal="true" (click)="$event.stopPropagation()" style="max-width:42rem;">
+      <button type="button" class="admin-modal-close" (click)="closeEditModal()" aria-label="Close">&times;</button>
+      <div class="admin-modal__header">
+        <h2 class="admin-modal__title">{{ isEditMode ? 'Edit Blacklist Entry' : 'Add to Blacklist' }}</h2>
       </div>
-      <div class="flex-1 overflow-y-auto scrollbar-hide p-6" style="max-height: calc(90vh - 140px);">
-        <form [formGroup]="blacklistForm">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">
-                  Target Type 
-                  <span class="text-red-500">*</span>
-                </label>
-                <select class="form-select" 
-                        formControlName="targetType" 
-                        (change)="onTargetTypeChange()"
-                        [class.border-red-500]="blacklistForm.get('targetType')?.invalid && blacklistForm.get('targetType')?.touched">
-                  <option value="">Select Target Type</option>
-                  <option value="email">Email Address</option>
-                  <option value="ip">IP Address</option>
-                  <option value="phone">Phone Number</option>
-                </select>
-                <div *ngIf="blacklistForm.get('targetType')?.invalid && blacklistForm.get('targetType')?.touched" 
-                     class="text-red-500 text-sm mt-1">
-                  Target Type is required
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">
-                  Target Value 
-                  <span class="text-red-500">*</span>
-                </label>
-                <input type="text" 
-                       class="form-control" 
-                       formControlName="targetValue" 
-                       [placeholder]="getTargetPlaceholder()"
-                       [class.border-red-500]="blacklistForm.get('targetValue')?.invalid && blacklistForm.get('targetValue')?.touched"
-                       (input)="loadRelatedAccounts()">
-                <div *ngIf="blacklistForm.get('targetValue')?.invalid && blacklistForm.get('targetValue')?.touched" 
-                     class="text-red-500 text-sm mt-1">
-                  <div *ngIf="blacklistForm.get('targetValue')?.errors?.['required']">Target Value is required</div>
-                  <div *ngIf="blacklistForm.get('targetValue')?.errors?.['email']">Please enter a valid email address</div>
-                  <div *ngIf="blacklistForm.get('targetValue')?.errors?.['invalidIp']">Please enter a valid IP address (e.g., 192.168.1.1)</div>
-                  <div *ngIf="blacklistForm.get('targetValue')?.errors?.['invalidPhone']">Please enter a valid phone number</div>
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">
-                  Category 
-                  <span class="text-red-500">*</span>
-                </label>
-                <select class="form-select" 
-                        formControlName="category"
-                        [class.border-red-500]="blacklistForm.get('category')?.invalid && blacklistForm.get('category')?.touched">
-                  <option value="">Select Category</option>
-                  <option value="fraud">Fraud</option>
-                  <option value="spam">Spam</option>
-                  <option value="abuse">Abuse</option>
-                  <option value="chargeback">Chargeback</option>
-                  <option value="fake_account">Fake Account</option>
-                  <option value="policy_violation">Policy Violation</option>
-                </select>
-                <div *ngIf="blacklistForm.get('category')?.invalid && blacklistForm.get('category')?.touched" 
-                     class="text-red-500 text-sm mt-1">
-                  Category is required
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">
-                  Risk Level 
-                  <span class="text-red-500">*</span>
-                </label>
-                <select class="form-select" 
-                        formControlName="riskLevel"
-                        [class.border-red-500]="blacklistForm.get('riskLevel')?.invalid && blacklistForm.get('riskLevel')?.touched">
-                  <option value="">Select Risk Level</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                  <option value="critical">Critical</option>
-                </select>
-                <div *ngIf="blacklistForm.get('riskLevel')?.invalid && blacklistForm.get('riskLevel')?.touched" 
-                     class="text-red-500 text-sm mt-1">
-                  Risk Level is required
-                </div>
-              </div>
-              <div class="col-md-12 mb-3">
-                <label class="form-label">
-                  Reason 
-                  <span class="text-red-500">*</span>
-                </label>
-                <input type="text" 
-                       class="form-control" 
-                       formControlName="reason" 
-                       placeholder="Brief description of the violation"
-                       [class.border-red-500]="blacklistForm.get('reason')?.invalid && blacklistForm.get('reason')?.touched">
-                <div *ngIf="blacklistForm.get('reason')?.invalid && blacklistForm.get('reason')?.touched" 
-                     class="text-red-500 text-sm mt-1">
-                  Reason is required
-                </div>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Expiry Date (Optional)</label>
-                <input type="date" class="form-control" formControlName="expiryDate">
-                <small class="form-text text-muted">Leave empty for permanent ban</small>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Associated Email (Optional)</label>
-                <input type="email" class="form-control" formControlName="associatedEmail" 
-                       placeholder="Related email address">
-              </div>
-              <div class="col-md-12 mb-3">
-                <label class="form-label">Notes</label>
-                <textarea class="form-control" rows="3" formControlName="notes" 
-                          placeholder="Detailed notes about this blacklist entry..."></textarea>
-              </div>
-              <div class="col-md-12 mb-3">
-                <!-- <div class="form-check">
-                  <input class="form-check-input" type="checkbox" formControlName="notifyTeam">
-                  <label class="form-check-label">Notify security team</label>
-                </div> -->
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" formControlName="blockRelated" (change)="loadRelatedAccounts()">
-                  <label class="form-check-label">Block related accounts (most used IP)</label>
-                </div>
+      <div class="admin-modal__body">
+        <form [formGroup]="blacklistForm" class="space-y-4" id="blacklist-entry-form">
+          <div class="admin-form-grid">
+            <div>
+              <label class="lux-field-label" for="bl-target-type">Target Type *</label>
+              <select id="bl-target-type" class="lux-select" formControlName="targetType" (change)="onTargetTypeChange()">
+                <option value="">Select Target Type</option>
+                <option value="email">Email Address</option>
+                <option value="ip">IP Address</option>
+                <option value="phone">Phone Number</option>
+              </select>
+              <div class="lux-field-error" *ngIf="blacklistForm.get('targetType')?.invalid && blacklistForm.get('targetType')?.touched">Target Type is required</div>
+            </div>
+            <div>
+              <label class="lux-field-label" for="bl-target-value">Target Value *</label>
+              <input id="bl-target-value" type="text" class="lux-input" formControlName="targetValue" [placeholder]="getTargetPlaceholder()" (input)="loadRelatedAccounts()" />
+              <div class="lux-field-error" *ngIf="blacklistForm.get('targetValue')?.invalid && blacklistForm.get('targetValue')?.touched">
+                <span *ngIf="blacklistForm.get('targetValue')?.errors?.['required']">Target Value is required</span>
+                <span *ngIf="blacklistForm.get('targetValue')?.errors?.['email']">Please enter a valid email address</span>
+                <span *ngIf="blacklistForm.get('targetValue')?.errors?.['invalidIp']">Please enter a valid IP address</span>
+                <span *ngIf="blacklistForm.get('targetValue')?.errors?.['invalidPhone']">Please enter a valid phone number</span>
               </div>
             </div>
-          </form>
-          <div class="impact-preview mt-6" *ngIf="blacklistForm.get('targetValue')?.value">
-            <h6 class="text-lg font-semibold mb-4 flex items-center">
-              <i data-lucide="info" class="w-5 h-5 text-blue-600 mr-2"></i>
-              Impact Information
-            </h6>
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-blue-600">{{ getAffectedAccounts() }}</div>
-                  <div class="text-gray-600 text-sm">Account(s) Will Be Blocked</div>
-                </div>
-                <div class="text-center">
-                  <div class="text-2xl font-bold text-orange-600">{{ getRelatedEntries() }}</div>
-                  <div class="text-gray-600 text-sm">Related Entries Found</div>
-                </div>
-              </div>
-              <div class="mt-3 text-sm text-gray-600 text-center">
-                <i data-lucide="alert-triangle" class="w-4 h-4 inline-block mr-1 text-orange-500"></i>
-                This action will prevent <strong>{{ blacklistForm.get('targetValue')?.value }}</strong> from accessing the system.
-              </div>
+            <div>
+              <label class="lux-field-label" for="bl-category">Category *</label>
+              <select id="bl-category" class="lux-select" formControlName="category">
+                <option value="">Select Category</option>
+                <option value="fraud">Fraud</option>
+                <option value="spam">Spam</option>
+                <option value="abuse">Abuse</option>
+                <option value="chargeback">Chargeback</option>
+                <option value="fake_account">Fake Account</option>
+                <option value="policy_violation">Policy Violation</option>
+              </select>
+              <div class="lux-field-error" *ngIf="blacklistForm.get('category')?.invalid && blacklistForm.get('category')?.touched">Category is required</div>
+            </div>
+            <div>
+              <label class="lux-field-label" for="bl-risk">Risk Level *</label>
+              <select id="bl-risk" class="lux-select" formControlName="riskLevel">
+                <option value="">Select Risk Level</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+              </select>
+              <div class="lux-field-error" *ngIf="blacklistForm.get('riskLevel')?.invalid && blacklistForm.get('riskLevel')?.touched">Risk Level is required</div>
             </div>
           </div>
 
-          <!-- Related Accounts Preview -->
-          <div class="related-accounts-preview mt-4" *ngIf="blacklistForm.get('targetValue')?.value && blacklistForm.get('blockRelated')?.value">
-            <h6 class="text-lg font-semibold mb-4 flex items-center">
-              <i data-lucide="users" class="w-5 h-5 text-orange-600 mr-2"></i>
-              Related Accounts That Will Be Blocked
-            </h6>
-            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              <div *ngIf="relatedAccounts.length > 0" class="space-y-2">
-                <div *ngFor="let account of relatedAccounts" class="flex items-center justify-between p-2 bg-white rounded border">
-                  <div class="flex items-center">
-                    <i data-lucide="user" class="w-4 h-4 text-gray-500 mr-2"></i>
-                    <span class="font-medium">{{ account.email }}</span>
-                  </div>
-                  <div class="text-xs text-gray-500 text-right">
-                    <div>{{ account.similarity }}</div>
-                    <div *ngIf="account.ip" class="text-gray-400">IP: {{ account.ip }}</div>
-                  </div>
-                </div>
-              </div>
-              <div *ngIf="relatedAccounts.length === 0" class="text-center text-gray-500 py-4">
-                <i data-lucide="search" class="w-8 h-8 mx-auto mb-2 text-gray-400"></i>
-                <p>No related accounts found</p>
-                <p class="text-xs">Checking for accounts with same IP address...</p>
-              </div>
-              <div class="mt-3 text-xs text-gray-600 text-center">
-                <i data-lucide="info" class="w-3 h-3 inline-block mr-1"></i>
-                These accounts will be automatically blocked if "Block related accounts" is checked.
-                <br>
-                <span class="text-gray-500">(Based on most frequently used IP address)</span>
-              </div>
+          <div>
+            <label class="lux-field-label" for="bl-reason">Reason *</label>
+            <input id="bl-reason" type="text" class="lux-input" formControlName="reason" placeholder="Brief description of the violation" />
+            <div class="lux-field-error" *ngIf="blacklistForm.get('reason')?.invalid && blacklistForm.get('reason')?.touched">Reason is required</div>
+          </div>
+
+          <div class="admin-form-grid">
+            <div>
+              <label class="lux-field-label" for="bl-expiry">Expiry Date (Optional)</label>
+              <input id="bl-expiry" type="date" class="lux-input" formControlName="expiryDate" />
+              <p class="lux-field-hint">Leave empty for permanent ban</p>
+            </div>
+            <div>
+              <label class="lux-field-label" for="bl-email">Associated Email (Optional)</label>
+              <input id="bl-email" type="email" class="lux-input" formControlName="associatedEmail" placeholder="Related email address" />
             </div>
           </div>
-        </div>
-        <div class="p-6 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
-          <button class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors" (click)="closeEditModal()">
-            <i data-lucide="x" class="w-4 h-4 inline-block mr-1"></i>Cancel
-          </button>
-          <button 
-            class="px-4 py-2 text-white bg-rose-600 hover:bg-rose-700 rounded-lg transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed" 
-            (click)="addToBlacklist()"
-            [disabled]="loading || !blacklistForm.valid">
-            <i data-lucide="loader-2" class="w-4 h-4 inline-block mr-1 animate-spin" *ngIf="loading"></i>
-            <i data-lucide="ban" class="w-4 h-4 inline-block mr-1" *ngIf="!loading"></i>
-            <span>{{ loading ? 'Processing...' : (isEditMode ? 'Update Entry' : 'Add to Blacklist') }}</span>
-          </button>
-        </div>
+
+          <div>
+            <label class="lux-field-label" for="bl-notes">Notes</label>
+            <textarea id="bl-notes" class="lux-input" rows="3" formControlName="notes" placeholder="Detailed notes about this blacklist entry…"></textarea>
+          </div>
+
+          <label class="lux-choice" [class.is-selected]="blacklistForm.get('blockRelated')?.value">
+            <input type="checkbox" formControlName="blockRelated" (change)="loadRelatedAccounts()" />
+            <span>Block related accounts (most used IP)</span>
+          </label>
+
+          <div class="page-panel p-4" *ngIf="blacklistForm.get('targetValue')?.value">
+            <div class="admin-kpi__label mb-2">Impact</div>
+            <p class="text-sm text-graphite m-0">
+              This action will prevent <strong class="text-ink">{{ blacklistForm.get('targetValue')?.value }}</strong> from accessing the system.
+              <span *ngIf="getAffectedAccounts()"> · {{ getAffectedAccounts() }} account(s)</span>
+            </p>
+          </div>
+
+          <div class="page-panel p-4" *ngIf="blacklistForm.get('targetValue')?.value && blacklistForm.get('blockRelated')?.value">
+            <div class="admin-kpi__label mb-2">Related accounts</div>
+            <div *ngIf="relatedAccounts.length > 0" class="space-y-2">
+              <div *ngFor="let account of relatedAccounts" class="flex items-center justify-between text-sm border-b border-fog py-2">
+                <span class="text-ink">{{ account.email }}</span>
+                <span class="text-stone text-xs">{{ account.similarity }}</span>
+              </div>
+            </div>
+            <p *ngIf="relatedAccounts.length === 0" class="lux-field-hint m-0">No related accounts found for the most-used IP.</p>
+          </div>
+        </form>
+      </div>
+      <div class="admin-modal__footer">
+        <button type="button" class="lux-btn lux-btn--ghost" (click)="closeEditModal()">Cancel</button>
+        <button
+          type="button"
+          class="lux-btn lux-btn--primary"
+          (click)="addToBlacklist()"
+          [disabled]="loading || !blacklistForm.valid"
+        >
+          {{ loading ? 'Processing…' : (isEditMode ? 'Update Entry' : 'Add to Blacklist') }}
+        </button>
       </div>
     </div>
+  </div>
 
   <!-- Incident History Modal -->
   <div *ngIf="showIncidentHistoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

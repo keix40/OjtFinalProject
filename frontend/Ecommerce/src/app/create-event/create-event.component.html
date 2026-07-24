@@ -16,7 +16,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div class="space-y-2">
             <label class="block text-sm font-medium text-slate-700">Event Name</label>
-            <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" [(ngModel)]="event.name" name="name" required #nameInput="ngModel">
+            <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-all duration-200" [(ngModel)]="event.name" name="name" required #nameInput="ngModel">
             <div *ngIf="isNameExists" class="text-red-500 text-xs mt-1 flex items-center gap-1">
               <i data-lucide="alert-circle" class="w-4 h-4"></i>
               Event name already exists.
@@ -30,7 +30,7 @@
             <label class="block text-sm font-medium text-slate-700">Slide No</label>
             <input type="number"
                    disabled
-                   class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
+                   class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-all duration-200 disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed"
                    [(ngModel)]="event.slideNo"
                    name="slideNo"
                    required
@@ -50,7 +50,7 @@
         </div>
         <div class="mt-6 space-y-2">
           <label class="block text-sm font-medium text-slate-700">Description</label>
-          <textarea class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none" rows="4" [(ngModel)]="event.description" name="description" required #descInput="ngModel"></textarea>
+          <textarea class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-all duration-200 resize-none" rows="4" [(ngModel)]="event.description" name="description" required #descInput="ngModel"></textarea>
           <div *ngIf="descInput.invalid && descInput.touched" class="text-red-500 text-xs mt-1 flex items-center gap-1">
             <i data-lucide="alert-circle" class="w-4 h-4"></i>
             Description is required.
@@ -68,7 +68,7 @@
           <div class="space-y-2">
             <label class="block text-sm font-medium text-slate-700">Start Date & Time</label>
             <input type="datetime-local"
-                   class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                   class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-all duration-200"
                    [(ngModel)]="event.startDate"
                    name="startDate"
                    [min]="todayString"
@@ -87,7 +87,7 @@
           </div>
           <div class="space-y-2">
             <label class="block text-sm font-medium text-slate-700">End Date & Time</label>
-            <input type="datetime-local" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" [(ngModel)]="event.endDate" name="endDate" [min]="event.startDate" required #endDateInput="ngModel">
+            <input type="datetime-local" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-all duration-200" [(ngModel)]="event.endDate" name="endDate" [min]="event.startDate" required #endDateInput="ngModel">
             <div *ngIf="endDateInput.invalid && endDateInput.touched" class="text-red-500 text-xs mt-1 flex items-center gap-1">
               <i data-lucide="alert-circle" class="w-4 h-4"></i>
               End date is required.
@@ -96,11 +96,11 @@
         </div>
         <div class="flex gap-6 mt-6">
           <div class="flex items-center gap-2">
-            <input type="checkbox" id="isDefault" [(ngModel)]="event.isDefault" name="isDefault" [checked]="event.isDefault === 1" (change)="onIsDefaultChange($event)" class="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
+            <input type="checkbox" id="isDefault" [(ngModel)]="event.isDefault" name="isDefault" [checked]="event.isDefault === 1" (change)="onIsDefaultChange($event)" class="w-5 h-5 accent-ink border-slate-300 rounded">
             <label for="isDefault" class="text-slate-700">Default Event</label>
           </div>
           <div class="flex items-center gap-2">
-            <input type="checkbox" id="status" [(ngModel)]="event.status" name="status" [checked]="event.status === 1" (change)="onStatusChange($event)" class="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500">
+            <input type="checkbox" id="status" [(ngModel)]="event.status" name="status" [checked]="event.status === 1" (change)="onStatusChange($event)" class="w-5 h-5 accent-ink border-slate-300 rounded">
             <label for="status" class="text-slate-700">Active</label>
           </div>
         </div>
@@ -114,29 +114,29 @@
         </div>
         <div class="flex gap-8 mb-6">
           <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="eventType" [value]="'discount'" [(ngModel)]="eventType" class="accent-blue-600">
+            <input type="radio" name="eventType" [value]="'discount'" [(ngModel)]="eventType" class="accent-ink">
             <span class="text-slate-700 font-medium">Discount</span>
           </label>
           <label class="flex items-center gap-2 cursor-pointer">
-            <input type="radio" name="eventType" [value]="'product'" [(ngModel)]="eventType" class="accent-blue-600">
+            <input type="radio" name="eventType" [value]="'product'" [(ngModel)]="eventType" class="accent-ink">
             <span class="text-slate-700 font-medium">Product</span>
           </label>
         </div>
         <div *ngIf="eventType === 'discount'">
           <label class="block font-semibold mb-1">Discount</label>
-          <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" [(ngModel)]="event.discountId" name="discountId">
+          <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-all duration-200" [(ngModel)]="event.discountId" name="discountId">
             <option [ngValue]="null">-- Select Discount --</option>
             <option *ngFor="let discount of discounts" [ngValue]="discount.id">{{ discount.name }}</option>
           </select>
         </div>
         <div *ngIf="eventType === 'product'">
           <label class="block font-semibold mb-1">Products</label>
-          <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200" (click)="openProductModal()">Select Products</button>
-          <span *ngIf="selectedProducts.length > 0" class="ml-3 inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold align-middle">Selected: {{ selectedProducts.length }}</span>
+          <button type="button" class="lux-btn lux-btn--primary" (click)="openProductModal()">Select Products</button>
+          <span *ngIf="selectedProducts.length > 0" class="lux-badge ml-3 align-middle">Selected: {{ selectedProducts.length }}</span>
           <div class="flex flex-wrap gap-2 mt-2">
-            <span *ngFor="let p of selectedProducts" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+            <span *ngFor="let p of selectedProducts" class="lux-badge flex items-center gap-1">
               {{ p.productName }}
-              <button type="button" (click)="removeSelectedProduct(p)" class="ml-1 text-blue-400 hover:text-red-500 focus:outline-none">
+              <button type="button" (click)="removeSelectedProduct(p)" class="ml-1 text-stone hover:text-ink focus:outline-none" aria-label="Remove product">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </span>
@@ -202,7 +202,7 @@
         <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
           <div>
             <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <i data-lucide="tags" class="w-5 h-5 text-blue-500"></i>
+              <i data-lucide="tags" class="w-5 h-5 text-champagne-deep"></i>
               Select Products for Event
             </h3>
             <p class="text-sm text-slate-500">Choose products to include in this event</p>
@@ -215,11 +215,11 @@
           <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
             <div class="flex items-center gap-2 w-full md:w-1/2">
               <i data-lucide="search" class="w-5 h-5 text-slate-400"></i>
-              <input type="text" [(ngModel)]="productSearchTerm" placeholder="Search products by name, code, brand, or category..." class="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm" />
+              <input type="text" [(ngModel)]="productSearchTerm" placeholder="Search products by name, code, brand, or category..." class="flex-1 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-champagne-soft focus:border-champagne text-sm" />
             </div>
             <div class="flex flex-wrap gap-4 text-xs text-slate-500">
               <span>{{ filteredProducts.length }} products available</span>
-              <span *ngIf="selectedProducts.length > 0" class="text-blue-600 font-semibold flex items-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i>{{ selectedProducts.length }} selected</span>
+              <span *ngIf="selectedProducts.length > 0" class="text-ink font-semibold flex items-center gap-1"><i data-lucide="check-circle" class="w-4 h-4"></i>{{ selectedProducts.length }} selected</span>
             </div>
           </div>
           <!-- Products Table -->
@@ -228,7 +228,7 @@
               <thead class="bg-slate-50">
                 <tr>
                   <th class="px-2 py-3 text-left">
-                    <input type="checkbox" [checked]="areAllProductsSelected()" (change)="toggleAllProducts()" class="accent-blue-600">
+                    <input type="checkbox" [checked]="areAllProductsSelected()" (change)="toggleAllProducts()" class="accent-ink">
                   </th>
                   <th class="px-2 py-3 text-left">Product</th>
                   <th class="px-2 py-3 text-left">Details</th>
@@ -238,9 +238,9 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let product of filteredProducts" (click)="toggleProductSelection(product)" [class.bg-blue-50]="event.productIds?.includes(product.id)" class="cursor-pointer transition hover:bg-blue-50">
+                <tr *ngFor="let product of filteredProducts" (click)="toggleProductSelection(product)" [class.bg-champagne-soft]="event.productIds?.includes(product.id)" class="cursor-pointer transition hover:bg-champagne-soft">
                   <td class="px-2 py-2">
-                    <input type="checkbox" [checked]="event.productIds?.includes(product.id)" (click)="$event.stopPropagation()" (change)="toggleProductSelection(product)" class="accent-blue-600">
+                    <input type="checkbox" [checked]="event.productIds?.includes(product.id)" (click)="$event.stopPropagation()" (change)="toggleProductSelection(product)" class="accent-ink">
                   </td>
                   <td class="px-2 py-2">
                     <img [src]="'http://localhost:8080'+(product.productImages && product.productImages.length > 0 ? product.productImages[0].imageUrl : '/assets/images/no-image.png')" alt="Product" class="w-12 h-12 object-cover rounded-lg border" />
@@ -278,12 +278,12 @@
         <!-- Modal Footer -->
         <div class="flex items-center justify-between px-6 py-4 border-t border-slate-100 bg-slate-50">
           <div class="text-sm text-slate-500" *ngIf="selectedProducts.length > 0">
-            <i data-lucide="check-circle" class="w-4 h-4 text-blue-500"></i>
+            <i data-lucide="check-circle" class="w-4 h-4 text-champagne-deep"></i>
             {{ selectedProducts.length }} product{{ selectedProducts.length !== 1 ? 's' : '' }} selected
           </div>
           <div class="flex gap-2">
             <button type="button" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg" (click)="closeProductModal()">Cancel</button>
-            <button type="button" class="px-4 py-2 bg-blue-600 text-white rounded-lg" (click)="closeProductModal()">Confirm Selection</button>
+            <button type="button" class="lux-btn lux-btn--primary" (click)="closeProductModal()">Confirm Selection</button>
           </div>
         </div>
       </div>

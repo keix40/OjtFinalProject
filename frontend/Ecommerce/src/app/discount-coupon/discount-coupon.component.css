@@ -1,5 +1,5 @@
 .admin-form-page { color: var(--lux-ink); }
-.admin-form-wrap { max-width: 42rem; }
+.admin-form-wrap { width: 100%; max-width: min(56rem, 100%); }
 .admin-form-card { background: var(--lux-cream); }
 .admin-form {
   display: flex;

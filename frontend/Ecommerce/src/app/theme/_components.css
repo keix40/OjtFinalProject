@@ -499,6 +499,40 @@
   padding-left: 2.25rem;
 }
 
+/* One-row admin filter grids (global — avoids page-shell encapsulation misses) */
+.lux-filter-row {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+  width: 100%;
+  min-width: 0;
+  align-items: end;
+}
+
+.lux-filter-row--3 {
+  grid-template-columns: minmax(14rem, 2fr) repeat(2, minmax(9rem, 1fr));
+}
+
+.lux-filter-row--compact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  .lux-filter-row,
+  .lux-filter-row--3,
+  .lux-filter-row--compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .lux-filter-row,
+  .lux-filter-row--3,
+  .lux-filter-row--compact {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-search {
   position: relative;
 }
@@ -775,5 +809,86 @@
 @media (max-width: 768px) {
   .admin-form-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Boxed controls inside admin modals/forms (underline fields stay for storefront) */
+.admin-modal .lux-input,
+.admin-modal .lux-select,
+.admin-form-page .lux-input,
+.admin-form-page .lux-select {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
+  background: var(--lux-porcelain);
+  box-shadow: none;
+}
+
+.admin-modal .lux-input:focus,
+.admin-modal .lux-select:focus,
+.admin-form-page .lux-input:focus,
+.admin-form-page .lux-select:focus {
+  outline: 2px solid var(--lux-champagne);
+  border-color: var(--lux-champagne);
+  box-shadow: none;
+}
+
+.lux-input--invalid {
+  border-color: var(--lux-danger) !important;
+}
+
+.lux-choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.lux-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex: 1 1 9rem;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
+  background: var(--lux-ivory);
+  color: var(--lux-ink);
+  cursor: pointer;
+  transition:
+    border-color var(--lux-dur) var(--lux-ease),
+    background-color var(--lux-dur) var(--lux-ease);
+}
+
+.lux-choice:hover {
+  border-color: color-mix(in srgb, var(--lux-champagne) 70%, var(--lux-fog));
+}
+
+.lux-choice.is-selected,
+.lux-choice:has(input:checked) {
+  border-color: var(--lux-ink);
+  background: var(--lux-champagne-soft);
+}
+
+.lux-choice input {
+  accent-color: var(--lux-ink);
+  flex-shrink: 0;
+}
+
+.lux-btn--sm {
+  min-height: 2rem;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.7rem;
+}
+
+@media (max-width: 640px) {
+  .admin-modal__footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .admin-modal__footer .lux-btn {
+    width: 100%;
+    justify-content: center;
   }
 }

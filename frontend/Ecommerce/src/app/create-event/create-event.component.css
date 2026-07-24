@@ -3,7 +3,8 @@
 }
 
 .admin-form-wrap {
-  max-width: 56rem;
+  width: 100%;
+  max-width: min(72rem, 100%);
 }
 
 .admin-form {
@@ -65,4 +66,11 @@
 .fixed.inset-0 .bg-blue-600,
 .fixed.inset-0 button.bg-blue-600 {
   background: var(--lux-ink) !important;
+}
+
+.admin-form input[type="checkbox"],
+.admin-form input[type="radio"],
+.fixed.inset-0 input[type="checkbox"],
+.fixed.inset-0 input[type="radio"] {
+  accent-color: var(--lux-ink);
 }

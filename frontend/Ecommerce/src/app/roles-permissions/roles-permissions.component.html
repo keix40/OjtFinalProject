@@ -181,7 +181,7 @@
               </div>
               <div>
                 <div class="text-sm text-gray-600">Users Assigned</div>
-                <div class="font-medium text-gray-900">{{ selectedRole.userCount }} users</div>
+                <div class="font-medium text-gray-900">{{ formatUserCount(selectedRole.userCount) }}</div>
               </div>
               <div>
                 <div class="text-sm text-gray-600">Permission Level</div>
@@ -250,7 +250,10 @@
                               {{ permission.name }}
                             </label>
                           </div>
-                          <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 ml-2 whitespace-nowrap">
+                          <span
+                            *ngIf="permission.level"
+                            class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 ml-2 whitespace-nowrap"
+                          >
                             {{ permission.level }}
                           </span>
                         </div>

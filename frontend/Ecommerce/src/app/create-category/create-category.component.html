@@ -1,175 +1,114 @@
 <div class="admin-modal-backdrop static-modal-shell">
-<form #createCategoryForm="ngForm" (ngSubmit)="createCategory(createCategoryForm)" class="admin-modal admin-modal--lg relative overflow-y-auto" style="max-height:90vh;">
-  <button type="button" class="admin-modal-close" (click)="activeModal.dismiss()" aria-label="Close">&times;</button>
-  <div class="admin-modal__header">
-    <h5 class="admin-modal__title">Create Category</h5>
-  </div>
-  <div class="admin-modal__body space-y-6">
-    <!-- Parent Category -->
-    <div class="space-y-2">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Main Category (optional):</label>
-      <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" name="parentCategoryId" [(ngModel)]="selectedParentCategoryId">
-        <option [ngValue]="null" selected>-- No Parent (Main Category) --</option>
-        <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
-      </select>
+  <form #createCategoryForm="ngForm" (ngSubmit)="createCategory(createCategoryForm)" class="admin-modal admin-modal--lg relative overflow-y-auto" style="max-height:90vh;">
+    <button type="button" class="admin-modal-close" (click)="activeModal.dismiss()" aria-label="Close">&times;</button>
+    <div class="admin-modal__header">
+      <h2 class="admin-modal__title">Create Category</h2>
     </div>
-    <!-- New Category Names -->
-    <div class="space-y-2">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">New Category Name(s):</label>
-      <div *ngFor="let name of categoryNames; let i = index; trackBy: trackByIndex" class="flex gap-2 mb-2">
-        <input
-          type="text"
-          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-400"
-          name="categoryName{{ i }}"
-          [(ngModel)]="categoryNames[i]"
+    <div class="admin-modal__body space-y-5">
+      <div>
+        <label class="lux-field-label" for="parent-category">Main Category (optional)</label>
+        <select
+          id="parent-category"
+          class="lux-select"
+          name="parentCategoryId"
+          [(ngModel)]="selectedParentCategoryId"
+        >
+          <option [ngValue]="null">-- No Parent (Main Category) --</option>
+          <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="lux-field-label">New Category Name(s)</label>
+        <div *ngFor="let name of categoryNames; let i = index; trackBy: trackByIndex" class="lux-input-add" style="margin-bottom:0.5rem;">
+          <input
+            type="text"
+            class="lux-input lux-input-add__field"
+            name="categoryName{{ i }}"
+            [(ngModel)]="categoryNames[i]"
+            required
+            placeholder="Enter new category name"
+          />
+          <button
+            *ngIf="categoryNames.length > 1"
+            type="button"
+            class="lux-btn lux-btn--ghost lux-btn--sm"
+            (click)="removeCategoryField(i)"
+          >
+            Remove
+          </button>
+        </div>
+        <button type="button" class="lux-btn lux-btn--secondary lux-btn--sm" (click)="addCategoryField()">+ Add More</button>
+      </div>
+
+      <div>
+        <label class="lux-field-label">Brand Type</label>
+        <div class="lux-choice-group">
+          <label class="lux-choice" [class.is-selected]="brandOption === 'old'">
+            <input type="radio" name="BrandOption" value="old" [(ngModel)]="brandOption" />
+            <span>Existing Brand</span>
+          </label>
+          <label class="lux-choice" [class.is-selected]="brandOption === 'new'">
+            <input type="radio" name="BrandOption" value="new" [(ngModel)]="brandOption" />
+            <span>New Brand</span>
+          </label>
+          <label class="lux-choice" [class.is-selected]="brandOption === 'none'">
+            <input type="radio" name="BrandOption" value="none" [(ngModel)]="brandOption" />
+            <span>None</span>
+          </label>
+        </div>
+      </div>
+
+      <div *ngIf="brandOption === 'old'">
+        <label class="lux-field-label" for="select-brand">Select Brand</label>
+        <select
+          id="select-brand"
+          class="lux-select"
+          name="selectedBrandId"
+          [(ngModel)]="selectedBrandId"
           required
-          placeholder="Enter new category name"
-        />
-        <button
-          *ngIf="categoryNames.length > 1"
-          type="button"
-          class="bg-red-100 text-red-600 hover:bg-red-200 rounded-lg px-3 py-2 font-semibold transition-colors duration-200"
-          (click)="removeCategoryField(i)">
-          Remove
-        </button>
+        >
+          <option *ngFor="let b of brands" [value]="b.id">{{ b.name }}</option>
+        </select>
       </div>
-      <button type="button" class="bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-full px-4 py-2 text-sm font-semibold transition-colors duration-200" (click)="addCategoryField()">
-        + Add More
-      </button>
-    </div>
-    <!-- Brand Type -->
-    <div class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-3">Brand Type:</label>
-      <div class="flex flex-col sm:flex-row gap-4">
-        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition-all duration-200">
-          <input class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" type="radio" name="BrandOption" value="old" [(ngModel)]="brandOption" id="oldBrand" />
-          <span class="ml-3 text-sm font-medium text-gray-700">Old Brand</span>
-        </label>
-        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition-all duration-200">
-          <input class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" type="radio" name="BrandOption" value="new" [(ngModel)]="brandOption" id="newBrand" />
-          <span class="ml-3 text-sm font-medium text-gray-700">New Brand</span>
-        </label>
-        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition-all duration-200">
-          <input class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" type="radio" name="BrandOption" value="none" [(ngModel)]="brandOption" id="none" />
-          <span class="ml-3 text-sm font-medium text-gray-700">None</span>
-        </label>
-      </div>
-    </div>
-    <!-- Old Brand Dropdown -->
-    <div class="space-y-2" *ngIf="brandOption === 'old'">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Select Brand:</label>
-      <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" name="selectedBrandId" [(ngModel)]="selectedBrandId" required>
-        <option *ngFor="let b of brands" [value]="b.id">{{ b.name }}</option>
-      </select>
-    </div>
-    <!-- New Brand Name -->
-    <div class="space-y-2" *ngIf="brandOption === 'new'">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">New Brand Name:</label>
-      <input
-        type="text"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-400"
-        name="newBrandName"
-        [(ngModel)]="newBrandName"
-        placeholder="Enter new brand name"
-        required
-      />
-    </div>
-    <!-- <div class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Icon Type:</label>
-      <select class="w-full px-4 py-3 border border-gray-300 rounded-lg" [(ngModel)]="iconInputType" name="iconInputType">
-        <option value="upload">Upload SVG/PNG</option>
-        <option value="url">Icon URL (SVG/PNG)</option>
-        <option value="class">Font Icon Class (FontAwesome, Bootstrap, etc)</option>
-      </select>
-    </div>
-    <div *ngIf="iconInputType === 'upload'" class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Upload SVG/PNG:</label>
-      <div class="relative w-full">
+
+      <div *ngIf="brandOption === 'new'">
+        <label class="lux-field-label" for="new-brand-name">New Brand Name</label>
         <input
-          type="file"
-          accept=".svg,.png"
-          id="iconFileInput"
-          (change)="onIconFileSelected($event)"
-          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          id="new-brand-name"
+          type="text"
+          class="lux-input"
+          name="newBrandName"
+          [(ngModel)]="newBrandName"
+          placeholder="Enter new brand name"
+          required
         />
-        <label for="iconFileInput" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-blue-400 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors duration-200 cursor-pointer select-none text-center p-4">
-          <svg class="h-8 w-8 text-blue-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span class="text-base font-medium text-blue-700">Click to upload or drag and drop</span>
-          <span class="text-xs text-gray-500 mt-1">SVG, PNG up to 10MB</span>
-        </label>
       </div>
-      <div *ngIf="iconFilePreview" class="mt-2 flex items-center gap-2">
-        <img [src]="iconFilePreview" alt="Icon Preview" class="w-6 h-6 object-contain" />
-        <span class="text-gray-600 text-sm">Preview</span>
-      </div>
-    </div>
-    <div *ngIf="iconInputType === 'url'" class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Icon URL (SVG/PNG):</label>
-      <input
-        type="url"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg"
-        [(ngModel)]="iconUrl"
-        name="iconUrl"
-        placeholder="https://example.com/icon.svg"
-      />
-      <div *ngIf="iconUrl" class="mt-2 flex items-center gap-2">
-        <img [src]="iconUrl" alt="Icon Preview" class="w-6 h-6 object-contain" (error)="iconUrl=''" />
-        <span class="text-gray-600 text-sm">Preview</span>
+
+      <div>
+        <label class="lux-field-label">Category Image</label>
+        <div class="admin-upload">
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png,.gif,.webp,.svg"
+            id="categoryImageInput"
+            (change)="onCategoryImageSelected($event)"
+            class="admin-upload__input"
+          />
+          <label for="categoryImageInput" class="admin-upload__label">
+            <span>Click to upload or drag and drop</span>
+            <span class="lux-field-hint" style="margin:0.35rem 0 0;">PNG, JPG, GIF, WEBP, SVG up to 10MB</span>
+          </label>
+        </div>
+        <div *ngIf="imagePreviewUrl" class="mt-3 flex items-center gap-2">
+          <img [src]="imagePreviewUrl" alt="Image Preview" class="admin-preview-img" />
+          <button type="button" class="lux-btn lux-btn--ghost lux-btn--sm" (click)="removeImage()">Remove</button>
+        </div>
       </div>
     </div>
-    <div *ngIf="iconInputType === 'class'" class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Font Icon Class (FontAwesome, Bootstrap, etc):</label>
-      <input
-        type="text"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg"
-        [(ngModel)]="iconClass"
-        name="iconClass"
-        placeholder="e.g. fa fa-user, bi bi-alarm"
-      />
-      <div class="text-xs text-gray-500 mt-1">
-        Enter the CSS class for your icon (e.g., <code>fa fa-fire</code> for FontAwesome, <code>bi bi-alarm</code> for Bootstrap Icons).
-      </div>
-      <div *ngIf="iconClass" class="mt-2 flex items-center gap-2">
-        <i [class]="iconClass" style="font-size: 24px;"></i>
-        <span class="text-gray-600 text-sm">Preview</span>
-      </div>
-    </div> -->
-    <div class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">Category Image:</label>
-      <div class="relative w-full">
-        <input
-          type="file"
-          accept=".jpg,.jpeg,.png,.gif,.webp,.svg"
-          id="categoryImageInput"
-          (change)="onCategoryImageSelected($event)"
-          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-        />
-        <label for="categoryImageInput" class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-blue-400 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors duration-200 cursor-pointer select-none text-center p-4">
-          <svg class="h-8 w-8 text-blue-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span class="text-base font-medium text-blue-700">Click to upload or drag and drop</span>
-          <span class="text-xs text-gray-500 mt-1">PNG, JPG, GIF, WEBP, SVG up to 10MB</span>
-        </label>
-      </div>
-      <div *ngIf="imagePreviewUrl" class="mt-2 flex items-center gap-2">
-        <img [src]="imagePreviewUrl" alt="Image Preview" class="w-16 h-16 object-contain rounded-lg border border-gray-200 shadow" />
-        <button 
-          type="button"
-          class="ml-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
-          (click)="removeImage()">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
+    <div class="admin-modal__footer">
+      <button type="button" class="lux-btn lux-btn--ghost" (click)="activeModal.dismiss()">Cancel</button>
+      <button type="submit" class="lux-btn lux-btn--primary" [disabled]="!createCategoryForm.valid">Create Category</button>
     </div>
-  </div>
-  <div class="admin-modal__footer">
-    <button type="button" class="lux-btn lux-btn--ghost" (click)="activeModal.dismiss()">Cancel</button>
-    <button type="submit" class="lux-btn lux-btn--primary" [disabled]="!createCategoryForm.valid">Create Category</button>
-  </div>
-</form>
+  </form>
 </div>

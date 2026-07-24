@@ -1,6 +1,24 @@
 <lux-page-shell variant="admin" shellClass="admin-page activity-logs-page activity-logs">
   <lux-page-header variant="admin" eyebrow="Security" title="Activity Logs" subtitle="Monitor and audit all system activities for security and compliance">
-    <lux-button variant="secondary" (pressed)="refreshLogs()">Refresh</lux-button>
+    <lux-button variant="secondary" (pressed)="refreshLogs()" [disabled]="isLoading">Refresh</lux-button>
+    <div class="relative" #exportDropdown id="exportDropdown">
+      <lux-button variant="primary" (pressed)="toggleExportDropdown()" [disabled]="isLoading">
+        {{ isLoading ? 'Processing…' : 'Export' }}
+      </lux-button>
+      <div class="absolute right-0 mt-2 w-48 bg-cream rounded-md shadow-lg border border-fog z-10" *ngIf="showExportDropdown && !isLoading">
+        <div class="py-1">
+          <button type="button" class="w-full text-left px-4 py-2 text-sm text-ink hover:bg-champagne-soft flex items-center space-x-2" (click)="exportLogs('csv')" [disabled]="isLoading">
+            <span>Export as CSV</span>
+          </button>
+          <button type="button" class="w-full text-left px-4 py-2 text-sm text-ink hover:bg-champagne-soft flex items-center space-x-2" (click)="exportLogs('json')" [disabled]="isLoading">
+            <span>Export as JSON</span>
+          </button>
+          <button type="button" class="w-full text-left px-4 py-2 text-sm text-ink hover:bg-champagne-soft flex items-center space-x-2" (click)="exportLogs('pdf')" [disabled]="isLoading">
+            <span>Export as PDF</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </lux-page-header>
   <div class="activity-logs-body"><!-- Success Notification -->
     <div *ngIf="showExportSuccess" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
@@ -9,44 +27,12 @@
     </div>
 
     <!-- User Filter Notification -->
-    <div *ngIf="showUserFilterNotification" class="fixed top-4 left-4 z-50 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 max-w-md">
+    <div *ngIf="showUserFilterNotification" class="fixed top-4 left-4 z-50 bg-ink text-ivory px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2 max-w-md">
       <i data-lucide="user" class="w-5 h-5"></i>
       <span class="flex-1">{{ userFilterNotificationMessage }}</span>
-      <button class="ml-2 hover:bg-blue-600 rounded p-1 transition-colors" (click)="clearUserFilter()" title="Clear user filter">
+      <button class="ml-2 hover:bg-espresso rounded p-1 transition-colors" (click)="clearUserFilter()" title="Clear user filter">
         <i data-lucide="x" class="w-4 h-4"></i>
       </button>
-    </div>
-
-    <!-- Action Buttons -->
-    <div class="flex justify-center items-center space-x-4 mb-8">
-      <button class="flex items-center space-x-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg border-2 border-slate-300 text-slate-700 hover:bg-white hover:shadow-md transition-all duration-200" (click)="refreshLogs()">
-        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-        <span class="font-medium">Refresh</span>
-      </button>
-      <div class="relative" #exportDropdown id="exportDropdown">
-        <button class="flex items-center space-x-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors duration-200" (click)="toggleExportDropdown()" [disabled]="isLoading">
-          <i *ngIf="!isLoading" data-lucide="download" class="w-4 h-4"></i>
-          <div *ngIf="isLoading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          <span>{{ isLoading ? 'Processing...' : 'Export' }}</span>
-          <i *ngIf="!isLoading" data-lucide="chevron-down" class="w-4 h-4"></i>
-        </button>
-        <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border-2 border-slate-200 z-10" *ngIf="showExportDropdown && !isLoading">
-          <div class="py-1">
-            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('csv')" [disabled]="isLoading">
-              <i data-lucide="file-text" class="w-4 h-4 text-indigo-500"></i>
-              <span>Export as CSV</span>
-            </button>
-            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('json')" [disabled]="isLoading">
-              <i data-lucide="code" class="w-4 h-4 text-purple-500"></i>
-              <span>Export as JSON</span>
-            </button>
-            <button class="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center space-x-2" (click)="exportLogs('pdf')" [disabled]="isLoading">
-              <i data-lucide="file-text" class="w-4 h-4 text-teal-500"></i>
-              <span>Export as PDF</span>
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -72,22 +58,22 @@
               <button 
                 *ngFor="let range of dateRanges" 
                 class="px-3 py-2 text-sm rounded-lg transition-colors duration-200"
-                [class.bg-indigo-600]="selectedDateRange === range.value"
-                [class.text-white]="selectedDateRange === range.value"
-                [class.bg-slate-100]="selectedDateRange !== range.value"
-                [class.text-slate-700]="selectedDateRange !== range.value"
-                [class.hover:bg-indigo-50]="selectedDateRange !== range.value"
+                [class.bg-ink]="selectedDateRange === range.value"
+                [class.text-ivory]="selectedDateRange === range.value"
+                [class.bg-porcelain]="selectedDateRange !== range.value"
+                [class.text-ink]="selectedDateRange !== range.value"
+                [class.hover:bg-champagne-soft]="selectedDateRange !== range.value"
                 (click)="selectDateRange(range.value)"
               >
                 {{ range.label }}
               </button>
               <button 
                 class="px-3 py-2 text-sm rounded-lg transition-colors duration-200"
-                [class.bg-indigo-600]="selectedDateRange === 'all'"
-                [class.text-white]="selectedDateRange === 'all'"
-                [class.bg-slate-100]="selectedDateRange !== 'all'"
-                [class.text-slate-700]="selectedDateRange !== 'all'"
-                [class.hover:bg-indigo-50]="selectedDateRange !== 'all'"
+                [class.bg-ink]="selectedDateRange === 'all'"
+                [class.text-ivory]="selectedDateRange === 'all'"
+                [class.bg-porcelain]="selectedDateRange !== 'all'"
+                [class.text-ink]="selectedDateRange !== 'all'"
+                [class.hover:bg-champagne-soft]="selectedDateRange !== 'all'"
                 (click)="selectDateRange('all')"
               >
                 All Time
@@ -98,7 +84,7 @@
                   <label class="block text-sm font-medium text-slate-700 mb-1">From</label>
                   <input 
                     type="date" 
-                    class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-colors duration-200"
                     [(ngModel)]="filters.dateFrom"
                     (change)="applyFilters()"
                   >
@@ -107,7 +93,7 @@
                   <label class="block text-sm font-medium text-slate-700 mb-1">To</label>
                   <input 
                     type="date" 
-                    class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                    class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-colors duration-200"
                     [(ngModel)]="filters.dateTo"
                     (change)="applyFilters()"
                   >
@@ -130,7 +116,7 @@
                 </button>
               </div>
               <select 
-                class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-colors duration-200"
                 [class.border-indigo-500]="filters.userId"
                 [class.bg-indigo-50]="filters.userId"
                 [(ngModel)]="filters.userId"
@@ -192,7 +178,7 @@
               <h4 class="font-medium text-slate-700 mb-2">IP Address</h4>
               <input 
                 type="text" 
-                class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                class="w-full px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-colors duration-200"
                 placeholder="Enter IP address"
                 [(ngModel)]="filters.ipAddress"
                 (input)="applyFilters()"
@@ -206,7 +192,7 @@
                 <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
                 <input 
                   type="text" 
-                  class="w-full pl-10 pr-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                  class="w-full pl-10 pr-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-colors duration-200"
                   placeholder="Search in descriptions..."
                   [(ngModel)]="filters.searchTerm"
                   (input)="applyFilters()"
@@ -286,7 +272,7 @@
                 </button>
               </div>
               <select 
-                class="px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                class="px-3 py-2 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-champagne-soft focus:border-champagne transition-colors duration-200"
                 [(ngModel)]="itemsPerPage"
                 (change)="updatePagination()"
               >

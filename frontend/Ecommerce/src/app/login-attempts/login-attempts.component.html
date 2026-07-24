@@ -62,142 +62,100 @@
     </div>
   
     <!-- Controls Section -->
-    <div class="controls-section lux-filter-like">
-      <div class="controls-left">
-        <div class="filter-group">
-          <label class="filter-label">Time Range:</label>
-          <select class="form-select" [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange()">
+    <lux-filter-bar>
+      <div primary class="lux-filter-row lux-filter-row--compact">
+        <lux-field label="Time Range" inputId="la-range">
+          <select id="la-range" class="lux-select" [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange()">
             <option value="1h">Last Hour</option>
             <option value="24h">Last 24 Hours</option>
             <option value="7d">Last 7 Days</option>
             <option value="30d">Last 30 Days</option>
             <option value="custom">Custom Range</option>
           </select>
-          
-          <!-- Custom Date Range Inputs -->
-          <div *ngIf="selectedTimeRange === 'custom'" class="custom-date-inputs">
-            <div class="date-input-group">
-              <label class="date-label">From:</label>
-              <input 
-                type="datetime-local" 
-                class="form-control date-input" 
-                [(ngModel)]="customDateFrom"
-                (change)="onTimeRangeChange()"
-              >
-            </div>
-            <div class="date-input-group">
-              <label class="date-label">To:</label>
-              <input 
-                type="datetime-local" 
-                class="form-control date-input" 
-                [(ngModel)]="customDateTo"
-                (change)="onTimeRangeChange()"
-              >
-            </div>
-          </div>
-        </div>
-  
-        <div class="filter-group">
-          <label class="filter-label">Status:</label>
-          <select class="form-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+        </lux-field>
+        <lux-field label="Status" inputId="la-status">
+          <select id="la-status" class="lux-select" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
             <option value="all">All Attempts</option>
             <option value="failed">Failed Only</option>
             <option value="successful">Successful Only</option>
             <option value="blocked">Blocked IPs</option>
             <option value="suspicious">Suspicious Activity</option>
           </select>
-        </div>
-  
-        <div class="search-group">
-          <div class="search-input-wrapper">
-            <input 
-              type="text" 
-              class="form-control search-input" 
-              placeholder="Search by IP, email, location, or session ID..."
-              [(ngModel)]="searchTerm"
-              (input)="onSearch()"
-            >
-            <button class="btn btn-clear" *ngIf="searchTerm" (click)="clearSearch()">
-              </button>
-          </div>
-        </div>
+        </lux-field>
+        <lux-field label="Search" inputId="la-search">
+          <input
+            id="la-search"
+            type="text"
+            class="lux-input"
+            placeholder="Search IP, email, location, or session…"
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
+          />
+        </lux-field>
       </div>
-  
-      <div class="controls-right">
-        <button class="btn btn-clear-all" (click)="clearAllFilters()" title="Clear all filters" [class.active]="hasActiveFilters()">
-          Clear All
-          <span *ngIf="hasActiveFilters()" class="filter-indicator">●</span>
-        </button>
-        <button class="btn btn-export" (click)="exportData()">
-          Export
-        </button>
-        <button class="btn btn-refresh" (click)="refreshData()">
-          Refresh
-        </button>
+      <div secondary class="la-toolbar">
+        <lux-button variant="ghost" (pressed)="clearAllFilters()" [disabled]="!hasActiveFilters()">Clear All</lux-button>
+        <lux-button variant="secondary" (pressed)="exportData()">Export</lux-button>
+        <lux-button variant="secondary" (pressed)="refreshData()">Refresh</lux-button>
+      </div>
+    </lux-filter-bar>
+
+    <div *ngIf="selectedTimeRange === 'custom'" class="la-custom-dates page-panel p-4 mb-4">
+      <div class="admin-form-grid">
+        <lux-field label="From" inputId="la-from">
+          <input id="la-from" type="datetime-local" class="lux-input" [(ngModel)]="customDateFrom" (change)="onTimeRangeChange()" />
+        </lux-field>
+        <lux-field label="To" inputId="la-to">
+          <input id="la-to" type="datetime-local" class="lux-input" [(ngModel)]="customDateTo" (change)="onTimeRangeChange()" />
+        </lux-field>
       </div>
     </div>
   
     <!-- Threat Level Indicators -->
-    <div class="threat-indicators">
-      <div class="threat-card" [ngClass]="getThreatLevelClass('low')">
-        <div class="threat-icon">
-          </div>
-        <div class="threat-info">
-          <h4>Low Risk</h4>
-          <p>{{ getThreatCount('low') }} attempts</p>
-        </div>
+    <div class="admin-kpi-grid threat-indicators mb-4">
+      <div class="admin-kpi" [ngClass]="getThreatLevelClass('low')">
+        <div class="admin-kpi__label">Low Risk</div>
+        <div class="admin-kpi__value">{{ getThreatCount('low') }}</div>
+        <div class="admin-kpi__meta">attempts</div>
       </div>
-  
-      <div class="threat-card" [ngClass]="getThreatLevelClass('medium')">
-        <div class="threat-icon">
-          </div>
-        <div class="threat-info">
-          <h4>Medium Risk</h4>
-          <p>{{ getThreatCount('medium') }} attempts</p>
-        </div>
+      <div class="admin-kpi" [ngClass]="getThreatLevelClass('medium')">
+        <div class="admin-kpi__label">Medium Risk</div>
+        <div class="admin-kpi__value">{{ getThreatCount('medium') }}</div>
+        <div class="admin-kpi__meta">attempts</div>
       </div>
-  
-      <div class="threat-card" [ngClass]="getThreatLevelClass('high')">
-        <div class="threat-icon">
-          </div>
-        <div class="threat-info">
-          <h4>High Risk</h4>
-          <p>{{ getThreatCount('high') }} attempts</p>
-        </div>
+      <div class="admin-kpi" [ngClass]="getThreatLevelClass('high')">
+        <div class="admin-kpi__label">High Risk</div>
+        <div class="admin-kpi__value">{{ getThreatCount('high') }}</div>
+        <div class="admin-kpi__meta">attempts</div>
       </div>
-  
-      <div class="threat-card" [ngClass]="getThreatLevelClass('critical')">
-        <div class="threat-icon">
-          </div>
-        <div class="threat-info">
-          <h4>Critical</h4>
-          <p>{{ getThreatCount('critical') }} attempts</p>
-        </div>
+      <div class="admin-kpi" [ngClass]="getThreatLevelClass('critical')">
+        <div class="admin-kpi__label">Critical</div>
+        <div class="admin-kpi__value">{{ getThreatCount('critical') }}</div>
+        <div class="admin-kpi__meta">attempts</div>
       </div>
     </div>
 
-    <!-- Security Policy Box (Modern UI, Expandable) -->
-<div class="mb-8">
-  <div class=" rounded-2xl shadow-lg p-6">
+    <!-- Security Policy Box -->
+<div class="page-panel mb-6">
+  <div class="p-5">
     <div class="flex items-center gap-3 mb-4 cursor-pointer select-none" (click)="showPolicyExpanded = !showPolicyExpanded">
-      <div class="bg-blue-500 text-white rounded-full p-2 flex items-center justify-center shadow">
-        </div>
       <div class="flex-1">
-        <h2 class="text-xl font-bold text-blue-900 tracking-tight">Security Policy Rules</h2>
-        <p class="text-gray-500 text-sm">These rules control what happens after failed login attempts.</p>
+        <h2 class="pm-section-title">Security Policy Rules</h2>
+        <p class="text-stone text-sm mt-1 mb-0">These rules control what happens after failed login attempts.</p>
       </div>
-      <button class="ml-2 bg-blue-100 hover: rounded-full p-2 transition" [attr.aria-expanded]="showPolicyExpanded">
-        </button>
+      <button type="button" class="lux-btn lux-btn--ghost" [attr.aria-expanded]="showPolicyExpanded">
+        {{ showPolicyExpanded ? 'Hide' : 'Show' }}
+      </button>
     </div>
     <div *ngIf="showPolicyExpanded" class="overflow-x-auto transition-all duration-300">
-      <table class="min-w-full bg-white/80 rounded-xl shadow divide-y divide-blue-100">
+      <table class="admin-table min-w-full">
         <thead>
-          <tr class="text-blue-700 text-sm font-semibold">
-            <th class="px-4 py-2 text-left">Action</th>
-            <th class="px-4 py-2 text-center">Attempts</th>
-            <th class="px-4 py-2 text-center">Window (min)</th>
-            <th class="px-4 py-2 text-center">Edit</th>
-            <th class="px-4 py-2 text-center">Delete</th>
+          <tr>
+            <th class="text-left">Action</th>
+            <th class="text-center">Attempts</th>
+            <th class="text-center">Window (min)</th>
+            <th class="text-center">Edit</th>
+            <th class="text-center">Delete</th>
           </tr>
         </thead>
         <tbody>
@@ -338,7 +296,7 @@
             </span>
           </td>
           <td>
-            <span class="timestamp-main">{{ attempt.timestamp | date:'MMM dd, HH:mm:ss' }}</span>
+            <span class="timestamp-main">{{ attempt.timestamp | date:'MMM dd, HH:mm' }}</span>
             <span class="timestamp-relative">{{ getRelativeTime(attempt.timestamp) }}</span>
           </td>
           <td>

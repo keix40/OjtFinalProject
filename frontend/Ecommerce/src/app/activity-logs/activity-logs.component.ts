@@ -803,7 +803,7 @@ export class ActivityLogsComponent implements OnInit {
           return description.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-green-600">$1</span>');
         case 'UPDATE':
           // For UPDATE operations, format the bold text in light blue
-          return description.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-blue-500">$1</span>');
+          return description.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-champagne-deep">$1</span>');
         case 'DELETE':
           // For DELETE operations, format the bold text in red
           return description.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold text-red-600">$1</span>');

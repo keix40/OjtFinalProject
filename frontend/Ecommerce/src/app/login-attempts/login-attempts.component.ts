@@ -241,7 +241,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
       // Calculate timeframe for this session
       const firstTime = new Date(first.timestamp);
       const lastTime = new Date(last.timestamp);
-      const timeDiff = Math.abs(lastTime.getTime() - firstTime.getTime()) / (1000 * 60); // minutes
+      const timeDiff = Math.round((Math.abs(lastTime.getTime() - firstTime.getTime()) / (1000 * 60)) * 10) / 10; // minutes, 1 decimal
       
       return {
         ...last,
@@ -249,7 +249,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
         sessionId: sessionId,
         sessionStart: first.timestamp,
         sessionEnd: last.timestamp,
-        timeframe: count > 1 ? `${timeDiff} min` : '1 min'
+        timeframe: count > 1 ? `${Number.isInteger(timeDiff) ? timeDiff : timeDiff.toFixed(1)} min` : '1 min'
       };
     });
   }
@@ -462,10 +462,10 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   private convertTimeframeToMinutes(timeframe: string): number {
     if (!timeframe) return 0
     
-    const match = timeframe.match(/(\d+)\s*(min|hour|day|week|month|year)s?/i)
+    const match = timeframe.match(/(\d+(?:\.\d+)?)\s*(min|hour|day|week|month|year)s?/i)
     if (!match) return 0
     
-    const value = parseInt(match[1])
+    const value = parseFloat(match[1])
     const unit = match[2].toLowerCase()
     
     switch (unit) {
@@ -767,15 +767,16 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   getRelativeTime(timestamp: string): string {
     const now = new Date()
     const timestampDate = new Date(timestamp)
+    if (Number.isNaN(timestampDate.getTime())) return ''
     const diff = now.getTime() - timestampDate.getTime()
     const minutes = Math.floor(diff / 60000)
     const hours = Math.floor(minutes / 60)
     const days = Math.floor(hours / 24)
 
-    if (days > 0) return `${days}d ago`
-    if (hours > 0) return `${hours}h ago`
-    if (minutes > 0) return `${minutes}m ago`
-    return "Just now"
+    if (days > 0) return `${days} day${days === 1 ? '' : 's'} ago`
+    if (hours > 0) return `${hours} hr${hours === 1 ? '' : 's'} ago`
+    if (minutes > 0) return `${minutes} min${minutes === 1 ? '' : 's'} ago`
+    return 'Just now'
   }
 
   trackByAttempt(index: number, attempt: LoginAttempt): number {

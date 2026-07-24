@@ -34,7 +34,7 @@ interface Permission {
   name: string;
   description: string;
   category: string;
-  level: 'basic' | 'intermediate' | 'advanced' | 'critical';
+  level?: 'basic' | 'intermediate' | 'advanced' | 'critical';
   dependencies?: string[];
 }
 
@@ -1027,15 +1027,24 @@ export class RolesPermissionsComponent implements OnInit{
     }
   }
 
-  getPermissionLevel(role: Role): string {
+  getPermissionLevel(role: Role | null | undefined): string {
+    if (!role?.permissions?.length || !this.totalAvailablePermissions) return 'basic';
     const permissionCount = role.permissions.length;
-    const totalPermissions = this.totalAvailablePermissions;
-    const percentage = (permissionCount / totalPermissions) * 100;
+    const percentage = (permissionCount / this.totalAvailablePermissions) * 100;
 
     if (percentage >= 80) return 'critical';
     if (percentage >= 60) return 'advanced';
     if (percentage >= 30) return 'intermediate';
     return 'basic';
+  }
+
+  getPermissionLevelLabel(permission: Permission | null | undefined): string {
+    return permission?.level || 'basic';
+  }
+
+  formatUserCount(count: number | null | undefined): string {
+    const n = count ?? 0;
+    return `${n} user${n === 1 ? '' : 's'}`;
   }
 
   getPermissionLevelFromCount(count: number): 'basic' | 'intermediate' | 'advanced' | 'critical' {

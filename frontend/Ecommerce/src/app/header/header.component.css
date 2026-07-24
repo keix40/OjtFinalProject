@@ -27,12 +27,46 @@
   -webkit-backdrop-filter: none;
 }
 
-.lux-site-header--overlay .text-neutral-700,
-.lux-site-header--overlay .text-neutral-500,
-.lux-site-header--overlay .text-ink,
+.lux-site-header--overlay .lg\:flex > a,
+.lux-site-header--overlay .lg\:flex > div > button,
 .lux-site-header--overlay .typewriter-britium,
-.lux-site-header--overlay .typewriter-gallery {
+.lux-site-header--overlay .typewriter-gallery,
+.lux-site-header--overlay > div > div > button {
   color: var(--lux-ivory) !important;
+}
+
+/* Dropdown/panels keep ink text on cream — never inherit overlay ivory */
+.lux-site-header .account-menu,
+.lux-site-header .account-menu .text-neutral-700,
+.lux-site-header .account-menu .text-neutral-500,
+.lux-site-header .account-menu .text-neutral-900,
+.lux-site-header .search-suggestions,
+.lux-site-header .search-suggestions .text-gray-700,
+.lux-site-header .search-suggestions .text-gray-500,
+.lux-site-header .search-suggestions .text-gray-400 {
+  color: var(--lux-ink) !important;
+}
+
+.lux-site-header .account-menu {
+  background: var(--lux-cream) !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-md) !important;
+  color: var(--lux-ink);
+}
+
+.lux-site-header .account-menu a:hover,
+.lux-site-header .account-menu button:hover {
+  background: var(--lux-champagne-soft) !important;
+}
+
+.lux-site-header .search-container {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.lux-site-header .search-input {
+  min-width: 0;
+  text-overflow: ellipsis;
 }
 
 .lux-site-header--scrolled {

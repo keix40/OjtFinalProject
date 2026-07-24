@@ -161,3 +161,52 @@
 .blacklist-page .bg-rose-600 { background: var(--lux-danger) !important; }
 .blacklist-page .number-formatted { font-variant-numeric: tabular-nums; }
 .blacklist-page .table-pagination { padding: 0.75rem 0; }
+
+.blacklist-page .bl-filters {
+  display: grid;
+  grid-template-columns: minmax(12rem, 2fr) repeat(3, minmax(8rem, 1fr));
+  gap: 0.75rem 1rem;
+  width: 100%;
+  min-width: 0;
+}
+.blacklist-page .pm-section-title {
+  margin: 0;
+  font-family: var(--lux-font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--lux-ink);
+}
+.blacklist-page .admin-kpi--interactive {
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+.blacklist-page .admin-kpi--interactive:hover {
+  border-color: var(--lux-champagne);
+  background: var(--lux-champagne-soft);
+}
+.blacklist-page input[type='checkbox'],
+.blacklist-page input[type='radio'] {
+  accent-color: var(--lux-ink) !important;
+}
+.blacklist-page .focus\:ring-blue-400:focus,
+.blacklist-page .focus\:ring-blue-500:focus {
+  --tw-ring-color: var(--lux-champagne-soft) !important;
+  border-color: var(--lux-champagne) !important;
+}
+.blacklist-page .bg-blue-50,
+.blacklist-page .hover\:bg-blue-50:hover,
+.blacklist-page .hover\:bg-blue-100:hover {
+  background: var(--lux-champagne-soft) !important;
+}
+.blacklist-page .text-blue-800,
+.blacklist-page .border-blue-600 {
+  color: var(--lux-ink) !important;
+  border-color: var(--lux-ink) !important;
+}
+@media (max-width: 1100px) {
+  .blacklist-page .bl-filters { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .blacklist-page .bl-filters { grid-template-columns: 1fr; }
+}

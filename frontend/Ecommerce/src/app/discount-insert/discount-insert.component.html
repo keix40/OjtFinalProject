@@ -293,12 +293,11 @@
 
           <!-- Select Products Button -->
           <div class="product-selection" *ngIf="targetType === 'PRODUCT'">
-            <button type="button" class="btn-select-products bg-slate-600 hover:bg-slate-700 text-white rounded-xl font-semibold transition-colors duration-200 flex items-center gap-2"
+            <button type="button" class="lux-btn lux-btn--primary btn-select-products"
               data-bs-toggle="modal" data-bs-target="#productSelectionModal"
               [ngClass]="{'invalid-input': discountForm.get('productIds')?.invalid && (discountForm.get('productIds')?.touched || discountForm.get('productIds')?.dirty)}">
-              <i class="fas fa-list"></i>
               Select Products
-              <span class="product-count">{{ getSelectedProductsCount() }}</span>
+              <span class="lux-badge">{{ getSelectedProductsCount() }}</span>
             </button>
             <div class="selection-status" *ngIf="getSelectedProductsCount() > 0">
               <i class="fas fa-check-circle"></i>

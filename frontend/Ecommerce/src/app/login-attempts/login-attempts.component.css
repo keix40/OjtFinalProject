@@ -159,9 +159,80 @@
 .login-attempts-page .status-indicator { display:inline-flex; align-items:center; gap:0.4rem; font-size:0.75rem; letter-spacing:0.08em; text-transform:uppercase; color:var(--lux-stone); }
 .login-attempts-page .status-dot { width:0.5rem; height:0.5rem; border-radius:50%; background:var(--lux-stone); }
 .login-attempts-page .status-indicator.active .status-dot { background:var(--lux-success); }
-.login-attempts-page .controls-section { display:flex; flex-wrap:wrap; justify-content:space-between; gap:0.75rem; padding:1rem; margin:1rem 0; background:var(--lux-cream); border:1px solid var(--lux-fog); border-radius:var(--lux-radius-md); }
-.login-attempts-page .controls-left, .login-attempts-page .controls-right { display:flex; flex-wrap:wrap; gap:0.75rem; align-items:flex-end; }
-.login-attempts-page .filter-label { display:block; font-size:0.6875rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--lux-stone); margin-bottom:0.35rem; }
-.login-attempts-page .threat-indicators { display:grid; grid-template-columns:repeat(auto-fit,minmax(10rem,1fr)); gap:0.75rem; margin:1rem 0; }
-.login-attempts-page .data-table, .login-attempts-page table { width:100%; border-collapse:collapse; background:var(--lux-cream); border:1px solid var(--lux-fog); border-radius:var(--lux-radius-md); }
 .login-attempts-page .alert-banner { padding:0.85rem 1rem; margin-bottom:1rem; border:1px solid rgba(158,74,67,0.3); background:rgba(158,74,67,0.08); color:var(--lux-danger); border-radius:var(--lux-radius-md); }
+
+.login-attempts-page .la-filters {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1fr) minmax(9rem, 1fr) minmax(14rem, 2fr);
+  gap: 0.75rem 1rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.login-attempts-page .la-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.login-attempts-page .pm-section-title {
+  margin: 0;
+  font-family: var(--lux-font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--lux-ink);
+}
+
+.login-attempts-page .timestamp-main {
+  display: block;
+  color: var(--lux-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.login-attempts-page .timestamp-relative {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--lux-stone);
+}
+
+.login-attempts-page .data-table-container,
+.login-attempts-page .table-responsive {
+  overflow-x: auto;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  background: var(--lux-cream);
+}
+
+.login-attempts-page .text-blue-900,
+.login-attempts-page .text-blue-800,
+.login-attempts-page .text-blue-400 {
+  color: var(--lux-ink) !important;
+}
+
+.login-attempts-page .divide-blue-100 > :not([hidden]) ~ :not([hidden]),
+.login-attempts-page .border-blue-200 {
+  border-color: var(--lux-fog) !important;
+}
+
+.login-attempts-page .hover\:bg-blue-50:hover,
+.login-attempts-page tr:hover {
+  background: rgba(232, 220, 194, 0.28);
+}
+
+.login-attempts-page input[type="checkbox"],
+.login-attempts-page input[type="radio"] {
+  accent-color: var(--lux-ink) !important;
+}
+
+@media (max-width: 900px) {
+  .login-attempts-page .la-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .login-attempts-page .la-filters {
+    grid-template-columns: 1fr;
+  }
+}

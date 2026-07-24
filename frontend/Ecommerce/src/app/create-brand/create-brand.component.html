@@ -1,142 +1,96 @@
 <div class="admin-modal-backdrop static-modal-shell">
-<form #createBrandForm="ngForm" (ngSubmit)="createBrand(createBrandForm)" class="admin-modal admin-modal--lg relative overflow-y-auto" style="max-height:90vh;">
-  <button type="button" class="admin-modal-close" (click)="activeModal.dismiss()" aria-label="Close">&times;</button>
-  <div class="admin-modal__header">
-    <h5 class="admin-modal__title">Create New Brand</h5>
-  </div>
-  <div class="admin-modal__body space-y-6">
-    <!-- Brand Name -->
-    <div class="space-y-2">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">
-        Brand Name <span class="text-red-500">*</span>
-      </label>
-      <input
-        type="text"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-400"
-        name="brandName"
-        required
-        [(ngModel)]="brand.brandName"
-        #brandName="ngModel"
-        [ngClass]="{ 
-          'border-red-500 focus:ring-red-500 focus:border-red-500': brandName.invalid && brandName.touched,
-          'border-green-500 focus:ring-green-500 focus:border-green-500': brandName.valid && brandName.touched
-        }"
-        placeholder="Enter brand name"
-      />
-      <div class="text-red-500 text-sm mt-1" *ngIf="brandName.invalid && brandName.touched">
-        Brand name is required.
-      </div>
+  <form #createBrandForm="ngForm" (ngSubmit)="createBrand(createBrandForm)" class="admin-modal admin-modal--lg relative overflow-y-auto" style="max-height:90vh;">
+    <button type="button" class="admin-modal-close" (click)="activeModal.dismiss()" aria-label="Close">&times;</button>
+    <div class="admin-modal__header">
+      <h2 class="admin-modal__title">Create New Brand</h2>
     </div>
-    <!-- Category Type -->
-    <div class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-3">
-        Category Type <span class="text-red-500">*</span>
-      </label>
-      <div class="flex flex-col sm:flex-row gap-4">
-        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition-all duration-200">
-          <input
-            class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-            type="radio"
-            name="categoryOption"
-            value="old"
-            [(ngModel)]="categoryOption"
-            id="oldCategory"
-          />
-          <span class="ml-3 text-sm font-medium text-gray-700">Existing Category</span>
-        </label>
-        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-300 transition-all duration-200">
-          <input
-            class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-            type="radio"
-            name="categoryOption"
-            value="new"
-            [(ngModel)]="categoryOption"
-            id="newCategory"
-          />
-          <span class="ml-3 text-sm font-medium text-gray-700">New Category</span>
-        </label>
-      </div>
-    </div>
-    <!-- Multi-Select for Old Category -->
-    <div class="space-y-2" *ngIf="categoryOption === 'old'">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">
-        Select Categories <span class="text-red-500">*</span>
-      </label>
-      <select
-        multiple
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 min-h-[120px]"
-        name="selectedCategoryIds"
-        [(ngModel)]="selectedCategoryIds"
-        required
-      >
-        <option *ngFor="let cat of categories" [value]="cat.id" class="py-2 px-3 hover:bg-blue-50">
-          {{ cat.name }}
-        </option>
-      </select>
-      <p class="text-xs text-gray-500 mt-1">Hold Ctrl (or Cmd on Mac) to select multiple categories</p>
-    </div>
-    <!-- New Category Name -->
-    <div class="space-y-2" *ngIf="categoryOption === 'new'">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">
-        New Category Name <span class="text-red-500">*</span>
-      </label>
-      <input
-        type="text"
-        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 placeholder-gray-400"
-        name="newCategoryName"
-        [(ngModel)]="newCategoryName"
-        placeholder="Enter new category name"
-        required
-      />
-    </div>
-    <!-- Brand Image -->
-    <div class="space-y-3">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">
-        Brand Image
-      </label>
-      <div class="relative">
+    <div class="admin-modal__body space-y-5">
+      <div>
+        <label class="lux-field-label" for="brand-name">Brand Name <span class="text-red-600">*</span></label>
         <input
-          type="file"
-          class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-          (change)="onImageSelected($event)"
-          accept="image/*"
-          id="imageInput"
+          id="brand-name"
+          type="text"
+          class="lux-input"
+          name="brandName"
+          required
+          [(ngModel)]="brand.brandName"
+          #brandName="ngModel"
+          [class.lux-input--invalid]="brandName.invalid && brandName.touched"
+          placeholder="Enter brand name"
         />
-        <label for="imageInput" class="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-blue-400 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors duration-200 cursor-pointer select-none text-center p-6">
-          <svg class="h-14 w-14 text-blue-400 mb-2" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span class="text-base font-medium text-blue-700">Click to upload or drag and drop</span>
-          <span class="text-xs text-gray-500 mt-1">PNG, JPG, GIF up to 10MB</span>
-        </label>
+        <div class="lux-field-error" *ngIf="brandName.invalid && brandName.touched">Brand name is required.</div>
       </div>
-    </div>
-    <!-- Preview Image -->
-    <div class="space-y-2" *ngIf="imagePreview">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">
-        Image Preview
-      </label>
-      <div class="relative inline-block">
-        <img 
-          [src]="imagePreview" 
-          alt="Preview" 
-          class="max-w-[120px] max-h-[90px] rounded-lg shadow-md border border-gray-200 object-contain" 
-        />
-        <button 
-          type="button"
-          class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors duration-200"
-          (click)="removeImage()"
+
+      <div>
+        <label class="lux-field-label">Category Type <span class="text-red-600">*</span></label>
+        <div class="lux-choice-group">
+          <label class="lux-choice" [class.is-selected]="categoryOption === 'old'">
+            <input type="radio" name="categoryOption" value="old" [(ngModel)]="categoryOption" />
+            <span>Existing Category</span>
+          </label>
+          <label class="lux-choice" [class.is-selected]="categoryOption === 'new'">
+            <input type="radio" name="categoryOption" value="new" [(ngModel)]="categoryOption" />
+            <span>New Category</span>
+          </label>
+        </div>
+      </div>
+
+      <div *ngIf="categoryOption === 'old'">
+        <label class="lux-field-label" for="brand-categories">Select Categories <span class="text-red-600">*</span></label>
+        <select
+          id="brand-categories"
+          multiple
+          class="lux-select admin-multiselect"
+          name="selectedCategoryIds"
+          [(ngModel)]="selectedCategoryIds"
+          required
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
+          <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+        </select>
+        <p class="lux-field-hint">Hold Ctrl (or Cmd on Mac) to select multiple categories.</p>
+      </div>
+
+      <div *ngIf="categoryOption === 'new'">
+        <label class="lux-field-label" for="new-category-name">New Category Name <span class="text-red-600">*</span></label>
+        <input
+          id="new-category-name"
+          type="text"
+          class="lux-input"
+          name="newCategoryName"
+          [(ngModel)]="newCategoryName"
+          placeholder="Enter new category name"
+          required
+        />
+      </div>
+
+      <div>
+        <label class="lux-field-label">Brand Image</label>
+        <div class="admin-upload">
+          <input
+            type="file"
+            class="admin-upload__input"
+            (change)="onImageSelected($event)"
+            accept="image/*"
+            id="imageInput"
+          />
+          <label for="imageInput" class="admin-upload__label">
+            <span>Click to upload or drag and drop</span>
+            <span class="lux-field-hint" style="margin:0.35rem 0 0;">PNG, JPG, GIF up to 10MB</span>
+          </label>
+        </div>
+      </div>
+
+      <div *ngIf="imagePreview">
+        <label class="lux-field-label">Image Preview</label>
+        <div class="relative inline-block">
+          <img [src]="imagePreview" alt="Preview" class="admin-preview-img" />
+          <button type="button" class="admin-preview-remove" (click)="removeImage()" aria-label="Remove image">&times;</button>
+        </div>
       </div>
     </div>
-  </div>
-  <div class="admin-modal__footer">
-    <button type="button" class="lux-btn lux-btn--ghost" (click)="activeModal.dismiss()">Cancel</button>
-    <button type="submit" class="lux-btn lux-btn--primary" [disabled]="!createBrandForm.valid">Create Brand</button>
-  </div>
-</form>
+    <div class="admin-modal__footer">
+      <button type="button" class="lux-btn lux-btn--ghost" (click)="activeModal.dismiss()">Cancel</button>
+      <button type="submit" class="lux-btn lux-btn--primary" [disabled]="!createBrandForm.valid">Create Brand</button>
+    </div>
+  </form>
 </div>
