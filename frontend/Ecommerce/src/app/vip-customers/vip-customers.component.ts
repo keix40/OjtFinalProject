@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, AfterViewChecked, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, FormControl } from '@angular/forms';
 import { ImageService } from '../services/image.service';
 import { CommonModule } from '@angular/common';
@@ -105,7 +105,7 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   showAddTierModal = false;
   showTierListModal = false;
   tiers: VipTier[] = [];
-  vipTiersForOverview: VipTier[] = []; // Tiers excluding the lowest tier for overview display
+  vipTiersForOverview: VipTier[] = [];
   tierForm: FormGroup;
   editTierId: number | null = null;
   showTierDropdown: boolean = false;
@@ -137,7 +137,8 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     private vipTierService: VipTierService,
     private vipStatsService: VipStatsService,
     private priceFormatService: PriceFormatService,
-    private luxDialog: LuxDialogService
+    private luxDialog: LuxDialogService,
+    private cdr: ChangeDetectorRef
   ) {
     this.vipForm = this.fb.group({
       customerSearch: ['', Validators.required],
@@ -149,14 +150,13 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
       specialNotes: ['']
     });
     this.tierForm = this.fb.group({
-      name: [''],
+      name: ['', Validators.required],
       description: [''],
-      minPoints: [0],
-      icon: [''],
-      color: [''],
-      benefits: [''],
+      minPoints: [0, Validators.required],
+      icon: ['award'],
+      color: ['text-champagne-deep'],
       order: [0],
-      weight: [5]
+      weight: [5, Validators.required]
     });
   }
 
@@ -214,18 +214,9 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: tiers => {
-          this.tiers = tiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-          
-          // Filter out the lowest tier for VIP Tiers Overview display
-          if (this.tiers.length > 0) {
-            const minMinPoints = Math.min(...this.tiers.map(tier => tier.minPoints));
-            this.vipTiersForOverview = this.tiers.filter(tier => tier.minPoints > minMinPoints);
-          } else {
-            this.vipTiersForOverview = [];
-          }
-          
-          // Initialize icons immediately after tiers are loaded
+          this.applyTiers(tiers);
           this.initializeIcons();
+          this.cdr.markForCheck();
         },
         error: error => {
           console.error('Error loading tiers:', error);
@@ -233,6 +224,12 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
       });
     
     this.loadVipCustomers();
+  }
+
+  /** Show every configured tier in the overview (sorted by order). */
+  private applyTiers(tiers: VipTier[]): void {
+    this.tiers = [...tiers].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    this.vipTiersForOverview = this.tiers;
   }
 
   // calculateLoyaltyScoreGrowth() { // Removed frontend calculation
@@ -885,42 +882,68 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
   openAddTierModal() {
     this.showAddTierModal = true;
     this.showTierListModal = false;
-    
+    this.cdr.markForCheck();
   }
   closeAddTierModal() {
     this.showAddTierModal = false;
     this.resetTierForm();
+    this.cdr.markForCheck();
   }
   openTierListModal() {
     this.showTierListModal = true;
     this.showAddTierModal = false;
-    
+    this.cdr.markForCheck();
   }
   closeTierListModal() {
     this.showTierListModal = false;
+    this.cdr.markForCheck();
   }
   loadTiers() {
-    this.vipTierService.getAllVipTiers().subscribe(tiers => {
-      this.tiers = tiers.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-      
-      // Filter out the lowest tier for VIP Tiers Overview display
-      if (this.tiers.length > 0) {
-        const minMinPoints = Math.min(...this.tiers.map(tier => tier.minPoints));
-        this.vipTiersForOverview = this.tiers.filter(tier => tier.minPoints > minMinPoints);
-      } else {
-        this.vipTiersForOverview = [];
+    this.vipTierService.getAllVipTiers().subscribe({
+      next: tiers => {
+        this.applyTiers(tiers);
+        this.initializeIcons();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        void this.luxDialog.error('Could not load VIP tiers', 'Please try again.');
+        this.cdr.markForCheck();
       }
-      
-      
     });
   }
   onTierSubmit() {
-    const tier: VipTier = this.tierForm.value;
-    if (this.editTierId) {
-      this.vipTierService.update(this.editTierId, tier).subscribe(() => { this.loadTiers(); this.resetTierForm(); this.closeAddTierModal(); });
-    } else {
-      this.vipTierService.create(tier).subscribe(() => { this.loadTiers(); this.resetTierForm(); this.closeAddTierModal(); });
+    if (this.tierForm.invalid) {
+      this.tierForm.markAllAsTouched();
+      this.cdr.markForCheck();
+      return;
     }
+    const raw = this.tierForm.getRawValue();
+    const tier: VipTier = {
+      name: String(raw.name || '').trim(),
+      description: String(raw.description || '').trim(),
+      minPoints: Number(raw.minPoints) || 0,
+      icon: String(raw.icon || 'award').trim(),
+      color: String(raw.color || 'text-champagne-deep').trim(),
+      order: Number(raw.order) || 0,
+      weight: Number(raw.weight) || 5
+    };
+    const request$ = this.editTierId
+      ? this.vipTierService.update(this.editTierId, tier)
+      : this.vipTierService.create(tier);
+
+    request$.subscribe({
+      next: () => {
+        this.luxDialog.toast(this.editTierId ? 'Tier updated' : 'Tier created');
+        this.loadTiers();
+        this.resetTierForm();
+        this.closeAddTierModal();
+      },
+      error: (err) => {
+        const message = err?.error?.message || err?.message || 'Could not save VIP tier. Check the API and try again.';
+        void this.luxDialog.error('Save failed', message);
+        this.cdr.markForCheck();
+      }
+    });
   }
   editTier(tier: VipTier) {
     this.tierForm.patchValue(tier);
@@ -931,11 +954,25 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     if (!id) return;
     const ok = await this.luxDialog.confirm({ title: 'Delete this tier?', confirmText: 'Delete', destructive: true });
     if (!ok) return;
-    this.vipTierService.delete(id).subscribe(() => this.loadTiers());
+    this.vipTierService.delete(id).subscribe({
+      next: () => this.loadTiers(),
+      error: () => {
+        void this.luxDialog.error('Delete failed', 'Could not delete this VIP tier.');
+        this.cdr.markForCheck();
+      }
+    });
   }
   resetTierForm() {
     this.editTierId = null;
-    this.tierForm.reset({ minPoints: 0, order: 0 });
+    this.tierForm.reset({
+      name: '',
+      description: '',
+      minPoints: 0,
+      icon: 'award',
+      color: 'text-champagne-deep',
+      order: 0,
+      weight: 5
+    });
   }
 
   // Add trackByTierId for tiers
