@@ -16,12 +16,8 @@ export class LoggedInGuard implements CanActivate {
         userRole = userRole.replace('ROLE_', '');
       }
       
-      // Redirect based on role
-      if (userRole === 'CUSTOMER') {
-        this.router.navigate(['/home']);
-      } else {
-        this.router.navigate(['/dashboard']);
-      }
+      // Redirect based on role (centralized)
+      this.router.navigate([this.auth.redirectPathForRoles(userRole)]);
       return false;
     }
     return true;

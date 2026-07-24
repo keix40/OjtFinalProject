@@ -33,9 +33,24 @@ export class AuthInterceptor implements HttpInterceptor {
       );
     }
 
-    // Add auth token to request
+    // Public auth endpoints must not send a stale Bearer token
+    const publicAuthEndpoints = [
+      '/api/auth/login',
+      '/api/auth/register',
+      '/api/auth/verify-otp',
+      '/api/auth/verify-login-otp',
+      '/api/auth/resend-otp',
+      '/api/auth/send-login-otp',
+      '/api/auth/sendOtp',
+      '/api/auth/send-reset-otp',
+      '/api/auth/reset-password',
+      '/api/auth/refresh-token',
+    ];
+    const isPublicAuth = publicAuthEndpoints.some((url) => request.url.includes(url));
+
+    // Add auth token to request (except public auth)
     const token = this.authService.getToken();
-    if (token) {
+    if (token && !isPublicAuth) {
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`

@@ -1,13 +1,14 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LuxUiModule } from '../../shared/ui/lux-ui.module';
 
 @Component({
   selector: 'app-verify-otp',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule, LuxUiModule],
   templateUrl: './verify-otp.component.html',
   styleUrls: ['./verify-otp.component.css']
 })
@@ -201,11 +202,7 @@ export class VerifyOtpComponent implements OnInit {
       if (this.authService.getDecodedToken()) {
         const decoded = this.authService.getDecodedToken();
         const roles = decoded?.roles ? decoded.roles.split(',') : [];
-        if (roles.includes('CUSTOMER')) {
-          this.router.navigate(['/home']);
-        } else {
-          this.router.navigate(['/dashboard']);
-        }
+        this.router.navigate([this.authService.redirectPathForRoles(roles)]);
       } else {
         this.router.navigate(['/']);
       }

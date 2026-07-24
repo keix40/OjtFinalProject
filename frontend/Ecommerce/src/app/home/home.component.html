@@ -1,555 +1,304 @@
-<app-header></app-header>
+<app-header [campaignOverlay]="true"></app-header>
 
-<!-- Luxury Background Wrapper -->
-<div class="bg-gradient-to-br from-slate-50 via-white to-slate-100 min-h-screen relative overflow-hidden">
-  <!-- Subtle Background Pattern -->
-  <div class="absolute inset-0 opacity-[0.02]">
-    <div class="absolute inset-0" style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0); background-size: 20px 20px;"></div>
-  </div>
-  <!-- Floating Elements -->
-  <div class="absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-amber-200/10 to-amber-300/10 rounded-full blur-xl animate-pulse"></div>
-  <div class="absolute bottom-20 right-20 w-40 h-40 bg-gradient-to-br from-slate-200/10 to-slate-300/10 rounded-full blur-xl animate-pulse delay-1000"></div>
+<main class="home-page">
+  <!-- Hero -->
+  <section class="home-hero" aria-label="Campaign">
+    <div *ngIf="!events?.length" class="home-hero__empty">
+      <p class="lux-overline">Britium Gallery</p>
+      <h1 class="lux-display home-hero__title">Curated for you</h1>
+      <button type="button" class="lux-btn lux-btn--accent" (click)="goToAllProducts()">
+        Explore the collection
+      </button>
+    </div>
 
-  <!-- Ultra-Luxury Hero Section -->
-  <section class="relative h-screen overflow-hidden">
-    <!-- Premium Background -->
-    <div class="absolute inset-0 bg-black"></div>
-    
-    <!-- Subtle Luxury Pattern -->
-    <div class="absolute inset-0 opacity-[0.03]">
-        <div class="absolute inset-0" style="background-image: repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(255,255,255,.05) 35px, rgba(255,255,255,.05) 70px);"></div>
-    </div>
-    
-    <!-- No Events Fallback -->
-    <div *ngIf="!events || events.length === 0" class="absolute inset-0 flex items-center justify-center z-10">
-      <div class="text-center text-white">
-        <p class="text-2xl font-light tracking-widest">NO ACTIVE EVENTS</p>
-      </div>
-    </div>
-    
-    <!-- Dynamic Event Slides -->
-    <div *ngFor="let event of events; let i = index">
-      <div *ngIf="i === currentSlide" class="absolute inset-0 z-10">
-        <!-- Full-Screen Hero Image -->
-        <div class="relative w-full h-full">
-          <img [src]="getEventImageUrl(event)" 
-               [alt]="event.name" 
-               class="w-full h-full object-cover"
-               (error)="onImageError($event)">
-          
-          <!-- Premium Dark Overlay -->
-          <div class="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/70"></div>
-          
-          <!-- Luxury Content Container -->
-          <div class="absolute inset-0 flex flex-col items-center justify-center px-4 sm:px-8">
-            <!-- Decorative Line Top -->
-            <div class="w-24 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent mb-8"></div>
-            
-            <!-- Event Title -->
-            <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light text-white text-center mb-6 tracking-[0.2em] uppercase" 
-                style="text-shadow: 0 4px 12px rgba(0,0,0,0.5); letter-spacing: 0.15em;">
-              {{ event.name }}
-            </h1>
-            
-            <!-- Event Description -->
-            <p class="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 text-center font-light mb-10 max-w-3xl leading-relaxed tracking-wide" 
-               style="text-shadow: 0 2px 8px rgba(0,0,0,0.5);">
-              {{ event.description }}
-            </p>
-            
-            <!-- Decorative Line Bottom -->
-            <div class="w-24 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent mb-10"></div>
-            
-            <!-- Premium CTA Button -->
-            <button (click)="goToEventProducts(event)"
-                    class="px-12 py-4 bg-white text-black font-medium text-sm tracking-[0.2em] uppercase transition-all duration-300 hover:bg-white/90 hover:scale-105 hover:shadow-2xl">
-              {{ getButtonText(event) }}
-            </button>
-            
-            <!-- Scroll Indicator -->
-            <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce">
-              <span class="text-white/60 text-xs tracking-widest mb-2 uppercase">Scroll</span>
-              <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-              </svg>
-            </div>
-          </div>
+    <ng-container *ngFor="let event of events; let i = index">
+      <article *ngIf="i === currentSlide" class="home-hero__slide">
+        <img
+          class="home-hero__media"
+          [src]="getEventImageUrl(event)"
+          [alt]="event.name"
+          (error)="onImageError($event)"
+        />
+        <div class="home-hero__scrim"></div>
+        <div class="home-hero__copy">
+          <p class="lux-overline home-hero__eyebrow">New campaign</p>
+          <h1 class="lux-display home-hero__title">{{ event.name }}</h1>
+          <p *ngIf="event.description" class="home-hero__desc">{{ event.description }}</p>
+          <button type="button" class="lux-btn lux-btn--accent" (click)="goToEventProducts(event)">
+            {{ getButtonText(event) }}
+          </button>
         </div>
-      </div>
-    </div>
+      </article>
+    </ng-container>
 
-    <!-- Premium Navigation Arrows -->
-    <button *ngIf="events.length > 1" 
-            (click)="prevSlide()" 
-            class="absolute left-4 sm:left-8 top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 sm:w-14 sm:h-14 border border-white/40 hover:border-white text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
-        <svg class="w-5 h-5 sm:w-6 sm:h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 19l-7-7 7-7"></path>
-        </svg>
+    <button
+      *ngIf="events.length > 1"
+      type="button"
+      class="home-hero__nav home-hero__nav--prev"
+      (click)="prevSlide()"
+      aria-label="Previous campaign"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
     </button>
-    <button *ngIf="events.length > 1" 
-            (click)="nextSlide()" 
-            class="absolute right-4 sm:right-8 top-1/2 transform -translate-y-1/2 z-20 w-12 h-12 sm:w-14 sm:h-14 border border-white/40 hover:border-white text-white hover:bg-white/10 transition-all duration-300 backdrop-blur-sm">
-        <svg class="w-5 h-5 sm:w-6 sm:h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5l7 7-7 7"></path>
-        </svg>
+    <button
+      *ngIf="events.length > 1"
+      type="button"
+      class="home-hero__nav home-hero__nav--next"
+      (click)="nextSlide()"
+      aria-label="Next campaign"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+      </svg>
     </button>
 
-    <!-- Minimalist Carousel Indicators -->
-    <div *ngIf="events.length > 1" class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-4 z-20">
-        <ng-container *ngFor="let event of events; let i = index">
-          <div (click)="setSlide(i)" 
-               class="transition-all duration-300 cursor-pointer" 
-               [ngClass]="{'w-12 bg-white': i === currentSlide, 'w-8 bg-white/40': i !== currentSlide}" 
-               style="height: 1px;"></div>
-        </ng-container>
+    <div *ngIf="events.length > 1" class="home-hero__dots" role="tablist">
+      <button
+        *ngFor="let event of events; let i = index"
+        type="button"
+        class="home-hero__dot"
+        [class.is-active]="i === currentSlide"
+        (click)="setSlide(i)"
+        [attr.aria-label]="'Go to slide ' + (i + 1)"
+      ></button>
     </div>
   </section>
 
-<!-- Luxury Features Bar -->
-  <section class="py-16">
-    <div class="max-w-7xl mx-auto px-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            <div class="group flex items-center space-x-6 p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/50 hover:border-slate-300/50 transition-all duration-500 hover:scale-105 hover:shadow-xl">
-                <div class="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200/50">
-                    <svg class="h-8 w-8 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-medium text-slate-900 mb-1">Secure Payment</h3>
-                    <p class="text-sm text-slate-600 font-light">100% protected transactions</p>
-                </div>
-            </div>
-            <div class="group flex items-center space-x-6 p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/50 hover:border-slate-300/50 transition-all duration-500 hover:scale-105 hover:shadow-xl">
-                <div class="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-violet-50 to-violet-100 border border-violet-200/50">
-                    <svg class="h-8 w-8 text-violet-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
-                        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-medium text-slate-900 mb-1">24/7 Support</h3>
-                    <p class="text-sm text-slate-600 font-light">Always here to help</p>
-                </div>
-            </div>
-            <div class="group flex items-center space-x-6 p-8 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/50 hover:border-slate-300/50 transition-all duration-500 hover:scale-105 hover:shadow-xl">
-                <div class="flex-shrink-0 w-16 h-16 rounded-2xl flex items-center justify-center bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200/50">
-                    <svg class="h-8 w-8 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="12" cy="8" r="7"></circle>
-                        <polyline points="8.21,13.89 7,23 12,20 17,23 15.79,13.88"></polyline>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-medium text-slate-900 mb-1">Quality Guarantee</h3>
-                    <p class="text-sm text-slate-600 font-light">Premium products only</p>
-                </div>
-            </div>
-        </div>
+  <!-- Trust strip (one quiet line, not icon cards) -->
+  <section class="home-trust" aria-label="Promises">
+    <div class="home-wrap home-trust__row">
+      <p><span>Secure payment</span></p>
+      <p><span>24/7 support</span></p>
+      <p><span>Quality guarantee</span></p>
     </div>
   </section>
 
-<!-- Luxury Categories Section -->
-  <section class="py-24" id="categories">
-    <div class="max-w-7xl mx-auto px-8">
-        <div class="text-center mb-20">
-            <h2 class="text-5xl lg:text-6xl font-light text-slate-900 mb-6 tracking-wide">
-                Shop by <span class="text-slate-600">Category</span>
-            </h2>
-            <p class="text-xl text-slate-600 max-w-3xl mx-auto font-light leading-relaxed">
-                Discover our carefully curated collection of premium categories, each designed to elevate your lifestyle
-            </p>
-        </div>
-        
-        <div *ngIf="loading" class="text-center text-lg text-slate-600">Loading categories...</div>
-        <div *ngIf="error" class="text-center text-red-500">{{ error }}</div>
-        
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8" *ngIf="!loading && !error">
-            <div *ngFor="let cat of categories | slice:0:5" 
-                 class="group relative overflow-hidden rounded-3xl bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-700 hover:-translate-y-3 border border-slate-200/50 hover:border-slate-300/50 cursor-pointer shadow-lg hover:shadow-2xl" 
-                 (click)="goToCategory(cat)">
-                
-                <div class="aspect-square overflow-hidden">
-                    <img [src]="getCategoryImageUrl(cat)" 
-                         [alt]="cat.name" 
-                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                </div>
-                
-                <!-- Elegant overlay -->
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent group-hover:from-black/70 transition-all duration-500"></div>
-                
-                <!-- Icon container -->
-                <div class="absolute top-6 left-6 w-14 h-14 rounded-2xl flex items-center justify-center bg-white/90 backdrop-blur-sm border border-white/50 shadow-lg group-hover:scale-110 transition-transform duration-500">
-                    <ng-container *ngIf="cat.iconUrl; else checkIconClass">
-                        <img [src]="getSafeIconUrl(cat)" alt="icon" class="w-8 h-8 object-contain" />
-                    </ng-container>
-                    <ng-template #checkIconClass>
-                        <ng-container *ngIf="cat.iconClass; else fallbackInitial">
-                            <i [class]="cat.iconClass" class="text-slate-700" style="font-size: 1.75rem;"></i>
-                        </ng-container>
-                    </ng-template>
-                    <ng-template #fallbackInitial>
-                        <span class="text-slate-700 text-xl font-medium">{{ cat.name ? cat.name[0] : '?' }}</span>
-                    </ng-template>
-                </div>
-                
-                <!-- Category info -->
-                <div class="absolute bottom-0 left-0 right-0 p-8 text-white">
-                    <h3 class="text-2xl font-light mb-2 group-hover:-translate-y-1 transition-transform duration-500 tracking-wide">
-                        {{ cat.name }}
-                    </h3>
-                    <span *ngIf="cat.parentId" class="inline-block bg-white/20 backdrop-blur-sm text-xs px-3 py-1 rounded-full font-light">
-                        Subcategory
-                    </span>
-                </div>
-            </div>
-        </div>
-        
-        <!-- View All Button -->
-        <div class="flex justify-center mt-12" *ngIf="categories.length > 5">
-            <a [routerLink]="getAllCategoriesUrl()" 
-               class="bg-slate-800 hover:bg-slate-700 text-white px-10 py-4 rounded-full font-medium transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl tracking-wide">
-                View All Categories
-            </a>
-        </div>
-    </div>
-  </section>
+  <!-- Categories -->
+  <section class="home-section" id="categories">
+    <div class="home-wrap">
+      <header class="home-section__head">
+        <p class="lux-overline">Browse</p>
+        <h2 class="lux-h1">Shop by category</h2>
+        <p class="lux-body">A focused selection of our most visited collections.</p>
+      </header>
 
-<!-- Trending Products
-<section class="py-20 bg-gradient-to-br from-neutral-50 to-neutral-100" id="trending">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between mb-16">
-        <div>
-          <h2 class="text-4xl lg:text-5xl font-bold text-neutral-900 mb-4 flex items-center animate-slide-up">
-            <svg class="mr-4 h-10 w-10 text-blue-600 animate-bounce-gentle" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" stroke-width="2">
-              <polyline points="23,6 13.5,15.5 8.5,10.5 1,18"></polyline>
-              <polyline points="17,6 23,6 23,12"></polyline>
-            </svg>
-            Trending Now
-          </h2>
-          <p class="text-xl text-neutral-600 animate-slide-up" style="animation-delay: 0.1s">Products that are flying off the shelves</p>
+      <lux-async-state
+        [loading]="loading"
+        [error]="error"
+        [empty]="!categories.length"
+        loadingLabel="Loading categories"
+        skeletonHeight="24rem"
+        emptyTitle="The next collection is being prepared"
+        emptyMessage="Return soon for newly curated chapters."
+        (retry)="loadCategory()"
+      >
+        <div class="home-cat-grid">
+          <button
+            type="button"
+            *ngFor="let cat of categories | slice:0:4"
+            class="home-cat"
+            (click)="goToCategory(cat)"
+          >
+            <div class="home-cat__media">
+              <img [src]="getCategoryImageUrl(cat)" [alt]="cat.name" />
+            </div>
+            <div class="home-cat__meta">
+              <span class="lux-overline">Collection</span>
+              <h3 class="lux-h3">{{ cat.name }}</h3>
+            </div>
+          </button>
         </div>
+      </lux-async-state>
+
+      <div class="home-section__cta" *ngIf="categories.length > 4">
+        <a [routerLink]="getAllCategoriesUrl()" class="lux-btn lux-btn--secondary">View all categories</a>
       </div>
-  
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-        <div *ngFor="let product of trendingProducts"
-          class="group bg-white rounded-2xl overflow-hidden hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-neutral-200 animate-fade-in cursor-pointer"
-          (click)="goToTrendingProductDetail(product)">
-  
-          Image container -->
-          <!-- <div class="relative overflow-hidden">
-            <img
-              [src]="(product.productImages && product.productImages.length > 0) ? 'http://localhost:8080' + product.productImages[0].imageUrl : 'assets/images/default-brand.svg'"
-              alt="{{ product.productName }}"
-              class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700"
-              width="400" height="192">
-  
-            Hover info overlay
-            <div
-              class="absolute left-0 bottom-0 w-full h-1/2 translate-y-full group-hover:translate-y-0 transition-transform duration-500 text-white px-6 py-4 flex flex-col justify-between backdrop-blur-lg bg-white/20">
-              
-              Rating
-              <div class="flex items-center mb-2">
-                <span class="text-yellow-400 text-sm">★★★★★</span>
-                <span class="text-sm text-white ml-2">(4.8)</span>
-              </div>
-  
-              Name
-              <h3 class="font-semibold text-black mb-2 group-hover:text-black transition-colors duration-300">
-                {{ product.productName }}
-              </h3>
-  
-              Price
-              <div class="flex items-center justify-between">
-                <span class="text-2xl font-bold text-black">
-                  {{ product.price }}
-                  <span class="text-sm font-normal">MMK</span>
-                </span>
-              </div>
-            </div>
-          </div>
-  
+    </div>
+  </section>
+
+  <!-- Trending -->
+  <section class="home-section home-section--cream" id="trending">
+    <div class="home-wrap">
+      <header class="home-section__head">
+        <p class="lux-overline">Now</p>
+        <h2 class="lux-h1">Trending</h2>
+        <p class="lux-body">Pieces our clients are choosing this season.</p>
+      </header>
+
+      <lux-async-state
+        [loading]="trendingLoading"
+        [error]="trendingError"
+        [empty]="!trendingProducts.length"
+        loadingLabel="Loading trending products"
+        skeletonHeight="26rem"
+        emptyTitle="A new edit is on its way"
+        (retry)="loadTrendingProducts()"
+      >
+        <div class="home-product-grid">
+          <lux-product-card
+            *ngFor="let product of trendingProducts"
+            [name]="product.productName"
+            [brand]="getProductBrand(product)"
+            [imageUrl]="getTrendingProductImageUrl(product)"
+            [badge]="product.hasEvent ? product.eventName : ''"
+            [saleLabel]="getDiscountText(product)"
+            [rating]="product.averageRating ?? null"
+            [reviewCount]="product.reviewCount ?? null"
+            [price]="formatPriceOnly(getDiscountedPrice(product)) + ' MMK'"
+            [originalPrice]="product.hasDiscount ? formatPriceOnly(product.price) + ' MMK' : ''"
+            (selected)="goToTrendingProductDetail(product)"
+            (imageError)="onImageError($event)"
+          ></lux-product-card>
         </div>
+      </lux-async-state>
+    </div>
+  </section>
+
+  <!-- Brands -->
+  <section class="home-section" id="brands">
+    <div class="home-wrap">
+      <header class="home-section__head">
+        <p class="lux-overline">Houses</p>
+        <h2 class="lux-h1">Featured brands</h2>
+        <p class="lux-body">Names we stock for craft and consistency.</p>
+      </header>
+
+      <lux-async-state
+        [loading]="brandsLoading"
+        [error]="brandsError"
+        [empty]="!brands.length"
+        loadingLabel="Loading featured brands"
+        skeletonHeight="8rem"
+        emptyTitle="Our house directory is being curated"
+        (retry)="loadBrands()"
+      >
+      <div class="home-brands">
+        <button
+          *ngIf="brands.length > 6"
+          type="button"
+          class="home-brands__nav home-brands__nav--prev"
+          (click)="scrollBrands('left')"
+          aria-label="Scroll brands left"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div #brandRow class="home-brands__track scrollbar-hide">
+          <button
+            type="button"
+            *ngFor="let brand of brands"
+            class="home-brand"
+            (click)="goToBrand(brand)"
+          >
+            <img [src]="getBrandImageUrl(brand)" [alt]="brand.name" />
+            <span class="lux-overline">{{ brand.name }}</span>
+          </button>
+        </div>
+
+        <button
+          *ngIf="brands.length > 6"
+          type="button"
+          class="home-brands__nav home-brands__nav--next"
+          (click)="scrollBrands('right')"
+          aria-label="Scroll brands right"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
-        </div>
-</section> -->
-
-<!-- Luxury Trending Now Section -->
-  <section class="py-24" id="trending">
-    <div class="max-w-7xl mx-auto px-8">
-        <div class="text-center mb-20">
-            <h2 class="text-5xl lg:text-6xl font-light text-slate-900 mb-6 tracking-wide">
-                Trending <span class="text-slate-600">Now</span>
-            </h2>
-            <p class="text-xl text-slate-600 max-w-3xl mx-auto font-light leading-relaxed">
-                Discover the most coveted products that our discerning customers can't get enough of
-            </p>
-        </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div *ngFor="let product of trendingProducts" 
-                 class="group bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-700 hover:-translate-y-3 border border-slate-200/50 hover:border-slate-300/50 cursor-pointer shadow-lg"
-                 (click)="goToTrendingProductDetail(product)">
-                
-                <!-- Product Image Container -->
-                <div class="relative overflow-hidden">
-                    <img [src]="getTrendingProductImageUrl(product)" 
-                         [alt]="product.productName"
-                         class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
-                    
-                    <!-- Event Badge -->
-                    <div *ngIf="product.hasEvent" 
-                         class="absolute top-4 left-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
-                        </svg>
-                        {{ product.eventName }}
-                    </div>
-                    
-                    <!-- Discount Badge -->
-                    <div *ngIf="product.hasDiscount" 
-                         class="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
-                        {{ getDiscountText(product) }}
-                    </div>
-                </div>
-                
-                <!-- Product Info -->
-                <div class="p-4">
-                    <!-- Product Name -->
-                    <h3 class="font-medium text-slate-900 mb-2 line-clamp-1 group-hover:text-slate-600 transition-colors duration-300 text-base">
-                        {{ product.productName }}
-                    </h3>
-                    
-                    <!-- Rating -->
-                    <div class="flex items-center mb-3">
-                        <span class="text-amber-400 text-xs">{{ getStarRating(product.averageRating) }}</span>
-                        <span class="text-xs text-slate-500 ml-2 font-light">({{ product.reviewCount }})</span>
-                    </div>
-                    
-                    <!-- Price -->
-                    <div class="flex items-center justify-between">
-                        <div *ngIf="product.hasDiscount; else originalPrice" class="flex flex-col">
-                            <span class="text-lg font-light text-red-600">
-                                {{ formatPriceOnly(getDiscountedPrice(product)) }} <span class="text-xs font-light">MMK</span>
-                            </span>
-                            <span class="text-xs font-light text-slate-400 line-through">
-                                {{ formatPriceOnly(product.price) }} <span class="text-xs font-light">MMK</span>
-                            </span>
-                        </div>
-                        <ng-template #originalPrice>
-                        <span class="text-lg font-light text-slate-900">
-                            {{ formatPriceOnly(product.price) }} <span class="text-xs font-light">MMK</span>
-                        </span>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-        </div>
+      </lux-async-state>
     </div>
   </section>
 
-<!-- Luxury Brands Section -->
-<section class="py-24 bg-gradient-to-br from-slate-50 via-white to-slate-100" id="brands">
-    <div class="max-w-7xl mx-auto px-8">
-        <div class="text-center mb-20">
-            <h2 class="text-5xl lg:text-6xl font-light text-slate-900 mb-6 tracking-wide">
-                Featured <span class="text-slate-600">Brands</span>
-            </h2>
-            <p class="text-xl text-slate-600 max-w-3xl mx-auto font-light leading-relaxed">
-                Discover the world's most prestigious and innovative brands, each representing excellence and craftsmanship
-            </p>
-        </div>
-        
-        <div class="relative">
-            <button *ngIf="brands.length > 8" 
-                    (click)="scrollBrands('left')" 
-                    class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-full shadow-lg w-12 h-12 flex items-center justify-center hover:bg-white hover:shadow-xl transition-all duration-300">
-                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                </svg>
-            </button>
-            
-            <div #brandRow class="flex overflow-x-auto gap-8 scrollbar-hide px-4" style="scroll-behavior: smooth;">
-                <div *ngFor="let brand of brands"
-                     class="group cursor-pointer flex-shrink-0"
-                     (click)="goToBrand(brand)">
-                    
-                    <!-- Brand Card -->
-                    <div class="w-48 h-48 bg-white/80 backdrop-blur-sm rounded-3xl border border-slate-200/50 hover:border-slate-300/50 transition-all duration-500 hover:scale-105 hover:shadow-xl shadow-lg overflow-hidden">
-                        <!-- Brand Image -->
-                        <div class="w-full h-full flex items-center justify-center p-8">
-                            <img [src]="getBrandImageUrl(brand)"
-                                 [alt]="brand.name"
-                                 class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-500" />
-                        </div>
-                        
-                        <!-- Hover Overlay -->
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end justify-center pb-6">
-                            <span class="text-white font-medium text-lg tracking-wide">{{ brand.name }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <button *ngIf="brands.length > 8" 
-                    (click)="scrollBrands('right')" 
-                    class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm border border-slate-200/50 rounded-full shadow-lg w-12 h-12 flex items-center justify-center hover:bg-white hover:shadow-xl transition-all duration-300">
-                <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                </svg>
-            </button>
-        </div>
-    </div>
-</section>
+  <!-- Featured products -->
+  <section class="home-section home-section--cream" id="featured">
+    <div class="home-wrap">
+      <header class="home-section__head">
+        <p class="lux-overline">Selection</p>
+        <h2 class="lux-h1">Featured products</h2>
+        <p class="lux-body">Handpicked from the current collection.</p>
+      </header>
 
-<!-- Luxury Featured Products -->
-<section class="py-24 bg-white" id="featured">
-    <div class="max-w-7xl mx-auto px-8">
-        <div class="text-center mb-20">
-            <h2 class="text-5xl lg:text-6xl font-light text-slate-900 mb-6 tracking-wide">
-                Featured <span class="text-slate-600">Products</span>
-            </h2>
-            <p class="text-xl text-slate-600 max-w-3xl mx-auto font-light leading-relaxed">
-                Handpicked selections from our latest collection, showcasing the finest in contemporary design
-            </p>
+      <lux-async-state
+        [loading]="featuredLoading"
+        [error]="featuredError"
+        [empty]="!featuredProducts.length"
+        loadingLabel="Loading featured products"
+        skeletonHeight="26rem"
+        emptyTitle="The selection is being refreshed"
+        (retry)="loadFeaturedProducts()"
+      >
+        <div class="home-product-grid">
+          <lux-product-card
+            *ngFor="let product of featuredProducts"
+            [name]="product.productName"
+            [brand]="getProductBrand(product)"
+            [imageUrl]="getTrendingProductImageUrl(product)"
+            [badge]="product.hasEvent ? product.eventName : ''"
+            [saleLabel]="getDiscountText(product)"
+            [rating]="product.averageRating ?? null"
+            [reviewCount]="product.reviewCount ?? null"
+            [price]="formatPriceOnly(getDiscountedPrice(product)) + ' MMK'"
+            [originalPrice]="product.hasDiscount ? formatPriceOnly(product.price) + ' MMK' : ''"
+            (selected)="goToTrendingProductDetail(product)"
+            (imageError)="onImageError($event)"
+          ></lux-product-card>
         </div>
-        
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div *ngFor="let product of featuredProducts" 
-                 class="group bg-white/80 backdrop-blur-sm rounded-3xl overflow-hidden hover:shadow-2xl transition-all duration-700 hover:-translate-y-3 border border-slate-200/50 hover:border-slate-300/50 cursor-pointer shadow-lg"
-                 (click)="goToTrendingProductDetail(product)">
-                
-                <!-- Product Image Container -->
-                <div class="relative overflow-hidden">
-                    <img [src]="getTrendingProductImageUrl(product)" 
-                         [alt]="product.productName"
-                         class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-700">
-                    
-                    <!-- Event Badge -->
-                    <div *ngIf="product.hasEvent" 
-                         class="absolute top-4 left-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1 shadow-lg">
-                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd"/>
-                        </svg>
-                        {{ product.eventName }}
-                    </div>
-                    
-                    <!-- Discount Badge -->
-                    <div *ngIf="product.hasDiscount" 
-                         class="absolute top-4 right-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-lg">
-                        {{ getDiscountText(product) }}
-                    </div>
-                </div>
-                
-                <!-- Product Info -->
-                <div class="p-4">
-                    <!-- Product Name -->
-                    <h3 class="font-medium text-slate-900 mb-2 line-clamp-1 group-hover:text-slate-600 transition-colors duration-300 text-base">
-                        {{ product.productName }}
-                    </h3>
-                    
-                    <!-- Rating -->
-                    <div class="flex items-center mb-3">
-                        <span class="text-amber-400 text-xs">{{ getStarRating(product.averageRating) }}</span>
-                        <span class="text-xs text-slate-500 ml-2 font-light">({{ product.reviewCount }})</span>
-                    </div>
-                    
-                    <!-- Price -->
-                    <div class="flex items-center justify-between">
-                        <div *ngIf="product.hasDiscount; else originalPrice" class="flex flex-col">
-                            <span class="text-lg font-light text-red-600">
-                                {{ formatPriceOnly(getDiscountedPrice(product)) }} <span class="text-xs font-light">MMK</span>
-                            </span>
-                            <span class="text-xs font-light text-slate-400 line-through">
-                                {{ formatPriceOnly(product.price) }} <span class="text-xs font-light">MMK</span>
-                            </span>
-                        </div>
-                        <ng-template #originalPrice>
-                        <span class="text-lg font-light text-slate-900">
-                            {{ formatPriceOnly(product.price) }} <span class="text-xs font-light">MMK</span>
-                        </span>
-                        </ng-template>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="flex justify-center mt-12">
-            <button class="bg-slate-800 hover:bg-slate-700 text-white px-10 py-4 rounded-full font-medium transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl tracking-wide" (click)="goToAllProducts()">
-                View All Products
-            </button>
-        </div>
-    </div>
-</section>
+      </lux-async-state>
 
-<!-- Luxury Customer Testimonials -->
-  <section class="py-24">
-    <div class="max-w-7xl mx-auto px-8">
-        <div class="text-center mb-20">
-            <h2 class="text-5xl lg:text-6xl font-light text-slate-900 mb-6 tracking-wide">
-                What Our <span class="text-slate-600">Customers Say</span>
-            </h2>
-            <p class="text-xl text-slate-600 max-w-3xl mx-auto font-light leading-relaxed">
-                Discover why discerning customers choose us for their premium shopping experience
-            </p>
-        </div>
-        
-        <div *ngIf="reviewsLoading" class="text-center text-lg text-slate-600">Loading reviews...</div>
-        <div *ngIf="reviewsError" class="text-center text-red-500">{{ reviewsError }}</div>
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8" *ngIf="!reviewsLoading && !reviewsError">
-            <div *ngFor="let review of reviews" 
-                 class="bg-white/80 backdrop-blur-sm p-10 rounded-3xl border border-slate-200/50 hover:border-slate-300/50 hover:shadow-2xl transition-all duration-700 hover:-translate-y-3 shadow-lg">
-                
-                <div class="flex items-center mb-8">
-                    <ng-container *ngIf="review.userImage; else initialsAvatar">
-                        <img [src]="getReviewUserImage(review)" 
-                             alt="{{ review.userName }}" 
-                             class="w-20 h-20 rounded-2xl mr-6 border-2 border-slate-200/50 object-cover shadow-lg">
-                    </ng-container>
-                    <ng-template #initialsAvatar>
-                        <div class="w-20 h-20 rounded-2xl mr-6 border-2 border-slate-200/50 bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center text-white text-2xl font-light shadow-lg">
-                            {{ getInitials(review.userName) }}
-                        </div>
-                    </ng-template>
-                    <div>
-                        <h4 class="font-medium text-slate-900 text-xl mb-2">{{ review.userName }}</h4>
-                        <div class="flex items-center">
-                            <span class="text-amber-400 text-lg">{{ '★★★★★'.slice(0, review.rating) }}</span>
-                            <span class="text-slate-300 text-lg">{{ '★★★★★'.slice(review.rating) }}</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <p class="text-slate-600 mb-8 leading-relaxed text-lg font-light italic">"{{ review.comment }}"</p>
-                
-                <div class="inline-block bg-slate-100/80 text-slate-600 px-4 py-2 rounded-full text-sm font-light border border-slate-200/50">
-                    Verified Purchase: {{ review.productName }}
-                </div>
-            </div>
-        </div>
+      <div class="home-section__cta">
+        <button type="button" class="lux-btn lux-btn--primary" (click)="goToAllProducts()">
+          View all products
+        </button>
+      </div>
     </div>
   </section>
 
-  <!-- Newsletter Section -->
-<!-- <section class="py-20 bg-gradient-to-br from-primary-600 to-primary-800">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div class="bg-white/10 backdrop-blur-md rounded-3xl p-12 animate-fade-in">
-            <div class="text-6xl mb-8 animate-bounce-gentle">📧</div>
-            <h2 class="text-4xl lg:text-5xl font-bold text-white mb-6">Stay in the Loop</h2>
-            <p class="text-xl text-white/90 mb-8 leading-relaxed">
-                Get exclusive deals, early access to sales, and the latest product updates delivered to your inbox
-            </p>
-            <div class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto mb-6">
-                <input type="email" [(ngModel)]="newsletterEmail" placeholder="Enter your email address" class="flex-1 px-6 py-4 rounded-xl bg-white/20 border border-white/30 text-white placeholder:text-white/70 focus:bg-white/30 focus:border-white focus:ring-2 focus:ring-white/20 transition-all duration-300 outline-none backdrop-blur-sm">
-                <button (click)="subscribeToNewsletter()" class="newsletter-btn bg-white text-primary-600 hover:bg-neutral-100 px-8 py-4 rounded-xl hover:scale-105 transition-all duration-300 font-semibold shadow-lg">
-                    Subscribe →
-                </button>
-            </div>
-            <p class="text-white/70 text-sm">Join 50,000+ subscribers and get 10% off your first order!</p>
-        </div>
-    </div>
-</section> -->
+  <!-- Reviews -->
+  <section class="home-section" aria-label="Customer voices">
+    <div class="home-wrap">
+      <header class="home-section__head">
+        <p class="lux-overline">Voices</p>
+        <h2 class="lux-h1">What clients say</h2>
+        <p class="lux-body">Recent notes from verified purchases.</p>
+      </header>
 
-  <app-footer></app-footer>
-</div>
+      <lux-async-state
+        [loading]="reviewsLoading"
+        [error]="reviewsError"
+        [empty]="!reviews.length"
+        loadingLabel="Loading client reviews"
+        skeletonHeight="14rem"
+        emptyTitle="Client notes will appear here"
+        (retry)="loadReviews()"
+      >
+      <div class="home-reviews">
+        <blockquote *ngFor="let review of reviews" class="home-review">
+          <p class="home-review__quote">“{{ review.comment }}”</p>
+          <footer class="home-review__foot">
+            <div class="home-review__avatar" *ngIf="review.userImage; else initials">
+              <img [src]="getReviewUserImage(review)" [alt]="review.userName" />
+            </div>
+            <ng-template #initials>
+              <div class="home-review__avatar home-review__avatar--text">
+                {{ getInitials(review.userName) }}
+              </div>
+            </ng-template>
+            <div>
+              <cite class="home-review__name">{{ review.userName }}</cite>
+              <p class="lux-body-sm">{{ '★★★★★'.slice(0, review.rating) }} · {{ review.productName }}</p>
+            </div>
+          </footer>
+        </blockquote>
+      </div>
+      </lux-async-state>
+    </div>
+  </section>
+</main>
+
+<app-footer></app-footer>

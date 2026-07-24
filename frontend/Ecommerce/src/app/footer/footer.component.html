@@ -1,86 +1,69 @@
 <!-- Footer -->
-<footer class="bg-slate-900 text-white py-20">
+<footer class="bg-espresso text-ivory py-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-5 gap-12">
             <!-- Company Information -->
             <div class="md:col-span-2">
-                <h3 class="text-3xl font-bold text-primary-400 mb-6">
+                <p class="lux-overline mb-3" style="color: var(--lux-champagne-soft);">Britium Gallery</p>
+                <h3 class="lux-h2 mb-6" style="color: #F7F3EC; font-size: 2rem;">
                     {{ companyName }}
                 </h3>
-                <p class="text-neutral-300 mb-8 leading-relaxed text-lg">
+                <p class="lux-body mb-8" style="color: var(--lux-fog);">
                     {{ companyDescription }}
                 </p>
-                <!-- Social Media Links -->
-                <div class="flex space-x-4">
-                    <a *ngFor="let social of socialMediaLinks" 
-                       [href]="social.url" 
+                <div class="flex space-x-3">
+                    <a *ngFor="let social of socialMediaLinks"
+                       [href]="social.url"
                        target="_blank"
-                       class="w-12 h-12 bg-neutral-800 rounded-xl flex items-center justify-center hover:bg-primary-600 transition-all duration-300 hover:scale-110 group">
-                        <svg class="w-5 h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
+                       class="w-10 h-10 border border-fog/40 flex items-center justify-center hover:border-champagne hover:text-champagne transition-all duration-lux"
+                       rel="noopener">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                             <path [attr.d]="social.icon"></path>
                         </svg>
                     </a>
                 </div>
             </div>
 
-            <!-- Shop Section -->
             <div>
-                <h4 class="font-semibold text-white mb-6 text-lg">Shop</h4>
-                <ul class="space-y-4 text-neutral-300">
-                    <!-- All Categories Link -->
+                <h4 class="lux-overline mb-6" style="color: var(--lux-champagne-soft);">Shop</h4>
+                <ul class="space-y-3" style="color: var(--lux-fog);">
                     <li>
-                        <a routerLink="/usercategorylist" 
-                           class="hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block">
+                        <a routerLink="/usercategorylist" class="lux-link hover:text-ivory transition-colors">
                             All Categories
                         </a>
                     </li>
-                    <!-- Dynamic Categories -->
                     <li *ngFor="let category of categories">
-                        <a (click)="navigateToCategory(category)" 
-                           class="hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block cursor-pointer">
+                        <a (click)="navigateToCategory(category)"
+                           class="lux-link hover:text-ivory transition-colors cursor-pointer">
                             {{ category.name }}
                         </a>
                     </li>
-                    <!-- Popular Brands -->
                     <li *ngFor="let brand of brands">
-                        <a (click)="navigateToBrand(brand)" 
-                           class="hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block cursor-pointer">
+                        <a (click)="navigateToBrand(brand)"
+                           class="lux-link hover:text-ivory transition-colors cursor-pointer">
                             {{ brand.name }}
                         </a>
                     </li>
-                    <!-- Loading State -->
-                    <li *ngIf="loading" class="text-neutral-400">
-                        <span class="inline-flex items-center">
-                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-neutral-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Loading...
-                        </span>
-                    </li>
+                    <li *ngIf="loading" class="lux-body-sm">Loading…</li>
                 </ul>
             </div>
 
-            <!-- Support Section -->
             <div>
-                <h4 class="font-semibold text-white mb-6 text-lg">Support</h4>
-                <ul class="space-y-4 text-neutral-300">
+                <h4 class="lux-overline mb-6" style="color: var(--lux-champagne-soft);">Support</h4>
+                <ul class="space-y-3" style="color: var(--lux-fog);">
                     <li *ngFor="let link of supportLinks">
-                        <a [routerLink]="link.url" 
-                           class="hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block">
+                        <a [routerLink]="link.url" class="lux-link hover:text-ivory transition-colors">
                             {{ link.name }}
                         </a>
                     </li>
                 </ul>
             </div>
 
-            <!-- Company Section -->
             <div>
-                <h4 class="font-semibold text-white mb-6 text-lg">Company</h4>
-                <ul class="space-y-4 text-neutral-300">
+                <h4 class="lux-overline mb-6" style="color: var(--lux-champagne-soft);">Company</h4>
+                <ul class="space-y-3" style="color: var(--lux-fog);">
                     <li *ngFor="let link of companyLinks">
-                        <a [routerLink]="link.url" 
-                           class="hover:text-white transition-colors duration-300 hover:translate-x-1 inline-block">
+                        <a [routerLink]="link.url" class="lux-link hover:text-ivory transition-colors">
                             {{ link.name }}
                         </a>
                     </li>
@@ -88,23 +71,20 @@
             </div>
         </div>
 
-        <!-- Footer Bottom -->
-        <div class="border-t border-neutral-800 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <!-- Copyright -->
-            <p class="text-neutral-400 text-sm">
-                &copy; {{ currentYear }} {{ companyName }}. All rights reserved. Made with ❤️ for amazing customers.
+        <div class="border-t border-fog/30 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="lux-body-sm" style="color: var(--lux-stone);">
+                &copy; {{ currentYear }} {{ companyName }}. All rights reserved.
             </p>
-            
-            <!-- Payment Methods -->
-            <div class="flex items-center space-x-6 mt-6 md:mt-0">
-                <span class="text-neutral-400 text-sm">We accept:</span>
-                <div class="flex space-x-3">
-                    <span *ngFor="let payment of paymentMethods" 
-                          class="bg-neutral-800 px-3 py-2 rounded-lg text-xs font-bold text-neutral-300 hover:bg-neutral-700 transition-colors duration-300">
+            <div class="flex items-center space-x-4">
+                <span class="lux-overline" style="color: var(--lux-stone);">We accept</span>
+                <div class="flex space-x-2">
+                    <span *ngFor="let payment of paymentMethods"
+                          class="px-2.5 py-1 border border-fog/40 text-xs tracking-wider uppercase"
+                          style="color: var(--lux-fog);">
                         {{ payment.code }}
                     </span>
                 </div>
             </div>
         </div>
     </div>
-</footer> 
+</footer>

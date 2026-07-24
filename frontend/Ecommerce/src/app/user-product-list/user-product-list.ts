@@ -11,22 +11,23 @@ import { WishlistService } from '../services/wishlist.service';
 import { AuthService } from '../auth/auth.service';
 import { BrandService } from '../services/brand.service';
 import { ImageService } from '../services/image.service';
-import { BreadcrumbComponent } from '../breadcrumb.component';
 import { HeaderComponent } from '../header/header.component';
+import { FooterComponent } from '../footer/footer.component';
 import { DiscountService } from '../services/discount.service';
 import { EventService } from '../services/event.service';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { OnInit, ChangeDetectorRef, AfterViewInit } from '@angular/core';
-import { FooterComponent } from '../footer/footer.component';
 import { PriceFormatService } from '../services/price-format.service';
+import { RouterModule } from '@angular/router';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
 
 @Component({
   selector: 'app-user-product-list',
   standalone: true,
   templateUrl: './user-product-list.html',
   styleUrls: ['./user-product-list.css'],
-  imports: [CommonModule, FormsModule, HeaderComponent, FooterComponent, BreadcrumbComponent]
+  imports: [CommonModule, FormsModule, RouterModule, LuxUiModule, HeaderComponent, FooterComponent]
 })
 export class UserProductListComponent implements OnInit, OnDestroy, AfterViewInit {
   @Output() wishlistChanged = new EventEmitter<void>();

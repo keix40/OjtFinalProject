@@ -48,7 +48,7 @@ import com.Ojt.Ecommerce.service.BlacklistServiceImpl;
 import com.Ojt.Ecommerce.entity.BlacklistEntry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = {"http://localhost:4200", "http://127.0.0.1:4200"})
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor

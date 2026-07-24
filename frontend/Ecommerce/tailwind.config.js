@@ -6,65 +6,87 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        ink: 'var(--lux-ink)',
+        espresso: 'var(--lux-espresso)',
+        graphite: 'var(--lux-graphite)',
+        stone: 'var(--lux-stone)',
+        fog: 'var(--lux-fog)',
+        ivory: 'var(--lux-ivory)',
+        cream: 'var(--lux-cream)',
+        porcelain: 'var(--lux-porcelain)',
+        champagne: {
+          DEFAULT: 'var(--lux-champagne)',
+          deep: 'var(--lux-champagne-deep)',
+          soft: 'var(--lux-champagne-soft)',
+        },
+        lux: {
+          success: 'var(--lux-success)',
+          warning: 'var(--lux-warning)',
+          danger: 'var(--lux-danger)',
+          info: 'var(--lux-info)',
+        },
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          900: '#0c4a6e'
+          50: 'var(--lux-cream)',
+          100: 'var(--lux-ivory)',
+          500: 'var(--lux-ink)',
+          600: 'var(--lux-espresso)',
+          700: 'var(--lux-ink)',
+          900: 'var(--lux-ink)',
         },
         neutral: {
-          50: '#fafafa',
-          100: '#f5f5f5',
-          200: '#e5e5e5',
-          300: '#d4d4d4',
-          400: '#a3a3a3',
-          500: '#737373',
-          600: '#525252',
-          700: '#404040',
-          800: '#262626',
-          900: '#171717'
-        }
+          50: 'var(--lux-cream)',
+          100: 'var(--lux-ivory)',
+          200: 'var(--lux-fog)',
+          300: '#C4BDB0',
+          400: 'var(--lux-stone)',
+          500: 'var(--lux-stone)',
+          600: 'var(--lux-graphite)',
+          700: 'var(--lux-graphite)',
+          800: 'var(--lux-espresso)',
+          900: 'var(--lux-ink)',
+        },
       },
       fontFamily: {
-        'sans': ['Inter', 'system-ui', 'sans-serif']
+        sans: ['var(--lux-font-sans)'],
+        serif: ['var(--lux-font-serif)'],
+      },
+      borderRadius: {
+        lux: 'var(--lux-radius-md)',
+        'lux-sm': 'var(--lux-radius-sm)',
+        'lux-lg': 'var(--lux-radius-lg)',
+      },
+      boxShadow: {
+        'lux-sm': 'var(--lux-shadow-sm)',
+        'lux-md': 'var(--lux-shadow-md)',
+        'lux-lg': 'var(--lux-shadow-lg)',
+      },
+      transitionTimingFunction: {
+        lux: 'var(--lux-ease)',
+      },
+      transitionDuration: {
+        lux: '280ms',
+        'lux-slow': '420ms',
       },
       animation: {
-        'fade-in': 'fadeIn 0.6s ease-out',
-        'slide-up': 'slideUp 0.6s ease-out',
-        'slide-in-right': 'slideInRight 0.5s ease-out',
-        'bounce-gentle': 'bounceGentle 2s infinite',
-        'pulse-soft': 'pulseSoft 2s infinite',
-        'float': 'float 3s ease-in-out infinite'
+        'fade-in': 'fadeIn 0.42s cubic-bezier(0.22, 0.61, 0.36, 1)',
+        'slide-up': 'slideUp 0.42s cubic-bezier(0.22, 0.61, 0.36, 1)',
+        'slide-in-right': 'slideInRight 0.42s cubic-bezier(0.22, 0.61, 0.36, 1)',
       },
       keyframes: {
         fadeIn: {
           '0%': { opacity: '0' },
-          '100%': { opacity: '1' }
+          '100%': { opacity: '1' },
         },
         slideUp: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' }
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         slideInRight: {
-          '0%': { opacity: '0', transform: 'translateX(20px)' },
-          '100%': { opacity: '1', transform: 'translateX(0)' }
+          '0%': { opacity: '0', transform: 'translateX(12px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
         },
-        bounceGentle: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-5px)' }
-        },
-        pulseSoft: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.8' }
-        },
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' }
-        }
-      }
+      },
     },
   },
   plugins: [],
-}
+};

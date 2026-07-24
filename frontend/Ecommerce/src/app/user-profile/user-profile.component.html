@@ -1,142 +1,45 @@
 <app-header></app-header>
-<!-- Profile Navigation Tabs (Tailwind) -->
-<nav class="sticky top-[4rem] z-40 bg-white border-b border-neutral-200">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center gap-2 py-3 overflow-x-visible">
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'personal-info', 'text-neutral-600': activeSection !== 'personal-info'}"
-        (click)="selectSection('personal-info')">
-        <i class="bi bi-person"></i>
-        Personal info
-      </button>
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'orders', 'text-neutral-600': activeSection !== 'orders'}"
-        (click)="selectSection('orders')">
-        <i class="bi bi-box-seam"></i>
-        Orders
-        <span class="ml-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-blue-200 text-blue-800">{{ orderCount }}</span>
-      </button>
-      <!-- <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'wishlist', 'text-neutral-600': activeSection !== 'wishlist'}"
-        (click)="selectSection('wishlist')">
-        <i class="bi bi-heart"></i>
-        Wishlist
-      </button> -->
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'payment', 'text-neutral-600': activeSection !== 'payment'}"
-        (click)="selectSection('payment')">
-        <i class="bi bi-credit-card"></i>
-        Payment methods
-      </button>
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'reviews', 'text-neutral-600': activeSection !== 'reviews'}"
-        (click)="selectSection('reviews')">
-        <i class="bi bi-star"></i>
-        My reviews
-      </button>
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'addresses', 'text-neutral-600': activeSection !== 'addresses'}"
-        (click)="selectSection('addresses')">
-        <i class="bi bi-geo-alt"></i>
-        Addresses
-      </button>
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'notifications', 'text-neutral-600': activeSection !== 'notifications'}"
-        (click)="selectSection('notifications')">
-        <i class="bi bi-bell"></i>
-        Notifications
-      </button>
-      <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-        [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'coupons', 'text-neutral-600': activeSection !== 'coupons'}"
-        (click)="selectSection('coupons')">
-        <i class="bi bi-ticket-perforated"></i>
-        Coupons
-        <span class="ml-1 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold rounded-full bg-green-200 text-green-800">{{ couponCount }}</span>
-      </button>
-      <!-- Support Dropdown (Tailwind) -->
-      <!-- <div class="relative group">
-        <button class="flex items-center gap-2 px-2 py-2 rounded-xl text-xs font-medium transition-colors duration-200 whitespace-nowrap hover:bg-blue-50 hover:text-blue-700 focus:outline-none"
-          type="button">
-          <i class="bi bi-question-circle"></i>
-          Support
-          <i class="bi bi-chevron-down"></i>
-        </button>
-        <div class="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-neutral-200 z-50 hidden group-hover:block">
-          <button class="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-neutral-700 hover:bg-blue-50 transition-colors duration-200"
-            [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'help'}"
-            (click)="selectSection('help')">
-            <i class="bi bi-question-circle"></i>
-            Help center
-          </button>
-          <button class="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-neutral-700 hover:bg-blue-50 transition-colors duration-200"
-            [ngClass]="{'bg-blue-100 text-blue-700 font-semibold': activeSection === 'terms'}"
-            (click)="selectSection('terms')">
-            <i class="bi bi-journal-text"></i>
-            Terms and conditions
-          </button>
-        </div>
-      </div> -->
-    </div>
-  </div>
-</nav>
+<main class="customer-account account-maison">
+  <div class="account-shell">
+    <lux-page-header
+      eyebrow="Private client services"
+      title="Your account"
+      subtitle="Manage your personal details, orders and preferences in one considered space."
+    ></lux-page-header>
 
-<!-- Main Content -->
-<main class="main-content">
-  <div class="content-container">
-      <div class="content-card">
+    <lux-tabs
+      class="account-tabs"
+      [tabs]="accountTabs"
+      [activeId]="activeSection"
+      (activeIdChange)="selectSection($event)"
+    ></lux-tabs>
 
-          <!-- Personal Info Section -->
-                   <div *ngIf="activeSection === 'personal-info'" class="content-section">
-              <app-user-personal-info [userDetails]="userDetails" [vipTierInfo]="vipTierInfo"></app-user-personal-info>
-          </div>
-
-          <!-- Orders Section -->
-          <div *ngIf="activeSection === 'orders'" class="content-section">
-              <app-user-orders></app-user-orders>
-          </div>
-
-          <!-- Wishlist Section -->
-          <div *ngIf="activeSection === 'wishlist'" class="content-section">
-              <app-user-wishlist></app-user-wishlist>
-          </div>
-
-          <!-- Payment Methods Section -->
-          <div *ngIf="activeSection === 'payment'" class="content-section">
-              <app-user-payment-methods></app-user-payment-methods>
-          </div>
-
-          <!-- My Reviews Section -->
-          <div *ngIf="activeSection === 'reviews'" class="content-section">
-              <app-user-reviews></app-user-reviews>
-          </div>
-
-
-
-          <!-- Addresses Section -->
-          <div *ngIf="activeSection === 'addresses'" class="content-section">
-              <app-user-addresses></app-user-addresses>
-          </div>
-
-          <!-- Notifications Section -->
-          <div *ngIf="activeSection === 'notifications'" class="content-section">
-              <app-user-notifications></app-user-notifications>
-          </div>
-
-          <!-- Coupons Section -->
-          <div *ngIf="activeSection === 'coupons'" class="content-section">
-              <app-user-coupon-list></app-user-coupon-list>
-          </div>
-
-          <!-- Help Center Section -->
-          <div *ngIf="activeSection === 'help'" class="content-section">
-              <!-- <app-help-center></app-help-center> -->
-          </div>
-
-          <!-- Terms Section -->
-          <div *ngIf="activeSection === 'terms'" class="content-section">
-              <!-- <app-terms-conditions></app-terms-conditions> -->
-          </div>
+    <section class="account-content">
+      <div *ngIf="activeSection === 'personal-info'">
+        <app-user-personal-info [userDetails]="userDetails" [vipTierInfo]="vipTierInfo"></app-user-personal-info>
       </div>
+      <div *ngIf="activeSection === 'orders'">
+        <app-user-orders></app-user-orders>
+      </div>
+      <div *ngIf="activeSection === 'wishlist'">
+        <app-user-wishlist></app-user-wishlist>
+      </div>
+      <div *ngIf="activeSection === 'payment'">
+        <app-user-payment-methods></app-user-payment-methods>
+      </div>
+      <div *ngIf="activeSection === 'reviews'">
+        <app-user-reviews></app-user-reviews>
+      </div>
+      <div *ngIf="activeSection === 'addresses'">
+        <app-user-addresses></app-user-addresses>
+      </div>
+      <div *ngIf="activeSection === 'notifications'">
+        <app-user-notifications></app-user-notifications>
+      </div>
+      <div *ngIf="activeSection === 'coupons'">
+        <app-user-coupon-list></app-user-coupon-list>
+      </div>
+    </section>
   </div>
 </main>
 <app-footer></app-footer>

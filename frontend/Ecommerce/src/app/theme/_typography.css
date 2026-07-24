@@ -1,0 +1,93 @@
+/* Luxury typography scale — Cormorant (editorial) + Inter (UI) */
+
+.lux-display {
+  font-family: var(--lux-font-serif);
+  font-weight: 500;
+  font-size: clamp(2.75rem, 5vw, 4.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  color: var(--lux-ink);
+}
+
+.lux-h1 {
+  font-family: var(--lux-font-serif);
+  font-weight: 500;
+  font-size: 2.5rem;
+  line-height: 1.15;
+  color: var(--lux-ink);
+}
+
+.lux-h2 {
+  font-family: var(--lux-font-serif);
+  font-weight: 500;
+  font-size: 1.875rem;
+  line-height: 1.2;
+  color: var(--lux-ink);
+}
+
+.lux-h3 {
+  font-family: var(--lux-font-serif);
+  font-weight: 600;
+  font-size: 1.375rem;
+  line-height: 1.3;
+  color: var(--lux-ink);
+}
+
+.lux-overline {
+  font-family: var(--lux-font-sans);
+  font-weight: 500;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lux-stone);
+}
+
+.lux-body {
+  font-family: var(--lux-font-sans);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--lux-graphite);
+}
+
+.lux-body-sm {
+  font-family: var(--lux-font-sans);
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--lux-graphite);
+}
+
+.lux-ui {
+  font-family: var(--lux-font-sans);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.lux-data {
+  font-family: var(--lux-font-sans);
+  font-weight: 400;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+h1, .mat-typography h1 {
+  font-family: var(--lux-font-serif);
+  font-weight: 500;
+  color: var(--lux-ink);
+}
+
+h2, .mat-typography h2 {
+  font-family: var(--lux-font-serif);
+  font-weight: 500;
+  color: var(--lux-ink);
+}
+
+h3, .mat-typography h3 {
+  font-family: var(--lux-font-serif);
+  font-weight: 600;
+  color: var(--lux-ink);
+}

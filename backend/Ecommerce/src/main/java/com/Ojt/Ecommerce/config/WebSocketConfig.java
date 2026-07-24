@@ -34,7 +34,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws", "/ws-review")
-                .setAllowedOriginPatterns("http://localhost:4200", "http://localhost:3000")
+                .setAllowedOriginPatterns(
+                        "http://localhost:4200",
+                        "http://127.0.0.1:4200",
+                        "http://localhost:3000",
+                        "http://127.0.0.1:3000"
+                )
                 .addInterceptors(new JwtHandshakeInterceptor(jwtTokenProvider))
                 .setHandshakeHandler(new DefaultHandshakeHandler() {
                     @Override

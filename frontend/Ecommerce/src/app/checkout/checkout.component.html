@@ -1,42 +1,39 @@
 <app-header></app-header>
 
 <!-- Breadcrumb Navigation -->
-<div class="bg-white border-b border-gray-100">
+<div class="customer-breadcrumb">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <nav class="flex items-center space-x-2 text-sm" aria-label="Breadcrumb">
-      <a routerLink="/home" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Home</a>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-      <a routerLink="/cart" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Cart</a>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-      <span class="text-gray-900 font-medium" aria-current="page">Checkout</span>
+      <a routerLink="/home">Home</a>
+      <span aria-hidden="true">/</span>
+      <a routerLink="/cart">Bag</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Checkout</span>
     </nav>
   </div>
 </div>
 
 <!-- Main Content -->
-<div class="bg-white min-h-screen">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-10">
-      <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Checkout</h1>
-      <p class="text-gray-600 text-lg">Complete your order in just a few steps</p>
+<div class="customer-checkout checkout-concierge min-h-screen">
+  <div class="checkout-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="checkout-intro mb-10">
+      <p class="lux-overline">Concierge checkout</p>
+      <h1>Complete your selection</h1>
+      <p>Address, delivery and payment—handled with care.</p>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <div class="checkout-grid grid grid-cols-1 lg:grid-cols-3 gap-10">
       <!-- Checkout Steps -->
-      <div class="lg:col-span-2">
+      <div class="checkout-flow lg:col-span-2">
         <div class="space-y-8">
           <!-- Step 1: Customer Information -->
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div class="checkout-step bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="checkout-step__head p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                <div class="checkout-step__badge">1</div>
                 <h2 class="text-xl font-semibold text-gray-900">Customer Information</h2>
                 <span *ngIf="stepCompleted[1]" class="ml-3 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>
               </div>
-              <button *ngIf="stepCompleted[1] && activeStep !== 1" class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200" (click)="editStep($event, 1)">Edit</button>
+              <button *ngIf="stepCompleted[1] && activeStep !== 1" type="button" class="checkout-step__edit" (click)="editStep($event, 1)">Edit</button>
             </div>
             <div *ngIf="activeStep === 1" class="p-6">
               <form #customerForm="ngForm" (ngSubmit)="nextStep(customerForm)">
@@ -51,10 +48,10 @@
                   </div>
                   <div class="md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-3">Phone Number <span class="text-red-500">*</span></label>
-                    <input type="tel" [(ngModel)]="customer.phone" name="phone" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none">
+                    <input type="tel" [(ngModel)]="customer.phone" name="phone" required class="w-full px-4 py-3 border border-gray-200 outline-none">
                   </div>
                 </div>
-                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-lg mt-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm" [disabled]="customer.phone === ''">Continue</button>
+                <button type="submit" class="checkout-cta" [disabled]="customer.phone === ''">Continue</button>
               </form>
             </div>
             <div *ngIf="stepCompleted[1] && activeStep !== 1" class="bg-gray-50 px-6 py-4 border-t border-gray-100">
@@ -64,39 +61,38 @@
             </div>
           </div>
           <!-- Step 2: Shipping Address -->
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+          <div class="checkout-step bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="checkout-step__head p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
               <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                <div class="checkout-step__badge">2</div>
                 <h2 class="text-xl font-semibold text-gray-900">Shipping Address</h2>
                 <span *ngIf="stepCompleted[2]" class="ml-3 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>
               </div>
-              <button *ngIf="stepCompleted[2] && activeStep !== 2" class="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200" (click)="editStep($event, 2)">Edit</button>
+              <button *ngIf="stepCompleted[2] && activeStep !== 2" type="button" class="checkout-step__edit" (click)="editStep($event, 2)">Edit</button>
             </div>
             <div *ngIf="activeStep === 2" class="p-6">
               <!-- Address List -->
               <div *ngIf="addresses.length > 0" class="space-y-4 mb-6">
-                <div *ngFor="let addr of addresses; let i = index" (click)="onSelectAddress(i)" class="border-2 rounded-xl p-4 cursor-pointer transition-colors duration-200" [ngClass]="{'border-blue-500 bg-blue-50': selectedAddressIndex === i, 'border-gray-200 hover:border-gray-300': selectedAddressIndex !== i}">
+                <div *ngFor="let addr of addresses; let i = index" (click)="onSelectAddress(i)" class="checkout-address p-4 cursor-pointer" [class.is-selected]="selectedAddressIndex === i">
                   <div class="flex items-start justify-between">
                     <div class="flex items-start space-x-3">
-                      <input type="radio" name="address" [checked]="selectedAddressIndex === i" class="mt-1 text-blue-600 focus:ring-blue-500" (click)="$event.stopPropagation()">
+                      <input type="radio" name="address" [checked]="selectedAddressIndex === i" class="mt-1" (click)="$event.stopPropagation()">
                       <div>
                         <div class="font-semibold text-gray-900">{{addr.address}}</div>
                         <div class="text-gray-600 text-sm">{{addr.city}}, {{addr.state}}, {{addr.postalCode}}, {{addr.country}}</div>
                       </div>
                     </div>
-                    <span *ngIf="selectedAddressIndex === i" class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">Selected</span>
+                    <span *ngIf="selectedAddressIndex === i" class="checkout-address__tag">Selected</span>
                   </div>
                 </div>
               </div>
-              <!-- Add New Address Button -->
-              <button type="button" (click)="openAddAddressModal()" class="w-full border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 rounded-xl p-4 text-gray-600 hover:text-blue-600 transition-all duration-200 flex items-center justify-center space-x-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              <button type="button" (click)="openAddAddressModal()" class="checkout-add-address">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
-                <span class="font-medium">Add New Address</span>
+                <span>Add New Address</span>
               </button>
-              <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-xl font-semibold mt-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm" (click)="continueToDelivery()" [disabled]="selectedAddressIndex === null">
+              <button type="button" class="checkout-cta" (click)="continueToDelivery()" [disabled]="selectedAddressIndex === null">
                 Continue to Delivery
               </button>
             </div>
@@ -105,18 +101,18 @@
             </div>
           </div>
           <!-- Step 3: Delivery Options -->
-          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center space-x-3">
-              <div class="w-8 h-8 bg-gray-300 text-gray-600 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+          <div class="checkout-step bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="checkout-step__head p-6 border-b border-gray-100 bg-gray-50 flex items-center space-x-3">
+              <div class="checkout-step__badge" [class.is-pending]="!stepCompleted[3] && activeStep !== 3">3</div>
               <h2 class="text-xl font-semibold text-gray-900">Delivery Options</h2>
               <span *ngIf="stepCompleted[3]" class="ml-3 text-green-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></span>
-              <button *ngIf="stepCompleted[3] && activeStep !== 3" class="ml-auto text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200" (click)="editStep($event, 3)">Edit</button>
+              <button *ngIf="stepCompleted[3] && activeStep !== 3" type="button" class="checkout-step__edit ml-auto" (click)="editStep($event, 3)">Edit</button>
             </div>
             <div *ngIf="activeStep === 3" class="p-6 bg-gray-50">
               <form #deliveryForm="ngForm" (ngSubmit)="goToPayment(deliveryForm)">
                 <div class="mb-6">
                   <label class="block text-sm font-semibold text-gray-700 mb-3">Select a delivery method*</label>
-                  <select class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [(ngModel)]="selectedDelivery" name="deliveryService" required (ngModelChange)="onDeliveryChange($event)">
+                  <select class="w-full px-4 py-3 border border-gray-200 outline-none" [(ngModel)]="selectedDelivery" name="deliveryService" required (ngModelChange)="onDeliveryChange($event)">
                     <option value="">Choose...</option>
                     <option *ngFor="let option of deliveryOptions" [ngValue]="option">
                       {{option.name}} - {{option.feePerKm}} MMK/km
@@ -126,7 +122,7 @@
                 <div *ngIf="deliveryFee > 0" class="text-green-600 font-semibold mt-2">
                   Delivery Fee: {{deliveryFee | number:'1.0-2'}} MMK
                 </div>
-                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold text-lg mt-6 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm" [disabled]="!deliveryForm.valid">Place order and continue to payment</button>
+                <button type="submit" class="checkout-cta" [disabled]="!deliveryForm.valid">Place order and continue to payment</button>
               </form>
             </div>
             <div *ngIf="stepCompleted[3] && activeStep !== 3" class="bg-gray-50 px-6 py-4 border-t border-gray-100">
@@ -137,10 +133,10 @@
       </div>
       <!-- Order Summary -->
       <div class="lg:col-span-1">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sticky top-24">
+        <div class="checkout-summary bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sticky top-24">
           <div class="flex items-center justify-between mb-8">
             <h2 class="text-xl font-bold text-gray-900">Order Summary</h2>
-            <a routerLink="/cart" class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors duration-200">Edit cart</a>
+            <a routerLink="/cart" class="checkout-summary__link">Edit cart</a>
           </div>
           <!-- Cart Items -->
           <div class="space-y-4 mb-8">
@@ -186,12 +182,12 @@
               </div>
               <div class="text-right min-w-[90px]">
                 <div *ngIf="productDetails.get(item.productId || item.id) as product">
-                  <div class="font-bold text-blue-700 text-lg">
+                  <div class="checkout-summary__price text-lg">
                     {{ getFinalDiscountedPrice(product) * item.quantity | number:'1.0-0' }} MMK
                   </div>
                 </div>
                 <div *ngIf="!productDetails.get(item.productId || item.id)">
-                  <div class="font-bold text-blue-700 text-lg">
+                  <div class="checkout-summary__price text-lg">
                     {{ item.price * item.quantity | number:'1.0-0' }} MMK
                   </div>
                 </div>
@@ -249,7 +245,7 @@
             <div class="border-t border-gray-100 pt-4">
               <div class="flex justify-between text-xl font-bold text-gray-900">
                 <span>Total</span>
-                <span class="text-blue-600">{{ (getSubtotal() - getTotalDiscount() + deliveryFee) | number:'1.0-0' }} MMK</span>
+                <span class="checkout-summary__total">{{ (getSubtotal() - getTotalDiscount() + deliveryFee) | number:'1.0-0' }} MMK</span>
               </div>
             </div>
           </div>
@@ -274,8 +270,8 @@
 </div>
 
 <!-- Add Address Modal -->
-<div *ngIf="showAddAddressModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+<div *ngIf="showAddAddressModal" class="checkout-modal fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+  <div class="checkout-modal__panel bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
     <div class="p-6 border-b border-gray-100 flex items-center justify-between">
       <h3 class="text-2xl font-bold text-gray-900">Add New Address</h3>
       <button type="button" class="p-2 rounded-xl hover:bg-gray-100 transition-colors duration-200" (click)="closeAddAddressModal()">
@@ -289,32 +285,32 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-3">Address <span class="text-red-500">*</span></label>
-            <input type="text" placeholder="Enter address" formControlName="address" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
+            <input type="text" placeholder="Enter address" formControlName="address" class="w-full px-4 py-3 border border-gray-200 outline-none" [class.border-red-300]="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">
             <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('address')?.invalid && addressForm.get('address')?.touched">Address is required.</div>
           </div>
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-3">City <span class="text-red-500">*</span></label>
-            <input type="text" placeholder="Enter city" formControlName="city" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
+            <input type="text" placeholder="Enter city" formControlName="city" class="w-full px-4 py-3 border border-gray-200 outline-none" [class.border-red-300]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
             <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">City is required.</div>
           </div>
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-3">State <span class="text-red-500">*</span></label>
-            <input type="text" placeholder="Enter state" formControlName="state" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
+            <input type="text" placeholder="Enter state" formControlName="state" class="w-full px-4 py-3 border border-gray-200 outline-none" [class.border-red-300]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
             <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">State is required.</div>
           </div>
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-3">Postal Code <span class="text-red-500">*</span></label>
-            <input type="text" placeholder="Enter postal code" formControlName="postalCode" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
+            <input type="text" placeholder="Enter postal code" formControlName="postalCode" class="w-full px-4 py-3 border border-gray-200 outline-none" [class.border-red-300]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
             <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">Postal code is required.</div>
           </div>
           <div class="md:col-span-2">
             <label class="block text-sm font-semibold text-gray-700 mb-3">Country <span class="text-red-500">*</span></label>
-            <input type="text" placeholder="Enter country" formControlName="country" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none" [class.border-red-300]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
+            <input type="text" placeholder="Enter country" formControlName="country" class="w-full px-4 py-3 border border-gray-200 outline-none" [class.border-red-300]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
             <div class="text-red-500 text-xs mt-2" *ngIf="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">Country is required.</div>
           </div>
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-3">Address Type</label>
-            <select formControlName="addressType" class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none">
+            <select formControlName="addressType" class="w-full px-4 py-3 border border-gray-200 outline-none">
               <option value="SHIPPING">Shipping</option>
               <option value="WORK">Work</option>
               <option value="OTHER">Other</option>
@@ -322,24 +318,24 @@
           </div>
         </div>
         <div class="flex items-center space-x-3 pt-4">
-          <button type="button" class="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition-colors duration-200" (click)="getCurrentLocation()">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          <button type="button" class="checkout-cta checkout-cta--ghost" (click)="getCurrentLocation()">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
             </svg>
             <span>Use My Location</span>
           </button>
         </div>
         <div class="my-6">
-          <div id="map" class="rounded-xl border-2 border-blue-100 shadow-sm w-full min-h-[180px] h-[200px] bg-gray-100"></div>
+          <div id="map" class="w-full min-h-[180px] h-[200px] bg-gray-100"></div>
         </div>
       </form>
     </div>
     <div class="p-6 border-t border-gray-100 flex space-x-3">
-      <button type="button" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors duration-200" (click)="closeAddAddressModal()">
+      <button type="button" class="checkout-cta checkout-cta--ghost flex-1" (click)="closeAddAddressModal()">
         Cancel
       </button>
-      <button type="button" class="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-colors duration-200" (click)="submitAddressForm()" [disabled]="!addressForm.valid">
+      <button type="button" class="checkout-cta flex-1" (click)="submitAddressForm()" [disabled]="!addressForm.valid">
         Save Address
       </button>
     </div>

@@ -1,4 +1,9 @@
-  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-neutral-200 shadow-sm transition-all duration-300">
+<header
+  class="lux-site-header sticky top-0 z-50 border-b border-fog/60 transition-all duration-lux"
+  [class.lux-site-header--campaign]="campaignOverlay"
+  [class.lux-site-header--overlay]="campaignOverlay && !isScrolled"
+  [class.lux-site-header--scrolled]="isScrolled"
+>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
@@ -7,10 +12,10 @@
           <img src="./assets/images/britium-logo.png" alt="Britium Logo" class="w-14 h-14 object-contain" />
         </a>
         <span class="flex flex-col leading-tight">
-          <span class="typewriter-britium text-lg md:text-xl font-semibold text-slate-800">
+          <span class="typewriter-britium text-lg md:text-xl font-serif text-ink tracking-wide">
             <span>{{ displayedBritium }}</span><span *ngIf="showCursorBritium" class="typewriter-cursor">|</span>
           </span>
-          <span class="typewriter-gallery text-sm md:text-base font-medium text-slate-800">
+          <span class="typewriter-gallery lux-overline text-stone">
             <span>{{ displayedGallery }}</span><span *ngIf="showCursorGallery" class="typewriter-cursor">|</span>
           </span>
         </span>
@@ -20,7 +25,7 @@
       <div class="hidden lg:flex items-center space-x-8 animate-slide-in-right">
         <!-- Categories Dropdown -->
         <div class="relative group">
-          <button class="text-neutral-700 hover:text-blue-500 transition-colors duration-300 font-medium flex items-center space-x-1 py-2" (click)="toggleDropdown($event, 'categories')">
+          <button class="text-neutral-700 hover:text-champagne-deep transition-colors duration-300 font-medium flex items-center space-x-1 py-2" (click)="toggleDropdown($event, 'categories')">
             <span>Categories</span>
             <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="openDropdown === 'categories'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -42,24 +47,24 @@
                         </ng-container>
                       </ng-template>
                       <ng-template #fallbackInitial>
-                        <span class="text-blue-500 font-bold text-lg">{{ category.name ? category.name[0] : '?' }}</span>
+                        <span class="text-champagne-deep font-bold text-lg">{{ category.name ? category.name[0] : '?' }}</span>
                       </ng-template>
                     </div>
                     <div>
-                      <p class="font-medium text-neutral-900 group-hover/item:text-blue-500">{{ category.name }}</p>
+                      <p class="font-medium text-neutral-900 group-hover/item:text-champagne-deep">{{ category.name }}</p>
                     </div>
                   </a>
                 </ng-container>
               </div>
             </div>
             <div class="border-t border-neutral-200 px-6 py-3 bg-white rounded-b-2xl">
-              <a [routerLink]="getAllCategoriesUrl()" class="block w-full text-center text-blue-600 font-semibold py-2 rounded-xl hover:bg-blue-50 transition">View All Categories</a>
+              <a [routerLink]="getAllCategoriesUrl()" class="block w-full text-center text-champagne-deep font-semibold py-2 rounded-xl hover:bg-champagne-soft transition">View All Categories</a>
             </div>
           </div>
         </div>
         <!-- Brands Dropdown -->
         <div class="relative group">
-          <button class="text-neutral-700 hover:text-blue-500 transition-colors duration-300 font-medium flex items-center space-x-1 py-2" (click)="toggleDropdown($event, 'brands')">
+          <button class="text-neutral-700 hover:text-champagne-deep transition-colors duration-300 font-medium flex items-center space-x-1 py-2" (click)="toggleDropdown($event, 'brands')">
             <span>Brands</span>
             <svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="openDropdown === 'brands'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -85,28 +90,28 @@
                           {{ brand.name[0].toUpperCase() }}
                         </span>
                       </div>
-                      <p class="text-xs text-neutral-600 group-hover/brand:text-blue-500 font-medium">{{ brand.name }}</p>
+                      <p class="text-xs text-neutral-600 group-hover/brand:text-champagne-deep font-medium">{{ brand.name }}</p>
                     </a>
                   </ng-container>
                 </div>
               </div>
             </div>
             <div class="border-t border-neutral-200 px-6 py-3 bg-white rounded-b-2xl">
-              <a [routerLink]="getAllBrandsUrl()" class="block w-full text-center text-blue-600 font-semibold py-2 rounded-xl hover:bg-blue-50 transition">View All Brands</a>
+              <a [routerLink]="getAllBrandsUrl()" class="block w-full text-center text-champagne-deep font-semibold py-2 rounded-xl hover:bg-champagne-soft transition">View All Brands</a>
             </div>
           </div>
         </div>
         <!-- Regular Navigation Links -->
         <a routerLink="/userproductlist" routerLinkActive="active-link" #rlaProducts="routerLinkActive"
-           class="text-neutral-700 hover:text-blue-500 transition-colors duration-300 font-medium relative group">
+           class="text-neutral-700 hover:text-champagne-deep transition-colors duration-300 font-medium relative group">
           Products
-          <span class="absolute -bottom-1 left-0 h-0.5 bg-blue-500 transition-all duration-300 w-0 group-hover:w-full"
+          <span class="absolute -bottom-1 left-0 h-0.5 bg-champagne transition-all duration-300 w-0 group-hover:w-full"
                 [ngClass]="{'w-full': rlaProducts.isActive}"></span>
         </a>
          <a routerLink="/about-us" routerLinkActive="active-link" #rlaAbout="routerLinkActive"
-           class="text-neutral-700 hover:text-blue-500 transition-colors duration-300 font-medium relative group">
+           class="text-neutral-700 hover:text-champagne-deep transition-colors duration-300 font-medium relative group">
           About Us
-          <span class="absolute -bottom-1 left-0 h-0.5 bg-blue-500 transition-all duration-300 w-0 group-hover:w-full"
+          <span class="absolute -bottom-1 left-0 h-0.5 bg-champagne transition-all duration-300 w-0 group-hover:w-full"
                 [ngClass]="{'w-full': rlaAbout.isActive}"></span>
         </a>
       </div>
@@ -119,10 +124,10 @@
             [(ngModel)]="searchQuery"
             (keyup.enter)="onSearch(); isMobileSearchVisible = false"
             placeholder="Search products, categories, brands..."
-            class="w-full py-3.5 pl-14 pr-20 rounded-full border-2 border-gray-100 bg-gray-50/80 backdrop-blur-sm focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-base placeholder-gray-400 hover:border-gray-200 hover:bg-white/90 search-input search-glass"
+            class="w-full py-3.5 pl-14 pr-20 border border-fog bg-cream focus:outline-none focus:border-champagne focus:ring-2 focus:ring-champagne-soft transition-all duration-lux text-base placeholder-stone search-input"
           />
           <!-- Search Icon -->
-          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-300 search-icon pointer-events-none">
+          <div class="absolute left-4 top-1/2 -translate-y-1/2 text-stone group-focus-within:text-champagne-deep transition-colors duration-lux search-icon pointer-events-none">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
@@ -132,7 +137,7 @@
           <button
             type="button"
             (click)="onSearch(); isMobileSearchVisible = false"
-            class="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full p-2.5 shadow-lg hover:shadow-xl transition-all duration-300 search-button"
+            class="absolute right-2 top-1/2 -translate-y-1/2 bg-ink hover:bg-champagne-deep text-ivory p-2.5 transition-all duration-lux search-button"
             aria-label="Search"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -151,10 +156,10 @@
               [(ngModel)]="searchQuery"
               (keyup.enter)="onSearch()"
               placeholder="Search products, categories, brands..."
-              class="w-80 py-3.5 pl-14 pr-20 rounded-full border-2 border-gray-100 bg-gray-50/80 backdrop-blur-sm focus:outline-none focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 transition-all duration-300 text-base placeholder-gray-400 hover:border-gray-200 hover:bg-white/90 search-input search-glass"
+              class="w-80 py-3.5 pl-14 pr-20 border border-fog bg-cream focus:outline-none focus:border-champagne focus:ring-2 focus:ring-champagne-soft transition-all duration-lux text-base placeholder-stone search-input"
             />
             <!-- Search Icon -->
-            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors duration-300 search-icon pointer-events-none">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-stone group-focus-within:text-champagne-deep transition-colors duration-lux search-icon pointer-events-none">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <circle cx="11" cy="11" r="8"></circle>
                 <path d="m21 21-4.35-4.35"></path>
@@ -164,7 +169,7 @@
             <button
               type="button"
               (click)="onSearch()"
-              class="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-full p-2.5 shadow-lg hover:shadow-xl transition-all duration-300 group-hover:shadow-blue-200 search-button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 bg-ink hover:bg-champagne-deep text-ivory p-2.5 transition-all duration-lux search-button"
               aria-label="Search"
             >
               <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -202,34 +207,34 @@
         
 
         <!-- Notification Icon Button by pmk july 14-->
-        <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-blue-500 transition-all duration-300 hover:scale-110 relative group" type="button" (click)="openNotificationSidebar()">
+        <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-champagne-deep transition-all duration-300 hover:scale-110 relative group" type="button" (click)="openNotificationSidebar()" aria-label="Open notifications">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 01-3.46 0" />
           </svg>
-          <span *ngIf="displayNotificationCount" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-blue-500 text-white rounded-full animate-bounce-gentle">{{ displayNotificationCount }}</span>
+          <span *ngIf="displayNotificationCount" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-champagne text-white rounded-full animate-bounce-gentle">{{ displayNotificationCount }}</span>
         </button>
         <!-- Notification Sidebar Component -->
 
         <!-- Wishlist Button -->
-        <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-blue-500 transition-all duration-300 hover:scale-110 relative group" routerLink="/wishlist">
+        <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-champagne-deep transition-all duration-300 hover:scale-110 relative group" routerLink="/wishlist" aria-label="Open wishlist">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
-          <span *ngIf="wishlistCount > 0" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-blue-500 text-white rounded-full animate-bounce-gentle">{{ wishlistCount }}</span>
+          <span *ngIf="wishlistCount > 0" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-champagne text-white rounded-full animate-bounce-gentle">{{ wishlistCount }}</span>
         </button>
         <!-- Cart Button (new UI, Tailwind only, dynamic data) -->
-        <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-blue-500 transition-all duration-300 hover:scale-110 relative group" type="button" (click)="openSidebar()">
+        <button class="p-2.5 rounded-xl hover:bg-neutral-100 hover:text-champagne-deep transition-all duration-300 hover:scale-110 relative group" type="button" (click)="openSidebar()" aria-label="Open shopping bag">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <path d="M16 10a4 4 0 0 1-8 0"></path>
           </svg>
-          <span *ngIf="cartItems.length > 0" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-blue-500 text-white rounded-full animate-bounce-gentle">{{ cartItems.length }}</span>
+          <span *ngIf="cartItems.length > 0" class="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-xs bg-champagne text-white rounded-full animate-bounce-gentle">{{ cartItems.length }}</span>
         </button>
 
         <div class="relative flex items-center space-x-2">  
-          <button (click)="toggleDropdown($event, 'account-dropdown')" class="flex items-center space-x-2 focus:outline-none" type="button">
+          <button (click)="toggleDropdown($event, 'account-dropdown')" class="flex items-center space-x-2 focus:outline-none" type="button" aria-label="Open account menu">
  
  
              <ng-container *ngIf="userProfileImage; else initialsAvatar">
@@ -326,7 +331,7 @@
            </div>
          </div>
         <!-- Mobile Menu Toggle -->
-        <button class="lg:hidden p-2.5 rounded-xl hover:bg-neutral-100 transition-colors duration-300" (click)="toggleMobileMenu()">
+        <button class="lg:hidden p-2.5 rounded-xl hover:bg-neutral-100 transition-colors duration-300" (click)="toggleMobileMenu()" aria-label="Open navigation menu" [attr.aria-expanded]="isMobileMenuOpen">
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -354,9 +359,9 @@
   <div class="absolute inset-0 bg-black/40" (click)="toggleMobileMenu()"></div>
   
   <!-- Menu Content -->
-  <nav class="absolute top-0 right-0 w-64 h-full bg-white shadow-xl transform transition-transform duration-300">
+  <nav class="lux-mobile-nav absolute top-0 right-0 w-64 h-full bg-white shadow-xl transform transition-transform duration-300" aria-label="Mobile navigation">
     <!-- Close Button -->
-    <button class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full" (click)="toggleMobileMenu()">
+    <button class="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full" (click)="toggleMobileMenu()" aria-label="Close navigation menu">
       <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M6 18L18 6M6 6l12 12"></path>
       </svg>
@@ -366,9 +371,9 @@
     <div class="pt-16 pb-8 px-4">
       <!-- Main Navigation -->
       <div class="space-y-4">
-        <a routerLink="/home" class="block py-2 hover:text-blue-600 transition-colors" (click)="toggleMobileMenu()">Home</a>
-        <a routerLink="/userproductlist" class="block py-2 hover:text-blue-600 transition-colors" (click)="toggleMobileMenu()">Products</a>
-        <a routerLink="/about-us" routerLinkActive="text-blue-600" class="block py-2 hover:text-blue-600 transition-colors" (click)="toggleMobileMenu()">About Us</a>
+        <a routerLink="/home" class="block py-2 hover:text-champagne-deep transition-colors" (click)="toggleMobileMenu()">Home</a>
+        <a routerLink="/userproductlist" class="block py-2 hover:text-champagne-deep transition-colors" (click)="toggleMobileMenu()">Products</a>
+        <a routerLink="/about-us" routerLinkActive="text-champagne-deep" class="block py-2 hover:text-champagne-deep transition-colors" (click)="toggleMobileMenu()">About Us</a>
       </div>
 
       <!-- Categories Section -->
@@ -384,7 +389,7 @@
             <a *ngFor="let category of topCategories" 
                [routerLink]="['/usercategorylist']" 
                [queryParams]="{category: category.categoryName}"
-               class="block py-1.5 text-sm hover:text-blue-600 transition-colors"
+               class="block py-1.5 text-sm hover:text-champagne-deep transition-colors"
                (click)="toggleMobileMenu()">
               <div class="flex items-center space-x-3">
                 <!-- Show icon if available -->
@@ -409,7 +414,7 @@
             <div class="text-sm text-gray-500 py-2">Loading categories...</div>
           </ng-template>
           <a routerLink="/usercategorylist" 
-             class="block py-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+             class="block py-1.5 text-sm text-champagne-deep hover:text-ink transition-colors"
              (click)="toggleMobileMenu()">
             View All Categories →
           </a>
@@ -429,7 +434,7 @@
             <a *ngFor="let brand of topBrands" 
                [routerLink]="['/userbrandlist']"
                [queryParams]="{brand: brand.brandName}"
-               class="block py-1.5 text-sm hover:text-blue-600 transition-colors"
+               class="block py-1.5 text-sm hover:text-champagne-deep transition-colors"
                (click)="toggleMobileMenu()">
               <div class="flex items-center space-x-3">
                 <!-- Show image if available and loaded -->
@@ -452,7 +457,7 @@
             <div class="text-sm text-gray-500 py-2">Loading brands...</div>
           </ng-template>
           <a routerLink="/userbrandlist" 
-             class="block py-1.5 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+             class="block py-1.5 text-sm text-champagne-deep hover:text-ink transition-colors"
              (click)="toggleMobileMenu()">
             View All Brands →
           </a>

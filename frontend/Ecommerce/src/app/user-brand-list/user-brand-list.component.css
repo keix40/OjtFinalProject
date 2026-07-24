@@ -1,43 +1,11 @@
-/* Brand card hover effects */
-.group:hover .absolute {
-  opacity: 1 !important;
-}
-
-/* Ensure overlay is visible on hover */
-.group:hover .bg-gradient-to-t {
-  opacity: 1 !important;
-}
-
-/* Smooth transitions for all hover effects */
-.group {
-  transition: all 0.3s ease;
-}
-
-.group:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Image hover effect */
-.group img {
-  transition: transform 0.3s ease;
-}
-
-.group:hover img {
-  transform: scale(1.1);
-}
-
-/* Overlay text styling */
-.group .text-white {
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-/* Ensure proper z-index stacking */
-.group .relative {
-  position: relative;
-  z-index: 1;
-}
-
-.group .absolute {
-  z-index: 10;
-}
+:host { display: block; }
+.customer-maison-page { background: var(--lux-ivory); }
+.maison-hero { max-width: 58rem; margin: 0 auto; padding: 6rem 1rem 4rem; }
+.maison-hero h1 { font-size: clamp(3.5rem, 8vw, 6.5rem); line-height: .95; letter-spacing: -.03em; }
+.maison-grid { display: grid !important; grid-template-columns: repeat(3, minmax(0,1fr)) !important; gap: 1px !important; background: var(--lux-fog); border: var(--lux-border-hair); }
+.maison-tile { min-height: 23rem; display: flex; flex-direction: column; justify-content: space-between; border: 0 !important; background: var(--lux-cream) !important; }
+.maison-tile__media { flex: 1; aspect-ratio: auto !important; background: var(--lux-porcelain) !important; }
+.maison-tile__media img { object-fit: contain !important; filter: grayscale(1); opacity: .75; transition: filter var(--lux-dur-slow) var(--lux-ease), opacity var(--lux-dur-slow) var(--lux-ease), transform var(--lux-dur-slow) var(--lux-ease); }
+.maison-tile:hover .maison-tile__media img { filter: grayscale(0); opacity: 1; transform: scale(1.025); }
+.maison-tile__body { display: block; border-top: var(--lux-border-hair); }
+@media (max-width: 850px) { .maison-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; } .maison-tile { min-height: 17rem; } }

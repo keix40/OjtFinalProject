@@ -1,11 +1,29 @@
-/* Custom styles for wishlist component */
-/* All styling is now handled by Tailwind CSS classes in the template */
-
-/* Optional: Add any custom animations or specific styles here if needed */
-.wishlist-item-hover {
-  transition: all 0.2s ease-in-out;
-}
-
-.wishlist-item-hover:hover {
-  transform: translateY(-2px);
-} 
+:host { display: block; }
+.customer-wishlist.wishlist-archive,
+.wishlist-archive { min-height: 100vh; padding: 5rem 0 7rem; background: var(--lux-ivory); color: var(--lux-ink); }
+.wishlist-shell { width: min(100% - 2rem, 1280px); margin-inline: auto; }
+.wishlist-shell > header { display: grid; grid-template-columns: 1.3fr .7fr; align-items: end; gap: 3rem; padding-bottom: 3rem; border-bottom: 1px solid var(--lux-ink); }
+.wishlist-shell > header h1 { margin: .5rem 0 0; font: 500 clamp(3.5rem,8vw,6.5rem)/.9 var(--lux-font-serif); letter-spacing: -.04em; }
+.wishlist-shell > header > p { color: var(--lux-graphite); line-height: 1.7; }
+.wishlist-meta { display: flex; justify-content: space-between; padding: 1.25rem 0 2.5rem; color: var(--lux-stone); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+.wishlist-meta a { color: var(--lux-ink); text-decoration: none; }
+.wishlist-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4rem 1.5rem; }
+.wishlist-grid article { cursor: pointer; }
+.wishlist-media { position: relative; aspect-ratio: 3/4; overflow: hidden; background: var(--lux-fog); }
+.wishlist-media img { width: 100%; height: 100%; object-fit: cover; transition: transform var(--lux-dur-slow) var(--lux-ease); }
+.wishlist-grid article:hover img { transform: scale(1.025); }
+.wishlist-media > span { position: absolute; top: .8rem; left: .8rem; padding: .4rem .55rem; background: var(--lux-ink); color: var(--lux-ivory); font-size: .6rem; letter-spacing: .1em; text-transform: uppercase; }
+.wishlist-media > button { position: absolute; top: .8rem; right: .8rem; width: 2.5rem; height: 2.5rem; border: 0; background: rgba(251,249,244,.9); color: var(--lux-ink); font-size: 1.25rem; }
+.wishlist-copy { padding-top: 1rem; }
+.wishlist-copy h2 { margin: .3rem 0 .65rem; font: 600 1.4rem/1.15 var(--lux-font-serif); }
+.wishlist-copy div { display: flex; gap: .7rem; align-items: baseline; }
+.wishlist-copy strong { font-size: .8rem; }
+.wishlist-copy del { color: var(--lux-stone); font-size: .7rem; }
+.wishlist-loading { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; padding: 3rem 0; }
+.wishlist-loading span { display: block; aspect-ratio: 3/4; background: linear-gradient(100deg,var(--lux-fog) 35%,var(--lux-cream) 50%,var(--lux-fog) 65%); background-size: 200% 100%; animation: wishlist-shimmer 1.5s infinite; }
+@keyframes wishlist-shimmer { to { background-position-x: -200%; } }
+.wishlist-empty { max-width: 45rem; margin: 8rem auto; text-align: center; }
+.wishlist-empty h2 { margin: .5rem 0 1rem; font: 500 clamp(3rem,7vw,5rem)/.95 var(--lux-font-serif); }
+.wishlist-empty > p:not(.lux-overline) { color: var(--lux-graphite); }
+.wishlist-empty a { display: inline-block; margin-top: 1.5rem; padding: 1rem 1.5rem; background: var(--lux-ink); color: var(--lux-ivory); text-decoration: none; font-size: .7rem; letter-spacing: .13em; text-transform: uppercase; }
+@media (max-width: 800px) { .wishlist-shell > header { grid-template-columns: 1fr; gap: 1.5rem; } .wishlist-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 2.5rem .8rem; } }

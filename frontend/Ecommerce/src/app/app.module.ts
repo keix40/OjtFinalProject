@@ -99,6 +99,7 @@ import { ConfirmModelComponent } from './confirm-model/confirm-model.component';
 import { ReturnDetailComponent } from './return-detail/return-detail.component';
 import { RevenueTargetAdminComponent } from './revenue-target-admin/revenue-target-admin.component';
 import { UserProductListComponent } from './user-product-list/user-product-list';
+import { LuxUiModule } from './shared/ui/lux-ui.module';
 
 
 @NgModule({
@@ -207,7 +208,8 @@ import { UserProductListComponent } from './user-product-list/user-product-list'
       positionClass: 'toast-top-right',
       preventDuplicates: true,
     }),
-    LucideAngularModule.pick({ Tag, Box, Gift, Heart, ShoppingBag, Star })
+    LucideAngularModule.pick({ Tag, Box, Gift, Heart, ShoppingBag, Star }),
+    LuxUiModule,
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true },

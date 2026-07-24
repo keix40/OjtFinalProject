@@ -21,11 +21,12 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { EventService } from '../services/event.service';
 import { EventDTO } from '../event-dto';
 import { PriceFormatService } from '../services/price-format.service';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FooterComponent, RouterModule, FormsModule],
+  imports: [CommonModule, HeaderComponent, FooterComponent, RouterModule, FormsModule, LuxUiModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
@@ -38,6 +39,12 @@ export class HomeComponent implements OnInit {
   reviewsError = '';
   loading = false;
   error = '';
+  brandsLoading = false;
+  brandsError = '';
+  trendingLoading = false;
+  trendingError = '';
+  featuredLoading = false;
+  featuredError = '';
   featuredProducts: any[] = [];
   trendingProducts: any[] = [];
   firstTimeBuyerNotification: any = null;
@@ -112,6 +119,7 @@ export class HomeComponent implements OnInit {
 
   loadCategory(){
     this.loading = true;
+    this.error = '';
     this.categoryService.getAllCategory().subscribe({
       next: (data) => {
         this.categories = data;
@@ -125,18 +133,23 @@ export class HomeComponent implements OnInit {
   }
 
   loadBrands() {
+    this.brandsLoading = true;
+    this.brandsError = '';
     this.brandService.getAllBrand().subscribe({
       next: (data) => {
         this.brands = data;
+        this.brandsLoading = false;
       },
-      error: (err) => {
-        // Optionally handle error
+      error: () => {
+        this.brandsError = 'We could not load the featured houses.';
+        this.brandsLoading = false;
       }
     });
   }
 
   loadReviews() {
     this.reviewsLoading = true;
+    this.reviewsError = '';
     this.reviewService.getTop5StarReviews().subscribe({
       next: (data) => {
         this.reviews = data;
@@ -150,12 +163,15 @@ export class HomeComponent implements OnInit {
   }
 
   loadFeaturedProducts() {
+    this.featuredLoading = true;
+    this.featuredError = '';
     // TODO: Get actual user ID from auth service
     const userId = undefined; // For now, use undefined to get latest products
     this.productService.getFeaturedProducts(userId).subscribe({
       next: (products) => {
         // Limit to 4 products to match trending section layout
         this.featuredProducts = products.slice(0, 4);
+        this.featuredLoading = false;
         console.log('Featured products loaded:', this.featuredProducts);
         
         // Debug discount information
@@ -187,16 +203,21 @@ export class HomeComponent implements OnInit {
         }
       },
       error: (error) => {
+        this.featuredError = 'We could not load the featured collection.';
+        this.featuredLoading = false;
         console.error('Error loading featured products:', error);
       }
     });
   }
 
   loadTrendingProducts() {
+    this.trendingLoading = true;
+    this.trendingError = '';
     this.productService.getTrendingProducts().subscribe({
       next: (products) => {
-        // Limit to 5 products to ensure they fit in one row
-        this.trendingProducts = products.slice(0, 5);
+        // Four cards preserve the intended desktop editorial rhythm.
+        this.trendingProducts = products.slice(0, 4);
+        this.trendingLoading = false;
         console.log('Trending products loaded:', this.trendingProducts);
         // Log each product's event and discount status
         this.trendingProducts.forEach((product, index) => {
@@ -227,6 +248,8 @@ export class HomeComponent implements OnInit {
         }
       },
       error: (error) => {
+        this.trendingError = 'We could not load the trending collection.';
+        this.trendingLoading = false;
         console.error('Error loading trending products:', error);
       }
     });
@@ -393,6 +416,12 @@ export class HomeComponent implements OnInit {
       return 'http://localhost:8080' + product.productImages[0].imageUrl;
     }
     return 'assets/images/default-brand.svg';
+  }
+
+  getProductBrand(product: any): string {
+    return product?.brandName
+      || product?.categoryBrandArray?.find((pair: any) => pair?.brandName)?.brandName
+      || '';
   }
 
   getStarRating(rating: number): string {

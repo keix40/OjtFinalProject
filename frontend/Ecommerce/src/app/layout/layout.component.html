@@ -1,13 +1,12 @@
-<div class="flex flex-col min-h-screen">
-  <app-navbar class="shadow-sm"></app-navbar>
-  <div class="relative flex-1">
-    <app-sidebar class="fixed top-0 left-0 z-40 h-full"></app-sidebar>
-    <div class="flex-1 p-4 transition-all duration-300 ml-20">
+<div class="flex flex-col min-h-screen admin-shell bg-ivory">
+  <app-navbar class="shadow-lux-sm"></app-navbar>
+  <div class="relative flex-1 admin-shell__body">
+    <app-sidebar class="admin-shell__rail"></app-sidebar>
+    <div class="admin-shell__content flex-1 transition-all duration-lux">
       <div class="content-wrapper">
         <router-outlet></router-outlet>
       </div>
     </div>
   </div>
-  <!-- Admin Inbox Modal Component -->
   <app-admin-inbox></app-admin-inbox>
 </div>

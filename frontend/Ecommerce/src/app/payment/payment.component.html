@@ -1,35 +1,30 @@
 <app-header></app-header>
 <!-- Breadcrumb -->
-<div class="bg-white border-b border-gray-100">
+<div class="customer-breadcrumb">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <nav class="flex items-center space-x-2 text-sm" aria-label="Breadcrumb">
-      <a routerLink="/home" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Home</a>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-      <a routerLink="/cart" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Cart</a>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-      <a routerLink="/checkout" class="text-gray-500 hover:text-blue-600 transition-colors duration-200">Checkout</a>
-      <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-      </svg>
-      <span class="text-gray-900 font-medium" aria-current="page">Payment</span>
+      <a routerLink="/home">Home</a>
+      <span aria-hidden="true">/</span>
+      <a routerLink="/cart">Bag</a>
+      <span aria-hidden="true">/</span>
+      <a routerLink="/checkout">Checkout</a>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page">Payment</span>
     </nav>
   </div>
 </div>
 <!-- Main Content -->
-<div class="bg-white min-h-screen">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-    <div class="mb-10">
-      <h1 class="text-4xl lg:text-5xl font-bold text-gray-900 mb-3">Payment</h1>
-      <p class="text-gray-600 text-lg">Complete your secure payment to finish your order</p>
+<div class="customer-checkout payment-room min-h-screen">
+  <div class="payment-shell max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="payment-intro mb-10">
+      <p class="lux-overline">Final arrangement</p>
+      <h1>Secure payment</h1>
+      <p>Review your selection and choose how you would like to complete the order.</p>
     </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+    <div class="payment-grid grid grid-cols-1 lg:grid-cols-3 gap-10">
       <!-- Payment Form -->
       <div class="lg:col-span-2">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div class="payment-panel bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
           <h2 class="text-2xl font-bold text-gray-900 mb-8">Payment Information</h2>
 
           <!-- Payment Method Toggle -->
@@ -67,15 +62,14 @@
                   [value]="card.id"
                   [(ngModel)]="selectedSavedCardId"
                   [checked]="selectedSavedCardId === card.id.toString()"
-                  class="form-radio h-4 w-4 text-blue-600"
+                  class="form-radio h-4 w-4"
                   [disabled]="isSubmitting"
                   style="margin-right: 0.75rem;"
                 />
-                <div class="flex items-center bg-gray-50 border rounded-lg px-4 py-2 shadow-sm w-full max-w-xs transition-all duration-150"
-                     [class.ring-2]="selectedSavedCardId === card.id.toString()"
-                     [class.ring-blue-500]="selectedSavedCardId === card.id.toString()">
-                  <div *ngIf="card.cardBrand === 'VISA'" class="w-10 h-6 bg-blue-600 rounded text-white flex items-center justify-center font-bold mr-3">VISA</div>
-                  <div *ngIf="card.cardBrand === 'MASTERCARD'" class="w-10 h-6 bg-red-600 rounded text-white flex items-center justify-center font-bold mr-3">MC</div>
+                <div class="payment-card-option"
+                     [class.is-selected]="selectedSavedCardId === card.id.toString()">
+                  <div *ngIf="card.cardBrand === 'VISA'" class="payment-brand-chip">VISA</div>
+                  <div *ngIf="card.cardBrand === 'MASTERCARD'" class="payment-brand-chip payment-brand-chip--mc">MC</div>
                   <div class="flex-1">
                     <span class="block font-mono text-lg tracking-widest">{{ maskCardNumber(card.cardNumber) }}</span>
                     <span class="block text-xs text-gray-500">Expires {{ card.expiryDate }}</span>
@@ -91,15 +85,15 @@
             <div class="mb-6">
               <label class="block text-sm font-semibold text-gray-700 mb-3">Select Card Brand <span class="text-red-500">*</span></label>
               <div class="flex space-x-4">
-                <label class="flex items-center cursor-pointer border rounded-lg px-4 py-2 transition-all duration-200"
-                  [class.border-blue-600]="cardForm.get('cardBrand')?.value === 'VISA'">
-                  <input type="radio" formControlName="cardBrand" value="VISA" class="form-radio text-blue-600" />
-                  <span class="ml-2 font-semibold text-blue-700">VISA</span>
+                <label class="payment-brand-pick cursor-pointer"
+                  [class.is-selected]="cardForm.get('cardBrand')?.value === 'VISA'">
+                  <input type="radio" formControlName="cardBrand" value="VISA" class="form-radio" />
+                  <span class="ml-2 font-semibold">VISA</span>
                 </label>
-                <label class="flex items-center cursor-pointer border rounded-lg px-4 py-2 transition-all duration-200"
-                  [class.border-red-600]="cardForm.get('cardBrand')?.value === 'MASTERCARD'">
-                  <input type="radio" formControlName="cardBrand" value="MASTERCARD" class="form-radio text-red-600" />
-                  <span class="ml-2 font-semibold text-red-700">MASTERCARD</span>
+                <label class="payment-brand-pick cursor-pointer"
+                  [class.is-selected]="cardForm.get('cardBrand')?.value === 'MASTERCARD'">
+                  <input type="radio" formControlName="cardBrand" value="MASTERCARD" class="form-radio" />
+                  <span class="ml-2 font-semibold">MASTERCARD</span>
                 </label>
               </div>
               <div class="text-red-500 text-xs mt-2" *ngIf="cardForm.get('cardBrand')?.invalid && cardForm.get('cardBrand')?.touched">
@@ -121,26 +115,26 @@
                 [class.border-red-300]="
                   cardForm.get('cardNumber')?.invalid && cardForm.get('cardNumber')?.touched
                 "
-                class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg font-mono bg-white"
+                class="w-full px-4 py-4 border border-gray-200 outline-none text-lg font-mono bg-white"
                 [disabled]="isSubmitting"
                 id="cardNumber"
                 aria-describedby="cardNumberError"
-              />              
+              />
                 <div class="absolute right-4 top-1/2 transform -translate-y-1/2 flex space-x-2">
                   <div
-                    class="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold"
+                    class="payment-brand-chip"
                     *ngIf="detectCardBrand(cardForm.get('cardNumber')?.value) === 'VISA'"
                   >
                     VISA
                   </div>
                   <div
-                    class="w-8 h-5 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold"
+                    class="payment-brand-chip payment-brand-chip--mc"
                     *ngIf="detectCardBrand(cardForm.get('cardNumber')?.value) === 'MASTERCARD'"
                   >
                     MC
                   </div>
                   <div
-                    class="w-8 h-5 bg-green-600 rounded text-white text-xs flex items-center justify-center font-bold"
+                    class="payment-brand-chip payment-brand-chip--amex"
                     *ngIf="detectCardBrand(cardForm.get('cardNumber')?.value) === 'AMEX'"
                   >
                     AMEX
@@ -170,7 +164,7 @@
                 [class.border-red-300]="
                   cardForm.get('cardholderName')?.invalid && cardForm.get('cardholderName')?.touched
                 "
-                class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg bg-white"
+                class="w-full px-4 py-4 border border-gray-200 outline-none text-lg bg-white"
                 [disabled]="isSubmitting"
                 id="cardholderName"
                 aria-describedby="cardholderNameError"
@@ -201,7 +195,7 @@
                   [class.border-red-300]="
                     cardForm.get('expiryDate')?.invalid && cardForm.get('expiryDate')?.touched
                   "
-                  class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg font-mono bg-white"
+                  class="w-full px-4 py-4 border border-gray-200 outline-none text-lg font-mono bg-white"
                   [disabled]="isSubmitting"
                   id="expiryDate"
                   aria-describedby="expiryDateError"
@@ -229,7 +223,7 @@
                   [class.border-red-300]="
                     cardForm.get('cvv')?.invalid && cardForm.get('cvv')?.touched
                   "
-                  class="w-full px-4 py-4 border border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all duration-200 outline-none text-lg font-mono bg-white"
+                  class="w-full px-4 py-4 border border-gray-200 outline-none text-lg font-mono bg-white"
                   [disabled]="isSubmitting"
                   id="cvv"
                   aria-describedby="cvvError"
@@ -245,11 +239,10 @@
             </div>
           </form>
 
-          <!-- Security Notice -->
-          <div class="mt-8 p-6 bg-blue-50 rounded-xl border border-blue-100">
+          <div class="payment-secure">
             <div class="flex items-center space-x-4">
               <svg
-                class="w-6 h-6 text-blue-600"
+                class="w-6 h-6"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -258,23 +251,22 @@
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  stroke-width="2"
+                  stroke-width="1.5"
                   d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                 ></path>
               </svg>
               <div>
-                <p class="text-sm font-semibold text-blue-900">Your payment is secure</p>
-                <p class="text-xs text-blue-700">
+                <p class="text-sm">Your payment is secure</p>
+                <p>
                   We use industry-standard encryption to protect your information
                 </p>
               </div>
             </div>
           </div>
 
-          <!-- Submit Button: Always visible -->
           <button
             type="button"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] shadow-sm flex items-center justify-center space-x-2"
+            class="payment-cta"
             [disabled]="isSubmitting || (useNewCard ? cardForm.invalid : !selectedSavedCardId)"
             (click)="submitOrder()"
           >
@@ -302,7 +294,7 @@
 
       <!-- Order Summary -->
       <div class="lg:col-span-1">
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sticky top-24">
+        <div class="payment-summary bg-white rounded-2xl shadow-sm border border-gray-100 p-8 sticky top-24">
           <h2 class="text-xl font-bold text-gray-900 mb-8">Order Summary</h2>
           <!-- Customer Info -->
           <div class="space-y-4 mb-6 pb-6 border-b border-gray-100">
@@ -361,7 +353,7 @@
                       {{ formatPriceOnly(product.price) }} MMK
                     </span>
                     <!-- Final price -->
-                    <span class="font-bold text-blue-700 text-base">
+                    <span class="payment-summary__price text-base">
                       {{ formatPriceOnly(getFinalDiscountedPrice(product)) }} MMK
                     </span>
                   </div>
@@ -430,7 +422,7 @@
             <div class="border-t border-gray-100 pt-4">
               <div class="flex justify-between text-xl font-bold text-gray-900">
                 <span>Total</span>
-                <span class="text-blue-600">{{ formatPriceOnly(getTotal()) }} MMK</span>
+                <span class="payment-summary__total">{{ formatPriceOnly(getTotal()) }} MMK</span>
               </div>
             </div>
           </div>

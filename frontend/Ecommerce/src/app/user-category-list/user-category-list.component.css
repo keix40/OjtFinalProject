@@ -1,56 +1,25 @@
-/* Category card hover effects */
-.group:hover .absolute {
-  opacity: 1 !important;
+:host { display: block; }
+
+.customer-maison-page { background: var(--lux-ivory); }
+.maison-hero { max-width: 55rem; margin: 0 auto; padding: 6rem 1rem 4rem; }
+.maison-hero h1 { font-size: clamp(3.5rem, 8vw, 6.5rem); line-height: .95; letter-spacing: -.03em; }
+
+.maison-grid {
+  display: grid !important;
+  grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+  gap: 2rem !important;
+  align-items: stretch;
 }
+.maison-tile { grid-column: span 4; border: 0 !important; background: transparent !important; }
+.maison-tile:first-child { grid-column: span 8; grid-row: span 2; }
+.maison-tile:nth-child(2), .maison-tile:nth-child(3) { grid-column: span 4; }
+.maison-tile__media { display: block; aspect-ratio: 3 / 4 !important; }
+.maison-tile:first-child .maison-tile__media { aspect-ratio: 4 / 3 !important; height: calc(100% - 5rem); }
+.maison-tile__body { display: block; padding: 1.1rem 0 0 !important; border-top: 1px solid transparent; }
+.maison-tile:hover .maison-tile__body { border-color: var(--lux-champagne); }
 
-/* Ensure overlay is visible on hover */
-.group:hover .bg-gradient-to-t {
-  opacity: 1 !important;
+@media (max-width: 850px) {
+  .maison-grid { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 1.5rem .8rem !important; }
+  .maison-tile, .maison-tile:first-child, .maison-tile:nth-child(2), .maison-tile:nth-child(3) { grid-column: span 1; grid-row: auto; }
+  .maison-tile:first-child .maison-tile__media { aspect-ratio: 3 / 4 !important; height: auto; }
 }
-
-/* Smooth transitions for all hover effects */
-.group {
-  transition: all 0.3s ease;
-}
-
-.group:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Image hover effect */
-.group img {
-  transition: transform 0.3s ease;
-}
-
-.group:hover img {
-  transform: scale(1.1);
-}
-
-/* Overlay text styling */
-.group .text-white {
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-/* Ensure proper z-index stacking */
-.group .relative {
-  position: relative;
-  z-index: 1;
-}
-
-.group .absolute {
-  z-index: 10;
-}
-
-/* Category name overlay styling */
-.group .bg-gradient-to-t {
-  transition: opacity 0.3s ease;
-}
-
-/* Icon badge styling */
-.group .bg-gray-800\/80 {
-  backdrop-filter: blur(4px);
-}
-
-
-

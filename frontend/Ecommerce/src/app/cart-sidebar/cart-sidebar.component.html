@@ -1,151 +1,44 @@
 <ng-container *ngIf="showCartSidebar">
-  <!-- Cart Sidebar Backdrop -->
-  <div class="fixed-top w-100 h-100 cart-sidebar-backdrop" 
-       style="background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 1050;" 
-       (click)="onClose()"></div>
-  <!-- Cart Sidebar -->
-  <div class="cart-sidebar position-fixed top-0 end-0 h-100 shadow-lg bg-white d-flex flex-column" 
-       style="width: 100%; max-width: 28rem; z-index: 1051; transform: translateX(0); transition: transform 0.3s ease-in-out;">
-    <!-- Cart Header -->
-    <div class="d-flex justify-content-between align-items-center p-4 border-bottom" 
-         style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);">
-      <div class="d-flex align-items-center">
-        <div class="rounded-3 d-flex align-items-center justify-content-center me-3" 
-             style="width: 2.5rem; height: 2.5rem; background: rgba(14, 165, 233, 0.1);">
-          <i class="bi bi-bag text-primary fs-5"></i>
-        </div>
+  <div class="cart-drawer-backdrop" (click)="onClose()"></div>
+  <aside class="cart-drawer" aria-label="Shopping bag">
+    <header>
+      <div><p class="lux-overline">Private selection</p><h2>Your bag</h2><span>{{ cartItems.length }} pieces</span></div>
+      <button type="button" (click)="onClose()" aria-label="Close bag">×</button>
+    </header>
+
+    <div class="cart-drawer__lines" *ngIf="cartItems.length; else drawerEmpty">
+      <article *ngFor="let item of cartItems">
+        <img [src]="item.image" [alt]="item.title" (error)="imageService.handleImageError($event, 'product')">
         <div>
-          <h4 class="fw-bold mb-0 text-dark">Your Cart</h4>
-          <small class="text-muted">{{ cartItems.length }} items in your cart</small>
-        </div>
-      </div>
-      <button type="button" 
-              class="btn-close rounded-3 p-2" 
-              style="background: rgba(0, 0, 0, 0.05); transition: all 0.2s ease;" 
-              aria-label="Close" 
-              (click)="onClose()"
-              onmouseover="this.style.background='rgba(0, 0, 0, 0.1)'"
-              onmouseout="this.style.background='rgba(0, 0, 0, 0.05)'">
-      </button>
-    </div>
-    <!-- Cart Items -->
-    <div class="flex-1 overflow-y-auto px-4 py-4 space-y-4 bg-neutral-50">
-      <div *ngFor="let item of cartItems" class="flex items-start bg-white rounded-xl border border-neutral-200 shadow-sm p-4 gap-4">
-        <img [src]="item.image" class="w-20 h-20 rounded-lg object-cover border border-neutral-100 flex-shrink-0" [alt]="item.title" (error)="imageService.handleImageError($event, 'product')">
-        <div class="flex-1 min-w-0 flex flex-col justify-between">
           <ng-container *ngIf="productDetails.get(item.productId || item.id) as product">
-            <!-- Product Name: full width, bold, top -->
-            <div class="font-bold text-neutral-900 text-base leading-tight mb-1 w-full">{{ product.productName || item.title }}</div>
-            <!-- Discount badges: right-aligned, under product name -->
-            <div class="flex justify-end gap-2 mb-1 w-full">
-              <span *ngIf="getProductDiscount(product.id)?.eventName"
-                    class="px-1.5 py-0 rounded bg-blue-50 text-blue-700 text-[10px] font-semibold border border-blue-100 rounded-full">
-                {{ getProductDiscount(product.id)?.eventName }}
-                <ng-container *ngIf="getDiscountDisplayText(getProductDiscount(product.id))">
-                  {{ getDiscountDisplayText(getProductDiscount(product.id)) }}
-                </ng-container>
-              </span>
-              <span *ngIf="getVipDiscountDisplay(product)"
-                    class="px-1.5 py-0 rounded bg-yellow-50 border border-yellow-200 text-yellow-800 text-[10px] font-bold rounded-full">
-                {{ getVipDiscountDisplay(product) }}
-              </span>
+            <p class="lux-overline" *ngIf="product.categoryBrandArray?.[0]?.brandName">{{ product.categoryBrandArray[0].brandName }}</p>
+            <h3>{{ product.productName || item.title }}</h3>
+            <div class="cart-drawer__attributes" *ngIf="item.variantAttributes?.length">
+              <span *ngFor="let attr of item.variantAttributes">{{ attr }} · </span>
             </div>
-            <!-- Brand: left-aligned, under product name -->
-            <div *ngIf="product.categoryBrandArray && product.categoryBrandArray[0]?.brandName" class="text-xs text-gray-500 mb-0.5 w-full">
-              <span class="font-medium text-gray-700">Brand:</span> <span class="font-semibold text-gray-800">{{ product.categoryBrandArray[0].brandName }}</span>
-            </div>
-            <!-- Category: left-aligned, under brand -->
-            <div *ngIf="product.categoryBrandArray && product.categoryBrandArray[0]?.cateName" class="text-xs text-gray-500 mb-1 w-full">
-              <span class="font-medium text-gray-700">Category:</span> <span class="font-semibold text-gray-800">{{ product.categoryBrandArray[0].cateName }}</span>
-            </div>
-            <!-- Price row: original price, discount badge, VIP badge, final price -->
-            <div class="flex items-center gap-1 mb-1">
-              <!-- Original price -->
-              <span *ngIf="!isFirstTimeBuyerDiscount && getProductDiscount(product.id)"
-                    class="text-xs text-gray-400 line-through">
-                {{ formatPriceOnly(product.price) }} <span class="text-xs font-normal">MMK</span>
-              </span>
-              <!-- Final price -->
-              <span class="font-bold text-blue-700 text-base ms-1">
-                {{ formatPriceOnly(getDiscountedPrice(product)) }} <span class="text-sm font-normal">MMK</span>
-              </span>
-            </div>
-            <div *ngIf="item.variantAttributes && item.variantAttributes.length" class="text-sm text-neutral-500 mb-2">
-              <ng-container *ngFor="let attr of item.variantAttributes">
-                <ng-container *ngIf="attr.toLowerCase().startsWith('color:') || attr.toLowerCase().startsWith('colour:'); else regularAttr">
-                  <span style="display:inline-flex;align-items:center;margin-right:8px;">
-                    <span style="font-weight:500;margin-right:4px;">{{ attr.split(':')[0].charAt(0).toUpperCase() + attr.split(':')[0].slice(1) }}:</span>
-                    <span style="display:inline-block;width:16px;height:16px;border-radius:50%;border:1px solid #ccc;vertical-align:middle;"
-                          [ngStyle]="{'background-color': attr.split(':')[1].trim() || '#ccc'}"></span>
-                  </span>
-                </ng-container>
-                <ng-template #regularAttr>
-                  <span style="margin-right:8px;">{{ attr }}</span>
-                </ng-template>
-              </ng-container>
-            </div>
+            <del *ngIf="getProductDiscount(product.id)">{{ formatPriceOnly(product.price) }} MMK</del>
+            <strong>{{ formatPriceOnly(getDiscountedPrice(product)) }} MMK</strong>
           </ng-container>
-          <div class="flex items-center mt-2">
-            <button class="w-8 h-8 flex items-center justify-center rounded border border-neutral-300 text-lg font-bold text-neutral-600 hover:bg-neutral-100 transition" (click)="decrementQty(item)">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12" stroke-width="2" stroke-linecap="round"/></svg>
-            </button>
-            <span class="mx-3 text-base font-medium">{{ item.quantity }}</span>
-            <button class="w-8 h-8 flex items-center justify-center rounded border border-neutral-300 text-lg font-bold text-neutral-600 hover:bg-neutral-100 transition"
-                    (click)="incrementQty(item)"
-                    [disabled]="item.quantity >= getMaxQuantity(item)"
-                    [attr.title]="'Max: ' + getMaxQuantity(item)">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19" stroke-width="2" stroke-linecap="round"/><line x1="5" y1="12" x2="19" y2="12" stroke-width="2" stroke-linecap="round"/></svg>
-            </button>
-            <button class="ml-auto text-red-500 hover:text-red-700 transition-colors text-xl" title="Remove" (click)="removeItem(item)">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3m-7 0h8" />
-              </svg>
-            </button>
+          <div class="cart-drawer__actions">
+            <div><button type="button" (click)="decrementQty(item)">−</button><span>{{ item.quantity }}</span>
+              <button type="button" (click)="incrementQty(item)" [disabled]="item.quantity >= getMaxQuantity(item)">+</button></div>
+            <button type="button" (click)="removeItem(item)">Remove</button>
           </div>
         </div>
-      </div>
-      <!-- Empty Cart State -->
-      <div *ngIf="cartItems.length === 0" class="text-center py-5">
-        <div class="rounded-full flex items-center justify-center mx-auto mb-4 bg-neutral-100" style="width: 6rem; height: 6rem;">
-          <svg class="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.5 8h13l-1.5 12h-10L5.5 8z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 8V6a3 3 0 116 0v2"/>
-          </svg>
-        </div>
-        <h5 class="font-semibold text-neutral-900 mb-2">Your cart is empty</h5>
-        <p class="text-neutral-500 mb-4">Add some products to get started</p>
-        <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl px-6 py-2 transition" (click)="onClose()">
-          Continue Shopping
-        </button>
-      </div>
+      </article>
     </div>
-    <!-- Footer / Summary: Only show if cart is not empty -->
-    <div *ngIf="cartItems.length > 0" class="px-6 py-6 border-t border-neutral-200 bg-white">
-      <div class="space-y-2 mb-4">
-        <div class="flex items-center justify-between text-neutral-700">
-          <span>Subtotal</span>
-          <span>{{ formatPriceOnly(getSubtotal()) }} <span class="text-sm font-normal">MMK</span></span>
-        </div>
-        <!-- Discount Savings -->
-        <div *ngIf="getTotalSavings() > 0"  class="flex items-center justify-between text-green-600">
-          <span>
-            <span *ngIf="isFirstTimeBuyerDiscount">Discount Savings</span>
-            <span *ngIf="!isFirstTimeBuyerDiscount">Discount Savings</span>
-          </span>
-          <span *ngIf="isFirstTimeBuyerDiscount" class="font-semibold"><small>(First time buyer 10%)</small>-{{ formatPriceOnly(getTotalSavings()) }} <span class="text-sm font-normal">MMK</span></span>
-          <span *ngIf="!isFirstTimeBuyerDiscount" class="font-semibold">-{{ formatPriceOnly(getTotalSavings()) }} <span class="text-sm font-normal">MMK</span></span>
-        </div>
-      </div>
-      <div class="border-t border-neutral-200 pt-4 mb-4">
-        <div class="flex items-center justify-between">
-          <span class="font-bold text-lg text-neutral-900">Total</span>
-          <span class="font-bold text-xl text-blue-600">{{ formatPriceOnly(getTotal()) }} <span class="text-sm font-normal">MMK</span></span>
-        </div>
-      </div>
-      <div class="flex flex-col gap-3">
-        <button class="w-full py-3 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-900 font-semibold transition" (click)="goToCart()">View Cart</button>
-        <button class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold transition" (click)="proceedToPayment()">Proceed to Checkout</button>
-      </div>
-    </div>
-  </div>
+
+    <ng-template #drawerEmpty>
+      <div class="cart-drawer__empty"><p class="lux-overline">The bag is empty</p><h3>Begin your selection</h3>
+        <button type="button" (click)="onClose()">Continue discovering</button></div>
+    </ng-template>
+
+    <footer *ngIf="cartItems.length">
+      <div><span>Subtotal</span><strong>{{ formatPriceOnly(getSubtotal()) }} MMK</strong></div>
+      <div *ngIf="getTotalSavings() > 0" class="is-saving"><span>Privileges</span><strong>−{{ formatPriceOnly(getTotalSavings()) }} MMK</strong></div>
+      <div class="cart-drawer__total"><span>Total</span><strong>{{ formatPriceOnly(getTotal()) }} MMK</strong></div>
+      <button type="button" (click)="goToCart()">View bag</button>
+      <button type="button" class="is-primary" (click)="proceedToPayment()">Proceed to checkout</button>
+    </footer>
+  </aside>
 </ng-container>

@@ -7,12 +7,12 @@ import { RegisterResponse } from './auth.types';
 import { RegisterRequest } from '../register-request';
 import { jwtDecode } from 'jwt-decode';
 import { LoginAttemptsService } from '../services/login-attempts.service';
-import { switchMap, mergeMap } from 'rxjs/operators';
+import { switchMap, mergeMap, timeout } from 'rxjs/operators';
 
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private baseUrl = 'http://localhost:8080/api/auth';
+  private baseUrl = '/api/auth';
   private publicIp: string | null = null;
 
   constructor(private http: HttpClient, private loginAttemptsService: LoginAttemptsService) {
@@ -138,7 +138,12 @@ export class AuthService {
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.get<any>('http://localhost:8080/api/auth/check-blacklist-status', { headers });
+    return this.http
+      .get<any>(`${this.baseUrl}/check-blacklist-status`, { headers })
+      .pipe(
+        // Avoid infinite "loading" when backend is down
+        timeout(5000)
+      );
   }
 
   // Method to automatically check and clear expired blacklist flags
@@ -178,6 +183,19 @@ export class AuthService {
   getRoles(): string[] {
     const decoded = this.getDecodedToken();
     return decoded?.roles ? decoded.roles.split(',') : [];
+  }
+
+  /** Single portal redirect rule: CUSTOMER → storefront, else → admin dashboard. */
+  redirectPathForRoles(roles?: string[] | string): string {
+    const list = Array.isArray(roles)
+      ? roles
+      : typeof roles === 'string'
+        ? roles.split(',')
+        : this.getRoles();
+    const normalized = list
+      .map((r) => r.trim().toUpperCase().replace(/^ROLE_/, ''))
+      .filter(Boolean);
+    return normalized.includes('CUSTOMER') ? '/home' : '/dashboard';
   }
   verifyOtp(email: string, otp: string): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.baseUrl}/verify-otp`, { email, otp });

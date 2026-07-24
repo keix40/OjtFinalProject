@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef, OnDestroy, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, OnDestroy, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
@@ -33,6 +33,7 @@ import { ImageService } from '../services/image.service';
 })
 export class HeaderComponent implements OnInit, OnDestroy {
 
+  @Input() campaignOverlay = false;
   name: string | null = null;
   userId: number | null = null;
   cartItems: CartItem[] = [];
@@ -68,6 +69,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   topCategories: any[] = [];
   topBrands: any[] = [];
   brandImagesLoaded: { [key: number]: boolean } = {};
+  isScrolled = false;
 
   constructor(
     private router: Router,
@@ -89,6 +91,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.updateScrolledState();
     const storedCount = localStorage.getItem('newNotificationCount');
   this.newNotificationCount = storedCount ? parseInt(storedCount, 10) : 0;
     this.checkAuthStatus();
@@ -259,6 +262,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.openDropdown = null;
     }
+  }
+
+  @HostListener('window:scroll')
+  updateScrolledState() {
+    this.isScrolled = window.scrollY > 64;
   }
 
   openSidebar() {

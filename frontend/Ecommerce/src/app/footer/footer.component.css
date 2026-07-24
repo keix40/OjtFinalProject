@@ -1,2 +1,8 @@
-/* Footer component styles */
-/* Additional custom styles can be added here if needed */ 
+:host { display: block; }
+footer { position: relative; overflow: hidden; border-top: 1px solid rgba(247,243,236,.16); }
+footer::before { content: "BRITIUM"; position: absolute; right: -1rem; bottom: -3rem; color: rgba(247,243,236,.035); font: 500 clamp(8rem,20vw,18rem)/1 var(--lux-font-serif); letter-spacing: -.06em; pointer-events: none; }
+footer > div { position: relative; z-index: 1; }
+footer h3 { max-width: 18rem; font-size: clamp(2.5rem,4vw,4rem) !important; line-height: .95 !important; }
+footer li a { display: inline-block; padding-block: .15rem; color: inherit; font-size: .78rem; text-decoration: none; }
+footer li a::after { content: ""; display: block; width: 0; height: 1px; margin-top: .2rem; background: var(--lux-champagne); transition: width var(--lux-dur) var(--lux-ease); }
+footer li a:hover::after { width: 100%; }

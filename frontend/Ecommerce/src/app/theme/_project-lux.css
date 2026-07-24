@@ -1,0 +1,238 @@
+/* Tailwind blue utilities → luxury palette (sitewide without per-page rewrites) */
+.text-blue-400,
+.text-blue-500,
+.text-blue-600,
+.text-blue-700,
+.text-blue-800,
+.text-sky-500,
+.text-sky-600,
+.text-indigo-500,
+.text-indigo-600 {
+  color: var(--lux-champagne-deep) !important;
+}
+
+.hover\:text-blue-400:hover,
+.hover\:text-blue-500:hover,
+.hover\:text-blue-600:hover,
+.hover\:text-blue-700:hover,
+.hover\:text-blue-800:hover {
+  color: var(--lux-ink) !important;
+}
+
+.bg-blue-50,
+.bg-sky-50,
+.bg-indigo-50 {
+  background-color: var(--lux-champagne-soft) !important;
+}
+
+.bg-blue-100,
+.bg-blue-200 {
+  background-color: var(--lux-champagne-soft) !important;
+}
+
+.bg-blue-500,
+.bg-blue-600,
+.bg-blue-700,
+.bg-sky-500,
+.bg-sky-600,
+.bg-indigo-500,
+.bg-indigo-600,
+.from-blue-500,
+.from-blue-600,
+.to-blue-600,
+.to-blue-700 {
+  background-color: var(--lux-ink) !important;
+  --tw-gradient-from: var(--lux-ink) !important;
+  --tw-gradient-to: var(--lux-espresso) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+.hover\:bg-blue-50:hover,
+.hover\:bg-blue-100:hover {
+  background-color: var(--lux-champagne-soft) !important;
+}
+
+.hover\:bg-blue-500:hover,
+.hover\:bg-blue-600:hover,
+.hover\:bg-blue-700:hover,
+.hover\:from-blue-600:hover,
+.hover\:to-blue-700:hover {
+  background-color: var(--lux-champagne-deep) !important;
+}
+
+.border-blue-200,
+.border-blue-300,
+.border-blue-400,
+.border-blue-500 {
+  border-color: var(--lux-champagne) !important;
+}
+
+.focus\:border-blue-400:focus,
+.focus\:border-blue-500:focus {
+  border-color: var(--lux-champagne) !important;
+}
+
+.focus\:ring-blue-100:focus,
+.focus\:ring-blue-200:focus,
+.focus\:ring-blue-300:focus {
+  --tw-ring-color: var(--lux-champagne-soft) !important;
+}
+
+.ring-blue-100,
+.ring-blue-200 {
+  --tw-ring-color: var(--lux-champagne-soft) !important;
+}
+
+/* Bootstrap buttons */
+.btn-primary,
+.btn-primary:focus {
+  background-color: var(--lux-ink) !important;
+  border-color: var(--lux-ink) !important;
+  color: var(--lux-ivory) !important;
+  border-radius: var(--lux-radius-sm) !important;
+  box-shadow: none !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.btn-primary:hover,
+.btn-primary:active {
+  background-color: var(--lux-champagne-deep) !important;
+  border-color: var(--lux-champagne-deep) !important;
+  color: var(--lux-porcelain) !important;
+}
+
+.btn-outline-primary {
+  color: var(--lux-ink) !important;
+  border-color: var(--lux-ink) !important;
+  border-radius: var(--lux-radius-sm) !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--lux-ink) !important;
+  color: var(--lux-ivory) !important;
+}
+
+.btn-success {
+  background-color: var(--lux-success) !important;
+  border-color: var(--lux-success) !important;
+}
+
+.btn-danger {
+  background-color: var(--lux-danger) !important;
+  border-color: var(--lux-danger) !important;
+}
+
+.btn-warning {
+  background-color: var(--lux-warning) !important;
+  border-color: var(--lux-warning) !important;
+  color: var(--lux-ink) !important;
+}
+
+/* Forms */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--lux-champagne) !important;
+  box-shadow: 0 0 0 0.2rem rgba(198, 166, 103, 0.25) !important;
+}
+
+.form-check-input:checked {
+  background-color: var(--lux-ink) !important;
+  border-color: var(--lux-ink) !important;
+}
+
+/* Cards / tables (admin + customer) */
+.card {
+  background: var(--lux-cream);
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-md) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+.table thead th {
+  font-family: var(--lux-font-sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lux-graphite);
+  border-bottom-color: var(--lux-fog) !important;
+  background: var(--lux-cream);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(232, 220, 194, 0.35) !important;
+}
+
+.badge.bg-primary,
+.bg-primary {
+  background-color: var(--lux-ink) !important;
+}
+
+.badge.bg-success { background-color: var(--lux-success) !important; }
+.badge.bg-danger  { background-color: var(--lux-danger) !important; }
+.badge.bg-warning { background-color: var(--lux-warning) !important; color: var(--lux-ink) !important; }
+.badge.bg-info    { background-color: var(--lux-info) !important; }
+
+/* Links that used tech-blue */
+a.text-primary,
+.text-primary {
+  color: var(--lux-champagne-deep) !important;
+}
+
+/* Angular Material primary → charcoal/champagne */
+.mat-mdc-button.mat-primary,
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-unelevated-button.mat-primary,
+.mat-mdc-outlined-button.mat-primary {
+  --mdc-filled-button-container-color: var(--lux-ink);
+  --mdc-protected-button-container-color: var(--lux-ink);
+  --mdc-text-button-label-text-color: var(--lux-ink);
+  --mdc-outlined-button-label-text-color: var(--lux-ink);
+  --mdc-outlined-button-outline-color: var(--lux-ink);
+}
+
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__leading,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__notch,
+.mat-mdc-form-field.mat-focused .mdc-notched-outline__trailing {
+  border-color: var(--lux-champagne) !important;
+}
+
+/* SweetAlert defaults if not using LuxDialogService */
+.swal2-confirm {
+  background-color: var(--lux-ink) !important;
+}
+
+.swal2-deny,
+.swal2-cancel {
+  color: var(--lux-ink) !important;
+}
+
+/* Toastr */
+.toast-success { background-color: var(--lux-success) !important; }
+.toast-error   { background-color: var(--lux-danger) !important; }
+.toast-info    { background-color: var(--lux-info) !important; }
+.toast-warning { background-color: var(--lux-warning) !important; }
+
+/* Admin shell page background */
+app-layout,
+.admin-shell {
+  background: var(--lux-ivory);
+  min-height: 100vh;
+}
+
+/* Storefront page default surface */
+app-home,
+app-user-product-list,
+app-user-product-detail,
+app-cart-page,
+app-checkout,
+app-wishlist,
+app-about-us,
+app-contact-us,
+app-user-profile {
+  display: block;
+  background: var(--lux-ivory);
+  min-height: 60vh;
+}

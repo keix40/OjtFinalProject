@@ -1,0 +1,132 @@
+:root {
+  /* --- Core neutrals (warm, human) --- */
+  --lux-ink:        #1C1B19;
+  --lux-espresso:   #2B2925;
+  --lux-graphite:   #4A463F;
+  --lux-stone:      #8C857A;
+  --lux-fog:        #D9D3C7;
+  --lux-ivory:      #F7F3EC;
+  --lux-cream:      #FBF9F4;
+  --lux-porcelain:  #FFFFFF;
+
+  /* --- Accent: champagne gold (use sparingly) --- */
+  --lux-champagne:      #C6A667;
+  --lux-champagne-deep: #A9884A;
+  --lux-champagne-soft: #E8DCC2;
+
+  /* --- Semantic (muted, not neon) --- */
+  --lux-success: #5F7355;
+  --lux-warning: #B08234;
+  --lux-danger:  #9E4A43;
+  --lux-info:    #4A5A66;
+
+  /* --- Elevation (soft, warm-tinted) --- */
+  --lux-shadow-xs: 0 1px 2px rgba(28, 27, 25, 0.04);
+  --lux-shadow-sm: 0 2px 8px rgba(28, 27, 25, 0.06);
+  --lux-shadow-md: 0 8px 24px rgba(28, 27, 25, 0.08);
+  --lux-shadow-lg: 0 20px 48px rgba(28, 27, 25, 0.10);
+
+  /* --- Geometry --- */
+  --lux-radius-sm: 2px;
+  --lux-radius-md: 4px;
+  --lux-radius-lg: 8px;
+  --lux-border-hair: 1px solid var(--lux-fog);
+
+  /* --- Motion --- */
+  --lux-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --lux-dur-fast: 180ms;
+  --lux-dur:      280ms;
+  --lux-dur-slow: 420ms;
+
+  /* --- Type --- */
+  --lux-font-serif: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+  --lux-font-sans:  'Inter', system-ui, sans-serif;
+
+  /* --- Legacy aliases (map old vars → luxury palette; avoids breaking existing pages) --- */
+  --primary: var(--lux-ink);
+  --primary-color: var(--lux-ink);
+  --primary-hover: var(--lux-champagne-deep);
+  --secondary: var(--lux-graphite);
+  --secondary-color: var(--lux-champagne);
+  --accent: var(--lux-champagne);
+  --accent-color: var(--lux-danger);
+  --bg-light: var(--lux-ivory);
+  --light-bg: var(--lux-ivory);
+  --light-color: var(--lux-ivory);
+  --text-main: var(--lux-ink);
+  --text-primary: var(--lux-ink);
+  --text-secondary: var(--lux-graphite);
+  --text-muted: var(--lux-stone);
+  --bg-primary: var(--lux-porcelain);
+  --bg-secondary: var(--lux-ivory);
+  --bg-muted: var(--lux-cream);
+  --background-color: var(--lux-ivory);
+  --card-background: var(--lux-cream);
+  --white: var(--lux-porcelain);
+  --black: var(--lux-ink);
+  --dark-color: var(--lux-espresso);
+  --gray-color: var(--lux-stone);
+  --border-color: var(--lux-fog);
+  --border-radius: var(--lux-radius-md);
+  --border-radius-lg: var(--lux-radius-lg);
+  --radius-sm: var(--lux-radius-sm);
+  --radius-md: var(--lux-radius-md);
+  --radius-lg: var(--lux-radius-lg);
+  --radius-xl: var(--lux-radius-lg);
+  --shadow-sm: var(--lux-shadow-sm);
+  --shadow: var(--lux-shadow-sm);
+  --shadow-md: var(--lux-shadow-md);
+  --shadow-lg: var(--lux-shadow-lg);
+  --box-shadow: var(--lux-shadow-sm);
+  --box-shadow-lg: var(--lux-shadow-lg);
+  --card-shadow: var(--lux-shadow-sm);
+  --transition: all var(--lux-dur) var(--lux-ease);
+
+  --success-color: var(--lux-success);
+  --warning-color: var(--lux-warning);
+  --danger-color: var(--lux-danger);
+  --info-color: var(--lux-info);
+
+  /* VIP tier colors (kept for tier badges; muted to match luxury voice) */
+  --vip-primary: #6c3fc5;
+  --vip-primary-dark: #4b278a;
+  --vip-gold: var(--lux-champagne);
+  --vip-gold-dark: var(--lux-champagne-deep);
+  --vip-teal: #5A8A88;
+  --vip-bg: var(--lux-cream);
+  --vip-border: var(--lux-fog);
+  --vip-shadow: var(--lux-shadow-md);
+  --vip-text-dark: var(--lux-ink);
+  --vip-text-light: var(--lux-porcelain);
+  --vip-table-header: var(--lux-champagne-soft);
+  --vip-table-row: var(--lux-cream);
+
+  --diamond-color: var(--lux-info);
+  --platinum-color: var(--lux-stone);
+  --gold-color: var(--lux-champagne);
+  --emerald-color: var(--lux-success);
+
+  --gray-50: var(--lux-cream);
+  --gray-100: var(--lux-ivory);
+  --gray-200: var(--lux-fog);
+  --gray-300: #C4BDB0;
+  --gray-400: var(--lux-stone);
+  --gray-500: var(--lux-stone);
+  --gray-600: var(--lux-graphite);
+  --gray-700: var(--lux-graphite);
+  --gray-800: var(--lux-espresso);
+  --gray-900: var(--lux-ink);
+}
+
+[data-lux-theme="noir"] {
+  --lux-ivory: #17150F;
+  --lux-cream: #1F1C15;
+  --lux-ink: #F7F3EC;
+  --lux-graphite: #C9C2B4;
+  --lux-fog: #3A362D;
+  --lux-stone: #8C857A;
+  --text-primary: var(--lux-ink);
+  --text-secondary: var(--lux-graphite);
+  --bg-primary: var(--lux-cream);
+  --bg-secondary: var(--lux-ivory);
+}

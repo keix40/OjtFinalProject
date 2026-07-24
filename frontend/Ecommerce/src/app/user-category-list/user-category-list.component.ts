@@ -5,13 +5,14 @@ import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
 import { FooterComponent } from '../footer/footer.component';
 import { BreadcrumbComponent } from '../breadcrumb.component';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
 
 @Component({
   selector: 'app-user-category-list',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FooterComponent, BreadcrumbComponent],
+  imports: [CommonModule, RouterModule, LuxUiModule, HeaderComponent, FooterComponent],
   templateUrl: './user-category-list.component.html',
   styleUrls: ['./user-category-list.component.css']
 })
@@ -23,13 +24,18 @@ export class UserCategoryListComponent implements OnInit {
   constructor(private categoryService: CategoryService, private router: Router, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
+    this.loadCategories();
+  }
+
+  loadCategories(): void {
     this.loading = true;
+    this.error = '';
     this.categoryService.getAllCategory().subscribe({
       next: (data) => {
         this.categories = data;
         this.loading = false;
       },
-      error: (err) => {
+      error: () => {
         this.error = 'Failed to load categories.';
         this.loading = false;
       }

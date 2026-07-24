@@ -1,0 +1,9 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Application" type="Application" factoryName="Application">
+    <module name="OjtFinalProject" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend/Ecommerce" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

@@ -118,8 +118,10 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         localStorage.setItem('refreshToken', res.refreshToken);
       }
 
-      // Call backend to check first time buyer eligibility
-      this.http.get('/api/notifications/check-first-time-buyer').subscribe();
+      // Call backend to check first time buyer eligibility (don't block login on failure)
+      this.http.get('/api/notifications/check-first-time-buyer').subscribe({
+        error: () => { /* ignore — not required for login */ }
+      });
 
       const decoded = this.auth.getDecodedToken(); // Only declare once
       const permissionString = decoded?.permissions || '';
@@ -129,13 +131,9 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       // Also set in localStorage for consistency
       localStorage.setItem('userPermissions', JSON.stringify(permissionArray));
 
-      // Role-based redirect
+      // Role-based redirect (centralized)
       const roles = decoded?.roles ? decoded.roles.split(',') : [];
-      if (roles.includes('CUSTOMER')) {
-        this.router.navigate(['/home']);
-      } else {
-        this.router.navigate(['/dashboard']);
-      }
+      this.router.navigate([this.auth.redirectPathForRoles(roles)]);
 
       if (decoded && decoded.sub) {
         localStorage.setItem('email', decoded.sub); // reuse 'decoded'
@@ -177,6 +175,8 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         // Redirect to OTP verification page with email
         const email = this.loginForm.get('email')?.value;
         this.router.navigate(['/verify-otp'], { queryParams: { email } });
+      } else if (err.status === 0 || err.status === 504 || err.status === 502) {
+        this.loginError = 'Cannot reach the server. Make sure the backend is running on port 8080.';
       } else {
         this.loginError = err?.error?.message || 'Invalid email or password.';
       }
