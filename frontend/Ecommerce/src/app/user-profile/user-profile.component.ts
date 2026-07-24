@@ -12,6 +12,7 @@ import { VipTierService, VipTierInfo } from '../services/vip-tier.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { filter, Subscription } from 'rxjs';
+import { LuxTabItem } from '../shared/ui/lux-tabs.component';
 
 // Updated interface to match UserPersonalInfoComponent's expected type
 interface UserDetails {
@@ -49,6 +50,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
   orderCount: number = 0; // <-- Add this
   couponCount: number = 0; // <-- Add this
   vipTierInfo: VipTierInfo | null = null;
+  accountTabs: LuxTabItem[] = [];
 
   breadcrumbItems = [
     { label: 'Home', link: '/home' },
@@ -68,6 +70,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    this.refreshAccountTabs();
     this.loadUserDetails();
     this.loadOrderCount(); // <-- Load order count on init
     this.loadCouponCount(); // <-- Load coupon count on init
@@ -118,19 +121,34 @@ const fullImageUrl = backendBaseUrl + rawImagePath;
     };
   }
 
+  private refreshAccountTabs(): void {
+    this.accountTabs = [
+      { id: 'personal-info', label: 'Personal' },
+      { id: 'orders', label: 'Orders', badge: this.orderCount || undefined },
+      { id: 'payment', label: 'Payment' },
+      { id: 'reviews', label: 'Reviews' },
+      { id: 'addresses', label: 'Addresses' },
+      { id: 'notifications', label: 'Notifications' },
+      { id: 'coupons', label: 'Privileges', badge: this.couponCount || undefined },
+    ];
+  }
+
   loadOrderCount() {
     const user = this.authService.getDecodedToken();
     const userId = user ? user.id : null;
     if (!userId) {
       this.orderCount = 0;
+      this.refreshAccountTabs();
       return;
     }
     this.orderService.getOrderByUserId(userId).subscribe({
       next: (orders) => {
         this.orderCount = Array.isArray(orders) ? orders.length : 0;
+        this.refreshAccountTabs();
       },
       error: () => {
         this.orderCount = 0;
+        this.refreshAccountTabs();
       }
     });
   }
@@ -140,14 +158,17 @@ const fullImageUrl = backendBaseUrl + rawImagePath;
     const userId = user ? user.id : null;
     if (!userId) {
       this.couponCount = 0;
+      this.refreshAccountTabs();
       return;
     }
     this.userCouponService.getUserCoupons(userId).subscribe({
       next: (coupons) => {
         this.couponCount = Array.isArray(coupons) ? coupons.length : 0;
+        this.refreshAccountTabs();
       },
       error: () => {
         this.couponCount = 0;
+        this.refreshAccountTabs();
       }
     });
   }

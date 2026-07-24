@@ -4,11 +4,7 @@ import { Brand } from '../brand';
 import { Category } from '../category';
 import { CategoryService } from '../services/category.service';
 import { BrandService } from '../services/brand.service';
-import { ModalService } from '../services/modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmModelComponent } from '../confirm-model/confirm-model.component';
-import Swal from 'sweetalert2';
-// Removed ExcelJS, XLSX, and jsPDF imports since we're using Jasper Reports
 import { ImageService } from '../services/image.service';
 import { Router } from '@angular/router';
 import { PermissionService } from '../services/permission.service';
@@ -17,10 +13,11 @@ import { AttributeService } from '../services/attribute.service';
 import { Attribute, AttributeValue } from '../attribute';
 import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
 import { PriceFormatService } from '../services/price-format.service';
-declare var $: any;
+import { SelectionStore } from '../core/state/selection-store';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
+
 declare var lucide: any;
 
-// Update ProductImage type for productImages array to include variantId
 export interface ProductImage {
   id: number;
   imageUrl: string;
@@ -28,7 +25,6 @@ export interface ProductImage {
   variantId?: number | null;
 }
 
-// Update ProductList to use ProductImage[]
 export interface ProductList {
   id: number;
   productName: string;
@@ -39,14 +35,12 @@ export interface ProductList {
   description: string;
   createDate: string;
   updateDate: string;
-  checked: boolean;
   productImages: ProductImage[];
   brandId?: number;
   categoryId?: number;
   variants?: Variant[];
 }
 
-// Add Variant interfaces
 interface VariantAttribute {
   attributeId: number;
   attributeName: string;
@@ -67,50 +61,52 @@ interface Variant {
   selector: 'app-product-mangement',
   standalone: false,
   templateUrl: './product-mangement.component.html',
-  styleUrl: './product-mangement.component.css'
+  styleUrl: './product-mangement.component.css',
+  providers: [SelectionStore],
 })
 export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewInit {
   products: ProductList[] = [];
   filteredProducts: ProductList[] = [];
   brands: Brand[] = [];
   categories: Category[] = [];
-  searchTerm: string = '';
-  
-  selectedCategory: number = 0;
-  selectedBrand: number = 0;
-  selectAll: boolean = false;
-  
-  // Dropdown states
-  csvDropdownOpen: boolean = false;
-  pdfDropdownOpen: boolean = false;
+  searchTerm = '';
+  selectedCategory = 0;
+  selectedBrand = 0;
+  selectedStatus: 'all' | 'active' | 'inactive' | 'low-stock' = 'all';
 
-  currentPage: number = 1;
-  pageSize: number = 10;
+  csvDropdownOpen = false;
+  pdfDropdownOpen = false;
+
+  /** 0-based page index for lux-paginator */
+  currentPage = 0;
+  pageSize = 10;
   paginatedProducts: ProductList[] = [];
+  loading = false;
 
   attributes: Attribute[] = [];
   attributeValues: { [attributeId: number]: AttributeValue[] } = {};
   editingAttributeId: number | null = null;
   editingAttributeValueId: number | null = null;
-  editAttributeName: string = '';
-  editAttributeValue: string = '';
+  editAttributeName = '';
+  editAttributeValue = '';
   expandedAttributeId: number | null = null;
 
   public PermissionConstants = PermissionConstants;
   public permissionService: PermissionService;
-  
+
   constructor(
     private productService: ProductService,
     private cateService: CategoryService,
     private brandService: BrandService,
     private ngbModel: NgbModal,
     public imageService: ImageService,
-    private router: Router,
+    public router: Router,
     private attributeService: AttributeService,
     permissionService: PermissionService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    public selection: SelectionStore<number>,
+    private dialog: LuxDialogService
   ) {
-    this.PermissionConstants = PermissionConstants;
     this.permissionService = permissionService;
   }
 
@@ -119,27 +115,33 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     this.loadCategory();
     this.loadBrand();
     this.loadAttributes();
-    document.addEventListener('click', this.handleDocumentClick.bind(this));
+    document.addEventListener('click', this.handleDocumentClick);
   }
 
   ngOnDestroy(): void {
-    document.removeEventListener('click', this.handleDocumentClick.bind(this));
+    document.removeEventListener('click', this.handleDocumentClick);
   }
 
   ngAfterViewInit(): void {
-    if (typeof window !== 'undefined' && (window as any).lucide) {
-      (window as any).lucide.createIcons();
-    } else if (typeof lucide !== 'undefined') {
-      lucide.createIcons();
-    }
+    this.refreshIcons();
   }
 
-  private handleDocumentClick(event: MouseEvent): void {
+  private handleDocumentClick = (event: MouseEvent): void => {
     const target = event.target as HTMLElement;
-    if (!target.closest('.relative')) {
+    if (!target.closest('.lux-export-menu')) {
       this.csvDropdownOpen = false;
       this.pdfDropdownOpen = false;
     }
+  };
+
+  private refreshIcons(): void {
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).lucide) {
+        (window as any).lucide.createIcons();
+      } else if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 0);
   }
 
   toggleCsvDropdown(): void {
@@ -152,77 +154,87 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     if (this.pdfDropdownOpen) this.csvDropdownOpen = false;
   }
 
-  // Edit functionality
-  editSelectedProduct(): void {
-    const selectedProducts = this.selectedProducts;
-    
-    if (selectedProducts.length === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'No Product Selected',
-        text: 'Please select a product to edit.',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
-    }
-    
-    if (selectedProducts.length > 1) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'Multiple Products Selected',
-        text: 'Please select only one product to edit.',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
-    }
-    
-    // Navigate to edit page with the selected product ID
-    const productId = selectedProducts[0].id;
-    this.router.navigate(['/product-edit', productId]);
+  get pageIds(): number[] {
+    return this.paginatedProducts.map((p) => p.id);
   }
 
-  loadProduct() {
+  get selectedCount(): number {
+    return this.selection.count();
+  }
+
+  get selectedProducts(): ProductList[] {
+    const ids = new Set(this.selection.ids());
+    return this.products.filter((p) => ids.has(p.id));
+  }
+
+  get allPageSelected(): boolean {
+    return this.selection.isPageAllSelected(this.pageIds);
+  }
+
+  get partialPageSelected(): boolean {
+    return this.selection.isPagePartialSelected(this.pageIds);
+  }
+
+  isRowSelected = (row: unknown): boolean =>
+    this.selection.isSelected((row as ProductList).id);
+
+  trackByProductId = (_index: number, row: unknown): number =>
+    (row as ProductList).id;
+
+  trackByAttrId = (_index: number, row: unknown): number =>
+    (row as Attribute).id;
+
+  onToggleAll(checked: boolean): void {
+    this.selection.setPage(this.pageIds, checked);
+  }
+
+  onToggleRow(event: { row: unknown; checked: boolean }): void {
+    const product = event.row as ProductList;
+    this.selection.toggle(product.id, event.checked);
+  }
+
+  editSelectedProduct(): void {
+    const selected = this.selectedProducts;
+
+    if (selected.length === 0) {
+      this.dialog.warning('No Product Selected', 'Please select a product to edit.');
+      return;
+    }
+
+    if (selected.length > 1) {
+      this.dialog.warning('Multiple Products Selected', 'Please select only one product to edit.');
+      return;
+    }
+
+    this.router.navigate(['/product-edit', selected[0].id]);
+  }
+
+  loadProduct(): void {
+    this.loading = true;
     this.productService.getAllProduct().subscribe({
       next: (data) => {
-        this.products = data.map(p => ({ ...p, checked: false }));
-        this.filteredProducts = [...this.products];
-        this.currentPage = 1;
-        this.updatePaginatedProducts();
-        setTimeout(() => {
-          $('#productTable').DataTable({
-            destroy: true,
-            columnDefs: [
-              { orderable: false, targets: 0 }
-            ]
-          });
-          if (typeof window !== 'undefined' && (window as any).lucide) {
-            (window as any).lucide.createIcons();
-          } else if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
-          }
-        }, 100);
+        this.products = data.map((p) => ({ ...p }));
+        this.applyFilters();
+        this.selection.clear();
+        this.loading = false;
+        this.refreshIcons();
       },
       error: (err) => {
         console.error('Product error:', err);
-        // Show error to user
-        Swal.fire({
-          icon: 'error',
-          title: 'Error Loading Products',
-          text: 'There was an error loading the products. Please try again later.',
-          confirmButtonColor: '#3085d6'
-        });
-      }
+        this.loading = false;
+        this.dialog.error('Error Loading Products', 'There was an error loading the products. Please try again later.');
+      },
     });
   }
 
-  loadCategory() {
+  loadCategory(): void {
     this.cateService.getAllCategory().subscribe({
-      next: (data) => this.categories = data,
-      error: (err) => console.error('Category error:', err)
+      next: (data) => (this.categories = data),
+      error: (err) => console.error('Category error:', err),
     });
   }
 
-  onCategoryChange() {
+  onCategoryChange(): void {
     if (this.selectedCategory != 0) {
       this.brandService.getBrandByCateId(this.selectedCategory).subscribe({
         next: (data) => {
@@ -231,72 +243,79 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
         error: (err) => {
           console.error('Error loading brands by category', err);
           this.brands = [];
-        }
+        },
       });
+    } else {
+      this.loadBrand();
     }
+    this.applyFilters();
   }
 
-  loadBrand() {
+  onBrandChange(): void {
+    this.applyFilters();
+  }
+
+  onStatusChange(): void {
+    this.applyFilters();
+  }
+
+  loadBrand(): void {
     this.brandService.getAllBrand().subscribe({
-      next: (data) => this.brands = data,
-      error: (err) => console.error('Brand error:', err)
+      next: (data) => (this.brands = data),
+      error: (err) => console.error('Brand error:', err),
     });
   }
 
-  loadAttributes() {
-    this.attributeService.getAllAttribute().subscribe(attrs => {
+  loadAttributes(): void {
+    this.attributeService.getAllAttribute().subscribe((attrs) => {
       this.attributes = attrs;
-      attrs.forEach(attr => {
+      attrs.forEach((attr) => {
         this.attributeService.getValueById(attr.id).subscribe((dtos) => {
-          this.attributeValues[attr.id] = (dtos && dtos.length > 0 && dtos[0].values) ? dtos[0].values : [];
+          this.attributeValues[attr.id] =
+            dtos && dtos.length > 0 && dtos[0].values ? dtos[0].values : [];
         });
       });
     });
   }
 
-  startEditAttribute(attr: Attribute) {
+  startEditAttribute(attr: Attribute): void {
     this.editingAttributeId = attr.id;
     this.editAttributeName = attr.name;
   }
 
-  saveEditAttribute(attr: Attribute) {
+  saveEditAttribute(attr: Attribute): void {
     this.attributeService.updateAttribute(attr.id, this.editAttributeName).subscribe(() => {
       attr.name = this.editAttributeName;
       this.editingAttributeId = null;
     });
   }
 
-  cancelEditAttribute() {
+  cancelEditAttribute(): void {
     this.editingAttributeId = null;
   }
 
-  deleteAttribute(attr: Attribute) {
-    Swal.fire({
-      title: 'Are you sure?',
+  async deleteAttribute(attr: Attribute): Promise<void> {
+    const ok = await this.dialog.confirm({
+      title: 'Delete attribute?',
       text: 'Do you want to delete this attribute?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#3085d6',
-      cancelButtonColor: '#d33',
-      confirmButtonText: 'Yes',
-      cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.attributeService.deleteAttribute(attr.id).subscribe(() => {
-          this.attributes = this.attributes.filter(a => a.id !== attr.id);
-          delete this.attributeValues[attr.id];
-          Swal.fire({ icon: 'success', title: 'Attribute deleted successfully!', confirmButtonText: 'OK' });
-        });
-      }
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (!ok) return;
+
+    this.attributeService.deleteAttribute(attr.id).subscribe(() => {
+      this.attributes = this.attributes.filter((a) => a.id !== attr.id);
+      delete this.attributeValues[attr.id];
+      this.dialog.toast('Attribute deleted');
     });
   }
 
-  startEditAttributeValue(attrId: number, value: AttributeValue) {
+  startEditAttributeValue(attrId: number, value: AttributeValue): void {
     this.editingAttributeValueId = value.id ?? null;
     this.editAttributeValue = value.value;
   }
 
-  saveEditAttributeValue(attrId: number, value: AttributeValue) {
+  saveEditAttributeValue(attrId: number, value: AttributeValue): void {
     if (value.id !== undefined) {
       this.attributeService.updateAttributeValue(value.id, this.editAttributeValue).subscribe(() => {
         value.value = this.editAttributeValue;
@@ -305,427 +324,284 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     }
   }
 
-  cancelEditAttributeValue() {
+  cancelEditAttributeValue(): void {
     this.editingAttributeValueId = null;
   }
 
-  deleteAttributeValue(attrId: number, value: AttributeValue) {
+  deleteAttributeValue(attrId: number, value: AttributeValue): void {
     if (value.id !== undefined) {
       this.attributeService.deleteAttributeValue(value.id).subscribe(() => {
-        this.attributeValues[attrId] = this.attributeValues[attrId].filter(v => v.id !== value.id);
+        this.attributeValues[attrId] = this.attributeValues[attrId].filter((v) => v.id !== value.id);
       });
     }
   }
 
   onSearch(): void {
+    this.applyFilters();
+  }
+
+  applyFilters(): void {
     const term = this.searchTerm.trim().toLowerCase();
-    this.filteredProducts = this.products.filter(product => {
+    this.filteredProducts = this.products.filter((product) => {
       const matchesName = product.productName?.toLowerCase().includes(term);
-      // Find brand name by brandId
       let brandName = '';
       let categoryName = '';
-      if (product.hasOwnProperty('brandId')) {
-        const brand = this.brands.find(b => b.id === (product as any).brandId);
+      if (product.brandId != null) {
+        const brand = this.brands.find((b) => b.id === product.brandId);
         brandName = brand ? brand.name.toLowerCase() : '';
       }
-      if (product.hasOwnProperty('categoryId')) {
-        const category = this.categories.find(c => c.id === (product as any).categoryId);
+      if (product.categoryId != null) {
+        const category = this.categories.find((c) => c.id === product.categoryId);
         categoryName = category ? category.name.toLowerCase() : '';
       }
-      const matchesBrand = brandName.includes(term);
-      const matchesCategory = categoryName.includes(term);
-      return !term || matchesName || matchesBrand || matchesCategory;
+      const matchesSearch = !term || matchesName || brandName.includes(term) || categoryName.includes(term);
+
+      const matchesCategory =
+        !this.selectedCategory || product.categoryId === this.selectedCategory;
+      const matchesBrand = !this.selectedBrand || product.brandId === this.selectedBrand;
+
+      let matchesStatus = true;
+      if (this.selectedStatus === 'active') {
+        matchesStatus = product.status === 1 && product.quantity > 0;
+      } else if (this.selectedStatus === 'inactive') {
+        matchesStatus = product.status === 0;
+      } else if (this.selectedStatus === 'low-stock') {
+        matchesStatus = product.quantity > 0 && product.quantity <= 5;
+      }
+
+      return matchesSearch && matchesCategory && matchesBrand && matchesStatus;
     });
-    this.currentPage = 1;
+    this.currentPage = 0;
     this.updatePaginatedProducts();
   }
 
   updatePaginatedProducts(): void {
-    const start = (this.currentPage - 1) * this.pageSize;
-    const end = start + this.pageSize;
-    this.paginatedProducts = this.filteredProducts.slice(start, end);
-    // Re-initialize lucide icons after pagination update
-    setTimeout(() => {
-      if (typeof window !== 'undefined' && (window as any).lucide) {
-        (window as any).lucide.createIcons();
-      } else if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-      }
-    }, 0);
+    const start = this.currentPage * this.pageSize;
+    this.paginatedProducts = this.filteredProducts.slice(start, start + this.pageSize);
+    this.refreshIcons();
   }
 
-  changePage(page: number): void {
-    if (page < 1 || page > this.totalPages) return;
+  onPageChange(page: number): void {
+    if (page < 0 || page >= this.totalPages) return;
     this.currentPage = page;
     this.updatePaginatedProducts();
   }
 
   get totalPages(): number {
-    return Math.ceil(this.filteredProducts.length / this.pageSize);
-  }
-
-  get showPagination(): boolean {
-    return this.filteredProducts.length > this.pageSize;
-  }
-
-  get selectedProducts(): any[] {
-    return this.paginatedProducts.filter(p => p.checked);
-  }
-  
-  toggleAllCheckboxes(): void {
-    this.paginatedProducts.forEach(p => p.checked = this.selectAll);
-  }
-  
-  updateSelection(): void {
-    const total = this.paginatedProducts.length;
-    const selected = this.paginatedProducts.filter(p => p.checked).length;
-    this.selectAll = total === selected;
-  }
-
-  deleteProduct(id : number){
-    this.productService.deleteProduct(id).subscribe({
-      next: () => 
-        this.loadProduct(),
-      error: (err) => 
-        console.error('Error deleting product', err)
-    });
-  }
-  
-  showDeleteConfirm() {
-    const selectedIds = this.selectedProducts.map(p => p.id);
-
-    if (selectedIds.length === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'No Products Selected',
-        text: 'Please select at least one product to delete.',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
-    }
-
-    Swal.fire({
-      title: `Are you sure you want to delete ${selectedIds.length} product(s)?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete',
-      cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.deleteSelectedProducts(selectedIds);
-      }
-    });
-  }
-
-  deleteSelectedProducts(ids: number[]) {
-    const deleteRequests = ids.map(id =>
-      this.productService.deleteProduct(id)
-    );
-
-    Promise.all(deleteRequests.map(req => req.toPromise()))
-      .then(() => {
-        this.loadProduct();
-        Swal.fire({
-          icon: 'success',
-          title: 'Deleted!',
-          text: 'Selected product(s) have been deleted.',
-          confirmButtonText: 'OK',
-          confirmButtonColor: '#3085d6'
-        });
-      })
-      .catch(err => {
-        console.error('Error deleting products', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Delete Failed',
-          text: 'There was an error deleting the products.',
-          confirmButtonColor: '#3085d6'
-        });
-      });
-  }
-  
-  // Export to Excel using backend service
-  async exportToCSV(): Promise<void> {
-    try {
-      Swal.fire({
-        title: 'Generating CSV Report...',
-        text: 'Please wait while we prepare your report.',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      this.productService.exportAllProductsToCSV().subscribe({
-        next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `Britium_Gallery_All_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Export Successful!',
-            text: 'All products have been exported successfully.',
-            timer: 3000,
-            showConfirmButton: false
-          });
-        },
-        error: (error: any) => {
-          console.error('CSV export error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'There was an error exporting all products to CSV.',
-            confirmButtonColor: '#3085d6'
-          });
-        }
-      });
-    } catch (error) {
-      console.error('CSV export error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Export Failed',
-        text: 'There was an error exporting to CSV. Please try again.',
-        confirmButtonColor: '#3085d6'
-      });
-    }
-  }
-
-  // Export selected products to CSV (using backend service)
-  async exportSelectedToCSV(): Promise<void> {
-    const selectedProducts = this.selectedProducts;
-    if (selectedProducts.length === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'No Products Selected',
-        text: 'Please select at least one product to export.',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
-    }
-
-    try {
-      Swal.fire({
-        title: 'Generating CSV Report...',
-        text: 'Please wait while we prepare your report.',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      // Get selected product IDs
-      const selectedProductIds = selectedProducts.map(p => p.id);
-
-      this.productService.exportSelectedProductsToCSV(selectedProductIds).subscribe({
-        next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Export Successful!',
-            text: `Selected ${selectedProducts.length} product(s) have been exported successfully.`,
-            timer: 3000,
-            showConfirmButton: false
-          });
-        },
-        error: (error: any) => {
-          console.error('CSV export error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'There was an error exporting the selected products to CSV.',
-            confirmButtonColor: '#3085d6'
-          });
-        }
-      });
-    } catch (error) {
-      console.error('CSV export error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Export Failed',
-        text: 'There was an error exporting the selected products to CSV.',
-        confirmButtonColor: '#3085d6'
-      });
-    }
-  }
-
-  // Removed old helper methods - now using backend service
-
-  // Removed ExcelJS internal export method - now using backend service
-
-  // Export to PDF using backend service
-  async exportToPDF(): Promise<void> {
-    try {
-      Swal.fire({
-        title: 'Generating Report...',
-        text: 'Please wait while we generate your PDF report...',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      this.productService.exportProductReportToPDF().subscribe({
-        next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          // Use .pdf extension for PDF files
-          const fileExtension = '.pdf';
-          link.download = `Britium_Gallery_Product_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-
-      Swal.fire({
-        icon: 'success',
-        title: 'Export Successful!',
-            text: 'Product report has been exported successfully.',
-            timer: 3000,
-        showConfirmButton: false
-          });
-        },
-        error: (error) => {
-          console.error('PDF export error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'There was an error exporting the product report to PDF.',
-            confirmButtonColor: '#3085d6'
-          });
-        }
-      });
-    } catch (error) {
-      console.error('PDF export error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Export Failed',
-        text: 'There was an error exporting the product report to PDF.',
-        confirmButtonColor: '#3085d6'
-      });
-    }
-  }
-
-  // Export selected products to PDF (using backend service)
-  async exportSelectedToPDF(): Promise<void> {
-    const selectedProducts = this.selectedProducts;
-    if (selectedProducts.length === 0) {
-      Swal.fire({
-        icon: 'warning',
-        title: 'No Products Selected',
-        text: 'Please select at least one product to export.',
-        confirmButtonColor: '#3085d6'
-      });
-      return;
-    }
-
-    try {
-      Swal.fire({
-        title: 'Generating Report...',
-        text: 'Please wait while we generate your PDF report...',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      // Get selected product IDs
-      const selectedProductIds = selectedProducts.map(p => p.id);
-
-      this.productService.exportSelectedProductsToPDF(selectedProductIds).subscribe({
-        next: (blob: Blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          // Use .pdf extension for PDF files
-          const fileExtension = '.pdf';
-          link.download = `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}${fileExtension}`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-
-          Swal.fire({
-            icon: 'success',
-            title: 'Export Successful!',
-            text: `Selected ${selectedProducts.length} product(s) have been exported successfully.`,
-            timer: 3000,
-            showConfirmButton: false
-          });
-        },
-        error: (error) => {
-          console.error('PDF export error:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Export Failed',
-            text: 'There was an error exporting the selected products to PDF.',
-            confirmButtonColor: '#3085d6'
-          });
-        }
-      });
-    } catch (error) {
-      console.error('PDF export error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Export Failed',
-        text: 'There was an error exporting the selected products to PDF.',
-        confirmButtonColor: '#3085d6'
-      });
-    }
-  }
-
-  // Removed jsPDF internal export method - now using backend service
-
-  // Helper method to get status text
-  private getStatusText(product: ProductList): string {
-    if (product.quantity <= 5 && product.quantity > 0) {
-      return 'Low Stock';
-    } else if (product.quantity === 0) {
-      return 'Out of Stock';
-    } else if (product.status === 1) {
-      return 'Active';
-    } else {
-      return 'Inactive';
-    }
+    return Math.ceil(this.filteredProducts.length / this.pageSize) || 0;
   }
 
   get totalItems(): number {
     return this.filteredProducts.length;
   }
 
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    for (let i = 1; i <= this.totalPages; i++) {
-      pages.push(i);
+  getBaseImage(product: ProductList): string | null {
+    const img = product.productImages?.find((i) => i.variantId == null);
+    return img ? this.imageService.getFullImageUrl(img.imageUrl) : null;
+  }
+
+  getStatusTone(product: ProductList): 'success' | 'warning' | 'danger' | 'default' {
+    if (product.quantity <= 5 && product.quantity > 0) return 'warning';
+    if (product.quantity === 0) return 'danger';
+    if (product.status === 1) return 'success';
+    return 'default';
+  }
+
+  getStatusLabel(product: ProductList): string {
+    if (product.quantity <= 5 && product.quantity > 0) return 'Low Stock';
+    if (product.quantity === 0) return 'Out of Stock';
+    if (product.status === 1) return 'Active';
+    return 'Inactive';
+  }
+
+  deleteProduct(id: number): void {
+    this.productService.deleteProduct(id).subscribe({
+      next: () => this.loadProduct(),
+      error: (err) => console.error('Error deleting product', err),
+    });
+  }
+
+  async showDeleteConfirm(): Promise<void> {
+    const selectedIds = this.selection.ids();
+
+    if (selectedIds.length === 0) {
+      this.dialog.warning('No Products Selected', 'Please select at least one product to delete.');
+      return;
     }
-    return pages;
+
+    const ok = await this.dialog.confirm({
+      title: `Delete ${selectedIds.length} product(s)?`,
+      text: 'This action cannot be undone.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (ok) {
+      this.deleteSelectedProducts(selectedIds);
+    }
   }
 
-  get showingFrom(): number {
-    return (this.currentPage - 1) * this.pageSize + 1;
+  deleteSelectedProducts(ids: number[]): void {
+    const deleteRequests = ids.map((id) => this.productService.deleteProduct(id));
+
+    Promise.all(deleteRequests.map((req) => req.toPromise()))
+      .then(() => {
+        this.selection.clear();
+        this.loadProduct();
+        this.dialog.toast('Selected product(s) deleted');
+      })
+      .catch((err) => {
+        console.error('Error deleting products', err);
+        this.dialog.error('Delete Failed', 'There was an error deleting the products.');
+      });
   }
 
-  get showingTo(): number {
-    return Math.min(this.currentPage * this.pageSize, this.totalItems);
+  async exportToCSV(): Promise<void> {
+    try {
+      this.dialog.fire({
+        title: 'Generating CSV Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          // SweetAlert loading via escape hatch
+          import('sweetalert2').then((m) => m.default.showLoading());
+        },
+      });
+
+      this.productService.exportAllProductsToCSV().subscribe({
+        next: (blob: Blob) => {
+          this.downloadBlob(
+            blob,
+            `Britium_Gallery_All_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`
+          );
+          this.dialog.toast('All products exported');
+        },
+        error: (error: any) => {
+          console.error('CSV export error:', error);
+          this.dialog.error('Export Failed', 'There was an error exporting all products to CSV.');
+        },
+      });
+    } catch (error) {
+      console.error('CSV export error:', error);
+      this.dialog.error('Export Failed', 'There was an error exporting to CSV. Please try again.');
+    }
+  }
+
+  async exportSelectedToCSV(): Promise<void> {
+    const selectedIds = this.selection.ids();
+    if (selectedIds.length === 0) {
+      this.dialog.warning('No Products Selected', 'Please select at least one product to export.');
+      return;
+    }
+
+    try {
+      this.dialog.fire({
+        title: 'Generating CSV Report...',
+        text: 'Please wait while we prepare your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          import('sweetalert2').then((m) => m.default.showLoading());
+        },
+      });
+
+      this.productService.exportSelectedProductsToCSV(selectedIds).subscribe({
+        next: (blob: Blob) => {
+          this.downloadBlob(
+            blob,
+            `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`
+          );
+          this.dialog.toast(`Exported ${selectedIds.length} product(s)`);
+        },
+        error: (error: any) => {
+          console.error('CSV export error:', error);
+          this.dialog.error('Export Failed', 'There was an error exporting the selected products to CSV.');
+        },
+      });
+    } catch (error) {
+      console.error('CSV export error:', error);
+      this.dialog.error('Export Failed', 'There was an error exporting the selected products to CSV.');
+    }
+  }
+
+  async exportToPDF(): Promise<void> {
+    try {
+      this.dialog.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we generate your PDF report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          import('sweetalert2').then((m) => m.default.showLoading());
+        },
+      });
+
+      this.productService.exportProductReportToPDF().subscribe({
+        next: (blob: Blob) => {
+          this.downloadBlob(
+            blob,
+            `Britium_Gallery_Product_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`
+          );
+          this.dialog.toast('Product report exported');
+        },
+        error: (error) => {
+          console.error('PDF export error:', error);
+          this.dialog.error('Export Failed', 'There was an error exporting the product report to PDF.');
+        },
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+      this.dialog.error('Export Failed', 'There was an error exporting the product report to PDF.');
+    }
+  }
+
+  async exportSelectedToPDF(): Promise<void> {
+    const selectedIds = this.selection.ids();
+    if (selectedIds.length === 0) {
+      this.dialog.warning('No Products Selected', 'Please select at least one product to export.');
+      return;
+    }
+
+    try {
+      this.dialog.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we generate your PDF report...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          import('sweetalert2').then((m) => m.default.showLoading());
+        },
+      });
+
+      this.productService.exportSelectedProductsToPDF(selectedIds).subscribe({
+        next: (blob: Blob) => {
+          this.downloadBlob(
+            blob,
+            `Britium_Gallery_Selected_Products_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`
+          );
+          this.dialog.toast(`Exported ${selectedIds.length} product(s)`);
+        },
+        error: (error) => {
+          console.error('PDF export error:', error);
+          this.dialog.error('Export Failed', 'There was an error exporting the selected products to PDF.');
+        },
+      });
+    } catch (error) {
+      console.error('PDF export error:', error);
+      this.dialog.error('Export Failed', 'There was an error exporting the selected products to PDF.');
+    }
+  }
+
+  private downloadBlob(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 
   goToProductDetail(productId: number): void {
     this.router.navigate(['/admin/products', productId]);
   }
 
-  toggleAttributeDropdown(attrId: number) {
-    this.expandedAttributeId = this.expandedAttributeId === attrId ? null : attrId;
-  }
-
-  openEditAttributeValueModal(attr: Attribute) {
+  openEditAttributeValueModal(attr: Attribute): void {
     const modalRef = this.ngbModel.open(CreateAttributeValueComponent);
     modalRef.componentInstance.attributeId = attr.id;
     modalRef.result.finally(() => {
@@ -739,158 +615,7 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     return ['color', 'colors', 'colour', 'colours'].includes(name);
   }
 
-  // Helper method to check if a value is a hex color code
-  isHexColor(value: string): boolean {
-    if (!value) return false;
-    const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
-    return hexRegex.test(value.trim());
-  }
-
-  // Helper method to test color attribute detection
-  testColorAttribute(attrName: string, attrValue: string): boolean {
-    return this.isColorAttribute(attrName) && this.isHexColor(attrValue);
-  }
-
-  // Helper method to format variant attributes with color circles
-  formatVariantAttributes(attributes: any[]): string {
-    if (!attributes || attributes.length === 0) return 'No attributes';
-    
-    return attributes.map((attr: any) => {
-      const attrName = attr.attributeName || attr.attribute_name;
-      const attrValue = attr.value;
-      
-      // Check if it's a color attribute with hex value
-      if (this.testColorAttribute(attrName, attrValue)) {
-        // Create a colored circle using Unicode character with color styling
-        const colorCircle = '●';
-        return `${attrName}: ${colorCircle} ${attrValue}`;
-      }
-      
-      return `${attrName}: ${attrValue}`;
-    }).join(', ');
-  }
-
-  // Helper method to format variant attributes for HTML display with color circles
-  formatVariantAttributesHTML(attributes: any[]): string {
-    if (!attributes || attributes.length === 0) return 'No attributes';
-    
-    return attributes.map((attr: any) => {
-      const attrName = attr.attributeName || attr.attribute_name;
-      const attrValue = attr.value;
-      
-      // Check if it's a color attribute with hex value
-      if (this.testColorAttribute(attrName, attrValue)) {
-        const colorCircle = this.createColorCircle(attrValue, 12);
-        return `${attrName}: ${colorCircle} ${attrValue}`;
-      }
-      
-      return `${attrName}: ${attrValue}`;
-    }).join(', ');
-  }
-
-  // Helper method to create color circle HTML for display
-  createColorCircle(hexColor: string, size: number = 16): string {
-    return `<div style="
-      display: inline-block;
-      width: ${size}px;
-      height: ${size}px;
-      border-radius: 50%;
-      background-color: ${hexColor};
-      border: 1px solid #ccc;
-      margin-right: 4px;
-      vertical-align: middle;
-    "></div>`;
-  }
-
-  // Helper method to create colored circle for Excel/PDF
-  createColoredCircle(hexColor: string): string {
-    // For Excel/PDF, we'll use a Unicode circle with color information
-    // Note: Excel/PDF don't support actual colored Unicode characters
-    // So we'll use the circle symbol and rely on the hex code for color reference
-    return '●';
-  }
-
-  // Helper method to create rich text with colored circles for Excel
-  createRichTextWithColoredCircles(attributes: any[]): any {
-    if (!attributes || attributes.length === 0) {
-      return { richText: [{ text: 'No attributes' }] };
-    }
-
-    const richTextParts: any[] = [];
-    
-    attributes.forEach((attr, index) => {
-      const attrName = attr.attributeName || attr.attribute_name;
-      const attrValue = attr.value;
-      
-      // Add attribute name
-      richTextParts.push({ text: `${attrName}: ` });
-      
-      // Check if it's a color attribute with hex value
-      if (this.testColorAttribute(attrName, attrValue)) {
-        // Add colored circle (we'll use a special character that Excel can style)
-        richTextParts.push({ 
-          text: '●',
-          font: { color: { rgb: attrValue } }
-        });
-        richTextParts.push({ text: ` ${attrValue}` });
-      } else {
-        richTextParts.push({ text: attrValue });
-      }
-      
-      // Add separator if not last attribute
-      if (index < attributes.length - 1) {
-        richTextParts.push({ text: ', ' });
-      }
-    });
-
-    return { richText: richTextParts };
-  }
-
-  // Helper method to format variant attributes with actual colored circles
-  formatVariantAttributesWithColors(attributes: any[]): string {
-    if (!attributes || attributes.length === 0) return 'No attributes';
-    
-    return attributes.map((attr: any) => {
-      const attrName = attr.attributeName || attr.attribute_name;
-      const attrValue = attr.value;
-      
-      // Check if it's a color attribute with hex value
-      if (this.testColorAttribute(attrName, attrValue)) {
-        // For now, just show the hex code without circle since Excel doesn't support colored Unicode
-        return `${attrName}: ${attrValue}`;
-      }
-      
-      return `${attrName}: ${attrValue}`;
-    }).join(', ');
-  }
-
-  // Helper method to create a more visible color indicator
-  createColorIndicator(hexColor: string): string {
-    // Use a different Unicode character that might be more visible
-    return '●'; // Black circle
-  }
-
-  // Helper method to format variant attributes with ExcelJS colors
-  formatVariantAttributesWithExcelJSColors(attributes: any[]): string {
-    if (!attributes || attributes.length === 0) return 'No attributes';
-    
-    return attributes.map((attr: any) => {
-      const attrName = attr.attributeName || attr.attribute_name;
-      const attrValue = attr.value;
-      
-      // Check if it's a color attribute with hex value
-      if (this.testColorAttribute(attrName, attrValue)) {
-        // For now, just show the hex code since colored circles are complex in Excel
-        return `${attrName}: ${attrValue}`;
-      }
-      
-      return `${attrName}: ${attrValue}`;
-    }).join(', ');
-  }
-
-  // Removed ExcelJS color-related methods - now using backend service
-
-  openCreateAttributeValueModal() {
+  openCreateAttributeValueModal(): void {
     const modalRef = this.ngbModel.open(CreateAttributeValueComponent);
     modalRef.componentInstance.createMode = true;
     modalRef.componentInstance.attributeSaved.subscribe(() => {
@@ -898,21 +623,7 @@ export class ProductMangementComponent implements OnInit, OnDestroy, AfterViewIn
     });
   }
 
-  // Price formatting methods
-  formatPrice(price: number, currency: string = 'MMK'): string {
-    return this.priceFormatService.formatPrice(price, currency);
-  }
-
   formatPriceOnly(price: number): string {
     return this.priceFormatService.formatPriceOnly(price);
   }
-
-  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
-    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
-  }
-
-  formatDiscountText(discountValue: number, discountType: string): string {
-    return this.priceFormatService.formatDiscountText(discountValue, discountType);
-  }
 }
-

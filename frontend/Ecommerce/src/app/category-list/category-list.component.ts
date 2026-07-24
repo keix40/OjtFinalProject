@@ -10,16 +10,20 @@ import { CreateCategoryComponent } from '../create-category/create-category.comp
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CategoryUpdateComponent } from '../category-update/category-update.component';
 import Swal from 'sweetalert2';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import { CategoryAddSubcategoryComponent } from '../category-add-subcategory/category-add-subcategory.component';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
+import { SelectionStore } from '../core/state/selection-store';
 
 @Component({
   selector: 'app-category-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LuxUiModule],
   templateUrl: './category-list.component.html',
-  styleUrls: ['./category-list.component.css']
+  styleUrls: ['./category-list.component.css'],
+  providers: [SelectionStore],
 })
 export class CategoryListComponent implements OnInit {
   categories: CategoryTreeDTO[] = [];
@@ -28,23 +32,22 @@ export class CategoryListComponent implements OnInit {
   loading = false;
   error = '';
 
-  // Additions for template compatibility
-  searchTerm: string = '';
-  selectedCategories: any[] = [];
+  searchTerm = '';
   csvDropdownOpen = false;
   pdfDropdownOpen = false;
-  showCreateCategoryModal: boolean = false;
-  // Pagination properties
-  totalPages: number = 1;
-  currentPage: number = 1;
-  itemsPerPage: number = 10;
-  totalItems: number = 0;
-  Math = Math;
+  showCreateCategoryModal = false;
+  /** 0-based page for lux-paginator */
+  totalPages = 0;
+  currentPage = 0;
+  itemsPerPage = 10;
+  totalItems = 0;
 
   constructor(
     private categoryService: CategoryService,
     private modalService: NgbModal,
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private luxDialog: LuxDialogService,
+    public selection: SelectionStore<number>
   ) {}
   public PermissionConstants = PermissionConstants;
 
@@ -59,8 +62,9 @@ export class CategoryListComponent implements OnInit {
         this.categories = data;
         this.flatCategories = this.flattenCategories(data);
         this.totalItems = this.flatCategories.length;
-        this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-        this.currentPage = 1;
+        this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+        this.currentPage = 0;
+        this.selection.clear();
         this.updatePaginatedCategories();
         this.loading = false;
       },
@@ -72,19 +76,48 @@ export class CategoryListComponent implements OnInit {
   }
 
   updatePaginatedCategories() {
-    const start = (this.currentPage - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    this.paginatedCategories = this.flatCategories.slice(start, end);
+    const start = this.currentPage * this.itemsPerPage;
+    this.paginatedCategories = this.flatCategories.slice(start, start + this.itemsPerPage);
   }
 
   onPageChange(page: number) {
-    if (page < 1 || page > this.totalPages) return;
+    if (page < 0 || (this.totalPages > 0 && page >= this.totalPages)) return;
     this.currentPage = page;
     this.updatePaginatedCategories();
   }
 
-  getPageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  get pageIds(): number[] {
+    return this.paginatedCategories.map((c) => c.id);
+  }
+
+  get selectedCount(): number {
+    return this.selection.count();
+  }
+
+  get selectedCategories(): any[] {
+    const ids = new Set(this.selection.ids());
+    return this.flatCategories.filter((c) => ids.has(c.id));
+  }
+
+  get allPageSelected(): boolean {
+    return this.selection.isPageAllSelected(this.pageIds);
+  }
+
+  get partialPageSelected(): boolean {
+    return this.selection.isPagePartialSelected(this.pageIds);
+  }
+
+  isRowSelected = (row: unknown): boolean =>
+    this.selection.isSelected((row as { id: number }).id);
+
+  trackById = (_i: number, row: unknown): number => (row as { id: number }).id;
+
+  onToggleAll(checked: boolean): void {
+    this.selection.setPage(this.pageIds, checked);
+  }
+
+  onToggleRow(event: { row: unknown; checked: boolean }): void {
+    this.selection.toggle((event.row as { id: number }).id, event.checked);
   }
 
   flattenCategories(categories: CategoryTreeDTO[], level = 0, parent: CategoryTreeDTO | null = null): any[] {
@@ -136,37 +169,28 @@ export class CategoryListComponent implements OnInit {
     });
   }
 
-  deleteCategory(cat: CategoryTreeDTO) {
-    Swal.fire({
+  async deleteCategory(cat: CategoryTreeDTO) {
+    const confirmed = await this.luxDialog.confirm({
       title: 'Delete Category',
       text: `Are you sure you want to delete "${cat.name}"? This action cannot be undone.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.categoryService.deleteCategory(cat.id).subscribe({
-          next: () => {
-            this.loadCategories();
-            Swal.fire({
-              icon: 'success',
-              title: 'Deleted!',
-              text: 'Category has been deleted successfully.',
-              timer: 2000,
-              showConfirmButton: false
-            });
-          },
-          error: (err) => {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Failed to delete category. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
+      confirmText: 'Yes, delete it!',
+      destructive: true
+    });
+    if (!confirmed) return;
+
+    this.categoryService.deleteCategory(cat.id).subscribe({
+      next: () => {
+        this.loadCategories();
+        this.luxDialog.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Category has been deleted successfully.',
+          timer: 2000,
+          showConfirmButton: false
         });
+      },
+      error: () => {
+        this.luxDialog.error('Error', 'Failed to delete category. Please try again.');
       }
     });
   }
@@ -196,17 +220,16 @@ export class CategoryListComponent implements OnInit {
       const categoriesToExport = type === 'all' ? this.flatCategories : this.selectedCategories;
       
       if (categoriesToExport.length === 0) {
-        Swal.fire({
+        this.luxDialog.fire({
           icon: 'warning',
           title: 'No Data to Export',
           text: 'There are no categories to export.',
-          confirmButtonColor: '#3085d6'
         });
         return;
       }
 
       // Show loading
-      Swal.fire({
+      this.luxDialog.fire({
         title: 'Generating PDF Report...',
         text: 'Please wait while we prepare your report.',
         allowOutsideClick: false,
@@ -228,7 +251,7 @@ export class CategoryListComponent implements OnInit {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Category report has been exported successfully.',
@@ -238,11 +261,10 @@ export class CategoryListComponent implements OnInit {
           },
           error: (error) => {
             console.error('❌ Category PDF export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the category report to PDF. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
@@ -258,7 +280,7 @@ export class CategoryListComponent implements OnInit {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Category report has been exported successfully.',
@@ -268,22 +290,20 @@ export class CategoryListComponent implements OnInit {
           },
           error: (error) => {
             console.error('❌ Category PDF export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the category report to PDF. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
       }
     } catch (error) {
       console.error('Category PDF export error:', error);
-      Swal.fire({
+      this.luxDialog.fire({
         icon: 'error',
         title: 'Export Failed',
         text: 'There was an error exporting to PDF. Please try again.',
-        confirmButtonColor: '#3085d6'
       });
     }
   }
@@ -293,17 +313,16 @@ export class CategoryListComponent implements OnInit {
       const categoriesToExport = type === 'all' ? this.flatCategories : this.selectedCategories;
       
       if (categoriesToExport.length === 0) {
-        Swal.fire({
+        this.luxDialog.fire({
           icon: 'warning',
           title: 'No Data to Export',
           text: 'There are no categories to export.',
-          confirmButtonColor: '#3085d6'
         });
         return;
       }
 
       // Show loading
-      Swal.fire({
+      this.luxDialog.fire({
         title: 'Generating CSV Report...',
         text: 'Please wait while we prepare your report.',
         allowOutsideClick: false,
@@ -325,7 +344,7 @@ export class CategoryListComponent implements OnInit {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Category report has been exported successfully.',
@@ -335,11 +354,10 @@ export class CategoryListComponent implements OnInit {
           },
           error: (error) => {
             console.error('❌ Category CSV export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the category report to CSV. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
@@ -355,7 +373,7 @@ export class CategoryListComponent implements OnInit {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Category report has been exported successfully.',
@@ -365,22 +383,20 @@ export class CategoryListComponent implements OnInit {
           },
           error: (error) => {
             console.error('❌ Category CSV export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the category report to CSV. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
       }
     } catch (error) {
       console.error('Category CSV export error:', error);
-      Swal.fire({
+      this.luxDialog.fire({
         icon: 'error',
         title: 'Export Failed',
         text: 'There was an error exporting to CSV. Please try again.',
-        confirmButtonColor: '#3085d6'
       });
     }
   }
@@ -395,8 +411,8 @@ export class CategoryListComponent implements OnInit {
       );
     }
     this.totalItems = this.flatCategories.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    this.currentPage = 1;
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+    this.currentPage = 0;
     this.updatePaginatedCategories();
   }
 
@@ -420,31 +436,7 @@ export class CategoryListComponent implements OnInit {
     this.showCreateCategoryModal = false;
   }
 
-  isAllSelected(): boolean {
-    return this.flatCategories.length > 0 && this.selectedCategories.length === this.flatCategories.length;
+  getCategoryIndentStyle(level: number): { [key: string]: string } {
+    return { paddingLeft: `${Math.min(level, 4) * 1}rem` };
   }
-
-  onSelectAll(event: any) {
-    if (event.target.checked) {
-      this.selectedCategories = [...this.flatCategories];
-    } else {
-      this.selectedCategories = [];
-    }
-  }
-
-  isCategorySelected(cat: any): boolean {
-    return this.selectedCategories.some(selected => selected.id === cat.id);
-  }
-
-  onCategorySelect(cat: any, event: any) {
-    if (event.target.checked) {
-      if (!this.isCategorySelected(cat)) {
-        this.selectedCategories.push(cat);
-      }
-    } else {
-      this.selectedCategories = this.selectedCategories.filter(selected => selected.id !== cat.id);
-    }
-  }
-
-  
 }

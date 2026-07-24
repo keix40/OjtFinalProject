@@ -1,0 +1,64 @@
+.cat-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.cat-panel {
+  padding: 0;
+  overflow: hidden;
+}
+
+.cat-panel lux-paginator {
+  display: block;
+  padding: 0 1rem 0.25rem;
+}
+
+.relative {
+  position: relative;
+}
+
+.cat-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid var(--lux-fog);
+  background: var(--lux-ivory);
+  display: grid;
+  place-items: center;
+}
+
+.cat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cat-avatar__initial {
+  font-family: var(--lux-font-serif);
+  font-size: 1rem;
+  color: var(--lux-ink);
+}
+
+.cat-name {
+  font-weight: 500;
+  color: var(--lux-ink);
+}
+
+.cat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  max-width: 22rem;
+}
+
+.cat-muted {
+  color: var(--lux-stone);
+}
+
+.cat-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}

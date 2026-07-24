@@ -13,6 +13,8 @@ import { PermissionConstants } from '../constants/permission.constants';
 import { PriceFormatService } from '../services/price-format.service';
 declare var lucide: any;
 import { UserService } from '../services/user.service';
+import { SelectionStore } from '../core/state/selection-store';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 function todayOrFutureDateOnlyValidator(control: AbstractControl): ValidationErrors | null {
   if (!control.value) return { required: true };
@@ -58,7 +60,8 @@ function endAfterStartValidator(group: AbstractControl): ValidationErrors | null
   selector: 'app-discount-event-management',
   standalone: false,
   templateUrl: './discount-management.component.html',
-  styleUrl: './discount-management.component.css'
+  styleUrl: './discount-management.component.css',
+  providers: [SelectionStore],
 })
 export class DiscountEventManagementComponent implements OnInit {
   discounts: any[] = []; // All discounts fetched from backend
@@ -68,7 +71,6 @@ export class DiscountEventManagementComponent implements OnInit {
   editForm: FormGroup;
   editingDiscount: DiscountDTO | null = null;
   submitted = false;
-  selectedDiscounts: number[] = [];
   filterType: string = '';
   filterStatus: string = '';
   filterName: string = '';
@@ -96,47 +98,59 @@ export class DiscountEventManagementComponent implements OnInit {
   // selectedDateRange: string = '';
   // dateRanges: Array<{ value: string, label: string }> = [...];
 
-  // Pagination properties
+  // Pagination properties (0-based for lux-paginator)
   pageSize: number = 10;
-  currentPage: number = 1;
+  currentPage: number = 0;
   get totalPages(): number {
-    return Math.ceil(this.filteredDiscounts.length / this.pageSize);
+    return Math.ceil(this.filteredDiscounts.length / this.pageSize) || 0;
   }
   get paginatedDiscounts(): any[] {
-    const start = (this.currentPage - 1) * this.pageSize;
+    const start = this.currentPage * this.pageSize;
     return this.filteredDiscounts.slice(start, start + this.pageSize);
   }
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    for (let i = 1; i <= this.totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
   changePage(page: number) {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && (window as any).lucide) {
-          (window as any).lucide.createIcons();
-        } else if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-        }
-      }, 0);
-    }
-  }
-  get showingFrom(): number {
-    return this.filteredDiscounts.length === 0 ? 0 : (this.pageSize * (this.currentPage - 1)) + 1;
-  }
-  get showingTo(): number {
-    return Math.min(this.pageSize * this.currentPage, this.filteredDiscounts.length);
-  }
-  get showPagination(): boolean {
-    return this.totalPages > 1;
+    if (page < 0 || page >= this.totalPages) return;
+    this.currentPage = page;
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).lucide) {
+        (window as any).lucide.createIcons();
+      } else if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 0);
   }
 
   get totalItems(): number {
     return this.filteredDiscounts.length;
+  }
+
+  get pageIds(): number[] {
+    return this.paginatedDiscounts.map((d) => d.id);
+  }
+
+  get allPageSelected(): boolean {
+    return this.selection.isPageAllSelected(this.pageIds);
+  }
+
+  get partialPageSelected(): boolean {
+    return this.selection.isPagePartialSelected(this.pageIds);
+  }
+
+  get selectedDiscounts(): number[] {
+    return this.selection.ids();
+  }
+
+  isRowSelected = (row: unknown): boolean =>
+    this.selection.isSelected((row as any).id);
+
+  trackByDiscount = (_: number, row: unknown) => (row as any).id;
+
+  onToggleAll(checked: boolean): void {
+    this.selection.setPage(this.pageIds, checked);
+  }
+
+  onToggleRow(event: { row: unknown; checked: boolean }): void {
+    this.selection.toggle((event.row as any).id, event.checked);
   }
 
   onSearch() {
@@ -150,7 +164,7 @@ export class DiscountEventManagementComponent implements OnInit {
     // If searchTerm is empty and no status filter, show all discounts
     if (!this.searchTerm && !this.selectedStatus) {
       this.filteredDiscounts = [...this.discounts];
-      this.currentPage = 1;
+      this.currentPage = 0;
       return;
     }
     this.filteredDiscounts = this.discounts.filter(d => {
@@ -164,7 +178,7 @@ export class DiscountEventManagementComponent implements OnInit {
         (d.name && d.name.toLowerCase().includes(search));
       return matchesStatus && matchesSearch;
     });
-    this.currentPage = 1;
+    this.currentPage = 0;
   }
 
   constructor(
@@ -177,7 +191,9 @@ export class DiscountEventManagementComponent implements OnInit {
     private productService: ProductService, // <-- Inject ProductService
     public permissionService: PermissionService,
     private userService: UserService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    public selection: SelectionStore<number>,
+    private dialog: LuxDialogService
   ) {
     this.editForm = this.fb.group({
       name: ['', Validators.required],
@@ -350,67 +366,55 @@ onDiscountTypeChange() {
     }
   }
 
-  deleteDiscount(id: number) {
-    if (confirm('Are you sure you want to delete this discount?')) {
-      this.discountService.deleteDiscount(id).subscribe({
-        next: () => {
-          this.fetchDiscounts();
-          this.notificationService.showSuccess('Discount deleted successfully');
-        },
-        error: () => {
-          this.notificationService.showError('Failed to delete discount');
-        }
-      });
-    }
+  async deleteDiscount(id: number) {
+    const ok = await this.dialog.confirm({
+      title: 'Delete discount',
+      text: 'Are you sure you want to delete this discount?',
+      destructive: true,
+      confirmText: 'Delete',
+    });
+    if (!ok) return;
+    this.discountService.deleteDiscount(id).subscribe({
+      next: () => {
+        this.selection.toggle(id, false);
+        this.fetchDiscounts();
+        this.notificationService.showSuccess('Discount deleted successfully');
+      },
+      error: () => {
+        this.notificationService.showError('Failed to delete discount');
+      },
+    });
   }
 
   isSelected(id: number): boolean {
-    return this.selectedDiscounts.includes(id);
+    return this.selection.isSelected(id);
   }
 
-  isAllSelected(): boolean {
-    return this.discounts.length > 0 && this.selectedDiscounts.length === this.discounts.length;
-  }
-
-  toggleSelectDiscount(id: number, event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
-    if (checked) {
-      if (!this.selectedDiscounts.includes(id)) {
-        this.selectedDiscounts.push(id);
-      }
-    } else {
-      this.selectedDiscounts = this.selectedDiscounts.filter(did => did !== id);
-    }
-  }
-
-  toggleSelectAll(event: Event): void {
-    const checked = (event.target as HTMLInputElement).checked;
-    if (checked) {
-      this.selectedDiscounts = this.discounts.map(d => d.id);
-    } else {
-      this.selectedDiscounts = [];
-    }
-  }
-
-  deleteSelectedDiscounts(): void {
+  async deleteSelectedDiscounts(): Promise<void> {
     if (this.selectedDiscounts.length === 0) return;
-    if (!confirm('Are you sure you want to delete the selected discounts?')) return;
+    const ok = await this.dialog.confirm({
+      title: 'Delete selected discounts',
+      text: `Delete ${this.selectedDiscounts.length} discount(s)?`,
+      destructive: true,
+      confirmText: 'Delete',
+    });
+    if (!ok) return;
     const idsToDelete = [...this.selectedDiscounts];
     let completed = 0;
     let failed = false;
-    idsToDelete.forEach(id => {
+    idsToDelete.forEach((id) => {
       this.discountService.deleteDiscount(id).subscribe({
         next: () => {
           completed++;
           if (completed === idsToDelete.length && !failed) {
-            this.selectedDiscounts = [];
+            this.selection.clear();
             this.fetchDiscounts();
           }
         },
         error: () => {
           failed = true;
           this.notificationService.showError('Failed to delete one or more discounts.');
-        }
+        },
       });
     });
   }

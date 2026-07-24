@@ -2,16 +2,17 @@ import { Component, OnInit } from '@angular/core';
 import { EventService } from '../services/event.service';
 import { EventDTO } from '../event-dto';
 import { Router } from '@angular/router';
-import Swal from 'sweetalert2';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
 declare var lucide: any;
 
 @Component({
   selector: 'app-event-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, LuxUiModule],
   templateUrl: './event-list.component.html',
   styleUrl: './event-list.component.css'
 })
@@ -20,8 +21,8 @@ export class EventListComponent implements OnInit {
   filteredEvents: EventDTO[] = [];
   searchTerm: string = '';
 
-  // Pagination properties
-  currentPage: number = 1;
+  // Pagination properties (0-based for lux-paginator)
+  currentPage: number = 0;
   itemsPerPage: number = 10;
   totalItems: number = 0;
   totalPages: number = 0;
@@ -32,7 +33,11 @@ export class EventListComponent implements OnInit {
   isSorting = false;
   originalOrder: EventDTO[] = [];
 
-  constructor(private eventService: EventService, private router: Router) {}
+  constructor(
+    private eventService: EventService,
+    private router: Router,
+    private dialog: LuxDialogService
+  ) {}
 
   ngOnInit() {
    this.loadEvent();
@@ -50,8 +55,8 @@ export class EventListComponent implements OnInit {
       this.sortedEvents = [...this.heroPreviewEvents];
       this.originalOrder = [...this.sortedEvents];
       this.totalItems = events.length;
-      this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-      this.currentPage = 1;
+      this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+      this.currentPage = 0;
       setTimeout(() => lucide.createIcons(), 0);
     });
   }
@@ -84,20 +89,10 @@ export class EventListComponent implements OnInit {
       next: () => {
         this.isSorting = false;
         this.loadEvent();
-        Swal.fire({
-          icon: 'success',
-          title: 'Order Updated!',
-          text: 'Hero section order has been saved successfully.',
-          confirmButtonText: 'OK'
-        });
+        this.dialog.success('Order updated', 'Hero section order has been saved successfully.');
       },
-      error: (err: any) => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Update Failed',
-          text: 'Failed to save the new order. Please try again.',
-          confirmButtonText: 'OK'
-        });
+      error: () => {
+        this.dialog.error('Update failed', 'Failed to save the new order. Please try again.');
       }
     });
   }
@@ -121,8 +116,8 @@ export class EventListComponent implements OnInit {
       (e.description && e.description.toLowerCase().includes(term))
     );
     this.totalItems = this.filteredEvents.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    this.currentPage = 1;
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+    this.currentPage = 0;
     setTimeout(() => lucide.createIcons(), 0);
   }
 
@@ -134,48 +129,36 @@ export class EventListComponent implements OnInit {
     this.router.navigate(['/admin/event']);
   }
 
-  deleteEvent(event: EventDTO) {
-    Swal.fire({
-      title: 'Delete Event',
-      text: `Are you sure you want to delete "${event.name}"?`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!',
-      cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.eventService.deleteEvent(event.id!).subscribe({
-          next: () => {
-            Swal.fire(
-              'Deleted!',
-              'Event has been deleted successfully.',
-              'success'
-            );
-            this.loadEvent();
-          },
-          error: (err: any) => {
-            Swal.fire(
-              'Error!',
-              'Failed to delete event. Please try again.',
-              'error'
-            );
-          }
-        });
-      }
+  async deleteEvent(event: EventDTO) {
+    const ok = await this.dialog.confirm({
+      title: 'Delete event',
+      text: `Delete "${event.name}"?`,
+      destructive: true,
+      confirmText: 'Delete',
+    });
+    if (!ok) return;
+    this.eventService.deleteEvent(event.id!).subscribe({
+      next: () => {
+        this.dialog.success('Deleted', 'Event has been deleted successfully.');
+        this.loadEvent();
+      },
+      error: () => {
+        this.dialog.error('Error', 'Failed to delete event. Please try again.');
+      },
     });
   }
 
   get paginatedEvents(): EventDTO[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredEvents.slice(startIndex, endIndex);
+    const startIndex = this.currentPage * this.itemsPerPage;
+    return this.filteredEvents.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
   onPageChange(page: number): void {
+    if (page < 0 || page >= this.totalPages) return;
     this.currentPage = page;
   }
+
+  trackByEvent = (_: number, row: unknown) => (row as EventDTO).id;
 
   getPageNumbers(): number[] {
     const pages: number[] = [];

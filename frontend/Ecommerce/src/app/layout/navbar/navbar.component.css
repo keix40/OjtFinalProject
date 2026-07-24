@@ -1,98 +1,58 @@
-.custom-navbar {
-  background: linear-gradient(135deg, #1e1e2d 0%, #2d2d3f 100%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.custom-dropdown {
-  background: #2d2d3f;
-  min-width: 280px;
-}
-
-.dropdown-header {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.dropdown-header h6 {
-  color: #ffffff;
-  font-size: 1rem;
-}
-
-.dropdown-header .text-primary {
-  color: #4dabf7 !important;
-}
-
-.dropdown-header p {
-  color: #b8c2cc !important;
-  font-size: 0.85rem;
-}
-
-.dropdown-item {
-  color: #e0e0e0;
-  transition: all 0.3s ease;
-}
-
-.dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-.hover-effect {
-  transition: all 0.2s ease;
-}
-
-.hover-effect:hover {
-  transform: translateX(5px);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-toggler {
-  width: 40px;
-  height: 40px;
-  padding: 0;
+.admin-topbar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
+  gap: 0.75rem;
+  min-height: 3.25rem;
+  padding: 0.5rem 1rem;
+  background: var(--lux-cream);
+  border-bottom: 1px solid var(--lux-fog);
+  color: var(--lux-ink);
 }
 
-.sidebar-toggler:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(0, 123, 255, 0.3);
-}
-
-/* Remove underline effect for user profile nav-link */
-.nav-item.dropdown .nav-link {
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.nav-item.dropdown .nav-link::after {
+.admin-topbar__toggle {
   display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
+  background: var(--lux-ivory);
+  color: var(--lux-ink);
+  cursor: pointer;
 }
 
-/* Keep underline effect for other nav-links */
-.nav-link:not(.dropdown-toggle) {
-  position: relative;
-  transition: all 0.3s ease;
+.admin-topbar__toggle:hover {
+  border-color: var(--lux-champagne);
+  background: var(--lux-champagne-soft);
 }
 
-.nav-link:not(.dropdown-toggle)::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: 0;
-  left: 0;
-  background-color: #007bff;
-  transition: width 0.3s ease;
+.admin-topbar__icon {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
-.nav-link:not(.dropdown-toggle):hover::after {
-  width: 100%;
+.admin-topbar__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
 }
 
-/* Add hover effect for user profile */
-.nav-item.dropdown .nav-link:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+.admin-topbar__title {
+  font-family: var(--lux-font-serif);
+  font-size: 1.05rem;
+  color: var(--lux-ink);
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 639px) {
+  .admin-topbar__toggle {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 640px) {
+  .admin-topbar {
+    display: none;
+  }
 }

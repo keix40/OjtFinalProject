@@ -36,7 +36,6 @@ import { OrderTrackingComponent } from './order-tracking/order-tracking.componen
 // Product Components
 import { ProductComponent } from './product/product.component';
 import { ProductMangementComponent } from './product-mangement/product-mangement.component';
-import { ProductDisplayComponent } from './product-display/product-display.component';
 import { ProductDetailComponent } from './admin/product-detail/product-detail.component';
 import { CategoryListComponent } from './category-list/category-list.component';
 import { BrandListComponent } from './brand-list/brand-list.component';
@@ -207,7 +206,7 @@ const routes: Routes = [
   { path: 'checkout', component: CheckoutComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Checkout',  } },
   { path: 'checkout/payment', component: PaymentComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Payment',  } },
   { path: 'checkout/confirm', component: OrderConfirmComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Order Confirmation',  } },
-  { path: 'display', component: ProductDisplayComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Product Display',  } },
+  { path: 'display', redirectTo: 'userproductlist', pathMatch: 'full' },
   { path: 'wishlist', component: WishlistComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Wishlist',  } },
   { path: 'userproductlist', component: UserProductListComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'ProductList' } },
   { path: 'product/:id', component: UserProductDetailComponent, canActivate: [AuthGuard, BlacklistGuard], data: { breadcrumb: 'Product Detail' } },

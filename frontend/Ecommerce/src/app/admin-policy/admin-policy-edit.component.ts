@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Policy, PolicyService } from '../services/policy.service';
-import Swal from 'sweetalert2';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 @Component({
   selector: 'app-admin-policy-edit',
@@ -16,7 +16,6 @@ export class AdminPolicyEditComponent implements OnInit {
   policyId: number | null = null;
   policy: Policy | null = null;
 
-  // Quill configuration
   quillModules = {
     toolbar: [
       ['bold', 'italic', 'underline'],
@@ -37,7 +36,8 @@ export class AdminPolicyEditComponent implements OnInit {
     private policyService: PolicyService,
     private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private luxDialog: LuxDialogService
   ) {
     this.policyForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
@@ -57,7 +57,7 @@ export class AdminPolicyEditComponent implements OnInit {
 
   loadPolicy() {
     if (!this.policyId) return;
-    
+
     this.loading = true;
     this.policyService.getPolicyById(this.policyId).subscribe({
       next: (policy) => {
@@ -72,12 +72,7 @@ export class AdminPolicyEditComponent implements OnInit {
       error: (error) => {
         console.error('Error loading policy:', error);
         this.loading = false;
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to load policy. Please try again.',
-          confirmButtonText: 'OK'
-        }).then(() => {
+        this.luxDialog.error('Error', 'Failed to load policy. Please try again.').then(() => {
           this.router.navigate(['/admin/policies']);
         });
       }
@@ -91,12 +86,7 @@ export class AdminPolicyEditComponent implements OnInit {
     }
 
     if (!this.policyId) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Error',
-        text: 'Policy ID not found.',
-        confirmButtonText: 'OK'
-      });
+      this.luxDialog.error('Error', 'Policy ID not found.');
       return;
     }
 
@@ -105,30 +95,20 @@ export class AdminPolicyEditComponent implements OnInit {
     const data = {
       title: formData.title,
       content: formData.content,
-      status: parseInt(formData.status)
+      status: parseInt(formData.status, 10)
     };
 
     this.policyService.updatePolicy(this.policyId, data).subscribe({
       next: () => {
         this.loading = false;
-        Swal.fire({
-          icon: 'success',
-          title: 'Success!',
-          text: 'Policy updated successfully.',
-          confirmButtonText: 'OK'
-        }).then(() => {
+        this.luxDialog.success('Success', 'Policy updated successfully.').then(() => {
           this.router.navigate(['/admin/policies']);
         });
       },
       error: (error) => {
         this.loading = false;
         console.error('Error updating policy:', error);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to update policy. Please try again.',
-          confirmButtonText: 'OK'
-        });
+        this.luxDialog.error('Error', 'Failed to update policy. Please try again.');
       }
     });
   }
@@ -137,22 +117,18 @@ export class AdminPolicyEditComponent implements OnInit {
     this.router.navigate(['/admin/policies']);
   }
 
-  // Helper method to mark all form controls as touched
   private markFormGroupTouched() {
     Object.keys(this.policyForm.controls).forEach(key => {
-      const control = this.policyForm.get(key);
-      control?.markAsTouched();
+      this.policyForm.get(key)?.markAsTouched();
     });
   }
 
-  // Get form control for template access
   getFormControl(controlName: string) {
     return this.policyForm.get(controlName);
   }
 
-  // Check if form control has error
   hasError(controlName: string, errorType: string): boolean {
     const control = this.getFormControl(controlName);
     return control ? control.hasError(errorType) && control.touched : false;
   }
-} 
+}

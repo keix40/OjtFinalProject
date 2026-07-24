@@ -1,10 +1,122 @@
-/* Hide scrollbar for Chrome, Safari and Opera */
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
+.delivery-admin {
+  color: var(--lux-ink);
+}
+
+.admin-filter-fields,
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-filter-fields lux-field {
+  min-width: 16rem;
+  flex: 1;
+}
+
+.cell-strong { font-weight: 500; }
+.cell-muted { color: var(--lux-stone); font-size: 0.75rem; }
+.cell-stack { display: flex; flex-direction: column; gap: 0.2rem; }
+
+.admin-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--lux-stone);
+}
+
+.lux-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.lux-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 27, 25, 0.45);
+}
+
+.lux-modal__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 42rem;
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--lux-cream);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  box-shadow: var(--lux-shadow-lg);
+  padding: 1.25rem 1.5rem;
+}
+
+.lux-modal__header,
+.lux-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.lux-modal__footer {
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.lux-modal__title {
+  margin: 0;
+  font-family: var(--lux-font-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.lux-modal__close {
+  border: 0;
+  background: transparent;
+  font-size: 1.75rem;
+  color: var(--lux-stone);
+  cursor: pointer;
+}
+
+.lux-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.form-grid .span-2 {
+  grid-column: 1 / -1;
+}
+
+.field-error {
+  color: var(--lux-danger);
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.update-map {
+  width: 100%;
+  min-height: 180px;
+  height: 200px;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  background: var(--lux-ivory);
+}
+
+@media (max-width: 700px) {
+  .form-grid {
+    grid-template-columns: 1fr;
   }
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  
+}

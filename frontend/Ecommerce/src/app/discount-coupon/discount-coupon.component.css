@@ -1,173 +1,31 @@
-/* Coupon Insert Form - Styled to Match Discount Management */
-
-.container {
-  padding: 20px;
-  max-width: 600px;
-  margin: 0 auto;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-h2, h3 {
-  color: #2c3e50;
-  margin-top: 1.5rem;
-  margin-bottom: 1rem;
-  font-size: 2.2rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.coupon-form {
-  margin-top: 1.5rem;
-}
-
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px 32px;
-  margin-bottom: 24px;
-}
-
-.form-group {
+.admin-form-page { color: var(--lux-ink); }
+.admin-form-wrap { max-width: 42rem; }
+.admin-form-card { background: var(--lux-cream); }
+.admin-form {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
 }
-
-.form-label {
-  font-weight: 600;
-  color: #2c3e50;
-  font-size: 0.98rem;
-  margin-bottom: 6px;
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  background: var(--lux-porcelain) !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-sm) !important;
+  color: var(--lux-ink) !important;
 }
-
-.form-control, .form-select {
-  border-radius: 6px;
-  border: 1px solid #dfe6e9;
-  padding: 10px 12px;
-  font-size: 1rem;
-  background: #f9f9f9;
-  transition: border-color 0.3s;
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus {
+  outline: 2px solid var(--lux-champagne);
+  border-color: var(--lux-champagne) !important;
+  box-shadow: none !important;
 }
-
-.form-control:focus, .form-select:focus {
-  border-color: #667eea;
-  outline: none;
-  background: #fff;
-}
-
-.form-control.ng-invalid.ng-touched {
-  border-color: #e74c3c;
-}
-
-.text-danger.small {
-  font-size: 0.85rem;
-  color: #e74c3c;
-  margin-top: 2px;
-}
-
-.form-switch-row {
+.admin-form-actions {
   display: flex;
-  align-items: center;
-  gap: 18px;
-  margin: 18px 0 24px 0;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
-
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 28px;
-  margin-left: 1rem;
-  vertical-align: middle;
-}
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #e5e7eb;
-  transition: .4s;
-  border-radius: 34px;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-input:checked + .slider {
-  background-color: #2563eb;
-}
-input:checked + .slider:before {
-  transform: translateX(20px);
-}
-.switch-label {
-  margin-left: 10px;
-  font-weight: 500;
-  color: #34495e;
-}
-
-.form-actions {
-  display: flex;
-  gap: 16px;
-  margin-top: 10px;
-  justify-content: flex-end;
-}
-
-.btn-primary {
-  background: #27ae60;
-  color: white;
-}
-.btn-primary:hover {
-  background: #229954;
-}
-.btn-primary:disabled {
-  background: #95a5a6;
-  cursor: not-allowed;
-}
-.btn-secondary {
-  background: #95a5a6;
-  color: white;
-}
-.btn-secondary:hover {
-  background: #7f8c8d;
-}
-
-.alert-info {
-  font-size: 1rem;
-  margin-top: 1rem;
-  background: #eafaf1;
-  color: #229954;
-  border-radius: 6px;
-  padding: 10px 16px;
-}
-
-@media (max-width: 768px) {
-  .container {
-    padding: 10px;
-    max-width: 98vw;
-  }
-  .form-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-  .form-actions {
-    flex-direction: column;
-    gap: 10px;
-  }
-}
+.admin-form label { color: var(--lux-graphite); }
+.fixed.inset-0 .bg-white { background: var(--lux-cream) !important; }

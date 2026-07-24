@@ -203,6 +203,8 @@ export class OrderTrackingComponent {
 
   loadOrderTracking() {
     const orderId = this.route.snapshot.paramMap.get('orderId');
+    this.isLoading = true;
+    this.error = null;
     if (orderId) {
       this.orderService.getOrderById(+orderId).subscribe({
         next: (order) => {
@@ -218,6 +220,9 @@ export class OrderTrackingComponent {
           this.isLoading = false;
         }
       });
+    } else {
+      this.error = 'Order not found.';
+      this.isLoading = false;
     }
   }
   

@@ -1,70 +1,93 @@
-/* Custom styles for user-notifications component */
-/* Most styling is now handled by Tailwind CSS */
+:host { display: block; }
 
-/* Custom scrollbar for notifications list */
-.max-h-96::-webkit-scrollbar {
-  width: 6px;
+.notif-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
-.max-h-96::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
+.notif-list {
+  display: grid;
+  gap: 0.55rem;
+  max-height: 32rem;
+  overflow: auto;
 }
 
-.max-h-96::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+.notif-row {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 0.95rem 1.1rem;
+  cursor: pointer;
 }
 
-.max-h-96::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.notif-row.is-unread {
+  border-left: 2px solid var(--lux-champagne);
 }
 
-/* Smooth transitions */
-.transition-all {
-  transition: all 0.3s ease;
+.check { display: grid; place-items: center; padding-top: 0.2rem; }
+.check input { accent-color: var(--lux-champagne-deep); }
+
+.notif-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  place-items: center;
+  background: var(--lux-ivory);
+  border: var(--lux-border-hair);
+  color: var(--lux-champagne-deep);
+  flex-shrink: 0;
+}
+.notif-icon.is-discount { background: var(--lux-champagne-soft); }
+
+.notif-body { flex: 1; min-width: 0; }
+.notif-body p {
+  margin: 0 0 0.35rem;
+  color: var(--lux-ink);
+  line-height: 1.45;
+  font-size: 0.9375rem;
+}
+.notif-body small {
+  color: var(--lux-stone);
+  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-/* Loading states */
-.loading {
-  opacity: 0.6;
-  pointer-events: none;
+.notif-menu { position: relative; }
+.menu-btn {
+  border: 0;
+  background: transparent;
+  color: var(--lux-stone);
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 0.25rem 0.4rem;
 }
-
-/* Custom animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+.menu-pop {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 8rem;
+  background: var(--lux-cream);
+  border: var(--lux-border-hair);
+  box-shadow: var(--lux-shadow-md);
+  z-index: 5;
+  display: grid;
 }
-
-.notification-enter {
-  animation: fadeIn 0.3s ease-out;
+.menu-pop button {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.8rem;
+  color: var(--lux-ink);
 }
+.menu-pop button:hover { background: var(--lux-ivory); }
+.menu-pop .danger { color: var(--lux-danger); }
 
-/* Focus states for accessibility */
-button:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Custom dropdown positioning */
-.dropdown-menu {
-  z-index: 1000;
-}
-
-/* Hover effects for better UX */
-.notification-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Hide scrollbar for webkit browsers */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-/* Hide scrollbar for IE, Edge and Firefox */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.notif-foot {
+  margin: 1rem 0 0;
+  color: var(--lux-stone);
+  font-size: 0.85rem;
 }

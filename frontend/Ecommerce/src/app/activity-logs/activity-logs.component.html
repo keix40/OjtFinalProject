@@ -1,15 +1,8 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 activity-logs">
-  <div class="container mx-auto px-4 py-8">
-    <!-- Header Section -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-        <i data-lucide="activity" class="w-8 h-8 text-indigo-500"></i>
-      </div>
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">Activity Logs</h1>
-      <p class="text-gray-600 text-lg">Monitor and audit all system activities for security and compliance</p>
-    </div>
-
-    <!-- Success Notification -->
+<lux-page-shell variant="admin" shellClass="admin-page activity-logs-page activity-logs">
+  <lux-page-header variant="admin" eyebrow="Security" title="Activity Logs" subtitle="Monitor and audit all system activities for security and compliance">
+    <lux-button variant="secondary" (pressed)="refreshLogs()">Refresh</lux-button>
+  </lux-page-header>
+  <div class="activity-logs-body"><!-- Success Notification -->
     <div *ngIf="showExportSuccess" class="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2">
       <i data-lucide="check-circle" class="w-5 h-5"></i>
       <span>{{ exportSuccessMessage }}</span>
@@ -680,7 +673,6 @@
       </div>
     </div>
   </div>
-</div>
 
 <!-- Custom CSS for glassmorphism -->
 <style>
@@ -702,3 +694,4 @@
   transition: none !important;
 }
 </style>
+</lux-page-shell>

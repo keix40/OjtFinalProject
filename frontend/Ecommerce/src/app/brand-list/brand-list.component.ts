@@ -5,6 +5,7 @@ import { BrandListDTO, BrandDTO } from '../brand';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateBrandComponent } from '../create-brand/create-brand.component';
 import Swal from 'sweetalert2';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -12,38 +13,37 @@ import { saveAs } from 'file-saver';
 import { BrandUpdateComponent } from '../brand-update/brand-update.component';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { SelectionStore } from '../core/state/selection-store';
 
 @Component({
   selector: 'app-brand-list',
   standalone: false,
   templateUrl: './brand-list.component.html',
-  styleUrl: './brand-list.component.css'
+  styleUrl: './brand-list.component.css',
+  providers: [SelectionStore],
 })
 export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
   brands: BrandListDTO[] = [];
   filteredBrands: BrandListDTO[] = [];
-  selectedBrands: BrandListDTO[] = [];
   loading = false;
   searchTerm = '';
-  currentPage = 1;
+  /** 0-based page for lux-paginator */
+  currentPage = 0;
   itemsPerPage = 10;
   totalItems = 0;
   totalPages = 0;
 
-  // Track failed images
   failedImages = new Set<number>();
-
-  // Export dropdown states
   csvDropdownOpen = false;
   pdfDropdownOpen = false;
-
-  // Track if the modal is open
   isBrandModalOpen = false;
 
   constructor(
     private brandService: BrandService,
     private modalService: NgbModal,
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private luxDialog: LuxDialogService,
+    public selection: SelectionStore<number>
   ) {}
   public PermissionConstants = PermissionConstants;
 
@@ -67,17 +67,18 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.brands = data;
         this.filteredBrands = [...data];
         this.totalItems = data.length;
-        this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+        this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+        this.currentPage = 0;
+        this.selection.clear();
         this.loading = false;
       },
       error: (err) => {
         console.error('Error loading brands:', err);
         this.loading = false;
-        Swal.fire({
+        this.luxDialog.fire({
           icon: 'error',
           title: 'Error',
           text: 'Failed to load brands. Please try again.',
-          confirmButtonColor: '#3085d6'
         });
       }
     });
@@ -105,15 +106,17 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
     return name.charAt(0).toUpperCase();
   }
 
-  getBrandBackgroundColor(brand: BrandListDTO): string {
-    const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
-      'bg-indigo-500', 'bg-red-500', 'bg-yellow-500', 'bg-teal-500',
-      'bg-orange-500', 'bg-cyan-500', 'bg-lime-500', 'bg-emerald-500'
+  getBrandTone(brand: BrandListDTO): string {
+    const tones = [
+      'var(--lux-champagne-soft)',
+      'rgba(95,115,85,.18)',
+      'rgba(74,90,102,.18)',
+      'rgba(158,74,67,.15)',
+      'rgba(176,130,52,.18)',
     ];
     const name = brand.name?.toString() || '';
     const charCodeSum = name.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-    return colors[charCodeSum % colors.length];
+    return tones[charCodeSum % tones.length];
   }
 
   onSearch(): void {
@@ -121,56 +124,59 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
       this.filteredBrands = [...this.brands];
     } else {
       const searchLower = this.searchTerm.toLowerCase();
-      this.filteredBrands = this.brands.filter(brand => 
-        brand.name.toLowerCase().includes(searchLower) ||
-        brand.categories.some(cat => cat.name.toLowerCase().includes(searchLower))
+      this.filteredBrands = this.brands.filter(
+        (brand) =>
+          brand.name.toLowerCase().includes(searchLower) ||
+          brand.categories.some((cat) => cat.name.toLowerCase().includes(searchLower))
       );
     }
     this.totalItems = this.filteredBrands.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    this.currentPage = 1;
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+    this.currentPage = 0;
   }
 
   get paginatedBrands(): BrandListDTO[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredBrands.slice(startIndex, endIndex);
+    const startIndex = this.currentPage * this.itemsPerPage;
+    return this.filteredBrands.slice(startIndex, startIndex + this.itemsPerPage);
+  }
+
+  get pageIds(): number[] {
+    return this.paginatedBrands.map((b) => b.id);
+  }
+
+  get selectedCount(): number {
+    return this.selection.count();
+  }
+
+  get selectedBrands(): BrandListDTO[] {
+    const ids = new Set(this.selection.ids());
+    return this.filteredBrands.filter((b) => ids.has(b.id));
+  }
+
+  get allPageSelected(): boolean {
+    return this.selection.isPageAllSelected(this.pageIds);
+  }
+
+  get partialPageSelected(): boolean {
+    return this.selection.isPagePartialSelected(this.pageIds);
+  }
+
+  isRowSelected = (row: unknown): boolean =>
+    this.selection.isSelected((row as BrandListDTO).id);
+
+  trackById = (_i: number, row: unknown): number => (row as BrandListDTO).id;
+
+  onToggleAll(checked: boolean): void {
+    this.selection.setPage(this.pageIds, checked);
+  }
+
+  onToggleRow(event: { row: unknown; checked: boolean }): void {
+    this.selection.toggle((event.row as BrandListDTO).id, event.checked);
   }
 
   onPageChange(page: number): void {
+    if (page < 0 || (this.totalPages > 0 && page >= this.totalPages)) return;
     this.currentPage = page;
-  }
-
-  onBrandSelect(brand: BrandListDTO, event: any): void {
-    if (event.target.checked) {
-      this.selectedBrands.push(brand);
-    } else {
-      this.selectedBrands = this.selectedBrands.filter(b => b.id !== brand.id);
-    }
-  }
-
-  onSelectAll(event: any): void {
-    if (event.target.checked) {
-      this.selectedBrands = [...this.paginatedBrands];
-    } else {
-      this.selectedBrands = [];
-    }
-  }
-
-  isAllSelected(): boolean {
-    return this.selectedBrands.length === this.paginatedBrands.length && this.paginatedBrands.length > 0;
-  }
-
-  isBrandSelected(brand: BrandListDTO): boolean {
-    return this.selectedBrands.some(b => b.id === brand.id);
-  }
-
-  onCardSelect(brand: BrandListDTO): void {
-    if (this.isBrandSelected(brand)) {
-      this.selectedBrands = this.selectedBrands.filter(b => b.id !== brand.id);
-    } else {
-      this.selectedBrands.push(brand);
-    }
   }
 
   openCreateBrandModal(): void {
@@ -184,7 +190,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
       this.isBrandModalOpen = false;
       if (result === 'success') {
         this.loadBrands();
-        Swal.fire({
+        this.luxDialog.fire({
           icon: 'success',
           title: 'Success',
           text: 'Brand created successfully!',
@@ -208,7 +214,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
     modalRef.result.then((result) => {
       if (result === 'updated') {
         this.loadBrands();
-        Swal.fire({
+        this.luxDialog.fire({
           icon: 'success',
           title: 'Success',
           text: 'Brand updated successfully!',
@@ -221,38 +227,29 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  deleteBrand(brand: BrandListDTO): void {
-    Swal.fire({
+  async deleteBrand(brand: BrandListDTO): Promise<void> {
+    const confirmed = await this.luxDialog.confirm({
       title: 'Delete Brand',
       text: `Are you sure you want to delete "${brand.name}"? This action cannot be undone.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.brandService.deleteBrand(brand.id).subscribe({
-          next: () => {
-            this.loadBrands();
-            Swal.fire({
-              icon: 'success',
-              title: 'Deleted!',
-              text: 'Brand has been deleted successfully.',
-              timer: 2000,
-              showConfirmButton: false
-            });
-          },
-          error: (err) => {
-            console.error('Error deleting brand:', err);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Failed to delete brand. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
+      confirmText: 'Yes, delete it!',
+      destructive: true
+    });
+    if (!confirmed) return;
+
+    this.brandService.deleteBrand(brand.id).subscribe({
+      next: () => {
+        this.loadBrands();
+        this.luxDialog.fire({
+          icon: 'success',
+          title: 'Deleted!',
+          text: 'Brand has been deleted successfully.',
+          timer: 2000,
+          showConfirmButton: false
         });
+      },
+      error: (err) => {
+        console.error('Error deleting brand:', err);
+        this.luxDialog.error('Error', 'Failed to delete brand. Please try again.');
       }
     });
   }
@@ -277,17 +274,16 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
       const brandsToExport = type === 'selected' ? this.selectedBrands : this.filteredBrands;
       
       if (brandsToExport.length === 0) {
-        Swal.fire({
+        this.luxDialog.fire({
           icon: 'warning',
           title: 'No Data to Export',
           text: 'There are no brands to export.',
-          confirmButtonColor: '#3085d6'
         });
         return;
       }
 
       // Show loading
-      Swal.fire({
+      this.luxDialog.fire({
         title: 'Generating PDF Report...',
         text: 'Please wait while we prepare your report.',
         allowOutsideClick: false,
@@ -309,7 +305,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Brand report has been exported successfully.',
@@ -319,11 +315,10 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
           },
           error: (error) => {
             console.error('❌ Brand PDF export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the brand report to PDF. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
@@ -339,7 +334,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Brand report has been exported successfully.',
@@ -349,22 +344,20 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
           },
           error: (error) => {
             console.error('❌ Brand PDF export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the brand report to PDF. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
       }
     } catch (error) {
       console.error('Brand PDF export error:', error);
-      Swal.fire({
+      this.luxDialog.fire({
         icon: 'error',
         title: 'Export Failed',
         text: 'There was an error exporting to PDF. Please try again.',
-        confirmButtonColor: '#3085d6'
       });
     }
   }
@@ -374,17 +367,16 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
       const brandsToExport = type === 'selected' ? this.selectedBrands : this.filteredBrands;
       
       if (brandsToExport.length === 0) {
-        Swal.fire({
+        this.luxDialog.fire({
           icon: 'warning',
           title: 'No Data to Export',
           text: 'There are no brands to export.',
-          confirmButtonColor: '#3085d6'
         });
         return;
       }
 
       // Show loading
-      Swal.fire({
+      this.luxDialog.fire({
         title: 'Generating CSV Report...',
         text: 'Please wait while we prepare your report.',
         allowOutsideClick: false,
@@ -406,7 +398,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Brand report has been exported successfully.',
@@ -416,11 +408,10 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
           },
           error: (error) => {
             console.error('❌ Brand CSV export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the brand report to CSV. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
@@ -436,7 +427,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
             link.click();
             window.URL.revokeObjectURL(url);
 
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'success',
               title: 'Export Successful!',
               text: 'Brand report has been exported successfully.',
@@ -446,22 +437,20 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
           },
           error: (error) => {
             console.error('❌ Brand CSV export error:', error);
-            Swal.fire({
+            this.luxDialog.fire({
               icon: 'error',
               title: 'Export Failed',
               text: 'There was an error exporting the brand report to CSV. Please try again.',
-              confirmButtonColor: '#3085d6'
             });
           }
         });
       }
     } catch (error) {
       console.error('Brand CSV export error:', error);
-      Swal.fire({
+      this.luxDialog.fire({
         icon: 'error',
         title: 'Export Failed',
         text: 'There was an error exporting to CSV. Please try again.',
-        confirmButtonColor: '#3085d6'
       });
     }
   }
@@ -478,22 +467,5 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   hasImageFailed(brand: BrandListDTO): boolean {
     return this.failedImages.has(brand.id);
-  }
-
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    const maxVisiblePages = 5;
-    const startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
-    const endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
-    
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
-
-  // Math utility for template
-  get Math() {
-    return Math;
   }
 }

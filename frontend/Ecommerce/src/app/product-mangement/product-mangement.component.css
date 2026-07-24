@@ -1,132 +1,152 @@
-/* Modern Product Management Styles */
-
-/* Animation keyframes */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.pm-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-@keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    max-height: 500px;
-  }
+.pm-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0.75rem 1rem;
+  width: 100%;
+  min-width: min(100%, 42rem);
 }
 
-/* Animation classes */
-.animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
+.pm-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.animate-slide-down {
-  animation: slide-down 0.3s ease-out forwards;
-}
-
-/* Hover effects */
-.hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hover-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-/* Table styles */
-.table-container {
-  border-radius: 12px;
+.pm-table-panel {
+  padding: 0;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Checkbox styles */
-.custom-checkbox {
-  transition: all 0.2s ease;
+.pm-table-panel lux-paginator {
+  display: block;
+  padding: 0 1rem 0.25rem;
 }
 
-.custom-checkbox:checked {
-  background-color: #475569;
-  border-color: #475569;
+.pm-product-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 12rem;
 }
 
-/* Button hover effects */
-.btn-modern {
-  transition: all 0.2s ease;
+.pm-thumb {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--lux-radius-sm);
+  border: 1px solid var(--lux-fog);
+  background: var(--lux-ivory);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.btn-modern:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.pm-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* Status badge animations */
-.status-badge {
-  transition: all 0.2s ease;
+.pm-thumb__fallback {
+  color: var(--lux-stone);
+  font-size: 0.75rem;
 }
 
-.status-badge:hover {
-  transform: scale(1.05);
+.pm-product-name {
+  font-weight: 500;
+  color: var(--lux-ink);
 }
 
-/* Product image container */
-.product-image-container {
+.pm-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.35rem);
+  min-width: 13rem;
+  z-index: 20;
+  background: var(--lux-cream);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  box-shadow: var(--lux-shadow-md);
+  overflow: hidden;
+}
+
+.pm-dropdown__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.7rem 1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--lux-fog);
+  color: var(--lux-ink);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.pm-dropdown__item:last-child {
+  border-bottom: none;
+}
+
+.pm-dropdown__item:hover:not(:disabled) {
+  background: var(--lux-champagne-soft);
+}
+
+.pm-dropdown__item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.relative {
   position: relative;
-  overflow: hidden;
-  border-radius: 8px;
 }
 
-.product-image-container img {
-  transition: transform 0.3s ease;
+.pm-attr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid var(--lux-fog);
 }
 
-.product-image-container:hover img {
-  transform: scale(1.1);
+.pm-section-title {
+  margin: 0;
+  font-family: var(--lux-font-serif);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--lux-ink);
 }
 
-/* Dropdown animations */
-.dropdown-menu {
-  animation: slide-down 0.2s ease-out;
+.pm-attr-values {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: 28rem;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .action-buttons {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .dropdown-container {
-    width: 100%;
-  }
+.pm-color-swatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1px solid var(--lux-fog);
+  display: inline-block;
 }
 
-/* Loading states */
-.loading {
-  opacity: 0.6;
-  pointer-events: none;
+.pm-muted {
+  color: var(--lux-stone);
+  font-size: 0.8125rem;
 }
 
-/* Focus states for accessibility */
-.focus-visible:focus {
-  outline: 2px solid #475569;
-  outline-offset: 2px;
+.pm-row-actions {
+  display: inline-flex;
+  gap: 0.25rem;
 }
-
-/* Smooth transitions for all interactive elements */
-* {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}  

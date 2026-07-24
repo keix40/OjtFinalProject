@@ -2,12 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { PolicyService, Policy } from '../services/policy.service';
 import { FooterComponent } from '../footer/footer.component';
 import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
 
 @Component({
   selector: 'app-user-policy',
   standalone: true,
-  imports: [CommonModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent],
   templateUrl: './user-policy.component.html',
   styleUrls: ['./user-policy.component.css']
 })

@@ -6,18 +6,20 @@ import { ReturnRequestById } from '../return';
 import { RefundDTO } from '../refund';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import Swal from 'sweetalert2';
+import { RouterModule } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
 import { PriceFormatService } from '../services/price-format.service';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
 
 @Component({
   selector: 'app-return-detail',
   templateUrl: './return-detail.component.html',
   styleUrls: ['./return-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, RouterModule, LuxUiModule]
 })
 export class ReturnDetailComponent implements OnInit {
   returnDetail: ReturnRequestById | null = null;
@@ -47,7 +49,8 @@ export class ReturnDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private modalService: NgbModal,
     public permissionService: PermissionService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    private dialog: LuxDialogService
   ) {}
   public PermissionConstants = PermissionConstants;
 
@@ -96,7 +99,7 @@ export class ReturnDetailComponent implements OnInit {
     }).subscribe(() => {
       // Update the status locally so the UI updates immediately
       this.returnDetail!.status = 'APPROVED';
-      Swal.fire('Success', 'Return request approved!', 'success');
+      this.dialog.success('Approved', 'Return request approved.');
     });
   }
 
@@ -108,28 +111,27 @@ export class ReturnDetailComponent implements OnInit {
       adminRemark: this.adminRemark
     }).subscribe({
       next: () => {
-        // After rejection, restore order status to before cancellation
         this.orderService.getOrderById(this.returnDetail!.orderId).subscribe({
           next: (order) => {
             const statusBeforeCancellation = this.findStatusBeforeCancellation(order);
             const targetStatus = statusBeforeCancellation || 'PENDING';
             this.orderService.updateOrderStatus(this.returnDetail!.orderId, targetStatus).subscribe({
               next: () => {
-                Swal.fire('Success', `Return request rejected and order status restored to ${targetStatus}.`, 'success');
+                this.dialog.success('Rejected', `Return request rejected and order status restored to ${targetStatus}.`);
                 this.loadRequestDetail();
               },
               error: (error) => {
-                Swal.fire('Error', `Return request rejected but failed to update order status: ${error.error || error.message || 'Unknown error'}`, 'error');
+                this.dialog.error('Error', `Return request rejected but failed to update order status: ${error.error || error.message || 'Unknown error'}`);
               }
             });
           },
           error: (error) => {
-            Swal.fire('Error', `Return request rejected but failed to fetch order details: ${error.error || error.message || 'Unknown error'}`, 'error');
+            this.dialog.error('Error', `Return request rejected but failed to fetch order details: ${error.error || error.message || 'Unknown error'}`);
           }
         });
       },
       error: (error) => {
-        Swal.fire('Error', 'Failed to reject return request: ' + (error.error || error.message || 'Unknown error'), 'error');
+        this.dialog.error('Error', 'Failed to reject return request: ' + (error.error || error.message || 'Unknown error'));
       }
     });
   }
@@ -144,7 +146,7 @@ export class ReturnDetailComponent implements OnInit {
     };
 
     this.returnService.processRefund(refundDTO).subscribe(() => {
-      Swal.fire('Success', 'Refund sent successfully!', 'success');
+      this.dialog.success('Refund sent', 'Refund processed successfully.');
       this.loadRequestDetail();
     });
   }
@@ -158,12 +160,12 @@ export class ReturnDetailComponent implements OnInit {
     };
 
     this.returnService.processReplacement(requestBody).subscribe({
-      next: (response) => {
-        Swal.fire('Success', 'Replacement processed and order status set to PENDING.', 'success');
+      next: () => {
+        this.dialog.success('Replacement sent', 'Replacement processed and order status set to PENDING.');
         this.loadRequestDetail();
       },
       error: (error) => {
-        Swal.fire('Error', 'Failed to process replacement: ' + (error.error || error.message || 'Unknown error'), 'error');
+        this.dialog.error('Error', 'Failed to process replacement: ' + (error.error || error.message || 'Unknown error'));
       }
     });
   }
@@ -294,12 +296,12 @@ export class ReturnDetailComponent implements OnInit {
     this.orderService.updateOrderStatus(this.returnDetail.orderId, 'PENDING').subscribe({
       next: (response) => {
         console.log('Test order status update successful:', response);
-        Swal.fire('Success', 'Test order status update successful!', 'success');
-        this.loadRequestDetail(); // Reload to see changes
+        this.dialog.success('Success', 'Test order status update successful!');
+        this.loadRequestDetail();
       },
       error: (error) => {
         console.error('Test order status update failed:', error);
-        Swal.fire('Error', `Test failed: ${error.error || error.message || 'Unknown error'}`, 'error');
+        this.dialog.error('Error', `Test failed: ${error.error || error.message || 'Unknown error'}`);
       }
     });
   }

@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { UserOrderListDTO, OrderProductDTO } from '../user-order';
 import { ReturnService } from '../services/return.service';
 import { PriceFormatService } from '../services/price-format.service';
-import Swal from 'sweetalert2';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 @Component({
   selector: 'app-return-request',
@@ -27,7 +27,8 @@ export class ReturnRequestComponent implements OnInit {
     private orderService: OrderService,
     public activeModal: NgbActiveModal,
     private returnService : ReturnService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    private luxDialog: LuxDialogService
   ) {}
 
   ngOnInit() {
@@ -108,16 +109,7 @@ export class ReturnRequestComponent implements OnInit {
     });
     this.returnService.submitReturnRequest(formData).subscribe({
       next: () => {
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Return request submitted!',
-          showConfirmButton: false,
-          timer: 1500,
-          timerProgressBar: true,
-          customClass: { popup: 'swal2-toast' }
-        });
+        this.luxDialog.toast('Return request submitted!');
         this.activeModal.close("success");
       },
       error: err => {

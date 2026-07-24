@@ -1,325 +1,176 @@
-<div class="p-4 bg-slate-50 min-h-screen">
-<!-- Header Section (outside card) -->
-<div class="text-center mb-8 mt-8 font-poppins" style="font-family: 'Poppins', sans-serif;">
-  <h1 class="text-3xl md:text-4xl font-extrabold text-black mb-2">Return Request Details</h1>
-  <p class="text-gray-500 text-lg">Review and manage this return request</p>
-</div>
+<lux-page-shell variant="admin" shellClass="admin-page return-detail-admin">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Returns"
+    title="Return request"
+    subtitle="Review evidence, approve or reject, then process refund or replacement.">
+    <a actions class="lux-btn lux-btn--ghost" routerLink="/return">Back to list</a>
+  </lux-page-header>
 
-<div class="flex justify-center items-center min-h-[60vh] font-poppins" style="font-family: 'Poppins', sans-serif;">
-  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-gray-100 p-6 md:p-10 mx-auto">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-      <div><span class="font-semibold text-gray-600">Order Code:</span> <span class="text-gray-800">{{ returnDetail?.orderCode }}</span></div>
-      <div class="md:col-span-2">
-        <span class="font-semibold text-gray-600">Products:</span>
-        <div *ngIf="returnDetail && returnDetail.products && returnDetail.products.length > 0" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-          <div *ngFor="let p of returnDetail.products" class="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
-            <div class="flex items-center gap-2 mb-1">
-              <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-              <span class="font-bold text-slate-800">{{ p.productName }}</span>
-              <span *ngIf="p.sku" class="ml-2 text-xs text-slate-500">SKU: {{ p.sku }}</span>
+  <div class="page-panel detail-panel" *ngIf="returnDetail">
+    <div class="detail-grid">
+      <div><span class="cell-muted">Order code</span><div class="cell-strong">{{ returnDetail.orderCode }}</div></div>
+      <div><span class="cell-muted">Status</span>
+        <lux-badge [tone]="returnDetail.status === 'APPROVED' ? 'success' : returnDetail.status === 'REJECTED' ? 'danger' : returnDetail.status === 'PENDING' ? 'warning' : 'default'">
+          {{ returnDetail.status }}
+        </lux-badge>
+      </div>
+      <div class="span-2">
+        <span class="cell-muted">Products</span>
+        <div class="product-grid" *ngIf="returnDetail.products?.length">
+          <div *ngFor="let p of returnDetail.products" class="admin-panel product-card">
+            <div class="cell-strong">{{ p.productName }} <span class="cell-muted" *ngIf="p.sku">SKU {{ p.sku }}</span></div>
+            <div class="meta-row">
+              <span>Qty {{ p.quantity }}</span>
+              <span>{{ formatPriceOnly(p.unitPrice) }} MMK</span>
+              <span>{{ formatPriceOnly(p.totalAmount) }} MMK</span>
             </div>
-            <div class="flex flex-wrap gap-4 text-sm text-slate-700">
-              <div><span class="font-semibold">Qty:</span> {{ p.quantity }}</div>
-                              <div><span class="font-semibold">Unit Price:</span> {{ formatPriceOnly(p.unitPrice) }} MMK</div>
-                              <div><span class="font-semibold">Total:</span> {{ formatPriceOnly(p.totalAmount) }} MMK</div>
-            </div>
-            <div *ngIf="p.productRemark" class="text-xs text-rose-600 mt-1"><span class="font-semibold">Remark:</span> {{ p.productRemark }}</div>
+            <div *ngIf="p.productRemark" class="cell-danger">Remark: {{ p.productRemark }}</div>
           </div>
         </div>
       </div>
-      <div class="md:col-span-2"><span class="font-semibold text-gray-600">Return Reason:</span> <span class="text-gray-800">{{ returnDetail?.reasonForReturn }}</span></div>
-      <div class="md:col-span-2"><span class="font-semibold text-gray-600">Return Details:</span> <span class="text-gray-800">{{ returnDetail?.returnDetail }}</span></div>
+      <div class="span-2"><span class="cell-muted">Return reason</span><div>{{ returnDetail.reasonForReturn }}</div></div>
+      <div class="span-2"><span class="cell-muted">Return details</span><div>{{ returnDetail.returnDetail }}</div></div>
     </div>
 
-    <div class="mb-8" *ngIf="hasImages">
-      <h3 class="text-lg font-bold text-blue-700 mb-3">Attached Media</h3>
-      <div class="flex flex-wrap gap-4">
-        <ng-container *ngIf="previewImages.length > 0">
-          <ng-container *ngFor="let img of previewImages.slice(0, 4); let idx = index">
-            <ng-container *ngIf="idx < 3 || previewImages.length <= 4">
-              <img
-                [src]="'http://localhost:8080' + img"
-                class="w-32 h-32 object-cover rounded-xl border border-gray-200 shadow-md cursor-pointer hover:scale-105 transition-transform duration-200"
-                (click)="openMediaPreviewModal(idx)"
-                alt="return-image"
-              />
-            </ng-container>
-            <ng-container *ngIf="idx === 3 && previewImages.length > 4">
-              <div
-                class="w-32 h-32 relative rounded-xl border border-gray-200 shadow-md cursor-pointer overflow-hidden"
-                (click)="openMediaPreviewModal(3)"
-              >
-                <img
-                  [src]="'http://localhost:8080' + img"
-                  class="w-full h-full object-cover opacity-50"
-                  alt="return-image"
-                />
-                <div class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 text-white text-2xl font-bold">
-                  +{{ previewImages.length - 4 }}
-                </div>
-              </div>
-            </ng-container>
-          </ng-container>
-        </ng-container>
-      </div>
-    </div>
-
-    <!-- Image Modal as Modal Box -->
-    <ng-template #mediaPreviewModal let-modal>
-      <div class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-        <button type="button" class="absolute top-6 right-8 text-slate-200 hover:text-white text-3xl z-50" (click)="modal.dismiss()">&times;</button>
-        <div class="relative flex items-center justify-center w-full max-w-2xl">
-          <button *ngIf="imageModalCanGoLeft()" (click)="imageModalPrev()" class="absolute left-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    <div class="media-block" *ngIf="hasImages">
+      <h3 class="section-title">Attached media</h3>
+      <div class="media-row">
+        <ng-container *ngFor="let img of previewImages.slice(0, 4); let idx = index">
+          <button *ngIf="idx < 3 || previewImages.length <= 4" type="button" class="media-thumb" (click)="openMediaPreviewModal(idx)">
+            <img [src]="'http://localhost:8080' + img" alt="return media" />
           </button>
-          <img
-            [src]="'http://localhost:8080' + previewImages[selectedImageIndex!]"
-            alt="Preview"
-            class="max-h-[80vh] w-auto object-contain rounded-xl border border-gray-300 shadow z-40"
-          />
-          <button *ngIf="imageModalCanGoRight()" (click)="imageModalNext()" class="absolute right-0 top-1/2 -translate-y-1/2 bg-slate-800/60 hover:bg-slate-900/80 text-white rounded-full p-2 z-50 focus:outline-none">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          <button *ngIf="idx === 3 && previewImages.length > 4" type="button" class="media-thumb media-thumb--more" (click)="openMediaPreviewModal(3)">
+            <img [src]="'http://localhost:8080' + img" alt="return media" />
+            <span>+{{ previewImages.length - 4 }}</span>
           </button>
-        </div>
-      </div>
-    </ng-template>
-
-    <!-- Refund Information Card -->
-    <div
-      *ngIf="returnDetail && returnDetail.refundStatus"
-      class="w-full bg-white border-l-4 border-blue-500 border border-gray-200 rounded-2xl p-6 text-gray-800 shadow flex flex-col items-start mb-8 max-w-2xl mx-auto"
-    >
-      <div class="flex items-center gap-2 mb-2">
-        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#e0e7ef"/><path stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2l4-4"/></svg>
-        <span class="text-lg font-bold text-blue-600">Refund Information</span>
-        <span class="ml-2 bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full text-xs font-semibold shadow">
-          {{ returnDetail.refundStatus === 'replacement' ? 'REPLACEMENT' : 'REFUNDED' }}
-        </span>
-      </div>
-      <div class="mt-2 text-sm space-y-1 w-full">
-        <ng-container *ngIf="returnDetail.refundStatus === 'REPLACEMENT'">
-          <div>
-            <span class="font-semibold text-gray-600">Initiated At:</span>
-            <span class="font-mono">{{ returnDetail.initiatedAt | date:'medium' }}</span>
-          </div>
-          <div *ngIf="returnDetail.completedAt">
-            <span class="font-semibold text-gray-600">Completed At:</span>
-            <span class="font-mono">{{ returnDetail.completedAt | date:'medium' }}</span>
-          </div>
-          <div *ngIf="returnDetail.refundAdminRemark">
-            <span class="font-semibold text-gray-600">Admin Remark:</span>
-            <span class="font-mono">{{ returnDetail.refundAdminRemark }}</span>
-          </div>
-        </ng-container>
-        <ng-container *ngIf="returnDetail.refundStatus === 'MONEY_REFUND'">
-          <div>
-            <span class="font-semibold text-gray-600">Amount:</span>
-                            <span class="font-mono">{{ formatPriceOnly(returnDetail.refundAmount ?? 0) }} MMK</span>
-          </div>
-          <div>
-            <span class="font-semibold text-gray-600">Card:</span>
-            <span class="font-mono">****{{ returnDetail.cardNumber.slice(-4) }}</span>
-          </div>
-          <div>
-            <span class="font-semibold text-gray-600">Completed At:</span>
-            <span class="font-mono">{{ returnDetail.completedAt | date:'medium' }}</span>
-          </div>
-          <div *ngIf="returnDetail.refundAdminRemark">
-            <span class="font-semibold text-gray-600">Admin Remark:</span>
-            <span class="font-mono">{{ returnDetail.refundAdminRemark }}</span>
-          </div>
         </ng-container>
       </div>
     </div>
 
-    <!-- Cancelled State: Admin Rejected -->
-    <ng-container *ngIf="returnDetail?.status === 'REJECTED' && (returnDetail?.adminRemark || returnDetail?.decisionAt)">
-      <div class="w-full bg-white border-l-4 border-red-500 border border-gray-200 rounded-2xl p-6 text-gray-800 shadow flex flex-col items-start mb-8 max-w-2xl mx-auto">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#fee2e2"/><path stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 9l-6 6m0-6l6 6"/></svg>
-          <span class="text-lg font-bold text-red-600">Request Rejected</span>
-        </div>
-        <div class="mt-2 text-sm">
-          <div *ngIf="returnDetail?.adminRemark"><span class="font-semibold text-gray-600">Admin Remark:</span> <span class="font-mono">{{ returnDetail?.adminRemark }}</span></div>
-          <div *ngIf="returnDetail?.decisionAt"><span class="font-semibold text-gray-600">Rejected At:</span> <span class="font-mono">{{ returnDetail?.decisionAt | date:'medium' }}</span></div>
-        </div>
+    <div *ngIf="returnDetail.refundStatus" class="admin-panel status-card status-card--info">
+      <div class="status-card__title">
+        Refund information
+        <lux-badge tone="info">{{ returnDetail.refundStatus === 'replacement' || returnDetail.refundStatus === 'REPLACEMENT' ? 'REPLACEMENT' : 'REFUNDED' }}</lux-badge>
       </div>
-    </ng-container>
+      <ng-container *ngIf="returnDetail.refundStatus === 'REPLACEMENT'">
+        <div *ngIf="returnDetail.initiatedAt"><span class="cell-muted">Initiated</span> {{ returnDetail.initiatedAt | date:'medium' }}</div>
+        <div *ngIf="returnDetail.completedAt"><span class="cell-muted">Completed</span> {{ returnDetail.completedAt | date:'medium' }}</div>
+        <div *ngIf="returnDetail.refundAdminRemark"><span class="cell-muted">Admin remark</span> {{ returnDetail.refundAdminRemark }}</div>
+      </ng-container>
+      <ng-container *ngIf="returnDetail.refundStatus === 'MONEY_REFUND'">
+        <div><span class="cell-muted">Amount</span> {{ formatPriceOnly(returnDetail.refundAmount ?? 0) }} MMK</div>
+        <div><span class="cell-muted">Card</span> ****{{ returnDetail.cardNumber.slice(-4) }}</div>
+        <div><span class="cell-muted">Completed</span> {{ returnDetail.completedAt | date:'medium' }}</div>
+        <div *ngIf="returnDetail.refundAdminRemark"><span class="cell-muted">Admin remark</span> {{ returnDetail.refundAdminRemark }}</div>
+      </ng-container>
+    </div>
 
-    <!-- Cancelled State: User Cancelled -->
-    <ng-container *ngIf="returnDetail?.status === 'CANCELLED' && !(returnDetail?.adminRemark || returnDetail?.decisionAt)">
-      <div class="w-full bg-white border-l-4 border-gray-400 border border-gray-200 rounded-2xl p-6 text-gray-800 shadow flex flex-col items-start mb-8 max-w-2xl mx-auto">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#f3f4f6"/><path stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          <span class="text-lg font-bold text-gray-600">Request Cancelled</span>
-        </div>
-        <div class="mt-2 text-sm">
-          <div><span class="font-semibold text-gray-600">Cancelled At:</span> <span class="font-mono">{{ returnDetail?.cancelledAt | date:'medium' }}</span></div>
-        </div>
+    <div *ngIf="returnDetail?.status === 'REJECTED' && (returnDetail?.adminRemark || returnDetail?.decisionAt)" class="admin-panel status-card status-card--danger">
+      <div class="status-card__title">Request rejected</div>
+      <div *ngIf="returnDetail?.adminRemark"><span class="cell-muted">Admin remark</span> {{ returnDetail?.adminRemark }}</div>
+      <div *ngIf="returnDetail?.decisionAt"><span class="cell-muted">Rejected at</span> {{ returnDetail?.decisionAt | date:'medium' }}</div>
+    </div>
+
+    <div *ngIf="returnDetail?.status === 'CANCELLED' && !(returnDetail?.adminRemark || returnDetail?.decisionAt)" class="admin-panel status-card">
+      <div class="status-card__title">Request cancelled</div>
+      <div><span class="cell-muted">Cancelled at</span> {{ returnDetail?.cancelledAt | date:'medium' }}</div>
+    </div>
+
+    <ng-container *ngIf="!returnDetail?.refundId && returnDetail?.status !== 'CANCELLED' && returnDetail?.status !== 'REJECTED'">
+      <div *ngIf="returnDetail?.status === 'PENDING'" class="admin-panel">
+        <lux-field label="Admin remark">
+          <textarea class="lux-input" rows="3" [(ngModel)]="adminRemark" placeholder="Add remark…"></textarea>
+        </lux-field>
       </div>
-    </ng-container>
 
-    <!-- Only show admin remark and action buttons if NOT refunded, cancelled, or rejected -->
-    <ng-container *ngIf="!returnDetail?.refundId && returnDetail?.status !== 'CANCELLED' && returnDetail?.status !== 'REJECTED' ">
-      <div *ngIf="returnDetail?.status === 'PENDING' " class="mb-6">
-        <h3 class="text-lg font-bold text-blue-700 mb-2">Admin Remark</h3>
-        <textarea [(ngModel)]="adminRemark" placeholder="Add remark..." class="w-full min-h-[80px] p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 resize-none"></textarea>
-      </div>
-
-      <div class="flex flex-col md:flex-row justify-center gap-6 mt-6">
-        <!-- If status is APPROVED and refund exists, show refund info -->
+      <div class="action-stack">
         <ng-container *ngIf="returnDetail?.status === 'APPROVED' && hasRefund">
-          <div class="w-full bg-green-50 border border-green-200 rounded-xl p-4 text-green-800">
-            <div class="font-semibold mb-2">Refund Information</div>
-            <div>Amount: <span class="font-mono">{{ returnDetail?.refundAmount }} MMK</span></div>
-            <div>Date: <span class="font-mono">{{ returnDetail?.initiatedAt | date:'medium' }}</span></div>
-            <div>Admin Remark: <span class="font-mono">{{ returnDetail?.refundAdminRemark }}</span></div>
+          <div class="admin-panel status-card status-card--success">
+            <div class="status-card__title">Refund information</div>
+            <div>Amount: {{ returnDetail?.refundAmount }} MMK</div>
+            <div>Date: {{ returnDetail?.initiatedAt | date:'medium' }}</div>
+            <div>Admin remark: {{ returnDetail?.refundAdminRemark }}</div>
           </div>
         </ng-container>
 
-        <!-- Refund & Replacement Section: Auto visible when status is APPROVED and no refund done -->
         <ng-container *ngIf="showRefundSection">
-          <div class="w-full bg-white rounded-2xl shadow border border-gray-200 mt-10">
-            <div class="p-6 border-b border-gray-100 bg-gray-50 flex items-center">
-              <div class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                {{ refundOrReplacement === 'refund' ? 'R' : 'P' }}
-              </div>
-              <h2 class="text-xl font-semibold text-gray-900 ml-3">
-                {{ refundOrReplacement === 'refund' ? 'Refund' : 'Replacement' }} Details
-              </h2>
+          <div class="admin-panel refund-panel">
+            <div class="section-title">{{ refundOrReplacement === 'refund' ? 'Refund' : 'Replacement' }} details</div>
+            <div class="radio-row">
+              <label><input type="radio" [(ngModel)]="refundOrReplacement" value="refund" /> Refund</label>
+              <label><input type="radio" [(ngModel)]="refundOrReplacement" value="replacement" /> Replacement</label>
             </div>
 
-            <!-- Radio Toggle -->
-            <div class="flex justify-center gap-8 mt-6 mb-4">
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" [(ngModel)]="refundOrReplacement" value="refund" class="accent-blue-500" />
-                <span class="font-medium text-gray-700">Refund</span>
-              </label>
-              <label class="flex items-center gap-2 cursor-pointer">
-                <input type="radio" [(ngModel)]="refundOrReplacement" value="replacement" class="accent-blue-500" />
-                <span class="font-medium text-gray-700">Replacement</span>
-              </label>
-            </div>
+            <ng-container *ngIf="refundOrReplacement === 'refund'">
+              <lux-field label="Refund amount">
+                <input class="lux-input" type="number" [(ngModel)]="refundAmount" />
+              </lux-field>
+              <lux-field label="Refund to card">
+                <select class="lux-input" [(ngModel)]="selectedCard">
+                  <option [value]="returnDetail?.cardNumber">**** {{ returnDetail?.cardNumber?.slice(-4) }}</option>
+                </select>
+              </lux-field>
+            </ng-container>
 
-            <div class="p-6">
-              <!-- Refund Form -->
-              <ng-container *ngIf="refundOrReplacement === 'refund'">
-                <div class="mb-4">
-                  <label class="block text-gray-600 font-medium mb-1">Refund Amount</label>
-                  <input
-                    type="number"
-                    [(ngModel)]="refundAmount"
-                    class="w-full p-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
-                  />
-                </div>
-                <div class="mb-4">
-                  <label class="block text-gray-600 font-medium mb-1">Refund To Card</label>
-                  <select
-                    [(ngModel)]="selectedCard"
-                    class="w-full p-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50"
-                  >
-                    <option [value]="returnDetail?.cardNumber">
-                      **** {{ returnDetail?.cardNumber?.slice(-4) }}
-                    </option>
-                  </select>
-                </div>
-              </ng-container>
-
-              <!-- Replacement Info -->
-              <ng-container *ngIf="refundOrReplacement === 'replacement'">
-                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                  <div class="flex items-center gap-2 mb-2">
-                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span class="font-medium text-blue-800">Replacement Process</span>
-                  </div>
-                  <div class="text-sm text-blue-700 space-y-1">
-                    <p>• Product will be resent to the customer</p>
-                    <p>• Order tracking will restart from the beginning</p>
-                    <p>• Order status will be updated to: <span class="font-semibold">{{ statusBeforeCancellation || 'PENDING' }}</span></p>
-                    <p>• Replacement will be initiated at: <span class="font-mono">{{ getCurrentDateTime() }}</span></p>
-                  </div>
-                </div>
-
-                <!-- Order Status History -->
-                <div *ngIf="orderDetails?.statusHistory?.length > 0" class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
-                  <div class="flex items-center gap-2 mb-3">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span class="font-medium text-gray-800">Order Status History</span>
-                  </div>
-                  <div class="space-y-2">
-                    <div *ngFor="let status of orderDetails.statusHistory; let i = index" 
-                         class="flex items-center gap-3 text-sm">
-                      <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full"
-                             [ngClass]="{
-                               'bg-green-500': status.status === 'DELIVERED',
-                               'bg-blue-500': status.status === 'PAID' || status.status === 'SHIPPED',
-                               'bg-red-500': status.status === 'CANCELLED',
-                               'bg-yellow-500': status.status === 'PENDING',
-                               'bg-purple-500': status.status === 'PROCESSING',
-                               'bg-gray-500': ['DELIVERED','PAID','CANCELLED','SHIPPED','PENDING','PROCESSING'].indexOf(status.status) === -1
-                             }"></div>
-                        <span class="font-medium">{{ status.status }}</span>
-                      </div>
-                      <span class="text-gray-500">{{ status.statusDate | date:'medium' }}</span>
-                      <span *ngIf="status.status === 'CANCELLED'" class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
-                        Current
-                      </span>
-                    </div>
-                  </div>
-                  <div *ngIf="statusBeforeCancellation" class="mt-3 p-2 bg-green-100 border border-green-200 rounded">
-                    <span class="text-sm text-green-800">
-                      <strong>Status before cancellation:</strong> {{ statusBeforeCancellation }}
-                    </span>
-                  </div>
-                </div>
-              </ng-container>
-
-              <!-- Admin Remark (Shared) -->
-              <div class="mb-4">
-                <label class="block text-gray-600 font-medium mb-1">Admin Remark</label>
-                <textarea
-                  [(ngModel)]="adminRemark"
-                  placeholder="Add remark..."
-                  class="w-full min-h-[80px] p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 bg-gray-50 resize-none"
-                ></textarea>
+            <ng-container *ngIf="refundOrReplacement === 'replacement'">
+              <div class="admin-panel lux-note">
+                <div class="cell-strong">Replacement process</div>
+                <p>• Product will be resent to the customer</p>
+                <p>• Order tracking will restart from the beginning</p>
+                <p>• Order status will be updated to: <strong>{{ statusBeforeCancellation || 'PENDING' }}</strong></p>
+                <p>• Replacement will be initiated at: {{ getCurrentDateTime() }}</p>
               </div>
-
-              <!-- Action Buttons -->
-              <div class="flex justify-end gap-4 flex-wrap">
-                <button
-                  *ngIf="refundOrReplacement === 'refund'"
-                  class="px-6 py-2 rounded-xl bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  (click)="onSendRefund()"
-                >
-                  Send Refund
-                </button>
-                <button
-                  *ngIf="refundOrReplacement === 'replacement'"
-                  class="px-6 py-2 rounded-xl bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  (click)="onSendReplacement()"
-                >
-                  Send Replacement
-                </button>
+              <div *ngIf="orderDetails?.statusHistory?.length > 0" class="admin-panel">
+                <div class="section-title">Order status history</div>
+                <div class="history-row" *ngFor="let status of orderDetails.statusHistory">
+                  <lux-badge [tone]="status.status === 'DELIVERED' ? 'success' : status.status === 'CANCELLED' ? 'danger' : status.status === 'PENDING' ? 'warning' : 'info'">
+                    {{ status.status }}
+                  </lux-badge>
+                  <span class="cell-muted">{{ status.statusDate | date:'medium' }}</span>
+                </div>
+                <div *ngIf="statusBeforeCancellation" class="lux-note mt-2">
+                  Status before cancellation: <strong>{{ statusBeforeCancellation }}</strong>
+                </div>
               </div>
+            </ng-container>
+
+            <lux-field label="Admin remark">
+              <textarea class="lux-input" rows="3" [(ngModel)]="adminRemark" placeholder="Add remark…"></textarea>
+            </lux-field>
+
+            <div class="action-row">
+              <lux-button *ngIf="refundOrReplacement === 'refund'" variant="primary" (pressed)="onSendRefund()">Send refund</lux-button>
+              <lux-button *ngIf="refundOrReplacement === 'replacement'" variant="primary" (pressed)="onSendReplacement()">Send replacement</lux-button>
             </div>
           </div>
         </ng-container>
 
-        <!-- Otherwise, show Approve/Reject buttons -->
-        <ng-container *ngIf="returnDetail?.status !== 'APPROVED'">
-          <button (click)="onApprove()" class="px-8 py-2 rounded-xl bg-slate-600 text-white font-semibold shadow hover:bg-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="!permissionService.hasPermission(PermissionConstants.REFUND_UPDATE)">Approve</button>
-          <button (click)="onReject()" class="px-8 py-2 rounded-xl border border-slate-300 text-slate-700 font-semibold shadow hover:bg-slate-50 transition"
-            [disabled]="!permissionService.hasPermission(PermissionConstants.REFUND_UPDATE)">Reject</button>
-        </ng-container>
+        <div class="action-row" *ngIf="returnDetail?.status !== 'APPROVED'">
+          <lux-button
+            variant="primary"
+            [disabled]="!permissionService.hasPermission(PermissionConstants.REFUND_UPDATE)"
+            (pressed)="onApprove()">
+            Approve
+          </lux-button>
+          <lux-button
+            variant="secondary"
+            [disabled]="!permissionService.hasPermission(PermissionConstants.REFUND_UPDATE)"
+            (pressed)="onReject()">
+            Reject
+          </lux-button>
+        </div>
       </div>
     </ng-container>
   </div>
-</div>
-</div> 
+</lux-page-shell>
+
+<ng-template #mediaPreviewModal let-modal>
+  <div class="lux-media-modal">
+    <div class="lux-media-modal__backdrop"></div>
+    <button type="button" class="lux-media-modal__close" (click)="modal.dismiss()">&times;</button>
+    <button *ngIf="imageModalCanGoLeft()" type="button" class="lux-media-modal__nav left" (click)="imageModalPrev()">‹</button>
+    <img [src]="'http://localhost:8080' + previewImages[selectedImageIndex!]" alt="Preview" />
+    <button *ngIf="imageModalCanGoRight()" type="button" class="lux-media-modal__nav right" (click)="imageModalNext()">›</button>
+  </div>
+</ng-template>

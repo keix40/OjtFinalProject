@@ -4,8 +4,7 @@ import { AuthService } from '../auth/auth.service';
 import { Router } from '@angular/router';
 import { UserDetails } from '../user-profile/user-details';
 import { ImageService } from '../services/image.service';
-
-declare var bootstrap: any;
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 @Component({
   selector: 'app-admin-profile',
@@ -27,7 +26,8 @@ export class AdminProfileComponent implements OnInit {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private imageService: ImageService
+    private imageService: ImageService,
+    private luxDialog: LuxDialogService
   ) { }
 
   ngOnInit(): void {
@@ -96,7 +96,6 @@ export class AdminProfileComponent implements OnInit {
         next: (response: any) => {
           if (response.token) {
             this.authService.saveToken(response.token);
-            // Immediately update adminDetails from new JWT
             const newDecoded = this.authService.getDecodedToken();
             if (newDecoded) {
               this.adminDetails = {
@@ -119,18 +118,21 @@ export class AdminProfileComponent implements OnInit {
           this.originalAvatarUrl = this.adminDetails?.profileImage || null;
           this.previewAvatarUrl = null;
           this.selectedAvatarFile = null;
-          this.isEditing = false;
           this.personalInfoForm.disable();
+          this.luxDialog.success('Saved', 'Profile updated successfully.');
         },
         error: (error) => {
           console.error('Update failed:', error);
           if (error.status === 401) {
             this.authService.logout();
             this.router.navigate(['/login']);
+            return;
           }
+          this.luxDialog.error('Error', 'Failed to update profile. Please try again.');
         }
       });
     };
+
     if (this.selectedAvatarFile) {
       this.authService.uploadProfileImage(this.selectedAvatarFile).subscribe({
         next: (response: any) => {
@@ -140,7 +142,7 @@ export class AdminProfileComponent implements OnInit {
         },
         error: (err) => {
           console.error('Avatar upload failed:', err);
-          alert('Failed to upload avatar image.');
+          this.luxDialog.error('Error', 'Failed to upload avatar image.');
         }
       });
     } else {
@@ -173,7 +175,7 @@ export class AdminProfileComponent implements OnInit {
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
       if (!file.type.startsWith('image/')) {
-        alert('Only image files are allowed!');
+        this.luxDialog.warning('Invalid file', 'Only image files are allowed.');
         return;
       }
       this.selectedAvatarFile = file;
@@ -217,7 +219,15 @@ export class AdminProfileComponent implements OnInit {
     return this.imageService.getAvatarImageUrl({});
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    const confirmed = await this.luxDialog.confirm({
+      title: 'Sign out?',
+      text: 'You will need to sign in again to access the admin portal.',
+      confirmText: 'Logout',
+      cancelText: 'Stay',
+      destructive: true
+    });
+    if (!confirmed) return;
     this.authService.logout();
     this.router.navigate(['/login']);
   }

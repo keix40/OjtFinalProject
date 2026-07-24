@@ -1,0 +1,15 @@
+<!-- Admin top bar: mobile rail toggle only — profile/inbox live in the sidebar -->
+<header class="admin-topbar">
+  <button
+    type="button"
+    class="admin-topbar__toggle"
+    (click)="toggleSidebar()"
+    aria-label="Toggle navigation"
+  >
+    <i data-lucide="menu" class="admin-topbar__icon"></i>
+  </button>
+  <div class="admin-topbar__brand">
+    <span class="lux-overline">Britium Gallery</span>
+    <span class="admin-topbar__title">Command Center</span>
+  </div>
+</header>

@@ -1,22 +1,119 @@
-/* Custom styles for user personal info component */
-/* All styling is now handled by Tailwind CSS classes in the template */
+:host { display: block; }
 
-/* Optional: Add any custom animations or specific styles here if needed */
-.personal-info-hover {
-  transition: all 0.2s ease-in-out;
+.personal-grid {
+  display: grid;
+  gap: 1.5rem;
 }
 
-.personal-info-hover:hover {
-  transform: translateY(-2px);
+@media (min-width: 900px) {
+  .personal-grid {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    align-items: start;
+  }
 }
 
-/* Hide scrollbar for webkit browsers */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+.personal-aside,
+.personal-form {
+  padding: 1.5rem;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.avatar-wrap {
+  position: relative;
+  width: 10rem;
+  height: 10rem;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--lux-fog);
+  border: var(--lux-border-hair);
 }
+
+.avatar-wrap img,
+.avatar-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--lux-stone);
+}
+
+.avatar-fallback svg { width: 3rem; height: 3rem; }
+
+.avatar-edit {
+  position: absolute;
+  inset: auto 0 0;
+  border: 0;
+  background: rgba(28, 27, 25, 0.72);
+  color: var(--lux-porcelain);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.55rem 0.25rem;
+}
+
+.vip-block { text-align: center; margin-bottom: 1rem; }
+.vip-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.35rem 0;
+  font-family: var(--lux-font-serif);
+  font-size: 1.35rem;
+}
+.vip-points { margin: 0; color: var(--lux-graphite); font-size: 0.875rem; }
+.vip-progress { margin-top: 1rem; text-align: left; }
+.vip-progress p { margin: 0 0 0.5rem; font-size: 0.8rem; color: var(--lux-stone); }
+.vip-bar {
+  height: 0.35rem;
+  background: var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
+  overflow: hidden;
+}
+.vip-bar span {
+  display: block;
+  height: 100%;
+  background: var(--lux-champagne);
+}
+.vip-top { margin-top: 0.75rem; color: var(--lux-success); font-size: 0.85rem; }
+
+.form-stack { display: grid; gap: 1.25rem; }
+.form-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+@media (min-width: 640px) {
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .span-2 { grid-column: 1 / -1; }
+}
+.phone-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+.phone-row .lux-input { flex: 1 1 12rem; }
+.otp-msg { margin: 0.5rem 0 0; font-size: 0.75rem; }
+.otp-msg.is-ok { color: var(--lux-success); }
+.otp-msg.is-err { color: var(--lux-danger); }
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: var(--lux-border-hair);
+}
+.verify-copy { color: var(--lux-graphite); margin-bottom: 1rem; }
+.lux-modal {
+  background: var(--lux-cream);
+  border: var(--lux-border-hair);
+  border-radius: var(--lux-radius-md);
+}
+.lux-modal .modal-title {
+  font-family: var(--lux-font-serif);
+  font-weight: 500;
+}
+.hidden { display: none; }

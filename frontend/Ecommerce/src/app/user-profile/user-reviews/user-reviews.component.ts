@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, TemplateRef, HostListener } from '@angula
 import { ReviewService } from '../../services/review.service';
 import { AuthService } from '../../auth/auth.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import Swal from 'sweetalert2';
+import { LuxDialogService } from '../../shared/dialog/lux-dialog.service';
 
 interface Review {
   id: number;
@@ -48,7 +48,8 @@ export class UserReviewsComponent implements OnInit {
   constructor(
     private reviewService: ReviewService, 
     private authService: AuthService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private luxDialog: LuxDialogService
   ) { }
 
   ngOnInit(): void {
@@ -228,46 +229,27 @@ export class UserReviewsComponent implements OnInit {
     this.reviewService.sendReview(formData).subscribe({
       next: (updatedReview) => {
         this.closeEditModal();
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Review updated successfully!',
-          showConfirmButton: false,
-          timer: 1500,
-          timerProgressBar: true,
-          customClass: { popup: 'swal2-toast' }
-        });
+        this.luxDialog.toast('Review updated successfully!');
         // Optionally reload reviews to show update
         this.loadUserReviews();
       },
       error: () => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Failed to update review',
-          showConfirmButton: true,
-          confirmButtonText: 'OK'
-        });
+        this.luxDialog.error('Failed to update review');
       }
     });
   }
 
-  deleteReview(review: Review) {
-    Swal.fire({
-      title: 'Are you sure?',
+  async deleteReview(review: Review) {
+    const confirmed = await this.luxDialog.confirm({
+      title: 'Delete this review?',
       text: 'Do you want to delete this review?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        // Actually delete the review
-        this.userReviews = this.userReviews.filter(r => r.id !== review.id);
-        Swal.fire('Deleted!', 'Your review has been deleted.', 'success');
-      }
+      confirmText: 'Delete',
+      destructive: true,
     });
+    if (!confirmed) return;
+    // Actually delete the review
+    this.userReviews = this.userReviews.filter(r => r.id !== review.id);
+    this.luxDialog.success('Deleted', 'Your review has been deleted.');
   }
 
   getAverageRating(): string {

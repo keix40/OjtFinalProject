@@ -1,473 +1,273 @@
-<!-- Modern Product Form Container -->
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-  <div class="max-w-4xl mx-auto">
-    <!-- Header Section -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-        <i data-lucide="package-plus" class="w-8 h-8 text-indigo-500"></i>
-      </div>
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ editMode ? 'Edit Product' : 'Create New Product' }}</h1>
-      <p class="text-gray-600 text-lg">{{ editMode ? 'Update product information below' : 'Add a new product to your inventory' }}</p>
-    </div>
+<lux-page-shell variant="admin" shellClass="admin-page product-form-page">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Catalogue"
+    [title]="editMode ? 'Edit Product' : 'Create Product'"
+    [subtitle]="editMode ? 'Update product information below.' : 'Add a new product to the inventory.'"
+  >
+  </lux-page-header>
 
-    <!-- Main Form -->
-    <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="space-y-8">
-      
-      <!-- Basic Information Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
-        <div class="flex items-center gap-3 mb-6">
-          <i data-lucide="info" class="w-5 h-5 text-slate-500"></i>
-          <h2 class="text-xl font-semibold text-slate-800">Basic Information</h2>
-        </div>
-        
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Product Name -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-700">
-              <i data-lucide="tag" class="w-4 h-4 inline mr-2"></i>
-              Product Name
-            </label>
-        <input 
-          type="text" 
-              class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" 
-          formControlName="productName"
-              placeholder="Enter product name">
-            <div *ngIf="productForm.get('productName')?.invalid && productForm.get('productName')?.touched" class="text-red-500 text-sm flex items-center gap-1">
-              <i data-lucide="alert-circle" class="w-4 h-4"></i>
-              <span *ngIf="productForm.get('productName')?.errors?.['required']">Product name is required</span>
-              <span *ngIf="productForm.get('productName')?.errors?.['minlength']">Product name must be at least 3 characters</span>
-        </div>
+  <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form">
+    <section class="page-panel product-form__panel">
+      <h2 class="product-form__section-title">Basic Information</h2>
+      <div class="admin-form-grid">
+        <lux-field label="Product Name" inputId="pf-name"
+          [error]="productForm.get('productName')?.invalid && productForm.get('productName')?.touched ? (productForm.get('productName')?.errors?.['required'] ? 'Product name is required' : 'At least 3 characters') : ''">
+          <input id="pf-name" type="text" class="lux-input" formControlName="productName" placeholder="Enter product name" />
+        </lux-field>
+
+        <lux-field label="Price" inputId="pf-price"
+          [error]="productForm.get('price')?.invalid && productForm.get('price')?.touched ? (productForm.get('price')?.errors?.['required'] ? 'Price is required' : 'Price must be greater than 0') : ''">
+          <input id="pf-price" type="number" class="lux-input" formControlName="price" min="0" placeholder="Enter price" />
+        </lux-field>
+
+        <lux-field label="Quantity" inputId="pf-qty"
+          [error]="productForm.get('quantity')?.invalid && productForm.get('quantity')?.touched ? (productForm.get('quantity')?.errors?.['required'] ? 'Quantity is required' : 'Quantity must be 0 or greater') : ''">
+          <input id="pf-qty" type="number" class="lux-input" formControlName="quantity" min="0" placeholder="Enter quantity" />
+        </lux-field>
+
+        <lux-field label="Status" inputId="pf-status">
+          <select id="pf-status" class="lux-select" formControlName="status">
+            <option [ngValue]="1">Active</option>
+            <option [ngValue]="0">Inactive</option>
+          </select>
+        </lux-field>
       </div>
 
-          <!-- Price -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-700">
-              <!-- <i data-lucide="dollar-sign" class="w-4 h-4 inline mr-2"></i>
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="20" height="12" x="2" y="6" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg> -->
-              Price
-            </label>
-            <div class="relative">
-              <!-- <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500"></span> -->
-              <input 
-                type="number" 
-                class="w-full pl-8 pr-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" 
-                formControlName="price"
-                min="0" 
-                placeholder="Enter price">
-            </div>
-            <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="text-red-500 text-sm flex items-center gap-1">
-              <i data-lucide="alert-circle" class="w-4 h-4"></i>
-              <span *ngIf="productForm.get('price')?.errors?.['required']">Price is required</span>
-              <span *ngIf="productForm.get('price')?.errors?.['min']">Price must be greater than 0</span>
-        </div>
-      </div>
+      <lux-field
+        class="product-form__full"
+        label="Description"
+        inputId="pf-desc"
+        [error]="productForm.get('description')?.invalid && productForm.get('description')?.touched ? (productForm.get('description')?.errors?.['required'] ? 'Description is required' : 'At least 10 characters') : ''"
+      >
+        <textarea id="pf-desc" class="lux-input product-form__textarea" rows="4" formControlName="description" placeholder="Enter product description…"></textarea>
+      </lux-field>
+    </section>
 
-          <!-- Quantity -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-700">
-              <i data-lucide="package" class="w-4 h-4 inline mr-2"></i>
-              Quantity
-            </label>
-            <input 
-              type="number" 
-              class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" 
-              formControlName="quantity"
-              min="0" 
-              placeholder="Enter quantity">
-            <div *ngIf="productForm.get('quantity')?.invalid && productForm.get('quantity')?.touched" class="text-red-500 text-sm flex items-center gap-1">
-              <i data-lucide="alert-circle" class="w-4 h-4"></i>
-              <span *ngIf="productForm.get('quantity')?.errors?.['required']">Quantity is required</span>
-              <span *ngIf="productForm.get('quantity')?.errors?.['min']">Quantity must be 0 or greater</span>
-            </div>
-          </div>
-
-          <!-- Status -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-700">
-              <i data-lucide="toggle-left" class="w-4 h-4 inline mr-2"></i>
-              Status
-            </label>
-            <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" formControlName="status">
-              <option value=1>Active</option>
-              <option value=0>Inactive</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Description -->
-        <div class="mt-6 space-y-2">
-          <label class="block text-sm font-medium text-slate-700">
-            <i data-lucide="file-text" class="w-4 h-4 inline mr-2"></i>
-            Description
-          </label>
-          <textarea 
-            class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200 resize-none" 
-            rows="4" 
-            formControlName="description"
-            placeholder="Enter product description..."></textarea>
-          <div *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched" class="text-red-500 text-sm flex items-center gap-1">
-            <i data-lucide="alert-circle" class="w-4 h-4"></i>
-            <span *ngIf="productForm.get('description')?.errors?.['required']">Description is required</span>
-            <span *ngIf="productForm.get('description')?.errors?.['minlength']">Description must be at least 10 characters</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Categories & Brands Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
-        <div class="flex items-center gap-3 mb-6">
-          <i data-lucide="layers" class="w-5 h-5 text-slate-500"></i>
-          <h2 class="text-xl font-semibold text-slate-800">Categories & Brands</h2>
-        </div>
-        
-        <div formArrayName="categoryBrandArray" class="space-y-4">
-          <div *ngFor="let group of categoryBrandArray.controls; let i = index" [formGroupName]="i" class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
-            <div class="flex-1">
-              <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" formControlName="categoryId" (change)="onCategoryChange(i)">
-                  <option [ngValue]="null" disabled>Select Category</option>
-                  <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
-                  <option [ngValue]="'add_new_category'">+ Add New Category</option>
-                </select>
-              </div>
-            <div class="flex-1">
-              <select class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-all duration-200" formControlName="brandId" (change)="onBrandChange(i)">
-                  <option [ngValue]="null">No Brand</option>
-                  <option *ngFor="let brand of group.value.availableBrands" [ngValue]="brand.id">{{ brand.name }}</option>
-                  <option [ngValue]="'add_new_brand'">+ Add New Brand</option>
-                </select>
-              </div>
-            <div class="flex items-center gap-2">
-              <button type="button" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200" (click)="removeCategoryBrandPair(i)" [disabled]="categoryBrandArray.length === 1">
-                <i data-lucide="trash-2" class="w-5 h-5"></i>
-              </button>
-              <button type="button" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-all duration-200" (click)="addCategoryBrandPair()" *ngIf="i === categoryBrandArray.length - 1">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Image Upload Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
-        <div class="flex items-center gap-3 mb-6">
-          <i data-lucide="image" class="w-5 h-5 text-slate-500"></i>
-          <h2 class="text-xl font-semibold text-slate-800">Product Images</h2>
-      </div>
-
-        <div class="upload-area" 
-             (click)="fileInput.click()"
-             (dragover)="onDragOver($event)"
-             (dragleave)="onDragLeave($event)"
-             (drop)="onDrop($event)"
-             [class.dragging]="isDragging"
-             class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-slate-400 transition-all duration-200 cursor-pointer">
-          <i data-lucide="upload-cloud" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
-          <p class="text-lg font-medium text-slate-700 mb-2">Click to upload images</p>
-          <span class="text-slate-500">or drag and drop</span>
-          <p class="text-sm text-slate-400 mt-2">Supported formats: JPG, PNG, GIF, WebP (max 5MB)</p>
-        </div>
-        <input type="file" #fileInput (change)="onImageSelect($event)" multiple accept="image/jpeg,image/png,image/gif,image/webp" class="hidden">
-
-        <div *ngIf="uploadError" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center gap-2">
-          <i data-lucide="alert-circle" class="w-5 h-5"></i>
-          {{ uploadError }}
-        </div>
-
-        <div *ngIf="submitted && selectedImages.length === 0" class="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 flex items-center gap-2">
-          <i data-lucide="alert-circle" class="w-5 h-5"></i>
-          At least one image is required
-        </div>
-
-        <!-- Image Previews -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-6">
-          <!-- Existing images -->
-          <div *ngFor="let image of existingImages; let existingIdx = index; trackBy: trackByExistingImage" class="relative group">
-            <img [src]="image.imageUrl" alt="Preview" class="w-full h-24 object-cover rounded-lg" />
-            <button type="button" class="absolute -top-2 -right-2 w-6 h-6 text-red-400 rounded-full flex items-center justify-center transition-all duration-200" (click)="$event.stopPropagation(); removeImage(existingIdx, true)">
-              <i data-lucide="trash-2" class="w-5 h-5"></i>
-            </button>
-          </div>
-          <!-- New images -->
-          <div *ngFor="let image of selectedImagesPreview; let newIdx = index; trackBy: trackByNewImage" class="relative group">
-            <img [src]="image" alt="Preview" class="w-full h-24 object-cover rounded-lg" />
-            <button type="button" class="absolute -top-2 -right-2 w-6 h-6 text-red-400 rounded-full flex items-center justify-center transition-all duration-200" (click)="$event.stopPropagation(); removeImage(newIdx, false)">
-              <i data-lucide="trash-2" class="w-5 h-5"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Variations Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
-        <div class="flex items-center gap-3 mb-6">
-          <i data-lucide="settings" class="w-5 h-5 text-slate-500"></i>
-          <h2 class="text-xl font-semibold text-slate-800">Product Variations</h2>
-        </div>
-        
-        <div class="flex items-center gap-3 mb-6">
-            <input 
-              type="checkbox" 
-              id="hasVariant" 
-            formControlName="hasVariant"
-            class="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500"
-            [attr.title]="!canEnableVariants ? 'Enter valid product name, price, and quantity first' : null">
-          <label for="hasVariant" class="text-slate-700">
-              This product has variants (size, color, etc.)
-            </label>
-        </div>
-        <div *ngIf="!canEnableVariants" class="text-xs text-red-500 mb-4 ml-1">
-          Please enter a valid product name, price, and quantity before enabling variants.
-        </div>
-
-        <!-- Product Attributes Section -->
-        <div *ngIf="productForm.get('hasVariant')?.value" class="space-y-6">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-slate-800">Product Attributes</h3>
-            <button type="button" class="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="openNewAttributeModal()">
+    <section class="page-panel product-form__panel">
+      <h2 class="product-form__section-title">Categories &amp; Brands</h2>
+      <div formArrayName="categoryBrandArray" class="product-form__pairs">
+        <div *ngFor="let group of categoryBrandArray.controls; let i = index" [formGroupName]="i" class="product-form__pair">
+          <select class="lux-select" formControlName="categoryId" (change)="onCategoryChange(i)">
+            <option [ngValue]="null" disabled>Select Category</option>
+            <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+            <option [ngValue]="'add_new_category'">+ Add New Category</option>
+          </select>
+          <select class="lux-select" formControlName="brandId" (change)="onBrandChange(i)">
+            <option [ngValue]="null">No Brand</option>
+            <option *ngFor="let brand of group.value.availableBrands" [ngValue]="brand.id">{{ brand.name }}</option>
+            <option [ngValue]="'add_new_brand'">+ Add New Brand</option>
+          </select>
+          <div class="product-form__pair-actions">
+            <lux-icon-button label="Remove pair" tone="danger" (pressed)="removeCategoryBrandPair(i)" [disabled]="categoryBrandArray.length === 1">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </lux-icon-button>
+            <lux-icon-button *ngIf="i === categoryBrandArray.length - 1" label="Add pair" (pressed)="addCategoryBrandPair()">
               <i data-lucide="plus" class="w-4 h-4"></i>
-              Add New Attribute
-            </button>
+            </lux-icon-button>
           </div>
-          
-          <!-- Existing Attributes -->
-          <div class="space-y-4">
-            <div *ngFor="let attr of productAttributes; let i = index" class="p-6 bg-slate-50 rounded-xl border border-slate-200">
-              <div class="flex items-center gap-3 mb-4">
-                <i data-lucide="tag" class="w-5 h-5 text-slate-500"></i>
-                <span class="font-semibold text-slate-800">{{ attr.attributeName }}</span>
-                <button type="button" class="ml-auto p-1 text-red-400 hover:text-red-600 rounded-full transition-all duration-200" (click)="removeProductAttribute(i)">
-                  <i data-lucide="trash-2" class="w-5 h-5"></i>
-                </button>
-              </div>
-              
-              <div class="flex flex-wrap items-center gap-2 mb-4">
-                <ng-container *ngFor="let value of attr.allowedValues; let j = index">
-                  <ng-container *ngIf="['color', 'colors', 'colour', 'colours'].includes((attr.attributeName || '').toLowerCase()) && value.value.startsWith('#'); else defaultPill">
-                    <div 
-                      class="w-8 h-8 rounded-full border-2 cursor-pointer transition-all"
-                      [style.backgroundColor]="value.value"
-                      [title]="value.value"
-                      (click)="toggleAttributeValue(i, j)"
-                      [class.border-slate-600]="value.selected"
-                      [class.border-slate-200]="!value.selected"
-                      [class.ring-2]="value.selected"
-                      [class.ring-slate-500]="value.selected"
-                      [class.ring-offset-2]="value.selected">
-                    </div>
-                  </ng-container>
-                  <ng-template #defaultPill>
-                    <button type="button"
-                        class="px-3 py-1 rounded-full text-sm font-medium transition-all duration-200"
-                        [class.bg-slate-600]="value.selected"
-                        [class.text-white]="value.selected"
-                        [class.bg-slate-200]="!value.selected"
-                        [class.text-slate-700]="!value.selected"
-                        [class.hover:bg-slate-300]="!value.selected"
-                        (click)="toggleAttributeValue(i, j)">
-                      {{ value.value }}
-                    </button>
-                  </ng-template>
-                </ng-container>
-              </div>
-              
-              <div class="flex gap-2 max-w-md">
-                <ng-container *ngIf="isColorAttribute(attr)">
-                  <input type="color" [(ngModel)]="newAttributeValueInputs[i]" [name]="'newColorValue' + i" class="w-12 h-12 p-1 border border-slate-400 rounded-lg cursor-pointer" (change)="onColorPickerChange(i, $event)" [ngModelOptions]="{standalone: true}" />
-                </ng-container>
-                <input type="text" class="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" placeholder="Add new value" [(ngModel)]="newAttributeValueInputs[i]" [name]="'newValue' + i" [readonly]="false" [ngModelOptions]="{standalone: true}" />
-                <button *ngIf="isColorAttribute(attr)" type="button" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="addNewColorValueToAttribute(i)">
-                  <i data-lucide="plus" class="w-4 h-4"></i>
-                </button>
-                <button *ngIf="!isColorAttribute(attr)" type="button" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="addNewAttributeValueToAttribute(i, newAttributeValueInputs[i], true); newAttributeValueInputs[i]=''">
-                  <i data-lucide="plus" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel product-form__panel">
+      <h2 class="product-form__section-title">Product Images</h2>
+      <div
+        class="product-form__upload"
+        (click)="fileInput.click()"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        [class.is-dragging]="isDragging"
+      >
+        <p class="product-form__upload-title">Click to upload images</p>
+        <p class="product-form__upload-hint">or drag and drop · JPG, PNG, GIF, WebP (max 5MB)</p>
+      </div>
+      <input type="file" #fileInput (change)="onImageSelect($event)" multiple accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" />
+
+      <p *ngIf="uploadError" class="lux-field-error">{{ uploadError }}</p>
+      <p *ngIf="submitted && selectedImages.length === 0" class="lux-field-error">At least one image is required</p>
+
+      <div class="product-form__thumbs">
+        <div *ngFor="let image of existingImages; let existingIdx = index; trackBy: trackByExistingImage" class="product-form__thumb">
+          <img [src]="image.imageUrl" alt="Preview" />
+          <button type="button" class="product-form__thumb-remove" (click)="$event.stopPropagation(); removeImage(existingIdx, true)" aria-label="Remove image">×</button>
+        </div>
+        <div *ngFor="let image of selectedImagesPreview; let newIdx = index; trackBy: trackByNewImage" class="product-form__thumb">
+          <img [src]="image" alt="Preview" />
+          <button type="button" class="product-form__thumb-remove" (click)="$event.stopPropagation(); removeImage(newIdx, false)" aria-label="Remove image">×</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="page-panel product-form__panel">
+      <h2 class="product-form__section-title">Product Variations</h2>
+      <label class="product-form__check">
+        <input
+          type="checkbox"
+          id="hasVariant"
+          formControlName="hasVariant"
+          [attr.title]="!canEnableVariants ? 'Enter valid product name, price, and quantity first' : null"
+        />
+        <span>This product has variants (size, color, etc.)</span>
+      </label>
+      <p *ngIf="!canEnableVariants" class="lux-field-error">Enter a valid product name, price, and quantity before enabling variants.</p>
+
+      <div *ngIf="productForm.get('hasVariant')?.value" class="product-form__variants-block">
+        <div class="product-form__attr-toolbar">
+          <h3 class="product-form__subhead">Product Attributes</h3>
+          <lux-button variant="secondary" (pressed)="openNewAttributeModal()">Add New Attribute</lux-button>
+        </div>
+
+        <div *ngFor="let attr of productAttributes; let i = index" class="product-form__attr-card">
+          <div class="product-form__attr-head">
+            <span class="pm-product-name">{{ attr.attributeName }}</span>
+            <lux-icon-button label="Remove attribute" tone="danger" (pressed)="removeProductAttribute(i)">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </lux-icon-button>
           </div>
-          
-          <!-- Add Existing Attribute -->
-          <div class="p-6 bg-slate-50 rounded-xl border border-slate-200">
-            <label class="block text-sm font-medium text-slate-700 mb-3">Add existing attribute:</label>
-            <div class="flex gap-2 max-w-md">
-              <select class="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" name="attributeSelect" [(ngModel)]="selectedAttributeId" [ngModelOptions]="{standalone: true}">
+
+          <div class="product-form__value-pills">
+            <ng-container *ngFor="let value of attr.allowedValues; let j = index">
+              <ng-container *ngIf="['color', 'colors', 'colour', 'colours'].includes((attr.attributeName || '').toLowerCase()) && value.value.startsWith('#'); else defaultPill">
+                <button
+                  type="button"
+                  class="product-form__swatch"
+                  [style.backgroundColor]="value.value"
+                  [title]="value.value"
+                  [class.is-selected]="value.selected"
+                  (click)="toggleAttributeValue(i, j)"
+                ></button>
+              </ng-container>
+              <ng-template #defaultPill>
+                <button
+                  type="button"
+                  class="product-form__pill"
+                  [class.is-selected]="value.selected"
+                  (click)="toggleAttributeValue(i, j)"
+                >
+                  {{ value.value }}
+                </button>
+              </ng-template>
+            </ng-container>
+          </div>
+
+          <div class="product-form__add-value">
+            <ng-container *ngIf="isColorAttribute(attr)">
+              <input type="color" [(ngModel)]="newAttributeValueInputs[i]" [name]="'newColorValue' + i" class="product-form__color-input" (change)="onColorPickerChange(i, $event)" [ngModelOptions]="{standalone: true}" />
+            </ng-container>
+            <input type="text" class="lux-input" placeholder="Add new value" [(ngModel)]="newAttributeValueInputs[i]" [name]="'newValue' + i" [ngModelOptions]="{standalone: true}" />
+            <lux-button *ngIf="isColorAttribute(attr)" variant="secondary" (pressed)="addNewColorValueToAttribute(i)">Add</lux-button>
+            <lux-button *ngIf="!isColorAttribute(attr)" variant="secondary" (pressed)="addNewAttributeValueToAttribute(i, newAttributeValueInputs[i], true); newAttributeValueInputs[i]=''">Add</lux-button>
+          </div>
+        </div>
+
+        <div class="product-form__attr-card">
+          <lux-field label="Add existing attribute">
+            <div class="product-form__add-value">
+              <select class="lux-select" name="attributeSelect" [(ngModel)]="selectedAttributeId" [ngModelOptions]="{standalone: true}">
                 <option [ngValue]="null">Select attribute</option>
                 <option *ngFor="let attr of availableAttributes" [ngValue]="attr.id" [disabled]="isAttributeDisabled(attr.id)">{{ attr.name }}</option>
               </select>
-              <button type="button" class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200 disabled:opacity-50" (click)="addProductAttribute()" [disabled]="!selectedAttributeId">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-              </button>
+              <lux-button variant="secondary" [disabled]="!selectedAttributeId" (pressed)="addProductAttribute()">Add</lux-button>
             </div>
-          </div>
+          </lux-field>
         </div>
+      </div>
 
-        <!-- Generated Variants Section -->
-        <div *ngIf="productForm.get('hasVariant')?.value && variants.length > 0" class="mt-8">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-slate-800">Generated Variants</h3>
-            <span class="text-sm text-slate-500 ml-4">{{ variants.length }} variant(s) generated</span>
-          </div>
-          <div formArrayName="variants">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div *ngFor="let variant of variantFormGroups; let variantIndex = index" [formGroupName]="variantIndex" class="bg-slate-50 rounded-xl p-6 border border-slate-200">
-                <!-- Variant Header -->
-                <div class="flex items-center justify-between mb-4">
-                  <div class="flex items-center gap-2">
-                    <i data-lucide="package" class="w-5 h-5 text-slate-500"></i>
-                    <h4 class="font-semibold text-slate-800">Variant {{ variantIndex + 1 }}</h4>
-                  </div>
-                  <span class="text-sm text-slate-500">{{ variant.get('sku')?.value }}</span>
-                  <button type="button" class="ml-2 p-1 text-red-400 hover:text-red-600 rounded-full transition-all duration-200" (click)="removeVariantCard(variantIndex)">
-                    <i data-lucide="trash-2" class="w-5 h-5"></i>
-                  </button>
+      <div *ngIf="productForm.get('hasVariant')?.value && variants.length > 0" class="product-form__generated">
+        <div class="product-form__attr-toolbar">
+          <h3 class="product-form__subhead">Generated Variants</h3>
+          <span class="product-form__meta">{{ variants.length }} variant(s)</span>
+        </div>
+        <div formArrayName="variants" class="product-form__variant-grid">
+          <div *ngFor="let variant of variantFormGroups; let variantIndex = index" [formGroupName]="variantIndex" class="product-form__variant-card">
+            <div class="product-form__attr-head">
+              <div>
+                <strong>Variant {{ variantIndex + 1 }}</strong>
+                <span class="product-form__meta">{{ variant.get('sku')?.value }}</span>
+              </div>
+              <lux-icon-button label="Remove variant" tone="danger" (pressed)="removeVariantCard(variantIndex)">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+              </lux-icon-button>
+            </div>
+
+            <div class="product-form__value-pills">
+              <ng-container *ngFor="let attr of variant.get('attributes')?.value">
+                <ng-container *ngIf="isColorAttribute(attr); else defaultAttr">
+                  <span class="product-form__pill product-form__pill--static">
+                    <span class="product-form__swatch product-form__swatch--sm" [style.backgroundColor]="attr.value"></span>
+                    Color
+                  </span>
+                </ng-container>
+                <ng-template #defaultAttr>
+                  <span class="product-form__pill product-form__pill--static">{{ attr.attributeName }}: {{ attr.value }}</span>
+                </ng-template>
+              </ng-container>
+            </div>
+
+            <div class="admin-form-grid">
+              <lux-field label="Price">
+                <input type="number" class="lux-input" formControlName="price" min="0.01" step="0.01" />
+              </lux-field>
+              <lux-field label="Stock">
+                <input type="number" class="lux-input" formControlName="stock" min="0" />
+              </lux-field>
+            </div>
+
+            <div class="product-form__variant-images">
+              <lux-button variant="secondary" (pressed)="onVariantImageSelect(variantIndex)">Add Images</lux-button>
+              <input type="file" [id]="'variantImageInput' + variantIndex" (change)="onVariantImageChange($event, variantIndex)" multiple accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" />
+              <div class="product-form__thumbs product-form__thumbs--sm">
+                <div class="product-form__thumb" *ngFor="let image of existingVariantImages[variantIndex]; let imageIndex = index; trackBy: trackByExistingImage">
+                  <img [src]="image.imageUrl" alt="Variant preview" />
+                  <button type="button" class="product-form__thumb-remove" (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, true)">×</button>
                 </div>
-
-                <!-- Variant Attributes -->
-                <div class="mb-4">
-                  <div class="flex flex-wrap gap-2">
-                    <ng-container *ngFor="let attr of variant.get('attributes')?.value">
-                      <ng-container *ngIf="isColorAttribute(attr); else defaultAttr">
-                        <span class="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full text-sm">
-                          <span class="w-5 h-5 rounded-full border border-slate-300 inline-block" [style.backgroundColor]="attr.value"></span>
-                          Color
-                        </span>
-                      </ng-container>
-                      <ng-template #defaultAttr>
-                        <span class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-sm">
-                          {{ attr.attributeName }}: {{ attr.value }}
-                        </span>
-                      </ng-template>
-                    </ng-container>
-                  </div>
-                </div>
-
-                <!-- Variant Details -->
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Price</label>
-                    <div class="relative">
-                      <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500">$</span>
-                      <input 
-                        type="number" 
-                        class="w-full pl-8 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" 
-                        formControlName="price"
-                        min="0.01" 
-                        step="0.01">
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Stock</label>
-                    <input 
-                      type="number" 
-                      class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" 
-                      formControlName="stock"
-                      min="0">
-                  </div>
-                </div>
-
-                <!-- Variant Images -->
-                <div class="mb-4">
-                  <label class="block text-sm font-medium text-slate-700 mb-2">Variant Images</label>
-                  <div class="flex items-center gap-2">
-                    <button 
-                      type="button" 
-                      class="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200"
-                      (click)="onVariantImageSelect(variantIndex)">
-                      <i data-lucide="image" class="w-4 h-4"></i>
-                      Add Images
-                    </button>
-                    <input 
-                      type="file" 
-                      [id]="'variantImageInput' + variantIndex"
-                      (change)="onVariantImageChange($event, variantIndex)"
-                      multiple 
-                      accept="image/jpeg,image/png,image/gif,image/webp" 
-                      class="hidden">
-                  </div>
-                  <!-- Variant Image Previews -->
-                  <div class="grid grid-cols-4 gap-2 mt-3">
-                    <!-- Existing images -->
-                    <div class="relative group" *ngFor="let image of existingVariantImages[variantIndex]; let imageIndex = index; trackBy: trackByExistingImage">
-                      <img [src]="image.imageUrl" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
-                      <button 
-                        type="button" 
-                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-100 transition-all duration-200" 
-                        (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, true)">
-                        <i data-lucide="x" class="w-3 h-3"></i>
-                      </button>
-                    </div>
-                    <!-- New images -->
-                    <div class="relative group" *ngFor="let image of newVariantImagesPreview[variantIndex]; let imageIndex = index; trackBy: trackByNewImage">
-                      <img [src]="image" alt="Variant preview" class="w-full h-16 object-cover rounded-lg" />
-                      <button 
-                        type="button" 
-                        class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-100 transition-all duration-200" 
-                        (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, false)">
-                        <i data-lucide="x" class="w-3 h-3"></i>
-                      </button>
-                    </div>
-                  </div>
+                <div class="product-form__thumb" *ngFor="let image of newVariantImagesPreview[variantIndex]; let imageIndex = index; trackBy: trackByNewImage">
+                  <img [src]="image" alt="Variant preview" />
+                  <button type="button" class="product-form__thumb-remove" (click)="$event.stopPropagation(); removeVariantImage(variantIndex, imageIndex, false)">×</button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Submit Button -->
-      <div class="flex flex-col items-center">
-        <button
-          type="submit"
-          class="flex items-center gap-3 px-8 py-4 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="!canSubmitProduct"
-        >
-          <i data-lucide="plus" class="w-5 h-5"></i>
-          {{ editMode ? 'Update Product' : 'Create Product' }}
-        </button>
-        <div *ngIf="productForm.get('hasVariant')?.value && !canSubmitProduct" class="text-xs text-red-500 mt-2">
-          Total variant stock must equal product quantity.
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
-<!-- New Attribute Modal -->
-<div *ngIf="showNewAttributeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-    <div class="flex items-center justify-between mb-6">
-      <h3 class="text-xl font-semibold text-slate-800">Create New Attribute</h3>
-      <button type="button" class="p-2 hover:bg-slate-100 rounded-lg transition-all duration-200" (click)="closeNewAttributeModal()">
-        <i data-lucide="x" class="w-5 h-5"></i>
-      </button>
+    <div class="product-form__submit">
+      <lux-button type="submit" variant="primary" [disabled]="!canSubmitProduct">
+        {{ editMode ? 'Update Product' : 'Create Product' }}
+      </lux-button>
+      <p *ngIf="productForm.get('hasVariant')?.value && !canSubmitProduct" class="lux-field-error">
+        Total variant stock must equal product quantity.
+      </p>
     </div>
-    
-    <div class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Attribute Name *</label>
-        <input type="text" class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" [(ngModel)]="newAttributeName">
-      </div>
-      
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Attribute Values *</label>
-        <div class="flex gap-2 mb-3">
-          <input type="text" class="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-500" [(ngModel)]="newAttributeValueInput" (keyup.enter)="addNewAttributeValue()">
-          <button type="button" class="px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200" (click)="addNewAttributeValue()">
-            <i data-lucide="plus" class="w-4 h-4"></i>
-          </button>
+  </form>
+</lux-page-shell>
+
+<div *ngIf="showNewAttributeModal" class="admin-modal-backdrop">
+  <div class="admin-modal" role="dialog" aria-modal="true">
+    <div class="admin-modal__header">
+      <h3 class="admin-modal__title">Create New Attribute</h3>
+      <button type="button" class="lux-icon-btn lux-icon-btn--ghost" (click)="closeNewAttributeModal()" aria-label="Close">×</button>
+    </div>
+    <div class="admin-modal__body space-y-4">
+      <lux-field label="Attribute Name *">
+        <input type="text" class="lux-input" [(ngModel)]="newAttributeName" />
+      </lux-field>
+      <lux-field label="Attribute Values *">
+        <div class="product-form__add-value">
+          <input type="text" class="lux-input" [(ngModel)]="newAttributeValueInput" (keyup.enter)="addNewAttributeValue()" />
+          <lux-button variant="secondary" (pressed)="addNewAttributeValue()">Add</lux-button>
         </div>
-        <div class="flex flex-wrap gap-2">
-          <span *ngFor="let val of newAttributeValues" class="px-3 py-1 bg-slate-200 text-slate-700 rounded-full text-sm">{{ val }}</span>
+        <div class="product-form__value-pills mt-2">
+          <span *ngFor="let val of newAttributeValues" class="product-form__pill product-form__pill--static">{{ val }}</span>
         </div>
-      </div>
-      </div>
-    
-    <div class="flex gap-3 mt-6">
-      <button type="button" class="flex-1 px-4 py-3 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-all duration-200" (click)="closeNewAttributeModal()">Cancel</button>
-      <button type="button" class="flex-1 px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-all duration-200 disabled:opacity-50" (click)="saveNewAttribute()" [disabled]="!newAttributeName || newAttributeValues.length === 0">Save Attribute</button>
+      </lux-field>
+    </div>
+    <div class="admin-modal__footer">
+      <lux-button variant="ghost" (pressed)="closeNewAttributeModal()">Cancel</lux-button>
+      <lux-button variant="primary" [disabled]="!newAttributeName || newAttributeValues.length === 0" (pressed)="saveNewAttribute()">Save Attribute</lux-button>
     </div>
   </div>
 </div>
-
-
-

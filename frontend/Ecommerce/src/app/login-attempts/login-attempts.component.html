@@ -1,85 +1,68 @@
-<div class="login-attempts-container">
+<lux-page-shell variant="admin" shellClass="admin-page login-attempts-page">
     <!-- Header Section -->
-    <div class="page-header">
-      <div class="header-content">
-        <div class="header-left">
-          <h1 class="page-title">
-            <i class="fas fa-shield-alt"></i>
-            Login Attempts Monitor
-          </h1>
-          <p class="page-subtitle">Real-time security monitoring and threat detection</p>
-        </div>
-        <div class="header-right">
-          <div class="status-indicator" [ngClass]="{'active': isRealTimeActive}">
-            <span class="status-dot"></span>
-            <span class="status-text">{{ isRealTimeActive ? 'Live Monitoring' : 'Monitoring Paused' }}</span>
-          </div>
-          <button class="btn btn-toggle" (click)="toggleRealTimeMonitoring()">
-            <i class="fas" [ngClass]="isRealTimeActive ? 'fa-pause' : 'fa-play'"></i>
-            {{ isRealTimeActive ? 'Pause' : 'Resume' }}
-          </button>
-        </div>
+    <lux-page-header variant="admin" eyebrow="Security" title="Login Attempts Monitor" subtitle="Real-time security monitoring and threat detection">
+      <div class="status-indicator" [ngClass]="{'active': isRealTimeActive}">
+        <span class="status-dot"></span>
+        <span class="status-text">{{ isRealTimeActive ? 'Live Monitoring' : 'Monitoring Paused' }}</span>
       </div>
-    </div>
-  
+      <lux-button variant="secondary" (pressed)="toggleRealTimeMonitoring()">
+        {{ isRealTimeActive ? 'Pause' : 'Resume' }}
+      </lux-button>
+    </lux-page-header>
+
     <!-- Alert Banner -->
     <div class="alert-banner" *ngIf="criticalAlerts.length > 0">
       <div class="alert-content">
-        <i class="fas fa-exclamation-triangle"></i>
         <span class="alert-text">{{ criticalAlerts.length }} Critical Security Alert(s) Detected</span>
         <button class="btn btn-alert-action" (click)="viewAlerts()">View Details</button>
       </div>
     </div>
   
     <!-- Statistics Dashboard -->
-    <div class="stats-grid">
-      <div class="stat-card">
+    <div class="admin-kpi-grid stats-grid">
+      <div class="admin-kpi stat-card">
         <div class="stat-icon success">
-          <i class="fas fa-check-circle"></i>
-        </div>
+          </div>
         <div class="stat-content">
-          <h3 class="stat-number">{{ statistics.successfulLogins | number }}</h3>
-          <p class="stat-label">Successful Logins</p>
+          <h3 class="admin-kpi__value stat-number">{{ statistics.successfulLogins | number }}</h3>
+          <p class="admin-kpi__label stat-label">Successful Logins</p>
           <span class="stat-change positive">+{{ statistics.successfulLoginsChange }}%</span>
         </div>
       </div>
   
-      <div class="stat-card">
+      <div class="admin-kpi stat-card">
         <div class="stat-icon warning">
-          <i class="fas fa-times-circle"></i>
-        </div>
+          </div>
         <div class="stat-content">
-          <h3 class="stat-number">{{ statistics.failedLogins | number }}</h3>
-          <p class="stat-label">Failed Attempts</p>
+          <h3 class="admin-kpi__value stat-number">{{ statistics.failedLogins | number }}</h3>
+          <p class="admin-kpi__label stat-label">Failed Attempts</p>
           <span class="stat-change negative">+{{ statistics.failedLoginsChange }}%</span>
         </div>
       </div>
   
-      <div class="stat-card">
+      <div class="admin-kpi stat-card">
         <div class="stat-icon danger">
-          <i class="fas fa-ban"></i>
-        </div>
+          </div>
         <div class="stat-content">
-          <h3 class="stat-number">{{ statistics.blockedIPs | number }}</h3>
-          <p class="stat-label">Blocked IPs</p>
+          <h3 class="admin-kpi__value stat-number">{{ statistics.blockedIPs | number }}</h3>
+          <p class="admin-kpi__label stat-label">Blocked IPs</p>
           <span class="stat-change neutral">{{ statistics.blockedIPsChange }}%</span>
         </div>
       </div>
   
-      <div class="stat-card">
+      <div class="admin-kpi stat-card">
         <div class="stat-icon info">
-          <i class="fas fa-lock"></i>
-        </div>
+          </div>
         <div class="stat-content">
-          <h3 class="stat-number">{{ statistics.lockedAccounts | number }}</h3>
-          <p class="stat-label">Locked Accounts</p>
+          <h3 class="admin-kpi__value stat-number">{{ statistics.lockedAccounts | number }}</h3>
+          <p class="admin-kpi__label stat-label">Locked Accounts</p>
           <span class="stat-change negative">+{{ statistics.lockedAccountsChange }}%</span>
         </div>
       </div>
     </div>
   
     <!-- Controls Section -->
-    <div class="controls-section">
+    <div class="controls-section lux-filter-like">
       <div class="controls-left">
         <div class="filter-group">
           <label class="filter-label">Time Range:</label>
@@ -127,7 +110,6 @@
   
         <div class="search-group">
           <div class="search-input-wrapper">
-            <i class="fas fa-search search-icon"></i>
             <input 
               type="text" 
               class="form-control search-input" 
@@ -136,24 +118,20 @@
               (input)="onSearch()"
             >
             <button class="btn btn-clear" *ngIf="searchTerm" (click)="clearSearch()">
-              <i class="fas fa-times"></i>
-            </button>
+              </button>
           </div>
         </div>
       </div>
   
       <div class="controls-right">
         <button class="btn btn-clear-all" (click)="clearAllFilters()" title="Clear all filters" [class.active]="hasActiveFilters()">
-          <i class="fas fa-times"></i>
           Clear All
           <span *ngIf="hasActiveFilters()" class="filter-indicator">●</span>
         </button>
         <button class="btn btn-export" (click)="exportData()">
-          <i class="fas fa-download"></i>
           Export
         </button>
         <button class="btn btn-refresh" (click)="refreshData()">
-          <i class="fas fa-sync-alt" [ngClass]="{'fa-spin': isLoading}"></i>
           Refresh
         </button>
       </div>
@@ -163,8 +141,7 @@
     <div class="threat-indicators">
       <div class="threat-card" [ngClass]="getThreatLevelClass('low')">
         <div class="threat-icon">
-          <i class="fas fa-shield-alt"></i>
-        </div>
+          </div>
         <div class="threat-info">
           <h4>Low Risk</h4>
           <p>{{ getThreatCount('low') }} attempts</p>
@@ -173,8 +150,7 @@
   
       <div class="threat-card" [ngClass]="getThreatLevelClass('medium')">
         <div class="threat-icon">
-          <i class="fas fa-exclamation-triangle"></i>
-        </div>
+          </div>
         <div class="threat-info">
           <h4>Medium Risk</h4>
           <p>{{ getThreatCount('medium') }} attempts</p>
@@ -183,8 +159,7 @@
   
       <div class="threat-card" [ngClass]="getThreatLevelClass('high')">
         <div class="threat-icon">
-          <i class="fas fa-skull-crossbones"></i>
-        </div>
+          </div>
         <div class="threat-info">
           <h4>High Risk</h4>
           <p>{{ getThreatCount('high') }} attempts</p>
@@ -193,8 +168,7 @@
   
       <div class="threat-card" [ngClass]="getThreatLevelClass('critical')">
         <div class="threat-icon">
-          <i class="fas fa-fire"></i>
-        </div>
+          </div>
         <div class="threat-info">
           <h4>Critical</h4>
           <p>{{ getThreatCount('critical') }} attempts</p>
@@ -207,15 +181,13 @@
   <div class=" rounded-2xl shadow-lg p-6">
     <div class="flex items-center gap-3 mb-4 cursor-pointer select-none" (click)="showPolicyExpanded = !showPolicyExpanded">
       <div class="bg-blue-500 text-white rounded-full p-2 flex items-center justify-center shadow">
-        <i class="fas fa-shield-alt text-xl"></i>
-      </div>
+        </div>
       <div class="flex-1">
         <h2 class="text-xl font-bold text-blue-900 tracking-tight">Security Policy Rules</h2>
         <p class="text-gray-500 text-sm">These rules control what happens after failed login attempts.</p>
       </div>
       <button class="ml-2 bg-blue-100 hover: rounded-full p-2 transition" [attr.aria-expanded]="showPolicyExpanded">
-        <i class="fas" [ngClass]="showPolicyExpanded ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-      </button>
+        </button>
     </div>
     <div *ngIf="showPolicyExpanded" class="overflow-x-auto transition-all duration-300">
       <table class="min-w-full bg-white/80 rounded-xl shadow divide-y divide-blue-100">
@@ -265,15 +237,15 @@
             </td>
             <td class="px-4 py-2 text-center">
               <ng-container *ngIf="editingRuleId !== rule.id">
-                <button class="text-blue-600 hover:text-blue-800 transition" (click)="editRule(rule)" title="Edit"><i class="fas fa-edit"></i></button>
+                <button class="text-blue-600 hover:text-blue-800 transition" (click)="editRule(rule)" title="Edit"></button>
               </ng-container>
               <ng-container *ngIf="editingRuleId === rule.id">
-                <button class="text-green-600 hover:text-green-800 mr-2" (click)="saveRule(editedRule)" [disabled]="isSavingRule" title="Save"><i class="fas fa-check"></i></button>
-                <button class="text-gray-500 hover:text-gray-700" (click)="cancelEdit()" title="Cancel"><i class="fas fa-times"></i></button>
+                <button class="text-green-600 hover:text-green-800 mr-2" (click)="saveRule(editedRule)" [disabled]="isSavingRule" title="Save"></button>
+                <button class="text-gray-500 hover:text-gray-700" (click)="cancelEdit()" title="Cancel"></button>
               </ng-container>
             </td>
             <td class="px-4 py-2 text-center">
-              <button class="text-red-500 hover:text-red-700 transition" (click)="deleteRule(rule)" [disabled]="isDeletingRule" title="Delete"><i class="fas fa-trash"></i></button>
+              <button class="text-red-500 hover:text-red-700 transition" (click)="deleteRule(rule)" [disabled]="isDeletingRule" title="Delete"></button>
             </td>
           </tr>
         </tbody>
@@ -312,36 +284,28 @@
         <tr>
           <th class="sortable" (click)="sort('username')">
             Email
-            <i class="fas" [ngClass]="getSortIcon('username')"></i>
-          </th>
+            </th>
           <th class="sortable" (click)="sort('ipAddress')">
             IP Address
-            <i class="fas" [ngClass]="getSortIcon('ipAddress')"></i>
-          </th>
+            </th>
           <th class="sortable" (click)="sort('location')">
             Location
-            <i class="fas" [ngClass]="getSortIcon('location')"></i>
-          </th>
+            </th>
           <th class="sortable" (click)="sort('attemptCount')">
             Attempts
-            <i class="fas" [ngClass]="getSortIcon('attemptCount')"></i>
-          </th>
+            </th>
           <th class="sortable" (click)="sort('timeframe')">
             Timeframe
-            <i class="fas" [ngClass]="getSortIcon('timeframe')"></i>
-          </th>
+            </th>
           <th class="sortable" (click)="sort('status')">
             Status
-            <i class="fas" [ngClass]="getSortIcon('status')"></i>
-          </th>
+            </th>
           <th class="sortable" (click)="sort('threatLevel')">
             Threat Level
-            <i class="fas" [ngClass]="getSortIcon('threatLevel')"></i>
-          </th>
+            </th>
           <th class="sortable" (click)="sort('timestamp')">
             Timestamp
-            <i class="fas" [ngClass]="getSortIcon('timestamp')"></i>
-          </th>
+            </th>
           <th>Actions</th>
           <th>Detailed Log</th>
         </tr>
@@ -352,7 +316,6 @@
           <td>{{ attempt.ipAddress }}</td>
           <td>
             <div class="location-cell">
-              <i class="fas fa-map-marker-alt location-icon"></i>
               <span class="location-text">{{ attempt.location }}</span>
               <span class="country-flag" [innerHTML]="getCountryFlag(attempt.countryCode)"></span>
             </div>
@@ -366,7 +329,6 @@
           </td>
           <td>
             <span class="status-badge" [ngClass]="attempt.status">
-              <i class="fas" [ngClass]="getStatusIcon(attempt.status)"></i>
               {{ attempt.status | titlecase }}
             </span>
           </td>
@@ -382,19 +344,16 @@
           <td>
             <div class="action-buttons">
               <button class="btn btn-action btn-details" (click)="viewDetails(attempt)" title="View Details">
-                <i class="fas fa-eye"></i>
-              </button>
+                </button>
               <button class="btn btn-action btn-block" (click)="blockIP(attempt)" title="Block IP" [disabled]="attempt.isBlocked">
-                <i class="fas fa-ban"></i>
-              </button>
+                </button>
               <button class="btn btn-action btn-whitelist" (click)="whitelistIP(attempt)" title="Whitelist IP">
-                <i class="fas fa-check"></i>
-              </button>
+                </button>
             </div>
           </td>
           <td>
             <button class="btn btn-glassmorphism btn-detailed-log" (click)="openDetailedLogModal(attempt)">
-              <i class="fas fa-list"></i> Detailed Log
+              Detailed Log
             </button>
           </td>
         </tr>
@@ -408,48 +367,13 @@
   <ng-container *ngTemplateOutlet="logTable; context: { $implicit: summaryAttempts }"></ng-container>
 </div>
 
-<!-- Detailed Log Table (existing table, now uses template) -->
-<!-- REMOVE global detailed log and pagination section -->
-<!-- <div *ngIf="viewMode === 'detailed'">
-  <ng-container *ngTemplateOutlet="logTable; context: { $implicit: paginatedAttempts }"></ng-container>
-  <!-- Pagination and other controls remain below as before -->
-  <div class="pagination-container">
-    <div class="pagination-info">
-      Showing {{ getStartIndex() + 1 }} to {{ getEndIndex() }} of {{ filteredAttempts.length }} entries
-    </div>
-    <nav class="pagination-nav">
-      <ul class="pagination">
-        <li class="page-item" [ngClass]="{'disabled': currentPage === 1}">
-          <button class="page-link" (click)="goToPage(currentPage - 1)">
-            <i class="fas fa-chevron-left"></i>
-          </button>
-        </li>
-        <li 
-          class="page-item" 
-          *ngFor="let page of getPageNumbers()" 
-          [ngClass]="{'active': page === currentPage}"
-        >
-          <button class="page-link" (click)="goToPage(page)">{{ page }}</button>
-        </li>
-        <li class="page-item" [ngClass]="{'disabled': currentPage === totalPages}">
-          <button class="page-link" (click)="goToPage(currentPage + 1)">
-            <i class="fas fa-chevron-right"></i>
-          </button>
-        </li>
-      </ul>
-    </nav>
-  </div>
-</div> 
-  
-    <!-- Real-time Activity Feed -->
+<!-- Real-time Activity Feed -->
     <div class="activity-feed" *ngIf="isRealTimeActive">
       <div class="feed-header">
         <h3 class="feed-title">
-          <i class="fas fa-broadcast-tower"></i>
           Live Activity Feed
         </h3>
         <button class="btn btn-clear-feed" (click)="clearActivityFeed()">
-          <i class="fas fa-trash"></i>
           Clear
         </button>
       </div>
@@ -460,8 +384,7 @@
           [ngClass]="activity.type"
         >
           <div class="feed-icon">
-            <i class="fas" [ngClass]="getActivityIcon(activity.type)"></i>
-          </div>
+            </div>
           <div class="feed-details">
             <p class="feed-message">{{ activity.message }}</p>
             <span class="feed-time">{{ activity.timestamp | date:'HH:mm:ss' }}</span>
@@ -477,17 +400,15 @@
       <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md max-h-[90vh] flex flex-col">
         <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between flex-shrink-0">
           <h5 class="modal-title flex items-center gap-2 text-xl font-semibold text-blue-900">
-            <i class="fas fa-info-circle text-blue-500"></i> Login Attempt Details
+            Login Attempt Details
           </h5>
           <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition" data-bs-dismiss="modal" aria-label="Close">
-            <i class="fas fa-times"></i>
-          </button>
+            </button>
         </div>
         <div class="modal-body p-4 md:p-8 flex-1 overflow-y-auto scrollbar-hide" style="max-height: calc(90vh - 140px);">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Timestamp -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-calendar-alt text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">Timestamp</div>
                 <div class="font-medium">{{ selectedAttemptDetails.timestamp | date:'full' }}</div>
@@ -496,7 +417,6 @@
             </div>
             <!-- Email -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-envelope text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">Email</div>
                 <div class="font-medium">{{ selectedAttemptDetails.username }}</div>
@@ -504,18 +424,16 @@
             </div>
             <!-- IP Address -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-globe text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">IP Address</div>
                 <div class="flex items-center gap-2">
                   <span class="font-mono">{{ selectedAttemptDetails.ipAddress }}</span>
-                  <button class="btn btn-xs btn-light ml-2" (click)="copyToClipboard(selectedAttemptDetails.ipAddress)"><i class="fas fa-copy"></i></button>
+                  <button class="btn btn-xs btn-light ml-2" (click)="copyToClipboard(selectedAttemptDetails.ipAddress)"></button>
                 </div>
               </div>
             </div>
             <!-- Location -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-map-marker-alt text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">Location</div>
                 <div class="flex items-center gap-2">
@@ -523,14 +441,13 @@
                   <span class="country-flag" [innerHTML]="getCountryFlag(selectedAttemptDetails.countryCode)"></span>
                   <a *ngIf="selectedAttemptDetails.location && selectedAttemptDetails.location !== 'Unknown'" class="ml-2 text-blue-500 underline" target="_blank"
                     [href]="'https://www.google.com/maps/search/' + encodeURIComponent(selectedAttemptDetails.location)">
-                    <i class="fas fa-map"></i> Map
+                    Map
                   </a>
                 </div>
               </div>
             </div>
             <!-- User Agent -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3 md:col-span-2">
-              <i class="fas fa-desktop text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">User Agent</div>
                 <div class="break-all text-sm">{{ selectedAttemptDetails.userAgent }}</div>
@@ -538,18 +455,15 @@
             </div>
             <!-- Status -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-shield-alt text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">Status</div>
                 <span class="status-badge" [ngClass]="selectedAttemptDetails.status">
-                  <i class="fas" [ngClass]="getStatusIcon(selectedAttemptDetails.status)"></i>
                   {{ selectedAttemptDetails.status | titlecase }}
                 </span>
               </div>
             </div>
             <!-- Threat Score -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-exclamation-triangle text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">Threat Score</div>
                 <span class="threat-badge" [ngClass]="selectedAttemptDetails.threatLevel">
@@ -559,7 +473,6 @@
             </div>
             <!-- Attempts in Window -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-redo text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">Attempts in Window</div>
                 <span class="font-medium">{{ selectedAttemptDetails.attemptCount }}</span>
@@ -567,7 +480,6 @@
             </div>
             <!-- VPN/Proxy -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-user-secret text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">VPN/Proxy</div>
                 <span *ngIf="selectedAttemptDetails.isVPN" class="badge bg-warning text-dark">VPN</span>
@@ -577,7 +489,6 @@
             </div>
             <!-- Session ID in details modal: clean, only session ID, copy, and view activity -->
             <div class="border border-gray-200 rounded-xl bg-white/80 p-4 flex items-center gap-3">
-              <i class="fas fa-key text-blue-400 text-lg"></i>
               <div>
                 <div class="text-xs text-gray-500">Session ID</div>
                 <div class="flex items-center gap-2 flex-wrap">
@@ -585,8 +496,8 @@
                     {{ selectedAttemptDetails.sessionId }}
                   </a>
                   <span *ngIf="!selectedAttemptDetails.sessionId" class="font-mono">N/A</span>
-                  <button *ngIf="selectedAttemptDetails.sessionId" class="btn btn-xs btn-light ml-2" (click)="copyToClipboard(selectedAttemptDetails.sessionId)"><i class="fas fa-copy"></i></button>
-                  <button *ngIf="selectedAttemptDetails.sessionId" class="btn btn-xs btn-link ml-2 text-blue-600" (click)="openSessionActivity(selectedAttemptDetails.sessionId)"><i class="fas fa-list"></i> View All Activity</button>
+                  <button *ngIf="selectedAttemptDetails.sessionId" class="btn btn-xs btn-light ml-2" (click)="copyToClipboard(selectedAttemptDetails.sessionId)"></button>
+                  <button *ngIf="selectedAttemptDetails.sessionId" class="btn btn-xs btn-link ml-2 text-blue-600" (click)="openSessionActivity(selectedAttemptDetails.sessionId)">View All Activity</button>
                 </div>
               </div>
             </div>
@@ -595,10 +506,10 @@
           <div class="my-6 border-t border-gray-200"></div>
           <!-- Actions -->
           <div class="flex flex-wrap gap-3 justify-end">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
-            <button type="button" class="btn btn-danger" (click)="blockIP(selectedAttemptDetails)"><i class="fas fa-ban"></i> Block IP</button>
-            <button type="button" class="btn btn-success" (click)="whitelistIP(selectedAttemptDetails)"><i class="fas fa-check"></i> Whitelist IP</button>
-            <button type="button" class="btn btn-light" (click)="exportData()"><i class="fas fa-download"></i> Export</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-danger" (click)="blockIP(selectedAttemptDetails)">Block IP</button>
+            <button type="button" class="btn btn-success" (click)="whitelistIP(selectedAttemptDetails)">Whitelist IP</button>
+            <button type="button" class="btn btn-light" (click)="exportData()">Export</button>
           </div>
         </div>
       </div>
@@ -611,17 +522,16 @@
     <div class="modal-content glass-card shadow-xl rounded-2xl border border-gray-200 bg-white/70 backdrop-blur-md max-h-[90vh] flex flex-col">
       <div class="modal-header sticky top-0 z-10 bg-white/80 backdrop-blur-md rounded-t-2xl border-b border-gray-100 flex items-center justify-between px-4 py-3 md:px-6 md:py-4 flex-shrink-0">
         <h5 class="modal-title flex items-center gap-2 text-lg md:text-xl font-semibold text-blue-900">
-          <i class="fas fa-list text-blue-500"></i> Session Activity Log
+          Session Activity Log
         </h5>
         <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition" (click)="closeSessionActivity()" aria-label="Close">
-          <i class="fas fa-times"></i>
-        </button>
+          </button>
       </div>
       <div class="modal-body p-2 md:p-4 lg:p-8 overflow-x-auto flex-1 overflow-y-auto scrollbar-hide" style="max-height: calc(90vh - 140px);">
         <div class="mb-4 flex flex-wrap gap-2 items-center">
           <span class="font-mono text-blue-700 break-all">Session: {{ sessionActivitySessionId }}</span>
-          <button *ngIf="sessionActivitySessionId" class="btn btn-xs btn-danger ml-2" (click)="blockSession(sessionActivitySessionId!)"><i class="fas fa-ban"></i> Block Session</button>
-          <button *ngIf="sessionActivitySessionId" class="btn btn-xs btn-success ml-2" (click)="whitelistSession(sessionActivitySessionId!)"><i class="fas fa-check"></i> Whitelist Session</button>
+          <button *ngIf="sessionActivitySessionId" class="btn btn-xs btn-danger ml-2" (click)="blockSession(sessionActivitySessionId!)">Block Session</button>
+          <button *ngIf="sessionActivitySessionId" class="btn btn-xs btn-success ml-2" (click)="whitelistSession(sessionActivitySessionId!)">Whitelist Session</button>
         </div>
         <div class="table-responsive w-full overflow-x-auto">
           <table class="table min-w-[600px] md:min-w-full text-xs md:text-sm">
@@ -629,32 +539,25 @@
               <tr>
                 <th class="sortable" (click)="sort('timestamp', sessionActivityAttempts)">
                   Timestamp
-                  <i class="fas" [ngClass]="getSortIcon('timestamp')"></i>
-                </th>
+                  </th>
                           <th class="sortable" (click)="sort('username', sessionActivityAttempts)">
             Email
-            <i class="fas" [ngClass]="getSortIcon('username')"></i>
-          </th>
+            </th>
                 <th class="sortable" (click)="sort('ipAddress', sessionActivityAttempts)">
                   IP Address
-                  <i class="fas" [ngClass]="getSortIcon('ipAddress')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('location', sessionActivityAttempts)">
                   Location
-                  <i class="fas" [ngClass]="getSortIcon('location')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('status', sessionActivityAttempts)">
                   Status
-                  <i class="fas" [ngClass]="getSortIcon('status')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('threatLevel', sessionActivityAttempts)">
                   Threat
-                  <i class="fas" [ngClass]="getSortIcon('threatLevel')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('attemptCount', sessionActivityAttempts)">
                   Attempts
-                  <i class="fas" [ngClass]="getSortIcon('attemptCount')"></i>
-                </th>
+                  </th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -666,7 +569,6 @@
                 <td class="whitespace-nowrap">{{ attempt.location }}</td>
                 <td>
                   <span class="status-badge" [ngClass]="attempt.status">
-                    <i class="fas" [ngClass]="getStatusIcon(attempt.status)"></i>
                     {{ attempt.status | titlecase }}
                   </span>
                 </td>
@@ -677,7 +579,7 @@
                 </td>
                 <td class="whitespace-nowrap">{{ attempt.attemptCount }}</td>
                 <td>
-                  <button class="btn btn-xs btn-light" (click)="viewDetails(attempt)"><i class="fas fa-eye"></i></button>
+                  <button class="btn btn-xs btn-light" (click)="viewDetails(attempt)"></button>
                 </td>
               </tr>
             </tbody>
@@ -685,7 +587,7 @@
         </div>
       </div>
       <div class="modal-footer flex gap-2 flex-wrap justify-end px-4 py-3 md:px-6 md:py-4 flex-shrink-0">
-        <button type="button" class="btn btn-secondary" (click)="closeSessionActivity()"><i class="fas fa-times"></i> Close</button>
+        <button type="button" class="btn btn-secondary" (click)="closeSessionActivity()">Close</button>
       </div>
     </div>
   </div>
@@ -701,7 +603,6 @@
     <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto border border-slate-200 z-50 max-h-[90vh] flex flex-col">
       <div class="modal-header flex items-center justify-between px-6 py-4 border-b border-gray-100 rounded-t-3xl bg-white/90 flex-shrink-0">
         <h5 class="modal-title flex items-center gap-2 text-lg md:text-2xl font-bold text-blue-900">
-          <i class="fas fa-list text-blue-500"></i>
           <span>Detailed Log for</span>
           <span class="truncate max-w-[120px] md:max-w-[200px]">{{ detailedLogContext?.username }}</span>
           <span class="text-gray-400">&#64;</span>
@@ -716,24 +617,19 @@
               <tr>
                 <th class="sortable" (click)="sort('timestamp', filteredDetailedLog)">
                   Timestamp
-                  <i class="fas" [ngClass]="getSortIcon('timestamp')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('status', filteredDetailedLog)">
                   Status
-                  <i class="fas" [ngClass]="getSortIcon('status')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('threatLevel', filteredDetailedLog)">
                   Threat
-                  <i class="fas" [ngClass]="getSortIcon('threatLevel')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('attemptCount', filteredDetailedLog)">
                   Attempts
-                  <i class="fas" [ngClass]="getSortIcon('attemptCount')"></i>
-                </th>
+                  </th>
                 <th class="sortable" (click)="sort('location', filteredDetailedLog)">
                   Location
-                  <i class="fas" [ngClass]="getSortIcon('location')"></i>
-                </th>
+                  </th>
                 <th>User Agent</th>
               </tr>
             </thead>
@@ -745,7 +641,6 @@
                 <td>{{ log.timestamp | date:'MMM dd, HH:mm:ss' }}</td>
                 <td>
                   <span class="status-badge" [ngClass]="log.status">
-                    <i class="fas" [ngClass]="getStatusIcon(log.status)"></i>
                     {{ log.status | titlecase }}
                   </span>
                 </td>
@@ -773,7 +668,6 @@
     <div class="relative bg-white rounded-xl shadow-lg w-full max-w-md mx-auto p-6 border border-slate-200 z-50">
       <div class="modal-header flex items-center justify-between mb-4">
         <h5 class="modal-title flex items-center gap-2 text-lg font-bold" [ngClass]="banConfirmationData?.success ? 'text-green-900' : 'text-red-900'">
-          <i class="fas" [ngClass]="banConfirmationData?.success ? 'fa-check-circle text-green-500' : 'fa-exclamation-triangle text-red-500'"></i>
           <span>{{ banConfirmationData?.action === 'ban' ? (banConfirmationData?.success ? 'Ban Successful' : 'Ban Failed') : (banConfirmationData?.success ? 'Whitelist Successful' : 'Whitelist Failed') }}</span>
         </h5>
         <button type="button" class="btn btn-light btn-close text-2xl p-2 rounded-full hover:bg-gray-200 transition flex items-center justify-center text-gray-400 hover:text-red-500" (click)="closeBanConfirmationModal()" aria-label="Close">&times;</button>
@@ -782,8 +676,7 @@
       <div class="modal-body">
         <div class="text-center mb-4">
           <div class="mx-auto flex items-center justify-center w-16 h-16 rounded-full mb-4" [ngClass]="banConfirmationData?.success ? 'bg-green-100' : 'bg-red-100'">
-            <i class="fas text-2xl" [ngClass]="banConfirmationData?.success ? 'fa-shield-check text-green-600' : 'fa-exclamation-triangle text-red-600'"></i>
-          </div>
+            </div>
           
           <h3 class="text-lg font-semibold mb-2" [ngClass]="banConfirmationData?.success ? 'text-green-900' : 'text-red-900'">
             {{ banConfirmationData?.action === 'ban' ? (banConfirmationData?.success ? 'IP Successfully Banned' : 'Ban Action Failed') : (banConfirmationData?.success ? 'IP Successfully Whitelisted' : 'Whitelist Action Failed') }}
@@ -806,7 +699,6 @@
           
           <div *ngIf="banConfirmationData?.success && banConfirmationData?.action === 'ban'" class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <div class="flex items-center gap-2 text-blue-800">
-              <i class="fas fa-info-circle"></i>
               <span class="text-sm font-medium">Ban Details</span>
             </div>
             <ul class="text-sm text-blue-700 mt-2 space-y-1">
@@ -819,7 +711,6 @@
           
           <div *ngIf="banConfirmationData?.success && banConfirmationData?.action === 'whitelist'" class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
             <div class="flex items-center gap-2 text-green-800">
-              <i class="fas fa-info-circle"></i>
               <span class="text-sm font-medium">Whitelist Details</span>
             </div>
             <ul class="text-sm text-green-700 mt-2 space-y-1">
@@ -834,12 +725,13 @@
       
       <div class="modal-footer flex justify-end gap-3">
         <button type="button" class="btn btn-secondary" (click)="closeBanConfirmationModal()">
-          <i class="fas fa-times"></i> Close
+          Close
         </button>
         <button *ngIf="!banConfirmationData?.success" type="button" class="btn btn-primary" (click)="closeBanConfirmationModal()">
-          <i class="fas fa-redo"></i> Try Again
+          Try Again
         </button>
       </div>
     </div>
   </div>
 </div>
+</lux-page-shell>

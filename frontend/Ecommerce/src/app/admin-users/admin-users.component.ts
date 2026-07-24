@@ -9,6 +9,7 @@ import SockJS from 'sockjs-client';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
 import { AuthService } from '../auth/auth.service';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 interface Permission {
   key: string;
@@ -85,7 +86,8 @@ export class AdminUsersComponent implements OnInit{
     private roleService: RoleService,
     public permissionService: PermissionService,
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private luxDialog: LuxDialogService
   ) {
     this.PermissionConstants = PermissionConstants;
     // Get current user's role level from JWT
@@ -373,15 +375,21 @@ export class AdminUsersComponent implements OnInit{
     });
   }
 
-  deleteAdmin(admin: AdminUser): void {
-    if (confirm(`Are you sure you want to delete ${admin.name}?`)) {
-      this.adminUserService.deleteAdminUser(admin.id).subscribe({
-        next: () => {
-          this.refreshData();
-        },
-        error: err => alert('Failed to delete admin: ' + (err.error?.message || err.message))
-      });
-    }
+  async deleteAdmin(admin: AdminUser): Promise<void> {
+    const confirmed = await this.luxDialog.confirm({
+      title: `Delete ${admin.name}?`,
+      text: 'This removes the admin account permanently.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (!confirmed) return;
+    this.adminUserService.deleteAdminUser(admin.id).subscribe({
+      next: () => {
+        this.refreshData();
+        this.luxDialog.toast('Admin deleted.');
+      },
+      error: err => this.luxDialog.error('Delete failed', err.error?.message || err.message)
+    });
   }
 
   toggleAdminStatus(admin: AdminUser): void {
@@ -389,16 +397,20 @@ export class AdminUsersComponent implements OnInit{
     this.adminUserService.updateAdminStatus(admin.id, newStatus).subscribe({
       next: () => {
         this.refreshData();
+        this.luxDialog.toast(`Status updated to ${newStatus}.`);
       },
-      error: err => alert('Failed to update status: ' + (err.error?.message || err.message))
+      error: err => this.luxDialog.error('Update failed', err.error?.message || err.message)
     });
   }
 
-  resetPassword(admin: AdminUser): void {
-    if (confirm(`Reset password for ${admin.name}?`)) {
-      console.log('Password reset for:', admin);
-      alert('Password reset email sent to ' + admin.email);
-    }
+  async resetPassword(admin: AdminUser): Promise<void> {
+    const confirmed = await this.luxDialog.confirm({
+      title: `Reset password for ${admin.name}?`,
+      text: `A reset email will be sent to ${admin.email}.`,
+      confirmText: 'Reset',
+    });
+    if (!confirmed) return;
+    this.luxDialog.toast('Password reset email sent to ' + admin.email);
   }
 
   // Permission methods

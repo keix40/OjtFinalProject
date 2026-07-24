@@ -13,6 +13,7 @@ import { PermissionCategoryService } from '../services/permission-category.servi
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { PermissionConstants } from '../constants/permission.constants';
 import { Observable } from 'rxjs';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 interface Role {
   id: number;
@@ -159,7 +160,8 @@ export class RolesPermissionsComponent implements OnInit{
     private authService: AuthService,
     private modalService: NgbModal,
     public imageService: ImageService,
-    private permissionCategoryService: PermissionCategoryService
+    private permissionCategoryService: PermissionCategoryService,
+    private luxDialog: LuxDialogService
   ) {
     this.roleForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
@@ -678,9 +680,10 @@ export class RolesPermissionsComponent implements OnInit{
     console.log(`Role ${role.name} status changed to ${role.status}`);
   }
 
-  deleteRole(role: Role): void {
+  async deleteRole(role: Role): Promise<void> {
     if (!this.canDeleteRole) return;
-    if (confirm(`Are you sure you want to delete "${role.name}"?`)) {
+    const ok = await this.luxDialog.confirm({ title: `Delete "${role.name}"?`, confirmText: 'Delete', destructive: true });
+    if (ok) {
       this.roleService.deleteRole(role.id).subscribe({
         next: () => {
           this.allRoles = this.allRoles.filter(r => r.id !== role.id);
@@ -1066,8 +1069,9 @@ export class RolesPermissionsComponent implements OnInit{
     this.showAssignedUsersModal = false;
   }
 
-  removeUserFromRole(user: User): void {
-    if (confirm(`Remove ${user.name} from this role?`)) {
+  async removeUserFromRole(user: User): Promise<void> {
+    const ok = await this.luxDialog.confirm({ title: `Remove ${user.name} from this role?`, confirmText: 'Remove', destructive: true });
+    if (ok) {
       this.assignedUsersList = this.assignedUsersList.filter(u => u.id !== user.id);
       if (this.selectedRole) {
         this.selectedRole.userCount = Math.max(0, this.selectedRole.userCount - 1);

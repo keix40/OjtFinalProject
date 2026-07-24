@@ -1,595 +1,282 @@
-<div class="p-4 bg-slate-50 min-h-screen">
-  <!-- Header Section -->
-  <div class="text-center mb-8">
-    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-      <i data-lucide="shopping-bag" class="w-8 h-8 text-indigo-500"></i>
-    </div>
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">Order Management</h1>
-    <p class="text-gray-600 text-lg">Manage and track all customer orders, status, and fulfillment</p>
-  </div>
-
-<!-- Filters Card -->
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-    <!-- Search and Filters -->
-    <div class="flex flex-col sm:flex-row gap-4 flex-1">
-      <div class="relative flex-1 max-w-md">
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </div>
-        <input 
-          type="text" 
-          [(ngModel)]="searchTerm"
-          (input)="onSearch()"
-          placeholder="Search order code or status..."
-          class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-        >
-      </div>
-  
-      <div class="flex items-center gap-2 text-sm text-gray-600">
-        <span class="font-medium">{{ totalItems }}</span>
-        <span>Orders found</span>
-      </div>
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
-      <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
-              [(ngModel)]="selectedStatus" (change)="onStatusChange()">
-        <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
-      </select>
-    </div>
-    <div>
-      <label class="block text-sm font-medium text-slate-700 mb-1">Date Range</label>
-      <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
-              [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
-        <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
-      </select>
-    </div>
-  </div>
-  </div>
-
-  <!-- Export Dropdowns -->
-  <div class="flex gap-2 mb-4">
-    <!-- CSV Export Dropdown -->
-    <div class="relative">
-      <button 
-        (click)="toggleCsvDropdown()"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-        </svg>
-        Export CSV
-        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': csvDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      <div *ngIf="csvDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-          (click)="exportToCSV('all'); csvDropdownOpen = false">
-          <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-          </svg>
-          Export All Orders
-        </button>
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="selectedOrders.length === 0"
-          (click)="exportToCSV('selected'); csvDropdownOpen = false">
-          <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-          </svg>
-          Export Selected ({{ selectedOrders.length }})
-        </button>
-      </div>
-    </div>
-    <!-- PDF Export Dropdown -->
-    <div class="relative">
-      <button 
-        (click)="togglePdfDropdown()"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors shadow-sm">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-        </svg>
-        Export PDF
-        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': pdfDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      <div *ngIf="pdfDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-          (click)="exportToPDF('all'); pdfDropdownOpen = false">
-          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-          </svg>
-          Export All Orders
-        </button>
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="selectedOrders.length === 0"
-          (click)="exportToPDF('selected'); pdfDropdownOpen = false">
-          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-          </svg>
-          Export Selected ({{ selectedOrders.length }})
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Order Table -->
-  <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
-    <table class="min-w-full divide-y divide-slate-200">
-      <thead class="bg-slate-50">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                   [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-slate-200">
-        <tr *ngFor="let order of paginatedOrders" class="hover:bg-slate-50">
-          <td class="px-4 py-3 whitespace-nowrap">
-            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                   [checked]="selectedOrderIds.has(order.orderId)" (change)="onOrderCheckboxChange(order, $event)">
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-2">
-              <!-- <i data-lucide="hash" class="w-4 h-4 text-slate-400"></i> -->
-              <span class="font-medium text-slate-800">{{ order.orderCode }}</span>
-              <!-- <span *ngIf="order.userDiscountId" class="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Discount Used</span> -->
-            </div>
-            <span class="text-xs text-slate-500">{{ order.deliveryService }}</span>
-          </td>
-          <td class="px-4 py-3 text-slate-700">
-            {{ formatDate(order.orderDate) }}
-          </td>
-          <td class="px-4 py-3">
-            <span class="text-slate-700">{{ getTotalItems(order) }} items</span>
-            <!-- <span class="block text-xs text-slate-500">{{ order.products.length }} products</span> -->
-          </td>
-          <td class="px-4 py-3 text-right">
-            <ng-container *ngIf="order.userDiscountId || order.discountAmount > 0; else noDiscount">
-              <span class="line-through text-gray-400 mr-2">{{ formatPriceOnly(getBeforeDiscountProductTotal(order) + (order.deliveryFee || 0)) }} MMK</span>
-              <span class="font-semi text-slate-800">{{ formatPriceOnly(getAfterDiscountProductTotal(order) + (order.deliveryFee || 0)) }} MMK</span>
-            </ng-container>
-            <ng-template #noDiscount>
-              <span>{{ formatPriceOnly(getRefundedTotal(order)) }} MMK</span>
-            </ng-template>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex flex-col gap-1">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                  [ngClass]="{
-                    'bg-emerald-100 text-emerald-800': order.status === 'DELIVERED',
-                    'bg-blue-100 text-blue-800': order.status === 'PAID',
-                    'bg-rose-100 text-rose-800': order.status === 'CANCELLED',
-                    'bg-indigo-100 text-indigo-800': order.status === 'SHIPPED',
-                    'bg-purple-100 text-purple-800': order.status === 'RETURNED',
-                    'bg-amber-100 text-amber-800': order.status === 'PENDING',
-                    'bg-cyan-100 text-cyan-800': order.status === 'PROCESSING',
-                    'bg-slate-100 text-slate-800': ['DELIVERED','PAID','CANCELLED','SHIPPED','RETURNED','PENDING','PROCESSING'].indexOf(order.status) === -1
-                  }">
-              {{ order.status }}
-            </span>
-              <!-- Replacement indicator -->
-              <span *ngIf="hasReplacementRequest(order)" 
-                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                </svg>
-                Replacement
-              </span>
-              <!-- Approved Return indicator for cancelled orders -->
-              <span *ngIf="isCancelledWithApprovedReturn(order)" 
-                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Money Refund
-              </span>
-            </div>
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex gap-2">
-              <button class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition text-xs shadow-sm flex items-center gap-1"
-                      (click)="openInvoiceModal(order)">
-                <i data-lucide="file-text" class="w-4 h-4"></i> See Invoice
-              </button>
-              <button class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1"
-                      (click)="viewOrderDetails(order, orderDetailsModal)">
-                <i data-lucide="eye" class="w-4 h-4"></i> View
-              </button>
-              <button class="px-3 py-1 bg-rose-50 text-rose-700 rounded-lg border border-rose-200 hover:bg-rose-100 transition text-xs shadow-sm flex items-center gap-1"
-                      (click)="cancelOrder(order)" [disabled]="order.status === 'DELIVERED' || order.status === 'CANCELLED' || !permissionService.hasPermission(PermissionConstants.ORDERS_UPDATE)">
-                <i data-lucide="x-circle" class="w-4 h-4"></i> Cancel
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Pagination Controls -->
-  <div *ngIf="showPagination" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-    <div class="flex items-center justify-between">
-      <div class="text-sm text-gray-700">
-        Showing {{ showingFrom }} to {{ showingTo }} of {{ totalItems }} results
-      </div>
-      <div class="flex items-center gap-2">
-        <button 
-          (click)="changePage(currentPage - 1)"
-          [disabled]="currentPage === 1"
-          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Previous
-        </button>
-        <div class="flex items-center gap-1">
-          <button 
-            *ngFor="let page of getPageNumbers()"
-            (click)="changePage(page)"
-            [class]="page === currentPage ? 
-              'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
-              'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
-            {{ page }}
+<lux-page-shell variant="admin" shellClass="admin-page order-admin">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Operations"
+    title="Order Management"
+    subtitle="Track fulfillment, status changes, invoices, and refunds.">
+    <div actions class="admin-export-group">
+      <div class="admin-export relative">
+        <lux-button variant="secondary" (pressed)="toggleCsvDropdown()">Export CSV</lux-button>
+        <div *ngIf="csvDropdownOpen" class="admin-menu">
+          <button type="button" (click)="exportToCSV('all'); csvDropdownOpen = false">Export all</button>
+          <button type="button" [disabled]="selectedOrders.length === 0" (click)="exportToCSV('selected'); csvDropdownOpen = false">
+            Export selected ({{ selectedOrders.length }})
           </button>
         </div>
-        <button 
-          (click)="changePage(currentPage + 1)"
-          [disabled]="currentPage === totalPages"
-          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          Next
-          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
+      </div>
+      <div class="admin-export relative">
+        <lux-button variant="ghost" (pressed)="togglePdfDropdown()">Export PDF</lux-button>
+        <div *ngIf="pdfDropdownOpen" class="admin-menu">
+          <button type="button" (click)="exportToPDF('all'); pdfDropdownOpen = false">Export all</button>
+          <button type="button" [disabled]="selectedOrders.length === 0" (click)="exportToPDF('selected'); pdfDropdownOpen = false">
+            Export selected ({{ selectedOrders.length }})
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </lux-page-header>
 
-  <!-- Empty State -->
-  <div *ngIf="filteredOrders.length === 0" class="flex flex-col items-center justify-center py-16">
-    <div class="bg-white rounded-xl p-8 flex flex-col items-center shadow-sm border border-slate-200 max-w-md w-full">
-      <div class="text-5xl text-slate-300 mb-4">📦</div>
-      <h4 class="text-lg font-semibold text-slate-800 mb-2">No Orders Found</h4>
-      <p class="text-slate-500 mb-4 text-center">No orders match your current filters.</p>
-      <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm"
-              (click)="selectedStatus = 'all'; selectedDateRange = 'all'; applyFilters()">
-        Clear Filters
-      </button>
+  <lux-filter-bar filters>
+    <div primary class="admin-filter-fields">
+      <lux-field label="Search">
+        <input class="lux-input" type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Order code, customer, status…" />
+      </lux-field>
+      <lux-field label="Status">
+        <select class="lux-input" [(ngModel)]="selectedStatus" (change)="onStatusChange()">
+          <option *ngFor="let status of statusOptions" [value]="status.value">{{ status.label }}</option>
+        </select>
+      </lux-field>
+      <lux-field label="Date range">
+        <select class="lux-input" [(ngModel)]="selectedDateRange" (change)="onDateRangeChange()">
+          <option *ngFor="let range of dateRanges" [value]="range.value">{{ range.label }}</option>
+        </select>
+      </lux-field>
     </div>
+    <div secondary class="admin-filter-meta">
+      <span class="lux-data">{{ totalItems }} orders</span>
+      <lux-button variant="ghost" (pressed)="clearFilters()">Clear</lux-button>
+    </div>
+  </lux-filter-bar>
+
+  <div class="page-panel">
+    <lux-table
+      [rows]="paginatedOrders"
+      [selectable]="true"
+      [allSelected]="allPageSelected"
+      [partialSelected]="partialPageSelected"
+      [isSelected]="isRowSelected"
+      [trackBy]="trackByOrder"
+      (toggleAll)="onToggleAll($event)"
+      (toggleRow)="onToggleRow($event)">
+      <ng-template luxColumn="order" header="Order" let-order>
+        <div class="cell-stack">
+          <span class="cell-strong">{{ order.orderCode }}</span>
+          <span class="cell-muted">{{ order.deliveryService }}</span>
+        </div>
+      </ng-template>
+      <ng-template luxColumn="date" header="Date" let-order>
+        {{ formatDate(order.orderDate) }}
+      </ng-template>
+      <ng-template luxColumn="items" header="Items" let-order>
+        {{ getTotalItems(order) }} items
+      </ng-template>
+      <ng-template luxColumn="total" header="Total" align="right" let-order>
+        <ng-container *ngIf="order.userDiscountId || order.discountAmount > 0; else noDiscount">
+          <span class="cell-strike">{{ formatPriceOnly(getBeforeDiscountProductTotal(order) + (order.deliveryFee || 0)) }}</span>
+          <span class="cell-strong">{{ formatPriceOnly(getAfterDiscountProductTotal(order) + (order.deliveryFee || 0)) }} MMK</span>
+        </ng-container>
+        <ng-template #noDiscount>
+          <span class="cell-strong">{{ formatPriceOnly(getRefundedTotal(order)) }} MMK</span>
+        </ng-template>
+      </ng-template>
+      <ng-template luxColumn="status" header="Status" let-order>
+        <div class="cell-stack">
+          <lux-badge [tone]="statusTone(order.status)">{{ order.status }}</lux-badge>
+          <lux-badge *ngIf="hasReplacementRequest(order)" tone="warning">Replacement</lux-badge>
+          <lux-badge *ngIf="isCancelledWithApprovedReturn(order)" tone="success">Money refund</lux-badge>
+        </div>
+      </ng-template>
+      <ng-template luxColumn="actions" header="Actions" let-order>
+        <div class="admin-row-actions">
+          <lux-button variant="ghost" (pressed)="openInvoiceModal(order)">Invoice</lux-button>
+          <lux-button variant="secondary" (pressed)="viewOrderDetails(order, orderDetailsModal)">View</lux-button>
+          <lux-button
+            variant="ghost"
+            [disabled]="order.status === 'DELIVERED' || order.status === 'CANCELLED' || !permissionService.hasPermission(PermissionConstants.ORDERS_UPDATE)"
+            (pressed)="cancelOrder(order)">
+            Cancel
+          </lux-button>
+        </div>
+      </ng-template>
+      <lux-empty-state empty eyebrow="Orders" title="No orders found" message="No orders match your current filters.">
+        <lux-button variant="secondary" (pressed)="clearFilters()">Clear filters</lux-button>
+      </lux-empty-state>
+    </lux-table>
+
+    <lux-paginator
+      [page]="currentPage"
+      [size]="pageSize"
+      [totalElements]="totalItems"
+      [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)">
+    </lux-paginator>
   </div>
-</div>
+</lux-page-shell>
 
 <!-- Order Details Modal -->
 <ng-template #orderDetailsModal let-modal>
-  <div class="fixed inset-0 z-40 flex items-center justify-center">
-    <!-- Modal Backdrop -->
-    <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-    <!-- Modal Content -->
-    <div class="relative bg-white rounded-xl shadow-lg w-full max-w-2xl mx-auto p-4 md:p-8 border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
-      <div class="flex items-center justify-between mb-4 md:mb-6">
-        <h4 class="text-lg md:text-xl font-semibold text-slate-800 break-words">
-          Invoice - {{ selectedOrder?.orderCode }}
-        </h4>
-        <button type="button" class="text-slate-400 hover:text-slate-600 text-2xl" (click)="modal.dismiss()">
-          &times;
-        </button>
+  <div class="lux-modal">
+    <div class="lux-modal__backdrop"></div>
+    <div class="lux-modal__panel">
+      <div class="lux-modal__header">
+        <div>
+          <p class="lux-overline">Invoice</p>
+          <h4 class="lux-modal__title">{{ selectedOrder?.orderCode }}</h4>
+        </div>
+        <button type="button" class="lux-modal__close" (click)="modal.dismiss()" aria-label="Close">&times;</button>
       </div>
-      <div *ngIf="selectedOrder" class="space-y-4 md:space-y-6">
-        <!-- Discount Info Section -->
-        <div *ngIf="selectedOrder.userDiscountId" class="bg-blue-50 rounded-lg p-4 border border-blue-200 w-full flex flex-col gap-1">
-          <div class="font-medium text-blue-700">Discount Used</div>
-          <div class="text-blue-900 text-sm">
-            <span *ngIf="getDiscountInfo(selectedOrder)">
-              Code: <span class="font-bold">{{ getDiscountInfo(selectedOrder).code }}</span> -
-              {{ getDiscountInfo(selectedOrder).name }}
-              <span *ngIf="selectedOrder.discountAmount">| Amount: <span class="font-bold">-{{ formatPriceOnly(selectedOrder.discountAmount) }} MMK</span></span>
-            </span>
-            <span *ngIf="!getDiscountInfo(selectedOrder)">Discount ID: {{ selectedOrder.userDiscountId }}</span>
+
+      <div *ngIf="selectedOrder" class="lux-modal__body">
+        <div *ngIf="selectedOrder.userDiscountId" class="admin-panel lux-modal__note">
+          <div class="cell-strong">Discount used</div>
+          <div class="cell-muted" *ngIf="getDiscountInfo(selectedOrder) as info">
+            Code: <strong>{{ info.code }}</strong> — {{ info.name }}
+            <span *ngIf="selectedOrder.discountAmount"> | −{{ formatPriceOnly(selectedOrder.discountAmount) }} MMK</span>
           </div>
         </div>
-        <!-- Customer Info -->
-        <div class="flex flex-col md:flex-row gap-4">
-          <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
-            <div class="font-medium text-slate-700 mb-2">Bill To:</div>
-            <div class="text-slate-600 break-words">{{ selectedOrder.user.name }}</div>
-            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.user.email }}</div>
-            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.user.phNo }}</div>
+
+        <div class="lux-modal__grid">
+          <div class="admin-panel">
+            <div class="lux-overline">Bill to</div>
+            <div>{{ selectedOrder.user.name }}</div>
+            <div class="cell-muted">{{ selectedOrder.user.email }}</div>
+            <div class="cell-muted">{{ selectedOrder.user.phNo }}</div>
           </div>
-          <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
-            <div class="font-medium text-slate-700 mb-2">Ship To:</div>
-            <div class="text-slate-600 break-words">{{ selectedOrder.address.address }}</div>
-            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.address.city }}, {{ selectedOrder.address.state }} {{ selectedOrder.address.postalCode }}</div>
-            <div class="text-sm text-slate-500 break-words">{{ selectedOrder.address.country }}</div>
+          <div class="admin-panel">
+            <div class="lux-overline">Ship to</div>
+            <div>{{ selectedOrder.address.address }}</div>
+            <div class="cell-muted">{{ selectedOrder.address.city }}, {{ selectedOrder.address.state }} {{ selectedOrder.address.postalCode }}</div>
+            <div class="cell-muted">{{ selectedOrder.address.country }}</div>
           </div>
         </div>
-        <!-- Order Info -->
-        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <div class="text-xs text-slate-500">Bill No</div>
-              <div class="font-medium text-slate-700 break-words">{{ selectedOrder.orderCode }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-slate-500">Date</div>
-              <div class="font-medium text-slate-700 break-words">{{ formatDate(selectedOrder.orderDate) }}</div>
-            </div>
-            <div>
-              <div class="text-xs text-slate-500">Status</div>
-              <div class="font-medium">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
-                      [ngClass]="{
-                        'bg-emerald-100 text-emerald-800': selectedOrder.status === 'DELIVERED',
-                        'bg-blue-100 text-blue-800': selectedOrder.status === 'PAID',
-                        'bg-rose-100 text-rose-800': selectedOrder.status === 'CANCELLED',
-                        'bg-indigo-100 text-indigo-800': selectedOrder.status === 'SHIPPED',
-                        'bg-purple-100 text-purple-800': selectedOrder.status === 'RETURNED',
-                        'bg-amber-100 text-amber-800': selectedOrder.status === 'PENDING',
-                        'bg-cyan-100 text-cyan-800': selectedOrder.status === 'PROCESSING'
-                      }">
-                    {{ selectedOrder.status }}
-                  </span>
-                </div>
-              </div>
-            </div>
-        </div>
-        <!-- Delivery Service Info -->
-        <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 w-full">
-          <div class="font-medium text-blue-700 mb-1">Delivery Service</div>
-          <div class="text-blue-900">{{ selectedOrder.deliveryService || selectedOrder.deliveryMethod }}</div>
-        </div>
-        <!-- Order Status History -->
-        <div *ngIf="(selectedOrder?.statusHistory || []).length > 0" class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
-          <div class="flex items-center gap-2 mb-3">
-            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span class="font-medium text-gray-800">Order Status History</span>
+
+        <div class="admin-panel lux-modal__meta">
+          <div><span class="cell-muted">Bill no</span><div class="cell-strong">{{ selectedOrder.orderCode }}</div></div>
+          <div><span class="cell-muted">Date</span><div class="cell-strong">{{ formatDate(selectedOrder.orderDate) }}</div></div>
+          <div>
+            <span class="cell-muted">Status</span>
+            <div><lux-badge [tone]="statusTone(selectedOrder.status)">{{ selectedOrder.status }}</lux-badge></div>
           </div>
-          <div class="space-y-2">
-            <div *ngFor="let status of selectedOrder.statusHistory; let i = index" class="flex items-center gap-3 text-sm">
-              <div class="flex items-center gap-2">
-                <div class="w-2 h-2 rounded-full"
-                     [ngClass]="{
-                       'bg-green-500': status.status === 'DELIVERED',
-                       'bg-blue-500': status.status === 'PAID' || status.status === 'SHIPPED',
-                       'bg-red-500': status.status === 'CANCELLED',
-                       'bg-yellow-500': status.status === 'PENDING',
-                       'bg-purple-500': status.status === 'PROCESSING',
-                       'bg-gray-500': ['DELIVERED','PAID','CANCELLED','SHIPPED','PENDING','PROCESSING'].indexOf(status.status) === -1
-                     }"></div>
-                <span class="font-medium">{{ status.status }}</span>
-              </div>
-              <span class="text-gray-500">{{ status.statusDate | date:'medium' }}</span>
-              <span *ngIf="i === 0" class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                Latest
-              </span>
+          <div>
+            <span class="cell-muted">Delivery</span>
+            <div class="cell-strong">{{ selectedOrder.deliveryService || selectedOrder.deliveryMethod }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="(selectedOrder?.statusHistory || []).length > 0" class="admin-panel">
+          <div class="lux-overline mb-2">Status history</div>
+          <div class="history-list">
+            <div *ngFor="let status of selectedOrder.statusHistory; let i = index" class="history-row">
+              <lux-badge [tone]="statusTone(status.status)">{{ status.status }}</lux-badge>
+              <span class="cell-muted">{{ status.statusDate | date:'medium' }}</span>
+              <lux-badge *ngIf="i === 0" tone="info">Latest</lux-badge>
             </div>
           </div>
         </div>
-        <!-- Products Table -->
-        <div class="overflow-x-auto w-full border border-slate-200 rounded-lg bg-white">
-          <table class="min-w-full divide-y divide-slate-200 text-xs md:text-sm">
-            <thead class="bg-slate-50">
+
+        <div class="lux-table-wrap modal-table">
+          <table class="lux-table">
+            <thead>
               <tr>
-                <th class="px-3 py-2 text-left font-medium text-slate-500 uppercase tracking-wider">#</th>
-                <th class="px-3 py-2 text-left font-medium text-slate-500 uppercase tracking-wider">Item</th>
-                <th class="px-3 py-2 text-right font-medium text-slate-500 uppercase tracking-wider">Qty</th>
-                <th class="px-3 py-2 text-right font-medium text-slate-500 uppercase tracking-wider">Price</th>
-                <th class="px-3 py-2 text-right font-medium text-slate-500 uppercase tracking-wider">Amount</th>
+                <th>#</th>
+                <th>Item</th>
+                <th class="text-right">Qty</th>
+                <th class="text-right">Price</th>
+                <th class="text-right">Amount</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-slate-200">
-              <tr *ngFor="let product of selectedOrder.products; let i = index" class="hover:bg-slate-50">
-                <td class="px-3 py-2 whitespace-nowrap">{{ i + 1 }}</td>
-                <td class="px-3 py-2 break-words">
+            <tbody>
+              <tr *ngFor="let product of selectedOrder.products; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>
                   {{ product.productName }}
-                  <span *ngIf="product.status === 'RETURNED'" class="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">Refunded</span>
+                  <lux-badge *ngIf="product.status === 'RETURNED'" tone="success">Refunded</lux-badge>
                 </td>
-                <td class="px-3 py-2 text-right">{{ product.quantity }}</td>
-                <td class="px-3 py-2 text-right">
-                  <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="line-through text-gray-400 mr-1" title="Original Price">{{ formatPriceOnly(product.originalPrice) }} MMK</span>
-                  <span title="Discounted Price">{{ formatPriceOnly(product.unitPrice) }} MMK</span>
+                <td class="text-right">{{ product.quantity }}</td>
+                <td class="text-right">
+                  <span *ngIf="product.originalPrice && product.originalPrice > product.unitPrice" class="cell-strike">{{ formatPriceOnly(product.originalPrice) }}</span>
+                  {{ formatPriceOnly(product.unitPrice) }} MMK
                 </td>
-                <td class="px-3 py-2 text-right">{{ formatPriceOnly(product.quantity * product.unitPrice) }} MMK</td>
+                <td class="text-right">{{ formatPriceOnly(product.quantity * product.unitPrice) }} MMK</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <!-- Totals -->
-        <div class="bg-slate-50 rounded-lg p-4 border border-slate-200 w-full">
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <span class="text-slate-600">Subtotal</span>
-              <span class="text-slate-700">
-                <span *ngIf="selectedOrder.discountAmount > 0" class="line-through text-gray-400 mr-2">{{ formatPriceOnly(selectedOrder.subtotal + selectedOrder.discountAmount) }} MMK</span>
-                {{ formatPriceOnly(selectedOrder.subtotal) }} MMK
+
+        <div class="admin-panel totals">
+          <div class="totals-row"><span>Subtotal</span><span>{{ formatPriceOnly(selectedOrder.subtotal) }} MMK</span></div>
+          <div class="totals-row" *ngIf="selectedOrder.deliveryFee > 0"><span>Delivery fee</span><span>{{ formatPriceOnly(selectedOrder.deliveryFee) }} MMK</span></div>
+          <div class="totals-row" *ngIf="selectedOrder.discountAmount > 0">
+            <span>Discount <span *ngIf="selectedOrder.discountCode">({{ selectedOrder.discountCode }})</span></span>
+            <span class="text-danger">−{{ formatPriceOnly(selectedOrder.discountAmount) }} MMK</span>
+          </div>
+          <div class="totals-row totals-row--total">
+            <span>Total</span>
+            <span>
+              {{ formatPriceOnly(selectedOrder.total) }} MMK
+              <span *ngIf="getMoneyRefundStatus(selectedOrder).show" class="cell-muted block">
+                −{{ formatPriceOnly(getMoneyRefundStatus(selectedOrder).amount) }} MMK refunded
               </span>
-            </div>
-            <div class="flex justify-between" *ngIf="selectedOrder.deliveryFee > 0">
-              <span class="text-slate-600">Delivery Fee</span>
-              <span class="text-slate-700">{{ formatPriceOnly(selectedOrder.deliveryFee) }} MMK</span>
-            </div>
-            <div class="flex justify-between" *ngIf="selectedOrder.discountAmount > 0">
-              <span class="text-slate-600">Discount <span *ngIf="selectedOrder.discountCode">({{ selectedOrder.discountCode }})</span></span>
-              <span class="text-rose-600">-{{ formatPriceOnly(selectedOrder.discountAmount) }} MMK</span>
-            </div>
-            <div class="border-t border-slate-200 my-2"></div>
-            <div class="flex justify-between font-semibold">
-              <span class="text-slate-700">TOTAL</span>
-              <span class="text-teal-600">
-                <!-- {{ getRefundedTotal(selectedOrder) | number:'1.2-2' }} ks -->
-                <span *ngIf="selectedOrder.total !== getRefundedTotal(selectedOrder)" class=" ">{{ formatPriceOnly(selectedOrder.total) }} MMK</span>
-                <!-- Show refund badge and amount if money refund -->
-                <span *ngIf="getMoneyRefundStatus(selectedOrder).show" class="block text-xs text-green-600 mt-1">
-                  -{{ formatPriceOnly(getMoneyRefundStatus(selectedOrder).amount) }} MMK refunded
-                </span>
-              </span>
-            </div>
+            </span>
           </div>
         </div>
-        <!-- Status Update Section - Only show if not cancelled with approved return -->
-        <div *ngIf="shouldShowStatusUpdate(selectedOrder)" class="bg-blue-50 rounded-lg p-4 border border-slate-200 w-full">
-          <!-- Replacement Notice -->
-          <div *ngIf="hasReplacementRequest(selectedOrder)" 
-               class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-            <div class="flex items-center gap-2">
-              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
-              </svg>
-              <span class="text-sm font-medium text-amber-800">Replacement Order</span>
-            </div>
-            <p class="text-xs text-amber-700 mt-1">This order has a replacement request. "Delivered" status is not available.</p>
+
+        <div *ngIf="shouldShowStatusUpdate(selectedOrder)" class="admin-panel status-update">
+          <div *ngIf="hasReplacementRequest(selectedOrder)" class="lux-modal__note warning">
+            <div class="cell-strong">Replacement order</div>
+            <p class="cell-muted">Delivered status is not available while a replacement request is open.</p>
           </div>
-          <div class="flex flex-col md:flex-row md:items-center gap-4">
-            <label for="status-select" class="block text-sm font-medium text-slate-700">Update Status:</label>
-            <select id="status-select" 
-                    class="flex-1 px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
-                    [(ngModel)]="selectedStatusInModal">
-              <option *ngFor="let status of currentAvailableStatuses" [value]="status.value">{{ status.label }}</option>
-            </select>
-            <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition shadow-sm disabled:opacity-50"
-                    (click)="changeOrderStatus()" [disabled]="selectedOrder.status === selectedStatusInModal || !permissionService.hasPermission(PermissionConstants.ORDERS_UPDATE)">
+          <div class="status-update__row">
+            <lux-field label="Update status" class="grow">
+              <select class="lux-input" id="status-select" [(ngModel)]="selectedStatusInModal">
+                <option *ngFor="let status of currentAvailableStatuses" [value]="status.value">{{ status.label }}</option>
+              </select>
+            </lux-field>
+            <lux-button
+              variant="primary"
+              [disabled]="selectedOrder.status === selectedStatusInModal || !permissionService.hasPermission(PermissionConstants.ORDERS_UPDATE)"
+              (pressed)="changeOrderStatus()">
               Update
-            </button>
+            </lux-button>
           </div>
         </div>
 
-        <!-- Refund Information Section - Show for cancelled orders with approved returns -->
-        <div *ngIf="isCancelledWithApprovedReturn(selectedOrder)" class="bg-green-50 rounded-lg p-4 border border-green-200 w-full">
-          <div class="flex items-center gap-2 mb-3">
-            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-            <span class="text-sm font-medium text-green-800">Return Request Approved</span>
-          </div>
-          
+        <div *ngIf="isCancelledWithApprovedReturn(selectedOrder)" class="admin-panel refund-info">
+          <div class="cell-strong mb-2">Return request approved</div>
           <div *ngIf="getApprovedReturnRequest(selectedOrder) as returnRequest" class="space-y-3">
-            <!-- Return Request Details -->
-            <div class="bg-white rounded-lg p-3 border border-green-100">
-              <div class="space-y-2">
-                <ng-container *ngIf="returnRequest.products && returnRequest.products.length > 0; else singleProduct">
-                  <div *ngFor="let p of returnRequest.products" class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6 items-center border-b border-slate-100 last:border-b-0 py-2">
-                    <div>
-                      <span class="font-medium text-slate-600">Product:</span>
-                      <span class="text-slate-800 ml-2">{{ p.productName }}</span>
-                    </div>
-                    <div>
-                      <span class="font-medium text-slate-600">Reason:</span>
-                      <span class="text-slate-800 ml-2">{{ returnRequest.reasonForReturn }}</span>
-                    </div>
-                    <div>
-                      <span class="font-medium text-slate-600">Quantity:</span>
-                      <span class="text-slate-800 ml-2">{{ p.quantity }}</span>
-                    </div>
-                    <div>
-                      <span class="font-medium text-slate-600">Total Amount:</span>
-                      <span class="text-slate-800 ml-2">{{ formatPriceOnly(p.totalAmount) }} MMK</span>
-                    </div>
-                  </div>
-                </ng-container>
-                <ng-template #singleProduct>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-6 items-center">
-                    <div>
-                      <span class="font-medium text-slate-600">Product:</span>
-                      <span class="text-slate-800 ml-2">{{ returnRequest.productName }}</span>
-                    </div>
-                    <div>
-                      <span class="font-medium text-slate-600">Reason:</span>
-                      <span class="text-slate-800 ml-2">{{ returnRequest.reasonForReturn }}</span>
-                    </div>
-                    <div>
-                      <span class="font-medium text-slate-600">Quantity:</span>
-                      <span class="text-slate-800 ml-2">{{ returnRequest.quantity }}</span>
-                    </div>
-                    <div>
-                      <span class="font-medium text-slate-600">Total Amount:</span>
-                      <span class="text-slate-800 ml-2">{{ formatPriceOnly(returnRequest.totalAmount) }} MMK</span>
-                    </div>
-                  </div>
-                </ng-template>
-                <div *ngIf="returnRequest.returnDetail" class="pt-2">
-                  <span class="font-medium text-slate-600">Details:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.returnDetail }}</span>
-                </div>
+            <ng-container *ngIf="returnRequest.products && returnRequest.products.length > 0; else singleProduct">
+              <div *ngFor="let p of returnRequest.products" class="refund-product">
+                <div><span class="cell-muted">Product</span> {{ p.productName }}</div>
+                <div><span class="cell-muted">Reason</span> {{ returnRequest.reasonForReturn }}</div>
+                <div><span class="cell-muted">Qty</span> {{ p.quantity }}</div>
+                <div><span class="cell-muted">Amount</span> {{ formatPriceOnly(p.totalAmount) }} MMK</div>
               </div>
-            </div>
-
-            <!-- Approval Information -->
-            <div class="bg-white rounded-lg p-3 border border-green-100">
-              <h4 class="font-medium text-green-800 mb-2">Approval Information</h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span class="font-medium text-slate-600">Approved At:</span>
-                  <span class="text-slate-800 ml-2">{{ formatDate(returnRequest.decisionAt) }}</span>
-                </div>
-                <div *ngIf="returnRequest.adminRemark">
-                  <span class="font-medium text-slate-600">Admin Remark:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.adminRemark }}</span>
-                </div>
+            </ng-container>
+            <ng-template #singleProduct>
+              <div class="refund-product">
+                <div><span class="cell-muted">Product</span> {{ returnRequest.productName }}</div>
+                <div><span class="cell-muted">Reason</span> {{ returnRequest.reasonForReturn }}</div>
+                <div><span class="cell-muted">Qty</span> {{ returnRequest.quantity }}</div>
+                <div><span class="cell-muted">Amount</span> {{ formatPriceOnly(returnRequest.totalAmount) }} MMK</div>
               </div>
+            </ng-template>
+            <div *ngIf="returnRequest.returnDetail"><span class="cell-muted">Details</span> {{ returnRequest.returnDetail }}</div>
+            <div><span class="cell-muted">Approved at</span> {{ formatDate(returnRequest.decisionAt) }}</div>
+            <div *ngIf="returnRequest.adminRemark"><span class="cell-muted">Admin remark</span> {{ returnRequest.adminRemark }}</div>
+            <div *ngIf="returnRequest.refundId" class="refund-product">
+              <div><span class="cell-muted">Refund amount</span> {{ formatPriceOnly(returnRequest.refundAmount) }} MMK</div>
+              <div><span class="cell-muted">Refund type</span> {{ returnRequest.refundType }}</div>
+              <div *ngIf="returnRequest.initiatedAt"><span class="cell-muted">Initiated</span> {{ formatDate(returnRequest.initiatedAt) }}</div>
+              <div *ngIf="returnRequest.completedAt"><span class="cell-muted">Completed</span> {{ formatDate(returnRequest.completedAt) }}</div>
+              <div *ngIf="returnRequest.refundAdminRemark" class="span-2"><span class="cell-muted">Refund remark</span> {{ returnRequest.refundAdminRemark }}</div>
             </div>
-
-            <!-- Refund Information -->
-            <div *ngIf="returnRequest.refundId" class="bg-white rounded-lg p-3 border border-green-100">
-              <h4 class="font-medium text-green-800 mb-2">Refund Information</h4>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span class="font-medium text-slate-600">Refund Amount:</span>
-                  <span class="text-slate-800 ml-2">{{ formatPriceOnly(returnRequest.refundAmount) }} MMK</span>
-                </div>
-                <div>
-                  <span class="font-medium text-slate-600">Refund Type:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.refundType }}</span>
-                </div>
-                <div *ngIf="returnRequest.initiatedAt">
-                  <span class="font-medium text-slate-600">Initiated At:</span>
-                  <span class="text-slate-800 ml-2">{{ formatDate(returnRequest.initiatedAt) }}</span>
-                </div>
-                <div *ngIf="returnRequest.completedAt">
-                  <span class="font-medium text-slate-600">Completed At:</span>
-                  <span class="text-slate-800 ml-2">{{ formatDate(returnRequest.completedAt) }}</span>
-                </div>
-                <div *ngIf="returnRequest.refundAdminRemark" class="md:col-span-2">
-                  <span class="font-medium text-slate-600">Refund Remark:</span>
-                  <span class="text-slate-800 ml-2">{{ returnRequest.refundAdminRemark }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Notice -->
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <span class="text-sm text-blue-800">This order was cancelled but the return request was approved. Status updates are not available.</span>
-              </div>
-            </div>
+            <p class="cell-muted">Status updates are not available for cancelled orders with an approved return.</p>
           </div>
         </div>
       </div>
-      <!-- Modal Footer -->
-      <div class="flex flex-col md:flex-row justify-end gap-3 mt-6 md:mt-8 w-full">
-        <button type="button" 
-                class="px-4 py-2 bg-white text-slate-700 rounded-lg border border-slate-300 hover:bg-slate-50 transition shadow-sm w-full md:w-auto"
-                (click)="modal.close()">
-          Close
-        </button>
+
+      <div class="lux-modal__footer">
+        <lux-button variant="secondary" (pressed)="modal.close()">Close</lux-button>
       </div>
     </div>
   </div>

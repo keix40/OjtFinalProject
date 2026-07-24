@@ -1,1 +1,9 @@
-/* BreadcrumbComponent uses Tailwind for styling. Add custom styles here if needed. */ 
+:host {
+  display: block;
+}
+
+.customer-breadcrumb {
+  font-family: var(--lux-font-sans);
+  letter-spacing: 0.02em;
+  color: var(--lux-stone);
+}

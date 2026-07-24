@@ -9,13 +9,15 @@ import { takeUntil, catchError, debounceTime, distinctUntilChanged, timeout } fr
 import { ToastrService } from 'ngx-toastr';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
 
 declare var lucide: any;
 
 @Component({
   selector: "app-blacklist",
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LuxUiModule],
   templateUrl: "./blacklist.component.html",
   styleUrls: ["./blacklist.component.css"],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -110,7 +112,8 @@ export class BlacklistComponent implements OnInit, OnDestroy {
     private blacklistService: BlacklistService,
     private toastr: ToastrService,
     private cdr: ChangeDetectorRef,
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private luxDialog: LuxDialogService
   ) {
     this.PermissionConstants = PermissionConstants;
     this.permissionService = permissionService;
@@ -519,12 +522,13 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   // Similar updates for other methods that modify state
-  liftBan(entry: BlacklistEntry): void {
+  async liftBan(entry: BlacklistEntry): Promise<void> {
     console.log('[BlacklistComponent] liftBan called for entry:', entry);
     console.log('[BlacklistComponent] Entry ID:', entry.id);
     console.log('[BlacklistComponent] Entry targetValue:', entry.targetValue);
     
-    if (confirm(`Lift ban for ${entry.targetValue}?`)) {
+    const ok = await this.luxDialog.confirm({ title: `Lift ban for ${entry.targetValue}?`, confirmText: 'Lift ban', destructive: true });
+    if (ok) {
       console.log('[BlacklistComponent] User confirmed lift ban');
       this.blacklistService.liftBan(entry.id)
         .pipe(takeUntil(this.destroy$))
@@ -586,9 +590,10 @@ export class BlacklistComponent implements OnInit, OnDestroy {
   }
 
   // Bulk actions
-  bulkLiftBan(): void {
+  async bulkLiftBan(): Promise<void> {
     console.log('[BlacklistComponent] bulkLiftBan called with selected entries:', this.selectedEntries);
-    if (confirm(`Lift ban for ${this.selectedEntries.length} selected entries?`)) {
+    const ok = await this.luxDialog.confirm({ title: `Lift ban for ${this.selectedEntries.length} selected entries?`, confirmText: 'Lift bans', destructive: true });
+    if (ok) {
       this.blacklistService.bulkLiftBan(this.selectedEntries)
         .pipe(takeUntil(this.destroy$))
         .subscribe({

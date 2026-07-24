@@ -1,98 +1,82 @@
-/* Custom animations for the coupon list component */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+:host { display: block; }
+
+.copy-toast {
+  position: fixed;
+  top: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%) translateY(-0.5rem);
+  z-index: 50;
+  padding: 0.75rem 1.1rem;
+  background: var(--lux-cream);
+  border: var(--lux-border-hair);
+  box-shadow: var(--lux-shadow-md);
+  color: var(--lux-ink);
+  font-size: 0.85rem;
+  opacity: 0;
+  transition: opacity var(--lux-dur) var(--lux-ease), transform var(--lux-dur) var(--lux-ease);
+}
+.copy-toast.is-in {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 
-@keyframes slideDown {
-  from { 
-    opacity: 0; 
-    transform: translate(-50%, -100%);
-  }
-  to { 
-    opacity: 1; 
-    transform: translate(-50%, 0);
-  }
+.coupon-list { display: grid; gap: 0.65rem; }
+
+.coupon-row {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.15rem;
+  align-items: center;
+}
+@media (min-width: 720px) {
+  .coupon-row { grid-template-columns: 1.4fr 1fr auto; }
 }
 
-@keyframes fadeOut {
-  from { 
-    opacity: 1; 
-    transform: translate(-50%, 0);
-  }
-  to { 
-    opacity: 0; 
-    transform: translate(-50%, -20px);
-  }
+.coupon-row.is-expired,
+.coupon-row.is-used,
+.coupon-row.is-off { opacity: 0.62; }
+.coupon-row.is-wait { background: #F7F1E4; }
+
+.coupon-main h3 {
+  margin: 0 0 0.25rem;
+  font-family: var(--lux-font-serif);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.discount {
+  margin: 0;
+  color: var(--lux-champagne-deep);
+  font-size: 0.95rem;
+}
+.discount strong {
+  font-family: var(--lux-font-serif);
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: var(--lux-ink);
+}
+.min { margin: 0.25rem 0 0; color: var(--lux-stone); font-size: 0.8rem; }
+
+.coupon-code .code-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+.coupon-code code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: 0.08em;
+  font-size: 0.9rem;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+.coupon-meta {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
 }
+.coupon-meta small { color: var(--lux-stone); font-size: 0.75rem; }
 
-@keyframes bounceGentle {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.6s ease-out;
-}
-
-.animate-slide-down {
-  animation: slideDown 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-.animate-fade-out {
-  animation: fadeOut 0.3s ease-out;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-.animate-bounce-gentle {
-  animation: bounceGentle 2s ease-in-out infinite;
-}
-
-/* Custom scrollbar for the coupons list */
-.max-h-\[32rem\]::-webkit-scrollbar {
-  width: 6px;
-}
-
-.max-h-\[32rem\]::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.max-h-\[32rem\]::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.max-h-\[32rem\]::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Smooth transitions for coupon items */
-.coupon-item {
-  transition: all 0.3s ease;
-}
-
-.coupon-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-/* Focus states for accessibility */
-button:focus {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Custom hover effects for better UX */
-.coupon-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.coupon-foot {
+  margin: 1rem 0 0;
+  color: var(--lux-stone);
+  font-size: 0.85rem;
 }

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ReviewService } from '../services/review.service';
 import { AuthService } from '../auth/auth.service';
-import Swal from 'sweetalert2';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import { ReviewMessage } from '../review-message';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener, ViewChild, ElementRef } from '@angular/core';
@@ -45,7 +45,8 @@ export class ReviewComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private reviewService: ReviewService,
     private authService: AuthService,
-    private modalService: NgbModal
+    private modalService: NgbModal,
+    private luxDialog: LuxDialogService
   ) {}
 
   ngOnInit() {
@@ -236,19 +237,10 @@ export class ReviewComponent implements OnInit, OnDestroy {
         this.mediaModalCurrentReview = null;
         this.editModalOpen = false;
   
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: isEdit ? 'Review updated!' : 'Review added!',
-          showConfirmButton: false,
-          timer: 1500,
-          timerProgressBar: true,
-          customClass: { popup: 'swal2-toast' }
-        });
+        this.luxDialog.toast(isEdit ? 'Review updated!' : 'Review added!');
       },
       error: () => {
-        Swal.fire('Error', 'Failed to submit review.', 'error');
+        this.luxDialog.error('Error', 'Failed to submit review.');
       }
     });
   } 
@@ -275,47 +267,31 @@ export class ReviewComponent implements OnInit, OnDestroy {
     formData.append('action', 'delete');
     this.reviewService.sendReview(formData).subscribe({
       next: () => {
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'success',
-          title: 'Review deleted!',
-          showConfirmButton: false,
-          timer: 1500,
-          timerProgressBar: true,
-          customClass: { popup: 'swal2-toast' }
-        });
+        this.luxDialog.toast('Review deleted!');
         this.loadReviews();
       },
       error: () => {
-        Swal.fire('Error', 'Failed to delete review.', 'error');
+        this.luxDialog.error('Error', 'Failed to delete review.');
       }
     });
   }
 
-  confirmDeleteReview(review?: any) {
+  async confirmDeleteReview(review?: any) {
     // Store the review ID for deletion without changing edit mode
     const reviewIdToDelete = review?.id || this.editingReviewId;
     if (!reviewIdToDelete) return;
     
-    Swal.fire({
-      title: 'Delete Review',
+    const confirmed = await this.luxDialog.confirm({
+      title: 'Delete review',
       text: 'Are you sure you want to delete this review?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Delete',
-      cancelButtonText: 'Cancel',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        const reviewToDelete = this.reviews.find(r => r.id === reviewIdToDelete);
-        if (reviewToDelete) {
-          this.deleteReview(reviewToDelete);
-        }
-      }
+      confirmText: 'Delete',
+      destructive: true,
     });
+    if (!confirmed) return;
+    const reviewToDelete = this.reviews.find(r => r.id === reviewIdToDelete);
+    if (reviewToDelete) {
+      this.deleteReview(reviewToDelete);
+    }
   }
 
   onFilesSelected(event: Event): void {

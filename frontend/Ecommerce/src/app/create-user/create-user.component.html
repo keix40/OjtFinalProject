@@ -1,27 +1,9 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-  <div class="container mx-auto px-4 py-8">
-    <!-- Header Section -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-        <i data-lucide="user-plus" class="w-8 h-8 text-blue-500"></i>
-            </div>
-      <h1 class="text-3xl font-bold text-slate-800 mb-2">Create New User</h1>
-      <p class="text-slate-600">Add new customers or staff members to the system</p>
-          </div>
-
-    <!-- Action Buttons -->
-    <div class="flex justify-center items-center space-x-4 mb-8">
-      <button class="flex items-center space-x-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-lg border border-slate-200 text-slate-700 hover:bg-white hover:shadow-md transition-all duration-200" (click)="goBack()">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i>
-        <span class="font-medium">Back to Users</span>
-              </button>
-      <button class="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200" (click)="toggleBulkImport()">
-        <i data-lucide="upload" class="w-4 h-4"></i>
-        <span>Bulk Import</span>
-              </button>
-    </div>
-  
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<lux-page-shell variant="admin" shellClass="admin-page create-user-page">
+  <lux-page-header variant="admin" eyebrow="Access" title="Create New User" subtitle="Add new customers or staff members to the system">
+    <lux-button variant="secondary" (pressed)="goBack()">Back</lux-button>
+    <lux-button variant="primary" (pressed)="toggleBulkImport()">Bulk Import</lux-button>
+  </lux-page-header>
+  <div class="create-user-body"><div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Main Form Section -->
       <div class="lg:col-span-2">
         <div class="glassmorphism rounded-2xl p-8">
@@ -446,7 +428,6 @@
           </div>
         </div>
       </div>
-    </div>
 
 <!-- User Created Modal -->
 <div *ngIf="createdUser" class="fixed inset-0 z-50 flex items-center justify-center">
@@ -481,3 +462,4 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 </style>
+</lux-page-shell>

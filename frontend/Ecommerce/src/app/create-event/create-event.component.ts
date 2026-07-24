@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import Swal from 'sweetalert2';
 import { ActivatedRoute } from '@angular/router';
 import { PriceFormatService } from '../services/price-format.service';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
 declare var lucide: any;
 
 function toDatetimeLocal(date: Date): string {
@@ -35,7 +36,7 @@ function toBackendLocalDatetime(date: Date): string {
   standalone: true,
   templateUrl: './create-event.component.html',
   styleUrls: ['./create-event.component.css'],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule]
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LuxUiModule]
 })
 export class CreateEventComponent implements OnInit {
   @ViewChild('cropperContainer') cropperContainer!: ElementRef;

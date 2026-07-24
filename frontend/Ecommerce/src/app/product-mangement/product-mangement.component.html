@@ -1,359 +1,238 @@
-<div class="p-4 bg-slate-50 min-h-screen">
-  <!-- Header Section -->
-  <div class="text-center mb-8">
-    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-      <i data-lucide="package" class="w-8 h-8 text-indigo-500"></i>
+<lux-page-shell variant="admin" shellClass="admin-page">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Catalogue"
+    title="Product Management"
+    subtitle="Manage inventory, pricing, and product attributes."
+  >
+    <div actions class="pm-header-actions">
+      <lux-button
+        *ngIf="permissionService.hasPermission(PermissionConstants.PRODUCTS_CREATE)"
+        variant="primary"
+        (pressed)="router.navigate(['/product'])"
+      >
+        Add Product
+      </lux-button>
     </div>
-    <h1 class="text-4xl font-bold text-gray-900 mb-2">Product Management</h1>
-    <p class="text-gray-600 text-lg">Manage your product catalog, stock, and pricing</p>
+  </lux-page-header>
+
+  <div class="admin-kpi-grid">
+    <div class="admin-kpi">
+      <div class="admin-kpi__label">In catalogue</div>
+      <div class="admin-kpi__value">{{ products.length }}</div>
+    </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi__label">Matching filters</div>
+      <div class="admin-kpi__value">{{ totalItems }}</div>
+    </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi__label">Selected</div>
+      <div class="admin-kpi__value">{{ selectedCount }}</div>
+    </div>
   </div>
 
-  <!-- Filters Section -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <!-- Search and Filters -->
-      <div class="flex flex-col sm:flex-row gap-4 flex-1">
-        <div class="relative flex-1 max-w-md">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </div>
-          <input 
-            type="text" 
-            [(ngModel)]="searchTerm"
-            (input)="onSearch()"
-            placeholder="Search brands or categories..."
-            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          >
-        </div>
-        
-        <div class="flex items-center gap-2 text-sm text-gray-600">
-          <span class="font-medium">{{ totalItems }}</span>
-          <span>Products found</span>
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Category</label>
-        <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
-                [(ngModel)]="selectedCategory" (change)="onCategoryChange()">
+  <lux-filter-bar>
+    <div primary class="pm-filters">
+      <lux-field label="Search" inputId="pm-search">
+        <input
+          id="pm-search"
+          class="lux-input"
+          type="text"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Search name, brand, or category"
+        />
+      </lux-field>
+      <lux-field label="Category" inputId="pm-category">
+        <select
+          id="pm-category"
+          class="lux-select"
+          [(ngModel)]="selectedCategory"
+          (change)="onCategoryChange()"
+        >
           <option [ngValue]="0">All Categories</option>
-          <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
+          <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
         </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Brand</label>
-        <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all" 
-                [(ngModel)]="selectedBrand">
+      </lux-field>
+      <lux-field label="Brand" inputId="pm-brand">
+        <select
+          id="pm-brand"
+          class="lux-select"
+          [(ngModel)]="selectedBrand"
+          (change)="onBrandChange()"
+        >
           <option [ngValue]="0">All Brands</option>
-          <option *ngFor="let brand of brands" [value]="brand.id">{{ brand.name }}</option>
+          <option *ngFor="let brand of brands" [ngValue]="brand.id">{{ brand.name }}</option>
         </select>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
-        <select class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all">
+      </lux-field>
+      <lux-field label="Status" inputId="pm-status">
+        <select
+          id="pm-status"
+          class="lux-select"
+          [(ngModel)]="selectedStatus"
+          (change)="onStatusChange()"
+        >
           <option value="all">All Status</option>
           <option value="active">Active</option>
           <option value="inactive">Inactive</option>
           <option value="low-stock">Low Stock</option>
         </select>
-      </div>
+      </lux-field>
     </div>
-  </div>
+    <div secondary class="pm-toolbar">
+      <lux-button
+        variant="secondary"
+        [disabled]="selectedCount !== 1 || !permissionService.hasPermission(PermissionConstants.PRODUCTS_UPDATE)"
+        (pressed)="editSelectedProduct()"
+      >
+        Edit
+      </lux-button>
+      <lux-button
+        variant="ghost"
+        [disabled]="selectedCount === 0 || !permissionService.hasPermission(PermissionConstants.PRODUCTS_DELETE)"
+        (pressed)="showDeleteConfirm()"
+      >
+        Delete
+      </lux-button>
 
-  <!-- Action Buttons Section -->
-  <div class="flex flex-wrap items-center gap-2 mb-6">
-    <button 
-      class="flex items-center gap-2 px-4 py-2 text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-      [disabled]="selectedProducts.length > 1 || selectedProducts.length === 0"
-      (click)="editSelectedProduct()"
-      [disabled]="!permissionService.hasPermission(PermissionConstants.PRODUCTS_UPDATE)">
-      <i data-lucide="edit" class="w-4 h-4"></i>
-      Edit
-    </button>
-    
-    <button 
-      class="flex items-center gap-2 px-4 py-2 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-      [disabled]="selectedProducts.length === 0"
-      (click)="showDeleteConfirm()"
-      [disabled]="!permissionService.hasPermission(PermissionConstants.PRODUCTS_DELETE)">
-      <i data-lucide="trash-2" class="w-4 h-4"></i>
-      Delete
-    </button>
-
-    <!-- Export Dropdowns -->
-    <div class="flex items-center gap-2">
-      <!-- CSV Export Dropdown -->
-      <div class="relative">
-        <button 
-          (click)="toggleCsvDropdown()"
-          class="inline-flex items-center gap-2 px-4 py-2.5 text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-          </svg>
-          Export CSV
-          <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': csvDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        <div *ngIf="csvDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-          <button 
-            class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-            (click)="exportToCSV(); csvDropdownOpen = false">
-            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-            </svg>
-            Export All Products
+      <div class="lux-export-menu relative">
+        <lux-button variant="secondary" (pressed)="toggleCsvDropdown()">Export CSV</lux-button>
+        <div *ngIf="csvDropdownOpen" class="pm-dropdown">
+          <button type="button" class="pm-dropdown__item" (click)="exportToCSV(); csvDropdownOpen = false">
+            Export All
           </button>
-          <button 
-            class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="selectedProducts.length === 0"
-            (click)="exportSelectedToCSV(); csvDropdownOpen = false">
-            <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-            </svg>
-            Export Selected ({{ selectedProducts.length }})
+          <button
+            type="button"
+            class="pm-dropdown__item"
+            [disabled]="selectedCount === 0"
+            (click)="exportSelectedToCSV(); csvDropdownOpen = false"
+          >
+            Export Selected ({{ selectedCount }})
           </button>
         </div>
       </div>
-      <!-- PDF Export Dropdown -->
-      <div class="relative">
-        <button 
-          (click)="togglePdfDropdown()"
-          class="inline-flex items-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors shadow-sm">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-          </svg>
-          Export PDF
-          <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': pdfDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        </button>
-        <div *ngIf="pdfDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-          <button 
-            class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-            (click)="exportToPDF(); pdfDropdownOpen = false">
-            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-            </svg>
-            Export All Products
+
+      <div class="lux-export-menu relative">
+        <lux-button variant="secondary" (pressed)="togglePdfDropdown()">Export PDF</lux-button>
+        <div *ngIf="pdfDropdownOpen" class="pm-dropdown">
+          <button type="button" class="pm-dropdown__item" (click)="exportToPDF(); pdfDropdownOpen = false">
+            Export All
           </button>
-          <button 
-            class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="selectedProducts.length === 0"
-            (click)="exportSelectedToPDF(); pdfDropdownOpen = false">
-            <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-            </svg>
-            Export Selected ({{ selectedProducts.length }})
+          <button
+            type="button"
+            class="pm-dropdown__item"
+            [disabled]="selectedCount === 0"
+            (click)="exportSelectedToPDF(); pdfDropdownOpen = false"
+          >
+            Export Selected ({{ selectedCount }})
           </button>
         </div>
       </div>
     </div>
-  </div>
+  </lux-filter-bar>
 
-  <!-- Product Table -->
-  <div class="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden">
-    <div class="overflow-x-auto">
-      <table class="w-full divide-y divide-slate-100">
-        <thead class="bg-slate-50">
-          <tr>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-10">
-              <input type="checkbox" class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500" 
-                     [(ngModel)]="selectAll" (change)="toggleAllCheckboxes()">
-            </th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-slate-100">
-          <tr *ngFor="let product of paginatedProducts"
-              class="hover:bg-slate-50/50 transition-colors cursor-pointer"
-              (click)="product.checked = !product.checked; updateSelection()">
-            <td class="px-4 py-3">
-              <input type="checkbox"
-                     class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-blue-500"
-                     [(ngModel)]="product.checked"
-                     (click)="$event.stopPropagation()"
-                     (change)="updateSelection()">
-            </td>
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-md overflow-hidden border border-slate-200 bg-slate-100 flex-shrink-0">
-                  <ng-container *ngIf="product.productImages && product.productImages.length > 0">
-                    <ng-container *ngFor="let img of product.productImages">
-                      <img *ngIf="img.variantId == null; else skip" [src]="imageService.getFullImageUrl(img.imageUrl)" alt="Product Image" class="w-full h-full object-cover" (error)="imageService.handleImageError($event, 'product')">
-                      <ng-template #skip></ng-template>
-                      <!-- Only show the first base image -->
-                      <ng-container *ngIf="img.variantId == null; break"></ng-container>
-                    </ng-container>
-                  </ng-container>
-                  <div *ngIf="!product.productImages?.length" class="w-full h-full flex items-center justify-center">
-                    <i data-lucide="image" class="w-5 h-5 text-slate-400"></i>
-                  </div>
-                </div>
-                <i data-lucide="package" class="w-4 h-4 text-slate-400"></i>
-                <span class="font-medium text-gray-900">{{ product.productName }}</span>
-              </div>
-            </td>
-            <td class="font-medium text-gray-600">{{ product.productCode }}</td>
-                            <td class="font-medium text-gray-600">{{ formatPriceOnly(product.price) }} MMK</td>
-            <td class="font-medium text-gray-600">{{ product.quantity }}</td>
-            <td class="px-4 py-3">
-              <ng-container *ngIf="product.quantity <= 5; else checkStatus">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
-                  Low Stock
-                </span>
-              </ng-container>
-            
-              <ng-template #checkStatus>
-                <ng-container *ngIf="product.status === 1 && product.quantity > 0; else inactiveStatus">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                    Active
-                  </span>
-                </ng-container>
-              </ng-template>
-            
-              <ng-template #inactiveStatus>
-                <ng-container *ngIf="product.status === 0">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
-                    Inactive
-                  </span>
-                </ng-container>
-              </ng-template>
-            </td>
-            <td class="px-4 py-3">
-              <button class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1"
-                      [disabled]="!permissionService.hasPermission(PermissionConstants.PRODUCTS_VIEW)"
-                      (click)="$event.stopPropagation(); goToProductDetail(product.id)">
-                <i data-lucide="eye" class="w-4 h-4"></i> View
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <section class="page-panel pm-table-panel">
+    <lux-async-state *ngIf="loading" [loading]="true" loadingLabel="Loading products" [skeletonCount]="3" skeletonHeight="3rem"></lux-async-state>
 
-  <!-- Pagination Controls -->
-  <div *ngIf="showPagination" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-    <div class="flex items-center justify-between">
-      <div class="text-sm text-gray-700">
-        Showing {{ showingFrom }} to {{ showingTo }} of {{ totalItems }} results
-      </div>
-      <div class="flex items-center gap-2">
-        <button 
-          (click)="changePage(currentPage - 1)"
-          [disabled]="currentPage === 1"
-          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Previous
-        </button>
-        <div class="flex items-center gap-1">
-          <button 
-            *ngFor="let page of getPageNumbers()"
-            (click)="changePage(page)"
-            [class]="page === currentPage ? 
-              'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
-              'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
-            {{ page }}
-          </button>
+    <lux-table
+      *ngIf="!loading"
+      [rows]="paginatedProducts"
+      [selectable]="true"
+      [allSelected]="allPageSelected"
+      [partialSelected]="partialPageSelected"
+      [isSelected]="isRowSelected"
+      [trackBy]="trackByProductId"
+      (toggleAll)="onToggleAll($event)"
+      (toggleRow)="onToggleRow($event)"
+    >
+      <ng-template luxColumn="product" header="Product" let-product>
+        <div class="pm-product-cell">
+          <div class="pm-thumb">
+            <img
+              *ngIf="getBaseImage(product) as src; else noImg"
+              [src]="src"
+              [alt]="product.productName"
+              (error)="imageService.handleImageError($event, 'product')"
+            />
+            <ng-template #noImg>
+              <span class="pm-thumb__fallback">—</span>
+            </ng-template>
+          </div>
+          <span class="pm-product-name">{{ product.productName }}</span>
         </div>
-        <button 
-          (click)="changePage(currentPage + 1)"
-          [disabled]="currentPage === totalPages"
-          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          Next
-          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Attribute and Value Table Section -->
-  <div class="bg-white rounded-lg border border-slate-100 shadow-sm overflow-hidden mt-8">
-    <div class="flex items-center justify-between p-4 border-b border-slate-100">
-      <h2 class="text-lg font-semibold text-black">Attributes & Values</h2>
-      <button class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition" (click)="openCreateAttributeValueModal()">
-        + New Attribute
-      </button>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full divide-y divide-slate-100">
-        <thead class="bg-slate-50">
-          <tr>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Attribute</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Values</th>
-            <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Action</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y divide-slate-100">
-          <tr *ngFor="let attr of attributes">
-            <td class="px-4 py-3 font-medium text-gray-900">{{ attr.name }}</td>
-            <td class="px-4 py-3" style="max-width: 350px; white-space: normal;">
-              <div class="flex flex-wrap items-center gap-2">
-                <ng-container *ngFor="let value of attributeValues[attr.id]">
-                  <div *ngIf="isColorAttribute(attr.name)" 
-                       class="w-6 h-6 rounded-full border border-slate-200" 
-                       [style.backgroundColor]="value.value"
-                       [title]="value.value">
-                  </div>
-                  <span *ngIf="!isColorAttribute(attr.name)" class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-medium">{{ value.value }}</span>
-                </ng-container>
-                <span *ngIf="!attributeValues[attr.id]?.length" class="text-slate-400">No values</span>
-              </div>
-            </td>
-            <td class="px-4 py-3">
-              <div class="flex gap-2">
-              <button class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors" (click)="openEditAttributeValueModal(attr)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-                Edit
-              </button>
-              <button class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors" (click)="deleteAttribute(attr)">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-                Delete
-              </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Empty State -->
-  <div *ngIf="products.length === 0" class="flex flex-col items-center justify-center py-12">
-    <div class="bg-slate-50 rounded-lg p-8 max-w-md w-full text-center border border-slate-100">
-      <div class="mx-auto w-16 h-16 flex items-center justify-center bg-blue-50 rounded-full mb-4">
-        <i data-lucide="package" class="w-8 h-8 text-blue-600"></i>
-      </div>
-      <h3 class="text-lg font-medium text-slate-800 mb-2">No Products Found</h3>
-      <p class="text-slate-500 mb-4">There are currently no products matching your criteria.</p>
-      <ng-container *ngIf="permissionService.hasPermission(PermissionConstants.PRODUCTS_CREATE); else noPermission">
-        <a routerLink="/product" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-          <i data-lucide="plus-circle" class="w-5 h-5"></i>
-          Add New Product
-        </a>
-      </ng-container>
-      <ng-template #noPermission>
-        <button class="inline-flex items-center gap-2 px-4 py-2 bg-blue-300 text-white rounded-lg cursor-not-allowed opacity-60" disabled>
-          <i data-lucide="plus-circle" class="w-5 h-5"></i>
-          Add New Product
-        </button>
       </ng-template>
+      <ng-template luxColumn="sku" header="SKU" let-product>
+        <span class="lux-data">{{ product.productCode }}</span>
+      </ng-template>
+      <ng-template luxColumn="price" header="Price" align="right" let-product>
+        <span class="lux-data">{{ formatPriceOnly(product.price) }} MMK</span>
+      </ng-template>
+      <ng-template luxColumn="stock" header="Stock" align="right" let-product>
+        <span class="lux-data">{{ product.quantity }}</span>
+      </ng-template>
+      <ng-template luxColumn="status" header="Status" let-product>
+        <lux-badge [tone]="getStatusTone(product)">{{ getStatusLabel(product) }}</lux-badge>
+      </ng-template>
+      <ng-template luxColumn="action" header="Action" align="center" let-product>
+        <lux-icon-button
+          label="View product"
+          [disabled]="!permissionService.hasPermission(PermissionConstants.PRODUCTS_VIEW)"
+          (pressed)="goToProductDetail(product.id)"
+        >
+          <i data-lucide="eye" class="w-4 h-4"></i>
+        </lux-icon-button>
+      </ng-template>
+
+      <lux-empty-state
+        empty
+        title="No products found"
+        [message]="searchTerm ? 'Try adjusting your filters.' : 'Add a product to start the catalogue.'"
+      ></lux-empty-state>
+    </lux-table>
+
+    <lux-paginator
+      *ngIf="!loading && totalItems > 0"
+      [page]="currentPage"
+      [size]="pageSize"
+      [totalElements]="totalItems"
+      [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)"
+    ></lux-paginator>
+  </section>
+
+  <section class="page-panel">
+    <div class="pm-attr-header">
+      <h2 class="pm-section-title">Attributes &amp; Values</h2>
+      <lux-button variant="secondary" (pressed)="openCreateAttributeValueModal()">
+        New Attribute
+      </lux-button>
     </div>
-  </div>
-</div>
+
+    <lux-table [rows]="attributes" [trackBy]="trackByAttrId">
+      <ng-template luxColumn="name" header="Attribute" let-attr>
+        <span class="pm-product-name">{{ attr.name }}</span>
+      </ng-template>
+      <ng-template luxColumn="values" header="Values" let-attr>
+        <div class="pm-attr-values">
+          <ng-container *ngFor="let value of attributeValues[attr.id]">
+            <span
+              *ngIf="isColorAttribute(attr.name)"
+              class="pm-color-swatch"
+              [style.backgroundColor]="value.value"
+              [title]="value.value"
+            ></span>
+            <lux-badge *ngIf="!isColorAttribute(attr.name)" tone="info">{{ value.value }}</lux-badge>
+          </ng-container>
+          <span *ngIf="!attributeValues[attr.id]?.length" class="pm-muted">No values</span>
+        </div>
+      </ng-template>
+      <ng-template luxColumn="actions" header="Action" let-attr>
+        <div class="pm-row-actions">
+          <lux-button variant="ghost" (pressed)="openEditAttributeValueModal(attr)">Edit</lux-button>
+          <lux-button variant="ghost" (pressed)="deleteAttribute(attr)">Delete</lux-button>
+        </div>
+      </ng-template>
+      <lux-empty-state empty title="No attributes yet" message="Create an attribute to define variants."></lux-empty-state>
+    </lux-table>
+  </section>
+</lux-page-shell>

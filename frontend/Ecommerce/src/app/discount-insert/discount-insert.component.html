@@ -1,20 +1,13 @@
-<!-- Modern Discount Form Container -->
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
-  <div class="max-w-4xl mx-auto">
-    <!-- Header Section -->
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg mb-4">
-        <i data-lucide="percent" class="w-8 h-8 text-white"></i>
-      </div>
-      <h1 class="text-3xl font-bold text-gray-900 mb-2">Create New Discount</h1>
-      <p class="text-gray-600 text-lg">Add a new discount event to your store</p>
-    </div>
-
-    <!-- Main Form -->
-    <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="space-y-8">
-      
-      <!-- Basic Information Card -->
-      <div class="bg-white rounded-2xl shadow-lg p-8 border border-slate-200">
+<lux-page-shell variant="admin" shellClass="admin-page admin-form-page">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Promotions"
+    title="Create discount"
+    subtitle="Add a new discount event to your store.">
+  </lux-page-header>
+  <div class="admin-form-wrap">
+    <form [formGroup]="discountForm" (ngSubmit)="onSubmit()" class="admin-form">
+      <div class="page-panel admin-form-card p-6">
         <div class="flex items-center gap-3 mb-6">
           <i data-lucide="info" class="w-5 h-5 text-slate-500"></i>
           <h2 class="text-xl font-semibold text-slate-800">Basic Information</h2>
@@ -769,20 +762,13 @@
         </div>
       </div>
 
-      <!-- Submit Button -->
-      <div class="flex flex-col items-center">
-        <button
-          type="submit"
-          class="flex items-center gap-3 px-8 py-4 bg-slate-600 text-white rounded-xl hover:bg-slate-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="discountForm.invalid || isSubmitting"
-        >
-          <i data-lucide="plus" class="w-5 h-5"></i>
-          Create Discount
-        </button>
+      <div class="admin-form-actions">
+        <lux-button type="submit" variant="primary" [disabled]="discountForm.invalid || isSubmitting">
+          Create discount
+        </lux-button>
       </div>
     </form>
   </div>
-</div>
 
 <!-- Duplicate Discount Warning Modal -->
 <div class="modal fade" id="duplicateWarningModal" tabindex="-1" aria-labelledby="duplicateWarningModalLabel" aria-hidden="true" [class.show]="showDuplicateWarning" [style.display]="showDuplicateWarning ? 'block' : 'none'">
@@ -873,3 +859,4 @@
   </div>
 </div>
 <div class="modal-backdrop fade show" *ngIf="showDuplicateWarning"></div>
+</lux-page-shell>

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { DeliveryServiceService, DeliveryService } from '../services/delivery-service-service.service';
-import Swal from 'sweetalert2';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { AddressService, Address } from '../services/address.service';
@@ -19,7 +19,7 @@ export class DeliveryServiceListComponent implements OnInit {
   filteredServices: DeliveryService[] = [];
   loading = false;
   searchTerm = '';
-  currentPage = 1;
+  currentPage = 0;
   itemsPerPage = 10;
   totalItems = 0;
   totalPages = 0;
@@ -44,7 +44,8 @@ export class DeliveryServiceListComponent implements OnInit {
     private modalService: NgbModal,
     private fb: FormBuilder,
     private addressService: AddressService,
-    public permissionService: PermissionService
+    public permissionService: PermissionService,
+    private luxDialog: LuxDialogService
   ) {
     this.updateForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],
@@ -70,7 +71,8 @@ export class DeliveryServiceListComponent implements OnInit {
         this.deliveryServices = data;
         this.filteredServices = [...data];
         this.totalItems = data.length;
-        this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
+        this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+        this.currentPage = 0;
         this.loading = false;
       },
       error: () => {
@@ -91,17 +93,17 @@ export class DeliveryServiceListComponent implements OnInit {
       );
     }
     this.totalItems = this.filteredServices.length;
-    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage);
-    this.currentPage = 1;
+    this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
+    this.currentPage = 0;
   }
 
   get paginatedServices(): DeliveryService[] {
-    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-    const endIndex = startIndex + this.itemsPerPage;
-    return this.filteredServices.slice(startIndex, endIndex);
+    const startIndex = this.currentPage * this.itemsPerPage;
+    return this.filteredServices.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
   onPageChange(page: number): void {
+    if (page < 0 || page >= this.totalPages) return;
     this.currentPage = page;
   }
 
@@ -109,42 +111,24 @@ export class DeliveryServiceListComponent implements OnInit {
     return Math;
   }
 
-  getPageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-  }
+  trackByService = (_: number, row: unknown) => (row as DeliveryService).id;
 
-  deleteDeliveryService(service: DeliveryService): void {
-    Swal.fire({
+  async deleteDeliveryService(service: DeliveryService): Promise<void> {
+    const confirmed = await this.luxDialog.confirm({
       title: 'Delete Delivery Service',
       text: `Are you sure you want to delete "${service.name}"? This action cannot be undone.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!'
-    }).then((result) => {
-      if (result.isConfirmed && service.id) {
-        this.deliveryServiceService.softDelete(service.id).subscribe({
-          next: () => {
-            this.loadDeliveryServices();
-            Swal.fire({
-              icon: 'success',
-              title: 'Deleted!',
-              text: 'Delivery service has been deleted successfully.',
-              confirmButtonColor: '#d33',
-              confirmButtonText: 'Ok',
-              showConfirmButton: true
-            });
-          },
-          error: () => {
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Failed to delete delivery service. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
-        });
+      confirmText: 'Yes, delete it!',
+      destructive: true
+    });
+    if (!confirmed || !service.id) return;
+
+    this.deliveryServiceService.softDelete(service.id).subscribe({
+      next: () => {
+        this.loadDeliveryServices();
+        this.luxDialog.success('Deleted!', 'Delivery service has been deleted successfully.');
+      },
+      error: () => {
+        this.luxDialog.error('Error', 'Failed to delete delivery service. Please try again.');
       }
     });
   }
@@ -289,36 +273,19 @@ export class DeliveryServiceListComponent implements OnInit {
             this.updateLoading = false;
             this.closeUpdateModal();
             this.loadDeliveryServices();
-            Swal.fire({
-              icon: 'success',
-              title: 'Updated!',
-              text: 'Delivery service updated successfully.',
-              confirmButtonColor: '#3085d6',
-              confirmButtonText: 'Ok',
-              showConfirmButton: true
-            });
+            this.luxDialog.success('Updated!', 'Delivery service updated successfully.');
           },
           error: (error) => {
             console.error('Error updating delivery service:', error);
             this.updateLoading = false;
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Failed to update delivery service.',
-              confirmButtonColor: '#3085d6'
-            });
+            this.luxDialog.error('Error', 'Failed to update delivery service.');
           }
         });
       },
       error: (error) => {
         console.error('Error updating address:', error);
         this.updateLoading = false;
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to update address.',
-          confirmButtonColor: '#3085d6'
-        });
+        this.luxDialog.error('Error', 'Failed to update address.');
       }
     });
   }

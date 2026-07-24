@@ -1,0 +1,58 @@
+.admin-form-page {
+  color: var(--lux-ink);
+}
+
+.admin-form-wrap {
+  max-width: 48rem;
+}
+
+.admin-form-card {
+  padding: 0;
+}
+
+.admin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+  background: var(--lux-porcelain) !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-sm) !important;
+  color: var(--lux-ink) !important;
+}
+
+.admin-form input:focus,
+.admin-form select:focus {
+  outline: 2px solid var(--lux-champagne);
+  border-color: var(--lux-champagne) !important;
+  box-shadow: none !important;
+}
+
+.admin-form-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.admin-form label,
+.fixed.inset-0 label {
+  color: var(--lux-graphite);
+}
+
+.fixed.inset-0 .bg-white {
+  background: var(--lux-cream) !important;
+  border-color: var(--lux-fog) !important;
+}
+
+.fixed.inset-0 .bg-slate-600,
+.fixed.inset-0 button.bg-slate-600 {
+  background: var(--lux-ink) !important;
+}
+
+#map {
+  border-color: var(--lux-fog) !important;
+  background: var(--lux-ivory) !important;
+}

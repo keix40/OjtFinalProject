@@ -7,6 +7,7 @@ import autoTable from 'jspdf-autotable'; // For PDF table export
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
 import { PriceFormatService } from '../services/price-format.service';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 interface Customer {
   id: string;
@@ -267,7 +268,8 @@ export class CustomersComponent implements OnInit {
     public imageService: ImageService,
     private userService: UserService,
     permissionService: PermissionService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    private luxDialog: LuxDialogService
   ) {
     this.permissionService = permissionService;
   }
@@ -441,7 +443,7 @@ export class CustomersComponent implements OnInit {
         this.showCustomerModal = true;
       },
       err => {
-        window.alert('Failed to load customer details.');
+        this.luxDialog.error('Unable to load', 'Failed to load customer details.');
       }
     );
   }
@@ -452,8 +454,7 @@ export class CustomersComponent implements OnInit {
 
   // Edit customer (stub, show alert for now)
   editCustomer(customer: Customer): void {
-    // In production, open a modal with a form and call updateUser on save
-    window.alert('Edit customer feature coming soon!');
+    this.luxDialog.info('Coming soon', 'Edit customer feature coming soon!');
   }
 
   // Activate/deactivate customer (calls backend and updates UI)
@@ -461,32 +462,36 @@ export class CustomersComponent implements OnInit {
     const newStatus = customer.status === 'active' ? 'INACTIVE' : 'ACTIVE';
     this.userService.updateUserStatus(customer.id, newStatus).subscribe(
       () => {
-        // Fix: ensure status is set to correct union type
         customer.status = newStatus === 'ACTIVE' ? 'active' : 'inactive';
         this.calculateStats();
-        window.alert(`Customer status updated to ${newStatus}.`);
+        this.luxDialog.toast(`Customer status updated to ${newStatus}.`);
       },
       err => {
-        window.alert('Failed to update customer status.');
+        this.luxDialog.error('Update failed', 'Failed to update customer status.');
       }
     );
   }
 
   // Delete customer (calls backend and updates UI)
-  deleteCustomer(customer: Customer): void {
-    if (window.confirm(`Are you sure you want to delete ${customer.name}?`)) {
-      this.userService.deleteUser(customer.id).subscribe(
-        () => {
-          this.customers = this.customers.filter(c => c.id !== customer.id);
-          this.applyFilters();
-          this.calculateStats();
-          window.alert('Customer deleted successfully.');
-        },
-        err => {
-          window.alert('Failed to delete customer.');
-        }
-      );
-    }
+  async deleteCustomer(customer: Customer): Promise<void> {
+    const confirmed = await this.luxDialog.confirm({
+      title: `Delete ${customer.name}?`,
+      text: 'This action cannot be undone.',
+      confirmText: 'Delete',
+      destructive: true,
+    });
+    if (!confirmed) return;
+    this.userService.deleteUser(customer.id).subscribe(
+      () => {
+        this.customers = this.customers.filter(c => c.id !== customer.id);
+        this.applyFilters();
+        this.calculateStats();
+        this.luxDialog.toast('Customer deleted successfully.');
+      },
+      err => {
+        this.luxDialog.error('Delete failed', 'Failed to delete customer.');
+      }
+    );
   }
   // --- End customer management actions ---
 

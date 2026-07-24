@@ -2,7 +2,7 @@ import { Component, OnInit, HostListener } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Policy, PolicyService } from '../services/policy.service';
 import { Router } from '@angular/router';
-import Swal from 'sweetalert2';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 @Component({
   selector: 'app-admin-policy',
@@ -20,7 +20,6 @@ export class AdminPolicyComponent implements OnInit {
   selectAll = false;
   selectedPolicies: Policy[] = [];
 
-  // Simple Quill configuration matching the design
   quillModules = {
     toolbar: [
       ['bold', 'italic', 'underline'],
@@ -31,7 +30,6 @@ export class AdminPolicyComponent implements OnInit {
     ]
   };
 
-  // Quill editor configuration
   quillConfig = {
     placeholder: 'Enter policy content...',
     theme: 'snow',
@@ -41,7 +39,8 @@ export class AdminPolicyComponent implements OnInit {
   constructor(
     private policyService: PolicyService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private luxDialog: LuxDialogService
   ) {
     this.policyForm = this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
@@ -52,15 +51,10 @@ export class AdminPolicyComponent implements OnInit {
 
   ngOnInit() {
     this.loadPolicies();
-    // Test Quill editor initialization
-    setTimeout(() => {
-      console.log('Quill editor should be initialized now');
-    }, 1000);
   }
 
-  // Close dropdown menus when clicking outside
   @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent) {
+  onDocumentClick(_event: MouseEvent) {
     if (this.activeMenu !== null) {
       this.activeMenu = null;
     }
@@ -70,26 +64,19 @@ export class AdminPolicyComponent implements OnInit {
     this.loading = true;
     this.policyService.getAllPolicies().subscribe({
       next: (policies) => {
-        // Filter out deleted policies (status = 2) and add checked property
         this.policies = policies
-          .filter(policy => policy.status !== 2) // Exclude deleted policies
+          .filter(policy => policy.status !== 2)
           .map(policy => ({ ...policy, checked: false }));
         this.loading = false;
       },
       error: (error) => {
         console.error('Error loading policies:', error);
         this.loading = false;
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: 'Failed to load policies. Please try again.',
-          confirmButtonText: 'OK'
-        });
+        this.luxDialog.error('Error', 'Failed to load policies. Please try again.');
       }
     });
   }
 
-  // Checkbox functionality
   toggleAllCheckboxes() {
     this.policies.forEach(policy => {
       policy.checked = this.selectAll;
@@ -102,13 +89,11 @@ export class AdminPolicyComponent implements OnInit {
     this.selectAll = this.policies.length > 0 && this.policies.every(policy => policy.checked);
   }
 
-  // Edit policy functionality
-  editPolicy(policy: Policy) {
-    // Navigate to edit page with policy ID
+  editPolicy(policy: Policy | null) {
+    if (!policy) return;
     this.router.navigate(['/admin/policies/edit', policy.id]);
   }
 
-  // Edit policy in current page (fallback)
   editPolicyInPage(policy: Policy) {
     this.editingPolicy = policy;
     this.policyForm.patchValue({
@@ -117,14 +102,6 @@ export class AdminPolicyComponent implements OnInit {
       status: policy.status ? policy.status.toString() : '1'
     });
     this.activeMenu = null;
-    
-    // Scroll to form
-    setTimeout(() => {
-      const formElement = document.querySelector('.bg-white.rounded-xl');
-      if (formElement) {
-        formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
   }
 
   submitForm() {
@@ -138,7 +115,7 @@ export class AdminPolicyComponent implements OnInit {
     const data = {
       title: formData.title,
       content: formData.content,
-      status: parseInt(formData.status)
+      status: parseInt(formData.status, 10)
     };
 
     if (this.editingPolicy) {
@@ -147,48 +124,26 @@ export class AdminPolicyComponent implements OnInit {
           this.loading = false;
           this.cancelEdit();
           this.loadPolicies();
-          Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: 'Policy updated successfully.',
-            confirmButtonText: 'OK'
-          });
+          this.luxDialog.success('Success', 'Policy updated successfully.');
         },
         error: (error) => {
           this.loading = false;
           console.error('Error updating policy:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to update policy. Please try again.',
-            confirmButtonText: 'OK'
-          });
+          this.luxDialog.error('Error', 'Failed to update policy. Please try again.');
         }
       });
     } else {
       this.policyService.createPolicy(data).subscribe({
         next: () => {
           this.loading = false;
-          this.policyForm.reset({
-            status: '1'
-          });
+          this.policyForm.reset({ status: '1' });
           this.loadPolicies();
-          Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            text: 'Policy created successfully.',
-            confirmButtonText: 'OK'
-          });
+          this.luxDialog.success('Success', 'Policy created successfully.');
         },
         error: (error) => {
           this.loading = false;
           console.error('Error creating policy:', error);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to create policy. Please try again.',
-            confirmButtonText: 'OK'
-          });
+          this.luxDialog.error('Error', 'Failed to create policy. Please try again.');
         }
       });
     }
@@ -196,45 +151,30 @@ export class AdminPolicyComponent implements OnInit {
 
   cancelEdit() {
     this.editingPolicy = null;
-    this.policyForm.reset({
-      status: '1'
-    });
+    this.policyForm.reset({ status: '1' });
     this.activeMenu = null;
   }
 
-  deletePolicy(id: number) {
-    Swal.fire({
-      title: 'Are you sure?',
+  async deletePolicy(id: number) {
+    const confirmed = await this.luxDialog.confirm({
+      title: 'Delete this policy?',
       text: 'This policy will be moved to deleted status and hidden from the list.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Yes, delete it!',
-      cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.policyService.deletePolicy(id).subscribe({
-          next: () => {
-            this.loadPolicies();
-            this.activeMenu = null;
-            Swal.fire({
-              icon: 'success',
-              title: 'Deleted!',
-              text: 'Policy has been moved to deleted status and hidden from the list.',
-              confirmButtonText: 'OK'
-            });
-          },
-          error: (error) => {
-            console.error('Error deleting policy:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Error',
-              text: 'Failed to delete policy. Please try again.',
-              confirmButtonText: 'OK'
-            });
-          }
-        });
+      confirmText: 'Yes, delete it',
+      cancelText: 'Cancel',
+      destructive: true
+    });
+
+    if (!confirmed) return;
+
+    this.policyService.deletePolicy(id).subscribe({
+      next: () => {
+        this.loadPolicies();
+        this.activeMenu = null;
+        this.luxDialog.success('Deleted', 'Policy has been moved to deleted status.');
+      },
+      error: (error) => {
+        console.error('Error deleting policy:', error);
+        this.luxDialog.error('Error', 'Failed to delete policy. Please try again.');
       }
     });
   }
@@ -255,20 +195,16 @@ export class AdminPolicyComponent implements OnInit {
     this.selectedPolicy = null;
   }
 
-  // Helper method to mark all form controls as touched
   private markFormGroupTouched() {
     Object.keys(this.policyForm.controls).forEach(key => {
-      const control = this.policyForm.get(key);
-      control?.markAsTouched();
+      this.policyForm.get(key)?.markAsTouched();
     });
   }
 
-  // Get form control for template access
   getFormControl(controlName: string) {
     return this.policyForm.get(controlName);
   }
 
-  // Check if form control has error
   hasError(controlName: string, errorType: string): boolean {
     const control = this.getFormControl(controlName);
     return control ? control.hasError(errorType) && control.touched : false;

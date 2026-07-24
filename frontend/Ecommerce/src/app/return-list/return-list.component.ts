@@ -1,493 +1,280 @@
 import { Component, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { ReturnService } from '../services/return.service';
 import { ReturnRequestDTO } from '../user-order';
-import { MatTableDataSource } from '@angular/material/table';
-import * as XLSX from 'xlsx';
-import { saveAs } from 'file-saver';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import ExcelJS from 'exceljs';
 import { PriceFormatService } from '../services/price-format.service';
-declare var $: any;
-declare var lucide: any;
-import Swal from 'sweetalert2';
+import { SelectionStore } from '../core/state/selection-store';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
-interface RefundRequest {
-  returnRequestId: number;
-  refundAmount: number;
-  refundMethod: string;
-  adminRemark?: string;
-}
+declare var lucide: any;
 
 @Component({
   selector: 'app-return-list',
   standalone: false,
   templateUrl: './return-list.component.html',
-  styleUrl: './return-list.component.css'
+  styleUrl: './return-list.component.css',
+  providers: [SelectionStore],
 })
 export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
-  displayedColumns: string[] = ['id', 'date', 'customer', 'product', 'reason', 'returnDetail', 'status', 'actions'];
-  dataSource = new MatTableDataSource<ReturnRequestDTO>([]);
+  returns: ReturnRequestDTO[] = [];
 
-  // Pagination
-  pageSize: number = 10;
-  currentPage: number = 1;
-  // Returns after all filters (status, search, sort) applied
-  get filteredReturns(): ReturnRequestDTO[] {
-    let filtered = this.dataSource.data;
-    if (this.statusFilter !== 'All') {
-      filtered = filtered.filter((r: any) => r.status === this.statusFilter);
-    }
-    if (this.searchText) {
-      const search = this.searchText.toLowerCase();
-      filtered = filtered.filter((r: any) =>
-        r.userName.toLowerCase().includes(search) ||
-        (r.products && r.products.map((p: any) => p.productName).join(', ').toLowerCase().includes(search)) ||
-        r.reasonForReturn.toLowerCase().includes(search) ||
-        r.id.toString().includes(search)
-      );
-    }
-    if (this.sortBy === 'Newest') {
-      filtered = filtered.sort((a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
-    } else {
-      filtered = filtered.sort((a: any, b: any) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
-    }
-    return filtered;
-  }
+  pageSize = 10;
+  /** 0-based */
+  currentPage = 0;
 
-  get paginatedReturns(): ReturnRequestDTO[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredReturns.slice(start, start + this.pageSize);
-  }
-  get totalItems(): number {
-    return this.filteredReturns.length;
-  }
-  get showingFrom(): number {
-    return this.totalItems === 0 ? 0 : (this.pageSize * (this.currentPage - 1)) + 1;
-  }
-  get showingTo(): number {
-    return Math.min(this.pageSize * this.currentPage, this.totalItems);
-  }
-  get showPagination(): boolean {
-    return this.totalPages > 1;
-  }
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    for (let i = 1; i <= this.totalPages; i++) {
-      pages.push(i);
-    }
-    return pages;
-  }
-  changePage(page: number) {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && (window as any).lucide) {
-          (window as any).lucide.createIcons();
-        } else if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-        }
-      }, 0);
-    }
-  }
-  goToPage(page: number) {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && (window as any).lucide) {
-          (window as any).lucide.createIcons();
-        } else if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-        }
-      }, 0);
-    }
-  }
-  nextPage() {
-    if (this.currentPage < this.totalPages) {
-      this.currentPage++;
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && (window as any).lucide) {
-          (window as any).lucide.createIcons();
-        } else if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-        }
-      }, 0);
-    }
-  }
-  prevPage() {
-    if (this.currentPage > 1) {
-      this.currentPage--;
-      setTimeout(() => {
-        if (typeof window !== 'undefined' && (window as any).lucide) {
-          (window as any).lucide.createIcons();
-        } else if (typeof lucide !== 'undefined') {
-          lucide.createIcons();
-        }
-      }, 0);
-    }
-  }
-
-  statusFilter: string = 'All';
-  sortBy: string = 'Newest';
-  searchText: string = '';
+  statusFilter = 'All';
+  sortBy = 'Newest';
+  searchText = '';
   isLoading = false;
 
-  statusOptions: string[] = ['All']; // Will be updated dynamically
+  statusOptions: string[] = ['All'];
   sortOptions = [
     { value: 'Newest', label: 'Newest' },
-    { value: 'Oldest', label: 'Oldest' }
+    { value: 'Oldest', label: 'Oldest' },
   ];
 
-  selectedRows: ReturnRequestDTO[] = [];
-
-  private dataTable: any;
+  showExcelDropdown = false;
+  showPdfDropdown = false;
 
   showDetailModal = false;
   selectedRequest: ReturnRequestDTO | null = null;
-  adminDecision: string = '';
-
-  // Dropdown toggles for export buttons
-  showExcelDropdown: boolean = false;
-  showPdfDropdown: boolean = false;
-
-  toggleExcelDropdown() {
-    this.showExcelDropdown = !this.showExcelDropdown;
-    if (this.showExcelDropdown) {
-      this.showPdfDropdown = false;
-    }
-  }
-
-  togglePdfDropdown() {
-    this.showPdfDropdown = !this.showPdfDropdown;
-    if (this.showPdfDropdown) {
-      this.showExcelDropdown = false;
-    }
-  }
-
-  get totalPages(): number {
-    return Math.ceil(this.filteredReturns.length / this.pageSize);
-  }
+  adminDecision = '';
 
   constructor(
     private returnService: ReturnService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    public selection: SelectionStore<number>,
+    private dialog: LuxDialogService
   ) {}
 
   ngOnInit() {
     this.fetchReturns();
+    document.addEventListener('click', this.handleDocumentClick);
   }
 
   ngAfterViewInit() {
-    // DataTables removed
+    this.refreshIcons();
   }
 
   ngOnDestroy() {
-    // DataTables removed
+    document.removeEventListener('click', this.handleDocumentClick);
+  }
+
+  private handleDocumentClick = (event: MouseEvent): void => {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.admin-export')) {
+      this.showExcelDropdown = false;
+      this.showPdfDropdown = false;
+    }
+  };
+
+  private refreshIcons(): void {
+    setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).lucide) {
+        (window as any).lucide.createIcons();
+      } else if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+      }
+    }, 0);
+  }
+
+  get filteredReturns(): ReturnRequestDTO[] {
+    let filtered = [...this.returns];
+    if (this.statusFilter !== 'All') {
+      filtered = filtered.filter((r) => r.status === this.statusFilter);
+    }
+    if (this.searchText) {
+      const search = this.searchText.toLowerCase();
+      filtered = filtered.filter(
+        (r: any) =>
+          (r.userName || '').toLowerCase().includes(search) ||
+          (r.products &&
+            r.products
+              .map((p: any) => p.productName)
+              .join(', ')
+              .toLowerCase()
+              .includes(search)) ||
+          (r.reasonForReturn || '').toLowerCase().includes(search) ||
+          (r.orderCode || '').toLowerCase().includes(search) ||
+          r.id.toString().includes(search)
+      );
+    }
+    filtered.sort((a: any, b: any) => {
+      const diff =
+        new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime();
+      return this.sortBy === 'Newest' ? diff : -diff;
+    });
+    return filtered;
+  }
+
+  get paginatedReturns(): ReturnRequestDTO[] {
+    const start = this.currentPage * this.pageSize;
+    return this.filteredReturns.slice(start, start + this.pageSize);
+  }
+
+  get totalItems(): number {
+    return this.filteredReturns.length;
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.filteredReturns.length / this.pageSize) || 0;
+  }
+
+  get pageIds(): number[] {
+    return this.paginatedReturns.map((r) => r.id);
+  }
+
+  get allPageSelected(): boolean {
+    return this.selection.isPageAllSelected(this.pageIds);
+  }
+
+  get partialPageSelected(): boolean {
+    return this.selection.isPagePartialSelected(this.pageIds);
+  }
+
+  get selectedRows(): ReturnRequestDTO[] {
+    const ids = new Set(this.selection.ids());
+    return this.returns.filter((r) => ids.has(r.id));
+  }
+
+  isRowSelected = (row: unknown): boolean =>
+    this.selection.isSelected((row as ReturnRequestDTO).id);
+
+  trackByReturn = (_: number, row: unknown) => (row as ReturnRequestDTO).id;
+
+  onToggleAll(checked: boolean): void {
+    this.selection.setPage(this.pageIds, checked);
+  }
+
+  onToggleRow(event: { row: unknown; checked: boolean }): void {
+    this.selection.toggle((event.row as ReturnRequestDTO).id, event.checked);
+  }
+
+  onPageChange(page: number): void {
+    if (page < 0 || page >= this.totalPages) return;
+    this.currentPage = page;
+    this.refreshIcons();
+  }
+
+  toggleExcelDropdown() {
+    this.showExcelDropdown = !this.showExcelDropdown;
+    if (this.showExcelDropdown) this.showPdfDropdown = false;
+  }
+
+  togglePdfDropdown() {
+    this.showPdfDropdown = !this.showPdfDropdown;
+    if (this.showPdfDropdown) this.showExcelDropdown = false;
   }
 
   fetchReturns() {
     this.isLoading = true;
     this.returnService.getAllReturn().subscribe({
       next: (data) => {
-        this.dataSource.data = data;
-        // Dynamically extract unique statuses from data
-        const statuses = Array.from(new Set(data.map((r: any) => r.status).filter((s: any) => !!s)));
+        this.returns = data;
+        const statuses = Array.from(
+          new Set(data.map((r: any) => r.status).filter((s: any) => !!s))
+        );
         this.statusOptions = ['All', ...statuses];
         this.isLoading = false;
-        this.currentPage = 1; // Reset to first page on fetch
+        this.currentPage = 0;
+        this.refreshIcons();
       },
-      error: () => { this.isLoading = false; }
+      error: () => {
+        this.isLoading = false;
+        this.dialog.error('Error', 'Failed to load return requests.');
+      },
     });
   }
 
-  applyFilters() {
-    let filtered = this.dataSource.data;
-    if (this.statusFilter !== 'All') {
-      filtered = filtered.filter((r: any) => r.status === this.statusFilter);
-    }
-    if (this.searchText) {
-      const search = this.searchText.toLowerCase();
-      filtered = filtered.filter((r: any) =>
-        r.userName.toLowerCase().includes(search) ||
-        r.productName.toLowerCase().includes(search) ||
-        r.reasonForReturn.toLowerCase().includes(search) ||
-        r.id.toString().includes(search)
-      );
-    }
-    if (this.sortBy === 'Newest') {
-      filtered = filtered.sort((a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime());
-    } else {
-      filtered = filtered.sort((a: any, b: any) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
-    }
-    this.dataSource.data = filtered;
-  }
-
   onStatusFilterChange() {
-    this.currentPage = 1;
+    this.currentPage = 0;
   }
 
   onSortChange() {
-    this.applyFilters();
+    this.currentPage = 0;
   }
 
   onSearchChange() {
-    this.applyFilters();
+    this.currentPage = 0;
   }
 
-  isSelected(row: ReturnRequestDTO): boolean {
-    return this.selectedRows.some(r => r.id === row.id);
+  clearFilters(): void {
+    this.statusFilter = 'All';
+    this.sortBy = 'Newest';
+    this.searchText = '';
+    this.currentPage = 0;
   }
 
-  toggleRow(row: ReturnRequestDTO, event: any) {
-    if (event.target.checked) {
-      if (!this.isSelected(row)) {
-        this.selectedRows.push(row);
-      }
+  statusTone(status: string): 'default' | 'success' | 'warning' | 'danger' | 'info' {
+    switch ((status || '').toLowerCase()) {
+      case 'approved':
+        return 'success';
+      case 'rejected':
+      case 'cancelled':
+        return 'danger';
+      case 'pending':
+        return 'warning';
+      default:
+        return 'info';
+    }
+  }
+
+  async exportExcel(type: 'all' | 'selected') {
+    const returnsToExport = type === 'all' ? this.filteredReturns : this.selectedRows;
+    if (returnsToExport.length === 0) {
+      await this.dialog.warning('No Data to Export', 'There are no return requests to export.');
+      return;
+    }
+
+    if (type === 'selected') {
+      const returnIds = this.selectedRows.map((r) => r.id);
+      this.returnService.exportSelectedReturnsToCSV(returnIds).subscribe({
+        next: (blob: Blob) => this.downloadBlob(blob, 'csv'),
+        error: () =>
+          this.dialog.error('Export Failed', 'There was an error exporting the return report to CSV.'),
+      });
     } else {
-      this.selectedRows = this.selectedRows.filter(r => r.id !== row.id);
+      this.returnService.exportReturnReportToCSV().subscribe({
+        next: (blob: Blob) => this.downloadBlob(blob, 'csv'),
+        error: () =>
+          this.dialog.error('Export Failed', 'There was an error exporting the return report to CSV.'),
+      });
     }
   }
 
-  isAllSelected(): boolean {
-    return this.dataSource.data.length > 0 && this.selectedRows.length === this.dataSource.data.length;
-  }
+  async exportPDF(type: 'all' | 'selected') {
+    const returnsToExport = type === 'all' ? this.filteredReturns : this.selectedRows;
+    if (returnsToExport.length === 0) {
+      await this.dialog.warning('No Data to Export', 'There are no return requests to export.');
+      return;
+    }
 
-  toggleSelectAll(event: any) {
-    if (event.target.checked) {
-      this.selectedRows = [...this.dataSource.data];
+    if (type === 'selected') {
+      const returnIds = this.selectedRows.map((r) => r.id);
+      this.returnService.exportSelectedReturnsToPDF(returnIds).subscribe({
+        next: (blob: Blob) => this.downloadBlob(blob, 'pdf'),
+        error: () =>
+          this.dialog.error('Export Failed', 'There was an error exporting the return report to PDF.'),
+      });
     } else {
-      this.selectedRows = [];
-    }
-  }
-
-  exportExcel(type: 'all' | 'selected') {
-    try {
-      const returnsToExport = type === 'all' ? this.dataSource.data : this.selectedRows;
-      
-      if (returnsToExport.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'No Data to Export',
-          text: 'There are no return requests to export.',
-          confirmButtonColor: '#3085d6'
-        });
-        return;
-      }
-
-      // Show loading
-      Swal.fire({
-        title: 'Generating CSV Report...',
-        text: 'Please wait while we prepare your report.',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      if (type === 'selected') {
-        const returnIds = this.selectedRows.map(returnRequest => returnRequest.id);
-        this.returnService.exportSelectedReturnsToCSV(returnIds).subscribe({
-          next: (blob: Blob) => {
-            console.log('✓ Return CSV export successful. Blob size:', blob.size, 'bytes');
-            
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Export Successful!',
-              text: 'Return report has been exported successfully.',
-              timer: 3000,
-              showConfirmButton: false
-            });
-          },
-          error: (error) => {
-            console.error('❌ Return CSV export error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Export Failed',
-              text: 'There was an error exporting the return report to CSV. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
-        });
-      } else {
-        this.returnService.exportReturnReportToCSV().subscribe({
-          next: (blob: Blob) => {
-            console.log('✓ Return CSV export successful. Blob size:', blob.size, 'bytes');
-            
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Export Successful!',
-              text: 'Return report has been exported successfully.',
-              timer: 3000,
-              showConfirmButton: false
-            });
-          },
-          error: (error) => {
-            console.error('❌ Return CSV export error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Export Failed',
-              text: 'There was an error exporting the return report to CSV. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Return CSV export error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Export Failed',
-        text: 'There was an error exporting to CSV. Please try again.',
-        confirmButtonColor: '#3085d6'
+      this.returnService.exportReturnReportToPDF().subscribe({
+        next: (blob: Blob) => this.downloadBlob(blob, 'pdf'),
+        error: () =>
+          this.dialog.error('Export Failed', 'There was an error exporting the return report to PDF.'),
       });
     }
   }
 
-  exportPDF(type: 'all' | 'selected') {
-    try {
-      const returnsToExport = type === 'all' ? this.dataSource.data : this.selectedRows;
-      
-      if (returnsToExport.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'No Data to Export',
-          text: 'There are no return requests to export.',
-          confirmButtonColor: '#3085d6'
-        });
-        return;
-      }
-
-      // Show loading
-      Swal.fire({
-        title: 'Generating PDF Report...',
-        text: 'Please wait while we prepare your report.',
-        allowOutsideClick: false,
-        didOpen: () => {
-          Swal.showLoading();
-        }
-      });
-
-      if (type === 'selected') {
-        const returnIds = this.selectedRows.map(returnRequest => returnRequest.id);
-        this.returnService.exportSelectedReturnsToPDF(returnIds).subscribe({
-          next: (blob: Blob) => {
-            console.log('✓ Return PDF export successful. Blob size:', blob.size, 'bytes');
-            
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Export Successful!',
-              text: 'Return report has been exported successfully.',
-              timer: 3000,
-              showConfirmButton: false
-            });
-          },
-          error: (error) => {
-            console.error('❌ Return PDF export error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Export Failed',
-              text: 'There was an error exporting the return report to PDF. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
-        });
-      } else {
-        this.returnService.exportReturnReportToPDF().subscribe({
-          next: (blob: Blob) => {
-            console.log('✓ Return PDF export successful. Blob size:', blob.size, 'bytes');
-            
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Britium_Gallery_Return_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-
-            Swal.fire({
-              icon: 'success',
-              title: 'Export Successful!',
-              text: 'Return report has been exported successfully.',
-              timer: 3000,
-              showConfirmButton: false
-            });
-          },
-          error: (error) => {
-            console.error('❌ Return PDF export error:', error);
-            Swal.fire({
-              icon: 'error',
-              title: 'Export Failed',
-              text: 'There was an error exporting the return report to PDF. Please try again.',
-              confirmButtonColor: '#3085d6'
-            });
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Return PDF export error:', error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Export Failed',
-        text: 'There was an error exporting to PDF. Please try again.',
-        confirmButtonColor: '#3085d6'
-      });
-    }
-  }
-
-  onExportOption(event: Event) {
-    const select = event.target as HTMLSelectElement;
-    const option = select && select.value ? select.value : '';
-    switch (option) {
-      case 'excel-all':
-        this.exportExcel('all');
-        break;
-      case 'excel-selected':
-        if (this.selectedRows.length > 0) this.exportExcel('selected');
-        break;
-      case 'pdf-all':
-        this.exportPDF('all');
-        break;
-      case 'pdf-selected':
-        if (this.selectedRows.length > 0) this.exportPDF('selected');
-        break;
-    }
-    // Reset dropdown (if needed)
-    if (select) select.selectedIndex = 0;
-  }
-
-  onDatatableSelect({ selected }: { selected: ReturnRequestDTO[] }) {
-    this.selectedRows = [...selected];
-  }
-
-  private initDataTable() {
-    setTimeout(() => {
-      this.dataTable = ($('#returnsTable') as any).DataTable({
-        paging: true,
-        searching: true,
-        ordering: true,
-        responsive: true
-      });
-    }, 0);
+  private downloadBlob(blob: Blob, kind: 'csv' | 'pdf') {
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Britium_Gallery_Return_Report_${new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace(/:/g, '-')}.${kind}`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    this.dialog.toast('Return report exported');
   }
 
   openDetailModal(request: ReturnRequestDTO) {
@@ -495,7 +282,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.adminDecision = '';
     this.showDetailModal = true;
   }
-  
+
   closeDetailModal() {
     this.showDetailModal = false;
     this.selectedRequest = null;
@@ -504,9 +291,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   getImageUrl(img: string): string {
     if (!img) return '';
-    // If already absolute, return as is
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    // Otherwise, prepend the base URL
     return `http://localhost:8080${img}`;
   }
 
@@ -515,7 +300,6 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     return row.products.map((p: any) => p.productName).join(', ');
   }
 
-  // Price formatting methods
   formatPrice(price: number, currency: string = 'MMK'): string {
     return this.priceFormatService.formatPrice(price, currency);
   }
@@ -524,8 +308,18 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
     return this.priceFormatService.formatPriceOnly(price);
   }
 
-  formatDiscountedPrice(originalPrice: number, discountValue: number, discountType: string, currency: string = 'MMK'): string {
-    return this.priceFormatService.formatDiscountedPrice(originalPrice, discountValue, discountType, currency);
+  formatDiscountedPrice(
+    originalPrice: number,
+    discountValue: number,
+    discountType: string,
+    currency: string = 'MMK'
+  ): string {
+    return this.priceFormatService.formatDiscountedPrice(
+      originalPrice,
+      discountValue,
+      discountType,
+      currency
+    );
   }
 
   formatDiscountText(discountValue: number, discountType: string): string {

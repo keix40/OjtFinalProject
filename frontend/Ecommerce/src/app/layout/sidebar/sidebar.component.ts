@@ -38,6 +38,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   sidebarCollapsed: boolean = true; // Start with collapsed sidebar
   currentMenu: string | null = null;
   currentSubmenu: string | null = null; // Track which submenu is active
+  private railToggleHandler: (() => void) | null = null;
 
   // Profile dropdown properties
   userName: string | null = null;
@@ -119,6 +120,8 @@ export class SidebarComponent implements OnInit, AfterViewInit {
     this.loadCustomerCount();
     this.loadTiersAndVipCount();
     document.addEventListener('click', this.handleDocumentClick.bind(this));
+    this.railToggleHandler = () => this.toggleSidebar();
+    window.addEventListener('admin-rail-toggle', this.railToggleHandler);
     
     // Set up periodic refresh of counts (every 5 minutes)
     this.refreshInterval = setInterval(() => {
@@ -139,6 +142,9 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   ngOnDestroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
     document.removeEventListener('click', this.handleDocumentClick.bind(this));
+    if (this.railToggleHandler) {
+      window.removeEventListener('admin-rail-toggle', this.railToggleHandler);
+    }
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }

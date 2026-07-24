@@ -4,6 +4,8 @@ import { ImageService } from '../services/image.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { LucideAngularModule } from 'lucide-angular';
+import { LuxUiModule } from '../shared/ui/lux-ui.module';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import { UserService } from '../services/user.service';
 import { VipTier, VipTierService } from '../services/vip-tier.service';
 import { VipStatsService } from '../services/vip-stats.service';
@@ -63,7 +65,8 @@ declare var lucide: any;
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    LucideAngularModule
+    LucideAngularModule,
+    LuxUiModule
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -133,7 +136,8 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     private userService: UserService,
     private vipTierService: VipTierService,
     private vipStatsService: VipStatsService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    private luxDialog: LuxDialogService
   ) {
     this.vipForm = this.fb.group({
       customerSearch: ['', Validators.required],
@@ -696,8 +700,9 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     // Implement tier change functionality
   }
 
-  removeVipStatus(customer: VipCustomer): void {
-    if (confirm(`Remove VIP status for ${customer.name}?`)) {
+  async removeVipStatus(customer: VipCustomer): Promise<void> {
+    const ok = await this.luxDialog.confirm({ title: `Remove VIP status for ${customer.name}?`, confirmText: 'Remove', destructive: true });
+    if (ok) {
       this.allCustomers = this.allCustomers.filter(c => c.userId !== customer.userId);
       this.applyFilters();
       console.log('VIP status removed for:', customer);
@@ -742,18 +747,20 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     // Implement bulk tier update
   }
 
-  bulkDelete(): void {
+  async bulkDelete(): Promise<void> {
     if (!this.selectedCustomers.length) return;
-    if (!confirm(`Are you sure you want to delete ${this.selectedCustomers.length} selected VIP customers? This action cannot be undone.`)) return;
+    const okDel = await this.luxDialog.confirm({ title: 'Delete selected VIP customers?', text: 'This action cannot be undone.', confirmText: 'Delete', destructive: true });
+    if (!okDel) return;
     this.allCustomers = this.allCustomers.filter(c => !this.selectedCustomers.includes(c.userId.toString()));
     this.applyFilters();
     this.selectedCustomers = [];
     
   }
 
-  bulkChangeStatus(): void {
+  async bulkChangeStatus(): Promise<void> {
     if (!this.selectedCustomers.length) return;
-    if (!confirm(`Toggle status for ${this.selectedCustomers.length} selected VIP customers?`)) return;
+    const ok = await this.luxDialog.confirm({ title: 'Toggle status for selected VIP customers?', confirmText: 'Toggle' });
+    if (!ok) return;
     this.allCustomers = this.allCustomers.map(c =>
       this.selectedCustomers.includes(c.userId.toString())
         ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' }
@@ -920,10 +927,11 @@ export class VipCustomersComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.editTierId = tier.id ?? null;
     this.openAddTierModal();
   }
-  deleteTier(id?: number) {
-    if (id && confirm('Delete this tier?')) {
-      this.vipTierService.delete(id).subscribe(() => this.loadTiers());
-    }
+  async deleteTier(id?: number): Promise<void> {
+    if (!id) return;
+    const ok = await this.luxDialog.confirm({ title: 'Delete this tier?', confirmText: 'Delete', destructive: true });
+    if (!ok) return;
+    this.vipTierService.delete(id).subscribe(() => this.loadTiers());
   }
   resetTierForm() {
     this.editTierId = null;

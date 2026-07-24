@@ -1,286 +1,137 @@
-<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
-  <!-- Header Section -->
-  <div class="max-w-7xl mx-auto">
-    <div class="text-center mb-8">
-      <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-        <svg class="w-8 h-8 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v4a1 1 0 001 1h3v6a1 1 0 001 1h6a1 1 0 001-1v-6h3a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 00-1 1z" />
-        </svg>
-      </div>
-      <h1 class="text-4xl font-bold text-gray-900 mb-2">Category Management</h1>
-      <p class="text-gray-600 text-lg">Manage your product categories and subcategories</p>
+<lux-page-shell variant="admin" shellClass="admin-page">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Catalogue"
+    title="Category Management"
+    subtitle="Organize product categories and subcategories."
+  >
+    <div actions>
+      <lux-button
+        variant="primary"
+        [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_CREATE)"
+        (pressed)="openCreateCategoryModal()"
+      >
+        Add Category
+      </lux-button>
     </div>
+  </lux-page-header>
 
-    <!-- Action Bar -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <!-- Search and Filters -->
-        <div class="flex flex-row gap-4 flex-1 items-center">
-          <!-- Search input -->
-          <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-              </svg>
-            </div>
-            <input 
-              type="text" 
-              [(ngModel)]="searchTerm"
-              (input)="onSearch()"
-              placeholder="Search categories..."
-              class="block w-full min-w-[200px] max-w-lg pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-            >
-          </div>
-          <!-- Category count label -->
-          <div class="flex items-center gap-2 text-sm text-gray-600 whitespace-nowrap flex-shrink-0">
-            <span class="font-medium">{{ totalItems }}</span>
-            <span>categories found</span>
-          </div>
-        </div>
-        <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-3">
-          <button 
-            (click)="openCreateCategoryModal()" 
-            class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-sm hover:shadow-md"
-            [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_CREATE)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Add Category
+  <div class="admin-kpi-grid">
+    <div class="admin-kpi">
+      <div class="admin-kpi__label">Categories</div>
+      <div class="admin-kpi__value">{{ totalItems }}</div>
+    </div>
+    <div class="admin-kpi">
+      <div class="admin-kpi__label">Selected</div>
+      <div class="admin-kpi__value">{{ selectedCount }}</div>
+    </div>
+  </div>
+
+  <lux-filter-bar>
+    <div primary>
+      <lux-field label="Search" inputId="cat-search">
+        <input
+          id="cat-search"
+          type="text"
+          class="lux-input"
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Search categories…"
+        />
+      </lux-field>
+    </div>
+    <div secondary class="cat-toolbar">
+      <div class="lux-export-menu relative">
+        <lux-button variant="secondary" (pressed)="csvDropdownOpen = !csvDropdownOpen; pdfDropdownOpen = false">Export CSV</lux-button>
+        <div *ngIf="csvDropdownOpen" class="admin-dropdown">
+          <button type="button" (click)="exportToCSV('all'); csvDropdownOpen = false">Export All</button>
+          <button type="button" [disabled]="selectedCount === 0" (click)="exportToCSV('selected'); csvDropdownOpen = false">
+            Export Selected ({{ selectedCount }})
           </button>
-          <!-- CSV Export Dropdown -->
-<div class="relative">
-  <button 
-    (click)="csvDropdownOpen = !csvDropdownOpen"
-    class="inline-flex items-center gap-2 px-4 py-2.5 text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
-    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-    </svg>
-    Export CSV
-    <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': csvDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-    </svg>
-  </button>
-  <div *ngIf="csvDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-    <button 
-      class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-      (click)="exportToCSV('all'); csvDropdownOpen = false">
-      <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-      </svg>
-      Export All Categories
-    </button>
-    <button 
-      class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      [disabled]="selectedCategories.length === 0"
-      (click)="exportToCSV('selected'); csvDropdownOpen = false">
-      <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-      </svg>
-      Export Selected ({{ selectedCategories.length }})
-    </button>
-  </div>
-</div>
-
-<!-- PDF Export Dropdown -->
-<div class="relative">
-  <button 
-    (click)="pdfDropdownOpen = !pdfDropdownOpen"
-    class="inline-flex items-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors shadow-sm">
-    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-    </svg>
-    Export PDF
-    <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': pdfDropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-    </svg>
-  </button>
-  <div *ngIf="pdfDropdownOpen" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-    <button 
-      class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-      (click)="exportToPDF('all'); pdfDropdownOpen = false">
-      <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-      </svg>
-      Export All Categories
-    </button>
-    <button 
-      class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-      [disabled]="selectedCategories.length === 0"
-      (click)="exportToPDF('selected'); pdfDropdownOpen = false">
-      <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-      </svg>
-      Export Selected ({{ selectedCategories.length }})
-    </button>
-  </div>
-</div>
+        </div>
+      </div>
+      <div class="lux-export-menu relative">
+        <lux-button variant="secondary" (pressed)="pdfDropdownOpen = !pdfDropdownOpen; csvDropdownOpen = false">Export PDF</lux-button>
+        <div *ngIf="pdfDropdownOpen" class="admin-dropdown">
+          <button type="button" (click)="exportToPDF('all'); pdfDropdownOpen = false">Export All</button>
+          <button type="button" [disabled]="selectedCount === 0" (click)="exportToPDF('selected'); pdfDropdownOpen = false">
+            Export Selected ({{ selectedCount }})
+          </button>
         </div>
       </div>
     </div>
+  </lux-filter-bar>
 
-    <!-- Loading State -->
-    <div *ngIf="loading" class="flex justify-center items-center py-12">
-      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-    </div>
+  <section class="page-panel cat-panel">
+    <lux-async-state *ngIf="loading" [loading]="true" loadingLabel="Loading categories" [skeletonCount]="3" skeletonHeight="3rem"></lux-async-state>
 
-    <!-- Category List -->
-    <div *ngIf="!loading" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <!-- Table Header -->
-      <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
-        <div class="flex items-center gap-4">
-          <input 
-            type="checkbox" 
-            [checked]="isAllSelected()"
-            (change)="onSelectAll($event)"
-            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+    <lux-table
+      *ngIf="!loading"
+      [rows]="paginatedCategories"
+      [selectable]="true"
+      [allSelected]="allPageSelected"
+      [partialSelected]="partialPageSelected"
+      [isSelected]="isRowSelected"
+      [trackBy]="trackById"
+      (toggleAll)="onToggleAll($event)"
+      (toggleRow)="onToggleRow($event)"
+    >
+      <ng-template luxColumn="image" header="Image" let-cat>
+        <div class="cat-avatar">
+          <img *ngIf="getCategoryImageUrl(cat); else initial" [src]="getCategoryImageUrl(cat)" [alt]="cat.name" />
+          <ng-template #initial>
+            <span class="cat-avatar__initial">{{ cat.name ? cat.name.charAt(0).toUpperCase() : '?' }}</span>
+          </ng-template>
+        </div>
+      </ng-template>
+      <ng-template luxColumn="name" header="Category" let-cat>
+        <div class="cat-name" [ngStyle]="getCategoryIndentStyle(cat.level)">{{ cat.name }}</div>
+      </ng-template>
+      <ng-template luxColumn="subs" header="Subcategories" let-cat>
+        <div class="cat-tags" *ngIf="cat.subcategories?.length; else noSub">
+          <lux-badge *ngFor="let sub of cat.subcategories" tone="info">{{ sub.name }}</lux-badge>
+        </div>
+        <ng-template #noSub><span class="cat-muted">—</span></ng-template>
+      </ng-template>
+      <ng-template luxColumn="actions" header="Actions" let-cat>
+        <div class="cat-actions">
+          <lux-button
+            variant="ghost"
+            [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_CREATE)"
+            (pressed)="openAddSubCategoryModal(cat.id)"
           >
-          <span class="text-sm font-medium text-gray-700">Select All</span>
+            Add Sub
+          </lux-button>
+          <lux-button
+            variant="ghost"
+            [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_UPDATE)"
+            (pressed)="editCategory(cat)"
+          >
+            Edit
+          </lux-button>
+          <lux-button
+            variant="ghost"
+            [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_DELETE)"
+            (pressed)="deleteCategory(cat)"
+          >
+            Delete
+          </lux-button>
         </div>
-      </div>
+      </ng-template>
+      <lux-empty-state
+        empty
+        title="No categories found"
+        [message]="searchTerm ? 'Try adjusting your search.' : 'Create a category to get started.'"
+      ></lux-empty-state>
+    </lux-table>
 
-      <!-- Empty State -->
-      <div *ngIf="flatCategories.length === 0" class="text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v4a1 1 0 001 1h3v6a1 1 0 001 1h6a1 1 0 001-1v-6h3a1 1 0 001-1V7a1 1 0 00-1-1H4a1 1 0 00-1 1z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">No categories found</h3>
-        <p class="mt-1 text-sm text-gray-500">
-          {{ searchTerm ? 'Try adjusting your search terms.' : 'Get started by creating a new category.' }}
-        </p>
-        <div class="mt-6">
-          <button 
-            (click)="openCreateCategoryModal()"
-            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Add Category
-          </button>
-        </div>
-      </div>
-
-      <!-- Category Table -->
-      <div *ngIf="flatCategories.length > 0" class="p-4">
-        <div class="overflow-x-auto rounded-2xl shadow-lg bg-white">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <input type="checkbox" [checked]="isAllSelected()" (change)="onSelectAll($event)" />
-                </th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category Name</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subcategories</th>
-                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr *ngFor="let cat of paginatedCategories">
-                <td class="px-4 py-3">
-                  <input type="checkbox" [checked]="isCategorySelected(cat)" (change)="onCategorySelect(cat, $event)" />
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                  <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                    <ng-container *ngIf="getCategoryImageUrl(cat); else initial">
-                      <img [src]="getCategoryImageUrl(cat)" [alt]="cat.name" class="w-full h-full object-cover" />
-                    </ng-container>
-                    <ng-template #initial>
-                      <div [ngClass]="getCategoryBackgroundColor(cat)" class="w-full h-full flex items-center justify-center">
-                        <span class="text-lg font-bold text-white">
-                          {{ cat.name ? cat.name.charAt(0).toUpperCase() : '?' }}
-                        </span>
-                      </div>
-                    </ng-template>
-                  </div>
-                </td>
-                <td class="align-middle">
-                  <div [ngClass]="getCategoryIndent(cat.level)" class="flex items-center">
-                    <span class="font-medium text-gray-900">{{ cat.name }}</span>
-                  </div>
-                </td>
-                <td class="px-4 py-3 whitespace-normal">
-                  <ng-container *ngIf="cat.subcategories && cat.subcategories.length > 0; else noSub">
-                    <div class="flex flex-wrap gap-1">
-                      <span *ngFor="let sub of cat.subcategories" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {{ sub.name }}
-                      </span>
-                    </div>
-                  </ng-container>
-                  <ng-template #noSub>
-                    <span class="text-gray-400 text-xs">-</span>
-                  </ng-template>
-                </td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                  <div class="flex gap-2">
-                    <button (click)="openAddSubCategoryModal(cat.id)" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors"
-                      [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_CREATE)">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add Subcategory
-                    </button>
-                    <button (click)="editCategory(cat)" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-                      [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_UPDATE)">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                      </svg>
-                      Edit
-                    </button>
-                    <button (click)="deleteCategory(cat)" class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
-                      [disabled]="!permissionService.hasPermission(PermissionConstants.CATEGORIES_DELETE)">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                      Delete
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-    </div>
-    <!-- Pagination -->
-    <div *ngIf="totalPages > 1" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-        <div class="flex items-center justify-between">
-        <div class="text-sm text-gray-700">
-            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }} results
-        </div>
-        <div class="flex items-center gap-2">
-            <button 
-            (click)="onPageChange(currentPage - 1)"
-            [disabled]="currentPage === 1"
-            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-            </svg>
-            Previous
-            </button>
-            
-            <div class="flex items-center gap-1">
-            <button 
-                *ngFor="let page of getPageNumbers()"
-                (click)="onPageChange(page)"
-                [class]="page === currentPage ? 
-                'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
-                'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
-                {{ page }}
-            </button>
-            </div>
-            
-            <button 
-            (click)="onPageChange(currentPage + 1)"
-            [disabled]="currentPage === totalPages"
-            class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-            Next
-            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-            </button>
-        </div>
-        </div>
-        </div>
-    </div>
-  </div>
-</div>
+    <lux-paginator
+      *ngIf="!loading && totalItems > 0"
+      [page]="currentPage"
+      [size]="itemsPerPage"
+      [totalElements]="totalItems"
+      [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)"
+    ></lux-paginator>
+  </section>
+</lux-page-shell>

@@ -22,9 +22,6 @@ export class NavbarComponent implements OnInit {
 
   toggleSidebar() {
     this.sidebarVisible = !this.sidebarVisible;
-    const sidebar = document.querySelector('.sidebar');
-    if (sidebar) {
-      sidebar.classList.toggle('d-none', !this.sidebarVisible);
-    }
+    window.dispatchEvent(new CustomEvent('admin-rail-toggle'));
   }
 }

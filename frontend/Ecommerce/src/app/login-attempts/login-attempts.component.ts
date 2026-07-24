@@ -3,6 +3,7 @@ import { interval, type Subscription } from "rxjs"
 import { LoginAttemptsService, LoginAttempt } from '../services/login-attempts.service';
 import { HttpClient } from '@angular/common/http';
 import { NotifcationService } from '../notifcation.service';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 interface ActivityFeedItem {
   id: string
@@ -140,8 +141,9 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     this.editingRuleId = null;
     this.editedRule = {};
   }
-  deleteRule(rule: any) {
-    if (!confirm('Are you sure you want to delete this rule?')) return;
+  async deleteRule(rule: any) {
+    const ok = await this.luxDialog.confirm({ title: 'Delete this rule?', confirmText: 'Delete', destructive: true });
+    if (!ok) return;
     this.isDeletingRule = true;
     this.http.delete<any>(`http://localhost:8080/api/login-attempts/security-policy/${rule.id}`).subscribe({
       next: () => {
@@ -155,7 +157,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     });
   }
 
-  constructor(private loginAttemptsService: LoginAttemptsService, private http: HttpClient, private notificationService: NotifcationService) {}
+  constructor(private loginAttemptsService: LoginAttemptsService, private http: HttpClient, private notificationService: NotifcationService, private luxDialog: LuxDialogService) {}
 
   ngOnInit(): void {
     this.loadLoginAttempts();

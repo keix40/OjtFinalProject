@@ -396,6 +396,16 @@ isPhoneVerified(): boolean {
   return !this.isPhoneEmpty() && this.userDetails?.phoneVerified === true;
 }
 
+get phoneHint(): string {
+  if (this.isPhoneVerified()) return 'Phone number is verified.';
+  if (this.isPhoneUnverified()) {
+    return this.isPhoneNumberChanged()
+      ? 'New phone number needs verification.'
+      : 'Phone number is not verified yet.';
+  }
+  return '';
+}
+
 isPhoneNumberChanged(): boolean {
   const currentPhone = this.personalInfoForm.get('phoneNumber')?.value;
   const originalPhone = this.originalDetails?.phoneNumber;

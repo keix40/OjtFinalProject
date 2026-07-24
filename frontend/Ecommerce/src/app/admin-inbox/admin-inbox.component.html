@@ -1,26 +1,24 @@
 <!-- Admin Inbox Modal -->
 <div *ngIf="showModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-  <!-- Background overlay -->
-  <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" (click)="closeModal()"></div>
+  <div class="fixed inset-0 bg-ink/50 backdrop-blur-sm transition-opacity" (click)="closeModal()"></div>
 
-  <!-- Modal panel -->
   <div class="flex min-h-full items-center justify-center p-4">
-    <div class="relative w-full max-w-5xl bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-      
+    <div class="relative w-full max-w-5xl lux-inbox-modal overflow-hidden">
+
       <!-- Modal Header -->
-      <div class="bg-white border-b border-gray-200 px-6 py-4">
+      <div class="lux-inbox-header px-6 py-4">
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                <i data-lucide="inbox" class="w-4 h-4 text-slate-500 group-hover:text-slate-700 transition-colors duration-200"></i>
+            <div class="lux-inbox-mark">
+              <i data-lucide="inbox" class="w-4 h-4"></i>
             </div>
             <div>
-              <h3 class="text-xl font-bold text-gray-900">Admin Inbox</h3>
-              <p class="text-sm text-gray-600">{{ unreadCount }} unread messages</p>
+              <h3 class="lux-h3" id="modal-title">Admin Inbox</h3>
+              <p class="lux-body-sm">{{ unreadCount }} unread messages</p>
             </div>
           </div>
-          <button (click)="closeModal()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors">
-            <i data-lucide="x" class="w-5 h-5 text-gray-500"></i>
+          <button type="button" (click)="closeModal()" class="lux-inbox-icon-btn" aria-label="Close">
+            <i data-lucide="x" class="w-5 h-5"></i>
           </button>
         </div>
       </div>
@@ -28,65 +26,59 @@
       <!-- Modal Body -->
       <div class="flex h-[600px]">
         <!-- Left Panel - Message List -->
-        <div class="w-2/5 border-r border-gray-200 flex flex-col bg-gray-50/50">
+        <div class="w-2/5 lux-inbox-list-panel flex flex-col">
           <!-- Filters -->
-          <div class="p-4 border-b border-gray-200 bg-white">
+          <div class="p-4 lux-inbox-filters">
             <div class="space-y-3">
-              <!-- Search -->
               <div class="relative">
-                <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                <input 
-                  type="text" 
-                  [(ngModel)]="searchTerm" 
+                <i data-lucide="search" class="absolute left-0 top-1/2 transform -translate-y-1/2 w-4 h-4 text-stone"></i>
+                <input
+                  type="text"
+                  [(ngModel)]="searchTerm"
                   (input)="applyFilters()"
-                  placeholder="Search messages..." 
-                  class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition-all"
+                  placeholder="Search messages…"
+                  class="lux-input pl-7"
                 >
               </div>
-              
-              <!-- Filter Buttons -->
+
               <div class="flex gap-2">
-                <select [(ngModel)]="categoryFilter" (change)="applyFilters()" class="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select [(ngModel)]="categoryFilter" (change)="applyFilters()" class="lux-select flex-1 text-sm">
                   <option value="all">All Categories</option>
                   <option value="support">Support</option>
                   <option value="order">Order</option>
                   <option value="urgent">Urgent</option>
                   <option value="general">General</option>
                 </select>
-                <select [(ngModel)]="priorityFilter" (change)="applyFilters()" class="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                <select [(ngModel)]="priorityFilter" (change)="applyFilters()" class="lux-select flex-1 text-sm">
                   <option value="all">All Priorities</option>
                   <option value="high">High</option>
                   <option value="medium">Medium</option>
                   <option value="low">Low</option>
                 </select>
               </div>
-              
-              <!-- Status Filter -->
-              <div class="flex gap-1 p-1 bg-gray-100 rounded-lg">
-                <button 
-                  (click)="readFilter = 'all'; applyFilters()" 
-                  [class.bg-white]="readFilter === 'all'"
-                  [class.text-gray-900]="readFilter === 'all'"
-                  [class.text-gray-600]="readFilter !== 'all'"
-                  class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all"
+
+              <div class="lux-inbox-tabs">
+                <button
+                  type="button"
+                  (click)="readFilter = 'all'; applyFilters()"
+                  [class.lux-inbox-tab--active]="readFilter === 'all'"
+                  class="lux-inbox-tab"
                 >
                   All
                 </button>
-                <button 
-                  (click)="readFilter = 'unread'; applyFilters()" 
-                  [class.bg-white]="readFilter === 'unread'"
-                  [class.text-gray-900]="readFilter === 'unread'"
-                  [class.text-gray-600]="readFilter !== 'unread'"
-                  class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all"
+                <button
+                  type="button"
+                  (click)="readFilter = 'unread'; applyFilters()"
+                  [class.lux-inbox-tab--active]="readFilter === 'unread'"
+                  class="lux-inbox-tab"
                 >
                   Unread
                 </button>
-                <button 
-                  (click)="readFilter = 'read'; applyFilters()" 
-                  [class.bg-white]="readFilter === 'read'"
-                  [class.text-gray-900]="readFilter === 'read'"
-                  [class.text-gray-600]="readFilter !== 'read'"
-                  class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-all"
+                <button
+                  type="button"
+                  (click)="readFilter = 'read'; applyFilters()"
+                  [class.lux-inbox-tab--active]="readFilter === 'read'"
+                  class="lux-inbox-tab"
                 >
                   Read
                 </button>
@@ -96,37 +88,33 @@
 
           <!-- Message List -->
           <div class="flex-1 overflow-y-auto">
-            <div *ngIf="paginatedMessages.length === 0" class="p-8 text-center text-gray-500">
-              <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="inbox" class="w-8 h-8 text-gray-400"></i>
-              </div>
-              <p class="font-medium">No messages found</p>
-              <p class="text-sm">Try adjusting your filters</p>
+            <div *ngIf="paginatedMessages.length === 0" class="p-8 text-center">
+              <p class="lux-overline mb-2">Empty</p>
+              <p class="lux-body-sm font-medium text-ink">No messages found</p>
+              <p class="lux-body-sm">Try adjusting your filters</p>
             </div>
-            <div *ngFor="let message of paginatedMessages" 
+            <div *ngFor="let message of paginatedMessages"
                  (click)="selectMessage(message)"
-                 [class.bg-blue-50]="selectedMessage?.id === message.id"
-                 [class.border-l-4]="selectedMessage?.id === message.id"
-                 [class.border-blue-500]="selectedMessage?.id === message.id"
-                 class="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-all">
+                 [class.lux-inbox-item--selected]="selectedMessage?.id === message.id"
+                 class="lux-inbox-item">
               <div class="flex items-start gap-3">
                 <div class="flex-shrink-0 mt-1">
-                  <div class="w-2 h-2 rounded-full" 
-                       [class.bg-blue-500]="!message.isRead"
-                       [class.bg-gray-300]="message.isRead"></div>
+                  <div class="lux-inbox-dot"
+                       [class.lux-inbox-dot--unread]="!message.isRead"
+                       [class.lux-inbox-dot--read]="message.isRead"></div>
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="flex items-center gap-2 mb-1">
-                    <h4 class="font-semibold text-gray-900 truncate" [class.font-bold]="!message.isRead">
+                    <h4 class="lux-inbox-subject truncate" [class.font-semibold]="!message.isRead">
                       {{ message.subject }}
                     </h4>
                   </div>
-                  <p class="text-sm text-gray-600 truncate mb-2">{{ message.sender }}</p>
+                  <p class="lux-body-sm truncate mb-2">{{ message.sender }}</p>
                   <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-500">
-                          {{ getTimeAgo(message.timestamp) }}
+                    <span class="lux-body-sm" style="font-size: 0.75rem;">
+                      {{ getTimeAgo(message.timestamp) }}
                     </span>
-                    <span [class]="'px-2 py-0.5 text-xs font-medium rounded-full ' + getPriorityColor(message.priority)">
+                    <span [class]="'lux-badge ' + getPriorityColor(message.priority)">
                       {{ message.priority }}
                     </span>
                   </div>
@@ -136,20 +124,24 @@
           </div>
 
           <!-- Pagination -->
-          <div *ngIf="totalPages > 1" class="p-4 border-t border-gray-200 bg-white">
+          <div *ngIf="totalPages > 1" class="p-4 lux-inbox-footer-bar">
             <div class="flex items-center justify-between">
-              <button 
-                (click)="currentPage = currentPage - 1; applyFilters()" 
+              <button
+                type="button"
+                (click)="currentPage = currentPage - 1; applyFilters()"
                 [disabled]="currentPage === 1"
-                class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                class="lux-btn lux-btn--ghost"
+                style="min-height: 2.25rem; padding: 0.4rem 0.85rem; font-size: 0.75rem;"
               >
                 Previous
               </button>
-              <span class="text-sm text-gray-600">Page {{ currentPage }} of {{ totalPages }}</span>
-              <button 
-                (click)="currentPage = currentPage + 1; applyFilters()" 
+              <span class="lux-body-sm">Page {{ currentPage }} of {{ totalPages }}</span>
+              <button
+                type="button"
+                (click)="currentPage = currentPage + 1; applyFilters()"
                 [disabled]="currentPage === totalPages"
-                class="px-3 py-1.5 text-sm border border-gray-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                class="lux-btn lux-btn--ghost"
+                style="min-height: 2.25rem; padding: 0.4rem 0.85rem; font-size: 0.75rem;"
               >
                 Next
               </button>
@@ -158,14 +150,13 @@
         </div>
 
         <!-- Right Panel - Message Details -->
-        <div class="flex-1 flex flex-col bg-white">
+        <div class="flex-1 flex flex-col lux-inbox-detail">
           <div *ngIf="selectedMessage" class="flex-1 flex flex-col">
-            <!-- Message Header -->
-            <div class="p-6 border-b border-gray-200">
+            <div class="p-6 lux-inbox-detail-header">
               <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
-                  <h2 class="text-xl font-bold text-gray-900 mb-2">{{ selectedMessage.subject }}</h2>
-                  <div class="flex items-center gap-4 text-sm text-gray-600">
+                  <h2 class="lux-h3 mb-2">{{ selectedMessage.subject }}</h2>
+                  <div class="flex flex-wrap items-center gap-4 lux-body-sm">
                     <span class="flex items-center gap-1">
                       <i data-lucide="user" class="w-4 h-4"></i>
                       {{ selectedMessage.sender }}
@@ -177,82 +168,74 @@
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span [class]="'px-3 py-1 text-sm font-medium rounded-full ' + getPriorityColor(selectedMessage.priority)">
+                  <span [class]="'lux-badge ' + getPriorityColor(selectedMessage.priority)">
                     {{ selectedMessage.priority }}
                   </span>
-                  <span class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full font-medium">
+                  <span class="lux-badge">
                     {{ selectedMessage.category }}
                   </span>
                 </div>
               </div>
-              
-              <!-- Action Buttons -->
-              <div class="flex items-center gap-2">
-                <button 
+
+              <div class="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
                   (click)="selectedMessage.isRead ? markAsUnread(selectedMessage) : markAsRead(selectedMessage)"
-                  class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  class="lux-btn lux-btn--secondary"
+                  style="min-height: 2.25rem; padding: 0.45rem 0.9rem; font-size: 0.75rem;"
                 >
                   <i data-lucide="mail" class="w-4 h-4"></i>
                   {{ selectedMessage.isRead ? 'Mark as Unread' : 'Mark as Read' }}
                 </button>
-                <button 
+                <button
+                  type="button"
                   (click)="deleteMessage(selectedMessage)"
-                  class="px-4 py-2 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2"
+                  class="lux-btn lux-btn--ghost lux-inbox-danger"
+                  style="min-height: 2.25rem; padding: 0.45rem 0.9rem; font-size: 0.75rem;"
                 >
                   <i data-lucide="trash-2" class="w-4 h-4"></i>
                   Delete
                 </button>
-                <button class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2">
+                <button
+                  type="button"
+                  class="lux-btn lux-btn--ghost"
+                  style="min-height: 2.25rem; padding: 0.45rem 0.9rem; font-size: 0.75rem;"
+                >
                   <i data-lucide="reply" class="w-4 h-4"></i>
                   Reply
                 </button>
               </div>
-              </div>
+            </div>
 
-            <!-- Message Content -->
             <div class="flex-1 p-6 overflow-y-auto">
-              <div class="prose max-w-none">
-                  <p class="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm">{{ selectedMessage.content }}</p>
-              </div>
+              <p class="lux-body whitespace-pre-wrap">{{ selectedMessage.content }}</p>
             </div>
           </div>
 
-          <!-- No Message Selected -->
           <div *ngIf="!selectedMessage" class="flex-1 flex items-center justify-center">
-            <div class="text-center text-gray-500">
-              <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="mail" class="w-10 h-10 text-gray-400"></i>
-              </div>
-              <p class="text-lg font-semibold text-gray-900 mb-2">Select a message to view</p>
-              <p class="text-sm">Choose a message from the list to read its content</p>
+            <div class="text-center px-6">
+              <p class="lux-overline mb-3">Inbox</p>
+              <p class="lux-h3 mb-2">Select a message</p>
+              <p class="lux-body-sm">Choose a message from the list to read its content</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Modal Footer -->
-      <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-        <div class="flex items-center justify-between">
-          <div class="text-sm text-gray-600">
+      <div class="lux-inbox-footer-bar px-6 py-4">
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="lux-body-sm">
             Showing {{ paginatedMessages.length }} of {{ totalMessages }} messages
           </div>
-          <div class="flex items-center gap-2">
-            <button 
-              (click)="closeModal()"
-              class="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
+          <div class="flex items-center gap-2 flex-wrap">
+            <button type="button" (click)="closeModal()" class="lux-btn lux-btn--ghost" style="min-height: 2.25rem; padding: 0.45rem 0.9rem; font-size: 0.75rem;">
               Close
             </button>
-            <button 
-              (click)="createSampleNotifications()"
-              class="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-            >
+            <button type="button" (click)="createSampleNotifications()" class="lux-btn lux-btn--secondary" style="min-height: 2.25rem; padding: 0.45rem 0.9rem; font-size: 0.75rem;">
               Create Test Notifications
             </button>
-            <button 
-              (click)="refreshNotifications()"
-              class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <button type="button" (click)="refreshNotifications()" class="lux-btn lux-btn--primary" style="min-height: 2.25rem; padding: 0.45rem 0.9rem; font-size: 0.75rem;">
               Refresh
             </button>
           </div>

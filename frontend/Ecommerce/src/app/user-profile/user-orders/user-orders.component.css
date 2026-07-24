@@ -1,44 +1,152 @@
-/* Custom styles for user orders component */
-/* All styling is now handled by Tailwind CSS classes in the template */
+:host { display: block; }
 
-/* Optional: Add any custom animations or specific styles here if needed */
-.order-item-hover {
-  transition: all 0.2s ease-in-out;
+.order-filter { min-width: 12rem; }
+
+.order-list {
+  display: grid;
+  gap: 0.85rem;
 }
 
-.order-item-hover:hover {
-  transform: translateY(-2px);
+.order-item {
+  padding: 0;
+  overflow: hidden;
 }
 
-@keyframes modernGlow {
-  0% {
-    box-shadow: 0 4px 24px 0 rgba(37, 99, 235, 0.10), 0 0 0 4px #3b82f633;
-  }
-  50% {
-    box-shadow: 0 8px 32px 0 rgba(37, 99, 235, 0.18), 0 0 0 12px #3b82f655;
-  }
-  100% {
-    box-shadow: 0 4px 24px 0 rgba(37, 99, 235, 0.10), 0 0 0 4px #3b82f633;
-  }
+.order-summary {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
 }
 
-.highlighted {
-  background: linear-gradient(90deg, #f0f6ff 0%, #e0e7ff 100%);
-  box-shadow: 0 4px 24px 0 rgba(37, 99, 235, 0.10), 0 0 0 4px #3b82f633;
-  border-radius: 1rem;
-  transition: box-shadow 0.3s, background 0.3s;
-  position: relative;
-  z-index: 1;
-  animation: modernGlow 1.5s ease-in-out infinite;
+.order-summary h3 {
+  margin: 0;
+  font-family: var(--lux-font-serif);
+  font-size: 1.2rem;
+  font-weight: 500;
 }
 
-/* Hide scrollbar for webkit browsers */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
+.order-summary p {
+  margin: 0.25rem 0 0;
+  color: var(--lux-stone);
+  font-size: 0.85rem;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.order-summary__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.order-summary__meta strong {
+  font-family: var(--lux-font-serif);
+  font-size: 1.1rem;
+}
+
+.order-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1.25rem 1rem;
+}
+
+.order-detail {
+  padding: 0 1.25rem 1.25rem;
+  border-top: var(--lux-border-hair);
+}
+
+.order-detail__grid {
+  display: grid;
+  gap: 1.25rem;
+  margin: 1rem 0;
+}
+
+@media (min-width: 700px) {
+  .order-detail__grid { grid-template-columns: 1fr 1fr; }
+}
+
+.order-detail h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+.order-detail dl {
+  margin: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.order-detail dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+  border-bottom: var(--lux-border-hair);
+  padding-bottom: 0.35rem;
+}
+
+.order-detail dt { color: var(--lux-stone); font-weight: 400; }
+.order-detail dd { margin: 0; color: var(--lux-ink); }
+.order-detail .total dd { font-family: var(--lux-font-serif); font-size: 1.05rem; }
+
+.order-products {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.order-products li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--lux-ivory);
+  border: var(--lux-border-hair);
+  font-size: 0.875rem;
+}
+
+.order-products del {
+  margin-right: 0.4rem;
+  color: var(--lux-stone);
+}
+
+.refund-note {
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border: var(--lux-border-hair);
+  background: #E4EBE0;
+  color: var(--lux-success);
+  font-size: 0.85rem;
+}
+
+.order-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 1.5rem;
+}
+
+.pager-num {
+  min-width: 2rem;
+  height: 2rem;
+  border: var(--lux-border-hair);
+  background: transparent;
+  color: var(--lux-ink);
+  font-size: 0.8rem;
+}
+
+.pager-num.is-active {
+  background: var(--lux-ink);
+  color: var(--lux-porcelain);
+  border-color: var(--lux-ink);
 }

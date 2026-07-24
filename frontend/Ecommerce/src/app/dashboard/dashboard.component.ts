@@ -587,7 +587,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       isPositive: true, // Set to true as default
       chartData: trend.map(d => ({ value: d.activeUserCount || 0 })),
       chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-      chartColor: '#8b5cf6'
+      chartColor: '#A9884A'
     };
 
     // Create initial metrics with placeholder chart data
@@ -599,7 +599,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       isPositive: true, // Set to true as default
       chartData: [],
       chartLabels: [],
-      chartColor: '#f59e0b'
+      chartColor: '#B08234'
     };
 
     const initialBounceRateMetric = {
@@ -610,7 +610,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       isPositive: true, // Set to true as default
       chartData: [],
       chartLabels: [],
-      chartColor: '#ef4444'
+      chartColor: '#9E4A43'
     };
 
     // Update userMetricsData with initial metrics
@@ -671,7 +671,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#10b981'
+        chartColor: '#5F7355'
       },
       {
         id: 'revenue',
@@ -682,7 +682,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#3b82f6'
+        chartColor: '#C6A667'
       },
       activeUsersData,
       {
@@ -693,7 +693,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: this.getRate(d.orderCount || 0, d.activeUserCount || 1) })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#ef4444'
+        chartColor: '#9E4A43'
       },
       {
         id: 'orders',
@@ -703,7 +703,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.orderCount })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#f59e0b'
+        chartColor: '#B08234'
       },
       {
         id: 'customers',
@@ -713,7 +713,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.customersCount || 0 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#06b6d4'
+        chartColor: '#4A5A66'
       }
     ];
     // Show only 4 sales metric cards: Total Sales, Revenue, Orders, Avg Order
@@ -727,7 +727,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#10b981'
+        chartColor: '#5F7355'
       },
       {
         id: 'revenue',
@@ -738,7 +738,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#3b82f6'
+        chartColor: '#C6A667'
       },
       {
         id: 'orders',
@@ -748,7 +748,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.orderCount })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#f59e0b'
+        chartColor: '#B08234'
       },
       {
         id: 'avg-order',
@@ -759,7 +759,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.orderCount > 0 ? Math.floor(d.total / d.orderCount) : 0 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#ef4444'
+        chartColor: '#9E4A43'
       }
     ];
     // Re-create charts with the new data
@@ -1599,8 +1599,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         label: 'Revenue',
         data: revenueData,
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.1)',
+        borderColor: '#C6A667',
+        backgroundColor: 'rgba(198,166,103,0.12)',
         fill: true,
         tension: 0.4,
         pointRadius: 0,
@@ -1683,14 +1683,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       const dayMap = new Map(this.salesTrendData.map(d => [d.label, d.total]));
       const filledData = allDays.map(day => ({ label: day, total: dayMap.get(day) || 0 }));
       const formattedData = filledData.map(d => ({ ...d, period: this.getFormattedLabel(d.label) }));
-      this.createEnhancedChart('salesTrendChart', formattedData, ['total'], ['#10b981'], 'area');
+      this.createEnhancedChart('salesTrendChart', formattedData, ['total'], ['#5F7355'], 'area');
     } else {
       // Use default logic for other time frames
     const dataKeys = [];
     const colors = [];
     if (this.showSales) {
         dataKeys.push('total');
-      colors.push('#10b981');
+      colors.push('#5F7355');
       }
       const formattedData = this.salesTrendData.map(d => ({ ...d, period: this.getFormattedLabel(d.label) }));
       this.createEnhancedChart('salesTrendChart', formattedData, dataKeys, colors, 'area');
@@ -1840,11 +1840,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const colors = [];
     if (this.showActiveUsers) {
       dataKeys.push('activeUsers');
-      colors.push('#3b82f6');
+      colors.push('#C6A667');
     }
     if (this.showNewUsers) {
       dataKeys.push('newUsers');
-      colors.push('#10b981');
+      colors.push('#5F7355');
     }
     
     console.log('🎨 Chart dataKeys:', dataKeys);
@@ -1870,11 +1870,11 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       const colors = [];
       if (this.showViews) {
         dataKeys.push('views');
-        colors.push('#8b5cf6');
+        colors.push('#A9884A');
       }
       if (this.showEngagement) {
         dataKeys.push('engagement');
-        colors.push('#f59e0b');
+        colors.push('#B08234');
       }
       
       console.log('📊 Engagement data for chart:', engagementData);
@@ -1886,7 +1886,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       console.log('⚠️ No engagement trends data, using fallback data');
       // Fallback to empty chart if no data
       const emptyData = [{ period: 'No Data', views: 0, engagement: 0 }];
-      this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#8b5cf6', '#f59e0b'], 'area');
+      this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#A9884A', '#B08234'], 'area');
     }
   }
 
@@ -1982,15 +1982,15 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const colors: string[] = [];
     if (this.showAcquired) {
       dataKeys.push('acquired');
-      colors.push('#10b981');
+      colors.push('#5F7355');
     }
     if (this.showChurned) {
       dataKeys.push('churned');
-      colors.push('#ef4444');
+      colors.push('#9E4A43');
     }
     if (this.showRetained) {
       dataKeys.push('retained');
-      colors.push('#3b82f6');
+      colors.push('#C6A667');
     }
     
     console.log('🎨 dataKeys:', dataKeys);
@@ -3191,7 +3191,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0, // Remove incorrect percentage calculation
         isPositive: true, // Set to true as default
         chartData: this.salesTrendData.map(d => ({ value: d.activeUserCount || 0 })),
-        chartColor: '#3b82f6'
+        chartColor: '#C6A667'
       },
       {
         id: 'new-users',
@@ -3200,7 +3200,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0, // Remove incorrect percentage calculation
         isPositive: newUserCount >= previousNewUsers,
         chartData: newUserTrend,
-        chartColor: '#10b981'
+        chartColor: '#5F7355'
       },
       {
         id: 'sessions',
@@ -3209,7 +3209,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0, // Could be improved with previous period logic
         isPositive: true,
         chartData: this.generateStaticSessionTrend(),
-        chartColor: '#f59e0b'
+        chartColor: '#B08234'
       },
       {
         id: 'bounce-rate',
@@ -3218,7 +3218,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0, // Could be improved with previous period logic
         isPositive: this.bounceRate < 50, // Lower is better
         chartData: this.generateStaticBounceRateTrend(),
-        chartColor: '#ef4444'
+        chartColor: '#9E4A43'
       }
     ];
     
@@ -3363,7 +3363,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0,
         isPositive: true,
         chartData: this.generateStaticSessionTrend(),
-        chartColor: '#f59e0b'
+        chartColor: '#B08234'
       },
       
       // Add bounce rate metric using current bounceRate
@@ -3374,7 +3374,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0,
         isPositive: this.bounceRate < 50,
         chartData: this.generateStaticBounceRateTrend(),
-        chartColor: '#ef4444'
+        chartColor: '#9E4A43'
       }
     ];
 

@@ -1,218 +1,104 @@
-<div class="p-4 bg-slate-50 min-h-screen">
-  <div class="text-center mb-8">
-    <div class="inline-flex items-center justify-center w-16 h-16 glassmorphism rounded-2xl shadow-lg mb-4">
-      <i data-lucide="package" class="w-8 h-8 text-indigo-500"></i>
-    </div>
-    <h1 class="text-4xl font-bold text-gray-900 mb-2">Return & Refund Management</h1>
-    <p class="text-gray-600 text-lg">Easily manage customer return requests, refunds, and product returns in one place.</p>
-  </div>
-  <!-- Filters Card -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-      <!-- Search and Filters -->
-      <div class="flex flex-col sm:flex-row gap-4 flex-1">
-        <div class="relative flex-1 max-w-md">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-          </div>
-          <input 
-            type="text" 
-            [(ngModel)]="searchText"
-            (input)="onSearchChange()"
-            placeholder="Search by customer, product, reason, or Order ID..."
-            class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          >
-        </div>
-        <div class="flex items-center gap-2 text-sm text-gray-600">
-          <span class="font-medium">{{ dataSource.data.length }}</span>
-          <span>Returns found</span>
-        </div>
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
-        <select class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700"
-                [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
-          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- Export Dropdowns -->
-  <div class="flex gap-2 mb-4">
-    <!-- CSV Export Dropdown -->
-    <div class="relative">
-      <button 
-        (click)="toggleExcelDropdown()"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-blue-600 bg-white border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-        </svg>
-        Export CSV
-        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': showExcelDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      <div *ngIf="showExcelDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-          (click)="exportExcel('all'); showExcelDropdown = false">
-          <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm0 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" clip-rule="evenodd"></path>
-          </svg>
-          Export All Returns
-        </button>
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="selectedRows.length === 0"
-          (click)="exportExcel('selected'); showExcelDropdown = false">
-          <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-          </svg>
-          Export Selected ({{ selectedRows.length }})
-        </button>
-      </div>
-    </div>
-    <!-- PDF Export Dropdown -->
-    <div class="relative">
-      <button 
-        (click)="togglePdfDropdown()"
-        class="inline-flex items-center gap-2 px-4 py-2.5 text-red-600 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition-colors shadow-sm">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-        </svg>
-        Export PDF
-        <svg class="w-4 h-4 transition-transform" [ngClass]="{'rotate-180': showPdfDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-        </svg>
-      </button>
-      <div *ngIf="showPdfDropdown" class="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-10 divide-y divide-gray-100">
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors"
-          (click)="exportPDF('all'); showPdfDropdown = false">
-          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z" clip-rule="evenodd"></path>
-          </svg>
-          Export All Returns
-        </button>
-        <button 
-          class="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="selectedRows.length === 0"
-          (click)="exportPDF('selected'); showPdfDropdown = false">
-          <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-          </svg>
-          Export Selected ({{ selectedRows.length }})
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Return List Table -->
-  <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-slate-200">
-    <table class="min-w-full divide-y divide-slate-200">
-      <thead class="bg-slate-50">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                   [checked]="isAllSelected()" (change)="toggleSelectAll($event)">
-          </th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-slate-200">
-        <tr *ngFor="let row of paginatedReturns" class="hover:bg-slate-50">
-          <td class="px-4 py-3 whitespace-nowrap">
-            <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" 
-                   [checked]="isSelected(row)" (change)="toggleRow(row, $event)">
-          </td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-2">
-              <span class="font-medium text-slate-800">{{ row.orderCode }}</span>
-            </div>
-          </td>
-          <td class="px-4 py-3 text-slate-700">
-            {{ row.requestedAt | date:'dd, MMM, yyyy' }}
-          </td>
-          <td class="px-4 py-3">
-            <span class="text-slate-700">{{ getProductNames(row) }}</span>
-          </td>
-          <td class="px-4 py-3">
-            <span class="text-slate-700">{{ row.userName }}</span>
-          </td>
-          <td class="px-4 py-3">
-            <span class="text-slate-700">{{ row.reasonForReturn }}</span>
-          </td>
-          <td class="px-4 py-3">
-            <span class="inline-block px-2 py-1 rounded text-xs font-semibold"
-              [ngClass]="{
-                'bg-yellow-100 text-yellow-800': (row.status ? row.status.toLowerCase() : '') === 'pending',
-                'bg-green-100 text-green-800': (row.status ? row.status.toLowerCase() : '') === 'approved',
-                'bg-red-100 text-red-800': (row.status ? row.status.toLowerCase() : '') === 'rejected',
-                'bg-slate-100 text-slate-800': ['pending','approved','rejected'].indexOf(row.status ? row.status.toLowerCase() : '') === -1
-              }">
-              {{ row.status }}
-            </span>
-          </td>
-          <td class="px-4 py-3">
-            <button class="px-3 py-1 bg-white text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 transition text-xs shadow-sm flex items-center gap-1" [routerLink]="['/return', row.id]">
-              <i data-lucide="eye" class="w-4 h-4"></i> View
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div *ngIf="paginatedReturns.length === 0 && !isLoading" class="text-center text-gray-500 py-8">No return requests found.</div>
-  </div>
-
-  <!-- Pagination Controls -->
-  <div *ngIf="showPagination" class="bg-gray-50 px-6 py-4 border-t border-gray-200">
-    <div class="flex items-center justify-between">
-      <div class="text-sm text-gray-700">
-        Showing {{ showingFrom }} to {{ showingTo }} of {{ totalItems }} results
-      </div>
-      <div class="flex items-center gap-2">
-        <button 
-          (click)="changePage(currentPage - 1)"
-          [disabled]="currentPage === 1"
-          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Previous
-        </button>
-        <div class="flex items-center gap-1">
-          <button 
-            *ngFor="let page of getPageNumbers()"
-            (click)="changePage(page)"
-            [class]="page === currentPage ? 
-              'inline-flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg' : 
-              'inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50'">
-            {{ page }}
+<lux-page-shell variant="admin" shellClass="admin-page return-admin">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Operations"
+    title="Returns & Refunds"
+    subtitle="Review return requests, approve decisions, and export reports.">
+    <div actions class="admin-export-group">
+      <div class="admin-export relative">
+        <lux-button variant="secondary" (pressed)="toggleExcelDropdown()">Export CSV</lux-button>
+        <div *ngIf="showExcelDropdown" class="admin-menu">
+          <button type="button" (click)="exportExcel('all'); showExcelDropdown = false">Export all</button>
+          <button type="button" [disabled]="selectedRows.length === 0" (click)="exportExcel('selected'); showExcelDropdown = false">
+            Export selected ({{ selectedRows.length }})
           </button>
         </div>
-        <button 
-          (click)="changePage(currentPage + 1)"
-          [disabled]="currentPage === totalPages"
-          class="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
-          Next
-          <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
+      </div>
+      <div class="admin-export relative">
+        <lux-button variant="ghost" (pressed)="togglePdfDropdown()">Export PDF</lux-button>
+        <div *ngIf="showPdfDropdown" class="admin-menu">
+          <button type="button" (click)="exportPDF('all'); showPdfDropdown = false">Export all</button>
+          <button type="button" [disabled]="selectedRows.length === 0" (click)="exportPDF('selected'); showPdfDropdown = false">
+            Export selected ({{ selectedRows.length }})
+          </button>
+        </div>
       </div>
     </div>
+  </lux-page-header>
+
+  <lux-filter-bar filters>
+    <div primary class="admin-filter-fields">
+      <lux-field label="Search">
+        <input
+          class="lux-input"
+          type="text"
+          [(ngModel)]="searchText"
+          (input)="onSearchChange()"
+          placeholder="Customer, product, reason, order…" />
+      </lux-field>
+      <lux-field label="Status">
+        <select class="lux-input" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+          <option *ngFor="let status of statusOptions" [value]="status">{{ status }}</option>
+        </select>
+      </lux-field>
+      <lux-field label="Sort">
+        <select class="lux-input" [(ngModel)]="sortBy" (change)="onSortChange()">
+          <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </lux-field>
+    </div>
+    <div secondary class="admin-filter-meta">
+      <span class="lux-data">{{ totalItems }} returns</span>
+      <lux-button variant="ghost" (pressed)="clearFilters()">Clear</lux-button>
+    </div>
+  </lux-filter-bar>
+
+  <div class="page-panel" *ngIf="!isLoading; else loadingTpl">
+    <lux-table
+      [rows]="paginatedReturns"
+      [selectable]="true"
+      [allSelected]="allPageSelected"
+      [partialSelected]="partialPageSelected"
+      [isSelected]="isRowSelected"
+      [trackBy]="trackByReturn"
+      (toggleAll)="onToggleAll($event)"
+      (toggleRow)="onToggleRow($event)">
+      <ng-template luxColumn="order" header="Order" let-row>
+        <span class="cell-strong">{{ row.orderCode }}</span>
+      </ng-template>
+      <ng-template luxColumn="date" header="Date" let-row>
+        {{ row.requestedAt | date:'dd MMM yyyy' }}
+      </ng-template>
+      <ng-template luxColumn="product" header="Product" let-row>
+        {{ getProductNames(row) }}
+      </ng-template>
+      <ng-template luxColumn="customer" header="Customer" let-row>
+        {{ row.userName }}
+      </ng-template>
+      <ng-template luxColumn="reason" header="Reason" let-row>
+        <span class="cell-muted">{{ row.reasonForReturn }}</span>
+      </ng-template>
+      <ng-template luxColumn="status" header="Status" let-row>
+        <lux-badge [tone]="statusTone(row.status)">{{ row.status }}</lux-badge>
+      </ng-template>
+      <ng-template luxColumn="actions" header="Actions" let-row>
+        <a class="lux-btn lux-btn--secondary" [routerLink]="['/return', row.id]">View</a>
+      </ng-template>
+      <lux-empty-state empty eyebrow="Returns" title="No return requests" message="No returns match your current filters.">
+        <lux-button variant="secondary" (pressed)="clearFilters()">Clear filters</lux-button>
+      </lux-empty-state>
+    </lux-table>
+
+    <lux-paginator
+      [page]="currentPage"
+      [size]="pageSize"
+      [totalElements]="totalItems"
+      [totalPages]="totalPages"
+      (pageChange)="onPageChange($event)">
+    </lux-paginator>
   </div>
+
   <ng-template #loadingTpl>
-    <div class="flex justify-center items-center py-12 text-blue-600 text-lg font-semibold">Loading...</div>
+    <div class="page-panel admin-loading">Loading return requests…</div>
   </ng-template>
-</div>
-  
+</lux-page-shell>

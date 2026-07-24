@@ -1,318 +1,103 @@
-<div class="min-h-screen bg-white p-6">
-  <div class="max-w-7xl mx-auto">
-    
-    <!-- Header Section -->
-    <div class="text-center mb-6">
-      <div class="inline-flex items-center justify-center w-10 h-10 bg-white/80 backdrop-blur-sm rounded-full shadow-lg border border-white/20 mb-3">
-        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-      </div>
-      <h1 class="text-2xl font-bold text-gray-900 mb-1">My Addresses</h1>
-      <p class="text-gray-600 text-sm">Manage your shipping and delivery locations</p>
+<div class="account-section">
+  <div class="account-section-head">
+    <div>
+      <p class="lux-overline">Delivery</p>
+      <h2>Addresses</h2>
+      <p>Manage shipping and delivery locations.</p>
     </div>
-
-    <!-- Header with Add Button -->
-    <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
-      <div class="flex items-center space-x-3">
-        <div class="w-2 h-8 bg-blue-500 rounded-full"></div>
-        <h2 class="text-2xl font-bold text-gray-900">Address Book</h2>
-      </div>
-      <div class="flex items-center space-x-4 w-full md:w-auto">
-        <div class="flex items-center space-x-2 bg-white bg-opacity-80 backdrop-blur-lg px-4 py-2 rounded-xl border border-white border-opacity-30 shadow-sm">
-          <label class="text-sm font-medium text-gray-700">Map View:</label>
-          <select 
-            class="bg-transparent text-sm border-none focus:ring-0 focus:outline-none"
-            [(ngModel)]="globalMapType"
-            (change)="setGlobalMapType(globalMapType)">
-            <option value="default">Default</option>
-            <option value="satellite">Satellite</option>
-            <option value="terrain">Terrain</option>
-          </select>
-        </div>
-        <button 
-          class="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-blue-400"
-          (click)="openAddModal()">
-          <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-          <span>Add New Address</span>
-        </button>
-      </div>
+    <div class="address-toolbar">
+      <lux-field label="Map view" inputId="map-type">
+        <select id="map-type" class="lux-select" [(ngModel)]="globalMapType" (change)="setGlobalMapType(globalMapType)">
+          <option value="default">Default</option>
+          <option value="satellite">Satellite</option>
+          <option value="terrain">Terrain</option>
+        </select>
+      </lux-field>
+      <lux-button variant="primary" type="button" (pressed)="openAddModal()">Add address</lux-button>
     </div>
+  </div>
 
-    <!-- Address List -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let address of addresses" class="bg-white bg-opacity-80 backdrop-blur-lg rounded-2xl shadow-md border border-white border-opacity-30 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-        
-        <!-- Map Section -->
-        <div *ngIf="address.id != null" class="relative">
-          <div [id]="'map-' + address.id" class="w-full h-48"></div>
-          <div class="absolute top-3 right-3">
-            <span class="px-3 py-1 bg-white bg-opacity-90 backdrop-blur-md text-blue-500 text-xs font-medium rounded-full border border-white border-opacity-30">
-              {{ address.type }}
-            </span>
-          </div>
-        </div>
+  <lux-empty-state
+    *ngIf="!addresses.length"
+    eyebrow="Address book"
+    title="No addresses yet"
+    message="Add your first address for deliveries."
+  >
+    <lux-button variant="primary" type="button" (pressed)="openAddModal()">Add first address</lux-button>
+  </lux-empty-state>
 
-        <!-- Address Details -->
-        <div class="p-6">
-          <div class="space-y-3">
-            <div class="flex items-start space-x-3">
-              <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-              <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ address.address }}</h3>
-                <div class="space-y-1 text-sm text-gray-600">
-                  <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                    <span>{{ address.city }}, {{ address.state }}</span>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                    <span>{{ address.postalCode }}</span>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span>{{ address.country }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Coordinates (if available) -->
-            <div *ngIf="address.latitude && address.longitude" class="pt-3 border-t border-gray-100 border-opacity-30">
-              <div class="flex items-center space-x-4 text-xs text-gray-500">
-                <span>Lat: {{ address.latitude | number:'1.4-4' }}</span>
-                <span>Lng: {{ address.longitude | number:'1.4-4' }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="flex items-center justify-end space-x-3 mt-6 pt-4 border-t border-gray-100 border-opacity-30">
-            <button 
-              class="group flex items-center space-x-2 px-4 py-2.5 text-blue-600 hover:text-white hover:bg-blue-500 transition-all duration-300 bg-blue-50 hover:bg-blue-500 rounded-xl border border-blue-200 hover:border-blue-500 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-              (click)="editAddress(address)">
-              <svg class="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-              </svg>
-              <span class="text-sm font-semibold">Edit</span>
-            </button>
-            <button 
-              *ngIf="address.id != null"
-              class="group flex items-center space-x-2 px-4 py-2.5 text-red-600 hover:text-white hover:bg-red-500 transition-all duration-300 bg-red-50 hover:bg-red-500 rounded-xl border border-red-200 hover:border-red-500 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-              (click)="deleteAddress(address.id!)">
-              <svg class="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-              </svg>
-              <span class="text-sm font-semibold">Delete</span>
-            </button>
-          </div>
+  <div *ngIf="addresses.length" class="address-grid">
+    <article *ngFor="let address of addresses" class="account-card address-card">
+      <div *ngIf="address.id != null" class="address-map">
+        <div [id]="'map-' + address.id" class="map-el"></div>
+        <span class="status-pill">{{ address.type }}</span>
+      </div>
+      <div class="address-body">
+        <h3>{{ address.address }}</h3>
+        <p>{{ address.city }}, {{ address.state }}</p>
+        <p>{{ address.postalCode }} · {{ address.country }}</p>
+        <p *ngIf="address.latitude && address.longitude" class="coords">
+          Lat {{ address.latitude | number:'1.4-4' }} · Lng {{ address.longitude | number:'1.4-4' }}
+        </p>
+        <div class="address-actions">
+          <lux-button variant="secondary" type="button" (pressed)="editAddress(address)">Edit</lux-button>
+          <lux-button *ngIf="address.id != null" variant="ghost" type="button" (pressed)="deleteAddress(address.id!)">Delete</lux-button>
         </div>
       </div>
-    </div>
-
-    <!-- Empty State -->
-    <div *ngIf="!addresses.length" class="text-center py-20">
-      <div class="bg-white bg-opacity-80 backdrop-blur-lg rounded-2xl p-12 shadow-lg border border-white border-opacity-30 max-w-md mx-auto">
-        <div class="w-16 h-16 bg-gray-100 bg-opacity-50 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-        </div>
-        <h3 class="text-2xl font-semibold text-gray-900 mb-3">No addresses yet</h3>
-        <p class="text-gray-600 mb-6">Add your first address to get started with deliveries</p>
-        <button 
-          class="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-blue-400 mx-auto"
-          (click)="openAddModal()">
-          <svg class="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-          </svg>
-          <span>Add First Address</span>
-        </button>
-      </div>
-    </div>
+    </article>
   </div>
 </div>
 
 <!-- Add/Edit Address Modal -->
-<div *ngIf="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4" (click)="onModalBackdropClick($event)">
-  <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-  <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-auto border border-slate-200 z-50 overflow-y-auto scrollbar-hide" style="max-height:90vh;">
-    <!-- Close button -->
-    <button (click)="closeAddModal()" class="absolute top-4 right-4 z-10 text-gray-400 hover:text-red-500 text-2xl bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-md">&times;</button>
-    <!-- Modal Header -->
-    <div class="flex items-center justify-between p-6 border-b border-gray-100 border-opacity-30 flex-shrink-0">
-      <div>
-        <h3 class="text-xl font-bold text-gray-900">{{ isEditMode ? 'Edit Address' : 'Add New Address' }}</h3>
-        <p class="text-sm text-gray-600 mt-1">Enter your address details below</p>
-      </div>
-    </div>
-
-    <!-- Modal Body -->
-    <div class="p-6 overflow-y-auto flex-1 modal-scroll">
-      <form [formGroup]="addressForm" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Address -->
-          <div class="md:col-span-2 space-y-2">
-            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg>
-              <span>Address <span class="text-red-500">*</span></span>
-            </label>
-            <input 
-              type="text" 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-              placeholder="Enter your full address"
-              formControlName="address"
-              (keydown.enter)="onAddressEnter()">
-          </div>
-
-          <!-- City -->
-          <div class="space-y-2">
-            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-              </svg>
-              <span>City <span class="text-red-500">*</span></span>
-            </label>
-            <input 
-              type="text" 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300"
-              placeholder="Enter city"
-              formControlName="city">
-          </div>
-
-          <!-- State -->
-          <div class="space-y-2">
-            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-              </svg>
-              <span>State <span class="text-red-500">*</span></span>
-            </label>
-            <input 
-              type="text" 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
-              placeholder="Enter state"
-              formControlName="state">
-          </div>
-
-          <!-- Postal Code -->
-          <div class="space-y-2">
-            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-              </svg>
-              <span>Postal Code <span class="text-red-500">*</span></span>
-            </label>
-            <input 
-              type="text" 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-300"
-              placeholder="Enter postal code"
-              formControlName="postalCode">
-          </div>
-
-          <!-- Country -->
-          <div class="space-y-2">
-            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span>Country <span class="text-red-500">*</span></span>
-            </label>
-            <input 
-              type="text" 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all duration-300"
-              placeholder="Enter country"
-              formControlName="country">
-          </div>
-
-          <!-- Latitude -->
-          <div class="space-y-2">
-            <label class="text-sm font-semibold text-gray-700">Latitude</label>
-            <input 
-              type="number" 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-              placeholder="Latitude"
-              formControlName="latitude">
-          </div>
-
-          <!-- Longitude -->
-          <div class="space-y-2">
-            <label class="text-sm font-semibold text-gray-700">Longitude</label>
-            <input 
-              type="number" 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-              placeholder="Longitude"
-              formControlName="longitude">
-          </div>
-
-          <!-- Address Type -->
-          <div class="md:col-span-2 space-y-2">
-            <label class="text-sm font-semibold text-gray-700 flex items-center space-x-2">
-              <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
-              </svg>
-              <span>Address Type <span class="text-red-500">*</span></span>
-            </label>
-            <select 
-              class="w-full px-4 py-3 text-sm bg-white bg-opacity-80 backdrop-blur-sm border border-gray-200 border-opacity-30 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
-              formControlName="addressType">
-              <option value="">Select type</option>
-              <option value="SHIPPING">Shipping</option>
-              <option value="WORK">Work</option>
-              <option value="OTHER">Other</option>
-            </select>
-          </div>
+<div *ngIf="showAddModal" class="lux-overlay" (click)="onModalBackdropClick($event)">
+  <div class="lux-dialog" role="dialog" aria-modal="true">
+    <button type="button" class="lux-dialog__close" (click)="closeAddModal()" aria-label="Close">&times;</button>
+    <header class="lux-dialog__head">
+      <h3>{{ isEditMode ? 'Edit address' : 'Add new address' }}</h3>
+      <p>Enter your address details below.</p>
+    </header>
+    <div class="lux-dialog__body">
+      <form [formGroup]="addressForm" class="form-grid">
+        <lux-field class="span-2" label="Address *" inputId="addr-line">
+          <input id="addr-line" type="text" class="lux-input" placeholder="Enter your full address" formControlName="address" (keydown.enter)="onAddressEnter()">
+        </lux-field>
+        <lux-field label="City *" inputId="addr-city">
+          <input id="addr-city" type="text" class="lux-input" placeholder="Enter city" formControlName="city">
+        </lux-field>
+        <lux-field label="State *" inputId="addr-state">
+          <input id="addr-state" type="text" class="lux-input" placeholder="Enter state" formControlName="state">
+        </lux-field>
+        <lux-field label="Postal code *" inputId="addr-postal">
+          <input id="addr-postal" type="text" class="lux-input" placeholder="Enter postal code" formControlName="postalCode">
+        </lux-field>
+        <lux-field label="Country *" inputId="addr-country">
+          <input id="addr-country" type="text" class="lux-input" placeholder="Enter country" formControlName="country">
+        </lux-field>
+        <lux-field label="Latitude" inputId="addr-lat">
+          <input id="addr-lat" type="number" class="lux-input" placeholder="Latitude" formControlName="latitude">
+        </lux-field>
+        <lux-field label="Longitude" inputId="addr-lng">
+          <input id="addr-lng" type="number" class="lux-input" placeholder="Longitude" formControlName="longitude">
+        </lux-field>
+        <lux-field class="span-2" label="Address type *" inputId="addr-type">
+          <select id="addr-type" class="lux-select" formControlName="addressType">
+            <option value="">Select type</option>
+            <option value="SHIPPING">Shipping</option>
+            <option value="WORK">Work</option>
+            <option value="OTHER">Other</option>
+          </select>
+        </lux-field>
+        <div class="span-2">
+          <lux-button variant="secondary" type="button" (pressed)="getCurrentLocation()">Use my location</lux-button>
         </div>
-
-        <!-- Location Button -->
-        <div class="flex items-center space-x-3">
-          <button 
-            type="button" 
-            class="group flex items-center space-x-2 px-4 py-2.5 text-sm bg-green-50 hover:bg-green-500 text-green-600 hover:text-white rounded-xl transition-all duration-300 border border-green-200 hover:border-green-500 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-            (click)="getCurrentLocation()">
-            <svg class="w-4 h-4 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            <span class="font-medium">Use My Location</span>
-          </button>
-        </div>
-
-        <!-- Map Preview -->
-        <div class="space-y-3">
-          <label class="text-sm font-semibold text-gray-700">Map Preview</label>
-          <div id="map" class="w-full h-48 rounded-xl border border-gray-200 border-opacity-30"></div>
-        </div>
+        <lux-field class="span-2" label="Map preview">
+          <div id="map" class="map-preview"></div>
+        </lux-field>
       </form>
     </div>
-
-    <!-- Modal Footer -->
-    <div class="flex items-center justify-end space-x-3 p-6 border-t border-gray-100 border-opacity-30 flex-shrink-0 bg-white">
-      <button 
-        type="button" 
-        class="group px-6 py-3 text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 font-semibold rounded-xl transition-all duration-300 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
-        (click)="closeAddModal()">
-        Cancel
-      </button>
-      <button 
-        type="button" 
-        class="group px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 border border-blue-400"
-        (click)="submitAddress()">
-        {{ isEditMode ? 'Save Changes' : 'Save Address' }}
-      </button>
-    </div>
+    <footer class="lux-dialog__foot">
+      <lux-button variant="ghost" type="button" (pressed)="closeAddModal()">Cancel</lux-button>
+      <lux-button variant="primary" type="button" (pressed)="submitAddress()">{{ isEditMode ? 'Save changes' : 'Save address' }}</lux-button>
+    </footer>
   </div>
 </div>

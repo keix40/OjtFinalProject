@@ -10,7 +10,7 @@ import { PermissionService } from '../../services/permission.service';
 import { PermissionConstants } from '../../constants/permission.constants';
 import { ColorUtilityService } from '../../services/color-utility.service';
 import { PriceFormatService } from '../../services/price-format.service';
-import { animate, style, transition, trigger } from '@angular/animations';
+import { LuxUiModule } from '../../shared/ui/lux-ui.module';
 
 interface ProductImage {
   id: number;
@@ -52,7 +52,7 @@ interface Product {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, NgbCarouselModule],
+  imports: [CommonModule, NgbCarouselModule, LuxUiModule],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.css']
 })

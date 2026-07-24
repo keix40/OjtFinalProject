@@ -1,23 +1,10 @@
-<div class="fixed inset-0 z-40 flex items-center justify-center">
-
-<div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-  
-<form #createBrandForm="ngForm" (ngSubmit)="createBrand(createBrandForm)" class="w-full max-w-xl mx-auto bg-white rounded-xl shadow-2xl p-6 md:p-8 relative overflow-y-auto scrollbar-hide" style="max-height:90vh;">
-  <!-- Close Button -->
-  <button 
-    type="button" 
-    class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold focus:outline-none"
-    (click)="activeModal.dismiss()"
-    aria-label="Close"
-  >
-    &times;
-  </button>
-  <!-- Modal Title -->
-  <div class="mb-6 text-center">
-    <h5 class="text-2xl font-bold text-gray-900">Create New Brand</h5>
+<div class="admin-modal-backdrop static-modal-shell">
+<form #createBrandForm="ngForm" (ngSubmit)="createBrand(createBrandForm)" class="admin-modal admin-modal--lg relative overflow-y-auto" style="max-height:90vh;">
+  <button type="button" class="admin-modal-close" (click)="activeModal.dismiss()" aria-label="Close">&times;</button>
+  <div class="admin-modal__header">
+    <h5 class="admin-modal__title">Create New Brand</h5>
   </div>
-  <!-- Modal Body -->
-  <div class="space-y-6">
+  <div class="admin-modal__body space-y-6">
     <!-- Brand Name -->
     <div class="space-y-2">
       <label class="block text-sm font-semibold text-gray-700 mb-2">
@@ -147,25 +134,9 @@
       </div>
     </div>
   </div>
-  <!-- Modal Footer -->
-  <div class="flex justify-end gap-2 mt-8">
-    <button 
-      type="button"
-      class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition text-sm"
-      (click)="activeModal.dismiss()"
-    >
-      Cancel
-    </button>
-    <button 
-      type="submit" 
-      class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold flex items-center gap-2"
-      [disabled]="!createBrandForm.valid"
-    >
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-      </svg>
-      Create Brand
-    </button>
+  <div class="admin-modal__footer">
+    <button type="button" class="lux-btn lux-btn--ghost" (click)="activeModal.dismiss()">Cancel</button>
+    <button type="submit" class="lux-btn lux-btn--primary" [disabled]="!createBrandForm.valid">Create Brand</button>
   </div>
 </form>
 </div>

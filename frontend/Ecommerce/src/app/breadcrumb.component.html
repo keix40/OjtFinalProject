@@ -1,10 +1,10 @@
-<nav class="w-full overflow-x-auto whitespace-nowrap flex items-center text-sm sm:text-base text-neutral-500 py-2 sm:py-4 px-2 sm:px-0" aria-label="Breadcrumb">
+<nav class="customer-breadcrumb w-full overflow-x-auto whitespace-nowrap flex items-center text-sm py-3 px-2 sm:px-0" aria-label="Breadcrumb">
   <ng-container *ngFor="let item of items; let last = last">
     <ng-container *ngIf="!last">
-      <a *ngIf="item.link; else plain" [routerLink]="item.link" class="hover:underline font-medium transition-colors duration-200 text-blue-600 hover:text-blue-800 px-1">{{ item.label }}</a>
-      <ng-template #plain>{{ item.label }}</ng-template>
-      <span class="mx-1 sm:mx-2 text-neutral-300">&gt;</span>
+      <a *ngIf="item.link; else plain" [routerLink]="item.link" class="lux-link px-1">{{ item.label }}</a>
+      <ng-template #plain><span class="text-stone px-1">{{ item.label }}</span></ng-template>
+      <span class="mx-2 text-fog" aria-hidden="true">/</span>
     </ng-container>
-    <span *ngIf="last" class="text-neutral-900 font-semibold px-1">{{ item.label }}</span>
+    <span *ngIf="last" class="text-ink font-medium px-1">{{ item.label }}</span>
   </ng-container>
-</nav> 
+</nav>

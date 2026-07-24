@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserService } from '../services/user.service';
+import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 
 declare var lucide: any;
 
@@ -51,7 +52,8 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
   constructor(
     private formBuilder: FormBuilder,
     private router: Router,
-    private userService: UserService
+    private userService: UserService,
+    private luxDialog: LuxDialogService
   ) {
     this.userForm = this.createForm();
   }
@@ -418,13 +420,13 @@ export class CreateUserComponent implements OnInit, AfterViewInit {
 
     if (validUsers.length === 0) {
       this.isImporting = false;
-      alert('No valid emails found. Please check your CSV data.');
+      this.luxDialog.error('Import blocked', 'No valid emails found. Please check your CSV data.');
       return;
     }
 
     if (validUsers.length < this.csvData.length) {
       const invalidCount = this.csvData.length - validUsers.length;
-      const proceed = confirm(`${invalidCount} users have invalid emails and will be skipped. Continue with ${validUsers.length} valid users?`);
+      const proceed = await this.luxDialog.confirm({ title: 'Skip invalid emails?', text: `${invalidCount} users have invalid emails and will be skipped. Continue with ${validUsers.length} valid users?`, confirmText: 'Continue' });
       if (!proceed) {
         this.isImporting = false;
         return;

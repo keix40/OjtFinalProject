@@ -1,593 +1,471 @@
-
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
-    <!-- Header -->
-    <div class="border-b border-slate-200/60 bg-white/80 backdrop-blur-sm ">
-      <div class="container mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
-          <div class="animate-slide-in">
-            <h1 class="text-3xl font-bold gradient-text">Analytics Dashboard</h1>
-            <p class="text-sm text-slate-500 mt-1">Universal Data Visualization • Real-time Updates</p>
-          </div>
-          <div class="flex items-center space-x-3 animate-slide-in animate-delay-200">
-            <div class="flex items-center space-x-2">
-              <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse-slow"></div>
-              <span class="text-xs text-slate-500">Live</span>
-            </div>
-            <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-white/60 backdrop-blur-sm border border-slate-200 glow-effect">
-            <i lucide="bar-chart-3" class="w-3 h-3 mr-1"></i>
-            <span>{{ timeFrameLabels[currentTimeFrame] }} View</span>
-            </span>
-          </div>
-        </div>
-      </div>
+<div class="admin-dash">
+  <!-- Command bar -->
+  <header class="admin-dash__command">
+    <div>
+      <p class="lux-overline">Operations</p>
+      <h1>Analytics Dashboard</h1>
+      <p>Universal data visualization with live updates</p>
     </div>
-  
-    <div class="container mx-auto p-6 space-y-8">
-      <!-- Top Metrics Row -->
-      <div class="grid gap-4 grid-cols-2 md:grid-cols-6 animate-fade-in">
-      @for (metric of topMetricsData; track metric.id) {
-        <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50">
-          <div class="p-5">
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <h3 class="font-semibold text-slate-700 text-sm">{{ metric.title }}</h3>
-                <div class="mini-chart-top">
-                  <canvas [id]="'chart-' + metric.id" width="64" height="32"></canvas>
-                </div>
-              </div>
-              <div class="space-y-2">
-                <div class="font-bold text-slate-900 text-2xl">
-                  {{ metric.value }}<span *ngIf="metric.currency" class="text-sm font-normal text-slate-600 ml-1">{{ metric.currency }}</span>
-                </div>
-                <div class="flex items-center space-x-2">
-                                      <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
-                      @if (metric.change > 0) {
-                        <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
-                      } @else if (metric.change < 0) {
-                        <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
-                      } @else {
-                        <i lucide="minus" class="h-3 w-3 text-slate-500"></i>
-                      }
-                      <!-- <span class="text-xs font-semibold" [ngClass]="metric.change > 0 ? 'text-emerald-600' : metric.change < 0 ? 'text-red-600' : 'text-slate-500'">
-                        {{ metric.change > 0 ? '+' : '' }}{{ metric.change > 0 ? metric.change.toFixed(1) + '%' : 'N/A' }}
-                      </span> -->
-                    </div>
-                  <!-- <span class="text-xs text-slate-500">vs last period</span> -->
-                </div>
+    <div class="admin-dash__command-meta">
+      <span class="admin-dash__live"><i aria-hidden="true"></i> Live</span>
+      <span class="admin-dash__period">{{ timeFrameLabels[currentTimeFrame] }} view</span>
+    </div>
+  </header>
+
+  <div class="admin-dash__body">
+    <!-- Primary KPIs -->
+    <section class="admin-dash__section" aria-label="Primary metrics">
+      <div class="admin-dash__kpi-grid">
+        @for (metric of topMetricsData; track metric.id) {
+          <article class="admin-dash__kpi">
+            <div class="admin-dash__kpi-head">
+              <h3>{{ metric.title }}</h3>
+              <div class="mini-chart-top">
+                <canvas [id]="'chart-' + metric.id" width="64" height="32"></canvas>
               </div>
             </div>
-          </div>
-        </div>
-      }
+            <div class="admin-dash__kpi-value">
+              {{ metric.value }}<span *ngIf="metric.currency">{{ metric.currency }}</span>
+            </div>
+            <div class="admin-dash__kpi-trend">
+              @if (metric.change > 0) {
+                <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
+              } @else if (metric.change < 0) {
+                <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
+              } @else {
+                <i lucide="minus" class="h-3 w-3 text-slate-500"></i>
+              }
+            </div>
+          </article>
+        }
       </div>
-  
-      <!-- Time Frame Selection -->
-      <div class="metric-card shadow-lg rounded-xl animate-fade-in animate-delay-100">
-        <div class="p-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-              <div class="p-2 bg-blue-100 rounded-lg">
-              <i lucide="calendar-days" class="h-5 w-5 text-blue-600"></i>
-              </div>
-              <div>
-                <span class="text-lg font-semibold text-slate-800">Time Period</span>
-                <p class="text-sm text-slate-500">Select data range for analysis</p>
-              </div>
-            </div>
-            <div class="flex space-x-2">
-            @for (frame of timeFrames; track frame) {
-              <button (click)="changeTimeFrame(frame)"
-                      class="time-frame-btn px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200"
-                      [ngClass]="{
-                        'bg-blue-600 text-white shadow-lg glow-effect': currentTimeFrame === frame,
-                        'bg-blue-100 text-blue-800': currentTimeFrame === frame,
-                        'text-slate-600 hover:bg-slate-100 hover:text-slate-800': currentTimeFrame !== frame
-                      }">
-                {{ frame.charAt(0).toUpperCase() + frame.slice(1) }}
-              </button>
-            }
-            </div>
-          </div>
+    </section>
+
+    <!-- Timeframe control -->
+    <section class="admin-dash__panel admin-dash__timeframe" aria-label="Time period">
+      <div class="admin-dash__timeframe-copy">
+        <div class="admin-dash__icon-chip">
+          <i lucide="calendar-days" class="h-5 w-5"></i>
+        </div>
+        <div>
+          <h2>Time Period</h2>
+          <p>Select data range for analysis</p>
         </div>
       </div>
-  
-      <!-- Sales Performance Section -->
-      <div class="space-y-6 animate-fade-in animate-delay-200">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold text-slate-800">Sales Performance</h2>
-            <p class="text-slate-500 mt-1">Track revenue trends and growth metrics</p>
-          </div>
-        <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{{ timeFrameLabels[currentTimeFrame] }} view</div>
+      <div class="admin-dash__segments" role="tablist" aria-label="Time frames">
+        @for (frame of timeFrames; track frame) {
+          <button
+            type="button"
+            class="time-frame-btn"
+            [class.is-active]="currentTimeFrame === frame"
+            (click)="changeTimeFrame(frame)"
+          >
+            {{ frame.charAt(0).toUpperCase() + frame.slice(1) }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <!-- Sales Performance -->
+    <section class="admin-dash__section">
+      <header class="admin-dash__section-head">
+        <div>
+          <h2>Sales Performance</h2>
+          <p>Track revenue trends and growth metrics</p>
         </div>
-  
-        <!-- Sales Metric Cards -->
-        <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+        <span class="admin-dash__period">{{ timeFrameLabels[currentTimeFrame] }} view</span>
+      </header>
+
+      <div class="admin-dash__metric-grid">
         @for (metric of salesMetricsData; track metric.id) {
-          <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50">
-            <div class="p-4">
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-semibold text-slate-700 text-xs">{{ metric.title }}</h3>
-                  <div class="mini-chart-top">
-                    <canvas [id]="'chart-sm-' + metric.id" width="64" height="32"></canvas>
-                  </div>
-                </div>
-                <div class="space-y-2">
-                  <div class="font-bold text-slate-900 text-lg">
-                    {{ metric.value }}<span *ngIf="metric.currency" class="text-sm font-normal text-slate-600 ml-1">{{ metric.currency }}</span>
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
-                      @if (metric.change > 0) {
-                        <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
-                      } @else if (metric.change < 0) {
-                        <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
-                      } @else {
-                        <i lucide="minus" class="h-3 w-3 text-slate-500"></i>
-                      }
-                      <!-- <span class="text-xs font-semibold" [ngClass]="metric.change > 0 ? 'text-emerald-600' : metric.change < 0 ? 'text-red-600' : 'text-slate-500'">
-                        {{ metric.change > 0 ? '+' : '' }}{{ metric.change > 0 ? metric.change.toFixed(1) + '%' : 'N/A' }}
-                      </span> -->
-                    </div>
-                  </div>
-                </div>
-                <div class="mini-chart-bottom">
-                  <canvas [id]="'chart-sm-line-' + metric.id" width="100" height="32"></canvas>
-                </div>
+          <article class="admin-dash__metric">
+            <div class="admin-dash__kpi-head">
+              <h3>{{ metric.title }}</h3>
+              <div class="mini-chart-top">
+                <canvas [id]="'chart-sm-' + metric.id" width="64" height="32"></canvas>
               </div>
             </div>
-          </div>
+            <div class="admin-dash__kpi-value is-compact">
+              {{ metric.value }}<span *ngIf="metric.currency">{{ metric.currency }}</span>
+            </div>
+            <div class="admin-dash__kpi-trend">
+              @if (metric.change > 0) {
+                <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
+              } @else if (metric.change < 0) {
+                <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
+              } @else {
+                <i lucide="minus" class="h-3 w-3 text-slate-500"></i>
+              }
+            </div>
+            <div class="mini-chart-bottom">
+              <canvas [id]="'chart-sm-line-' + metric.id" width="100" height="32"></canvas>
+            </div>
+          </article>
         }
-        </div>
-  
-        <!-- Sales Charts -->
-        <div class="grid gap-6 md:grid-cols-2">
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="p-5 pb-3">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Sales Trend Analysis</h3>
-                <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <i lucide="more-horizontal" class="h-4 w-4 text-slate-400"></i>
-                </button>
-              </div>
-              <div class="relative">
-                <div style="height: 280px">
-                  <canvas id="salesTrendChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
+      </div>
 
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="p-5 pb-3">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Revenue vs Target</h3>
-                <div class="relative">
-                  <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                          (click)="showRevenueDropdown = !showRevenueDropdown">
-                    <span class="text-2xl text-slate-700">&#8942;</span>
-                  </button>
-                  <div *ngIf="showRevenueDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
-                    <label class="flex items-center text-sm mb-2">
-                      <input type="checkbox" [(ngModel)]="showRevenue" (change)="updateRevenueTargetChart()" class="mr-1" />
-                      Revenue
-                    </label>
-                    <label class="flex items-center text-sm">
-                      <input type="checkbox" [(ngModel)]="showTarget" (change)="updateRevenueTargetChart()" class="mr-1" />
-                      Target
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="relative">
-                <div style="height: 280px">
-                  <canvas id="revenueTargetChart"></canvas>
-                </div>
+      <div class="admin-dash__chart-grid">
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Sales Trend Analysis</h3>
+            <button type="button" class="admin-dash__ghost-btn" aria-label="More options">
+              <i lucide="more-horizontal" class="h-4 w-4"></i>
+            </button>
+          </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="salesTrendChart"></canvas>
+          </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Revenue vs Target</h3>
+            <div class="admin-dash__menu">
+              <button
+                type="button"
+                class="admin-dash__ghost-btn"
+                (click)="showRevenueDropdown = !showRevenueDropdown"
+                aria-label="Toggle series"
+              >
+                <span aria-hidden="true">&#8942;</span>
+              </button>
+              <div *ngIf="showRevenueDropdown" class="admin-dash__menu-panel">
+                <label>
+                  <input type="checkbox" [(ngModel)]="showRevenue" (change)="updateRevenueTargetChart()" />
+                  Revenue
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="showTarget" (change)="updateRevenueTargetChart()" />
+                  Target
+                </label>
               </div>
             </div>
           </div>
-        </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="revenueTargetChart"></canvas>
+          </div>
+        </article>
       </div>
-  
-      <!-- Sales Analytics Pie Charts Section -->
-      <div class="space-y-6 animate-fade-in animate-delay-250">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold text-slate-800">Sales Analytics</h2>
-            <p class="text-slate-500 mt-1">Distribution analysis across brands, categories, products & delivery services</p>
-          </div>
-          <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">{{ timeFrameLabels[currentTimeFrame] }} view</div>
+    </section>
+
+    <!-- Sales Analytics -->
+    <section class="admin-dash__section">
+      <header class="admin-dash__section-head">
+        <div>
+          <h2>Sales Analytics</h2>
+          <p>Distribution across brands, categories, products &amp; delivery</p>
         </div>
-  
-        <!-- Four Pie Charts Row -->
-        <div class="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          <!-- Brand Sales Pie Chart -->
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="flex items-center justify-between p-5 pb-3">
-              <h3 class="text-lg font-bold text-slate-800">Brand Sales</h3>
-              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                <i lucide="tag" class="h-4 w-4 text-blue-600"></i>
-              </div>
-            </div>
-            <div class="px-5 pb-5 relative flex flex-col items-center justify-center" style="height: 280px;">
-              <div style="height: 200px" class="relative mb-4">
-                <canvas id="brandSalesChart"></canvas>
-              </div>
-              <button 
-                (click)="openChartModal('brand')" 
-                class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl w-full max-w-[120px]">
-                <i lucide="bar-chart-3" class="h-4 w-4"></i>
-                <span>View</span>
-              </button>
-            </div>
+        <span class="admin-dash__period">{{ timeFrameLabels[currentTimeFrame] }} view</span>
+      </header>
+
+      <div class="admin-dash__pie-grid">
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Brand Sales</h3>
+            <div class="admin-dash__icon-chip is-info"><i lucide="tag" class="h-4 w-4"></i></div>
           </div>
-  
-          <!-- Category Sales Pie Chart -->
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="flex items-center justify-between p-5 pb-3">
-              <h3 class="text-lg font-bold text-slate-800">Category Sales</h3>
-              <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <i lucide="folder" class="h-4 w-4 text-emerald-600"></i>
-              </div>
+          <div class="admin-dash__pie-body">
+            <div class="admin-dash__canvas-wrap is-pie" style="height: 200px">
+              <canvas id="brandSalesChart"></canvas>
             </div>
-            <div class="px-5 pb-5 relative flex flex-col items-center justify-center" style="height: 280px;">
-              <div style="height: 200px" class="relative mb-4">
-                <canvas id="categorySalesChart"></canvas>
-              </div>
-              <button 
-                (click)="openChartModal('category')" 
-                class="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl w-full max-w-[120px]">
-                <i lucide="bar-chart-3" class="h-4 w-4"></i>
-                <span>View</span>
-              </button>
-            </div>
+            <button type="button" class="admin-dash__view-btn" (click)="openChartModal('brand')">
+              <i lucide="bar-chart-3" class="h-4 w-4"></i>
+              <span>View</span>
+            </button>
           </div>
-  
-          <!-- Product Sales Pie Chart -->
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="flex items-center justify-between p-5 pb-3">
-              <h3 class="text-lg font-bold text-slate-800">Product Sales</h3>
-              <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                <i lucide="package" class="h-4 w-4 text-purple-600"></i>
-              </div>
-            </div>
-            <div class="px-5 pb-5 relative flex flex-col items-center justify-center" style="height: 280px;">
-              <div style="height: 200px" class="relative mb-4">
-                <canvas id="productSalesChart"></canvas>
-              </div>
-              <button 
-                (click)="openChartModal('product')" 
-                class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl w-full max-w-[120px]">
-                <i lucide="bar-chart-3" class="h-4 w-4"></i>
-                <span>View</span>
-              </button>
-            </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Category Sales</h3>
+            <div class="admin-dash__icon-chip is-success"><i lucide="folder" class="h-4 w-4"></i></div>
           </div>
-  
-          <!-- Delivery Service Usage Pie Chart -->
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="flex items-center justify-between p-5 pb-3">
-              <h3 class="text-lg font-bold text-slate-800">Delivery Services</h3>
-              <div class="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                <i lucide="truck" class="h-4 w-4 text-orange-600"></i>
-              </div>
+          <div class="admin-dash__pie-body">
+            <div class="admin-dash__canvas-wrap is-pie" style="height: 200px">
+              <canvas id="categorySalesChart"></canvas>
             </div>
-            <div class="px-5 pb-5 relative flex flex-col items-center justify-center" style="height: 280px;">
-              <div style="height: 200px" class="relative mb-4">
-                <canvas id="deliveryServiceChart"></canvas>
-              </div>
-              <button 
-                (click)="openChartModal('delivery')" 
-                class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl w-full max-w-[120px]">
-                <i lucide="bar-chart-3" class="h-4 w-4"></i>
-                <span>View</span>
-              </button>
-            </div>
+            <button type="button" class="admin-dash__view-btn is-success" (click)="openChartModal('category')">
+              <i lucide="bar-chart-3" class="h-4 w-4"></i>
+              <span>View</span>
+            </button>
           </div>
-        </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Product Sales</h3>
+            <div class="admin-dash__icon-chip is-accent"><i lucide="package" class="h-4 w-4"></i></div>
+          </div>
+          <div class="admin-dash__pie-body">
+            <div class="admin-dash__canvas-wrap is-pie" style="height: 200px">
+              <canvas id="productSalesChart"></canvas>
+            </div>
+            <button type="button" class="admin-dash__view-btn is-accent" (click)="openChartModal('product')">
+              <i lucide="bar-chart-3" class="h-4 w-4"></i>
+              <span>View</span>
+            </button>
+          </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Delivery Services</h3>
+            <div class="admin-dash__icon-chip is-warning"><i lucide="truck" class="h-4 w-4"></i></div>
+          </div>
+          <div class="admin-dash__pie-body">
+            <div class="admin-dash__canvas-wrap is-pie" style="height: 200px">
+              <canvas id="deliveryServiceChart"></canvas>
+            </div>
+            <button type="button" class="admin-dash__view-btn is-warning" (click)="openChartModal('delivery')">
+              <i lucide="bar-chart-3" class="h-4 w-4"></i>
+              <span>View</span>
+            </button>
+          </div>
+        </article>
       </div>
-  
-      <!-- User Engagement Section -->
-      <div class="space-y-6 animate-fade-in animate-delay-300">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold text-slate-800">User Engagement</h2>
-            <p class="text-slate-500 mt-1">Monitor user activity and behavior patterns</p>
-          </div>
-          <!-- <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Engagement rate: {{ engagementRate.toFixed(1) }}%</div> -->
+    </section>
+
+    <!-- User Engagement -->
+    <section class="admin-dash__section">
+      <header class="admin-dash__section-head">
+        <div>
+          <h2>User Engagement</h2>
+          <p>Monitor user activity and behavior patterns</p>
         </div>
-  
-        <!-- User Metric Cards -->
-        <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+      </header>
+
+      <div class="admin-dash__metric-grid">
         @for (metric of userMetricsData; track metric.id) {
-          <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/50">
-            <div class="p-4">
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-semibold text-slate-700 text-xs">{{ metric.title }}</h3>
-                  <div class="mini-chart-top">
-                    <canvas [id]="'chart-user-' + metric.id" width="64" height="32"></canvas>
-                  </div>
-                </div>
-                <div class="space-y-2">
-                  <div class="font-bold text-slate-900 text-lg">
-                    {{ metric.value }}
-                  </div>
-                  <div class="flex items-center space-x-2">
-                    <div class="flex items-center space-x-1 px-2 py-1 rounded-full bg-white/60">
-                      @if (metric.change > 0) {
-                        <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
-                      } @else if (metric.change < 0) {
-                        <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
-                      } @else {
-                        <i lucide="minus" class="h-3 w-3 text-slate-500"></i>
-                      }
-                      <!-- <span class="text-xs font-semibold" [ngClass]="metric.change > 0 ? 'text-emerald-600' : metric.change < 0 ? 'text-red-600' : 'text-slate-500'">
-                        {{ metric.change > 0 ? '+' : '' }}{{ metric.change > 0 ? metric.change.toFixed(1) + '%' : 'N/A' }}
-                      </span> -->
-                    </div>
-                  </div>
-                </div>
-                <div class="mini-chart-bottom">
-                  <canvas [id]="'chart-user-line-' + metric.id" width="100" height="32"></canvas>
-                </div>
+          <article class="admin-dash__metric">
+            <div class="admin-dash__kpi-head">
+              <h3>{{ metric.title }}</h3>
+              <div class="mini-chart-top">
+                <canvas [id]="'chart-user-' + metric.id" width="64" height="32"></canvas>
               </div>
             </div>
-          </div>
+            <div class="admin-dash__kpi-value is-compact">{{ metric.value }}</div>
+            <div class="admin-dash__kpi-trend">
+              @if (metric.change > 0) {
+                <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
+              } @else if (metric.change < 0) {
+                <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
+              } @else {
+                <i lucide="minus" class="h-3 w-3 text-slate-500"></i>
+              }
+            </div>
+            <div class="mini-chart-bottom">
+              <canvas [id]="'chart-user-line-' + metric.id" width="100" height="32"></canvas>
+            </div>
+          </article>
         }
-        </div>
-  
-        <!-- User Charts -->
-        <div class="grid gap-6 md:grid-cols-2">
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="p-5 pb-3">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-800">User Growth Trends</h3>
-                <div class="relative">
-                  <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                          (click)="showUserGrowthDropdown = !showUserGrowthDropdown">
-                    <span class="text-2xl text-slate-700">&#8942;</span>
-                  </button>
-                  <div *ngIf="showUserGrowthDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
-                    <label class="flex items-center text-sm mb-2">
-                      <input type="checkbox" [(ngModel)]="showActiveUsers" (change)="updateUserGrowthChart()" class="mr-1" />
-                      Active Users
-                    </label>
-                    <label class="flex items-center text-sm">
-                      <input type="checkbox" [(ngModel)]="showNewUsers" (change)="updateUserGrowthChart()" class="mr-1" />
-                      New Users
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="relative">
-                <div style="height: 280px">
-                  <canvas id="userGrowthChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="p-5 pb-3">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Engagement Analytics</h3>
-                <div class="relative">
-                  <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                          (click)="showEngagementDropdown = !showEngagementDropdown">
-                    <span class="text-2xl text-slate-700">&#8942;</span>
-                  </button>
-                  <div *ngIf="showEngagementDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
-                    <label class="flex items-center text-sm mb-2">
-                      <input type="checkbox" [(ngModel)]="showViews" (change)="updateEngagementChart()" class="mr-1" />
-                      Views
-                    </label>
-                    <label class="flex items-center text-sm">
-                      <input type="checkbox" [(ngModel)]="showEngagement" (change)="updateEngagementChart()" class="mr-1" />
-                      Engagement
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="relative">
-                <div style="height: 280px">
-                  <canvas id="profileViewsChart"></canvas>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
-  
-      <!-- Customer Segmentation Section -->
-      <div class="space-y-6 animate-fade-in animate-delay-400">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-2xl font-bold text-slate-800">Customer Segmentation</h2>
-            <p class="text-slate-500 mt-1">Analyze customer distribution and loyalty tiers</p>
+
+      <div class="admin-dash__chart-grid">
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>User Growth Trends</h3>
+            <div class="admin-dash__menu">
+              <button
+                type="button"
+                class="admin-dash__ghost-btn"
+                (click)="showUserGrowthDropdown = !showUserGrowthDropdown"
+                aria-label="Toggle user series"
+              >
+                <span aria-hidden="true">&#8942;</span>
+              </button>
+              <div *ngIf="showUserGrowthDropdown" class="admin-dash__menu-panel">
+                <label>
+                  <input type="checkbox" [(ngModel)]="showActiveUsers" (change)="updateUserGrowthChart()" />
+                  Active Users
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="showNewUsers" (change)="updateUserGrowthChart()" />
+                  New Users
+                </label>
+              </div>
+            </div>
           </div>
-          <div class="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">Total: {{ formatNumber(totalCustomers) }} customers</div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="userGrowthChart"></canvas>
+          </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Engagement Analytics</h3>
+            <div class="admin-dash__menu">
+              <button
+                type="button"
+                class="admin-dash__ghost-btn"
+                (click)="showEngagementDropdown = !showEngagementDropdown"
+                aria-label="Toggle engagement series"
+              >
+                <span aria-hidden="true">&#8942;</span>
+              </button>
+              <div *ngIf="showEngagementDropdown" class="admin-dash__menu-panel">
+                <label>
+                  <input type="checkbox" [(ngModel)]="showViews" (change)="updateEngagementChart()" />
+                  Views
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="showEngagement" (change)="updateEngagementChart()" />
+                  Engagement
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="profileViewsChart"></canvas>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Customer Segmentation -->
+    <section class="admin-dash__section">
+      <header class="admin-dash__section-head">
+        <div>
+          <h2>Customer Segmentation</h2>
+          <p>Analyze customer distribution and loyalty tiers</p>
         </div>
-  
-        <!-- Customer Tier Cards -->
-        <div class="grid gap-4 grid-cols-2 md:grid-cols-4">
+        <span class="admin-dash__period">Total: {{ formatNumber(totalCustomers) }} customers</span>
+      </header>
+
+      <div class="admin-dash__metric-grid">
         @for (tier of segmentationData; track tier.name) {
           @if (tier.value > 0) {
-            <div class="metric-card shadow-lg hover-scale rounded-xl bg-gradient-to-br from-white to-slate-50 border border-slate-200/50">
-              <div class="p-5">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 rounded-lg flex items-center justify-center" [style.backgroundColor]="tier.color">
-                      @if (tier.name === 'Regular') {
-                        <span class="text-white text-sm">👤</span>
-                      } @else if (tier.name === 'Silver') {
-                        <span class="text-white text-sm">🥈</span>
-                      } @else if (tier.name === 'Gold') {
-                        <span class="text-white text-sm">🥇</span>
-                      } @else if (tier.name === 'Platinum') {
-                        <span class="text-white text-sm">👑</span>
-                      } @else {
-                        <span class="text-white text-sm">💎</span>
-                      }
-                    </div>
-                    <span class="text-sm font-semibold text-slate-700">{{ tier.name }}</span>
-                  </div>
-                  <div class="w-12 h-6">
-                    <svg width="100%" height="100%" viewBox="0 0 48 24">
-                      <path d="M 0 12 L 12 8 L 24 14 L 36 6 L 48 10" [attr.stroke]="tier.color" stroke-width="2" fill="none"/>
-                    </svg>
-                  </div>
+            <article class="admin-dash__tier">
+              <div class="admin-dash__tier-head">
+                <div class="admin-dash__tier-mark" [style.backgroundColor]="tier.color">
+                  @if (tier.name === 'Regular') { <span>R</span> }
+                  @else if (tier.name === 'Silver') { <span>S</span> }
+                  @else if (tier.name === 'Gold') { <span>G</span> }
+                  @else if (tier.name === 'Platinum') { <span>P</span> }
+                  @else { <span>•</span> }
                 </div>
-                <div class="space-y-2">
-                  <div class="text-2xl font-bold text-slate-900">{{ formatNumber(tier.value) }}</div>
-                  <div class="flex items-center justify-between">
-                    <div class="text-xs text-slate-500">{{ (tier.value / totalCustomers * 100).toFixed(1) }}% of total</div>
-                    <div class="px-2 py-1 rounded-full text-xs font-medium" 
-                         [ngClass]="{
-                           'bg-emerald-100 text-emerald-700': tier.value > 1000,
-                           'bg-blue-100 text-blue-700': tier.value > 500 && tier.value <= 1000,
-                           'bg-slate-100 text-slate-600': tier.value <= 500
-                         }">
-                      {{ tier.value > 1000 ? 'High' : tier.value > 500 ? 'Medium' : 'Low' }} Volume
-                    </div>
-                  </div>
+                <span>{{ tier.name }}</span>
+                <div class="admin-dash__tier-spark">
+                  <svg width="100%" height="100%" viewBox="0 0 48 24" aria-hidden="true">
+                    <path d="M 0 12 L 12 8 L 24 14 L 36 6 L 48 10" [attr.stroke]="tier.color" stroke-width="2" fill="none"/>
+                  </svg>
                 </div>
               </div>
-            </div>
+              <div class="admin-dash__kpi-value">{{ formatNumber(tier.value) }}</div>
+              <div class="admin-dash__tier-meta">
+                <span>{{ (tier.value / totalCustomers * 100).toFixed(1) }}% of total</span>
+                <span
+                  class="admin-dash__volume"
+                  [class.is-high]="tier.value > 1000"
+                  [class.is-mid]="tier.value > 500 && tier.value <= 1000"
+                >
+                  {{ tier.value > 1000 ? 'High' : tier.value > 500 ? 'Medium' : 'Low' }} Volume
+                </span>
+              </div>
+            </article>
           }
         }
-        </div>
-  
-        <!-- Customer Charts -->
-        <div class="grid gap-6 md:grid-cols-2">
-        <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="p-5 pb-3">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Customer Distribution</h3>
-                <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                <i lucide="more-horizontal" class="h-4 w-4 text-slate-400"></i>
-                </button>
-              </div>
-              <div class="relative">
-                 <div style="height: 280px">
-                   <canvas id="customerDistributionChart"></canvas>
-                 </div>
-              </div>
-            </div>
-          </div>
+      </div>
 
-          <div class="metric-card shadow-lg hover-scale rounded-xl chart-container">
-            <div class="p-5 pb-3">
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-bold text-slate-800">Customer Acquisition & Retention</h3>
-                <div class="relative">
-                  <button class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                          (click)="showCustomerAcqDropdown = !showCustomerAcqDropdown">
-                    <span class="text-2xl text-slate-700">&#8942;</span>
-                  </button>
-                  <div *ngIf="showCustomerAcqDropdown" class="absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-50 p-3">
-                    <label class="flex items-center text-sm mb-2">
-                      <input type="checkbox" [(ngModel)]="showAcquired" (change)="updateCustomerAcqChart()" class="mr-1" />
-                      Acquired
-                    </label>
-                    <label class="flex items-center text-sm mb-2">
-                      <input type="checkbox" [(ngModel)]="showChurned" (change)="updateCustomerAcqChart()" class="mr-1" />
-                      Churned
-                    </label>
-                    <label class="flex items-center text-sm">
-                      <input type="checkbox" [(ngModel)]="showRetained" (change)="updateCustomerAcqChart()" class="mr-1" />
-                      Retained
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div class="relative">
-                <div style="height: 280px">
-                  <canvas id="customerAcquisitionChart"></canvas>
-                </div>
+      <div class="admin-dash__chart-grid">
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Customer Distribution</h3>
+            <button type="button" class="admin-dash__ghost-btn" aria-label="More options">
+              <i lucide="more-horizontal" class="h-4 w-4"></i>
+            </button>
+          </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="customerDistributionChart"></canvas>
+          </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Customer Acquisition &amp; Retention</h3>
+            <div class="admin-dash__menu">
+              <button
+                type="button"
+                class="admin-dash__ghost-btn"
+                (click)="showCustomerAcqDropdown = !showCustomerAcqDropdown"
+                aria-label="Toggle acquisition series"
+              >
+                <span aria-hidden="true">&#8942;</span>
+              </button>
+              <div *ngIf="showCustomerAcqDropdown" class="admin-dash__menu-panel">
+                <label>
+                  <input type="checkbox" [(ngModel)]="showAcquired" (change)="updateCustomerAcqChart()" />
+                  Acquired
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="showChurned" (change)="updateCustomerAcqChart()" />
+                  Churned
+                </label>
+                <label>
+                  <input type="checkbox" [(ngModel)]="showRetained" (change)="updateCustomerAcqChart()" />
+                  Retained
+                </label>
               </div>
             </div>
           </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="customerAcquisitionChart"></canvas>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Chart Details Modal -->
+<div *ngIf="showChartModal" class="admin-dash__modal-backdrop" (click)="closeChartModal()">
+  <div class="admin-dash__modal" role="dialog" aria-modal="true" [attr.aria-label]="modalTitle" (click)="$event.stopPropagation()">
+    <header class="admin-dash__modal-head">
+      <div class="admin-dash__modal-title">
+        <div
+          class="admin-dash__icon-chip"
+          [class.is-info]="modalType === 'brand'"
+          [class.is-success]="modalType === 'category'"
+          [class.is-accent]="modalType === 'product'"
+          [class.is-warning]="modalType === 'delivery'"
+        >
+          <i lucide="bar-chart-3" class="h-4 w-4"></i>
+        </div>
+        <div>
+          <h3>{{ modalTitle }}</h3>
+          <p>Detailed breakdown</p>
         </div>
       </div>
-  
-      <!-- Footer -->
-     
-    </div>
-  </div>
+      <button type="button" class="admin-dash__ghost-btn" (click)="closeChartModal()" aria-label="Close">
+        <i lucide="x" class="h-4 w-4"></i>
+      </button>
+    </header>
 
-  <!-- Chart Details Modal -->
-  <div *ngIf="showChartModal" class="fixed inset-0 bg-black bg-opacity-10 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden border border-slate-200">
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between p-4 border-b border-slate-100">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center" 
-               [ngClass]="{
-                 'bg-blue-100': modalType === 'brand',
-                 'bg-emerald-100': modalType === 'category',
-                 'bg-purple-100': modalType === 'product',
-                 'bg-orange-100': modalType === 'delivery'
-               }">
-            <i lucide="bar-chart-3" 
-               class="h-4 w-4"
-               [ngClass]="{
-                 'text-blue-600': modalType === 'brand',
-                 'text-emerald-600': modalType === 'category',
-                 'text-purple-600': modalType === 'product',
-                 'text-orange-600': modalType === 'delivery'
-               }"></i>
-          </div>
+    <div class="admin-dash__modal-body">
+      <div *ngFor="let item of modalData; trackBy: trackByItem" class="admin-dash__modal-row">
+        <div class="admin-dash__modal-item">
+          <span class="admin-dash__swatch" [style.backgroundColor]="item.color"></span>
           <div>
-            <h3 class="text-lg font-bold text-slate-800">{{ modalTitle }}</h3>
-            <p class="text-xs text-slate-500">Detailed breakdown</p>
+            <strong>{{ item.name }}</strong>
+            <span>{{ item.value }} sales</span>
           </div>
         </div>
-        <button (click)="closeChartModal()" class="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-          <i lucide="x" class="h-4 w-4 text-slate-400"></i>
-        </button>
+        <div class="admin-dash__modal-pct">{{ item.percentage }}%</div>
       </div>
 
-      <!-- Modal Body -->
-      <div class="p-4 overflow-y-auto max-h-[calc(80vh-120px)]">
-        <div class="space-y-2">
-          <div *ngFor="let item of modalData; trackBy: trackByItem" 
-               class="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-            <div class="flex items-center gap-2.5">
-              <div class="w-3 h-3 rounded-full" [style.backgroundColor]="item.color"></div>
-              <div>
-                <h4 class="font-medium text-slate-800 text-sm">{{ item.name }}</h4>
-                <p class="text-xs text-slate-500">{{ item.value }} sales</p>
-              </div>
-            </div>
-            <div class="text-right">
-              <div class="text-sm font-bold text-slate-800">{{ item.percentage }}%</div>
-            </div>
-          </div>
+      <div class="admin-dash__modal-summary">
+        <div>
+          <strong>Summary</strong>
+          <span>{{ modalData.length }} items</span>
         </div>
-
-        <!-- Summary Section -->
-        <div class="mt-4 p-3 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg">
-          <div class="flex items-center justify-between">
-            <div>
-              <h4 class="font-medium text-slate-800 text-sm">Summary</h4>
-              <p class="text-xs text-slate-500">{{ modalData.length }} items</p>
-            </div>
-            <div class="text-right">
-              <div class="text-sm font-bold text-slate-800">{{ totalModalValue }}</div>
-              <div class="text-xs text-slate-500">total sales</div>
-            </div>
-          </div>
+        <div>
+          <strong>{{ totalModalValue }}</strong>
+          <span>total sales</span>
         </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="flex items-center justify-end gap-2 p-4 border-t border-slate-100">
-        <button (click)="closeChartModal()" 
-                class="px-3 py-1.5 text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors">
-          Close
-        </button>
       </div>
     </div>
+
+    <footer class="admin-dash__modal-foot">
+      <button type="button" (click)="closeChartModal()">Close</button>
+    </footer>
   </div>
+</div>
