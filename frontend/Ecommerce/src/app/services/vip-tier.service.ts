@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface VipTier {
-  id: number;
+  id?: number;
   name: string;
   description: string;
   minPoints: number;
@@ -25,58 +25,52 @@ export interface VipTierInfo {
   providedIn: 'root'
 })
 export class VipTierService {
-  private apiUrl = environment.apiUrl;
+  private readonly baseUrl = `${environment.apiUrl}/vip-tiers`;
 
   constructor(private http: HttpClient) { }
 
   getAllVipTiers(): Observable<VipTier[]> {
-    return this.http.get<VipTier[]>(`${this.apiUrl}/vip-tiers`);
+    return this.http.get<VipTier[]>(this.baseUrl);
   }
 
   getById(id: number): Observable<VipTier> {
-    return this.http.get<VipTier>(`${this.apiUrl}/${id}`);
+    return this.http.get<VipTier>(`${this.baseUrl}/${id}`);
   }
 
   create(tier: VipTier): Observable<VipTier> {
-    return this.http.post<VipTier>(this.apiUrl, tier);
+    return this.http.post<VipTier>(this.baseUrl, tier);
   }
 
   update(id: number, tier: VipTier): Observable<VipTier> {
-    return this.http.put<VipTier>(`${this.apiUrl}/${id}`, tier);
+    return this.http.put<VipTier>(`${this.baseUrl}/${id}`, tier);
   }
 
   delete(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+    return this.http.delete(`${this.baseUrl}/${id}`);
   }
 
   calculateVipTierInfo(totalPoints: number, allTiers: VipTier[]): VipTierInfo {
-    console.log('calculateVipTierInfo called with totalPoints:', totalPoints, 'allTiers:', allTiers);
-    
-    // Sort tiers by minPoints in ascending order
-    const sortedTiers = allTiers.sort((a, b) => a.minPoints - b.minPoints);
-    console.log('Sorted tiers:', sortedTiers);
-    
+    const sortedTiers = [...allTiers].sort((a, b) => a.minPoints - b.minPoints);
+
     let currentTier: VipTier | null = null;
     let nextTier: VipTier | null = null;
-    
-    // Find current tier (highest tier where user's points >= minPoints)
+
     for (let i = sortedTiers.length - 1; i >= 0; i--) {
       if (totalPoints >= sortedTiers[i].minPoints) {
         currentTier = sortedTiers[i];
         break;
       }
     }
-    
-    // Find next tier (lowest tier where user's points < minPoints)
+
     for (const tier of sortedTiers) {
       if (totalPoints < tier.minPoints) {
         nextTier = tier;
         break;
       }
     }
-    
+
     const pointsToNextTier = nextTier ? nextTier.minPoints - totalPoints : 0;
-    
+
     return {
       currentTier,
       nextTier,
@@ -84,4 +78,4 @@ export class VipTierService {
       currentPoints: totalPoints
     };
   }
-} 
+}
