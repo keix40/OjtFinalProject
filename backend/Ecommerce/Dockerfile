@@ -2,10 +2,10 @@
 FROM maven:3.9-eclipse-temurin-17 AS build
 
 WORKDIR /app
-COPY pom.xml ./
+COPY backend/Ecommerce/pom.xml ./
 RUN mvn -B dependency:go-offline
 
-COPY . .
+COPY backend/Ecommerce/src ./src
 RUN mvn -B -DskipTests package
 
 # Run the packaged application in a smaller Java runtime image.
