@@ -5,7 +5,7 @@ WORKDIR /app
 COPY pom.xml ./
 RUN mvn -B dependency:go-offline
 
-COPY src ./src
+COPY . .
 RUN mvn -B -DskipTests package
 
 # Run the packaged application in a smaller Java runtime image.
