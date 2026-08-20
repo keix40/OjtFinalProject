@@ -1,0 +1,13 @@
+.git
+.idea
+.mvn
+target
+uploads
+product_image
+brand_and_category_image
+event
+return_images
+review
+*.zip
+*.pdf
+*.csv
