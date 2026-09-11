@@ -1,2 +1,4 @@
 *.mp4 filter=lfs diff=lfs merge=lfs -text
 *.jpg filter=lfs diff=lfs merge=lfs -text
+# Auth hero image must be a real binary in CI/Vercel builds (Git LFS is not pulled there).
+src/assets/images/login-bg.jpg -filter -diff -merge
