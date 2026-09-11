@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "return_requests")
+@BatchSize(size = 25)
 @Getter
 @Setter
 public class ReturnRequest {
@@ -27,6 +29,7 @@ public class ReturnRequest {
 //    private UserOrderHasProduct orderProduct;
 
     @OneToMany(mappedBy = "returnRequest", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 25)
     private List<ReturnRequestProduct> returnRequestProducts = new ArrayList<>();
 
 
@@ -56,6 +59,7 @@ public class ReturnRequest {
     private LocalDateTime decisionAt;
 
     @OneToMany(mappedBy = "returnRequest", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 25)
     private List<ReturnRequestImage> images = new ArrayList<>();
 
     @OneToOne(mappedBy = "returnRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)

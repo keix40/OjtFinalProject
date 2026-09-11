@@ -7,6 +7,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import org.hibernate.annotations.BatchSize;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -70,6 +72,7 @@ public class UserOrder {
     private DeliveryMethod deliveryMethod;
 
     @OneToMany(mappedBy = "userOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 25)
     @Builder.Default
     private List<OrderStatus> orderStatusHistory = new ArrayList<>();
 
@@ -79,6 +82,7 @@ public class UserOrder {
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
+    @BatchSize(size = 25)
     @Builder.Default
     private List<ReturnRequest> returnRequests = new ArrayList<>();
 

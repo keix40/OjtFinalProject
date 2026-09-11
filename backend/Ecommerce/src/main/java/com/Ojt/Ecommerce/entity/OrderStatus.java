@@ -1,6 +1,7 @@
 package com.Ojt.Ecommerce.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.BatchSize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "order_status")
+@BatchSize(size = 25)
 @Getter
 @Setter
 @NoArgsConstructor
