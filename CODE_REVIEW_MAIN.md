@@ -21,7 +21,16 @@ Tracks **P0 + P1 + P2** on branch `fix/grok-bot-fixes` (PR #16). Full original r
 | H12 | Public catalog | **Fixed** — removed `@RequiresPermission(PRODUCTS_VIEW)` from public GET product endpoints |
 | H13 | `vercel.json` placeholder | **Fixed** — SPA-only rewrites; API via `environment.prod.ts` / same-origin proxy at deploy time |
 
-**Still open (non-blocking / manual):** payment page re-fetch of server preview totals (M8), coupon metadata in localStorage (M9), WebSocket cookie auth (M4), git history purge, secret rotation.
+**Still open (non-blocking / manual):** payment page re-fetch of server preview totals (M8), coupon metadata in localStorage (M9), git history purge, secret rotation.
+
+## PR #16 R2 High — addressed
+
+| Item | Status |
+|------|--------|
+| Login-attempt enumeration (sub-routes) | **Fixed** — all GET read endpoints require `SECURITY_VIEW_ATTEMPTS` (except public `is-blocked`) |
+| Coupon / `findEligibleDiscount` bypass | **Fixed** — order commit uses `DiscountCouponService.requireEligibleDiscountForOrder` (autoApply, VIP, code, products, usage) |
+| WebSocket auth | **Fixed** — handshake rejects unauthenticated clients; cookie or query JWT; STOMP SUBSCRIBE/SEND requires principal |
+| Order debug endpoints | **Fixed** — `/order/analytics/debug`, `/order/test/vip-tier` require `ORDERS_VIEW` |
 
 ---
 

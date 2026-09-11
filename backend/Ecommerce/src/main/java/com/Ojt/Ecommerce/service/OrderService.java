@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -82,6 +83,9 @@ public class OrderService {
 
     @Autowired
     private UserCouponUsageRepository couponRepo;
+
+    @Autowired
+    private DiscountCouponService discountCouponService;
 
     @Autowired
     private UserRepository userRepo;
@@ -274,7 +278,7 @@ public class OrderService {
 
             // If no first-time discount applied, apply manual discount if any (server-validated)
             if (dto.getDiscountId() != null && order.getDiscount() == null) {
-                applyValidatedDiscount(user, order, dto.getDiscountId());
+                applyValidatedDiscount(user, order, dto.getDiscountId(), dto.getCartItem());
             }
 
             order.setOrderCode(generateUniqueOrderCode());
@@ -501,15 +505,18 @@ public class OrderService {
         }
 
         if (discountAmount == 0.0 && dto.getDiscountId() != null && user != null) {
-            Discount manualDiscount = findEligibleDiscount(user, dto.getDiscountId());
-            if (manualDiscount != null) {
-                discountName = manualDiscount.getName();
-                discountReason = "Validated discount applied";
-                if (manualDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
-                    discountAmount = subtotal * manualDiscount.getDiscountValue();
-                } else {
-                    discountAmount = manualDiscount.getDiscountValue();
-                }
+            List<Long> productIds = dto.getCartItem().stream()
+                    .map(CartDTO::getProductId)
+                    .filter(Objects::nonNull)
+                    .toList();
+            Discount manualDiscount = discountCouponService.requireEligibleDiscountForOrder(
+                    user.getId(), dto.getDiscountId(), productIds);
+            discountName = manualDiscount.getName();
+            discountReason = "Validated discount applied";
+            if (manualDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
+                discountAmount = subtotal * manualDiscount.getDiscountValue();
+            } else {
+                discountAmount = manualDiscount.getDiscountValue();
             }
         }
 
@@ -923,38 +930,15 @@ public class OrderService {
         return repo.countBrands();
     }
 
-    private void applyValidatedDiscount(User user, UserOrder order, Long discountId) {
-        Discount discount = findEligibleDiscount(user, discountId);
-        if (discount == null) {
-            throw new AccessDeniedException("Discount not eligible");
-        }
+    private void applyValidatedDiscount(User user, UserOrder order, Long discountId, List<CartDTO> cartItems) {
+        List<Long> productIds = cartItems.stream()
+                .map(CartDTO::getProductId)
+                .filter(Objects::nonNull)
+                .toList();
+        Discount discount = discountCouponService.requireEligibleDiscountForOrder(
+                user.getId(), discountId, productIds);
         order.setDiscount(discount);
         order.setUserDiscountId(discountId);
-    }
-
-    private Discount findEligibleDiscount(User user, Long discountId) {
-        Discount discount = discountRepo.findById(discountId).orElse(null);
-        if (discount == null) {
-            return null;
-        }
-        LocalDate today = LocalDate.now();
-        if (!discount.isStatus()
-                || today.isBefore(discount.getStartDate())
-                || today.isAfter(discount.getEndDate())) {
-            return null;
-        }
-        if (couponRepo.existsByUserIdAndDiscountId(user.getId(), discountId)) {
-            return null;
-        }
-        List<DiscountRule> rules = discount.getDiscountRules();
-        if (rules != null && rules.stream().anyMatch(r -> r.getUser() != null)) {
-            boolean allowed = rules.stream()
-                    .anyMatch(r -> r.getUser() != null && r.getUser().getId() == user.getId());
-            if (!allowed) {
-                return null;
-            }
-        }
-        return discount;
     }
 
     /** Authoritative catalog price — never trust client-supplied CartDTO.price. */

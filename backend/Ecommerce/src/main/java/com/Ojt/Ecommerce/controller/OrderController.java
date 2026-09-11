@@ -886,7 +886,7 @@ public class OrderController {
         return ResponseEntity.ok(deliveryServices);
     }
 
-    // Debug endpoint to test basic data
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     @GetMapping("/analytics/debug")
     public ResponseEntity<Map<String, Object>> debugData() {
         Map<String, Object> debugInfo = new HashMap<>();
@@ -949,6 +949,7 @@ public class OrderController {
         return ResponseEntity.ok(debugInfo);
     }
     
+    @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     @GetMapping("/test/vip-tier")
     public ResponseEntity<Map<String, Object>> testVipTier() {
         System.out.println("🧪 Test: Testing VIP tier data endpoint");

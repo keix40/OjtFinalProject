@@ -10,6 +10,7 @@ import com.Ojt.Ecommerce.exception.CustomException;
 import com.Ojt.Ecommerce.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -156,6 +157,53 @@ public class DiscountCouponService {
     public CouponApplyResponse validateCoupon(CouponApplyRequest request) {
         Discount discount = discountRepository.findByCode(request.getCouponCode())
                 .orElseThrow(() -> new CustomException("Invalid Promo code"));
+        return validateDiscountEntity(discount, request);
+    }
+
+    /**
+     * Full coupon validation for order commit — reuses validateCoupon rules; rejects autoApply discounts
+     * and discount IDs that do not match the coupon code.
+     */
+    public Discount requireEligibleDiscountForOrder(Long userId, Long discountId, List<Long> productIds) {
+        Discount discount = discountRepository.findById(discountId)
+                .orElseThrow(() -> new AccessDeniedException("Discount not found"));
+
+        if (discount.getCode() == null || discount.getCode().isBlank()) {
+            throw new AccessDeniedException("Promo code required");
+        }
+
+        CouponApplyRequest request = buildOrderCouponRequest(userId, productIds);
+        request.setCouponCode(discount.getCode());
+
+        CouponApplyResponse response = validateCoupon(request);
+        if (!response.isValid()) {
+            throw new AccessDeniedException(
+                    response.getMessage() != null ? response.getMessage() : "Discount not eligible");
+        }
+        if (!Objects.equals(response.getDiscountId(), discountId)) {
+            throw new AccessDeniedException("Discount not eligible");
+        }
+        return discount;
+    }
+
+    private CouponApplyRequest buildOrderCouponRequest(Long userId, List<Long> productIds) {
+        CouponApplyRequest request = new CouponApplyRequest();
+        request.setUserId(userId);
+        request.setProductIds(productIds);
+        User user = userRepository.findById(userId).orElse(null);
+        if (user != null) {
+            VipTier tier = determineUserVipTier(user.getTotalPoints());
+            if (tier != null) {
+                request.setVipTierId(tier.getId());
+            }
+        }
+        return request;
+    }
+
+    private CouponApplyResponse validateDiscountEntity(Discount discount, CouponApplyRequest request) {
+        if (Boolean.TRUE.equals(discount.getAutoApply())) {
+            return new CouponApplyResponse(false, "Invalid Promo code", 0.0, null, null, null);
+        }
 
         LocalDate today = LocalDate.now();
         if (today.isBefore(discount.getStartDate()) || today.isAfter(discount.getEndDate())) {
@@ -166,24 +214,21 @@ public class DiscountCouponService {
             return new CouponApplyResponse(false, "Invalid Promo code", 0.0,null, null,null);
         }
 
-        // Check if already used
         boolean alreadyUsed = userCouponUsageRepository
                 .existsByUserIdAndDiscountId(request.getUserId(), discount.getId());
         if (alreadyUsed) {
             return new CouponApplyResponse(false, "Promo code already used", 0.0,null, null,null);
         }
 
-        // Check user/vip eligibility with hierarchical tier system
         List<DiscountRule> rules = discount.getDiscountRules();
         Long requestingUserId = request.getUserId();
-        Long requestingUserVipTierId = request.getVipTierId();
-        
-        if (rules.stream().anyMatch(r -> r.getUser() != null)) {
+
+        if (rules != null && rules.stream().anyMatch(r -> r.getUser() != null)) {
             // Check specific user eligibility
             if (!rules.stream().anyMatch(r -> Objects.equals(r.getUser().getId(), requestingUserId))) {
                 return new CouponApplyResponse(false, "Invalid Promo code", 0.0, null, null,null);
             }
-        } else if (rules.stream().anyMatch(r -> r.getVipTier() != null)) {
+        } else if (rules != null && rules.stream().anyMatch(r -> r.getVipTier() != null)) {
             // Check VIP tier eligibility with hierarchical system
             boolean isEligible = false;
             
@@ -243,13 +288,17 @@ public class DiscountCouponService {
         }
         // else: applies to all users
 
-        // Check if coupon is linked to specific products
         List<DiscountRule> productDiscounts = discount.getDiscountRules();
-        if (!productDiscounts.isEmpty() && request.getProductIds() != null) {
+        boolean hasProductRules = productDiscounts != null
+                && productDiscounts.stream().anyMatch(pd -> pd.getProduct() != null);
+        if (hasProductRules) {
+            if (request.getProductIds() == null || request.getProductIds().isEmpty()) {
+                return new CouponApplyResponse(false, "Invalid Promo code", 0.0, null, null, null);
+            }
             boolean matches = productDiscounts.stream()
                     .anyMatch(pd -> pd.getProduct() != null && request.getProductIds().contains(pd.getProduct().getId()));
             if (!matches) {
-                return new CouponApplyResponse(false, "Invalid Promo code", 0.0, null, null,null);
+                return new CouponApplyResponse(false, "Invalid Promo code", 0.0, null, null, null);
             }
         }
 
