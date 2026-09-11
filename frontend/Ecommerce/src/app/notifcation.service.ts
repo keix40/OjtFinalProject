@@ -2,34 +2,41 @@ import { Injectable } from '@angular/core';
 import { Client, Message } from '@stomp/stompjs';
 import { Subject, Observable, of } from 'rxjs';
 import SockJS from 'sockjs-client';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from './auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotifcationService {
-private client!: Client;
+  private client!: Client;
   private notificationSubject = new Subject<any>();
   public notifications$ = this.notificationSubject.asObservable();
+  private httpOptions = { withCredentials: true as const };
 
-  constructor(private http: HttpClient) {
-    const token = localStorage.getItem('token');
+  constructor(private http: HttpClient, private authService: AuthService) {
+    if (!this.authService.isLoggedIn()) {
+      this.authService.loadSession().subscribe(session => {
+        if (session) {
+          this.initWebSocket();
+        }
+      });
+    } else {
+      this.initWebSocket();
+    }
+  }
 
-    if (!token) {
-      console.warn('[NotificationService] No token found in localStorage. WebSocket not started.');
+  private initWebSocket(): void {
+    if (!this.authService.isLoggedIn()) {
       return;
     }
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(`/ws?token=${token}`),
+      webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
-
     });
 
     this.client.onConnect = () => {
-      console.log('[NotificationService] Connected to WebSocket server');
-
-      // User-specific notifications
       this.client.subscribe('/user/queue/notifications', (message: Message) => {
         let notificationData: any;
         try {
@@ -37,15 +44,9 @@ private client!: Client;
         } catch {
           notificationData = { message: message.body, timestamp: new Date().toISOString() };
         }
-        if (typeof notificationData === 'object') {
-          console.log('[NotificationService] Received notification:', JSON.stringify(notificationData, null, 2));
-        } else {
-          console.log('[NotificationService] Received notification:', notificationData);
-        }
         this.notificationSubject.next(notificationData);
       });
 
-      // Broadcast activity feed events
       this.client.subscribe('/topic/activity-feed', (message: Message) => {
         let activityData: any;
         try {
@@ -53,7 +54,6 @@ private client!: Client;
         } catch {
           activityData = { message: message.body, timestamp: new Date().toISOString() };
         }
-        console.log('[NotificationService] Received activity feed event:', activityData);
         this.notificationSubject.next(activityData);
       });
     };
@@ -62,68 +62,32 @@ private client!: Client;
       console.error('[NotificationService] STOMP Error:', frame.headers['message']);
     };
 
-    this.client.onWebSocketError = (evt) => {
-      console.error('[NotificationService] WebSocket error:', evt);
-    };
-
     this.client.activate();
   }
 
-  // Public method to send notifications
   sendNotification(notificationData: any): void {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    this.http.post('/api/notifications', notificationData, { headers }).subscribe({
-      next: (savedNotification) => {
-        this.notificationSubject.next(savedNotification);
-      },
-      error: (err) => {
-        console.error('Failed to save notification:', err);
-      }
+    this.http.post('/api/notifications', notificationData, this.httpOptions).subscribe({
+      next: (savedNotification) => this.notificationSubject.next(savedNotification),
+      error: (err) => console.error('Failed to save notification:', err)
     });
   }
-
-   //🔁 Load stored notifications from backend
 
   getStoredNotifications(): Observable<any[]> {
-    const token = localStorage.getItem('token');
-    if (!token || token === 'null' || token === 'undefined') {
+    if (!this.authService.isLoggedIn()) {
       return of([]);
     }
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    return this.http.get<any[]>('/api/notifications', { headers });
+    return this.http.get<any[]>('/api/notifications', this.httpOptions);
   }
-
-
-   //🗑 Delete a notification from the backend
 
   deleteNotification(id: number): Observable<any> {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    return this.http.delete(`/api/notifications/${id}`, { headers });
+    return this.http.delete(`/api/notifications/${id}`, this.httpOptions);
   }
-
-   //✅ Mark a notification as read
 
   markAsRead(id: number): Observable<any> {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    return this.http.post(`/api/notifications/${id}/read`, {}, { headers });
+    return this.http.post(`/api/notifications/${id}/read`, {}, this.httpOptions);
   }
 
-  markAsUnread(id: number) {
-    return this.http.post(`/api/notifications/${id}/unread`, {});
+  markAsUnread(id: number): Observable<any> {
+    return this.http.post(`/api/notifications/${id}/unread`, {}, this.httpOptions);
   }
 }

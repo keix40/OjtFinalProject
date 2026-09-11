@@ -25,5 +25,8 @@ public class OtpVerification {
     private LocalDateTime expiryTime;
 
     private boolean verified = false;
-    private String type; // 'login' or 'email_verification'
+    /** login | email_verification | password_reset */
+    private String type;
+    /** Set only when login OTP is issued after successful password verification. */
+    private LocalDateTime passwordVerifiedAt;
 }

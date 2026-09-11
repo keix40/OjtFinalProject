@@ -232,13 +232,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
     }
 
     // 2. Apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
       // Find the best VIP discount for this tier
       const vipDiscount = this.activeDiscounts.find(d =>
@@ -253,13 +247,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   getVipDiscountDisplay(product: ProductDTO): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -504,15 +492,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   checkFirstTimeBuyerDiscount(): void {
-    const token = localStorage.getItem('token');
-    let userId: number | null = null;
-    if (token) {
-      try {
-        userId = JSON.parse(atob(token.split('.')[1])).id;
-      } catch (e) {
-        userId = null;
-      }
-    }
+    const userId = this.authService.getUserId();
     if (!userId || this.cartItems.length === 0) {
       this.isFirstTimeBuyerDiscount = false;
       return;
@@ -866,13 +846,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
     }
 
     // Apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -886,13 +860,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   // VIP discount display for related products
   getRelatedProductVipDiscount(product: any): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -1072,13 +1040,7 @@ getCouponDiscountAmount(): number {
 }
 
 getVipTierDiscountAmount(): number {
-  const token = localStorage.getItem('token');
-  let userVipTier = null;
-  if (token) {
-    try {
-      userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-    } catch {}
-  }
+  const userVipTier = this.authService.getUserVipTier();
   if (!userVipTier || !this.activeDiscounts.length) return 0;
   const vipDiscount = this.activeDiscounts.find(d =>
     (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)

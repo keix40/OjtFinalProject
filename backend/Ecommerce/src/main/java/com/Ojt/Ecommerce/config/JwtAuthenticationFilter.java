@@ -106,6 +106,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             } catch (Exception e) {
                 logger.error("Blacklist check failed: {}", e.getMessage());
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"message\":\"Unable to verify account status\"}");
+                return;
             }
 
             var userDetails = userDetailsService.loadUserByUsername(email);

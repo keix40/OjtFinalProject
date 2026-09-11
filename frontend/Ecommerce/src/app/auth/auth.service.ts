@@ -257,10 +257,6 @@ export class AuthService {
     return this.http.put(`${this.baseUrl}/update-avatar`, formData, this.httpOptions);
   }
 
-  sendLoginOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/send-login-otp`, { email }, this.httpOptions);
-  }
-
   getUserVipTier(): string | null {
     return this.getSession()?.vipTier ?? null;
   }

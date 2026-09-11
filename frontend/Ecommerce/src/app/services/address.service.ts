@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -16,7 +16,7 @@ export interface Address {
   longitude: number;
   type: string;
   userId?: number;
-  deliveryServiceId?: number; // Optional delivery service ID
+  deliveryServiceId?: number;
 }
 
 @Injectable({
@@ -24,6 +24,7 @@ export interface Address {
 })
 export class AddressService {
   private apiUrl = `${environment.apiUrl}/addresses`;
+  private httpOptions = { withCredentials: true as const };
 
   constructor(
     private http: HttpClient,
@@ -32,23 +33,15 @@ export class AddressService {
 
   getAddresses(): Observable<Address[]> {
     const userId = this.authService.getUserId();
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-    return this.http.get<Address[]>(`${this.apiUrl}/showAddressList/${userId}`, { headers })
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http.get<Address[]>(`${this.apiUrl}/showAddressList/${userId}`, this.httpOptions)
+      .pipe(catchError(this.handleError));
   }
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An error occurred';
     if (error.error instanceof ErrorEvent) {
-      // Client-side error
       errorMessage = error.error.message;
     } else {
-      // Server-side error
       errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
     }
     console.error('Address Service Error:', errorMessage);
@@ -57,41 +50,20 @@ export class AddressService {
 
   addAddress(address: Address): Observable<any> {
     const userId = this.authService.getUserId();
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-    
-    const addressWithUserId = {
-      ...address,
-      userId: userId
-    };
-
+    const addressWithUserId = { ...address, userId };
     return this.http.post(
       `${this.apiUrl}/addNewAddress`,
       addressWithUserId,
-      { headers, responseType: 'text' as 'json' }
+      { ...this.httpOptions, responseType: 'text' as 'json' }
     );
   }
 
   updateAddress(id: number, address: Address): Observable<Address> {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-    console.log('Updating address with ID:', id);
-    console.log('Address data:', address);
-    return this.http.put<any>(`${this.apiUrl}/updateAddress/${id}`, address, { headers })
-      .pipe(
-        catchError(this.handleError)
-      );
+    return this.http.put<any>(`${this.apiUrl}/updateAddress/${id}`, address, this.httpOptions)
+      .pipe(catchError(this.handleError));
   }
 
   deleteAddress(id: number): Observable<void> {
-    const token = localStorage.getItem('token');
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-    return this.http.delete<void>(`${this.apiUrl}/deleteAddress/${id}`, { headers });
+    return this.http.delete<void>(`${this.apiUrl}/deleteAddress/${id}`, this.httpOptions);
   }
-} 
+}

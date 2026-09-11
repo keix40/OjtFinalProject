@@ -302,13 +302,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
 
     // 2. Always apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier) {
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -321,13 +315,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   getVipDiscountPercent(product: ProductDTO): number | null {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return null;
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -336,13 +324,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   getVipDiscountDisplay(product: ProductDTO): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const percent = this.getVipDiscountPercent(product);
     if (percent) {

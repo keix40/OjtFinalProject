@@ -171,22 +171,22 @@ public class LoginAttemptController {
         }
     }
 
-    // Endpoint to get current security policy
     @GetMapping("/security-policy")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<SecurityPolicyRule>> getSecurityPolicy() {
         securityPolicyService.seedDefaultsIfEmpty();
         return ResponseEntity.ok(securityPolicyService.getAllRules());
     }
 
-    // Update a security policy rule
     @PutMapping("/security-policy/{id}")
+    @RequiresPermission(value = SECURITY_UPDATE_ATTEMPTS, level = "advanced")
     public ResponseEntity<SecurityPolicyRule> updateSecurityPolicyRule(@PathVariable Long id, @RequestBody SecurityPolicyRule updatedRule) {
         SecurityPolicyRule rule = securityPolicyService.updateRule(id, updatedRule);
         return ResponseEntity.ok(rule);
     }
 
-    // Delete a security policy rule
     @DeleteMapping("/security-policy/{id}")
+    @RequiresPermission(value = SECURITY_UPDATE_ATTEMPTS, level = "advanced")
     public ResponseEntity<?> deleteSecurityPolicyRule(@PathVariable Long id) {
         securityPolicyService.deleteRule(id);
         return ResponseEntity.ok().build();

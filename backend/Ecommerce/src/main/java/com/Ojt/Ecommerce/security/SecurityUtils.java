@@ -29,6 +29,10 @@ public final class SecurityUtils {
         if (principal instanceof CustomUserDetails customUserDetails) {
             return Optional.of(customUserDetails.getUser().getId());
         }
+        if (principal instanceof org.springframework.security.core.userdetails.User springUser) {
+            // Fallback: principal email is available but user id requires lookup — prefer CustomUserDetails.
+            return Optional.empty();
+        }
         return Optional.empty();
     }
 

@@ -22,12 +22,8 @@ export class ReviewService {
   connect(productId: number, username: string): void {
     this.productId = productId;
   
-    // 🔐 Get token from localStorage (or AuthService if you're using one)
-    const token = localStorage.getItem('token');
-  
     this.stompClient = new Client({
-      // 🛠️ Use SockJS with token in query param
-      webSocketFactory: () => new SockJS(`/ws-review?token=${token}`),
+      webSocketFactory: () => new SockJS('/ws-review'),
       reconnectDelay: 5000,
     });
   

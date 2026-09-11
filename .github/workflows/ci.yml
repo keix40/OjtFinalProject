@@ -18,7 +18,6 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
 
   backend:
     name: Backend tests
@@ -33,8 +32,8 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - name: Compile and test
-        run: mvn -B -q test -DskipTests=false || mvn -B -q -DskipTests package
+      - name: Unit tests
+        run: mvn -B test -Dspring.profiles.active=test
 
   frontend:
     name: Frontend build
@@ -52,7 +51,6 @@ jobs:
       - run: npm ci
       - name: Production build
         run: npm run build -- --configuration=production
-        continue-on-error: true
 
   dependency-audit:
     name: Dependency audit

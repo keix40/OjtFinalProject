@@ -217,6 +217,9 @@ public class OrderService {
 
             Address address = addRepo.findById(dto.getAddressId())
                     .orElseThrow(() -> new RuntimeException("Address not found with ID: " + dto.getAddressId()));
+            if (address.getUser() == null || address.getUser().getId() != user.getId()) {
+                throw new AccessDeniedException("Address does not belong to user");
+            }
             order.setAddress(address);
 
             DeliveryService deliveryService = deliveryServiceRepo.findById(dto.getDeliveryServiceId())
@@ -269,16 +272,9 @@ public class OrderService {
                 }
             }
 
-            // If no first-time discount applied, apply manual discount if any
-            if (dto.getDiscountId() != null) {
-                Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
-                if (manualDiscount != null) {
-                    order.setDiscount(manualDiscount);
-                    order.setUserDiscountId(dto.getDiscountId());
-                    System.out.println("Applied manual discount: " + manualDiscount.getName() + " (ID: " + manualDiscount.getId() + ")");
-                } else {
-                    System.out.println("Warning: Discount with ID " + dto.getDiscountId() + " not found");
-                }
+            // If no first-time discount applied, apply manual discount if any (server-validated)
+            if (dto.getDiscountId() != null && order.getDiscount() == null) {
+                applyValidatedDiscount(user, order, dto.getDiscountId());
             }
 
             order.setOrderCode(generateUniqueOrderCode());
@@ -504,11 +500,11 @@ public class OrderService {
             }
         }
 
-        if (discountAmount == 0.0 && dto.getDiscountId() != null) {
-            Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
-            if (manualDiscount != null && manualDiscount.isStatus()) {
+        if (discountAmount == 0.0 && dto.getDiscountId() != null && user != null) {
+            Discount manualDiscount = findEligibleDiscount(user, dto.getDiscountId());
+            if (manualDiscount != null) {
                 discountName = manualDiscount.getName();
-                discountReason = "Manual discount applied";
+                discountReason = "Validated discount applied";
                 if (manualDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
                     discountAmount = subtotal * manualDiscount.getDiscountValue();
                 } else {
@@ -525,6 +521,10 @@ public class OrderService {
         if (dto.getDeliveryServiceId() != null && dto.getAddressId() != null) {
             DeliveryService deliveryService = deliveryServiceRepo.findById(dto.getDeliveryServiceId()).orElse(null);
             Address userAddress = addRepo.findById(dto.getAddressId()).orElse(null);
+            if (userAddress != null && user != null
+                    && (userAddress.getUser() == null || userAddress.getUser().getId() != user.getId())) {
+                throw new AccessDeniedException("Address does not belong to user");
+            }
 
             if (deliveryService != null && userAddress != null) {
                 double distance = distanceCalculator.calculateDistance(
@@ -847,6 +847,11 @@ public class OrderService {
     public UserOrderListDTO getOrderById(Long orderId) {
         UserOrder order = repo.findByIdWithDetails(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
+        Long currentUserId = SecurityUtils.requireCurrentUserId();
+        if (!SecurityUtils.hasAnyAdminViewPermission()
+                && (order.getUser() == null || order.getUser().getId() != currentUserId)) {
+            throw new AccessDeniedException("Access denied for order " + orderId);
+        }
         return convertToDTO(order);
     }
 
@@ -916,6 +921,40 @@ public class OrderService {
 
     public long getBrandCount() {
         return repo.countBrands();
+    }
+
+    private void applyValidatedDiscount(User user, UserOrder order, Long discountId) {
+        Discount discount = findEligibleDiscount(user, discountId);
+        if (discount == null) {
+            throw new AccessDeniedException("Discount not eligible");
+        }
+        order.setDiscount(discount);
+        order.setUserDiscountId(discountId);
+    }
+
+    private Discount findEligibleDiscount(User user, Long discountId) {
+        Discount discount = discountRepo.findById(discountId).orElse(null);
+        if (discount == null) {
+            return null;
+        }
+        LocalDate today = LocalDate.now();
+        if (!discount.isStatus()
+                || today.isBefore(discount.getStartDate())
+                || today.isAfter(discount.getEndDate())) {
+            return null;
+        }
+        if (couponRepo.existsByUserIdAndDiscountId(user.getId(), discountId)) {
+            return null;
+        }
+        List<DiscountRule> rules = discount.getDiscountRules();
+        if (rules != null && rules.stream().anyMatch(r -> r.getUser() != null)) {
+            boolean allowed = rules.stream()
+                    .anyMatch(r -> r.getUser() != null && r.getUser().getId() == user.getId());
+            if (!allowed) {
+                return null;
+            }
+        }
+        return discount;
     }
 
     /** Authoritative catalog price — never trust client-supplied CartDTO.price. */

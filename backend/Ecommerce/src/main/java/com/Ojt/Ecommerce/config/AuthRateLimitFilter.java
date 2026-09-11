@@ -30,7 +30,6 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             "/api/auth/verify-otp",
             "/api/auth/verify-login-otp",
             "/api/auth/resend-otp",
-            "/api/auth/send-login-otp",
             "/api/auth/sendOtp",
             "/api/auth/send-reset-otp",
             "/api/auth/forgot-password",

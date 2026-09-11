@@ -34,8 +34,8 @@ public class RedisAuthRateLimitStore implements AuthRateLimitStore {
             }
             return count != null ? count.intValue() : 1;
         } catch (Exception e) {
-            log.warn("Redis rate-limit failed, allowing request: {}", e.getMessage());
-            return 1;
+            log.error("Redis rate-limit failed — failing closed (request blocked): {}", e.getMessage());
+            return -1;
         }
     }
 }

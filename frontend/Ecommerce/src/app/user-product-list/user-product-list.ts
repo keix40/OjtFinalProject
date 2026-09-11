@@ -144,22 +144,10 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
   ) {}
 
   ngOnInit(): void {
-    // Debug: log JWT payload and VIP tier
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('JWT payload:', payload);
-        const vipTier = payload.vipTier || null;
-        console.log('VIP tier from JWT:', vipTier);
-      } catch (e) {
-        console.log('Could not parse JWT:', e);
-      }
-      this.breadcrumbItems = [
-        { label: 'Home',   link: '/home'},
-        { label: 'Products', link: '/products' }
-      ];
-    }
+    this.breadcrumbItems = [
+      { label: 'Home', link: '/home' },
+      { label: 'Products', link: '/products' }
+    ];
     
     // Add window resize listener for grid layout updates
     window.addEventListener('resize', () => {
@@ -1179,15 +1167,7 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
 }
 
   checkFirstTimeBuyerDiscount(): void {
-    const token = localStorage.getItem('token');
-    let userId: number | null = null;
-    if (token) {
-      try {
-        userId = JSON.parse(atob(token.split('.')[1])).id;
-      } catch (e) {
-        userId = null;
-      }
-    }
+    const userId = this.authService.getUserId();
     if (!userId) {
       this.isFirstTimeBuyerDiscount = false;
       return;

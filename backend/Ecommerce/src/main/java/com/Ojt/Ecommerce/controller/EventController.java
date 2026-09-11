@@ -12,9 +12,14 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
 import com.Ojt.Ecommerce.dto.EventDTO;
 import com.Ojt.Ecommerce.service.EventService;
 import com.Ojt.Ecommerce.annotations.LogActivity;
+
+import static com.Ojt.Ecommerce.constants.PermissionConstants.PRODUCTS_CREATE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.PRODUCTS_DELETE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.PRODUCTS_UPDATE;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +32,7 @@ public class EventController {
     private final com.Ojt.Ecommerce.repository.EventRepository eventRepository;
 
     @LogActivity(actionType = "CREATE", entityType = "EVENT", description = "Created promotional event", severityLevel = "MEDIUM")
+    @RequiresPermission(PRODUCTS_CREATE)
     @PostMapping("/create")
     public ResponseEntity<?> createEvent(@RequestPart("data") EventDTO eventDTO,
                                          @RequestPart(value = "image", required = false) MultipartFile imageFile) {
@@ -34,6 +40,7 @@ public class EventController {
     }
 
     @LogActivity(actionType = "UPDATE", entityType = "EVENT", description = "Updated promotional event", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
+    @RequiresPermission(PRODUCTS_UPDATE)
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateEvent(@PathVariable Long id,
                                          @RequestPart("data") EventDTO eventDTO,
@@ -70,11 +77,13 @@ public class EventController {
     }
 
     @LogActivity(actionType = "DELETE", entityType = "EVENT", description = "", severityLevel = "HIGH", entityIdParam = "id")
+    @RequiresPermission(PRODUCTS_DELETE)
     @PutMapping("/delete/{id}")
     public Object deleteEvent(@PathVariable Long id) {
         return eventService.deleteEvent(id);
     }
 
+    @RequiresPermission(PRODUCTS_UPDATE)
     @PostMapping("/update-order")
     public ResponseEntity<?> updateEventOrder(@org.springframework.web.bind.annotation.RequestBody List<com.Ojt.Ecommerce.service.EventService.EventOrderUpdate> orderUpdates) {
         eventService.updateEventOrder(orderUpdates);

@@ -74,7 +74,7 @@ export class AuthGuard implements CanActivate {
         },
         error: (error) => {
           console.error('[AuthGuard] Failed to check blacklist status:', error);
-          resolve(this.performNormalAuthCheck(route));
+          resolve(this.router.createUrlTree(['/login']));
         }
       });
   }

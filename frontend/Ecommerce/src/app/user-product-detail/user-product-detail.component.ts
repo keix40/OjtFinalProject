@@ -491,15 +491,7 @@ getProductDiscount(): any {
   }
 
 checkFirstTimeBuyerDiscount(): void {
-    const token = localStorage.getItem('token');
-    let userId: number | null = null;
-    if (token) {
-      try {
-        userId = JSON.parse(atob(token.split('.')[1])).id;
-      } catch (e) {
-        userId = null;
-      }
-    }
+    const userId = this.authService.getUserId();
     if (!userId) {
       this.isFirstTimeBuyerDiscount = false;
       return;

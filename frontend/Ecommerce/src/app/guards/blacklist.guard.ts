@@ -44,7 +44,7 @@ export class BlacklistGuard implements CanActivate {
               resolve(true);
             }
           },
-          error: () => resolve(true)
+          error: () => resolve(this.router.createUrlTree(['/login']))
         });
       });
     }

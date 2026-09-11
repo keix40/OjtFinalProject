@@ -82,21 +82,21 @@ export class VerifyOtpComponent implements OnInit {
     this.message = '';
     
     
-    // Use the appropriate endpoint based on whether this is a login OTP
-    const sendOtpObservable = this.isLoginOtp 
-      ? this.authService.sendLoginOtp(this.email)
-      : this.authService.sendRegisterOtp(this.email);
-    
-    sendOtpObservable.subscribe({
+    if (this.isLoginOtp) {
+      this.isSending = false;
+      this.error = 'Login OTP is issued only after password verification. Return to login and try again.';
+      return;
+    }
+
+    this.authService.sendRegisterOtp(this.email).subscribe({
       next: (res) => {
         this.isSending = false;
         this.otpSent = true;
         this.message = res?.message || 'OTP sent to your email.';
       },
-      error: (err) => {
+      error: (err: { error?: { message?: string } }) => {
         this.isSending = false;
         this.error = err?.error?.message || 'Failed to send OTP.';
-        console.error('OTP send error:', err); // Debug log
       }
     });
   }

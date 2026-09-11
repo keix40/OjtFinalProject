@@ -14,6 +14,7 @@ import { ImageService } from '../services/image.service';
 import { CardService } from '../services/card.service';
 import Swal from 'sweetalert2';
 import { PriceFormatService } from '../services/price-format.service';
+import { AuthService } from '../auth/auth.service';
 
 interface Card {
   id: number;
@@ -82,7 +83,8 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
     private productService: ProductService,
     public imageService: ImageService,
     private cdr: ChangeDetectorRef,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    private authService: AuthService
   ) {
     this.cardForm = this.fb.group({
       cardNumber: ['', [
@@ -240,13 +242,7 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     // 2. Always apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier) {
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -259,13 +255,7 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getVipDiscountPercent(product: ProductDTO): number | null {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return null;
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -274,13 +264,7 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getVipDiscountDisplay(product: ProductDTO): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const percent = this.getVipDiscountPercent(product);
     if (percent) {

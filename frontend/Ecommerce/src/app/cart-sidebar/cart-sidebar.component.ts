@@ -9,6 +9,7 @@ import { DiscountService } from '../services/discount.service';
 import { ProductService } from '../services/product.service';
 import { ProductDTO } from '../product';
 import { PriceFormatService } from '../services/price-format.service';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-cart-sidebar',
@@ -38,7 +39,8 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
     private http: HttpClient, // Add HttpClient for preview API
     private discountService: DiscountService,
     private productService: ProductService,
-    private priceFormatService: PriceFormatService
+    private priceFormatService: PriceFormatService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
@@ -167,13 +169,7 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
     }
 
     // 2. Always apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -186,13 +182,7 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
   }
 
   getVipDiscountPercent(product: ProductDTO): number | null {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return null;
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -215,16 +205,7 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
   }
 
   checkFirstTimeBuyerDiscount() {
-    // You may want to get userId from a service if needed
-    const token = localStorage.getItem('token');
-    let userId: number | null = null;
-    if (token) {
-     try {
-    userId = JSON.parse(atob(token.split('.')[1])).id;
-   } catch (e) {
-    userId = null;
-   }
-  }
+    const userId = this.authService.getUserId();
     if (!userId || this.cartItems.length === 0) {
       this.isFirstTimeBuyerDiscount = false;
       return;
@@ -381,13 +362,7 @@ getTotal(): number {
   }
 
   getVipDiscountDisplay(product: ProductDTO): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const percent = this.getVipDiscountPercent(product);
     if (percent) {

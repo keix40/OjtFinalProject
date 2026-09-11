@@ -932,86 +932,25 @@ export class RolesPermissionsComponent implements OnInit{
     return this.allRoles;
   }
 
-  // NEW: Initialize current user from JWT token
   initializeCurrentUserFromToken(): void {
-    const token = localStorage.getItem('token');
-    
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        
-        // Check if required fields exist
-        if (payload.id && payload.sub && payload.roles && payload.roleLevel !== undefined) {
-          this.currentUser = {
-            id: payload.id,
-            name: payload.sub,
-            role: {
-              id: payload.id,
-              name: payload.roles,
-              level: payload.roleLevel
-            }
-          };
-          console.log('Current User initialized successfully:', this.currentUser);
-        } else {
-          console.error('Missing required fields in JWT payload');
-          console.log('Available fields:', {
-            id: payload.id,
-            sub: payload.sub,
-            roles: payload.roles,
-            roleLevel: payload.roleLevel
-          });
-          // Set fallback with available data
-          this.currentUser = {
-            id: payload.id || 0,
-            name: payload.sub || 'Unknown User',
-            role: {
-              id: payload.id || 0,
-              name: payload.roles || 'UNKNOWN',
-              level: payload.roleLevel || 0
-            }
-          };
-        }
-      } catch (error) {
-        console.error('Error parsing JWT token:', error);
-        // If token parsing fails, set a minimal user object
-        this.currentUser = {
-          id: 0,
-          name: 'Parse Error',
-          role: {
-            id: 0,
-            name: 'PARSE_ERROR',
-            level: 0
-          }
-        };
+    const applySession = (session: ReturnType<AuthService['getSession']>) => {
+      if (!session) {
+        return;
       }
-    } else {
-      console.error('No access token found in localStorage');
-      // If no token, set a minimal user object
       this.currentUser = {
-        id: 0,
-        name: 'No Token',
+        id: session.id,
+        name: session.sub,
         role: {
-          id: 0,
-          name: 'NO_TOKEN',
-          level: 0
+          id: session.id,
+          name: session.roles,
+          level: session.roleLevel ?? 0
         }
       };
-    }
-    
-    // Ensure currentUser is never null
+    };
+    applySession(this.authService.getSession());
     if (!this.currentUser) {
-      this.currentUser = {
-        id: 0,
-        name: 'Fallback User',
-        role: {
-          id: 0,
-          name: 'FALLBACK',
-          level: 0
-        }
-      };
+      this.authService.loadSession().subscribe(s => applySession(s));
     }
-    
-    console.log('Final currentUser:', this.currentUser);
   }
 
   // NEW: Clear selected role if it becomes inaccessible

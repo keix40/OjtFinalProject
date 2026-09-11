@@ -1,6 +1,27 @@
 # Code Review — Remediation Status
 
-Tracks **P0 + P1 + P2** on branch `fix/grok-bot-fixes` (PR #16). Full original review: branch `cursor/code-review-main-6066`.
+Tracks **P0 + P1 + P2** on branch `fix/grok-bot-fixes` (PR #16). Full original review: branch `cursor/code-review-main-6066`. Strict adversarial review: `cursor/pr16-strict-review-8b02` / `PR16_STRICT_REVIEW.md`.
+
+---
+
+## PR #16 strict review blockers — addressed
+
+| ID | Item | Status |
+|----|------|--------|
+| C1 | `SecurityUtils` / JWT principal (`CustomUserDetails`) | **Fixed** — `UserDetailsServiceImpl` returns `CustomUserDetails`; `SecurityUtilsTest` |
+| C2 | Passwordless login OTP takeover | **Fixed** — removed public `send-login-otp`; login OTP requires `passwordVerifiedAt` from login flow |
+| C3 | CI false green | **Fixed** — `mvn test` only (no `\|\| package` fallback); frontend/gitleaks blocking |
+| H1 | Order detail ownership | **Fixed** — `getOrderById` enforces self-or-admin |
+| H2 | Address ownership on order create | **Fixed** |
+| H3 | Server-side discount eligibility | **Fixed** — `findEligibleDiscount` at create/preview |
+| H4–H5 | Event/Attribute/security-policy permissions | **Fixed** — `@RequiresPermission` on mutators |
+| H6–H7 | Redis / blacklist fail-closed | **Fixed** when `REDIS_ENABLED=true` (Redis errors block, not bypass) |
+| H8 | OTP type enforcement | **Fixed** — `login` / `email_verification` / `password_reset` |
+| H9–H10 | Frontend cookie auth + fail-closed guards | **Mostly fixed** — removed `localStorage` token reads; guards deny on blacklist check errors |
+| H12 | Public catalog | **Fixed** — removed `@RequiresPermission(PRODUCTS_VIEW)` from public GET product endpoints |
+| H13 | `vercel.json` placeholder | **Fixed** — SPA-only rewrites; API via `environment.prod.ts` / same-origin proxy at deploy time |
+
+**Still open (non-blocking / manual):** payment page re-fetch of server preview totals (M8), coupon metadata in localStorage (M9), WebSocket cookie auth (M4), git history purge, secret rotation.
 
 ---
 
@@ -9,10 +30,10 @@ Tracks **P0 + P1 + P2** on branch `fix/grok-bot-fixes` (PR #16). Full original r
 | Item | Status |
 |------|--------|
 | Secrets externalized | **Addressed** |
-| Authorization / IDOR | **Addressed** |
+| Authorization / IDOR | **Addressed** (strict-review fixes: order/address ownership, identity resolution) |
 | PAN / saved cards (last-4) | **Addressed** |
 | Server-side pricing | **Addressed** |
-| OTP / verification | **Addressed** |
+| OTP / verification | **Addressed** (typed OTP flows; no passwordless login OTP) |
 | HttpOnly cookies | **Addressed** |
 
 ## P1 — implemented
@@ -33,10 +54,10 @@ Tracks **P0 + P1 + P2** on branch `fix/grok-bot-fixes` (PR #16). Full original r
 | Lazy-loaded modules | **Addressed** | `AdminModule`, `CartModule`, `CheckoutModule` via `loadChildren` |
 | N+1 + pagination | **Addressed** | Order list `@EntityGraph` + optional `page`/`size`; customer summaries via SQL aggregation |
 | Input validation | **Addressed** | `spring-boot-starter-validation`, `@Valid` on auth/order/card DTOs, 400 handler |
-| Redis blacklist + rate limit | **Addressed** | Optional `REDIS_ENABLED=true`; in-memory fallback when disabled |
-| Public catalog browsing | **Addressed** | Home, product list/detail, categories, brands public; cart/checkout/auth protected |
+| Redis blacklist + rate limit | **Addressed** | Optional `REDIS_ENABLED=true`; fail-closed on Redis errors when enabled; in-memory when disabled |
+| Public catalog browsing | **Addressed** | SecurityConfig + product GET endpoints permit anonymous catalog reads |
 | Admin UX (lux-async-state) | **Partial** | Customers + order management loading/error/retry |
-| CI pipeline | **Addressed** | `.github/workflows/ci.yml` — backend test, frontend build, gitleaks, npm audit |
+| CI pipeline | **Addressed** | `.github/workflows/ci.yml` — blocking backend unit tests, frontend prod build, gitleaks |
 
 ## Residual items — addressed in-repo
 
@@ -70,7 +91,7 @@ Copy `.env.example` to `.env`.
 GOOGLE_MAPS_API_KEY=your-key npm run build -- --configuration=production
 ```
 
-**Vercel:** Set `YOUR_BACKEND_HOST` in `frontend/Ecommerce/vercel.json`.
+**Vercel:** `vercel.json` is SPA-only. Point `environment.prod.ts` `apiUrl` at your backend host at build time, or deploy frontend behind the same origin as the API.
 
 ---
 
@@ -89,3 +110,4 @@ GOOGLE_MAPS_API_KEY=your-key npm run build -- --configuration=production
 
 - P0: `CardMaskingUtilTest`, `AuthServicePermissionTest`, `OrderServicePricingTest`
 - P1: `AuthRateLimitFilterTest`, `FileUploadSanitizerTest`, `permission.guard.spec.ts`
+- Strict review: `SecurityUtilsTest`, `LoginOtpSecurityTest`

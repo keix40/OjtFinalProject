@@ -41,8 +41,8 @@ public class RedisTokenBlacklistStore implements TokenBlacklistStore {
             Boolean exists = redisTemplate.hasKey(KEY_PREFIX + hash(token));
             return Boolean.TRUE.equals(exists);
         } catch (Exception e) {
-            log.warn("Redis blacklist read failed, failing open for availability: {}", e.getMessage());
-            return false;
+            log.error("Redis blacklist read failed — failing closed (token treated as blacklisted): {}", e.getMessage());
+            return true;
         }
     }
 

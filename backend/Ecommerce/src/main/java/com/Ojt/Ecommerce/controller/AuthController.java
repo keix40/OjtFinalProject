@@ -188,7 +188,8 @@ public class AuthController {
                 otpVerification.setOtpCode(otp);
                 otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
                 otpVerification.setVerified(false);
-                otpVerification.setType("login"); // <-- distinguish from email verification
+                otpVerification.setType("login");
+                otpVerification.setPasswordVerifiedAt(LocalDateTime.now());
                 otpVerificationRepository.save(otpVerification);
                 emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
                 return ResponseEntity.status(401).body(Map.of(
@@ -443,6 +444,9 @@ public class AuthController {
         String otp = request.getOtp();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP request found for this email."));
+        if (!"email_verification".equals(otpVerification.getType())) {
+            throw new CustomException("Invalid OTP type for email verification.");
+        }
         if (!otpVerification.getOtpCode().equals(otp)) {
             throw new CustomException("Invalid OTP.");
         }
@@ -465,11 +469,13 @@ public class AuthController {
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP request found for this email."));
         
-        // Check if this is a login OTP
         if (!"login".equals(otpVerification.getType())) {
             throw new CustomException("Invalid OTP type for login verification.");
         }
-        
+        if (otpVerification.getPasswordVerifiedAt() == null) {
+            throw new CustomException("Login OTP was not issued after password verification.");
+        }
+
         // Verify OTP correctness and expiry
         if (!otpVerification.getOtpCode().equals(otp)) {
             throw new CustomException("Invalid OTP.");
@@ -572,9 +578,10 @@ public class AuthController {
         String newOtp = generateOtpCode();
         otpVerification.setOtpCode(newOtp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
+        if (otpVerification.getType() == null || otpVerification.getType().isBlank()) {
+            otpVerification.setType("email_verification");
+        }
         otpVerificationRepository.save(otpVerification);
-
-        // Log to confirm email is actually sent
 
         emailService.sendEmail(
                 email,
@@ -612,6 +619,8 @@ public class AuthController {
         otpVerification.setOtpCode(otp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
         otpVerification.setVerified(false);
+        otpVerification.setType("email_verification");
+        otpVerification.setPasswordVerifiedAt(null);
         otpVerificationRepository.save(otpVerification);
 
         emailService.sendEmail(email, "Your OTP Code", "Your OTP is: " + otp);
@@ -643,6 +652,8 @@ public class AuthController {
         otpVerification.setOtpCode(otp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
         otpVerification.setVerified(false);
+        otpVerification.setType("password_reset");
+        otpVerification.setPasswordVerifiedAt(null);
         otpVerificationRepository.save(otpVerification);
 
         emailService.sendEmail(email, "Password Reset OTP", "Your OTP is: " + otp);
@@ -669,10 +680,11 @@ public class AuthController {
         otpVerification.setEmail(email);
         otpVerification.setOtpCode(otp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
-        otpVerification.setVerified(false); // mark for reset, not for registration
+        otpVerification.setVerified(false);
+        otpVerification.setType("password_reset");
+        otpVerification.setPasswordVerifiedAt(null);
         otpVerificationRepository.save(otpVerification);
 
-        // ✅ Send OTP via email
         emailService.sendEmail(email, "Reset Password OTP", "Your OTP for password reset is: " + otp);
         return ResponseEntity.ok(Map.of("message", "OTP sent for password reset."));
     }
@@ -693,6 +705,9 @@ public class AuthController {
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP found for this email"));
 
+        if (!"password_reset".equals(otpVerification.getType())) {
+            throw new CustomException("Invalid OTP type for password reset.");
+        }
         if (otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
             throw new CustomException("OTP expired");
         }
@@ -732,31 +747,6 @@ public class AuthController {
         } else {
             return ResponseEntity.ok(Map.of("real", false, "message", "Email does not exist or is not active."));
         }
-    }
-
-    @PostMapping("/send-login-otp")
-    public ResponseEntity<?> sendLoginOtp(@Valid @RequestBody EmailRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
-        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new CustomException("Invalid email format.");
-        }
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            throw new CustomException("No account found with this email.");
-        }
-        // Generate OTP
-        String otp = generateOtpCode();
-        // Save to DB
-        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
-                .orElse(new OtpVerification());
-        otpVerification.setEmail(email);
-        otpVerification.setOtpCode(otp);
-        otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
-        otpVerification.setVerified(false);
-        otpVerification.setType("login"); // Set type to login
-        otpVerificationRepository.save(otpVerification);
-        emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
-        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
     }
 
     @GetMapping("/check-blacklist-status")

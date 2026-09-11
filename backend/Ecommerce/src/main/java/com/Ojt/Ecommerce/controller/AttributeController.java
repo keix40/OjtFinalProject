@@ -11,6 +11,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.Ojt.Ecommerce.annotations.LogActivity;
+import com.Ojt.Ecommerce.annotations.RequiresPermission;
+
+import static com.Ojt.Ecommerce.constants.PermissionConstants.PRODUCTS_CREATE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.PRODUCTS_DELETE;
+import static com.Ojt.Ecommerce.constants.PermissionConstants.PRODUCTS_UPDATE;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +68,7 @@ public class AttributeController {
     }
 
     @LogActivity(actionType = "CREATE", entityType = "ATTRIBUTE", description = "Created attribute", severityLevel = "MEDIUM")
+    @RequiresPermission(PRODUCTS_CREATE)
     @PostMapping("/create")
     public ResponseEntity<?> saveAttributeAndValue(@RequestBody AttributeAndValueDTO dto) {
         Attribute attribute;
@@ -141,6 +148,7 @@ public class AttributeController {
         return ResponseEntity.ok("All values processed successfully.");
     }
 
+    @RequiresPermission(PRODUCTS_UPDATE)
     @PostMapping("/addvalue")
     public ResponseEntity<?> addValueToAttribute(@RequestParam Long attributeId, @RequestBody AttributeValueDTO dto) {
         Attribute attribute = attService.getAttributeById(attributeId);
@@ -161,6 +169,7 @@ public class AttributeController {
     }
 
     @LogActivity(actionType = "UPDATE", entityType = "ATTRIBUTE", description = "Updated attribute", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
+    @RequiresPermission(PRODUCTS_UPDATE)
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateAttribute(@PathVariable Long id, @RequestBody Attribute dto) {
         try {
@@ -174,6 +183,7 @@ public class AttributeController {
     }
 
     @LogActivity(actionType = "DELETE", entityType = "ATTRIBUTE", description = "Deleted attribute", severityLevel = "HIGH", entityIdParam = "id")
+    @RequiresPermission(PRODUCTS_DELETE)
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> softDeleteAttribute(@PathVariable Long id) {
         try {
@@ -184,6 +194,7 @@ public class AttributeController {
         }
     }
 
+    @RequiresPermission(PRODUCTS_UPDATE)
     @PutMapping("/update-value/{id}")
     public ResponseEntity<?> updateAttributeValue(@PathVariable Long id, @RequestBody AttributeValue dto) {
         try {
@@ -194,6 +205,7 @@ public class AttributeController {
         }
     }
 
+    @RequiresPermission(PRODUCTS_DELETE)
     @DeleteMapping("/delete-value/{id}")
     public ResponseEntity<?> softDeleteAttributeValue(@PathVariable Long id) {
         try {
