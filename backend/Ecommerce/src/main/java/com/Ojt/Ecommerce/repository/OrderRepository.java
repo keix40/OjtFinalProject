@@ -37,6 +37,7 @@ public interface OrderRepository extends JpaRepository<UserOrder, Long> {
             "returnRequests.returnRequestProducts.orderProduct",
             "returnRequests.images", "returnRequests.refund"
     })
+    @Query("SELECT o FROM UserOrder o")
     Page<UserOrder> findAllWithDetails(Pageable pageable);
 
     @EntityGraph(attributePaths = {
