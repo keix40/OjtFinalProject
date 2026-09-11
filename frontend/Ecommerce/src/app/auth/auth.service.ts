@@ -7,14 +7,29 @@ import { RegisterResponse } from './auth.types';
 import { mergeMap, tap, catchError, map } from 'rxjs/operators';
 import { PermissionService } from '../services/permission.service';
 
+/** Auth session from /api/auth/me. Profile fields are optional — fetch full profile via UserService when needed. */
 export interface SessionUser {
   id: number;
   sub: string;
+  email?: string;
   name: string;
   roles: string;
   permissions: string;
   verified?: boolean;
   vipTier?: string | null;
+  profileImage?: string | null;
+  gender?: string | null;
+  dateofbirth?: string | null;
+  dateOfBirth?: string | null;
+  phoneNumber?: string | null;
+  phNumber?: string | null;
+  totalPoints?: number;
+  avatar?: string | null;
+  image?: string | null;
+  roleLevel?: number;
+  role?: string;
+  roleName?: string;
+  password?: string;
 }
 
 @Injectable({ providedIn: 'root' })

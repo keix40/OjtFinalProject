@@ -14,7 +14,7 @@ import { BrandUpdateComponent } from '../brand-update/brand-update.component';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
 import { SelectionStore } from '../core/state/selection-store';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-brand-list',

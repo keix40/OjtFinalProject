@@ -6,7 +6,7 @@ import { FooterComponent } from '../footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-user-brand-list',

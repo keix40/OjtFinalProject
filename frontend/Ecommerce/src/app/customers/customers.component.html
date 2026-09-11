@@ -31,6 +31,16 @@
     </div>
   </lux-page-header>
 
+  <lux-async-state
+    [loading]="isLoading"
+    [error]="loadError"
+    [empty]="!isLoading && !loadError && filteredCustomers.length === 0"
+    emptyTitle="No customers found"
+    emptyMessage="Try adjusting your filters or refresh the list."
+    skeletonCount="4"
+    skeletonHeight="4rem"
+    (retry)="loadCustomers()"
+  >
   <div class="admin-kpi-grid">
     <div class="admin-kpi">
       <div class="admin-kpi__label">Total Customers</div>
@@ -252,6 +262,7 @@
       <p>Try adjusting your search criteria or filters</p>
     </div>
   </div>
+  </lux-async-state>
 
   <div *ngIf="showCustomerModal && selectedCustomerDetails" class="admin-modal-backdrop" (click)="closeCustomerModal()">
     <div class="admin-modal admin-modal--lg" (click)="$event.stopPropagation()">

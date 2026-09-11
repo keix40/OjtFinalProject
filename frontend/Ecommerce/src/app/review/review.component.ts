@@ -6,7 +6,7 @@ import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import { ReviewMessage } from '../review-message';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener, ViewChild, ElementRef } from '@angular/core';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 // Import your review service and review model as needed
 
 @Component({

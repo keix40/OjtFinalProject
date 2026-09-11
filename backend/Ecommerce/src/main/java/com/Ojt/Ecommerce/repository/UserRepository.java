@@ -39,4 +39,34 @@ public interface UserRepository extends JpaRepository<User, Long> {
                    "AND u.total_points >= 10000 " +
                    "AND u.created_date <= LAST_DAY(:endDate)", nativeQuery = true)
     int countVipCustomersAtEndOfMonth(@Param("endDate") String endDate);
+
+    @Query(value = """
+            SELECT u.id, u.name, u.email, u.phone_number, u.status, r.name, u.created_date,
+                   COUNT(DISTINCT o.id) AS total_orders,
+                   COALESCE(SUM(op.unit_price * op.quantity), 0) AS total_spent,
+                   u.profile_image, u.tier
+            FROM users u
+            JOIN role r ON u.role_id = r.id
+            LEFT JOIN user_order o ON o.user_id = u.id
+            LEFT JOIN user_order_has_product op ON op.order_id = o.id
+            WHERE UPPER(r.name) = 'CUSTOMER'
+            GROUP BY u.id, u.name, u.email, u.phone_number, u.status, r.name, u.created_date, u.profile_image, u.tier
+            ORDER BY u.created_date DESC
+            """, nativeQuery = true)
+    List<Object[]> findCustomerSummaryRows();
+
+    @Query(value = """
+            SELECT u.id, u.name, u.email, u.phone_number, u.status, r.name, u.created_date,
+                   COUNT(DISTINCT o.id) AS total_orders,
+                   COALESCE(SUM(op.unit_price * op.quantity), 0) AS total_spent,
+                   u.profile_image, u.tier
+            FROM users u
+            JOIN role r ON u.role_id = r.id
+            LEFT JOIN user_order o ON o.user_id = u.id
+            LEFT JOIN user_order_has_product op ON op.order_id = o.id
+            WHERE UPPER(r.name) = 'CUSTOMER' AND u.total_points > :minPoints
+            GROUP BY u.id, u.name, u.email, u.phone_number, u.status, r.name, u.created_date, u.profile_image, u.tier
+            ORDER BY total_spent DESC
+            """, nativeQuery = true)
+    List<Object[]> findVipCustomerSummaryRows(@Param("minPoints") int minPoints);
 }

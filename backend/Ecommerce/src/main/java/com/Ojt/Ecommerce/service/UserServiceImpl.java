@@ -368,38 +368,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<CustomerSummaryDTO> getAllCustomerSummaries() {
-        List<User> customers = userRepository.findByRole_Name("CUSTOMER");
-        List<CustomerSummaryDTO> result = new java.util.ArrayList<>();
-        for (User user : customers) {
-            int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
-            double totalSpent = 0.0;
-            if (user.getOrders() != null) {
-                for (var order : user.getOrders()) {
-                    if (order.getOrderProducts() != null) {
-                        for (var op : order.getOrderProducts()) {
-                            if (op.getProduct() != null && op.getProduct().getPrice() != null && op.getQuantity() != null) {
-                                totalSpent += op.getProduct().getPrice() * op.getQuantity();
-                            }
-                        }
-                    }
-                }
-            }
-            CustomerSummaryDTO dto = new CustomerSummaryDTO();
-            dto.setUserId(user.getId());
-            dto.setName(user.getName());
-            dto.setEmail(user.getEmail());
-            dto.setPhoneNumber(user.getPhoneNumber());
-            dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
-            dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
-            dto.setJoinDate(user.getCreatedDate());
-            dto.setTotalOrders(totalOrders);
-            dto.setTotalSpent(totalSpent);
-            dto.setProfileImage(user.getProfileImage());
-            // Set tier if available
-            try { dto.setTier(user.getTier()); } catch (Exception ignored) {}
-            result.add(dto);
+        return userRepository.findCustomerSummaryRows().stream()
+                .map(this::mapCustomerSummaryRow)
+                .toList();
+    }
+
+    private CustomerSummaryDTO mapCustomerSummaryRow(Object[] row) {
+        CustomerSummaryDTO dto = new CustomerSummaryDTO();
+        dto.setUserId(row[0] != null ? ((Number) row[0]).longValue() : null);
+        dto.setName(row[1] != null ? row[1].toString() : null);
+        dto.setEmail(row[2] != null ? row[2].toString() : null);
+        dto.setPhoneNumber(row[3] != null ? row[3].toString() : null);
+        dto.setStatus(row[4] != null ? row[4].toString() : null);
+        dto.setRoleName(row[5] != null ? row[5].toString() : null);
+        if (row[6] instanceof java.sql.Timestamp ts) {
+            dto.setJoinDate(ts.toLocalDateTime());
+        } else if (row[6] instanceof java.time.LocalDateTime ldt) {
+            dto.setJoinDate(ldt);
         }
-        return result;
+        dto.setTotalOrders(row[7] != null ? ((Number) row[7]).intValue() : 0);
+        dto.setTotalSpent(row[8] != null ? ((Number) row[8]).doubleValue() : 0.0);
+        dto.setProfileImage(row[9] != null ? row[9].toString() : null);
+        dto.setTier(row[10] != null ? row[10].toString() : null);
+        return dto;
     }
 
     @Override
@@ -411,63 +402,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<CustomerSummaryDTO> getAllVipCustomers() {
-        List<User> users = userRepository.findByRole_Name("customer");
-        
-        // Get all VIP tiers to determine the lowest tier
         List<VipTier> allTiers = vipTierRepository.findAll();
         if (allTiers.isEmpty()) {
-            return new ArrayList<>(); // No tiers defined, return empty list
+            return new ArrayList<>();
         }
-        
-        // Find the minimum minPoints among all tiers (this is the lowest tier)
         int minMinPoints = allTiers.stream()
                 .mapToInt(VipTier::getMinPoints)
                 .min()
                 .orElse(0);
-        
-        return users.stream()
-                .filter(user -> {
-                    // Only include users whose totalPoints is greater than the minimum minPoints
-                    // This excludes users in the lowest tier (e.g., "Regular" tier)
-                    if (user.getTotalPoints() == null) return false;
-                    
-                    return user.getTotalPoints() > minMinPoints;
-                })
-                .map(user -> {
-                    int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
-                    double totalSpent = 0.0;
-                    if (user.getOrders() != null) {
-                        for (var order : user.getOrders()) {
-                            if (order.getOrderProducts() != null) {
-                                for (var op : order.getOrderProducts()) {
-                                    if (op.getUnitPrice() != null && op.getQuantity() != null) {
-                                        totalSpent += op.getUnitPrice() * op.getQuantity();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    CustomerSummaryDTO dto = new CustomerSummaryDTO();
-                    dto.setUserId(user.getId());
-                    dto.setName(user.getName());
-                    dto.setEmail(user.getEmail());
-                    dto.setPhoneNumber(user.getPhoneNumber());
-                    dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
-                    dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
-                    dto.setJoinDate(user.getCreatedDate());
-                    dto.setTotalOrders(totalOrders);
-                    dto.setTotalSpent(totalSpent);
-                    dto.setProfileImage(user.getProfileImage());
-                    dto.setTier(user.getTier());
-                    
-                    // Add spending trend data
-                    dto.setSpendingTrend(user.getSpendingTrend());
-                    dto.setSpendingChange(user.getSpendingChangePercentage());
-                    dto.setCurrentPeriodSpent(user.getCurrentPeriodSpent());
-                    dto.setPreviousPeriodSpent(user.getPreviousPeriodSpent());
-                    
-                    return dto;
-                }).toList();
+        return userRepository.findVipCustomerSummaryRows(minMinPoints).stream()
+                .map(this::mapCustomerSummaryRow)
+                .toList();
     }
 
     @Override

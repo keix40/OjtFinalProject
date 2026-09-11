@@ -19,7 +19,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener } from '@angular/core';
 import { ColorUtilityService } from '../services/color-utility.service';
 import { PriceFormatService } from '../services/price-format.service';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 interface ProductImage {
   id: number;

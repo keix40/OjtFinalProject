@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.Ojt.Ecommerce.annotations.LogActivity;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class SavedCardController {
 
     @LogActivity(actionType = "CREATE", entityType = "SAVED_CARD", description = "Created saved card", severityLevel = "MEDIUM")
     @PostMapping
-    public ResponseEntity<?> saveCard(@RequestBody SavedCardRequestDTO dto) {
+    public ResponseEntity<?> saveCard(@Valid @RequestBody SavedCardRequestDTO dto) {
         try {
             SavedCardResponseDTO saved = cardService.saveIfNewCard(dto);
             if (saved == null) {
@@ -62,7 +63,7 @@ public class SavedCardController {
     @PutMapping("/update/{cardId}")
     public ResponseEntity<?> updateCard(
             @PathVariable Long cardId,
-            @RequestBody SavedCardRequestDTO dto
+            @Valid @RequestBody SavedCardRequestDTO dto
     ) {
         try {
             SavedCardResponseDTO updatedCard = cardService.updateCard(cardId, dto);

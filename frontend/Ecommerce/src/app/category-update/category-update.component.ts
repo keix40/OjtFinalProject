@@ -9,7 +9,7 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-category-update',

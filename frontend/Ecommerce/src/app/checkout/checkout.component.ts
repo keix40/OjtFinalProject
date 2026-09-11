@@ -844,7 +844,10 @@ getTotalDiscount() {
     }
 
     const user = this.authService.getDecodedToken();
-    const userId = user ? user.id : null;
+    const userId = user?.id;
+    if (userId == null) {
+      return;
+    }
 
     this.orderService.getDiscount(userId, this.couponCode).subscribe({
       next: (discount) => {

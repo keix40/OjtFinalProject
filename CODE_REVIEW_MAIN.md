@@ -1,68 +1,91 @@
-# Code Review — `main` Branch
+# Code Review — Remediation Status
 
-See the full original review on branch `cursor/code-review-main-6066`. This document tracks **remediation status** for PR `fix/grok-bot-fixes` (P0 + P1).
-
----
-
-## Remediation Status (P0 — implemented)
-
-| P0 Item | Status | Summary |
-|---------|--------|---------|
-| 1. Secrets externalized | **Addressed** | `application.properties` uses `${ENV}` placeholders only; `.env.example` added. No real secrets committed. |
-| 2. Authorization / IDOR | **Addressed** | Default-deny `SecurityConfig`; real `AuthService.currentUserHasPermission()`; ownership checks on orders, cards, wishlists, addresses, users. |
-| 3. PAN / saved cards | **Addressed** | Store/return last-4 only via `CardMaskingUtil`; legacy full PAN masked on read. Payment processor tokenization still recommended. |
-| 4. Server-side pricing | **Addressed** | `OrderService.resolveUnitPrice()` used in `createOrder` and `previewOrder`. |
-| 5. OTP / verification | **Addressed** | Reset requires OTP code; registration sets `verified=false`; `/verify-otp` sets `verified=true` after valid OTP. |
-| 6. HttpOnly cookies | **Addressed** | `AuthCookieService` sets/clears cookies; Angular uses `withCredentials` + `/api/auth/me` session (no localStorage tokens). |
+Tracks **P0 + P1 + P2** on branch `fix/grok-bot-fixes` (PR #16). Full original review: branch `cursor/code-review-main-6066`.
 
 ---
 
-## Remediation Status (P1 — implemented)
+## P0 — implemented
 
-| P1 Item | Status | Summary |
-|---------|--------|---------|
-| 1. XSS / innerHTML | **Addressed** | DOMPurify via `HtmlSanitizerService` + `safeHtml` pipe on policies, activity logs, login-attempt flags, order-tracking policy modal. Activity log text escaped before HTML wrapping. |
-| 2. Prod environment | **Addressed** | `environment.prod.ts` + `angular.json` `fileReplacements`; API calls use `/api`; media URLs via `mediaUrl()` / `mediaUrl` pipe. Vercel rewrites `/api` — set `YOUR_BACKEND_HOST` in `vercel.json` before deploy. |
-| 3. Admin permission guards | **Addressed** | `PermissionGuard` fails closed when `permission` route data is missing; `/users/roles`, dashboard, policies, VIP tiers, revenue target guarded. |
-| 4. Token/OTP logging | **Addressed** | Removed OTP/token `System.out` from `AuthController`, `TwilioVerificationService`; removed OTP/token `console.log` from auth UI flows. |
-| 5. Rate-limit auth endpoints | **Addressed** | `AuthRateLimitFilter` on login/register/OTP/reset/refresh paths; configurable via `AUTH_RATE_LIMIT_*`. |
-| 6. Sanitize file uploads | **Addressed** | `FileUploadSanitizer` used in product, category, brand, event, review, profile, return upload paths; UUID filenames, extension/MIME allowlist, path traversal checks, configurable dirs. |
+| Item | Status |
+|------|--------|
+| Secrets externalized | **Addressed** |
+| Authorization / IDOR | **Addressed** |
+| PAN / saved cards (last-4) | **Addressed** |
+| Server-side pricing | **Addressed** |
+| OTP / verification | **Addressed** |
+| HttpOnly cookies | **Addressed** |
 
-### Tests added
+## P1 — implemented
 
-- P0: `CardMaskingUtilTest`, `AuthServicePermissionTest`, `OrderServicePricingTest`
-- P1: `AuthRateLimitFilterTest`, `FileUploadSanitizerTest`, `permission.guard.spec.ts`
+| Item | Status |
+|------|--------|
+| XSS / innerHTML (DOMPurify) | **Addressed** |
+| Prod environment (`environment.prod.ts`) | **Addressed** |
+| Permission guards (fail-closed) | **Addressed** |
+| Token/OTP logging removed | **Addressed** |
+| Auth rate limiting | **Addressed** (in-memory; Redis optional in P2) |
+| File upload sanitization | **Addressed** |
 
-### Configuration reference
+## P2 — implemented
 
-Copy `.env.example` to `.env`. Key variables:
+| Item | Status | Summary |
+|------|--------|---------|
+| Lazy-loaded modules | **Addressed** | `AdminModule`, `CartModule`, `CheckoutModule` via `loadChildren` |
+| N+1 + pagination | **Addressed** | Order list `@EntityGraph` + optional `page`/`size`; customer summaries via SQL aggregation |
+| Input validation | **Addressed** | `spring-boot-starter-validation`, `@Valid` on auth/order/card DTOs, 400 handler |
+| Redis blacklist + rate limit | **Addressed** | Optional `REDIS_ENABLED=true`; in-memory fallback when disabled |
+| Public catalog browsing | **Addressed** | Home, product list/detail, categories, brands public; cart/checkout/auth protected |
+| Admin UX (lux-async-state) | **Partial** | Customers + order management loading/error/retry |
+| CI pipeline | **Addressed** | `.github/workflows/ci.yml` — backend test, frontend build, gitleaks, npm audit |
+
+## Residual items — addressed in-repo
+
+| Item | Status | Notes |
+|------|--------|-------|
+| Google Maps API key | **Addressed** | Removed from `index.html`; `GoogleMapsLoaderService` + `GOOGLE_MAPS_API_KEY` env |
+| Payment tokenization | **Documented + stub** | `PaymentTokenizationPort`, `PAYMENT_TOKENIZATION.md`; last-4 default preserved |
+| Git history secrets | **Documented** | `SECURITY_ROTATION.md` — manual BFG/filter-repo steps |
+| SessionUser type errors | **Addressed** | Optional profile fields on `SessionUser`; full profile via UserService when needed |
+
+---
+
+## Configuration reference
+
+Copy `.env.example` to `.env`.
 
 | Variable | Purpose | Default |
 |----------|---------|---------|
 | `JWT_SECRET` | JWT signing (≥64 chars) | required in prod |
-| `COOKIE_SECURE` | HttpOnly cookie Secure flag | `false` (set `true` with HTTPS) |
-| `AUTH_RATE_LIMIT_ENABLED` | Enable auth rate limiting | `true` |
-| `AUTH_RATE_LIMIT_RPM` | Max POST auth requests per IP per minute | `30` |
-| `APP_UPLOAD_DIR` | Profile uploads | `uploads` |
-| `APP_PRODUCT_UPLOAD_DIR` | Product images | `product_image` |
-| `APP_CATEGORY_UPLOAD_DIR` | Brand/category images | `brand_and_category_image` |
-| `APP_EVENT_UPLOAD_DIR` | Event banners | `event` |
-| `APP_RETURN_IMAGES_DIR` | Return evidence | `return_images` |
-| `APP_REVIEW_UPLOAD_DIR` | Review media | `review` |
+| `AUTH_RATE_LIMIT_*` | Auth rate limiting | enabled, 30 RPM |
+| `REDIS_ENABLED` | Shared blacklist + rate limits | `false` |
+| `REDIS_URL` or `REDIS_HOST`/`REDIS_PORT` | Redis connection | localhost:6379 |
+| `PAYMENT_PROCESSOR` | `local` or `stripe` (stub) | `local` |
+| `GOOGLE_MAPS_API_KEY` | Frontend build-time injection | empty |
+| `APP_*_UPLOAD_DIR` | Upload directories | see `.env.example` |
 
-**Frontend prod API URL:** Production builds use `environment.prod.ts` (`apiUrl: '/api'`). Deploy behind a reverse proxy that forwards `/api` to the backend, or set `serverUrl` in `environment.prod.ts` if the API host differs from static assets.
+**Google Maps:** Restrict key in GCP Console to your domains (HTTP referrers). Inject at build:
 
-**Vercel:** Replace `YOUR_BACKEND_HOST` in `frontend/Ecommerce/vercel.json` with your backend hostname (no scheme).
+```bash
+# Example: patch environment.prod.ts or use CI secret
+GOOGLE_MAPS_API_KEY=your-key npm run build -- --configuration=production
+```
 
-### Residual risks (follow-up)
-
-- **Rotate all previously exposed secrets** (DB, JWT, Gmail, IPQS, Google Maps) — git history purge is manual.
-- **Payment tokenization** — interim stores last-4 only; integrate Stripe/similar for production PCI scope reduction.
-- **Rate limiter** — in-memory only; multi-instance production needs Redis-backed limiter.
-- **Google Maps API key** in `index.html` — move to env/build injection.
-- **Customer role permissions** — ensure DB seed grants `orders.create` / `orders.view` to CUSTOMER role or checkout will 403.
-- **`/admin/profile/:id`** — uses `AuthGuard` only (self-profile); backend must enforce ownership.
+**Vercel:** Set `YOUR_BACKEND_HOST` in `frontend/Ecommerce/vercel.json`.
 
 ---
 
-*Original detailed findings remain on branch `cursor/code-review-main-6066`.*
+## Manual actions still required
+
+1. **Rotate** all previously exposed secrets (see `SECURITY_ROTATION.md`)
+2. **Purge git history** if secrets were committed (BFG / git-filter-repo — force-push)
+3. **Enable Redis** in production multi-instance: `REDIS_ENABLED=true`
+4. **Restrict Maps key** in Google Cloud Console
+5. **Choose payment processor** and implement `StripePaymentTokenizationAdapter` when ready
+6. **Ensure CUSTOMER role** has `orders.create` / `orders.view` in DB seed
+
+---
+
+## Tests
+
+- P0: `CardMaskingUtilTest`, `AuthServicePermissionTest`, `OrderServicePricingTest`
+- P1: `AuthRateLimitFilterTest`, `FileUploadSanitizerTest`, `permission.guard.spec.ts`

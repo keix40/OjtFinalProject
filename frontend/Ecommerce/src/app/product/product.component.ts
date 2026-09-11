@@ -13,7 +13,7 @@ import Swal from 'sweetalert2';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 
 // ===== Interfaces =====

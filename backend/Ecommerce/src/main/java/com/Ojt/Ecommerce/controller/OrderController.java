@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
 
 import com.Ojt.Ecommerce.dto.CustomerSummaryDTO;
 import com.Ojt.Ecommerce.annotations.LogActivity;
@@ -120,8 +121,7 @@ public class OrderController {
     @LogActivity(actionType = "CREATE", entityType = "ORDER", description = "Created order", severityLevel = "MEDIUM")
     @PostMapping("/create")
     @RequiresPermission(value = ORDERS_CREATE, level = "basic")
-    public ResponseEntity<?> createOrder(@RequestBody UserOrderDTO dto){
-        System.out.println("Received order DTO: " + dto);
+    public ResponseEntity<?> createOrder(@Valid @RequestBody UserOrderDTO dto){
         try {
             UserOrder order = service.createOrder(dto);
             return ResponseEntity.ok(order);
@@ -134,7 +134,7 @@ public class OrderController {
     //add for discount  preview by pmk july 9
     @PostMapping("/preview")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
-    public ResponseEntity<?> previewOrder(@RequestBody UserOrderDTO dto) {
+    public ResponseEntity<?> previewOrder(@Valid @RequestBody UserOrderDTO dto) {
         return ResponseEntity.ok(service.previewOrder(dto));
     }
 
@@ -148,9 +148,13 @@ public class OrderController {
 
     @GetMapping("/getallorder")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic", description = "Get all orders")
-    public ResponseEntity<List<UserOrderListDTO>> getAllOrder(){
-        List<UserOrderListDTO> orders = service.getAllOrders();
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<?> getAllOrder(
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false, defaultValue = "50") Integer size) {
+        if (page != null) {
+            return ResponseEntity.ok(service.getAllOrders(page, size));
+        }
+        return ResponseEntity.ok(service.getAllOrders());
     }
 
     @GetMapping("/total-sales")

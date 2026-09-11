@@ -11,7 +11,8 @@ import { PermissionConstants } from '../../constants/permission.constants';
 import { ColorUtilityService } from '../../services/color-utility.service';
 import { PriceFormatService } from '../../services/price-format.service';
 import { LuxUiModule } from '../../shared/ui/lux-ui.module';
-import { mediaUrl } from '../../../shared/media-url.util';
+import { mediaUrl } from '../../shared/media-url.util';
+import { MediaUrlPipe } from '../../shared/media-url.pipe';
 
 interface ProductImage {
   id: number;
@@ -53,7 +54,7 @@ interface Product {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, NgbCarouselModule, LuxUiModule],
+  imports: [CommonModule, NgbCarouselModule, LuxUiModule, MediaUrlPipe],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.css']
 })

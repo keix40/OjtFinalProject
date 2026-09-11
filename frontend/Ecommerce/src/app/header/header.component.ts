@@ -23,7 +23,7 @@ import { NotificationSidebarService } from '../notifcation-sidebar.service';
 import { NotifcationService } from '../notifcation.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageService } from '../services/image.service';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-header',

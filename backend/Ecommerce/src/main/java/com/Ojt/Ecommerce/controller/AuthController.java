@@ -52,6 +52,7 @@ import com.Ojt.Ecommerce.util.IpLocationUtil;
 import com.Ojt.Ecommerce.service.BlacklistServiceImpl;
 import com.Ojt.Ecommerce.entity.BlacklistEntry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 
 @CrossOrigin(origins = {"http://localhost:4200", "http://127.0.0.1:4200"})
 @RestController
@@ -97,7 +98,7 @@ public class AuthController {
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> register(
-            @RequestPart("user") RegisterRequest request,
+            @Valid @RequestPart("user") RegisterRequest request,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
         String result = userService.register(request, profileImage);
@@ -109,14 +110,14 @@ public class AuthController {
 
 //    @LogActivity(actionType = "LOGIN", entityType = "USER", description = "User login", severityLevel = "LOW")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, Object> loginRequest, HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         // Start timing for duration tracking
         java.time.LocalDateTime startTime = java.time.LocalDateTime.now();
-        
-        String email = ((String)loginRequest.get("email")).trim().toLowerCase();
-        String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
-        String ip = IpLocationUtil.extractClientIp(request); // <-- Use the same logic as activity logs
-        String location = loginRequest.getOrDefault("location", "").toString();
+
+        String email = loginRequest.getEmail().trim().toLowerCase();
+        String password = loginRequest.getPassword();
+        String ip = IpLocationUtil.extractClientIp(request);
+        String location = loginRequest.getLocation() != null ? loginRequest.getLocation() : "";
         boolean isVPN = false;
         boolean isProxy = false;
         try {
@@ -432,7 +433,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody OtpRequest request) {
+    public ResponseEntity<?> verifyOtp(@Valid @RequestBody OtpRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         String otp = request.getOtp();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
@@ -452,7 +453,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify-login-otp")
-    public ResponseEntity<?> verifyLoginOtp(@RequestBody OtpRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
+    public ResponseEntity<?> verifyLoginOtp(@Valid @RequestBody OtpRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         String email = request.getEmail().trim().toLowerCase();
         String otp = request.getOtp();
         
@@ -551,7 +552,7 @@ public class AuthController {
     }
 
     @PostMapping("/resend-otp")
-    public ResponseEntity<?> resendOtp(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> resendOtp(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException("User not found"));
@@ -580,7 +581,7 @@ public class AuthController {
     }
 
     @PostMapping("/sendOtp")
-    public ResponseEntity<?> sendOtp(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> sendOtp(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         if (!emailVerificationService.isEmailReal(email)) {
             throw new CustomException("Email not found.");
@@ -614,7 +615,7 @@ public class AuthController {
     }
     //add (for otp code for password reset)
     @PostMapping("/send-reset-otp")
-    public ResponseEntity<?> sendResetOtp(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> sendResetOtp(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
 
         if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
@@ -645,7 +646,7 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")   //for forgot passward
-    public ResponseEntity<?> forgotPassword(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
 
         // ✅ Check if user exists and is verified
@@ -718,7 +719,7 @@ public class AuthController {
     }
 
     @PostMapping("/validate-real-email")
-    public ResponseEntity<?> validateRealEmail(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> validateRealEmail(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         boolean isReal = emailVerificationService.isEmailReal(email);
         if (isReal) {
@@ -729,7 +730,7 @@ public class AuthController {
     }
 
     @PostMapping("/send-login-otp")
-    public ResponseEntity<?> sendLoginOtp(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> sendLoginOtp(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new CustomException("Invalid email format.");

@@ -17,7 +17,7 @@ class AuthRateLimitFilterTest {
 
     @BeforeEach
     void setUp() {
-        filter = new AuthRateLimitFilter();
+        filter = new AuthRateLimitFilter(new InMemoryAuthRateLimitStore());
         ReflectionTestUtils.setField(filter, "requestsPerMinute", 2);
         ReflectionTestUtils.setField(filter, "enabled", true);
     }

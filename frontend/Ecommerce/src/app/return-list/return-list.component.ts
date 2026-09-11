@@ -4,7 +4,7 @@ import { ReturnRequestDTO } from '../user-order';
 import { PriceFormatService } from '../services/price-format.service';
 import { SelectionStore } from '../core/state/selection-store';
 import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 declare var lucide: any;
 

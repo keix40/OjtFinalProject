@@ -5,7 +5,7 @@ import { BrandService } from '../services/brand.service';
 import { Category } from '../category';
 import { BrandListDTO } from '../brand';
 import { CommonModule } from '@angular/common';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-footer',

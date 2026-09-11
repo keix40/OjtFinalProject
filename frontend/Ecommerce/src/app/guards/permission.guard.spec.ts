@@ -36,7 +36,7 @@ describe('PermissionGuard', () => {
 
   it('allows access when permission is granted', () => {
     perms.hasPermission.and.returnValue(true);
-    const route = { data: { permission: 'orders.view' } } as ActivatedRouteSnapshot;
+    const route = { data: { permission: 'orders.view' } } as unknown as ActivatedRouteSnapshot;
     expect(guard.canActivate(route)).toBeTrue();
   });
 });

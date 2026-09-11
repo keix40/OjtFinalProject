@@ -22,7 +22,7 @@ import { EventService } from '../services/event.service';
 import { EventDTO } from '../event-dto';
 import { PriceFormatService } from '../services/price-format.service';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-home',

@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -13,17 +14,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * In-memory per-IP rate limiter for auth endpoints.
- * Configure via app.rate-limit.auth.* properties. For multi-instance production, use Redis.
+ * Per-IP rate limiter for auth endpoints. Uses Redis when app.redis.enabled=true, else in-memory.
  */
 @Component
+@RequiredArgsConstructor
 public class AuthRateLimitFilter extends OncePerRequestFilter {
 
     private static final Set<String> LIMITED_PATHS = Set.of(
@@ -40,7 +38,7 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
             "/api/auth/refresh-token"
     );
 
-    private final Map<String, WindowCounter> counters = new ConcurrentHashMap<>();
+    private final AuthRateLimitStore rateLimitStore;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${app.rate-limit.auth.requests-per-minute:30}")
@@ -65,18 +63,8 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         }
 
         String clientKey = IpLocationUtil.extractClientIp(request) + ":" + path;
-        long windowMs = 60_000L;
-        long now = Instant.now().toEpochMilli();
-
-        WindowCounter counter = counters.compute(clientKey, (key, existing) -> {
-            if (existing == null || now - existing.windowStartMs >= windowMs) {
-                return new WindowCounter(now, new AtomicInteger(0));
-            }
-            return existing;
-        });
-
-        int count = counter.count.incrementAndGet();
-        if (count > requestsPerMinute) {
+        int count = rateLimitStore.incrementAndGet(clientKey, 60_000L, requestsPerMinute);
+        if (count < 0) {
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             objectMapper.writeValue(response.getWriter(), Map.of(
@@ -87,15 +75,5 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private static final class WindowCounter {
-        private final long windowStartMs;
-        private final AtomicInteger count;
-
-        private WindowCounter(long windowStartMs, AtomicInteger count) {
-            this.windowStartMs = windowStartMs;
-            this.count = count;
-        }
     }
 }

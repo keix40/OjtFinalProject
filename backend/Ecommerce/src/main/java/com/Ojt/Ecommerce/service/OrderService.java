@@ -562,15 +562,21 @@ public class OrderService {
     }
 
     public List<UserOrderListDTO> getOrdersByUserId(Long userId) {
-        List<UserOrder> orders = repo.findByUserId(userId);
-        return orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return repo.findByUserIdWithDetails(userId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     public List<UserOrderListDTO> getAllOrders() {
-        List<UserOrder> orders = repo.findAll();
-        return orders.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return getAllOrders(0, 500).getContent();
+    }
+
+    public org.springframework.data.domain.Page<UserOrderListDTO> getAllOrders(int page, int size) {
+        int safeSize = Math.min(Math.max(size, 1), 500);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                Math.max(page, 0), safeSize,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "orderDate"));
+        return repo.findAllWithDetails(pageable).map(this::convertToDTO);
     }
 
     public UserOrderListDTO updateOrderStatus(Long orderId, String statusStr, Long refundId) {
@@ -839,7 +845,7 @@ public class OrderService {
     }
 
     public UserOrderListDTO getOrderById(Long orderId) {
-        UserOrder order = repo.findById(orderId)
+        UserOrder order = repo.findByIdWithDetails(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
         return convertToDTO(order);
     }

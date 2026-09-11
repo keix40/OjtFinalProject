@@ -16,7 +16,7 @@ import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
 import { SelectionStore } from '../core/state/selection-store';
-import { mediaUrl } from '../../shared/media-url.util';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-category-list',
