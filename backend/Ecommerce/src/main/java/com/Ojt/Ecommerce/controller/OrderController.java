@@ -46,6 +46,7 @@ import com.Ojt.Ecommerce.service.OrderService;
 import com.Ojt.Ecommerce.service.UserActivityService;
 import com.Ojt.Ecommerce.service.SessionService;
 import com.Ojt.Ecommerce.service.UserService;
+import com.Ojt.Ecommerce.security.SecurityUtils;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -140,6 +141,7 @@ public class OrderController {
     @GetMapping("/getorderbyuserid/{userId}")
     @RequiresPermission(value = ORDERS_VIEW, level = "basic")
     public ResponseEntity<List<UserOrderListDTO>> getOrdersByUserId(@PathVariable Long userId) {
+        SecurityUtils.enforceSelfOrAdmin(userId);
         List<UserOrderListDTO> orders = service.getOrdersByUserId(userId);
         return ResponseEntity.ok(orders);
     }

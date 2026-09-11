@@ -1,33 +1,43 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, from } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
 import { LoginRequest } from '../login-request';
 import { LoginResponse } from '../login-response';
 import { RegisterResponse } from './auth.types';
-import { RegisterRequest } from '../register-request';
-import { jwtDecode } from 'jwt-decode';
-import { LoginAttemptsService } from '../services/login-attempts.service';
-import { switchMap, mergeMap, timeout } from 'rxjs/operators';
+import { mergeMap, tap, catchError, map } from 'rxjs/operators';
+import { PermissionService } from '../services/permission.service';
 
+export interface SessionUser {
+  id: number;
+  sub: string;
+  name: string;
+  roles: string;
+  permissions: string;
+  verified?: boolean;
+  vipTier?: string | null;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private baseUrl = '/api/auth';
   private publicIp: string | null = null;
+  private sessionSubject = new BehaviorSubject<SessionUser | null>(null);
+  readonly session$ = this.sessionSubject.asObservable();
 
-  constructor(private http: HttpClient, private loginAttemptsService: LoginAttemptsService) {
-    // Fetch public IP on service init
+  constructor(
+    private http: HttpClient,
+    private permissionService: PermissionService
+  ) {
     fetch('https://api.ipify.org?format=json')
       .then(res => res.json())
-      .then(data => { this.publicIp = data.ip; });
+      .then(data => { this.publicIp = data.ip; })
+      .catch(() => undefined);
   }
 
+  private httpOptions = { withCredentials: true };
+
   login(data: LoginRequest): Observable<LoginResponse> {
-    return from(
-      fetch('https://ipinfo.io/json')
-        .then(res => res.json())
-        .catch(() => ({ city: '', region: '', country: '', countryCode: '' }))
-    ).pipe(
+    return fromLocation().pipe(
       mergeMap(loc => {
         const locationString = [loc.city, loc.region, loc.country].filter(Boolean).join(', ');
         const payload = { ...data, location: locationString, countryCode: loc.country || '' };
@@ -35,157 +45,140 @@ export class AuthService {
         if (this.publicIp) {
           headers = headers.set('X-Client-IP', this.publicIp);
         }
-        return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload, { headers });
+        return this.http.post<LoginResponse>(`${this.baseUrl}/login`, payload, {
+          headers,
+          withCredentials: true
+        });
       })
     );
   }
 
-
-  //   register(data: RegisterRequest): Observable<any> {
-  //     const headers = new HttpHeaders().set('Accept', 'text/plain, application/json');
-  //     return this.http.post(`${this.baseUrl}/register`, data, {
-  //       headers: headers,
-  //       responseType: 'text'
-  //     });
-  //   }
-
-  //   register(data: RegisterRequest): Observable<RegisterResponse> {
-  //   return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
-  // }
-
   register(data: any): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data);
+    return this.http.post<RegisterResponse>(`${this.baseUrl}/register`, data, this.httpOptions);
   }
 
+  /** Load session from HttpOnly cookie via /me — replaces localStorage token reads. */
+  loadSession(): Observable<SessionUser | null> {
+    return this.http.get<SessionUser>(`${this.baseUrl}/me`, this.httpOptions).pipe(
+      tap(session => this.applySession(session)),
+      catchError(() => {
+        this.clearSession();
+        return of(null);
+      })
+    );
+  }
 
-  saveToken(token: string) {
-    if (!token || token === 'null' || token === 'undefined') {
-      localStorage.removeItem('token');
-      return;
+  establishSession(): Observable<SessionUser | null> {
+    return this.loadSession();
+  }
+
+  private applySession(session: SessionUser): void {
+    this.sessionSubject.next(session);
+    const permissionArray = (session.permissions || '')
+      .split(',')
+      .map(p => p.trim())
+      .filter(Boolean);
+    this.permissionService.setPermissions(permissionArray);
+    if (session.sub) {
+      sessionStorage.setItem('email', session.sub);
     }
-    localStorage.setItem('token', token);
   }
 
-  getDecodedToken(): any {
-    const token = this.getToken();
-    return token ? jwtDecode(token) : null;
+  private clearSession(): void {
+    this.sessionSubject.next(null);
+    this.permissionService.setPermissions([]);
+  }
+
+  /** @deprecated Tokens are HttpOnly cookies — use getSession() instead. */
+  saveToken(_token: string) {
+    // no-op: cookies are set by the server
+  }
+
+  getSession(): SessionUser | null {
+    return this.sessionSubject.value;
+  }
+
+  getDecodedToken(): SessionUser | null {
+    return this.getSession();
   }
 
   getPermissions(): string[] {
-    const decoded = this.getDecodedToken();
-    if (!decoded || !decoded.permissions) return [];
-    return decoded.permissions.split(',');
+    const session = this.getSession();
+    if (!session?.permissions) return [];
+    return session.permissions.split(',').map(p => p.trim()).filter(Boolean);
   }
 
   hasPermission(permission: string): boolean {
-    const permissions = this.getPermissions();
-    return permissions.includes(permission);
+    return this.getPermissions().includes(permission);
   }
 
-
   getToken(): string | null {
-    const token = localStorage.getItem('token');
-    if (!token || token === 'null' || token === 'undefined') {
-      if (token === 'null' || token === 'undefined') {
-        localStorage.removeItem('token');
-      }
-      return null;
-    }
-    return token;
+    return this.getSession() ? 'cookie-session' : null;
   }
 
   isLoggedIn(): boolean {
-    const token = this.getToken();
-    if (!token) return false;
-
-    try {
-      const decoded: any = jwtDecode(token);
-      const now = Date.now().valueOf() / 1000;
-      return decoded.exp > now;
-    } catch (e) {
-      return false;
-    }
+    return this.getSession() != null;
   }
 
-  logout() {
+  logout(): Observable<any> {
+    return this.http.post(`${this.baseUrl}/logout`, {}, this.httpOptions).pipe(
+      tap(() => this.clearLocalState())
+    );
+  }
+
+  clearLocalState(): void {
+    this.clearSession();
+    sessionStorage.removeItem('email');
+    localStorage.removeItem('blacklisted');
+    localStorage.removeItem('blacklistReason');
+    localStorage.removeItem('blacklistExpiryDate');
+    localStorage.removeItem('banType');
+    localStorage.removeItem('isPermanent');
+    localStorage.removeItem('newNotificationCount');
+    // Remove legacy token keys if present
     localStorage.removeItem('token');
     localStorage.removeItem('jwtToken');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('userPermissions');
-    localStorage.removeItem('email');
-    localStorage.removeItem('newNotificationCount');
-    // Remove any other session or user-related keys as needed
   }
 
-  // Method to clear blacklist flags (can be called when user is removed from blacklist)
   clearBlacklistFlags() {
     localStorage.removeItem('blacklisted');
     localStorage.removeItem('blacklistReason');
     localStorage.removeItem('blacklistExpiryDate');
   }
 
-  // Method to check if current user is blacklisted
   checkBlacklistStatus(): Observable<any> {
-    const token = this.getToken();
-    if (!token) {
-      return new Observable(subscriber => {
-        subscriber.error(new Error('No token found'));
-      });
-    }
-
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`
-    });
-
-    return this.http
-      .get<any>(`${this.baseUrl}/check-blacklist-status`, { headers })
-      .pipe(
-        // Avoid infinite "loading" when backend is down
-        timeout(5000)
-      );
+    return this.http.get<any>(`${this.baseUrl}/check-blacklist-status`, this.httpOptions);
   }
 
-  // Method to automatically check and clear expired blacklist flags
   checkAndClearExpiredBlacklist(): void {
     const blacklisted = localStorage.getItem('blacklisted');
     const expiryDate = localStorage.getItem('blacklistExpiryDate');
     const isPermanent = localStorage.getItem('isPermanent') === 'true';
-    
-    // Don't clear permanent bans automatically
-    if (blacklisted === 'true' && isPermanent) {
-      console.log('[Auth] User has permanent ban - not clearing automatically');
-      return;
-    }
-    
+    if (blacklisted === 'true' && isPermanent) return;
     if (blacklisted === 'true' && expiryDate) {
       const expiry = new Date(expiryDate);
-      const now = new Date();
-      
-      // If expiry date has passed, clear the blacklist flags
-      if (expiry <= now) {
-        console.log('[Auth] Blacklist expired, clearing flags');
+      if (expiry <= new Date()) {
         this.clearBlacklistFlags();
       }
     }
   }
 
   getUsername(): string | null {
-    const decoded = this.getDecodedToken();
-    return decoded?.name || null;
+    return this.getSession()?.name ?? null;
   }
 
   getUserId(): number | null {
-    const decoded = this.getDecodedToken();
-    return decoded?.id || null;
+    return this.getSession()?.id ?? null;
   }
 
   getRoles(): string[] {
-    const decoded = this.getDecodedToken();
-    return decoded?.roles ? decoded.roles.split(',') : [];
+    const roles = this.getSession()?.roles;
+    return roles ? roles.split(',').map(r => r.trim()).filter(Boolean) : [];
   }
 
-  /** Single portal redirect rule: CUSTOMER → storefront, else → admin dashboard. */
   redirectPathForRoles(roles?: string[] | string): string {
     const list = Array.isArray(roles)
       ? roles
@@ -193,115 +186,88 @@ export class AuthService {
         ? roles.split(',')
         : this.getRoles();
     const normalized = list
-      .map((r) => r.trim().toUpperCase().replace(/^ROLE_/, ''))
+      .map(r => r.trim().toUpperCase().replace(/^ROLE_/, ''))
       .filter(Boolean);
     return normalized.includes('CUSTOMER') ? '/home' : '/dashboard';
   }
-  verifyOtp(email: string, otp: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/verify-otp`, { email, otp });
+
+  verifyOtp(email: string, otp: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/verify-otp`, { email, otp }, this.httpOptions);
   }
 
-  verifyLoginOtp(email: string, otp: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/verify-login-otp`, { email, otp });
+  verifyLoginOtp(email: string, otp: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/verify-login-otp`, { email, otp }, this.httpOptions).pipe(
+      tap(() => this.loadSession().subscribe())
+    );
   }
 
   resendOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/resend-otp`, { email });
+    return this.http.post(`${this.baseUrl}/resend-otp`, { email }, this.httpOptions);
   }
 
-
-
-
   updateUserDetails(details: any): Observable<any> {
-    const token = this.getToken();
-    if (!token) {
-      console.error('No token found in localStorage');
-      return new Observable(subscriber => {
-        subscriber.error(new Error('No token found'));
-      });
-    }
-
-    console.log('Token being used:', token);
-    const decoded = this.getDecodedToken();
-    console.log('Decoded token:', decoded);
-
-    const headers = new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
+    return this.http.put(`${this.baseUrl}/user/${details.id}`, details, {
+      ...this.httpOptions,
+      headers: new HttpHeaders({ 'Content-Type': 'application/json' })
     });
-
-    console.log('Request URL:', `${this.baseUrl}/user/${details.id}`);
-    console.log('Request payload:', JSON.stringify(details, null, 2));
-    console.log('Request headers:', headers);
-
-    return this.http.put(`${this.baseUrl}/user/${details.id}`, details, { headers });
   }
 
   sendRegisterOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/sendOtp`, { email });
+    return this.http.post(`${this.baseUrl}/sendOtp`, { email }, this.httpOptions);
   }
 
   sendResetOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/send-reset-otp`, { email });
+    return this.http.post(`${this.baseUrl}/send-reset-otp`, { email }, this.httpOptions);
   }
 
-  resetPassword(email: string, newPassword: string) {
-    return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, newPassword });
+  resetPassword(email: string, otp: string, newPassword: string) {
+    return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, otp, newPassword }, this.httpOptions);
   }
 
   assignRoleToUser(userId: number, roleId: number): Observable<any> {
-    return this.http.put(`${this.baseUrl}/users/${userId}/assign-role?roleId=${roleId}`, {});
+    return this.http.put(`${this.baseUrl}/users/${userId}/assign-role?roleId=${roleId}`, {}, this.httpOptions);
   }
 
   getUsersByRoleId(roleId: number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/user/roles/${roleId}/users`);
+    return this.http.get<any[]>(`${this.baseUrl}/user/roles/${roleId}/users`, this.httpOptions);
   }
 
   getAllUsers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.baseUrl}/user/all`);
+    return this.http.get<any[]>(`${this.baseUrl}/user/all`, this.httpOptions);
   }
 
-
-
-
-uploadProfileImage(file: File): Observable<any> { //add for profile avatar update by pmk june 13
-  const token = this.getToken();
-  if (!token) {
-    console.error('No token found in localStorage');
-    return new Observable(subscriber => {
-      subscriber.error(new Error('No token found'));
-    });
+  uploadProfileImage(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('image', file);
+    return this.http.put(`${this.baseUrl}/update-avatar`, formData, this.httpOptions);
   }
-
-  const formData = new FormData();
-  formData.append('image', file);
-
-  const headers = new HttpHeaders({
-    'Authorization': `Bearer ${token}`
-  });
-
-  return this.http.put(`${this.baseUrl}/update-avatar`, formData, { headers });
-}
 
   sendLoginOtp(email: string): Observable<any> {
-    return this.http.post(`${this.baseUrl}/send-login-otp`, { email });
+    return this.http.post(`${this.baseUrl}/send-login-otp`, { email }, this.httpOptions);
   }
 
-    getUserVipTier(): string | null {
-    const token = localStorage.getItem('token');
-    
-    if (!token) return null;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.vipTier || null;
-    } catch {
-      return null;
-    }
+  getUserVipTier(): string | null {
+    return this.getSession()?.vipTier ?? null;
   }
 
   refreshToken(): Observable<any> {
-    const refreshToken = localStorage.getItem('refreshToken');
-    return this.http.post(`${this.baseUrl}/refresh-token`, { refreshToken });
+    return this.http.post(`${this.baseUrl}/refresh-token`, {}, this.httpOptions).pipe(
+      tap(() => this.loadSession().subscribe())
+    );
   }
+}
 
+function fromLocation(): Observable<{ city?: string; region?: string; country?: string }> {
+  return new Observable(subscriber => {
+    fetch('https://ipinfo.io/json')
+      .then(res => res.json())
+      .then(data => {
+        subscriber.next(data);
+        subscriber.complete();
+      })
+      .catch(() => {
+        subscriber.next({});
+        subscriber.complete();
+      });
+  });
 }

@@ -26,7 +26,7 @@ public class AddressServiceImpl implements AddressService{
     //add service (Kei_
     @Override
     public Long addNewAddress(AddressDTO dto){
-
+        com.Ojt.Ecommerce.security.SecurityUtils.enforceSelfOrAdmin(dto.getUserId());
         User user = userRepository.findById(dto.getUserId()).orElseThrow(() -> new RuntimeException("User not found"));
 
         Address address = Address.builder()
@@ -49,7 +49,7 @@ public class AddressServiceImpl implements AddressService{
 
     @Override
     public List<AddressDTO> getAddressByUserId(Long userId){
-
+        com.Ojt.Ecommerce.security.SecurityUtils.enforceSelfOrAdmin(userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -81,11 +81,9 @@ public class AddressServiceImpl implements AddressService{
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
 
-        // Optionally, check if userId matches the address's user
-        if (dto.getUserId() != null && address.getUser() != null && !dto.getUserId().equals(address.getUser().getId())) {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            address.setUser(user);
+        com.Ojt.Ecommerce.security.SecurityUtils.enforceSelfOrAdmin(address.getUser().getId());
+        if (dto.getUserId() != null && !dto.getUserId().equals(address.getUser().getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("Cannot reassign address to another user");
         }
 
         address.setAddress(dto.getAddress());
@@ -105,6 +103,7 @@ public class AddressServiceImpl implements AddressService{
     public void deleteAddress(Long id) {
         Address address = addressRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Address not found"));
+        com.Ojt.Ecommerce.security.SecurityUtils.enforceSelfOrAdmin(address.getUser().getId());
         address.setStatus(0);
         addressRepository.save(address);
     }

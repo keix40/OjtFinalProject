@@ -10,7 +10,10 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
+import com.Ojt.Ecommerce.security.SecurityUtils;
 
 import com.Ojt.Ecommerce.dto.AddressDTO;
 import com.Ojt.Ecommerce.dto.CartDTO;
@@ -188,6 +191,14 @@ public class OrderService {
     public UserOrder createOrder(UserOrderDTO dto) {
         ensureFirstTimeBuyerDiscountExists();
 
+        Long currentUserId = SecurityUtils.requireCurrentUserId();
+        if (!currentUserId.equals(dto.getUserId()) && !SecurityUtils.hasAnyAdminViewPermission()) {
+            throw new AccessDeniedException("Cannot create order for another user");
+        }
+        if (!SecurityUtils.hasAnyAdminViewPermission()) {
+            dto.setUserId(currentUserId);
+        }
+
         // Debug logging
         System.out.println("=== CREATE ORDER DEBUG ===");
         System.out.println("User ID: " + dto.getUserId());
@@ -227,6 +238,9 @@ public class OrderService {
             if (dto.getCardId() != null) {
                 SavedCard savedCard = savedCardRepo.findById(dto.getCardId())
                         .orElseThrow(() -> new RuntimeException("Saved card not found with ID: " + dto.getCardId()));
+                if (savedCard.getUser() == null || !savedCard.getUser().getId().equals(user.getId())) {
+                    throw new AccessDeniedException("Saved card does not belong to user");
+                }
                 order.setSavedCard(savedCard);
             }
 
@@ -293,16 +307,21 @@ public class OrderService {
                 Product product = proRepo.findById(item.getProductId())
                         .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
 
+                ProductVariant variant = null;
+                if (item.getVariantId() != null) {
+                    variant = variantRepo.findById(item.getVariantId())
+                            .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
+                }
+                double unitPrice = resolveUnitPrice(product, variant);
+                item.setPrice(unitPrice);
+
                 UserOrderHasProduct orderProduct = new UserOrderHasProduct();
                 orderProduct.setUserOrder(savedOrder);
                 orderProduct.setProduct(product);
                 orderProduct.setQuantity(item.getQuantity());
-                orderProduct.setUnitPrice(item.getPrice());
+                orderProduct.setUnitPrice(unitPrice);
 
-                if (item.getVariantId() != null) {
-                    ProductVariant variant = variantRepo.findById(item.getVariantId())
-                            .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
-
+                if (variant != null) {
                     if (variant.getStock() == null || variant.getStock() < item.getQuantity()) {
                         throw new RuntimeException("Insufficient stock for variant ID: " + item.getVariantId());
                     }
@@ -427,12 +446,27 @@ public class OrderService {
     //add discount preivew by pmk july 9
 
     public OrderPreviewDTO previewOrder(UserOrderDTO dto) {
-        OrderPreviewDTO preview = new OrderPreviewDTO();
-        preview.setCartItems(dto.getCartItem());
+        Long currentUserId = SecurityUtils.requireCurrentUserId();
+        if (!currentUserId.equals(dto.getUserId()) && !SecurityUtils.hasAnyAdminViewPermission()) {
+            throw new AccessDeniedException("Cannot preview order for another user");
+        }
 
-        double subtotal = dto.getCartItem().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+        OrderPreviewDTO preview = new OrderPreviewDTO();
+
+        double subtotal = 0.0;
+        for (CartDTO item : dto.getCartItem()) {
+            Product product = proRepo.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
+            ProductVariant variant = null;
+            if (item.getVariantId() != null) {
+                variant = variantRepo.findById(item.getVariantId())
+                        .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
+            }
+            double unitPrice = resolveUnitPrice(product, variant);
+            item.setPrice(unitPrice);
+            subtotal += unitPrice * item.getQuantity();
+        }
+        preview.setCartItems(dto.getCartItem());
         preview.setSubtotal(subtotal);
 
         String discountName = null;
@@ -876,5 +910,16 @@ public class OrderService {
 
     public long getBrandCount() {
         return repo.countBrands();
+    }
+
+    /** Authoritative catalog price — never trust client-supplied CartDTO.price. */
+    double resolveUnitPrice(Product product, ProductVariant variant) {
+        if (variant != null && variant.getPrice() != null) {
+            return variant.getPrice().doubleValue();
+        }
+        if (product.getPrice() != null) {
+            return product.getPrice();
+        }
+        throw new RuntimeException("No authoritative price for product ID: " + product.getId());
     }
 }

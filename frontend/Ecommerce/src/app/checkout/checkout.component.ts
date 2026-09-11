@@ -448,7 +448,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             console.log('Phone number updated successfully:', response);
             // Update the token with new phone number
             if (response.token) {
-              this.authService.saveToken(response.token);
+              this.authService.loadSession().subscribe();
             }
             this.proceedToNextStep();
           },

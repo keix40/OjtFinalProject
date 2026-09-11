@@ -279,7 +279,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
 
     this.authService.updateUserDetails(updatedData).subscribe({
       next: (response: any) => {
-        if (response.token) this.authService.saveToken(response.token);
+        if (response.authenticated) this.authService.loadSession().subscribe();
         if (response.user) this.userDetails = { ...this.userDetails, ...response.user };
       this.isEditing = false;
       this.originalAvatarUrl = this.userDetails?.profileImage || null;
@@ -305,7 +305,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
     this.authService.uploadProfileImage(this.selectedAvatarFile).subscribe({
       next: (response: any) => {
         const newProfileImageUrl = response.profileImage || null;
-        if (response.token) this.authService.saveToken(response.token);
+        if (response.authenticated) this.authService.loadSession().subscribe();
         updateUser(newProfileImageUrl);
       },
       error: (err) => {

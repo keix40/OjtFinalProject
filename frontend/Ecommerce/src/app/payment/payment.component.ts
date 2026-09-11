@@ -596,7 +596,7 @@ export class PaymentComponent implements OnInit, OnDestroy, AfterViewInit {
         id: Number(card.id),
         cardholderName: card.cardholderName,
         cardBrand: card.cardBrand,
-        cardNumber: card.cardNumber,
+        cardNumber: card.maskedNumber || card.lastFour || card.cardNumber,
         expiryDate: card.expiryDate,
         isDefault: card.isDefault
       }));

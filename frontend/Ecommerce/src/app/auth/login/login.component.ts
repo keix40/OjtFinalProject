@@ -109,35 +109,21 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
         this.showCaptchaModal = true;
         return;
       }
-      if (!res.accessToken) {
-        this.loginError = 'Login succeeded but no access token was returned.';
-        return;
-      }
-      this.auth.saveToken(res.accessToken);
-      if (res.refreshToken) {
-        localStorage.setItem('refreshToken', res.refreshToken);
-      }
-
-      // Call backend to check first time buyer eligibility (don't block login on failure)
-      this.http.get('/api/notifications/check-first-time-buyer').subscribe({
-        error: () => { /* ignore — not required for login */ }
+      this.auth.establishSession().subscribe({
+        next: (session) => {
+          if (!session) {
+            this.loginError = 'Login succeeded but session could not be established.';
+            return;
+          }
+          this.http.get('/api/notifications/check-first-time-buyer', { withCredentials: true }).subscribe({
+            error: () => undefined
+          });
+          this.router.navigate([this.auth.redirectPathForRoles(session.roles)]);
+        },
+        error: () => {
+          this.loginError = 'Login succeeded but session could not be established.';
+        }
       });
-
-      const decoded = this.auth.getDecodedToken(); // Only declare once
-      const permissionString = decoded?.permissions || '';
-      const permissionArray = permissionString.split(',').map((p: string) => p.trim()).filter(Boolean);
-
-      this.permissionService.setPermissions(permissionArray);
-      // Also set in localStorage for consistency
-      localStorage.setItem('userPermissions', JSON.stringify(permissionArray));
-
-      // Role-based redirect (centralized)
-      const roles = decoded?.roles ? decoded.roles.split(',') : [];
-      this.router.navigate([this.auth.redirectPathForRoles(roles)]);
-
-      if (decoded && decoded.sub) {
-        localStorage.setItem('email', decoded.sub); // reuse 'decoded'
-      }
     },
     error: (err) => {
       if (err?.error?.otpRequired) {
@@ -305,24 +291,20 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
   this.resetError = '';
   this.resetSuccessMessage = '';
 
-  this.auth.resetPassword(this.forgotEmail, this.newPassword).subscribe({
+  this.auth.resetPassword(this.forgotEmail, this.enteredOtp, this.newPassword).subscribe({
     next: () => {
       this.isResettingPassword = false;
       this.showResetModal = false;
       this.resetSuccessMessage = 'Password reset successfully. Logging you in ...';
 
-     // Automatically log in the user with their new password
       this.auth.login({
         email: this.forgotEmail,
         password: this.newPassword
       }).subscribe({
-        next: (loginRes) => {
-          this.auth.saveToken(loginRes.accessToken);
-          this.router.navigate(['/home']);
-          const decoded: any = this.auth.getDecodedToken();
-    if (decoded && decoded.sub) {
-      localStorage.setItem('email', decoded.sub); // "sub" is the email in your token
-    }
+        next: () => {
+          this.auth.establishSession().subscribe(() => {
+            this.router.navigate(['/home']);
+          });
         },
         error: (loginErr) => {
           console.error('Auto-login failed after password reset:', loginErr);

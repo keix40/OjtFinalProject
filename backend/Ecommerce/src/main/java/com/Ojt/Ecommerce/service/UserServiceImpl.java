@@ -147,7 +147,7 @@ public class UserServiceImpl implements UserService {
         user.setCreatedDate(LocalDateTime.now());
         user.setOtpCode(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        user.setVerified(true); // Set as verified if OTP is verified before
+        user.setVerified(false);
         user.setStatus(UserStatus.ACTIVE); // Explicitly set status to ACTIVE
 //        User user = User.builder()
 //                .name(request.getName())

@@ -95,7 +95,7 @@ export class AdminProfileComponent implements OnInit {
       this.authService.updateUserDetails(updatedData).subscribe({
         next: (response: any) => {
           if (response.token) {
-            this.authService.saveToken(response.token);
+            this.authService.loadSession().subscribe();
             const newDecoded = this.authService.getDecodedToken();
             if (newDecoded) {
               this.adminDetails = {
@@ -137,7 +137,7 @@ export class AdminProfileComponent implements OnInit {
       this.authService.uploadProfileImage(this.selectedAvatarFile).subscribe({
         next: (response: any) => {
           const newProfileImageUrl = response.profileImage || null;
-          if (response.token) this.authService.saveToken(response.token);
+          if (response.authenticated) this.authService.loadSession().subscribe();
           updateAdmin(newProfileImageUrl);
         },
         error: (err) => {

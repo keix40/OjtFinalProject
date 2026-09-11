@@ -20,3 +20,5 @@
 
 # --- Environment files ---
 .env
+.env.local
+backend/Ecommerce/.env

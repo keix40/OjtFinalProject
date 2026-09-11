@@ -155,17 +155,12 @@ export class VerifyOtpComponent implements OnInit {
         console.log('Response has refreshToken:', res && res.refreshToken); // Debug log
         
         // If this is a login OTP, show CAPTCHA before redirecting
-        if (this.isLoginOtp && res && res.accessToken && res.refreshToken) {
-          console.log('Login OTP verified, showing CAPTCHA'); // Debug log
-          // Save tokens for login flow
-          this.authService.saveToken(res.accessToken);
-          localStorage.setItem('refreshToken', res.refreshToken);
-          this.showCaptchaModal = true;
-          this.generateCaptcha();
+        if (this.isLoginOtp && res && (res.authenticated || res.accessToken)) {
+          this.authService.establishSession().subscribe(() => {
+            this.showCaptchaModal = true;
+            this.generateCaptcha();
+          });
         } else if (this.isLoginOtp) {
-          // Login OTP but no tokens returned - this shouldn't happen
-          console.error('Login OTP verified but no tokens returned:', res);
-          console.log('Response keys:', Object.keys(res || {}));
           this.error = 'Login verification failed. Please try again.';
         } else {
           // Regular email verification OTP

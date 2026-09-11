@@ -44,8 +44,8 @@ export class AppComponent implements OnInit, OnDestroy {
     const storedCount = localStorage.getItem('newNotificationCount');
     this.newNotificationCount = storedCount ? parseInt(storedCount, 10) : 0;
     
-    // Check and clear expired blacklist flags on app initialization
     this.authService.checkAndClearExpiredBlacklist();
+    this.authService.loadSession().subscribe();
     
     this.notificationSidebarService.getSidebarState().subscribe(open => {
       this.showNotificationSidebar = open;
