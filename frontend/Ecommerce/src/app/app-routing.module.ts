@@ -224,7 +224,7 @@ const routes: Routes = [
     canActivate: [AuthGuard, BlacklistGuard],
     data: { role: 'admin' },
     children: [
-      { path: 'dashboard', component: DashboardComponent, data: { breadcrumb: 'Dashboard', role: 'admin' } },
+      { path: 'dashboard', component: DashboardComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Dashboard', permission: PermissionConstants.ORDERS_VIEW, role: 'admin' } },
       // Products
       { path: 'product', component: ProductComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Products', permission: PermissionConstants.PRODUCTS_CREATE, role: 'admin' } },
       { path: 'product-edit/:id', component: ProductComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Edit Product', permission: PermissionConstants.PRODUCTS_UPDATE, role: 'admin' } },
@@ -249,15 +249,15 @@ const routes: Routes = [
       { path: 'users/vip', component: VipCustomersComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'VIP Customers', permission: PermissionConstants.CUSTOMERS_VIEW_VIP, role: 'admin' } },
       { path: 'users/create', component: CreateUserComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Create User', permission: PermissionConstants.USERS_CREATE, role: 'admin' } },
       { path: 'users/admins', component: AdminUsersComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Admins', permission: PermissionConstants.ADMIN_USERS_VIEW, role: 'admin' } },
-      { path: 'users/roles', component: RolesPermissionsComponent, data: { breadcrumb: 'Roles & Permissions', permission: PermissionConstants.PERMISSIONS_VIEW, role: 'admin' } },
+      { path: 'users/roles', component: RolesPermissionsComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Roles & Permissions', permission: PermissionConstants.PERMISSIONS_VIEW, role: 'admin' } },
       { path: 'users/blacklist', component: BlacklistComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Blacklist', permission: PermissionConstants.BLACKLIST_VIEW, role: 'admin' } },
       { path: 'users/login-attempts', component: LoginAttemptsComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Login Attempts', permission: PermissionConstants.SECURITY_VIEW_ATTEMPTS, role: 'admin' } },
       { path: 'users/activity', component: ActivityLogsComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Activity Logs', permission: PermissionConstants.ACTIVITY_LOGS_VIEW, role: 'admin' } },
       // Admin Settings
-      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Revenue Target',} },
-      { path: 'admin/vip-tiers', component: VipTiersAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'VIP Tiers'} },
-      { path: 'admin/policies', component: AdminPolicyComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Policies', role: 'admin' } },
-      { path: 'admin/policies/edit/:id', component: AdminPolicyEditComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Edit Policy' } },
+      { path: 'revenue-target-admin', component: RevenueTargetAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Revenue Target', permission: PermissionConstants.REVENUE_TARGET_VIEW, role: 'admin' } },
+      { path: 'admin/vip-tiers', component: VipTiersAdminComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'VIP Tiers', permission: PermissionConstants.VIP_TIERS_VIEW, role: 'admin' } },
+      { path: 'admin/policies', component: AdminPolicyComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Policies', permission: PermissionConstants.POLICIES_VIEW, role: 'admin' } },
+      { path: 'admin/policies/edit/:id', component: AdminPolicyEditComponent, canActivate: [PermissionGuard], data: { breadcrumb: 'Edit Policy', permission: PermissionConstants.POLICIES_UPDATE, role: 'admin' } },
       { path: 'admin/profile/:id', component: AdminProfileComponent, canActivate: [AuthGuard], data: { breadcrumb: 'Profile' } },
 
       //Event Management

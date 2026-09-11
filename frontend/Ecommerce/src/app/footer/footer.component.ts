@@ -5,6 +5,7 @@ import { BrandService } from '../services/brand.service';
 import { Category } from '../category';
 import { BrandListDTO } from '../brand';
 import { CommonModule } from '@angular/common';
+import { mediaUrl } from '../../shared/media-url.util';
 
 @Component({
   selector: 'app-footer',
@@ -120,7 +121,7 @@ export class FooterComponent implements OnInit {
     if (category.image.startsWith('http://') || category.image.startsWith('https://')) {
       return category.image;
     }
-    return `http://localhost:8080${category.image}`;
+    return mediaUrl(category.image);
   }
 
   // Get brand image URL
@@ -131,7 +132,7 @@ export class FooterComponent implements OnInit {
     if (brand.image.startsWith('http://') || brand.image.startsWith('https://')) {
       return brand.image;
     }
-    return `http://localhost:8080${brand.image}`;
+    return mediaUrl(brand.image);
   }
 
   // Navigate to category

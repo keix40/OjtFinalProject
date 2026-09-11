@@ -100,7 +100,6 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
       // Redirect to OTP page if required
       if (res.otpRequired) {
         const email = this.loginForm.get('email')?.value;
-        console.log('Login: Navigating to verify-otp with email:', email, 'reason: login'); // Debug log
         this.router.navigate(['/verify-otp'], { queryParams: { email, reason: 'login' } });
         return;
       }
@@ -128,7 +127,6 @@ this.loginForm.get('password')?.valueChanges.subscribe(() => {
     error: (err) => {
       if (err?.error?.otpRequired) {
         const email = this.loginForm.get('email')?.value;
-        console.log('Login Error: Navigating to verify-otp with email:', email, 'reason: login'); // Debug log
         this.router.navigate(['/verify-otp'], { queryParams: { email, reason: 'login' } });
         return;
       }

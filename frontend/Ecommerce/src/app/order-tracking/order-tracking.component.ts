@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SafeHtml } from '@angular/platform-browser';
+import { HtmlSanitizerService } from '../shared/html-sanitizer.service';
 import { OrderService } from '../services/order.service';
 import { ModalService } from '../services/modal.service';
 import { ReturnService } from '../services/return.service';
@@ -36,7 +37,7 @@ export class OrderTrackingComponent {
     private modalService: ModalService,
     private returnService: ReturnService,
     private policyService: PolicyService,
-    private sanitizer: DomSanitizer,
+    private htmlSanitizer: HtmlSanitizerService,
     private priceFormatService: PriceFormatService
   ) {}
 
@@ -53,7 +54,7 @@ export class OrderTrackingComponent {
         this.returnPolicyText = policy.content;
         // Process content for smart text wrapping
         this.returnPolicyText = this.processContentForSmartWrapping(this.returnPolicyText);
-        this.returnPolicyHtml = this.sanitizer.bypassSecurityTrustHtml(this.returnPolicyText);
+        this.returnPolicyHtml = this.htmlSanitizer.sanitize(this.returnPolicyText);
         this.isLoadingPolicy = false;
       },
       error: (error) => {
@@ -94,7 +95,7 @@ export class OrderTrackingComponent {
 <p>For questions about returns, please contact our customer service team.</p>`;
         // Process fallback content for smart text wrapping
         this.returnPolicyText = this.processContentForSmartWrapping(this.returnPolicyText);
-        this.returnPolicyHtml = this.sanitizer.bypassSecurityTrustHtml(this.returnPolicyText);
+        this.returnPolicyHtml = this.htmlSanitizer.sanitize(this.returnPolicyText);
         this.selectedPolicy = {
           content: this.returnPolicyText
         };

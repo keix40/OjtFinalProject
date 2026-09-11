@@ -19,6 +19,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener } from '@angular/core';
 import { ColorUtilityService } from '../services/color-utility.service';
 import { PriceFormatService } from '../services/price-format.service';
+import { mediaUrl } from '../../shared/media-url.util';
 
 interface ProductImage {
   id: number;
@@ -303,7 +304,7 @@ export class UserProductDetailComponent implements OnInit {
           reviewCount: data.reviewCount || 0,
           images: (data.productImages || []).map((img: any) => ({
             id: img.id,
-            url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
+            url: img.imageUrl.startsWith('http') ? img.imageUrl : mediaUrl(img.imageUrl),
             isMain: false,
             status: img.status === 1 ? 'active' : 'inactive',
             variantId: img.variantId || null
@@ -315,7 +316,7 @@ export class UserProductDetailComponent implements OnInit {
             stock: variant.stock,
             images: (data.productImages || []).filter((img: any) => img.variantId === variant.id).map((img: any) => ({
               id: img.id,
-              url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
+              url: img.imageUrl.startsWith('http') ? img.imageUrl : mediaUrl(img.imageUrl),
               isMain: false,
               status: img.status === 1 ? 'active' : 'inactive',
               variantId: img.variantId || null
@@ -508,7 +509,7 @@ checkFirstTimeBuyerDiscount(): void {
       userId: userId,
       cartItem: []
     };
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview: any) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
       },
@@ -1096,12 +1097,12 @@ checkFirstTimeBuyerDiscount(): void {
     this.existingReviewMedia = [];
     if (review.imageUrls && review.imageUrls.length > 0) {
       review.imageUrls.forEach((url: string) => {
-        this.existingReviewMedia.push({ url: 'http://localhost:8080' + url, type: 'image' });
+        this.existingReviewMedia.push({ url: '' + url, type: 'image' });
       });
     }
     if (review.videoUrls && review.videoUrls.length > 0) {
       review.videoUrls.forEach((url: string) => {
-        this.existingReviewMedia.push({ url: 'http://localhost:8080' + url, type: 'video' });
+        this.existingReviewMedia.push({ url: '' + url, type: 'video' });
       });
     }
     
@@ -1310,8 +1311,8 @@ checkFirstTimeBuyerDiscount(): void {
   // Helper to get the combined media array for the review
   getMediaModalArray(): { type: 'image' | 'video', url: string }[] {
     if (!this.mediaModalCurrentReview) return [];
-    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
-    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: '' + url }));
+    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: '' + url }));
     return [...images, ...videos];
   }
 
@@ -1355,8 +1356,8 @@ checkFirstTimeBuyerDiscount(): void {
   }
 
   getAllMedia(review: any): { type: 'image' | 'video', url: string }[] {
-    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
-    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: '' + url }));
+    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: '' + url }));
     return [...images, ...videos];
   }
 
@@ -1726,7 +1727,7 @@ checkFirstTimeBuyerDiscount(): void {
   // Get product image URL
   getProductImageUrl(product: any): string {
     if (product.productImages?.length > 0) {
-      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+      return '' + product.productImages[0].imageUrl;
     }
     return '/assets/images/default-brand.svg';
   }

@@ -13,7 +13,7 @@ export interface BrandHasCategory {
   providedIn: 'root'
 })
 export class BrandService {
- baseUrl = 'http://localhost:8080/brand';
+ baseUrl = '/brand';
 
   constructor(private http: HttpClient) { }
 
@@ -69,18 +69,18 @@ export class BrandService {
   
   // Export methods using Jasper Reports
   exportBrandReportToPDF(): Observable<Blob> {
-    return this.http.get(`http://localhost:8080/api/brand-reports/pdf`, { responseType: 'blob' });
+    return this.http.get(`/api/brand-reports/pdf`, { responseType: 'blob' });
   }
 
   exportSelectedBrandsToPDF(brandIds: number[]): Observable<Blob> {
-    return this.http.post(`http://localhost:8080/api/brand-reports/pdf/selected`, brandIds, { responseType: 'blob' });
+    return this.http.post(`/api/brand-reports/pdf/selected`, brandIds, { responseType: 'blob' });
   }
 
   exportBrandReportToCSV(): Observable<Blob> {
-    return this.http.get(`http://localhost:8080/api/brand-reports/csv`, { responseType: 'blob' });
+    return this.http.get(`/api/brand-reports/csv`, { responseType: 'blob' });
   }
 
   exportSelectedBrandsToCSV(brandIds: number[]): Observable<Blob> {
-    return this.http.post(`http://localhost:8080/api/brand-reports/csv/selected`, brandIds, { responseType: 'blob' });
+    return this.http.post(`/api/brand-reports/csv/selected`, brandIds, { responseType: 'blob' });
   }
 }

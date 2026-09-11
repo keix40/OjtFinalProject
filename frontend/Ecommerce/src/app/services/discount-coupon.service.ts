@@ -6,9 +6,9 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class DiscountCouponService  {
-  private adminBaseUrl = 'http://localhost:8080/api/admin/discounts';
+  private adminBaseUrl = '/api/admin/discounts';
 
-  private couponValidateUrl = 'http://localhost:8080/api/coupons/validate';
+  private couponValidateUrl = '/api/coupons/validate';
 
   constructor(private http: HttpClient) {}
 

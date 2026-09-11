@@ -6,6 +6,7 @@ import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import { ReviewMessage } from '../review-message';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HostListener, ViewChild, ElementRef } from '@angular/core';
+import { mediaUrl } from '../../shared/media-url.util';
 // Import your review service and review model as needed
 
 @Component({
@@ -175,8 +176,8 @@ export class ReviewComponent implements OnInit, OnDestroy {
   // Helper to get the combined media array for the review
   getMediaModalArray(): { type: 'image' | 'video', url: string }[] {
     if (!this.mediaModalCurrentReview) return [];
-    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
-    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: '' + url }));
+    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: '' + url }));
     return [...images, ...videos];
   }
 
@@ -358,8 +359,8 @@ export class ReviewComponent implements OnInit, OnDestroy {
   }  
 
   getAllMedia(review: any): { type: 'image' | 'video', url: string }[] {
-    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
-    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: '' + url }));
+    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: '' + url }));
     return [...images, ...videos];
   }
 
@@ -392,6 +393,6 @@ export class ReviewComponent implements OnInit, OnDestroy {
     }
     // Always ensure a leading slash for local images
     const path = review.userImage.startsWith('/') ? review.userImage : '/' + review.userImage;
-    return `http://localhost:8080${path}`;
+    return mediaUrl(path);
   }
 }

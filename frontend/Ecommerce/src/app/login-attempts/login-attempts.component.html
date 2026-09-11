@@ -275,7 +275,7 @@
           <td>
             <div class="location-cell">
               <span class="location-text">{{ attempt.location }}</span>
-              <span class="country-flag" [innerHTML]="getCountryFlag(attempt.countryCode)"></span>
+              <span class="country-flag" [innerHTML]="getCountryFlag(attempt.countryCode) | safeHtml"></span>
             </div>
           </td>
           <td>
@@ -396,7 +396,7 @@
                 <div class="text-xs text-gray-500">Location</div>
                 <div class="flex items-center gap-2">
                   <span>{{ selectedAttemptDetails.location }}</span>
-                  <span class="country-flag" [innerHTML]="getCountryFlag(selectedAttemptDetails.countryCode)"></span>
+                  <span class="country-flag" [innerHTML]="getCountryFlag(selectedAttemptDetails.countryCode) | safeHtml"></span>
                   <a *ngIf="selectedAttemptDetails.location && selectedAttemptDetails.location !== 'Unknown'" class="ml-2 text-blue-500 underline" target="_blank"
                     [href]="'https://www.google.com/maps/search/' + encodeURIComponent(selectedAttemptDetails.location)">
                     Map

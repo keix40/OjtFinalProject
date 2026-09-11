@@ -10,7 +10,7 @@ import { Product, ProductDTO, ProductList } from '../product';
 })
 export class ProductService {
 
-  baseUrl = 'http://localhost:8080/product';
+  baseUrl = '/product';
 
   constructor(private http: HttpClient) {}
 
@@ -131,28 +131,28 @@ export class ProductService {
 
   // Product Report endpoints - Jasper Reports (CSV/PDF like order management)
   exportProductReportToCSV(): Observable<Blob> {
-    return this.http.get(`http://localhost:8080/api/product-reports/csv`, { responseType: 'blob' });
+    return this.http.get(`/api/product-reports/csv`, { responseType: 'blob' });
   }
 
   exportSelectedProductsToCSV(productIds: number[]): Observable<Blob> {
-    return this.http.post(`http://localhost:8080/api/product-reports/csv/selected`, productIds, { responseType: 'blob' });
+    return this.http.post(`/api/product-reports/csv/selected`, productIds, { responseType: 'blob' });
   }
 
   exportProductReportToPDF(): Observable<Blob> {
-    return this.http.get(`http://localhost:8080/api/product-reports/pdf`, { responseType: 'blob' });
+    return this.http.get(`/api/product-reports/pdf`, { responseType: 'blob' });
   }
 
   exportSelectedProductsToPDF(productIds: number[]): Observable<Blob> {
-    return this.http.post(`http://localhost:8080/api/product-reports/pdf/selected`, productIds, { responseType: 'blob' });
+    return this.http.post(`/api/product-reports/pdf/selected`, productIds, { responseType: 'blob' });
   }
 
   // Additional methods for consistency with order management
   exportAllProductsToCSV(): Observable<Blob> {
-    return this.http.get(`http://localhost:8080/api/product-reports/csv`, { responseType: 'blob' });
+    return this.http.get(`/api/product-reports/csv`, { responseType: 'blob' });
   }
 
   exportAllProductsToPDF(): Observable<Blob> {
-    return this.http.get(`http://localhost:8080/api/product-reports/pdf`, { responseType: 'blob' });
+    return this.http.get(`/api/product-reports/pdf`, { responseType: 'blob' });
   }
   
 }

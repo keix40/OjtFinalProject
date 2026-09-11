@@ -110,7 +110,7 @@
               <div class="lux-policy-title">{{ policy.title }}</div>
             </td>
             <td>
-              <div class="policy-content-preview line-clamp-2" [innerHTML]="policy.content"></div>
+              <div class="policy-content-preview line-clamp-2" [innerHTML]="policy.content | safeHtml"></div>
             </td>
             <td>
               <lux-badge *ngIf="policy.status === 1" tone="success">Active</lux-badge>
@@ -147,7 +147,7 @@
       </div>
       <lux-button type="button" variant="ghost" (pressed)="closePolicyDetail()">Close</lux-button>
     </header>
-    <div class="lux-modal-body policy-content-full" [innerHTML]="selectedPolicy.content"></div>
+    <div class="lux-modal-body policy-content-full" [innerHTML]="selectedPolicy.content | safeHtml"></div>
     <footer class="lux-modal-footer">
       <lux-button type="button" variant="primary" (pressed)="editPolicy(selectedPolicy)">Edit Policy</lux-button>
       <lux-button type="button" variant="secondary" (pressed)="closePolicyDetail()">Close</lux-button>

@@ -73,7 +73,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     const userId = this.authService.getUserId();
     if (userId) {
       // Use navigator.sendBeacon for reliability on unload
-      const url = 'http://localhost:8080/api/admin-users/activity';
+      const url = '/api/admin-users/activity';
       const data = JSON.stringify({ userId, type: 'logout' });
       navigator.sendBeacon(url, data);
     }

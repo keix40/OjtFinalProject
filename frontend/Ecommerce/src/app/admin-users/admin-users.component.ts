@@ -169,7 +169,7 @@ export class AdminUsersComponent implements OnInit{
   connectWebSocket(): void {
     this.stompClient = new Client({
       brokerURL: undefined,
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         this.stompSub = this.stompClient!.subscribe('/topic/admin-online-status', (message: IMessage) => {

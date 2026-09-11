@@ -45,8 +45,6 @@ export class VerifyOtpComponent implements OnInit {
       // Store the reason to determine which endpoint to call
       this.isLoginOtp = reason === 'login';
       
-      console.log('Verify OTP Component - Email:', this.email, 'Reason:', reason, 'IsLoginOtp:', this.isLoginOtp); // Debug log
-      console.log('All query params:', params); // Debug all params
       
       // Also check navigation state
       const navigation = this.router.getCurrentNavigation();
@@ -58,7 +56,6 @@ export class VerifyOtpComponent implements OnInit {
         if (state['reason'] && !this.isLoginOtp) {
           this.isLoginOtp = state['reason'] === 'login';
         }
-        console.log('Navigation state:', state);
       }
       
       if (this.email) {
@@ -76,7 +73,6 @@ export class VerifyOtpComponent implements OnInit {
     if (snapshotParams['reason'] && !this.isLoginOtp) {
       this.isLoginOtp = snapshotParams['reason'] === 'login';
     }
-    console.log('Snapshot params:', snapshotParams);
   }
 
   sendOtp() {
@@ -85,7 +81,6 @@ export class VerifyOtpComponent implements OnInit {
     this.error = '';
     this.message = '';
     
-    console.log('Sending OTP - Email:', this.email, 'IsLoginOtp:', this.isLoginOtp); // Debug log
     
     // Use the appropriate endpoint based on whether this is a login OTP
     const sendOtpObservable = this.isLoginOtp 
@@ -97,7 +92,6 @@ export class VerifyOtpComponent implements OnInit {
         this.isSending = false;
         this.otpSent = true;
         this.message = res?.message || 'OTP sent to your email.';
-        console.log('OTP sent successfully:', res); // Debug log
       },
       error: (err) => {
         this.isSending = false;
@@ -137,22 +131,16 @@ export class VerifyOtpComponent implements OnInit {
     this.error = '';
     this.message = '';
     
-    console.log('Verifying OTP - Email:', this.email, 'OTP:', otp, 'IsLoginOtp:', this.isLoginOtp); // Debug log
     
     // Use the appropriate endpoint based on whether this is a login OTP
     const verifyObservable = this.isLoginOtp 
       ? this.authService.verifyLoginOtp(this.email, otp)
       : this.authService.verifyOtp(this.email, otp);
     
-    console.log('Using endpoint:', this.isLoginOtp ? 'verify-login-otp' : 'verify-otp'); // Debug log
     
     verifyObservable.subscribe({
       next: (res) => {
         this.isVerifying = false;
-        console.log('OTP verification response:', res); // Debug log
-        console.log('Is login OTP:', this.isLoginOtp); // Debug log
-        console.log('Response has accessToken:', res && res.accessToken); // Debug log
-        console.log('Response has refreshToken:', res && res.refreshToken); // Debug log
         
         // If this is a login OTP, show CAPTCHA before redirecting
         if (this.isLoginOtp && res && (res.authenticated || res.accessToken)) {

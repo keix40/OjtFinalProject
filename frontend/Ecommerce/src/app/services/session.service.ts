@@ -103,7 +103,7 @@ export class SessionService {
 
     console.log('Starting session with payload:', payload);
 
-    this.http.post('http://localhost:8080/api/auth/user/session/start', payload).subscribe({
+    this.http.post('/api/auth/user/session/start', payload).subscribe({
       next: (response) => {
         console.log('Session started successfully for user:', sessionUserId, 'Response:', response);
       },
@@ -144,7 +144,7 @@ export class SessionService {
       return;
     }
 
-    this.http.post('http://localhost:8080/api/auth/user/session/page-view', {
+    this.http.post('/api/auth/user/session/page-view', {
       sessionId: this.sessionId
     }).subscribe({
       next: () => console.log('Page view recorded'),
@@ -165,7 +165,7 @@ export class SessionService {
   endSession() {
     if (!this.sessionId) return;
 
-    const url = 'http://localhost:8080/api/auth/user/session/end';
+    const url = '/api/auth/user/session/end';
     const payload = JSON.stringify({ sessionId: this.sessionId });
     if (navigator.sendBeacon) {
       navigator.sendBeacon(url, payload);
@@ -235,7 +235,7 @@ export class SessionService {
 
     console.log('Testing connection with payload:', testPayload);
 
-    this.http.post('http://localhost:8080/api/auth/user/session/test', testPayload).subscribe({
+    this.http.post('/api/auth/user/session/test', testPayload).subscribe({
       next: (response) => {
         console.log('Connection test successful:', response);
       },

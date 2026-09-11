@@ -156,7 +156,7 @@
     <div *ngFor="let review of reviews" class="pd-review">
       <div class="pd-review__head">
         <div class="admin-person">
-          <img class="admin-avatar" [src]="'http://localhost:8080' + review.userImage" [alt]="review.username" width="40" height="40" />
+          <img class="admin-avatar" [src]="review.userImage | mediaUrl" [alt]="review.username" width="40" height="40" />
           <div>
             <div class="admin-person__name">{{ review.username }}</div>
             <div class="admin-person__meta">{{ review.timestamp | date:'medium' }} · {{ review.rating }}/5</div>

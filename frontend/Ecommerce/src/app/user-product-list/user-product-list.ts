@@ -419,7 +419,7 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
 
   getProductImageUrl(product: ProductDTO): string {
     if (product.productImages?.length > 0) {
-      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+      return '' + product.productImages[0].imageUrl;
     }
     return '/assets/project_img/fashion_store.jpg';
   }
@@ -1197,7 +1197,7 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
       userId: userId,
       cartItem: []
     };
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview: any) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
         if (this.isFirstTimeBuyerDiscount && !localStorage.getItem('firstTimeBuyerPopupShown')) {

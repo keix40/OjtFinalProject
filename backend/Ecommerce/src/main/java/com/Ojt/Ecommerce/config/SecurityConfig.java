@@ -31,6 +31,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final JwtAuthenticationEntryPoint entryPoint;
     private final IPBanFilter ipBanFilter;
+    private final AuthRateLimitFilter authRateLimitFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -83,6 +84,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 );
 
+        http.addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(ipBanFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 

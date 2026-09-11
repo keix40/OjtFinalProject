@@ -130,7 +130,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
     this.isSendingOtp = true;
     this.clearOtpMessage();
 
-            this.http.post<any>('http://localhost:8080/api/phone-verification/send-otp', {
+            this.http.post<any>('/api/phone-verification/send-otp', {
           phoneNumber: phoneNumber
         }).subscribe({
           next: (response) => {
@@ -178,7 +178,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
 
     this.isVerifyingOtp = true;
 
-    this.http.post<any>('http://localhost:8080/api/phone-verification/verify-otp', {
+    this.http.post<any>('/api/phone-verification/verify-otp', {
       phoneNumber: phoneNumber,
       otpCode: otpCode
     }).subscribe({
@@ -223,7 +223,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
     this.isResendingOtp = true;
     this.otpForm.reset();
 
-    this.http.post<any>('http://localhost:8080/api/phone-verification/send-otp', {
+    this.http.post<any>('/api/phone-verification/send-otp', {
       phoneNumber: this.currentPhoneNumber
     }).subscribe({
       next: (response) => {

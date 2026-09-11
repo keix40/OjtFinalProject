@@ -387,7 +387,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if (this.discountId) {
       userOrderDto.discountId = this.discountId;
     }
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview) => {
         this.orderPreview = preview;
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');

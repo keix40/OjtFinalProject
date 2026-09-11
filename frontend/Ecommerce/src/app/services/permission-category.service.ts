@@ -11,7 +11,7 @@ export interface PermissionCategory {
 
 @Injectable({ providedIn: 'root' })
 export class PermissionCategoryService {
-  private apiUrl = 'http://localhost:8080/api/permission-categories';
+  private apiUrl = '/api/permission-categories';
 
   constructor(private http: HttpClient) {}
 

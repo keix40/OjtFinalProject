@@ -9,7 +9,7 @@ import { ReturnRequestById } from '../return';
   providedIn: 'root'
 })
 export class ReturnService {
-  private baseUrl = 'http://localhost:8080/returns'; // Adjust your backend base URL
+  private baseUrl = '/returns'; // Adjust your backend base URL
 
   constructor(private http: HttpClient) {}
 
@@ -46,18 +46,18 @@ export class ReturnService {
 
   // Jasper Reports Export Methods
   exportReturnReportToPDF(): Observable<Blob> {
-    return this.http.get('http://localhost:8080/api/return-reports/pdf', { responseType: 'blob' });
+    return this.http.get('/api/return-reports/pdf', { responseType: 'blob' });
   }
 
   exportSelectedReturnsToPDF(returnIds: number[]): Observable<Blob> {
-    return this.http.post('http://localhost:8080/api/return-reports/pdf/selected', returnIds, { responseType: 'blob' });
+    return this.http.post('/api/return-reports/pdf/selected', returnIds, { responseType: 'blob' });
   }
 
   exportReturnReportToCSV(): Observable<Blob> {
-    return this.http.get('http://localhost:8080/api/return-reports/csv', { responseType: 'blob' });
+    return this.http.get('/api/return-reports/csv', { responseType: 'blob' });
   }
 
   exportSelectedReturnsToCSV(returnIds: number[]): Observable<Blob> {
-    return this.http.post('http://localhost:8080/api/return-reports/csv/selected', returnIds, { responseType: 'blob' });
+    return this.http.post('/api/return-reports/csv/selected', returnIds, { responseType: 'blob' });
   }
 }

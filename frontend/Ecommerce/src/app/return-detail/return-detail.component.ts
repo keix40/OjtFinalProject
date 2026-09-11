@@ -13,13 +13,14 @@ import { PermissionConstants } from '../constants/permission.constants';
 import { PriceFormatService } from '../services/price-format.service';
 import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
+import { MediaUrlPipe } from '../shared/media-url.pipe';
 
 @Component({
   selector: 'app-return-detail',
   templateUrl: './return-detail.component.html',
   styleUrls: ['./return-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LuxUiModule]
+  imports: [CommonModule, FormsModule, RouterModule, LuxUiModule, MediaUrlPipe]
 })
 export class ReturnDetailComponent implements OnInit {
   returnDetail: ReturnRequestById | null = null;

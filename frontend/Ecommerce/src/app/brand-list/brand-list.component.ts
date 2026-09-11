@@ -14,6 +14,7 @@ import { BrandUpdateComponent } from '../brand-update/brand-update.component';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
 import { SelectionStore } from '../core/state/selection-store';
+import { mediaUrl } from '../../shared/media-url.util';
 
 @Component({
   selector: 'app-brand-list',
@@ -95,7 +96,7 @@ export class BrandListComponent implements OnInit, AfterViewInit, OnDestroy {
     if (imagePath.startsWith('/assets/')) {
       return imagePath;
     }
-    return `http://localhost:8080${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
+    return mediaUrl(imagePath.startsWith('/') ? imagePath : '/' + imagePath);
   }
 
   getBrandInitial(brand: BrandListDTO): string {

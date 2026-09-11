@@ -13,6 +13,7 @@ import Swal from 'sweetalert2';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CreateAttributeValueComponent } from '../create-attribute-value/create-attribute-value.component';
+import { mediaUrl } from '../../shared/media-url.util';
 
 
 // ===== Interfaces =====
@@ -435,7 +436,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
       this.selectedImagesPreview = [];
       this.existingImages = (product.productImages || []).filter((img: any) => !img.variantId).map((img: any) => ({
         id: img.id,
-        imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`
+        imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : mediaUrl(img.imageUrl)
       }));
       this.imagesMarkedForDeletion = [];
       // Patch variants and their images
@@ -459,7 +460,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
           // Existing images for this variant
           this.existingVariantImages[idx] = (product.productImages || []).filter((img: any) => img.variantId === variant.id).map((img: any) => ({
             id: img.id,
-            imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`
+            imageUrl: img.imageUrl.startsWith('http') ? img.imageUrl : mediaUrl(img.imageUrl)
           }));
           this.variantImagesMarkedForDeletion[idx] = [];
           this.newVariantImages[idx] = [];

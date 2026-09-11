@@ -13,6 +13,7 @@ import com.Ojt.Ecommerce.service.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -56,6 +57,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     @Autowired
@@ -114,7 +116,6 @@ public class AuthController {
         String email = ((String)loginRequest.get("email")).trim().toLowerCase();
         String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
         String ip = IpLocationUtil.extractClientIp(request); // <-- Use the same logic as activity logs
-        System.out.println("[LoginAttempt] Detected client IP: " + ip);
         String location = loginRequest.getOrDefault("location", "").toString();
         boolean isVPN = false;
         boolean isProxy = false;
@@ -146,18 +147,14 @@ public class AuthController {
             ));
         }
         boolean requireOtpCaptcha = loginAttemptService.isOtpCaptchaRequired(ip);
-        System.out.println("[LoginAttempt] IP: " + ip + ", requireOtpCaptcha: " + requireOtpCaptcha);
 
         // Blacklist enforcement: check if user is blacklisted by email
         try {
-            System.out.println("[Blacklist Check] Checking email: " + email);
             BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
             if (blacklistEntry != null) {
-                System.out.println("[Blacklist Check] User is blacklisted: " + email);
                 
                 // Handle permanent ban (null expiry date) vs temporary ban
                 String banType = blacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary";
-                System.out.println("[Blacklist Check] Ban type: " + banType);
                 
                 return ResponseEntity.status(403).body(Map.of(
                     "blocked", true,
@@ -167,7 +164,6 @@ public class AuthController {
                     "isPermanent", blacklistEntry.getExpiryDate() == null
                 ));
             } else {
-                System.out.println("[Blacklist Check] User is not blacklisted: " + email);
             }
         } catch (Exception e) {
             System.err.println("[Blacklist Check] Error checking blacklist: " + e.getMessage());
@@ -181,7 +177,6 @@ public class AuthController {
             );
             // If password is correct, check if OTP/CAPTCHA is required
             if (requireOtpCaptcha) {
-                System.out.println("[LoginAttempt] OTP/CAPTCHA required for IP: " + ip + ", email: " + email);
                 // Generate a login OTP (not email verification OTP)
                 String otp = generateOtpCode();
                 OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
@@ -193,7 +188,6 @@ public class AuthController {
                 otpVerification.setType("login"); // <-- distinguish from email verification
                 otpVerificationRepository.save(otpVerification);
                 emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
-                System.out.println("[LoginAttempt] Generated login OTP: " + otp + " for email: " + email);
                 return ResponseEntity.status(401).body(Map.of(
                     "otpRequired", true,
                     "captchaRequired", true,
@@ -301,7 +295,6 @@ public class AuthController {
             );
             log.setDetails(detailsJson);
             activityLogService.createActivityLog(log);
-            System.out.println("Activity log insert called.");
             // --- END MANUAL LOGGING ---
             return issueAuthResponse(response, user, accessToken, refreshToken.getToken());
         
@@ -563,11 +556,9 @@ public class AuthController {
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException("User not found"));
 
-        System.out.println("Resend called. Verified? " + otpVerification.isVerified());
 
         // Optionally allow resending even if verified
         if (otpVerification.isVerified()) {
-            System.out.println("Warning: user already verified. Resending anyway.");
             // You can return here if desired, or allow resend
             // return ResponseEntity.ok(Map.of("message", "User already verified"));
         }
@@ -578,7 +569,6 @@ public class AuthController {
         otpVerificationRepository.save(otpVerification);
 
         // Log to confirm email is actually sent
-        System.out.println("Sending OTP email to: " + otpVerification.getEmail() + ", OTP: " + newOtp);
 
         emailService.sendEmail(
                 email,
@@ -592,7 +582,6 @@ public class AuthController {
     @PostMapping("/sendOtp")
     public ResponseEntity<?> sendOtp(@RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        System.out.println("email is :"+email);
         if (!emailVerificationService.isEmailReal(email)) {
             throw new CustomException("Email not found.");
         }
@@ -627,8 +616,6 @@ public class AuthController {
     @PostMapping("/send-reset-otp")
     public ResponseEntity<?> sendResetOtp(@RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        System.out.println("[DEBUG] send-reset-otp called with email: " + email);
-        System.out.println("email is :"+email);
 
         if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new CustomException("Invalid email format.");
@@ -784,9 +771,7 @@ public class AuthController {
             String phoneNumber = null;
             try {
                 phoneNumber = jwtTokenProvider.getPhoneNumberFromToken(token);
-                System.out.println("[AuthController] Extracted phone number from token: " + phoneNumber);
             } catch (Exception e) {
-                System.out.println("[AuthController] Could not extract phone number from token: " + e.getMessage());
                 // Phone number not available in token, continue without it
             }
             
@@ -799,15 +784,11 @@ public class AuthController {
             // Check if user is blacklisted by phone number
             BlacklistEntry phoneBlacklistEntry = null;
             if (phoneNumber != null) {
-                System.out.println("[AuthController] Checking blacklist for phone: " + phoneNumber);
                 phoneBlacklistEntry = blacklistServiceImpl.getActiveBlacklistByPhone(phoneNumber);
                 if (phoneBlacklistEntry != null) {
-                    System.out.println("[AuthController] Found blacklist entry for phone: " + phoneNumber);
                 } else {
-                    System.out.println("[AuthController] No blacklist entry found for phone: " + phoneNumber);
                 }
             } else {
-                System.out.println("[AuthController] No phone number available for blacklist check");
             }
             
             // If any of email, IP, or phone is blacklisted, return blacklisted status

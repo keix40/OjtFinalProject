@@ -4,6 +4,7 @@ import { ReturnRequestDTO } from '../user-order';
 import { PriceFormatService } from '../services/price-format.service';
 import { SelectionStore } from '../core/state/selection-store';
 import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
+import { mediaUrl } from '../../shared/media-url.util';
 
 declare var lucide: any;
 
@@ -292,7 +293,7 @@ export class ReturnListComponent implements OnInit, AfterViewInit, OnDestroy {
   getImageUrl(img: string): string {
     if (!img) return '';
     if (img.startsWith('http://') || img.startsWith('https://')) return img;
-    return `http://localhost:8080${img}`;
+    return mediaUrl(img);
   }
 
   getProductNames(row: ReturnRequestDTO): string {

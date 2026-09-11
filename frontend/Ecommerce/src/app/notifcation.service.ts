@@ -21,7 +21,7 @@ private client!: Client;
     }
 
     this.client = new Client({
-      webSocketFactory: () => new SockJS(`http://localhost:8080/ws?token=${token}`),
+      webSocketFactory: () => new SockJS(`/ws?token=${token}`),
       reconnectDelay: 5000,
 
     });
@@ -76,7 +76,7 @@ private client!: Client;
       'Authorization': `Bearer ${token}`
     });
 
-    this.http.post('http://localhost:8080/api/notifications', notificationData, { headers }).subscribe({
+    this.http.post('/api/notifications', notificationData, { headers }).subscribe({
       next: (savedNotification) => {
         this.notificationSubject.next(savedNotification);
       },
@@ -97,7 +97,7 @@ private client!: Client;
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.get<any[]>('http://localhost:8080/api/notifications', { headers });
+    return this.http.get<any[]>('/api/notifications', { headers });
   }
 
 
@@ -109,7 +109,7 @@ private client!: Client;
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.delete(`http://localhost:8080/api/notifications/${id}`, { headers });
+    return this.http.delete(`/api/notifications/${id}`, { headers });
   }
 
    //✅ Mark a notification as read
@@ -120,7 +120,7 @@ private client!: Client;
       'Authorization': `Bearer ${token}`
     });
 
-    return this.http.post(`http://localhost:8080/api/notifications/${id}/read`, {}, { headers });
+    return this.http.post(`/api/notifications/${id}/read`, {}, { headers });
   }
 
   markAsUnread(id: number) {

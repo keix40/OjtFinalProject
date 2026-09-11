@@ -104,7 +104,7 @@ export class UserProfileComponent implements OnInit, OnDestroy {
 
   private loadUserDetails() {
     const decodedToken = this.authService.getDecodedToken();
-    const backendBaseUrl = 'http://localhost:8080';                     //add For profile by PMK (June 11)
+    const backendBaseUrl = '';                     //add For profile by PMK (June 11)
 const rawImagePath = decodedToken?.profileImage || '/upload/defaultProfile.png';
 const fullImageUrl = backendBaseUrl + rawImagePath;
 
@@ -178,7 +178,6 @@ const fullImageUrl = backendBaseUrl + rawImagePath;
     const userId = user ? user.id : null;
     
     console.log('Loading VIP tier info for user:', userId);
-    console.log('Full user token:', user);
     
     if (!userId) {
       this.vipTierInfo = null;

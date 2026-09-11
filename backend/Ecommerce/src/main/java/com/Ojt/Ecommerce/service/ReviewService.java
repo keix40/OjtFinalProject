@@ -12,7 +12,9 @@ import com.Ojt.Ecommerce.repository.ReviewMediaRepository;
 import com.Ojt.Ecommerce.repository.ReviewRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import com.Ojt.Ecommerce.util.FileUploadSanitizer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -43,7 +45,8 @@ public class ReviewService {
     @Autowired
     private NotificationService notificationService;
 
-    private static final String MEDIA_UPLOAD_DIR = "C:/Users/HP/OjtFinalProject/backend/Ecommerce/review/";
+    @Value("${app.upload.review-dir:review}")
+    private String reviewUploadDir;
 
     public Review saveReview(ReviewMessageDTO msg) {
         Review review = new Review();
@@ -87,15 +90,12 @@ public class ReviewService {
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 try {
+                    FileUploadSanitizer.validateMediaUpload(file);
                     ReviewMedia media = new ReviewMedia();
                     media.setType(file.getContentType().startsWith("video") ? MediaType.VIDEO : MediaType.IMAGE);
-
-                    // Use UUID to avoid name collisions
-                    String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-                    Path path = Paths.get(MEDIA_UPLOAD_DIR, filename);
-                    Files.createDirectories(path.getParent()); // Ensure folder exists
-
-                    // Save file
+                    String filename = FileUploadSanitizer.safeFilename(file.getOriginalFilename());
+                    Path path = FileUploadSanitizer.resolveUploadPath(reviewUploadDir, filename);
+                    Files.createDirectories(path.getParent());
                     Files.write(path, file.getBytes());
 
                     media.setMediaUrl("/review/" + filename);
@@ -150,7 +150,7 @@ public class ReviewService {
             // Optionally delete physical files too
             for (String url : removedMediaUrls) {
                 String filename = url.replace("/review/", "");
-                Path path = Paths.get(MEDIA_UPLOAD_DIR, filename);
+                Path path = FileUploadSanitizer.resolveUploadPath(reviewUploadDir, filename);
                 Files.deleteIfExists(path);
             }
         }
@@ -158,11 +158,11 @@ public class ReviewService {
         // Add new uploaded files
         if (newFiles != null && newFiles.length > 0) {
             for (MultipartFile file : newFiles) {
+                FileUploadSanitizer.validateMediaUpload(file);
                 ReviewMedia media = new ReviewMedia();
                 media.setType(file.getContentType().startsWith("video") ? MediaType.VIDEO : MediaType.IMAGE);
-
-                String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
-                Path path = Paths.get(MEDIA_UPLOAD_DIR, filename);
+                String filename = FileUploadSanitizer.safeFilename(file.getOriginalFilename());
+                Path path = FileUploadSanitizer.resolveUploadPath(reviewUploadDir, filename);
                 Files.createDirectories(path.getParent());
                 Files.write(path, file.getBytes());
 
@@ -214,11 +214,11 @@ public class ReviewService {
         // Delete media files from disk
         for (ReviewMedia media : review.getMediaList()) {
             String filename = media.getMediaUrl().replace("/review/", "");
-            Path path = Paths.get(MEDIA_UPLOAD_DIR, filename);
             try {
+                Path path = FileUploadSanitizer.resolveUploadPath(reviewUploadDir, filename);
                 Files.deleteIfExists(path);
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (IOException | IllegalArgumentException e) {
+                // ignore missing or invalid paths during cleanup
             }
         }
 

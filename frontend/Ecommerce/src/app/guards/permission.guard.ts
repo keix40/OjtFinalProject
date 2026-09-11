@@ -16,8 +16,16 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   canActivate(route: ActivatedRouteSnapshot): boolean {
-    const required = route.data['permission'] as string;
-    if (!required || this.perms.hasPermission(required)) {
+    const required = route.data['permission'] as string | undefined;
+
+    if (!required) {
+      this.luxDialog
+        .warning('Unauthorized', 'This admin route is missing a required permission configuration.')
+        .then(() => this.location.back());
+      return false;
+    }
+
+    if (this.perms.hasPermission(required)) {
       return true;
     }
 

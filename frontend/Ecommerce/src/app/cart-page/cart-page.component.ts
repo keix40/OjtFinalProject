@@ -525,7 +525,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         price: item.price
       }))
     };
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview) => {
         const wasFirstTimeBuyerDiscount = this.isFirstTimeBuyerDiscount;
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
@@ -1000,7 +1000,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         return; // Do NOT call backend
       }
       // Only now call the backend to validate the coupon
-      this.http.post<any>('http://localhost:8080/api/coupons/validate', {
+      this.http.post<any>('/api/coupons/validate', {
         couponCode: this.promoCode,
         userId: userId,
         total: total
@@ -1255,7 +1255,7 @@ getVipTierDiscountAmount(): number {
       productDetailsCount: this.productDetails.size
     });
     
-    this.http.post<any>('http://localhost:8080/api/coupons/validate', {
+    this.http.post<any>('/api/coupons/validate', {
       couponCode: this.promoCode,
       userId: this.userId,
       total: total
@@ -1346,7 +1346,7 @@ getVipTierDiscountAmount(): number {
   // Public method to test backend connectivity
   public testBackendConnection(): void {
     console.log('Testing backend connection...');
-    this.http.get('http://localhost:8080/product/productlist').subscribe({
+    this.http.get('/product/productlist').subscribe({
       next: (response) => console.log('Backend connection successful:', response),
       error: (error) => console.error('Backend connection failed:', error)
     });

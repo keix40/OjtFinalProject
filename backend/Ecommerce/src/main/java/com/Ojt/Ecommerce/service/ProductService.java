@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -58,11 +59,14 @@ import com.Ojt.Ecommerce.repository.ProductRepository;
 import com.Ojt.Ecommerce.repository.ProductVariantRepository;
 import com.Ojt.Ecommerce.repository.ReviewRepository;
 import com.Ojt.Ecommerce.repository.VariantAttributeValueRepository;
+import com.Ojt.Ecommerce.util.FileUploadSanitizer;
 import com.Ojt.Ecommerce.util.ProductCodeGeneratorUtil;
 
 @Service
 public class ProductService {
-    private final Path uploadPath = Paths.get("product_image").toAbsolutePath();
+
+    @Value("${app.upload.product-dir:product_image}")
+    private String productUploadDir;
 
     @Autowired
     private ProductRepository proRepo;
@@ -108,6 +112,10 @@ public class ProductService {
 
     @Autowired
     private DiscountRepository discountRepo;
+
+    private String saveProductImage(MultipartFile file) throws IOException {
+        return FileUploadSanitizer.saveValidatedImage(file, productUploadDir, "/product_image");
+    }
 
     @Transactional
 //    public Product saveProductWithImages(ProductDTO dto, MultipartFile[] files,Map<String, List<MultipartFile>> variantImageMap) throws IOException {
@@ -347,19 +355,12 @@ public class ProductService {
         savedProduct = proRepo.save(savedProduct);
 
         // 5. Save product images
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
-
         List<ProductImage> imageList = new ArrayList<>();
         for (MultipartFile file : files) {
             if (!file.isEmpty()) {
-                String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-                Path filePath = uploadPath.resolve(fileName);
-                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
+                String imageUrl = saveProductImage(file);
                 ProductImage image = ProductImage.builder()
-                        .imageUrl("/product_image/" + fileName)
+                        .imageUrl(imageUrl)
                         .product(savedProduct)
                         .status(1)
                         .build();
@@ -400,12 +401,9 @@ public class ProductService {
                 if (variantImages != null) {
                     for (MultipartFile imageFile : variantImages) {
                         if (!imageFile.isEmpty()) {
-                            String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                            Path filePath = uploadPath.resolve(fileName);
-                            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
+                            String imageUrl = saveProductImage(imageFile);
                             ProductImage variantImage = ProductImage.builder()
-                                    .imageUrl("/product_image/" + fileName)
+                                    .imageUrl(imageUrl)
                                     .product(savedProduct)
                                     .productVariant(variant)
                                     .status(1)
@@ -527,9 +525,6 @@ public class ProductService {
         product.getProductCategories().addAll(newPhcSet);
 
         // 4. Handle product images (delete only those marked for deletion, not all)
-        if (!Files.exists(uploadPath)) {
-            Files.createDirectories(uploadPath);
-        }
         // Delete only images marked for deletion
         if (dto.getImagesMarkedForDeletion() != null && !dto.getImagesMarkedForDeletion().isEmpty()) {
             List<ProductImage> toDelete = product.getProductImages().stream()
@@ -547,11 +542,9 @@ public class ProductService {
             List<ProductImage> imageList = new ArrayList<>();
             for (MultipartFile file : files) {
                 if (!file.isEmpty()) {
-                    String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-                    Path filePath = uploadPath.resolve(fileName);
-                    Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                    String imageUrl = saveProductImage(file);
                     ProductImage image = ProductImage.builder()
-                            .imageUrl("/product_image/" + fileName)
+                            .imageUrl(imageUrl)
                             .product(product)
                             .status(1)
                             .build();
@@ -660,11 +653,9 @@ public class ProductService {
                 if (variantImages != null) {
                     for (MultipartFile imageFile : variantImages) {
                         if (!imageFile.isEmpty()) {
-                            String fileName = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                            Path filePath = uploadPath.resolve(fileName);
-                            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                            String imageUrl = saveProductImage(imageFile);
                             ProductImage variantImage = ProductImage.builder()
-                                    .imageUrl("/product_image/" + fileName)
+                                    .imageUrl(imageUrl)
                                     .product(product)
                                     .productVariant(variant)
                                     .status(1)

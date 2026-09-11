@@ -237,7 +237,7 @@ export class CartSidebarComponent implements OnInit, OnDestroy {
         price: item.price
       }))
     };
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
         this.firstTimeBuyerDiscountAmount = preview.discountAmount || 0;

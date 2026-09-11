@@ -25,7 +25,7 @@ export interface AdminUserDTO {
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
-  private apiUrl = 'http://localhost:8080/api/admin-users';
+  private apiUrl = '/api/admin-users';
   constructor(private http: HttpClient) {}
 
   getAdminUsers(): Observable<AdminUser[]> {

@@ -3,7 +3,11 @@
   "outputDirectory": "dist/final-prj/browser",
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/api/:path*",
+      "destination": "https://YOUR_BACKEND_HOST/api/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
       "destination": "/index.html"
     }
   ]

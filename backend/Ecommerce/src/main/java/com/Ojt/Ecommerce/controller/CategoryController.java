@@ -12,9 +12,11 @@ import com.Ojt.Ecommerce.entity.ProductHasCategory;
 import com.Ojt.Ecommerce.service.BrandHasCategoryService;
 import com.Ojt.Ecommerce.service.BrandService;
 import com.Ojt.Ecommerce.service.CategoryService;
+import com.Ojt.Ecommerce.util.FileUploadSanitizer;
 import com.Ojt.Ecommerce.annotations.LogActivity;
 import com.Ojt.Ecommerce.annotations.PermissionCategoryTag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,8 +36,10 @@ import static com.Ojt.Ecommerce.constants.PermissionConstants.*;
 @RestController
 @RequestMapping("/category")
 public class CategoryController {
-    private static final Path uploadPath = Paths.get("brand_and_category_image").toAbsolutePath();
     private final String IMAGE_PATH_DB_PREFIX = "/brand_and_category_image/";
+
+    @Value("${app.upload.category-dir:brand_and_category_image}")
+    private String categoryUploadDir;
 
     @Autowired
     private CategoryService service;
@@ -81,13 +85,8 @@ public class CategoryController {
             // Save image (optional)
             if (imageFile != null && !imageFile.isEmpty()) {
                 try {
-                    String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                    if (!Files.exists(uploadPath)) {
-                        Files.createDirectories(uploadPath);
-                    }
-                    Path path = uploadPath.resolve(filename);
-                    Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                    newBrand.setImage(IMAGE_PATH_DB_PREFIX + filename);
+                    newBrand.setImage(FileUploadSanitizer.saveValidatedImage(
+                            imageFile, categoryUploadDir, "/brand_and_category_image"));
                 } catch (IOException e) {
                     return ResponseEntity.internalServerError().body("Brand image upload failed.");
                 }
@@ -117,15 +116,9 @@ public class CategoryController {
 
                 if (imageFile != null && !imageFile.isEmpty()) {
                     try {
-                        String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                        if (!Files.exists(uploadPath)) {
-                            Files.createDirectories(uploadPath);
-                        }
-                        Path path = uploadPath.resolve(filename);
-                        Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                        newCate.setImage(IMAGE_PATH_DB_PREFIX + filename);
+                        newCate.setImage(FileUploadSanitizer.saveValidatedImage(
+                                imageFile, categoryUploadDir, "/brand_and_category_image"));
                     } catch (IOException e) {
-                        e.printStackTrace();
                         return ResponseEntity.internalServerError().body("Category image upload failed.");
                     }
                 }

@@ -58,7 +58,7 @@
           </button>
 
           <div *ngIf="policy.open" class="lux-policy-content animate-fadeIn">
-            <div [innerHTML]="policy.content" class="prose"></div>
+            <div [innerHTML]="policy.content | safeHtml" class="prose"></div>
           </div>
         </div>
       </div>

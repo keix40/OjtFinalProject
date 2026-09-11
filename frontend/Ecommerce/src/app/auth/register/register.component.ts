@@ -168,7 +168,6 @@ export class RegisterComponent  {
         this.isOtpStep = true;
         this.successMessage = res?.message || 'OTP sent to your email.';
         if (showModal) this.showEmailVerifyModal = true;
-        console.log("OPT Sent");
       },
       error: (err) => {
         const msg = err?.error?.message || err?.message || 'Failed to send OTP.';
@@ -252,7 +251,6 @@ export class RegisterComponent  {
     this.authService.register(formData).subscribe({
       next: (response) => {
         this.isRegistering = false;
-        console.log('Access Token:', response.accessToken);
         this.authService.saveToken(response.accessToken!);
         this.successMessage = 'Registration successful! Redirecting to home...';
         this.errorMessage = '';

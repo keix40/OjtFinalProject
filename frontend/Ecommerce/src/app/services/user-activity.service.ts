@@ -11,7 +11,7 @@ export class UserActivityService {
       return;
     }
     console.log('UserActivityService: Logging page view for user:', userId);
-    this.http.post('http://localhost:8080/api/auth/user/user/activity', { userId, type: 'page_view' })
+    this.http.post('/api/auth/user/user/activity', { userId, type: 'page_view' })
       .subscribe({
         next: () => console.log('UserActivityService: Page view logged successfully.'),
         error: (err) => console.error('UserActivityService: Failed to log page view:', err)

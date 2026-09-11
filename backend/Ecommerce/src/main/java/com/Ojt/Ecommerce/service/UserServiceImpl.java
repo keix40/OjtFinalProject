@@ -14,7 +14,9 @@ import com.Ojt.Ecommerce.exception.CustomException;
 import com.Ojt.Ecommerce.repository.RoleRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
+import com.Ojt.Ecommerce.util.FileUploadSanitizer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -67,6 +69,9 @@ public class UserServiceImpl implements UserService {
     private final AddressService addressService;
     private final DiscountRepository discountRepository;
     private final DiscountRuleRepository discountRuleRepository;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
     @Autowired
     private VipTierRepository vipTierRepository;
 
@@ -166,27 +171,11 @@ public class UserServiceImpl implements UserService {
         // Handle profile image if present
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
-                File uploadPath = new File(uploadDir);
-                if (!uploadPath.exists()) {
-                    uploadPath.mkdirs(); // ✅ create upload directory
-                }
-                ;
-
-                String imageName = System.currentTimeMillis() + "_" + profileImage.getOriginalFilename();
-                File dest = new File(uploadPath, imageName);
-                profileImage.transferTo(dest);
-                System.out.println("Uploading to absolute path: " + dest.getAbsolutePath());
-                user.setProfileImage("/upload/" + imageName); // serve from /upload/** mapping
-                System.out.println("Attempting to register with email: " + request.getEmail());
-                System.out.println("Normalized email: " + request.getEmail().trim().toLowerCase());
-                System.out.println("User found: " + userRepository.findByEmail(request.getEmail().trim().toLowerCase()));
-
+                String imageName = storeProfileImage(profileImage);
+                user.setProfileImage("/upload/" + imageName);
             } catch (IOException e) {
-                e.printStackTrace(); // ✅ Print full stack trace to console
                 throw new CustomException("Failed to upload image: " + e.getMessage());
             }
-
         } else {
             // 👉 Use default image path
             user.setProfileImage("/upload/defaultProfile.png");
@@ -206,9 +195,7 @@ public class UserServiceImpl implements UserService {
                 rule.setUser(user);
                 rule.setStartDate(LocalDate.now());
                 rule.setEndDate(LocalDate.now().plusDays(7));
-                System.out.println("Saving DiscountRule for user: " + user.getEmail());
                 discountRuleRepository.save(rule);
-                System.out.println("Saved DiscountRule for user: " + user.getEmail());
 
             }
         } catch (Exception e) {
@@ -335,25 +322,23 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new CustomException("User not found"));
 
         try {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
-            File uploadPath = new File(uploadDir);
-            if (!uploadPath.exists()) {
-                uploadPath.mkdirs();
-            }
-
-            String imageName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-            File dest = new File(uploadPath, imageName);
-            image.transferTo(dest);
-
+            String imageName = storeProfileImage(image);
             String imagePath = "/uploads/" + imageName;
             user.setProfileImage(imagePath);
             userRepository.save(user);
-
             return imagePath;
         } catch (IOException e) {
-            e.printStackTrace();
             throw new CustomException("Failed to upload profile image: " + e.getMessage());
         }
+    }
+
+    private String storeProfileImage(MultipartFile file) throws IOException {
+        FileUploadSanitizer.validateImageUpload(file);
+        String imageName = FileUploadSanitizer.safeFilename(file.getOriginalFilename());
+        Path target = FileUploadSanitizer.resolveUploadPath(uploadDir, imageName);
+        Files.createDirectories(target.getParent());
+        file.transferTo(target.toFile());
+        return imageName;
     }
 
     //add method

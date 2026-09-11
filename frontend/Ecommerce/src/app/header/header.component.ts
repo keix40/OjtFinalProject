@@ -23,6 +23,7 @@ import { NotificationSidebarService } from '../notifcation-sidebar.service';
 import { NotifcationService } from '../notifcation.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageService } from '../services/image.service';
+import { mediaUrl } from '../../shared/media-url.util';
 
 @Component({
   selector: 'app-header',
@@ -309,7 +310,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         price: item.price
       }))
     };
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
       },
@@ -403,7 +404,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
         return cat.iconUrl;
       }
       // If it's a relative path (uploaded file)
-      return `http://localhost:8080${cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl}`;
+      return mediaUrl(cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl);
     }
     return undefined;
   }
@@ -430,7 +431,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (!iconUrl) return null;
     if (iconUrl.startsWith('data:')) return iconUrl;
     if (iconUrl.startsWith('http://') || iconUrl.startsWith('https://')) return iconUrl;
-    return `http://localhost:8080${iconUrl.startsWith('/') ? '' : '/'}${iconUrl}`;
+    return mediaUrl(iconUrl.startsWith('/') ? iconUrl : '/' + iconUrl);
   }
 
   getInitialColor(initial: string): string {
@@ -460,7 +461,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (image.startsWith('data:')) return image;
     if (image.startsWith('http://') || image.startsWith('https://')) return image;
     // Make sure the image path is properly formatted
-    return `http://localhost:8080/uploads/${image}`;
+    return `/uploads/${image}`;
   }
 
   loadTopBrands() {

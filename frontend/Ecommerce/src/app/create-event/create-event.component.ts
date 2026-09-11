@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import { ActivatedRoute } from '@angular/router';
 import { PriceFormatService } from '../services/price-format.service';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
+import { MediaUrlPipe } from '../shared/media-url.pipe';
 declare var lucide: any;
 
 function toDatetimeLocal(date: Date): string {
@@ -36,7 +37,7 @@ function toBackendLocalDatetime(date: Date): string {
   standalone: true,
   templateUrl: './create-event.component.html',
   styleUrls: ['./create-event.component.css'],
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, LuxUiModule]
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, LuxUiModule, MediaUrlPipe]
 })
 export class CreateEventComponent implements OnInit {
   @ViewChild('cropperContainer') cropperContainer!: ElementRef;
@@ -151,7 +152,7 @@ export class CreateEventComponent implements OnInit {
             if (event.eventImage.startsWith('http') || event.eventImage.startsWith('data:')) {
               this.imagePreview = event.eventImage;
             } else {
-              this.imagePreview = 'http://localhost:8080' + event.eventImage;
+              this.imagePreview = '' + event.eventImage;
             }
           }
         });

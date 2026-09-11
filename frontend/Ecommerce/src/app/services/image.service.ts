@@ -13,7 +13,7 @@ export interface ImageConfig {
 })
 export class ImageService {
   private config: ImageConfig = {
-    baseUrl: 'http://localhost:8080',
+    baseUrl: '',
     defaultProductImage: '/assets/images/default-product.png',
     defaultAvatarImage: '/assets/images/test.jpg',
     defaultCategoryImage: '/assets/project_img/default-category.png',

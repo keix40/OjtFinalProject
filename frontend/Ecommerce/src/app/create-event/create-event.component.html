@@ -170,7 +170,7 @@
                         ? imagePreview
                         : (event.eventImage && (event.eventImage.startsWith('http') || event.eventImage.startsWith('data:'))
                             ? event.eventImage
-                            : (event.eventImage ? 'http://localhost:8080' + event.eventImage : null)
+                            : (event.eventImage ? (event.eventImage | mediaUrl) : null)
                           )
                     )
                     : imagePreview
@@ -243,7 +243,7 @@
                     <input type="checkbox" [checked]="event.productIds?.includes(product.id)" (click)="$event.stopPropagation()" (change)="toggleProductSelection(product)" class="accent-ink">
                   </td>
                   <td class="px-2 py-2">
-                    <img [src]="'http://localhost:8080'+(product.productImages && product.productImages.length > 0 ? product.productImages[0].imageUrl : '/assets/images/no-image.png')" alt="Product" class="w-12 h-12 object-cover rounded-lg border" />
+                    <img [src]="(product.productImages && product.productImages.length > 0 ? product.productImages[0].imageUrl : '/assets/images/no-image.png') | mediaUrl" alt="Product" class="w-12 h-12 object-cover rounded-lg border" />
                   </td>
                   <td class="px-2 py-2">
                     <div class="font-semibold text-slate-800">{{ product.productName }}</div>

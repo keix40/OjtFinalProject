@@ -8,7 +8,9 @@ import com.Ojt.Ecommerce.repository.CategoryRepository;
 import com.Ojt.Ecommerce.repository.ProductHasCategoryRepository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
+import com.Ojt.Ecommerce.util.FileUploadSanitizer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +25,9 @@ import java.util.UUID;
 
 @Service
 public class CategoryService {
-    private static final Path uploadPath = Paths.get("brand_and_category_image").toAbsolutePath();
+
+    @Value("${app.upload.category-dir:brand_and_category_image}")
+    private String categoryUploadDir;
 
     @Autowired
     private CategoryRepository repo;
@@ -90,13 +94,9 @@ public class CategoryService {
 
         if (imageFile != null && !imageFile.isEmpty()) {
             try {
-                String filename = UUID.randomUUID() + "_" + imageFile.getOriginalFilename();
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-                Path path = uploadPath.resolve(filename);
-                Files.copy(imageFile.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-                category.setImage("/brand_and_category_image/" + filename);
+                String imageUrl = FileUploadSanitizer.saveValidatedImage(
+                        imageFile, categoryUploadDir, "/brand_and_category_image");
+                category.setImage(imageUrl);
             } catch (IOException e) {
                 throw new RuntimeException("Category image upload failed.");
             }
