@@ -100,7 +100,7 @@ Copy `.env.example` to `.env`.
 GOOGLE_MAPS_API_KEY=your-key npm run build -- --configuration=production
 ```
 
-**Vercel:** `vercel.json` is SPA-only. Point `environment.prod.ts` `apiUrl` at your backend host at build time, or deploy frontend behind the same origin as the API.
+**Vercel:** Angular app lives in `frontend/Ecommerce`. Set **Root Directory** to `frontend/Ecommerce` in each Vercel project (recommended). Root `vercel.json` also redirects install/build there if Root Directory is wrongly left at `.` — use `npm ci` + production build, not bare `npx ng build`. Do **not** commit `node_modules/` (root had a stale copy that caused `ng: Permission denied` on duplicate project `ojt-final-project-qjcw`). Disconnect that duplicate or point it at `frontend/Ecommerce`. Point `environment.prod.ts` `apiUrl` at your backend host at build time, or deploy frontend behind the same origin as the API.
 
 ---
 

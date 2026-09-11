@@ -1,0 +1,13 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "cd frontend/Ecommerce && npm ci",
+  "buildCommand": "cd frontend/Ecommerce && npm run build -- --configuration=production",
+  "outputDirectory": "frontend/Ecommerce/dist/final-prj/browser",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

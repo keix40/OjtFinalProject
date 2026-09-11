@@ -1,0 +1,10 @@
+{
+  "_comment": "Legacy root deps stub — do not npm install here. Angular app + ngx-quill live in frontend/Ecommerce.",
+  "dependencies": {
+    "ngx-quill": "^28.0.1",
+    "quill": "^2.0.3"
+  },
+  "devDependencies": {
+    "@angular/cli": "^22.1.5"
+  }
+}

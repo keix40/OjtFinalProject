@@ -1,7 +1,10 @@
-# --- Angular ---
-/frontend/node_modules/
-/frontend/dist/
-/frontend/.angular/cache/
+# --- Node / frontend ---
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.angular/
+**/.angular/
 
 # --- Java Spring Boot ---
 /backend/target/
