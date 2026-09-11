@@ -1,7 +1,13 @@
 .git
+.gitignore
 .idea
+.vscode
 .mvn
 target
+*.iml
+*.log
+.env
+.env.*
 uploads
 product_image
 brand_and_category_image
@@ -11,3 +17,5 @@ review
 *.zip
 *.pdf
 *.csv
+Dockerfile
+.dockerignore

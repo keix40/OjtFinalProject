@@ -1,0 +1,67 @@
+# Render Blueprint — Spring Boot API (frontend stays on Vercel).
+# Apply via Dashboard → Blueprints → New Blueprint Instance, or connect repo with this file at root.
+#
+# After deploy, health check: https://<service-name>.onrender.com/actuator/health
+
+services:
+  - type: web
+    name: ojt-ecommerce-api
+    runtime: docker
+    plan: starter
+    region: oregon
+    dockerfilePath: ./backend/Ecommerce/Dockerfile
+    dockerContext: ./backend/Ecommerce
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION_MS
+        value: "86400000"
+      - key: JWT_REFRESH_EXPIRATION_MS
+        value: "604800000"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: Lax
+      - key: COOKIE_DOMAIN
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://ojt-final-project.vercel.app
+      - key: JPA_DDL_AUTO
+        value: validate
+      - key: JPA_SHOW_SQL
+        value: "false"
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: REDIS_ENABLED
+        value: "false"
+      - key: REDIS_URL
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: IPQS_API_KEY
+        sync: false
+      - key: PAYMENT_PROCESSOR
+        value: local
+      - key: AUTH_RATE_LIMIT_ENABLED
+        value: "true"
+      - key: AUTH_RATE_LIMIT_RPM
+        value: "30"
