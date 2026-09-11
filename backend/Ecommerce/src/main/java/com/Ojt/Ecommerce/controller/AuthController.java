@@ -47,7 +47,6 @@ import org.json.JSONObject;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import com.Ojt.Ecommerce.service.UserActivityService;
 import com.Ojt.Ecommerce.annotations.LogActivity;
-import com.Ojt.Ecommerce.security.CustomUserDetails;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.service.ActivityLogService;
 import com.Ojt.Ecommerce.util.IpLocationUtil;
@@ -200,8 +199,6 @@ public class AuthController {
                 ));
             }
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            org.springframework.security.core.userdetails.User springUser =
-                    (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
             // Fetch user with role for activity log
             User user = userRepository.findByEmailWithRole(email)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
