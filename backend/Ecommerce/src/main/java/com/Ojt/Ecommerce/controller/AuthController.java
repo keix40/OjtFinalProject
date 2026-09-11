@@ -21,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -302,38 +303,53 @@ public class AuthController {
             // --- END MANUAL LOGGING ---
             return issueAuthResponse(response, user, accessToken, refreshToken.getToken());
         
+        } catch (AuthenticationException ex) {
+            recordFailedLogin(email, ip, location, request, isVPN, isProxy);
+            return ResponseEntity.status(401).body(Map.of(
+                    "message", "Invalid email or password.",
+                    "status", 401
+            ));
         } catch (Exception ex) {
-            // Save failed attempt
-            LoginAttemptDTO failDTO = LoginAttemptDTO.builder()
-                    .username(email)
-                    .ipAddress(ip)
-                    .userAgent(request.getHeader("User-Agent"))
-                    .timestamp(LocalDateTime.now())
-                    .status("failed")
-                    .isBlocked(false)
-                    .isVPN(isVPN)
-                    .isProxy(isProxy)
-                    .location(location)
-                    .countryCode("")
-                    .attemptCount(loginAttemptService.calculateRecentAttemptCount(ip, LocalDateTime.now()))
-                    .sessionId(null)
-                    .build();
-            loginAttemptService.enrichAttemptWithStats(failDTO);
-            int score = loginAttemptService.calculateThreatScore(failDTO);
-            failDTO.setThreatScore(score);
-            failDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
-            loginAttemptService.saveAttempt(failDTO);
-            // --- Broadcast real-time activity feed event ---
-            String activityMsg = "Failed login for " + email + " from IP " + ip + (isVPN ? " [VPN detected]" : "") + (isProxy ? " [Proxy detected]" : "");
-            messagingTemplate.convertAndSend("/topic/activity-feed", Map.of(
+            recordFailedLogin(email, ip, location, request, isVPN, isProxy);
+            throw ex;
+        }
+    }
+
+    private void recordFailedLogin(
+            String email,
+            String ip,
+            String location,
+            HttpServletRequest request,
+            boolean isVPN,
+            boolean isProxy) {
+        LoginAttemptDTO failDTO = LoginAttemptDTO.builder()
+                .username(email)
+                .ipAddress(ip)
+                .userAgent(request.getHeader("User-Agent"))
+                .timestamp(LocalDateTime.now())
+                .status("failed")
+                .isBlocked(false)
+                .isVPN(isVPN)
+                .isProxy(isProxy)
+                .location(location)
+                .countryCode("")
+                .attemptCount(loginAttemptService.calculateRecentAttemptCount(ip, LocalDateTime.now()))
+                .sessionId(null)
+                .build();
+        loginAttemptService.enrichAttemptWithStats(failDTO);
+        int score = loginAttemptService.calculateThreatScore(failDTO);
+        failDTO.setThreatScore(score);
+        failDTO.setThreatLevel(loginAttemptService.determineThreatLevel(score));
+        loginAttemptService.saveAttempt(failDTO);
+        String activityMsg = "Failed login for " + email + " from IP " + ip
+                + (isVPN ? " [VPN detected]" : "")
+                + (isProxy ? " [Proxy detected]" : "");
+        messagingTemplate.convertAndSend("/topic/activity-feed", Map.of(
                 "timestamp", LocalDateTime.now().toString(),
                 "type", isVPN || isProxy ? "danger" : "warning",
                 "message", activityMsg
-            ));
-            // Progressive security logic
-            loginAttemptService.handleFailedLogin(email, ip, location);
-            throw ex;
-        }
+        ));
+        loginAttemptService.handleFailedLogin(email, ip, location);
     }
 
     // Utility to generate a short, user-friendly session ID
