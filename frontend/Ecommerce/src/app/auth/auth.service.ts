@@ -6,6 +6,7 @@ import { LoginResponse } from '../login-response';
 import { RegisterResponse } from './auth.types';
 import { mergeMap, tap, catchError, map } from 'rxjs/operators';
 import { PermissionService } from '../services/permission.service';
+import { environment } from '../../environments/environment';
 
 /** Auth session from /api/auth/me. Profile fields are optional — fetch full profile via UserService when needed. */
 export interface SessionUser {
@@ -34,7 +35,7 @@ export interface SessionUser {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private baseUrl = '/api/auth';
+  private baseUrl = `${environment.apiUrl}/auth`;
   private publicIp: string | null = null;
   private sessionSubject = new BehaviorSubject<SessionUser | null>(null);
   readonly session$ = this.sessionSubject.asObservable();

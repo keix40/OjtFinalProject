@@ -48,7 +48,9 @@ Use the **Service URI** host/port and your database name. Do **not** paste the f
 |----------|---------|--------|
 | `CORS_ALLOWED_ORIGINS` | `https://ojt-final-project.vercel.app` | Comma-separated Vercel production + preview URLs |
 | `COOKIE_DOMAIN` | (empty) | Set if cookies must span subdomains |
-| `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD` | — | Required for email features |
+| `RESEND_API_KEY` | — | **Recommended.** [Resend](https://resend.com) HTTPS API (works on Render free; SMTP is often blocked) |
+| `MAIL_FROM` | — | Verified sender, e.g. `Britium Gallery <noreply@yourdomain.com>` (use Resend onboarding domain for testing) |
+| `MAIL_HOST`, `MAIL_USERNAME`, `MAIL_PASSWORD` | — | Optional SMTP fallback when `RESEND_API_KEY` is unset (Gmail SMTP usually fails on Render) |
 | `REDIS_ENABLED` | `false` | Set `true` + `REDIS_URL` for multi-instance JWT blacklist / rate limits |
 | `TWILIO_*`, `IPQS_API_KEY` | — | Optional integrations |
 
@@ -68,13 +70,22 @@ Render uses `/actuator/health` as the service health check path (see `render.yam
 
 ## 4. Frontend (Vercel)
 
-Point the Angular app’s API base URL to your Render service, e.g.:
+Set the Vercel project **Root Directory** to `frontend/Ecommerce` (or deploy from repo root using the root `vercel.json`).
 
-```text
-https://<your-service-name>.onrender.com
-```
+Production uses **same-origin relative URLs** (`/api`, `/product/...`) with **Vercel rewrites** proxying to Render (`https://ojtfinalproject.onrender.com`). This keeps HttpOnly auth cookies on the Vercel origin (`SameSite=Lax` + `Secure`) without cross-site cookie issues.
 
 Ensure `CORS_ALLOWED_ORIGINS` on Render includes every Vercel URL the browser will use (production and preview deployments).
+
+### Email on Render
+
+Gmail SMTP (`smtp.gmail.com:587`) typically **times out** on Render’s free tier. Configure:
+
+```bash
+RESEND_API_KEY=re_xxxxxxxxxxxx
+MAIL_FROM="Britium Gallery <onboarding@resend.dev>"
+```
+
+Register, OTP, forgot-password, and login-OTP flows use `EmailService`, which sends via Resend when `RESEND_API_KEY` is set. Without it, the API returns **503** with a clear message instead of an opaque 500.
 
 ## 5. Local Docker smoke test
 

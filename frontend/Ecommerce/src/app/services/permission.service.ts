@@ -2,20 +2,20 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { AuthService } from '../auth/auth.service';
+import { SessionUser } from '../auth/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class PermissionService {
   private userPermissions: string[] = [];
 
-  constructor(private http: HttpClient, private auth: AuthService) {}
+  constructor(private http: HttpClient) {}
 
   getAllPermissions(): Observable<any[]> {
     return this.http.get<any[]>('/api/permissions', { withCredentials: true });
   }
 
   refreshPermissions(): Observable<string[]> {
-    return this.auth.loadSession().pipe(
+    return this.http.get<SessionUser>('/api/auth/me', { withCredentials: true }).pipe(
       map(session => {
         const perms = session?.permissions
           ? session.permissions.split(',').map(p => p.trim()).filter(Boolean)

@@ -6,6 +6,74 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/api/:path*"
+    },
+    {
+      "source": "/product/:path((?![0-9]+$).*)",
+      "destination": "https://ojtfinalproject.onrender.com/product/:path"
+    },
+    {
+      "source": "/deliveryservice/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/deliveryservice/:path*"
+    },
+    {
+      "source": "/order/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/order/:path*"
+    },
+    {
+      "source": "/brand/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/brand/:path*"
+    },
+    {
+      "source": "/category/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/category/:path*"
+    },
+    {
+      "source": "/attribute/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/attribute/:path*"
+    },
+    {
+      "source": "/events/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/events/:path*"
+    },
+    {
+      "source": "/returns/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/returns/:path*"
+    },
+    {
+      "source": "/wishlist/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/wishlist/:path*"
+    },
+    {
+      "source": "/card/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/card/:path*"
+    },
+    {
+      "source": "/product_image/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/product_image/:path*"
+    },
+    {
+      "source": "/uploads/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/uploads/:path*"
+    },
+    {
+      "source": "/review/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/review/:path*"
+    },
+    {
+      "source": "/return_images/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/return_images/:path*"
+    },
+    {
+      "source": "/brand_and_category_image/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/brand_and_category_image/:path*"
+    },
+    {
+      "source": "/event/:path*",
+      "destination": "https://ojtfinalproject.onrender.com/event/:path*"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

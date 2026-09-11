@@ -9,21 +9,19 @@ import { AuthService } from './auth/auth.service';
   providedIn: 'root'
 })
 export class NotifcationService {
-  private client!: Client;
+  private client?: Client;
   private notificationSubject = new Subject<any>();
   public notifications$ = this.notificationSubject.asObservable();
   private httpOptions = { withCredentials: true as const };
 
-  constructor(private http: HttpClient, private authService: AuthService) {
-    if (!this.authService.isLoggedIn()) {
-      this.authService.loadSession().subscribe(session => {
-        if (session) {
-          this.initWebSocket();
-        }
-      });
-    } else {
-      this.initWebSocket();
+  constructor(private http: HttpClient, private authService: AuthService) {}
+
+  /** Connect WebSocket after session is established (avoid HttpClient cycle at bootstrap). */
+  ensureConnected(): void {
+    if (this.client?.active || !this.authService.isLoggedIn()) {
+      return;
     }
+    this.initWebSocket();
   }
 
   private initWebSocket(): void {
@@ -37,7 +35,7 @@ export class NotifcationService {
     });
 
     this.client.onConnect = () => {
-      this.client.subscribe('/user/queue/notifications', (message: Message) => {
+      this.client!.subscribe('/user/queue/notifications', (message: Message) => {
         let notificationData: any;
         try {
           notificationData = JSON.parse(message.body);
@@ -47,7 +45,7 @@ export class NotifcationService {
         this.notificationSubject.next(notificationData);
       });
 
-      this.client.subscribe('/topic/activity-feed', (message: Message) => {
+      this.client!.subscribe('/topic/activity-feed', (message: Message) => {
         let activityData: any;
         try {
           activityData = JSON.parse(message.body);

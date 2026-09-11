@@ -45,7 +45,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this.newNotificationCount = storedCount ? parseInt(storedCount, 10) : 0;
     
     this.authService.checkAndClearExpiredBlacklist();
-    this.authService.loadSession().subscribe();
+    this.authService.loadSession().subscribe(session => {
+      if (session) {
+        this.notificationService.ensureConnected();
+      }
+    });
     
     this.notificationSidebarService.getSidebarState().subscribe(open => {
       this.showNotificationSidebar = open;
