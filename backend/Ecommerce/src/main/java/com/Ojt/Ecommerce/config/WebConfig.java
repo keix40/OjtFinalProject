@@ -10,8 +10,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.nio.file.Paths;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
+
+    private final CorsProperties corsProperties;
 
 //    @Bean
 //    public ModelMapper mapper() {
@@ -38,12 +43,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns(
-                        "http://localhost:4200",
-                        "http://127.0.0.1:4200",
-                        "http://localhost:3000",
-                        "http://127.0.0.1:3000"
-                )
+                .allowedOriginPatterns(corsProperties.getAllowedOriginPatternsList().toArray(new String[0]))
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 .allowedHeaders("Authorization", "Content-Type", "X-Requested-With", "Accept", "Origin", 
                                "Access-Control-Request-Method", "Access-Control-Request-Headers",

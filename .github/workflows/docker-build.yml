@@ -1,0 +1,28 @@
+name: Docker build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/Ecommerce/**'
+      - '.github/workflows/docker-build.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/Ecommerce/**'
+      - '.github/workflows/docker-build.yml'
+
+jobs:
+  docker-build:
+    name: Build backend Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image (no registry push)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend/Ecommerce
+          file: ./backend/Ecommerce/Dockerfile
+          push: false
+          tags: ojt-ecommerce-api:ci
