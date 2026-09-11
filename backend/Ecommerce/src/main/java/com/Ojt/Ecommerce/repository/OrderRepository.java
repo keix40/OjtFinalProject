@@ -20,40 +20,28 @@ public interface OrderRepository extends JpaRepository<UserOrder, Long> {
 
     @EntityGraph(attributePaths = {
             "user", "address", "deliveryService", "discount",
-            "orderProducts", "orderProducts.product", "orderProducts.productVariant",
-            "orderStatusHistory", "orderStatusHistory.status",
-            "returnRequests", "returnRequests.returnRequestProducts",
-            "returnRequests.returnRequestProducts.orderProduct",
-            "returnRequests.images", "returnRequests.refund"
+            "orderProducts", "orderProducts.product", "orderProducts.productVariant"
     })
     @Query("SELECT o FROM UserOrder o WHERE o.user.id = :userId ORDER BY o.orderDate DESC")
     List<UserOrder> findByUserIdWithDetails(@Param("userId") Long userId);
 
     @EntityGraph(attributePaths = {
             "user", "address", "deliveryService", "discount",
-            "orderProducts", "orderProducts.product", "orderProducts.productVariant",
-            "orderStatusHistory", "orderStatusHistory.status",
-            "returnRequests", "returnRequests.returnRequestProducts",
-            "returnRequests.returnRequestProducts.orderProduct",
-            "returnRequests.images", "returnRequests.refund"
+            "orderProducts", "orderProducts.product", "orderProducts.productVariant"
     })
     @Query("SELECT o FROM UserOrder o")
     Page<UserOrder> findAllWithDetails(Pageable pageable);
 
     @EntityGraph(attributePaths = {
             "user", "address", "deliveryService", "discount",
-            "orderProducts", "orderProducts.product", "orderProducts.productVariant",
-            "orderStatusHistory", "orderStatusHistory.status",
-            "returnRequests", "returnRequests.returnRequestProducts",
-            "returnRequests.returnRequestProducts.orderProduct",
-            "returnRequests.images", "returnRequests.refund"
+            "orderProducts", "orderProducts.product", "orderProducts.productVariant"
     })
     @Query("SELECT o FROM UserOrder o WHERE o.id = :id")
     Optional<UserOrder> findByIdWithDetails(@Param("id") Long id);
 
     /** @deprecated use {@link #findByIdWithDetails(Long)} */
     @Deprecated
-    @EntityGraph(attributePaths = {"orderProducts", "orderStatusHistory"})
+    @EntityGraph(attributePaths = {"orderProducts"})
     @Query("SELECT o FROM UserOrder o WHERE o.id = :id")
     UserOrder findByIdWithEntity(@Param("id") Long id);
 
