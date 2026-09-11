@@ -238,7 +238,7 @@ public class OrderService {
             if (dto.getCardId() != null) {
                 SavedCard savedCard = savedCardRepo.findById(dto.getCardId())
                         .orElseThrow(() -> new RuntimeException("Saved card not found with ID: " + dto.getCardId()));
-                if (savedCard.getUser() == null || !savedCard.getUser().getId().equals(user.getId())) {
+                if (savedCard.getUser() == null || savedCard.getUser().getId() != user.getId()) {
                     throw new AccessDeniedException("Saved card does not belong to user");
                 }
                 order.setSavedCard(savedCard);

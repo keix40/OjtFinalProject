@@ -6,6 +6,7 @@ import com.Ojt.Ecommerce.exception.CustomException;
 import com.Ojt.Ecommerce.repository.OtpVerificationRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.repository.VerificationTokenRepository;
+import com.Ojt.Ecommerce.repository.VipTierRepository;
 import com.Ojt.Ecommerce.security.AuthCookieService;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
 import com.Ojt.Ecommerce.security.SecurityUtils;
@@ -87,6 +88,7 @@ public class AuthController {
     private final BlacklistServiceImpl blacklistServiceImpl;
     private final NotificationService notificationService;
     private final AuthCookieService authCookieService;
+    private final VipTierRepository vipTierRepository;
 
     @Value("${ipqs.api.key:}")
     private String ipqsApiKey;
@@ -408,7 +410,10 @@ public class AuthController {
                     body.put("roles", roles);
                     body.put("permissions", permissions);
                     body.put("verified", user.isVerified());
-                    body.put("vipTier", user.getVipTier() != null ? user.getVipTier().getName() : null);
+                    VipTier vipTier = vipTierRepository.findTopByMinPointsLessThanEqualOrderByMinPointsDesc(
+                            user.getTotalPoints() != null ? user.getTotalPoints() : 0
+                    ).orElse(null);
+                    body.put("vipTier", vipTier != null ? vipTier.getName() : "Regular");
                     return ResponseEntity.ok(body);
                 })
                 .orElse(ResponseEntity.status(401).body(Map.of("message", "Not authenticated")));
