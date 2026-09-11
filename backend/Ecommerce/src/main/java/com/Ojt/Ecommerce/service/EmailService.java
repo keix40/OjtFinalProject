@@ -3,7 +3,10 @@ package com.Ojt.Ecommerce.service;
 import com.Ojt.Ecommerce.exception.EmailDeliveryException;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
@@ -20,6 +23,8 @@ import java.util.List;
 
 @Service
 public class EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
     private static final HttpClient HTTP = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(15))
@@ -46,10 +51,24 @@ public class EmailService {
     }
 
     private void sendViaResend(String toEmail, String subject, String body, boolean html) {
+        sendViaResend(List.of(toEmail), subject, body, html);
+    }
+
+    private void sendViaResend(List<String> toEmails, String subject, String body, boolean html) {
         try {
+            JSONArray recipients = new JSONArray();
+            for (String email : toEmails) {
+                if (email != null && !email.isBlank()) {
+                    recipients.put(email.trim());
+                }
+            }
+            if (recipients.isEmpty()) {
+                throw new EmailDeliveryException("No valid recipient email address.");
+            }
+
             JSONObject payload = new JSONObject();
             payload.put("from", mailFrom);
-            payload.put("to", toEmail);
+            payload.put("to", recipients);
             payload.put("subject", subject);
             if (html) {
                 payload.put("html", body);
@@ -67,15 +86,45 @@ public class EmailService {
 
             HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new EmailDeliveryException(
-                        "Email service temporarily unavailable. Please try again later.");
+                log.warn("Resend API error: status={} body={}", response.statusCode(), response.body());
+                throw new EmailDeliveryException(resendClientMessage(response.statusCode(), response.body()));
             }
         } catch (EmailDeliveryException ex) {
             throw ex;
         } catch (Exception ex) {
+            log.warn("Resend API request failed: {}", ex.getMessage());
             throw new EmailDeliveryException(
                     "Email service temporarily unavailable. Please try again later.", ex);
         }
+    }
+
+    private static String resendClientMessage(int statusCode, String responseBody) {
+        if (statusCode == 403 || statusCode == 422) {
+            String detail = extractResendErrorMessage(responseBody);
+            if (detail != null && (detail.toLowerCase().contains("domain")
+                    || detail.toLowerCase().contains("from")
+                    || detail.toLowerCase().contains("recipient")
+                    || detail.toLowerCase().contains("verified"))) {
+                return "Email could not be sent. Check that the sender domain and recipient are allowed for your mail provider.";
+            }
+            return "Email could not be sent due to a configuration issue. Please contact support.";
+        }
+        return "Email service temporarily unavailable. Please try again later.";
+    }
+
+    private static String extractResendErrorMessage(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return null;
+        }
+        try {
+            JSONObject json = new JSONObject(responseBody);
+            if (json.has("message")) {
+                return json.getString("message");
+            }
+        } catch (Exception ignored) {
+            // fall through
+        }
+        return responseBody.length() > 200 ? responseBody.substring(0, 200) : responseBody;
     }
 
     private void sendViaSmtp(String toEmail, String subject, String body) {
