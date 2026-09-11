@@ -37,6 +37,8 @@ interface Address {
   styleUrls: ['./customers.component.css']
 })
 export class CustomersComponent implements OnInit {
+  isLoading = false;
+  loadError = '';
   // Data properties
   customers: Customer[] = [];
   filteredCustomers: Customer[] = [];
@@ -285,7 +287,10 @@ export class CustomersComponent implements OnInit {
   // }
 
   loadCustomers(): void {
-    this.userService.getCustomers().subscribe((data: any[]) => {
+    this.isLoading = true;
+    this.loadError = '';
+    this.userService.getCustomers().subscribe({
+      next: (data: any[]) => {
       this.customers = data.map(c => ({
         id: c.userId?.toString() ?? '',
         name: c.name || '',
@@ -300,6 +305,12 @@ export class CustomersComponent implements OnInit {
       }));
       this.calculateStats();
       this.applyFilters();
+      this.isLoading = false;
+    },
+      error: () => {
+        this.isLoading = false;
+        this.loadError = 'Failed to load customers. Please try again.';
+      }
     });
   }
 

@@ -302,13 +302,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     }
 
     // 2. Always apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier) {
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -321,13 +315,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   getVipDiscountPercent(product: ProductDTO): number | null {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return null;
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -336,13 +324,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   getVipDiscountDisplay(product: ProductDTO): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const percent = this.getVipDiscountPercent(product);
     if (percent) {
@@ -387,7 +369,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     if (this.discountId) {
       userOrderDto.discountId = this.discountId;
     }
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview) => {
         this.orderPreview = preview;
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
@@ -448,7 +430,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             console.log('Phone number updated successfully:', response);
             // Update the token with new phone number
             if (response.token) {
-              this.authService.saveToken(response.token);
+              this.authService.loadSession().subscribe();
             }
             this.proceedToNextStep();
           },
@@ -844,7 +826,10 @@ getTotalDiscount() {
     }
 
     const user = this.authService.getDecodedToken();
-    const userId = user ? user.id : null;
+    const userId = user?.id;
+    if (userId == null) {
+      return;
+    }
 
     this.orderService.getDiscount(userId, this.couponCode).subscribe({
       next: (discount) => {

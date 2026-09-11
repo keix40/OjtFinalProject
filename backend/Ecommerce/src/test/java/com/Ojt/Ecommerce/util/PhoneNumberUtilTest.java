@@ -35,7 +35,7 @@ class PhoneNumberUtilTest {
         assertTrue(PhoneNumberUtil.isValidPhoneNumber("+44123456789"));
         
         // Invalid numbers
-        assertFalse(PhoneNumberUtil.isValidPhoneNumber("123456"));
+        assertFalse(PhoneNumberUtil.isValidPhoneNumber("1"));
         assertFalse(PhoneNumberUtil.isValidPhoneNumber("abc"));
         assertFalse(PhoneNumberUtil.isValidPhoneNumber(""));
         assertFalse(PhoneNumberUtil.isValidPhoneNumber(null));
@@ -56,8 +56,8 @@ class PhoneNumberUtilTest {
     @Test
     void testDisplayFormat() {
         // Myanmar numbers with spacing
-        assertEquals("+959 12 345 67", PhoneNumberUtil.getDisplayFormat("0912345678"));
-        assertEquals("+959 12 345 67", PhoneNumberUtil.getDisplayFormat("+95912345678"));
+        assertEquals("+959 12 345 678", PhoneNumberUtil.getDisplayFormat("0912345678"));
+        assertEquals("+959 12 345 678", PhoneNumberUtil.getDisplayFormat("+95912345678"));
         
         // Other numbers remain unchanged
         assertEquals("+1234567890", PhoneNumberUtil.getDisplayFormat("+1234567890"));

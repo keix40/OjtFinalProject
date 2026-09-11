@@ -121,7 +121,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   isDeletingRule: boolean = false;
   saveRule(rule: any) {
     this.isSavingRule = true;
-    this.http.put<any>(`http://localhost:8080/api/login-attempts/security-policy/${rule.id}`, rule).subscribe({
+    this.http.put<any>(`/api/login-attempts/security-policy/${rule.id}`, rule).subscribe({
       next: (data) => {
         this.isSavingRule = false;
         this.editingRuleId = null;
@@ -145,7 +145,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
     const ok = await this.luxDialog.confirm({ title: 'Delete this rule?', confirmText: 'Delete', destructive: true });
     if (!ok) return;
     this.isDeletingRule = true;
-    this.http.delete<any>(`http://localhost:8080/api/login-attempts/security-policy/${rule.id}`).subscribe({
+    this.http.delete<any>(`/api/login-attempts/security-policy/${rule.id}`).subscribe({
       next: () => {
         this.isDeletingRule = false;
         this.fetchSecurityPolicy();
@@ -903,7 +903,7 @@ export class LoginAttemptsComponent implements OnInit, OnDestroy {
   }
 
   fetchSecurityPolicy() {
-    this.http.get<any[]>('http://localhost:8080/api/login-attempts/security-policy').subscribe({
+    this.http.get<any[]>('/api/login-attempts/security-policy').subscribe({
       next: (data) => {
         this.securityPolicy = data;
       },

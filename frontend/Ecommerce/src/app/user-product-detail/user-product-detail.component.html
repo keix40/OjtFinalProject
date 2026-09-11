@@ -342,7 +342,7 @@
                  [@slideIn]>
                 <div class="flex items-start justify-between mb-4">
                   <div class="flex items-center space-x-3">
-                  <img [src]="'http://localhost:8080' + review.userImage"
+                  <img [src]="review.userImage | mediaUrl"
                          class="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm"
                          alt="User Avatar" width="40" height="40">
                   <div>

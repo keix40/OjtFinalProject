@@ -80,8 +80,8 @@
           <p class="lux-field-label">Media</p>
           <div *ngIf="editMediaList.length > 0" class="media-grid mb">
             <div *ngFor="let media of editMediaList" class="media-thumb relative">
-              <img *ngIf="media.type === 'IMAGE'" [src]="media.url.startsWith('http') ? media.url : 'http://localhost:8080' + media.url" alt="" />
-              <video *ngIf="media.type === 'VIDEO'" [src]="media.url.startsWith('http') ? media.url : 'http://localhost:8080' + media.url"></video>
+              <img *ngIf="media.type === 'IMAGE'" [src]="media.url.startsWith('http') ? media.url : (media.url | mediaUrl)" alt="" />
+              <video *ngIf="media.type === 'VIDEO'" [src]="media.url.startsWith('http') ? media.url : (media.url | mediaUrl)"></video>
               <button type="button" class="rm" (click)="removeExistingMedia(media.url, media.type === 'IMAGE' ? 'image' : 'video')" aria-label="Remove">×</button>
             </div>
           </div>

@@ -40,26 +40,26 @@ public class LoginAttemptController {
         return ResponseEntity.ok(loginAttemptService.getAllAttempts());
     }
 
-    // ✅ Filter by status (e.g., failed, successful)
     @GetMapping("/status/{status}")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getByStatus(@PathVariable String status) {
         return ResponseEntity.ok(loginAttemptService.getByStatus(status));
     }
 
-    // ✅ Filter by threat level (e.g., critical, medium)
     @GetMapping("/threat/{level}")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getByThreatLevel(@PathVariable String level) {
         return ResponseEntity.ok(loginAttemptService.getByThreatLevel(level));
     }
 
-    // ✅ Search by username/IP/location
     @GetMapping("/search")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> search(@RequestParam String keyword) {
         return ResponseEntity.ok(loginAttemptService.search(keyword));
     }
 
-    // ✅ Filter by time range
     @GetMapping("/range")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getByTimeRange(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
@@ -76,8 +76,8 @@ public class LoginAttemptController {
         return ResponseEntity.ok().build();
     }
 
-    // 🛡️ (Optional future) Block/whitelist IP – will implement in Step 10
     @GetMapping("/filter")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> filterAndSearch(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String threatLevel,
@@ -94,6 +94,7 @@ public class LoginAttemptController {
     }
 
     @GetMapping("/paged")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<PagedResponse<LoginAttemptDTO>> getPagedAttempts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -131,8 +132,8 @@ public class LoginAttemptController {
         return ResponseEntity.ok("IPs blocked");
     }
 
-    // ✅ Get all login attempts by sessionId
     @GetMapping("/session/{sessionId}")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<LoginAttemptDTO>> getBySessionId(@PathVariable String sessionId) {
         return ResponseEntity.ok(loginAttemptService.getBySessionId(sessionId));
     }
@@ -171,22 +172,22 @@ public class LoginAttemptController {
         }
     }
 
-    // Endpoint to get current security policy
     @GetMapping("/security-policy")
+    @RequiresPermission(value = SECURITY_VIEW_ATTEMPTS, level = "basic")
     public ResponseEntity<List<SecurityPolicyRule>> getSecurityPolicy() {
         securityPolicyService.seedDefaultsIfEmpty();
         return ResponseEntity.ok(securityPolicyService.getAllRules());
     }
 
-    // Update a security policy rule
     @PutMapping("/security-policy/{id}")
+    @RequiresPermission(value = SECURITY_UPDATE_ATTEMPTS, level = "advanced")
     public ResponseEntity<SecurityPolicyRule> updateSecurityPolicyRule(@PathVariable Long id, @RequestBody SecurityPolicyRule updatedRule) {
         SecurityPolicyRule rule = securityPolicyService.updateRule(id, updatedRule);
         return ResponseEntity.ok(rule);
     }
 
-    // Delete a security policy rule
     @DeleteMapping("/security-policy/{id}")
+    @RequiresPermission(value = SECURITY_UPDATE_ATTEMPTS, level = "advanced")
     public ResponseEntity<?> deleteSecurityPolicyRule(@PathVariable Long id) {
         securityPolicyService.deleteRule(id);
         return ResponseEntity.ok().build();

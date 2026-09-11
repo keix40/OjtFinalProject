@@ -6,6 +6,7 @@ import { FooterComponent } from '../footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { HeaderComponent } from '../header/header.component';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-user-brand-list',
@@ -50,7 +51,7 @@ export class UserBrandListComponent implements OnInit {
     if (brand.image.startsWith('/assets/')) {
       return brand.image;
     }
-    return `http://localhost:8080${brand.image.startsWith('/') ? brand.image : '/' + brand.image}`;
+    return mediaUrl(brand.image.startsWith('/') ? brand.image : '/' + brand.image);
   }
 
   goToBrand(brand: BrandListDTO) {

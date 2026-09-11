@@ -8,6 +8,7 @@ import { BreadcrumbComponent } from '../breadcrumb.component';
 import { Router, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-user-category-list',
@@ -45,7 +46,7 @@ export class UserCategoryListComponent implements OnInit {
   getCategoryImageUrl(cat: Category): string {
     if (!cat.image || cat.image.includes('null')) return 'assets/images/default-brand.svg';
     if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
-    return `http://localhost:8080${cat.image}`;
+    return mediaUrl(cat.image);
   }
 
   getSafeIconUrl(cat: Category): SafeUrl | string | undefined {
@@ -57,7 +58,7 @@ export class UserCategoryListComponent implements OnInit {
         return cat.iconUrl;
       }
       // If it's a relative path (uploaded file)
-      return `http://localhost:8080${cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl}`;
+      return mediaUrl(cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl);
     }
     return undefined;
   }

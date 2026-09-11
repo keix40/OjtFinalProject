@@ -11,6 +11,8 @@ import { PermissionConstants } from '../../constants/permission.constants';
 import { ColorUtilityService } from '../../services/color-utility.service';
 import { PriceFormatService } from '../../services/price-format.service';
 import { LuxUiModule } from '../../shared/ui/lux-ui.module';
+import { mediaUrl } from '../../shared/media-url.util';
+import { MediaUrlPipe } from '../../shared/media-url.pipe';
 
 interface ProductImage {
   id: number;
@@ -52,7 +54,7 @@ interface Product {
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, NgbCarouselModule, LuxUiModule],
+  imports: [CommonModule, NgbCarouselModule, LuxUiModule, MediaUrlPipe],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.css']
 })
@@ -156,7 +158,7 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
           categories: categories,
           images: (data.productImages || []).filter((img: any) => !img.variantId).map((img: any) => ({
             id: img.id,
-            url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
+            url: img.imageUrl.startsWith('http') ? img.imageUrl : mediaUrl(img.imageUrl),
             isMain: false,
             status: img.status === 1 ? 'active' : 'inactive',
             variantId: img.variantId || null
@@ -168,7 +170,7 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
             stock: variant.stock,
             images: (data.productImages || []).filter((img: any) => img.variantId === variant.id).map((img: any) => ({
               id: img.id,
-              url: img.imageUrl.startsWith('http') ? img.imageUrl : `http://localhost:8080${img.imageUrl}`,
+              url: img.imageUrl.startsWith('http') ? img.imageUrl : mediaUrl(img.imageUrl),
               isMain: false,
               status: img.status === 1 ? 'active' : 'inactive',
               variantId: img.variantId
@@ -430,8 +432,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
   }
 
   getAllMedia(review: any): { type: 'image' | 'video', url: string }[] {
-    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
-    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    const images = (review.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: '' + url }));
+    const videos = (review.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: '' + url }));
     return [...images, ...videos];
   }
 
@@ -492,8 +494,8 @@ export class ProductDetailComponent implements OnInit, AfterViewInit {
 
   getMediaModalArray(): { type: 'image' | 'video', url: string }[] {
     if (!this.mediaModalCurrentReview) return [];
-    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: 'http://localhost:8080' + url }));
-    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: 'http://localhost:8080' + url }));
+    const images = (this.mediaModalCurrentReview.imageUrls || []).map((url: string) => ({ type: 'image' as const, url: '' + url }));
+    const videos = (this.mediaModalCurrentReview.videoUrls || []).map((url: string) => ({ type: 'video' as const, url: '' + url }));
     return [...images, ...videos];
   }
   

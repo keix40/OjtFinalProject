@@ -139,7 +139,7 @@ export class DiscountService {
   }
 
   getCouponMinimumSpend(code: string): Observable<number | null> {
-    return this.http.get<{minSpend: number}>(`http://localhost:8080/api/coupons/min-spend?couponCode=${encodeURIComponent(code)}`)
+    return this.http.get<{minSpend: number}>(`/api/coupons/min-spend?couponCode=${encodeURIComponent(code)}`)
       .pipe(map(res => res.minSpend));
   }
   

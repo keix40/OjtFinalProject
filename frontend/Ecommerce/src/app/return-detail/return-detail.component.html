@@ -38,10 +38,10 @@
       <div class="media-row">
         <ng-container *ngFor="let img of previewImages.slice(0, 4); let idx = index">
           <button *ngIf="idx < 3 || previewImages.length <= 4" type="button" class="media-thumb" (click)="openMediaPreviewModal(idx)">
-            <img [src]="'http://localhost:8080' + img" alt="return media" />
+            <img [src]="img | mediaUrl" alt="return media" />
           </button>
           <button *ngIf="idx === 3 && previewImages.length > 4" type="button" class="media-thumb media-thumb--more" (click)="openMediaPreviewModal(3)">
-            <img [src]="'http://localhost:8080' + img" alt="return media" />
+            <img [src]="img | mediaUrl" alt="return media" />
             <span>+{{ previewImages.length - 4 }}</span>
           </button>
         </ng-container>
@@ -170,7 +170,7 @@
     <div class="lux-media-modal__backdrop"></div>
     <button type="button" class="lux-media-modal__close" (click)="modal.dismiss()">&times;</button>
     <button *ngIf="imageModalCanGoLeft()" type="button" class="lux-media-modal__nav left" (click)="imageModalPrev()">‹</button>
-    <img [src]="'http://localhost:8080' + previewImages[selectedImageIndex!]" alt="Preview" />
+    <img [src]="previewImages[selectedImageIndex!] | mediaUrl" alt="Preview" />
     <button *ngIf="imageModalCanGoRight()" type="button" class="lux-media-modal__nav right" (click)="imageModalNext()">›</button>
   </div>
 </ng-template>

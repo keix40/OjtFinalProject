@@ -153,7 +153,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   setupWebSocket(): void {
     this.stompClient = new Client({
       brokerURL: undefined,
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         this.wsConnected = true;

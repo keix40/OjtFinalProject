@@ -30,17 +30,21 @@ export class AuthGuard implements CanActivate {
       });
     }
     
-    // Check if user is logged in
-    const isLoggedIn = this.auth.isLoggedIn();
-    console.log('[AuthGuard] isLoggedIn:', isLoggedIn);
-    if (!isLoggedIn) {
-      console.log('[AuthGuard] User not logged in, redirecting to login');
-      return this.router.createUrlTree(['/login']);
-    }
-    
-    // Priority 2: For logged-in users without localStorage flag, check with backend
-    console.log('[AuthGuard] User is logged in, checking with backend...');
     return new Promise<boolean | UrlTree>((resolve) => {
+      this.auth.loadSession().subscribe({
+        next: (session) => {
+          if (!session) {
+            resolve(this.router.createUrlTree(['/login']));
+            return;
+          }
+          this.checkBlacklistAndContinue(resolve, route);
+        },
+        error: () => resolve(this.router.createUrlTree(['/login']))
+      });
+    });
+  }
+
+  private checkBlacklistAndContinue(resolve: (v: boolean | UrlTree) => void, route: ActivatedRouteSnapshot): void {
       this.auth.checkBlacklistStatus().subscribe({
         next: (response) => {
           console.log('[AuthGuard] Backend response:', response);
@@ -70,16 +74,16 @@ export class AuthGuard implements CanActivate {
         },
         error: (error) => {
           console.error('[AuthGuard] Failed to check blacklist status:', error);
-          // If blacklist check fails, continue with normal auth check
-          resolve(this.performNormalAuthCheck(route));
+          resolve(this.router.createUrlTree(['/login']));
         }
       });
-    });
   }
   
   private performNormalAuthCheck(route: ActivatedRouteSnapshot): boolean | UrlTree {
     const decoded = this.auth.getDecodedToken();
-    let userRole = (decoded?.roles || decoded?.role || decoded?.roleName || '').toUpperCase();
+    const rolesRaw = decoded?.roles || '';
+    const roleList = rolesRaw.split(',').map(r => r.trim().toUpperCase().replace(/^ROLE_/, '')).filter(Boolean);
+    let userRole = roleList[0] || '';
     // Remove ROLE_ prefix if present
     if (userRole.startsWith('ROLE_')) {
       userRole = userRole.replace('ROLE_', '');

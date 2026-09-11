@@ -8,7 +8,7 @@ import { UserOrder, UserOrderListDTO } from '../user-order';
 })
 export class OrderService {
 
-  baseUrl = 'http://localhost:8080/order';
+  baseUrl = '/order';
 
   constructor(private http: HttpClient) {}
 
@@ -46,18 +46,18 @@ export class OrderService {
 
   // Jasper Reports Export Methods
   exportOrderReportToPDF(): Observable<Blob> {
-    return this.http.get('http://localhost:8080/api/order-reports/pdf', { responseType: 'blob' });
+    return this.http.get('/api/order-reports/pdf', { responseType: 'blob' });
   }
 
   exportSelectedOrdersToPDF(orderIds: number[]): Observable<Blob> {
-    return this.http.post('http://localhost:8080/api/order-reports/pdf/selected', orderIds, { responseType: 'blob' });
+    return this.http.post('/api/order-reports/pdf/selected', orderIds, { responseType: 'blob' });
   }
 
   exportOrderReportToCSV(): Observable<Blob> {
-    return this.http.get('http://localhost:8080/api/order-reports/csv', { responseType: 'blob' });
+    return this.http.get('/api/order-reports/csv', { responseType: 'blob' });
   }
 
   exportSelectedOrdersToCSV(orderIds: number[]): Observable<Blob> {
-    return this.http.post('http://localhost:8080/api/order-reports/csv/selected', orderIds, { responseType: 'blob' });
+    return this.http.post('/api/order-reports/csv/selected', orderIds, { responseType: 'blob' });
   }
 }

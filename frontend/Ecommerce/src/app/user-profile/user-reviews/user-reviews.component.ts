@@ -176,7 +176,7 @@ export class UserReviewsComponent implements OnInit {
   getAllMedia(review: Review): { type: 'image' | 'video', url: string }[] {
     return (review.mediaList || []).map(m => ({
       type: m.type === 'IMAGE' ? 'image' : 'video',
-      url: m.url.startsWith('http') ? m.url : 'http://localhost:8080' + m.url
+      url: m.url.startsWith('http') ? m.url : '' + m.url
     }));
   }
 

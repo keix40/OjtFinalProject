@@ -6,7 +6,7 @@ import { Observable, Subject } from 'rxjs';
   providedIn: 'root'
 })
 export class WishlistService {
-  baseUrl = 'http://localhost:8080/wishlist';
+  baseUrl = '/wishlist';
   public wishlistUpdated$ = new Subject<void>();
 
   constructor(private http: HttpClient) {}

@@ -16,6 +16,7 @@ import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
 import { SelectionStore } from '../core/state/selection-store';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-category-list',
@@ -134,7 +135,7 @@ export class CategoryListComponent implements OnInit {
   getCategoryImageUrl(cat: CategoryTreeDTO): string {
     if (!cat.image || cat.image.includes('null')) return '';
     if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
-    return `http://localhost:8080${cat.image}`;
+    return mediaUrl(cat.image);
   }
 
   getCategoryBackgroundColor(cat: any): string {

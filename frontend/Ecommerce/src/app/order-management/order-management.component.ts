@@ -171,6 +171,9 @@ export class OrderManagementComponent implements OnInit, AfterViewInit, OnDestro
     return product.unitPrice;
   }
 
+  isLoading = false;
+  loadError = '';
+
   ngOnInit(): void {
     this.loadOrders();
     document.addEventListener('click', this.handleDocumentClickBound);
@@ -213,6 +216,8 @@ export class OrderManagementComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   loadOrders() {
+    this.isLoading = true;
+    this.loadError = '';
     this.orderService.getAllOrder().subscribe({
       next: async (data) => {
         this.orders = data;
@@ -221,8 +226,11 @@ export class OrderManagementComponent implements OnInit, AfterViewInit, OnDestro
         this.updatePaginatedOrders();
         await this.fetchDiscountInfoForOrders();
         this.refreshIcons();
+        this.isLoading = false;
       },
       error: () => {
+        this.isLoading = false;
+        this.loadError = 'Failed to load orders. Please try again.';
         this.dialog.error('Error Loading Orders', 'There was an error loading your orders. Please try again later.');
       },
     });

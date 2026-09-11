@@ -108,7 +108,21 @@ export const PermissionConstants = {
   REFUND_VIEW: 'refund.view',
   REFUND_UPDATE: 'refund.update',
 
-  
+  // Policies
+  POLICIES_VIEW: 'policies.view',
+  POLICIES_CREATE: 'policies.create',
+  POLICIES_UPDATE: 'policies.update',
+  POLICIES_DELETE: 'policies.delete',
+
+  // VIP tiers
+  VIP_TIERS_VIEW: 'vip_tiers.view',
+  VIP_TIERS_CREATE: 'vip_tiers.create',
+  VIP_TIERS_UPDATE: 'vip_tiers.update',
+  VIP_TIERS_DELETE: 'vip_tiers.delete',
+
+  // Revenue target
+  REVENUE_TARGET_VIEW: 'revenue_target.view',
+  REVENUE_TARGET_UPDATE: 'revenue_target.update',
 
   //permission
 

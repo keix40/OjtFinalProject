@@ -144,22 +144,10 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
   ) {}
 
   ngOnInit(): void {
-    // Debug: log JWT payload and VIP tier
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('JWT payload:', payload);
-        const vipTier = payload.vipTier || null;
-        console.log('VIP tier from JWT:', vipTier);
-      } catch (e) {
-        console.log('Could not parse JWT:', e);
-      }
-      this.breadcrumbItems = [
-        { label: 'Home',   link: '/home'},
-        { label: 'Products', link: '/products' }
-      ];
-    }
+    this.breadcrumbItems = [
+      { label: 'Home', link: '/home' },
+      { label: 'Products', link: '/products' }
+    ];
     
     // Add window resize listener for grid layout updates
     window.addEventListener('resize', () => {
@@ -419,7 +407,7 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
 
   getProductImageUrl(product: ProductDTO): string {
     if (product.productImages?.length > 0) {
-      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+      return '' + product.productImages[0].imageUrl;
     }
     return '/assets/project_img/fashion_store.jpg';
   }
@@ -1179,15 +1167,7 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
 }
 
   checkFirstTimeBuyerDiscount(): void {
-    const token = localStorage.getItem('token');
-    let userId: number | null = null;
-    if (token) {
-      try {
-        userId = JSON.parse(atob(token.split('.')[1])).id;
-      } catch (e) {
-        userId = null;
-      }
-    }
+    const userId = this.authService.getUserId();
     if (!userId) {
       this.isFirstTimeBuyerDiscount = false;
       return;
@@ -1197,7 +1177,7 @@ export class UserProductListComponent implements OnInit, OnDestroy, AfterViewIni
       userId: userId,
       cartItem: []
     };
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview: any) => {
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
         if (this.isFirstTimeBuyerDiscount && !localStorage.getItem('firstTimeBuyerPopupShown')) {

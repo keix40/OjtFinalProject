@@ -3,6 +3,7 @@ import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http'
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, retry, tap, map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
+import { AuthService } from '../auth/auth.service';
 
 export interface BlacklistEntry {
   id: string;
@@ -86,7 +87,7 @@ export interface Appeal {
 export class BlacklistService {
   private apiUrl = `${environment.apiUrl}/blacklist`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An error occurred';
@@ -222,16 +223,8 @@ getEntries(filters: BlacklistFilters): Observable<{
   }
 
   private getCurrentUserEmail(): string | null {
-    try {
-      const token = localStorage.getItem('token');
-      if (token) {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.email || payload.sub;
-      }
-    } catch (error) {
-      console.error('[BlacklistService] Error parsing token:', error);
-    }
-    return null;
+    const session = this.authService.getSession();
+    return session?.sub ?? session?.email ?? null;
   }
 
   // Method to check if current user is still blacklisted

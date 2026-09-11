@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { PermissionService } from '../services/permission.service';
 import { PermissionConstants } from '../constants/permission.constants';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-category-update',
@@ -48,7 +49,7 @@ export class CategoryUpdateComponent implements OnInit {
           this.category = found;
           this.categoryNames = [found.name];
           this.selectedParentCategoryId = found.parentId || undefined;
-          this.imagePreviewUrl = found.image ? `http://localhost:8080${found.image}` : null;
+          this.imagePreviewUrl = found.image ? mediaUrl(found.image) : null;
         }
       }
     });

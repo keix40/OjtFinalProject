@@ -1,7 +1,8 @@
 import { Component, OnInit, AfterViewInit, ElementRef, HostListener } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ActivityLogService, ActivityLogFilter, ActivityLogResponse, ActivityStatistics } from '../services/activity-log.service';
-import { environment } from '../../environments/environment';
+import { mediaUrl } from '../shared/media-url.util';
+import { HtmlSanitizerService } from '../shared/html-sanitizer.service';
 
 declare var lucide: any;
 
@@ -117,7 +118,8 @@ export class ActivityLogsComponent implements OnInit {
     private activityLogService: ActivityLogService,
     private elementRef: ElementRef,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private htmlSanitizer: HtmlSanitizerService
   ) {}
 
   ngOnInit(): void {
@@ -711,7 +713,7 @@ export class ActivityLogsComponent implements OnInit {
         if (category === 'No categories') {
           return '<span class="font-bold text-gray-600">No categories</span>';
         }
-        return `<span class="font-bold">${category}</span>`;
+        return `<span class="font-bold">${this.htmlSanitizer.escapeText(category)}</span>`;
       }).join(' , ');
     }
     if (typeof value === 'object') {
@@ -724,7 +726,7 @@ export class ActivityLogsComponent implements OnInit {
       return this.formatImageDisplay(stringValue);
     }
     
-    return stringValue;
+    return this.htmlSanitizer.escapeText(stringValue);
   }
 
 
@@ -732,18 +734,18 @@ export class ActivityLogsComponent implements OnInit {
   // Helper method to format image display
   private formatImageDisplay(imageUrl: string): string {
     // Extract base URL from environment (remove /api suffix)
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
-    
+    const fullUrl = mediaUrl(imageUrl);
+    const escapedPath = this.htmlSanitizer.escapeText(imageUrl);
+
     return `
       <div class="flex items-center space-x-2">
-        <img src="${fullUrl}" 
-             alt="Image" 
+        <img src="${fullUrl}"
+             alt="Image"
              class="w-12 h-12 object-cover rounded border border-gray-300 shadow-sm cursor-pointer"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
              loading="lazy"
              title="Click to view full size">
-        <span class="text-xs text-gray-500" style="display: none;">${imageUrl}</span>
+        <span class="text-xs text-gray-500" style="display: none;">${escapedPath}</span>
       </div>
     `;
   }
@@ -783,15 +785,12 @@ export class ActivityLogsComponent implements OnInit {
 
   // Method to get full image URL
   getImageUrl(value: string): string {
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    return value.startsWith('http') ? value : `${baseUrl}${value}`;
+    return mediaUrl(value);
   }
 
   // Method to open image in new tab
   openImageInNewTab(imageUrl: string): void {
-    const baseUrl = environment.apiUrl.replace('/api', '');
-    const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${baseUrl}${imageUrl}`;
-    window.open(fullUrl, '_blank');
+    window.open(mediaUrl(imageUrl), '_blank');
   }
 
   // Helper method to format description with proper styling for different operations
@@ -812,7 +811,7 @@ export class ActivityLogsComponent implements OnInit {
           return description.replace(/\*\*(.*?)\*\*/g, '<span class="font-bold">$1</span>');
       }
     }
-    return description;
+    return this.htmlSanitizer.escapeText(description);
   }
 
   // Cache for hasActualChanges results to prevent excessive method calls

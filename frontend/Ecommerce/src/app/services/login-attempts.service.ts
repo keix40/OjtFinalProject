@@ -32,7 +32,7 @@ export interface PagedResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class LoginAttemptsService {
-  private apiUrl = 'http://localhost:8080/api/login-attempts';
+  private apiUrl = '/api/login-attempts';
 
   constructor(private http: HttpClient) {}
 

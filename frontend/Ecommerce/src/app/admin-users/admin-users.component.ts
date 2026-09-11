@@ -99,43 +99,23 @@ export class AdminUsersComponent implements OnInit{
   public PermissionConstants = PermissionConstants;
 
   ngOnInit(): void {
-    // Set currentUser from JWT
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        this.currentUser = {
-          id: payload.id || 0,
-          name: payload.sub || 'Unknown User',
-          role: {
-            id: payload.id || 0,
-            name: payload.roles || 'UNKNOWN',
-            level: payload.roleLevel || 0
-          }
-        };
-      } catch (error) {
-        console.error('Error parsing JWT token:', error);
-        this.currentUser = {
-          id: 0,
-          name: 'Parse Error',
-          role: {
-            id: 0,
-            name: 'PARSE_ERROR',
-            level: 0
-          }
-        };
+    const applySession = (session: { id?: number; name?: string; sub?: string; roles?: string; roleLevel?: number } | null) => {
+      if (!session) {
+        return;
       }
-    } else {
-      console.error('No token found in localStorage');
       this.currentUser = {
-        id: 0,
-        name: 'No Token',
+        id: session.id || 0,
+        name: session.name || session.sub || 'Unknown User',
         role: {
-          id: 0,
-          name: 'NO_TOKEN',
-          level: 0
+          id: session.id || 0,
+          name: session.roles || 'UNKNOWN',
+          level: session.roleLevel || 0
         }
       };
+    };
+    applySession(this.authService.getSession());
+    if (!this.currentUser) {
+      this.authService.loadSession().subscribe(s => applySession(s));
     }
     this.permissionCategoryService.getPermissionCategories().subscribe(categories => {
       this.permissionCategories = categories;
@@ -169,7 +149,7 @@ export class AdminUsersComponent implements OnInit{
   connectWebSocket(): void {
     this.stompClient = new Client({
       brokerURL: undefined,
-      webSocketFactory: () => new SockJS('http://localhost:8080/ws'),
+      webSocketFactory: () => new SockJS('/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         this.stompSub = this.stompClient!.subscribe('/topic/admin-online-status', (message: IMessage) => {

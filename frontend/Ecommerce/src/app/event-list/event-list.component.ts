@@ -106,7 +106,7 @@ export class EventListComponent implements OnInit {
     if (event.eventImage.startsWith('http') || event.eventImage.startsWith('data:')) {
       return event.eventImage;
     }
-    return 'http://localhost:8080' + event.eventImage;
+    return '' + event.eventImage;
   }
 
   onSearch() {

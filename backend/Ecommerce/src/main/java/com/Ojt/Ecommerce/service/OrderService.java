@@ -4,13 +4,17 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+
+import com.Ojt.Ecommerce.security.SecurityUtils;
 
 import com.Ojt.Ecommerce.dto.AddressDTO;
 import com.Ojt.Ecommerce.dto.CartDTO;
@@ -79,6 +83,9 @@ public class OrderService {
 
     @Autowired
     private UserCouponUsageRepository couponRepo;
+
+    @Autowired
+    private DiscountCouponService discountCouponService;
 
     @Autowired
     private UserRepository userRepo;
@@ -188,6 +195,14 @@ public class OrderService {
     public UserOrder createOrder(UserOrderDTO dto) {
         ensureFirstTimeBuyerDiscountExists();
 
+        Long currentUserId = SecurityUtils.requireCurrentUserId();
+        if (!currentUserId.equals(dto.getUserId()) && !SecurityUtils.hasAnyAdminViewPermission()) {
+            throw new AccessDeniedException("Cannot create order for another user");
+        }
+        if (!SecurityUtils.hasAnyAdminViewPermission()) {
+            dto.setUserId(currentUserId);
+        }
+
         // Debug logging
         System.out.println("=== CREATE ORDER DEBUG ===");
         System.out.println("User ID: " + dto.getUserId());
@@ -206,6 +221,9 @@ public class OrderService {
 
             Address address = addRepo.findById(dto.getAddressId())
                     .orElseThrow(() -> new RuntimeException("Address not found with ID: " + dto.getAddressId()));
+            if (address.getUser() == null || address.getUser().getId() != user.getId()) {
+                throw new AccessDeniedException("Address does not belong to user");
+            }
             order.setAddress(address);
 
             DeliveryService deliveryService = deliveryServiceRepo.findById(dto.getDeliveryServiceId())
@@ -227,6 +245,9 @@ public class OrderService {
             if (dto.getCardId() != null) {
                 SavedCard savedCard = savedCardRepo.findById(dto.getCardId())
                         .orElseThrow(() -> new RuntimeException("Saved card not found with ID: " + dto.getCardId()));
+                if (savedCard.getUser() == null || savedCard.getUser().getId() != user.getId()) {
+                    throw new AccessDeniedException("Saved card does not belong to user");
+                }
                 order.setSavedCard(savedCard);
             }
 
@@ -255,16 +276,9 @@ public class OrderService {
                 }
             }
 
-            // If no first-time discount applied, apply manual discount if any
-            if (dto.getDiscountId() != null) {
-                Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
-                if (manualDiscount != null) {
-                    order.setDiscount(manualDiscount);
-                    order.setUserDiscountId(dto.getDiscountId());
-                    System.out.println("Applied manual discount: " + manualDiscount.getName() + " (ID: " + manualDiscount.getId() + ")");
-                } else {
-                    System.out.println("Warning: Discount with ID " + dto.getDiscountId() + " not found");
-                }
+            // If no first-time discount applied, apply manual discount if any (server-validated)
+            if (dto.getDiscountId() != null && order.getDiscount() == null) {
+                applyValidatedDiscount(user, order, dto.getDiscountId(), dto.getCartItem());
             }
 
             order.setOrderCode(generateUniqueOrderCode());
@@ -293,16 +307,21 @@ public class OrderService {
                 Product product = proRepo.findById(item.getProductId())
                         .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
 
+                ProductVariant variant = null;
+                if (item.getVariantId() != null) {
+                    variant = variantRepo.findById(item.getVariantId())
+                            .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
+                }
+                double unitPrice = resolveUnitPrice(product, variant);
+                item.setPrice(unitPrice);
+
                 UserOrderHasProduct orderProduct = new UserOrderHasProduct();
                 orderProduct.setUserOrder(savedOrder);
                 orderProduct.setProduct(product);
                 orderProduct.setQuantity(item.getQuantity());
-                orderProduct.setUnitPrice(item.getPrice());
+                orderProduct.setUnitPrice(unitPrice);
 
-                if (item.getVariantId() != null) {
-                    ProductVariant variant = variantRepo.findById(item.getVariantId())
-                            .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
-
+                if (variant != null) {
                     if (variant.getStock() == null || variant.getStock() < item.getQuantity()) {
                         throw new RuntimeException("Insufficient stock for variant ID: " + item.getVariantId());
                     }
@@ -427,12 +446,27 @@ public class OrderService {
     //add discount preivew by pmk july 9
 
     public OrderPreviewDTO previewOrder(UserOrderDTO dto) {
-        OrderPreviewDTO preview = new OrderPreviewDTO();
-        preview.setCartItems(dto.getCartItem());
+        Long currentUserId = SecurityUtils.requireCurrentUserId();
+        if (!currentUserId.equals(dto.getUserId()) && !SecurityUtils.hasAnyAdminViewPermission()) {
+            throw new AccessDeniedException("Cannot preview order for another user");
+        }
 
-        double subtotal = dto.getCartItem().stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+        OrderPreviewDTO preview = new OrderPreviewDTO();
+
+        double subtotal = 0.0;
+        for (CartDTO item : dto.getCartItem()) {
+            Product product = proRepo.findById(item.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found with ID: " + item.getProductId()));
+            ProductVariant variant = null;
+            if (item.getVariantId() != null) {
+                variant = variantRepo.findById(item.getVariantId())
+                        .orElseThrow(() -> new RuntimeException("Variant not found with ID: " + item.getVariantId()));
+            }
+            double unitPrice = resolveUnitPrice(product, variant);
+            item.setPrice(unitPrice);
+            subtotal += unitPrice * item.getQuantity();
+        }
+        preview.setCartItems(dto.getCartItem());
         preview.setSubtotal(subtotal);
 
         String discountName = null;
@@ -470,16 +504,19 @@ public class OrderService {
             }
         }
 
-        if (discountAmount == 0.0 && dto.getDiscountId() != null) {
-            Discount manualDiscount = discountRepo.findById(dto.getDiscountId()).orElse(null);
-            if (manualDiscount != null && manualDiscount.isStatus()) {
-                discountName = manualDiscount.getName();
-                discountReason = "Manual discount applied";
-                if (manualDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
-                    discountAmount = subtotal * manualDiscount.getDiscountValue();
-                } else {
-                    discountAmount = manualDiscount.getDiscountValue();
-                }
+        if (discountAmount == 0.0 && dto.getDiscountId() != null && user != null) {
+            List<Long> productIds = dto.getCartItem().stream()
+                    .map(CartDTO::getProductId)
+                    .filter(Objects::nonNull)
+                    .toList();
+            Discount manualDiscount = discountCouponService.requireEligibleDiscountForOrder(
+                    user.getId(), dto.getDiscountId(), productIds);
+            discountName = manualDiscount.getName();
+            discountReason = "Validated discount applied";
+            if (manualDiscount.getDiscountType() == DiscountType.PERCENTAGE) {
+                discountAmount = subtotal * manualDiscount.getDiscountValue();
+            } else {
+                discountAmount = manualDiscount.getDiscountValue();
             }
         }
 
@@ -491,6 +528,10 @@ public class OrderService {
         if (dto.getDeliveryServiceId() != null && dto.getAddressId() != null) {
             DeliveryService deliveryService = deliveryServiceRepo.findById(dto.getDeliveryServiceId()).orElse(null);
             Address userAddress = addRepo.findById(dto.getAddressId()).orElse(null);
+            if (userAddress != null && user != null
+                    && (userAddress.getUser() == null || userAddress.getUser().getId() != user.getId())) {
+                throw new AccessDeniedException("Address does not belong to user");
+            }
 
             if (deliveryService != null && userAddress != null) {
                 double distance = distanceCalculator.calculateDistance(
@@ -528,15 +569,21 @@ public class OrderService {
     }
 
     public List<UserOrderListDTO> getOrdersByUserId(Long userId) {
-        List<UserOrder> orders = repo.findByUserId(userId);
-        return orders.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return repo.findByUserIdWithDetails(userId).stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
     public List<UserOrderListDTO> getAllOrders() {
-        List<UserOrder> orders = repo.findAll();
-        return orders.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+        return getAllOrders(0, 500).getContent();
+    }
+
+    public org.springframework.data.domain.Page<UserOrderListDTO> getAllOrders(int page, int size) {
+        int safeSize = Math.min(Math.max(size, 1), 500);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                Math.max(page, 0), safeSize,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "orderDate"));
+        return repo.findAllWithDetails(pageable).map(this::convertToDTO);
     }
 
     public UserOrderListDTO updateOrderStatus(Long orderId, String statusStr, Long refundId) {
@@ -805,8 +852,13 @@ public class OrderService {
     }
 
     public UserOrderListDTO getOrderById(Long orderId) {
-        UserOrder order = repo.findById(orderId)
+        UserOrder order = repo.findByIdWithDetails(orderId)
                 .orElseThrow(() -> new EntityNotFoundException("Order not found with ID: " + orderId));
+        Long currentUserId = SecurityUtils.requireCurrentUserId();
+        if (!SecurityUtils.hasAnyAdminViewPermission()
+                && (order.getUser() == null || order.getUser().getId() != currentUserId)) {
+            throw new AccessDeniedException("Access denied for order " + orderId);
+        }
         return convertToDTO(order);
     }
 
@@ -876,5 +928,27 @@ public class OrderService {
 
     public long getBrandCount() {
         return repo.countBrands();
+    }
+
+    private void applyValidatedDiscount(User user, UserOrder order, Long discountId, List<CartDTO> cartItems) {
+        List<Long> productIds = cartItems.stream()
+                .map(CartDTO::getProductId)
+                .filter(Objects::nonNull)
+                .toList();
+        Discount discount = discountCouponService.requireEligibleDiscountForOrder(
+                user.getId(), discountId, productIds);
+        order.setDiscount(discount);
+        order.setUserDiscountId(discountId);
+    }
+
+    /** Authoritative catalog price — never trust client-supplied CartDTO.price. */
+    double resolveUnitPrice(Product product, ProductVariant variant) {
+        if (variant != null && variant.getPrice() != null) {
+            return variant.getPrice().doubleValue();
+        }
+        if (product.getPrice() != null) {
+            return product.getPrice();
+        }
+        throw new RuntimeException("No authoritative price for product ID: " + product.getId());
     }
 }

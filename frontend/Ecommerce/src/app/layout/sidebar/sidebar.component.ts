@@ -193,7 +193,6 @@ export class SidebarComponent implements OnInit, AfterViewInit {
       
       // Get user data from token or localStorage
       const decoded = this.authService.getDecodedToken();
-      console.log('[Sidebar] Decoded token data:', decoded);
       
       if (decoded) {
         this.userData = {

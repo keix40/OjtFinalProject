@@ -7,7 +7,7 @@ import { Attribute, AttributeAndValueDTO, AttributeValue } from '../attribute';
   providedIn: 'root'
 })
 export class AttributeService {
-  baseUrl = 'http://localhost:8080/attribute';
+  baseUrl = '/attribute';
 
   constructor(private http: HttpClient) { }
 

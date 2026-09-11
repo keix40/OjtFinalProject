@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  private apiUrl = 'http://localhost:8080/api/auth/user'; // Adjust base URL if needed
+  private apiUrl = '/api/auth/user'; // Adjust base URL if needed
 
   constructor(private http: HttpClient) {}
 
@@ -13,19 +13,19 @@ export class UserService {
   }
 
   getAllRoles(): Observable<any> {
-    return this.http.get('http://localhost:8080/api/roles');
+    return this.http.get('/api/roles');
   }
 
   checkEmailExists(email: string) {
-    return this.http.get<{ exists: boolean }>(`http://localhost:8080/api/auth/check-email?email=${encodeURIComponent(email)}`);
+    return this.http.get<{ exists: boolean }>(`/api/auth/check-email?email=${encodeURIComponent(email)}`);
   }
 
   validateRealEmail(email: string) {
-    return this.http.post<{ real: boolean, message: string }>('http://localhost:8080/api/auth/validate-real-email', { email });
+    return this.http.post<{ real: boolean, message: string }>('/api/auth/validate-real-email', { email });
   }
 
   getCustomers(): Observable<any[]> {
-    return this.http.get<any[]>('http://localhost:8080/api/auth/user/customers');
+    return this.http.get<any[]>('/api/auth/user/customers');
   }
 
   getVipCustomers(): Observable<any[]> {
@@ -35,17 +35,17 @@ export class UserService {
   // --- Added for customer management actions ---
   // Delete user by ID (for customer table delete action)
   deleteUser(id: string) {
-    return this.http.delete(`http://localhost:8080/api/auth/user/${id}`);
+    return this.http.delete(`/api/auth/user/${id}`);
   }
 
   // Update user status (for activate/deactivate action)
   updateUserStatus(id: string, status: string) {
-    return this.http.patch(`http://localhost:8080/api/auth/user/${id}/status`, { status });
+    return this.http.patch(`/api/auth/user/${id}/status`, { status });
   }
 
   // Get user details by ID (for view details modal)
   getUserById(id: string) {
-    return this.http.get(`http://localhost:8080/api/auth/user/${id}`);
+    return this.http.get(`/api/auth/user/${id}`);
   }
   // --- End customer management actions ---
 } 

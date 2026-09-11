@@ -13,6 +13,8 @@ public class SavedCardResponseDTO {
     private String cardBrand;
     private String expiryDate;
     private boolean isDefault;
-    private String cardNumber;
+    /** Last four digits only — full PAN is never returned. */
+    private String lastFour;
+    /** Display-friendly masked value for UI. */
+    private String maskedNumber;
 }
-

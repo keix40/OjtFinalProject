@@ -333,7 +333,7 @@
                   </span>
                 </div>
 
-                <p class="text-slate-700" [innerHTML]="formatDescription(log.description, log.actionType)"></p>
+                <p class="text-slate-700" [innerHTML]="formatDescription(log.description, log.actionType) | safeHtml"></p>
                 
                 <div *ngIf="viewMode === 'detailed' && log.details" class="mt-4 p-4 bg-slate-50 rounded-lg">
                   <h5 class="font-medium text-slate-800 mb-2">Details</h5>
@@ -365,7 +365,7 @@
                               </div>
                             </ng-container>
                             <ng-template #textBefore>
-                              <span [innerHTML]="formatChangeValue(change.before)"></span>
+                              <span [innerHTML]="formatChangeValue(change.before) | safeHtml"></span>
                             </ng-template>
                           </span>
                         </div>
@@ -383,7 +383,7 @@
                               </div>
                             </ng-container>
                             <ng-template #textAfter>
-                              <span [innerHTML]="formatChangeValue(change.after)"></span>
+                              <span [innerHTML]="formatChangeValue(change.after) | safeHtml"></span>
                             </ng-template>
                           </span>
                         </div>
@@ -577,7 +577,7 @@
 
         <div>
           <div class="font-medium text-slate-700 mb-2">Description</div>
-          <div class="text-slate-800" [innerHTML]="formatDescription(selectedLog.description, selectedLog.actionType)"></div>
+          <div class="text-slate-800" [innerHTML]="formatDescription(selectedLog.description, selectedLog.actionType) | safeHtml"></div>
         </div>
 
         <div *ngIf="selectedLog.details">
@@ -612,7 +612,7 @@
                   </div>
                 </ng-container>
                 <ng-template #textBeforeModal>
-                  <span [innerHTML]="formatChangeValue(change.before)"></span>
+                  <span [innerHTML]="formatChangeValue(change.before) | safeHtml"></span>
                 </ng-template>
               </span>
               <i data-lucide="arrow-right" class="w-4 h-4 text-slate-400"></i>
@@ -628,7 +628,7 @@
                   </div>
                 </ng-container>
                 <ng-template #textAfterModal>
-                  <span [innerHTML]="formatChangeValue(change.after)"></span>
+                  <span [innerHTML]="formatChangeValue(change.after) | safeHtml"></span>
                 </ng-template>
               </span>
             </div>

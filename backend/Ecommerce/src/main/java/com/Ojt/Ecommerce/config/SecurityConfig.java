@@ -20,7 +20,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
-import com.Ojt.Ecommerce.config.IPBanFilter;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,141 +27,111 @@ import lombok.RequiredArgsConstructor;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 @RequiredArgsConstructor
-
-
-//add permit userController(kei)
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final JwtAuthenticationEntryPoint entryPoint;
-    private final UserDetailsServiceImpl userDetailsService;
     private final IPBanFilter ipBanFilter;
+    private final AuthRateLimitFilter authRateLimitFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // ✅ Enable CORS here
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-
-                        .requestMatchers(HttpMethod.POST, "/api/appeals/submit").permitAll() // Allow blacklisted users to submit appeals - MUST BE FIRST
-                        .requestMatchers("/api/auth/**").permitAll()  // ✅ Only write this once
-                        .requestMatchers("/product/**").permitAll()
-                        .requestMatchers("/ws-review/**", "/ws-review/info/**").permitAll()
-                        .requestMatchers("product/**").permitAll()
-                        .requestMatchers("/product_image/**").permitAll()
-                        .requestMatchers("/review/**").permitAll()
-                        .requestMatchers("/returns/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers("/category/**").permitAll()
-                        .requestMatchers("/brand/**").permitAll()
-                        .requestMatchers("/attribute/**").permitAll()
-                        .requestMatchers("/uploads/**").permitAll() // for profile image by pmk june 11
-                        .requestMatchers("/upload/**").permitAll()
-                        .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/wishlist/**").permitAll()
-                        .requestMatchers("/order/**").permitAll()
-                        .requestMatchers("/review/**").permitAll()
-                        .requestMatchers("/card/**").permitAll()
-                        .requestMatchers("/return_images/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/user/**").permitAll()
-                        .requestMatchers("/api/discounts/**").permitAll()
-                        .requestMatchers("/api/admin/discounts/**").permitAll()
-                        .requestMatchers("/api/policies/**").permitAll()
-                        .requestMatchers("/api/coupons/validate").permitAll()
-                        .requestMatchers("/api/login-attempts/is-blocked").permitAll()
-                        .requestMatchers("/brand_and_category_image/**").permitAll()
-                        .requestMatchers("/review/**").permitAll()
-                        .requestMatchers("/deliveryservice/**").permitAll()
-                        .requestMatchers("/api/contact/**").permitAll()
-                        .requestMatchers("/api/notification/**").permitAll()
-                        .requestMatchers("/api/newsletter/**").permitAll()
-                        .requestMatchers("/events/**").permitAll()
-                        .requestMatchers("/event/**").permitAll()
-                        .requestMatchers("/api/product-reports/**").permitAll()
-
-
+                        // Public auth endpoints only (not /api/auth/user/** admin APIs)
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login",
+                                "/api/auth/register",
+                                "/api/auth/verify-otp",
+                                "/api/auth/verify-login-otp",
+                                "/api/auth/resend-otp",
+                                "/api/auth/sendOtp",
+                                "/api/auth/send-reset-otp",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
+                                "/api/auth/refresh-token"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/verify").permitAll()
+                        // Public catalog reads
+                        .requestMatchers(HttpMethod.GET, "/product/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/category/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/brand/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/attribute/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/events/**", "/event/**").permitAll()
+                        // Static uploaded assets
+                        .requestMatchers(
+                                "/product_image/**",
+                                "/uploads/**",
+                                "/upload/**",
+                                "/review/**",
+                                "/return_images/**",
+                                "/brand_and_category_image/**"
+                        ).permitAll()
+                        // Other intentionally public APIs
+                        .requestMatchers(HttpMethod.POST, "/api/appeals/submit").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/coupons/validate").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/login-attempts/is-blocked").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/contact/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/newsletter/**").permitAll()
+                        // WebSocket handshake (token validated in interceptor)
+                        .requestMatchers("/ws/**", "/ws-review/**").permitAll()
                         .anyRequest().authenticated()
-
                 );
 
+        http.addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(ipBanFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-
-
-    // ✅ fix 500 error (kei _4)
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
-        // Use specific origins instead of wildcard
+
         configuration.setAllowedOriginPatterns(List.of(
                 "http://localhost:4200",
                 "http://127.0.0.1:4200",
                 "http://localhost:3000",
                 "http://127.0.0.1:3000"
         ));
-        
-        // Set allowed methods
+
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        
-        // Set allowed headers - include all necessary headers
         configuration.setAllowedHeaders(List.of(
-            "Authorization", 
-            "Content-Type", 
-            "X-Requested-With", 
-            "Accept", 
-            "Origin", 
-            "Access-Control-Request-Method", 
-            "Access-Control-Request-Headers",
-            "x-forwarded-for",
-            "x-forwarded-proto",
-            "x-forwarded-host",
-            "x-client-ip",
-            "X-Client-IP",
-            "X-Forwarded-For",
-            "X-Forwarded-Proto",
-            "X-Forwarded-Host",
-            "Sec-WebSocket-Protocol",
-            "Sec-WebSocket-Key",
-            "Sec-WebSocket-Version",
-            "Sec-WebSocket-Extensions"
+                "Authorization",
+                "Content-Type",
+                "X-Requested-With",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers",
+                "x-forwarded-for",
+                "x-forwarded-proto",
+                "x-forwarded-host",
+                "x-client-ip",
+                "X-Client-IP",
+                "X-Forwarded-For",
+                "X-Forwarded-Proto",
+                "X-Forwarded-Host",
+                "Sec-WebSocket-Protocol",
+                "Sec-WebSocket-Key",
+                "Sec-WebSocket-Version",
+                "Sec-WebSocket-Extensions",
+                "Cookie"
         ));
-        
-        // Allow credentials
         configuration.setAllowCredentials(true);
-        
-        // Set exposed headers
-        configuration.setExposedHeaders(List.of("Authorization", "Content-Type"));
-        
-        // Cache preflight requests for 1 hour
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "Set-Cookie"));
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
-        source.registerCorsConfiguration("/ws/**", configuration);
-        source.registerCorsConfiguration("/ws-review/**", configuration);
         return source;
     }
-
-//    @Bean
-//    CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOrigins(List.of("http://localhost:4200")); // allow your Angular app origin
-//        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-//        configuration.setAllowedHeaders(List.of("*"));  // allow all headers
-//        configuration.setAllowCredentials(true);  // allow credentials (cookies, auth headers)
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);  // apply for all endpoints
-//        return source;
-//    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

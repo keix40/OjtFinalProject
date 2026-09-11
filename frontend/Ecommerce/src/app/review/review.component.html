@@ -91,7 +91,7 @@
         <p class="lux-field-label">Media</p>
         <div *ngIf="mediaModalCurrentReview?.imageUrls?.length || mediaModalCurrentReview?.videoUrls?.length" class="media-grid mb">
           <div *ngFor="let imageUrl of mediaModalCurrentReview.imageUrls" class="media-thumb relative">
-            <img [src]="'http://localhost:8080'+imageUrl" alt="" />
+            <img [src]="imageUrl | mediaUrl" alt="" />
             <button type="button" class="rm" (click)="removeExistingMedia(imageUrl, 'image')" aria-label="Remove">×</button>
           </div>
           <div *ngFor="let videoUrl of mediaModalCurrentReview.videoUrls" class="media-thumb relative">

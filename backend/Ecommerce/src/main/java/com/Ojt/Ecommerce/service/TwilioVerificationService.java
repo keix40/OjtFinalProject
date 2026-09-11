@@ -44,13 +44,6 @@ public class TwilioVerificationService {
          String messageBody = "Your verification code is: " + otpCode + ". Please enter this code to verify your phone number. This code will expire in 10 minutes.";
 
         
-        // Console output for testing
-        System.out.println("=== OTP FOR TESTING ===");
-        System.out.println("Phone Number: " + phoneNumber);
-        System.out.println("OTP Code: " + otpCode);
-        System.out.println("=======================");
-        
-        // Return a dummy message SID for testing
         return sendSms(phoneNumber, messageBody);
     }
 

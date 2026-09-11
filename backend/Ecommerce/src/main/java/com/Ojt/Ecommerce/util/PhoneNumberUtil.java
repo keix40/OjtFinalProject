@@ -29,7 +29,7 @@ public class PhoneNumberUtil {
             return phoneNumber;
         }
         
-        String cleaned = phoneNumber.trim().replaceAll("\\s+", "");
+        String cleaned = phoneNumber.trim().replaceAll("[\\s\\-]", "");
         
         // If already in E.164 format, return as is
         if (E164_PATTERN.matcher(cleaned).matches()) {
@@ -122,7 +122,7 @@ public class PhoneNumberUtil {
             return false;
         }
         
-        String cleaned = phoneNumber.trim().replaceAll("\\s+", "");
+        String cleaned = phoneNumber.trim().replaceAll("[\\s\\-]", "");
         return MYANMAR_PHONE_PATTERN.matcher(cleaned).matches() ||
                MYANMAR_PHONE_PATTERN_LONG.matcher(cleaned).matches() ||
                MYANMAR_PHONE_PATTERN_9.matcher(cleaned).matches() ||

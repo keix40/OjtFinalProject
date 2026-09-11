@@ -14,7 +14,9 @@ import com.Ojt.Ecommerce.exception.CustomException;
 import com.Ojt.Ecommerce.repository.RoleRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
+import com.Ojt.Ecommerce.util.FileUploadSanitizer;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -67,6 +69,9 @@ public class UserServiceImpl implements UserService {
     private final AddressService addressService;
     private final DiscountRepository discountRepository;
     private final DiscountRuleRepository discountRuleRepository;
+
+    @Value("${app.upload.dir:uploads}")
+    private String uploadDir;
     @Autowired
     private VipTierRepository vipTierRepository;
 
@@ -147,7 +152,7 @@ public class UserServiceImpl implements UserService {
         user.setCreatedDate(LocalDateTime.now());
         user.setOtpCode(otp);
         user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        user.setVerified(true); // Set as verified if OTP is verified before
+        user.setVerified(false);
         user.setStatus(UserStatus.ACTIVE); // Explicitly set status to ACTIVE
 //        User user = User.builder()
 //                .name(request.getName())
@@ -166,27 +171,11 @@ public class UserServiceImpl implements UserService {
         // Handle profile image if present
         if (profileImage != null && !profileImage.isEmpty()) {
             try {
-                String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
-                File uploadPath = new File(uploadDir);
-                if (!uploadPath.exists()) {
-                    uploadPath.mkdirs(); // ✅ create upload directory
-                }
-                ;
-
-                String imageName = System.currentTimeMillis() + "_" + profileImage.getOriginalFilename();
-                File dest = new File(uploadPath, imageName);
-                profileImage.transferTo(dest);
-                System.out.println("Uploading to absolute path: " + dest.getAbsolutePath());
-                user.setProfileImage("/upload/" + imageName); // serve from /upload/** mapping
-                System.out.println("Attempting to register with email: " + request.getEmail());
-                System.out.println("Normalized email: " + request.getEmail().trim().toLowerCase());
-                System.out.println("User found: " + userRepository.findByEmail(request.getEmail().trim().toLowerCase()));
-
+                String imageName = storeProfileImage(profileImage);
+                user.setProfileImage("/upload/" + imageName);
             } catch (IOException e) {
-                e.printStackTrace(); // ✅ Print full stack trace to console
                 throw new CustomException("Failed to upload image: " + e.getMessage());
             }
-
         } else {
             // 👉 Use default image path
             user.setProfileImage("/upload/defaultProfile.png");
@@ -206,9 +195,7 @@ public class UserServiceImpl implements UserService {
                 rule.setUser(user);
                 rule.setStartDate(LocalDate.now());
                 rule.setEndDate(LocalDate.now().plusDays(7));
-                System.out.println("Saving DiscountRule for user: " + user.getEmail());
                 discountRuleRepository.save(rule);
-                System.out.println("Saved DiscountRule for user: " + user.getEmail());
 
             }
         } catch (Exception e) {
@@ -335,25 +322,23 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new CustomException("User not found"));
 
         try {
-            String uploadDir = System.getProperty("user.dir") + File.separator + "uploads";
-            File uploadPath = new File(uploadDir);
-            if (!uploadPath.exists()) {
-                uploadPath.mkdirs();
-            }
-
-            String imageName = System.currentTimeMillis() + "_" + image.getOriginalFilename();
-            File dest = new File(uploadPath, imageName);
-            image.transferTo(dest);
-
+            String imageName = storeProfileImage(image);
             String imagePath = "/uploads/" + imageName;
             user.setProfileImage(imagePath);
             userRepository.save(user);
-
             return imagePath;
         } catch (IOException e) {
-            e.printStackTrace();
             throw new CustomException("Failed to upload profile image: " + e.getMessage());
         }
+    }
+
+    private String storeProfileImage(MultipartFile file) throws IOException {
+        FileUploadSanitizer.validateImageUpload(file);
+        String imageName = FileUploadSanitizer.safeFilename(file.getOriginalFilename());
+        Path target = FileUploadSanitizer.resolveUploadPath(uploadDir, imageName);
+        Files.createDirectories(target.getParent());
+        file.transferTo(target.toFile());
+        return imageName;
     }
 
     //add method
@@ -383,38 +368,29 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<CustomerSummaryDTO> getAllCustomerSummaries() {
-        List<User> customers = userRepository.findByRole_Name("CUSTOMER");
-        List<CustomerSummaryDTO> result = new java.util.ArrayList<>();
-        for (User user : customers) {
-            int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
-            double totalSpent = 0.0;
-            if (user.getOrders() != null) {
-                for (var order : user.getOrders()) {
-                    if (order.getOrderProducts() != null) {
-                        for (var op : order.getOrderProducts()) {
-                            if (op.getProduct() != null && op.getProduct().getPrice() != null && op.getQuantity() != null) {
-                                totalSpent += op.getProduct().getPrice() * op.getQuantity();
-                            }
-                        }
-                    }
-                }
-            }
-            CustomerSummaryDTO dto = new CustomerSummaryDTO();
-            dto.setUserId(user.getId());
-            dto.setName(user.getName());
-            dto.setEmail(user.getEmail());
-            dto.setPhoneNumber(user.getPhoneNumber());
-            dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
-            dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
-            dto.setJoinDate(user.getCreatedDate());
-            dto.setTotalOrders(totalOrders);
-            dto.setTotalSpent(totalSpent);
-            dto.setProfileImage(user.getProfileImage());
-            // Set tier if available
-            try { dto.setTier(user.getTier()); } catch (Exception ignored) {}
-            result.add(dto);
+        return userRepository.findCustomerSummaryRows().stream()
+                .map(this::mapCustomerSummaryRow)
+                .toList();
+    }
+
+    private CustomerSummaryDTO mapCustomerSummaryRow(Object[] row) {
+        CustomerSummaryDTO dto = new CustomerSummaryDTO();
+        dto.setUserId(row[0] != null ? ((Number) row[0]).longValue() : null);
+        dto.setName(row[1] != null ? row[1].toString() : null);
+        dto.setEmail(row[2] != null ? row[2].toString() : null);
+        dto.setPhoneNumber(row[3] != null ? row[3].toString() : null);
+        dto.setStatus(row[4] != null ? row[4].toString() : null);
+        dto.setRoleName(row[5] != null ? row[5].toString() : null);
+        if (row[6] instanceof java.sql.Timestamp ts) {
+            dto.setJoinDate(ts.toLocalDateTime());
+        } else if (row[6] instanceof java.time.LocalDateTime ldt) {
+            dto.setJoinDate(ldt);
         }
-        return result;
+        dto.setTotalOrders(row[7] != null ? ((Number) row[7]).intValue() : 0);
+        dto.setTotalSpent(row[8] != null ? ((Number) row[8]).doubleValue() : 0.0);
+        dto.setProfileImage(row[9] != null ? row[9].toString() : null);
+        dto.setTier(row[10] != null ? row[10].toString() : null);
+        return dto;
     }
 
     @Override
@@ -426,63 +402,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<CustomerSummaryDTO> getAllVipCustomers() {
-        List<User> users = userRepository.findByRole_Name("customer");
-        
-        // Get all VIP tiers to determine the lowest tier
         List<VipTier> allTiers = vipTierRepository.findAll();
         if (allTiers.isEmpty()) {
-            return new ArrayList<>(); // No tiers defined, return empty list
+            return new ArrayList<>();
         }
-        
-        // Find the minimum minPoints among all tiers (this is the lowest tier)
         int minMinPoints = allTiers.stream()
                 .mapToInt(VipTier::getMinPoints)
                 .min()
                 .orElse(0);
-        
-        return users.stream()
-                .filter(user -> {
-                    // Only include users whose totalPoints is greater than the minimum minPoints
-                    // This excludes users in the lowest tier (e.g., "Regular" tier)
-                    if (user.getTotalPoints() == null) return false;
-                    
-                    return user.getTotalPoints() > minMinPoints;
-                })
-                .map(user -> {
-                    int totalOrders = user.getOrders() != null ? user.getOrders().size() : 0;
-                    double totalSpent = 0.0;
-                    if (user.getOrders() != null) {
-                        for (var order : user.getOrders()) {
-                            if (order.getOrderProducts() != null) {
-                                for (var op : order.getOrderProducts()) {
-                                    if (op.getUnitPrice() != null && op.getQuantity() != null) {
-                                        totalSpent += op.getUnitPrice() * op.getQuantity();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    CustomerSummaryDTO dto = new CustomerSummaryDTO();
-                    dto.setUserId(user.getId());
-                    dto.setName(user.getName());
-                    dto.setEmail(user.getEmail());
-                    dto.setPhoneNumber(user.getPhoneNumber());
-                    dto.setStatus(user.getStatus() != null ? user.getStatus().name() : null);
-                    dto.setRoleName(user.getRole() != null ? user.getRole().getName() : null);
-                    dto.setJoinDate(user.getCreatedDate());
-                    dto.setTotalOrders(totalOrders);
-                    dto.setTotalSpent(totalSpent);
-                    dto.setProfileImage(user.getProfileImage());
-                    dto.setTier(user.getTier());
-                    
-                    // Add spending trend data
-                    dto.setSpendingTrend(user.getSpendingTrend());
-                    dto.setSpendingChange(user.getSpendingChangePercentage());
-                    dto.setCurrentPeriodSpent(user.getCurrentPeriodSpent());
-                    dto.setPreviousPeriodSpent(user.getPreviousPeriodSpent());
-                    
-                    return dto;
-                }).toList();
+        return userRepository.findVipCustomerSummaryRows(minMinPoints).stream()
+                .map(this::mapCustomerSummaryRow)
+                .toList();
     }
 
     @Override

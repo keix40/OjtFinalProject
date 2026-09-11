@@ -6,8 +6,11 @@ import com.Ojt.Ecommerce.entity.SavedCard;
 import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.repository.SavedCardRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
+import com.Ojt.Ecommerce.security.SecurityUtils;
+import com.Ojt.Ecommerce.util.CardMaskingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,96 +29,85 @@ public class SavedCardService {
         this.userRepository = userRepository;
     }
 
-    public SavedCard saveIfNewCard(SavedCardRequestDTO dto) {
-        try {
-            User user = userRepository.findById(dto.getUserId())
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+    public SavedCardResponseDTO saveIfNewCard(SavedCardRequestDTO dto) {
+        SecurityUtils.enforceSelfOrAdmin(dto.getUserId());
 
-            boolean exists = cardRepository
-                    .findByUserIdAndCardNumberAndExpiryDateAndCardBrandIgnoreCase(
-                            dto.getUserId(), dto.getCardNumber(), dto.getExpiryDate(), dto.getCardBrand())
-                    .isPresent();
+        User user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-            if (!exists) {
-                SavedCard card = new SavedCard();
-                card.setUser(user);
-                card.setCardholderName(dto.getCardholderName());
-                card.setCardNumber(dto.getCardNumber());
-                card.setExpiryDate(dto.getExpiryDate());
-                card.setCardBrand(dto.getCardBrand());
-                card.setDefault(dto.isDefault());
-                return cardRepository.save(card);
-            } else {
-                logger.info("Card already exists for userId={}", dto.getUserId());
-                return null;
-            }
-        } catch (Exception e) {
-            logger.error("Error saving card", e);
-            throw e;
+        String lastFour = CardMaskingUtil.extractLastFour(dto.getCardNumber());
+
+        boolean exists = cardRepository
+                .findByUserIdAndLastFourAndExpiryDateAndCardBrandIgnoreCase(
+                        dto.getUserId(), lastFour, dto.getExpiryDate(), dto.getCardBrand())
+                .isPresent();
+
+        if (exists) {
+            logger.info("Card already exists for userId={}", dto.getUserId());
+            return null;
         }
+
+        SavedCard card = new SavedCard();
+        card.setUser(user);
+        card.setCardholderName(dto.getCardholderName());
+        card.setLastFour(lastFour);
+        card.setExpiryDate(dto.getExpiryDate());
+        card.setCardBrand(dto.getCardBrand());
+        card.setDefault(dto.isDefault());
+        SavedCard saved = cardRepository.save(card);
+        return convertToDTO(saved);
     }
 
     public List<SavedCardResponseDTO> getCardsByUserId(Long userId) {
-        List<SavedCard> cards = cardRepository.findByUserId(userId)
-                .stream()
+        SecurityUtils.enforceSelfOrAdmin(userId);
+        return cardRepository.findByUserId(userId).stream()
                 .filter(card -> card.getStatus() != null && card.getStatus() == 1)
-                .collect(Collectors.toList());
-
-        return cards.stream()
-                .map(card -> new SavedCardResponseDTO(
-                        card.getId(),
-                        card.getCardholderName(),
-                        card.getCardBrand(),
-                        card.getExpiryDate(),
-                        card.isDefault(),
-                        card.getCardNumber()
-                ))
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
     public void softDeleteCard(Long cardId) {
-        SavedCard card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+        SavedCard card = requireOwnedCard(cardId);
         card.setStatus(0);
         cardRepository.save(card);
     }
 
     public SavedCardResponseDTO updateCard(Long cardId, SavedCardRequestDTO dto) {
-        SavedCard card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
-
+        SavedCard card = requireOwnedCard(cardId);
         card.setCardholderName(dto.getCardholderName());
-        card.setCardNumber(dto.getCardNumber());
+        if (dto.getCardNumber() != null && !dto.getCardNumber().isBlank()) {
+            card.setLastFour(CardMaskingUtil.extractLastFour(dto.getCardNumber()));
+        }
         card.setExpiryDate(dto.getExpiryDate());
         card.setCardBrand(dto.getCardBrand());
         card.setDefault(dto.isDefault());
-
-        SavedCard updated = cardRepository.save(card);
-
-        return new SavedCardResponseDTO(
-                updated.getId(),
-                updated.getCardholderName(),
-                updated.getCardBrand(),
-                updated.getExpiryDate(),
-                updated.isDefault(),
-                updated.getCardNumber()
-        );
+        return convertToDTO(cardRepository.save(card));
     }
 
     public SavedCard getCardById(Long cardId) {
-        return cardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+        return requireOwnedCard(cardId);
     }
 
     public SavedCardResponseDTO convertToDTO(SavedCard card) {
+        String lastFour = CardMaskingUtil.maskForDisplay(card.getLastFour());
         return new SavedCardResponseDTO(
                 card.getId(),
                 card.getCardholderName(),
                 card.getCardBrand(),
                 card.getExpiryDate(),
                 card.isDefault(),
-                card.getCardNumber()
+                lastFour,
+                "**** **** **** " + lastFour
         );
     }
 
+    private SavedCard requireOwnedCard(Long cardId) {
+        SavedCard card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("Card not found"));
+        if (card.getUser() == null) {
+            throw new AccessDeniedException("Card has no owner");
+        }
+        SecurityUtils.enforceSelfOrAdmin(card.getUser().getId());
+        return card;
+    }
 }

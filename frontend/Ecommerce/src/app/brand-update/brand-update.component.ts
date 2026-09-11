@@ -45,7 +45,7 @@ export class BrandUpdateComponent implements OnInit {
             next: (data) => {
               console.log('Brand data:', data);
               this.brand = data;
-              this.imagePreviewUrl = this.brand.image ? 'http://localhost:8080' + this.brand.image : undefined;
+              this.imagePreviewUrl = this.brand.image ? '' + this.brand.image : undefined;
               this.selectedCategoryIds = data.categoryIds ?? [];
               this.loading = false;
             },

@@ -15,7 +15,10 @@ import com.Ojt.Ecommerce.entity.User;
 import com.Ojt.Ecommerce.entity.UserStatus;
 import com.Ojt.Ecommerce.repository.RoleRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
+import com.Ojt.Ecommerce.security.AuthCookieService;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
+import com.Ojt.Ecommerce.security.SecurityUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import com.Ojt.Ecommerce.service.AddressService;
 import com.Ojt.Ecommerce.service.UserService;
 import com.Ojt.Ecommerce.service.UserActivityService;
@@ -59,6 +62,9 @@ public class UserController {
 
     @Autowired
     private SessionService sessionService;
+
+    @Autowired
+    private AuthCookieService authCookieService;
 
     @GetMapping("/hello")
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -106,18 +112,21 @@ public class UserController {
     @PutMapping("/{id}")
     @Transactional
     @RequiresPermission(value = USERS_UPDATE, level = "intermediate", description = "Update user information")
-    public ResponseEntity<Map<String, Object>> updateUser(@PathVariable Long id, @RequestBody RegisterRequest dto, @RequestHeader("Authorization") String token) {
+    public ResponseEntity<Map<String, Object>> updateUser(
+            @PathVariable Long id,
+            @RequestBody RegisterRequest dto,
+            HttpServletResponse httpResponse) {
+        SecurityUtils.enforceSelfOrAdmin(id);
         RegisterRequest updatedUser = userService.updateUser(id, dto);
 
         User user = userRepository.findById(id).orElseThrow();
         String newToken = jwtTokenProvider.generateToken(user);
+        authCookieService.setAuthCookies(httpResponse, newToken, null);
 
-        // Create response with both updated user and new token
         Map<String, Object> response = new HashMap<>();
         response.put("user", updatedUser);
-        response.put("token", newToken);
+        response.put("authenticated", true);
         return ResponseEntity.ok(response);
-
     }
 
     @PutMapping("/{userId}/assign-role")
@@ -274,6 +283,7 @@ public class UserController {
 
     // Update user status endpoint (for activate/deactivate action)
     @PatchMapping("/{id}/status")
+    @RequiresPermission(value = USERS_UPDATE, level = "advanced", description = "Update user status")
     public ResponseEntity<?> updateUserStatus(@PathVariable Long id, @RequestBody Map<String, String> body) {
         try {
             User user = userRepository.findById(id).orElse(null);
@@ -316,8 +326,10 @@ public class UserController {
 
     // Get user details endpoint (for view details modal)
     @GetMapping("/{id}")
+    @RequiresPermission(value = USERS_VIEW, level = "basic", description = "View user by ID")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         try {
+            SecurityUtils.enforceSelfOrAdmin(id);
             User user = userRepository.findById(id).orElse(null);
             if (user == null) {
                 return ResponseEntity.status(404).body(Map.of("error", "User not found"));

@@ -16,7 +16,7 @@ export interface Policy {
   providedIn: 'root'
 })
 export class PolicyService {
-  private baseUrl = 'http://localhost:8080/api/policies';
+  private baseUrl = '/api/policies';
 
   constructor(private http: HttpClient) { }
 

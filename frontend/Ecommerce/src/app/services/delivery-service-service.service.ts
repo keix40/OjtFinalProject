@@ -26,7 +26,7 @@ export interface DeliveryService {
   providedIn: 'root'
 })
 export class DeliveryServiceService {
-  private apiUrl = 'http://localhost:8080/deliveryservice';
+  private apiUrl = '/deliveryservice';
 
   constructor(private http: HttpClient) {}
 

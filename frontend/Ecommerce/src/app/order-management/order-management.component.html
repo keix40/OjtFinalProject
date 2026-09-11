@@ -26,6 +26,16 @@
     </div>
   </lux-page-header>
 
+  <lux-async-state
+    [loading]="isLoading"
+    [error]="loadError"
+    [empty]="!isLoading && !loadError && filteredOrders.length === 0"
+    emptyTitle="No orders found"
+    emptyMessage="Orders will appear here once customers place them."
+    skeletonCount="5"
+    skeletonHeight="4rem"
+    (retry)="loadOrders()"
+  >
   <lux-filter-bar filters>
     <div primary class="admin-filter-fields">
       <lux-field label="Search">
@@ -111,6 +121,7 @@
       (pageChange)="onPageChange($event)">
     </lux-paginator>
   </div>
+  </lux-async-state>
 </lux-page-shell>
 
 <!-- Order Details Modal -->

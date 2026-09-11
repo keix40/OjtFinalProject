@@ -12,6 +12,6 @@ public interface SavedCardRepository extends JpaRepository<SavedCard, Long> {
     @Query("select sc from SavedCard sc where sc.user.id = :userId and status = 1")
     List<SavedCard> findByUserId(@Param("userId") Long userId);
 
-    Optional<SavedCard> findByUserIdAndCardNumberAndExpiryDateAndCardBrandIgnoreCase(
-            Long userId, String cardNumber, String expiryDate, String cardBrand);
+    Optional<SavedCard> findByUserIdAndLastFourAndExpiryDateAndCardBrandIgnoreCase(
+            Long userId, String lastFour, String expiryDate, String cardBrand);
 }

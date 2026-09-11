@@ -6,11 +6,17 @@ import com.Ojt.Ecommerce.exception.CustomException;
 import com.Ojt.Ecommerce.repository.OtpVerificationRepository;
 import com.Ojt.Ecommerce.repository.UserRepository;
 import com.Ojt.Ecommerce.repository.VerificationTokenRepository;
+import com.Ojt.Ecommerce.repository.VipTierRepository;
+import com.Ojt.Ecommerce.security.AuthCookieService;
 import com.Ojt.Ecommerce.security.JwtTokenProvider;
+import com.Ojt.Ecommerce.security.SecurityUtils;
 import com.Ojt.Ecommerce.service.*;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -47,11 +53,13 @@ import com.Ojt.Ecommerce.util.IpLocationUtil;
 import com.Ojt.Ecommerce.service.BlacklistServiceImpl;
 import com.Ojt.Ecommerce.entity.BlacklistEntry;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 
 @CrossOrigin(origins = {"http://localhost:4200", "http://127.0.0.1:4200"})
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
 
     @Autowired
@@ -79,6 +87,11 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final BlacklistServiceImpl blacklistServiceImpl;
     private final NotificationService notificationService;
+    private final AuthCookieService authCookieService;
+    private final VipTierRepository vipTierRepository;
+
+    @Value("${ipqs.api.key:}")
+    private String ipqsApiKey;
 
     // Configurable thresholds
     private static final int THREAT_SCORE_BLOCK_THRESHOLD = 60; // 60 = high, 80 = critical
@@ -87,7 +100,7 @@ public class AuthController {
 
     @PostMapping(value = "/register", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> register(
-            @RequestPart("user") RegisterRequest request,
+            @Valid @RequestPart("user") RegisterRequest request,
             @RequestPart(value = "profileImage", required = false) MultipartFile profileImage) {
 
         String result = userService.register(request, profileImage);
@@ -99,31 +112,31 @@ public class AuthController {
 
 //    @LogActivity(actionType = "LOGIN", entityType = "USER", description = "User login", severityLevel = "LOW")
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, Object> loginRequest, HttpServletRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest, HttpServletRequest request, HttpServletResponse response) {
         // Start timing for duration tracking
         java.time.LocalDateTime startTime = java.time.LocalDateTime.now();
-        
-        String email = ((String)loginRequest.get("email")).trim().toLowerCase();
-        String password = loginRequest.get("password") != null ? loginRequest.get("password").toString() : "";
-        String ip = IpLocationUtil.extractClientIp(request); // <-- Use the same logic as activity logs
-        System.out.println("[LoginAttempt] Detected client IP: " + ip);
-        String location = loginRequest.getOrDefault("location", "").toString();
+
+        String email = loginRequest.getEmail().trim().toLowerCase();
+        String password = loginRequest.getPassword();
+        String ip = IpLocationUtil.extractClientIp(request);
+        String location = loginRequest.getLocation() != null ? loginRequest.getLocation() : "";
         boolean isVPN = false;
         boolean isProxy = false;
         try {
-            String ipqsApiKey = "RL4UtL8bX86mxJKRY3nqYNGdlPrViZX";
-            String ipqsUrl = "https://ipqualityscore.com/api/json/ip/" + ipqsApiKey + "/" + ip;
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest req = HttpRequest.newBuilder()
-                .uri(URI.create(ipqsUrl))
-                .build();
-            HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-            org.json.JSONObject obj = new org.json.JSONObject(resp.body());
-            if (obj.has("vpn")) {
-                isVPN = obj.getBoolean("vpn");
-            }
-            if (obj.has("proxy")) {
-                isProxy = obj.getBoolean("proxy");
+            if (ipqsApiKey != null && !ipqsApiKey.isBlank()) {
+                String ipqsUrl = "https://ipqualityscore.com/api/json/ip/" + ipqsApiKey + "/" + ip;
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(ipqsUrl))
+                    .build();
+                HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+                org.json.JSONObject obj = new org.json.JSONObject(resp.body());
+                if (obj.has("vpn")) {
+                    isVPN = obj.getBoolean("vpn");
+                }
+                if (obj.has("proxy")) {
+                    isProxy = obj.getBoolean("proxy");
+                }
             }
         } catch (Exception e) {
             // Log or handle error, but do not block login
@@ -137,18 +150,14 @@ public class AuthController {
             ));
         }
         boolean requireOtpCaptcha = loginAttemptService.isOtpCaptchaRequired(ip);
-        System.out.println("[LoginAttempt] IP: " + ip + ", requireOtpCaptcha: " + requireOtpCaptcha);
 
         // Blacklist enforcement: check if user is blacklisted by email
         try {
-            System.out.println("[Blacklist Check] Checking email: " + email);
             BlacklistEntry blacklistEntry = blacklistServiceImpl.getActiveBlacklistByEmail(email);
             if (blacklistEntry != null) {
-                System.out.println("[Blacklist Check] User is blacklisted: " + email);
                 
                 // Handle permanent ban (null expiry date) vs temporary ban
                 String banType = blacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary";
-                System.out.println("[Blacklist Check] Ban type: " + banType);
                 
                 return ResponseEntity.status(403).body(Map.of(
                     "blocked", true,
@@ -158,7 +167,6 @@ public class AuthController {
                     "isPermanent", blacklistEntry.getExpiryDate() == null
                 ));
             } else {
-                System.out.println("[Blacklist Check] User is not blacklisted: " + email);
             }
         } catch (Exception e) {
             System.err.println("[Blacklist Check] Error checking blacklist: " + e.getMessage());
@@ -172,19 +180,18 @@ public class AuthController {
             );
             // If password is correct, check if OTP/CAPTCHA is required
             if (requireOtpCaptcha) {
-                System.out.println("[LoginAttempt] OTP/CAPTCHA required for IP: " + ip + ", email: " + email);
                 // Generate a login OTP (not email verification OTP)
-                String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+                String otp = generateOtpCode();
                 OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                     .orElse(new OtpVerification());
                 otpVerification.setEmail(email);
                 otpVerification.setOtpCode(otp);
                 otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
                 otpVerification.setVerified(false);
-                otpVerification.setType("login"); // <-- distinguish from email verification
+                otpVerification.setType("login");
+                otpVerification.setPasswordVerifiedAt(LocalDateTime.now());
                 otpVerificationRepository.save(otpVerification);
                 emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
-                System.out.println("[LoginAttempt] Generated login OTP: " + otp + " for email: " + email);
                 return ResponseEntity.status(401).body(Map.of(
                     "otpRequired", true,
                     "captchaRequired", true,
@@ -292,12 +299,8 @@ public class AuthController {
             );
             log.setDetails(detailsJson);
             activityLogService.createActivityLog(log);
-            System.out.println("Activity log insert called.");
             // --- END MANUAL LOGGING ---
-            return ResponseEntity.ok(Map.of(
-                "accessToken", accessToken,
-                "refreshToken", refreshToken.getToken()
-            ));
+            return issueAuthResponse(response, user, accessToken, refreshToken.getToken());
         
         } catch (Exception ex) {
             // Save failed attempt
@@ -358,25 +361,63 @@ public class AuthController {
 
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshToken(@RequestBody TokenRefreshRequest request) {
-        String requestRefreshToken = request.getRefreshToken();
+    public ResponseEntity<?> refreshToken(
+            @RequestBody(required = false) TokenRefreshRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        String requestRefreshToken = authCookieService.getRefreshToken(httpRequest)
+                .orElse(request != null ? request.getRefreshToken() : null);
+        if (requestRefreshToken == null || requestRefreshToken.isBlank()) {
+            throw new CustomException("Refresh token is required");
+        }
 
         return refreshTokenService.findByToken(requestRefreshToken)
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    String token = jwtTokenProvider.generateToken(user);
-                    return ResponseEntity.ok(new TokenRefreshResponse(token, requestRefreshToken));
+                    String accessToken = jwtTokenProvider.generateToken(user);
+                    authCookieService.setAuthCookies(httpResponse, accessToken, requestRefreshToken);
+                    return ResponseEntity.ok(Map.of("message", "Token refreshed", "authenticated", true));
                 })
                 .orElseThrow(() -> new RuntimeException("Refresh token is not in database!"));
     }
 
     @LogActivity(actionType = "LOGOUT", entityType = "USER", description = "User logout", severityLevel = "LOW")
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestHeader("Authorization") String tokenHeader) {
-        String token = tokenHeader.replace("Bearer ", "");
-        tokenBlacklistService.blacklistToken(token);
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        authCookieService.getAccessToken(request).ifPresent(tokenBlacklistService::blacklistToken);
+        authCookieService.getRefreshToken(request).ifPresent(refreshToken ->
+                refreshTokenService.findByToken(refreshToken).ifPresent(rt ->
+                        refreshTokenService.deleteByUserId(rt.getUser().getId())));
+        authCookieService.clearAuthCookies(response);
         return ResponseEntity.ok(Map.of("message", "Logout successful. Token has been invalidated."));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> currentSession() {
+        return SecurityUtils.getCurrentUserId()
+                .flatMap(userRepository::findById)
+                .map(user -> {
+                    String roles = user.getRole() != null ? "ROLE_" + user.getRole().getName() : "";
+                    String permissions = user.getRole() != null
+                            ? user.getRole().getPermissions().stream()
+                                .map(p -> p.getKey())
+                                .collect(java.util.stream.Collectors.joining(","))
+                            : "";
+                    Map<String, Object> body = new java.util.HashMap<>();
+                    body.put("id", user.getId());
+                    body.put("sub", user.getEmail());
+                    body.put("name", user.getName());
+                    body.put("roles", roles);
+                    body.put("permissions", permissions);
+                    body.put("verified", user.isVerified());
+                    VipTier vipTier = vipTierRepository.findTopByMinPointsLessThanEqualOrderByMinPointsDesc(
+                            user.getTotalPoints() != null ? user.getTotalPoints() : 0
+                    ).orElse(null);
+                    body.put("vipTier", vipTier != null ? vipTier.getName() : "Regular");
+                    return ResponseEntity.ok(body);
+                })
+                .orElse(ResponseEntity.status(401).body(Map.of("message", "Not authenticated")));
     }
 
     @GetMapping("/verify")
@@ -398,36 +439,43 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody OtpRequest request) {
+    public ResponseEntity<?> verifyOtp(@Valid @RequestBody OtpRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         String otp = request.getOtp();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP request found for this email."));
-        // Only check OTP correctness and expiry, do not set verified
+        if (!"email_verification".equals(otpVerification.getType())) {
+            throw new CustomException("Invalid OTP type for email verification.");
+        }
         if (!otpVerification.getOtpCode().equals(otp)) {
             throw new CustomException("Invalid OTP.");
         }
         if (otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
             throw new CustomException("OTP has expired.");
         }
-        // Optionally, you can delete the OTP after successful verification
-        // otpVerificationRepository.delete(otpVerification);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new CustomException("User not found"));
+        user.setVerified(true);
+        userRepository.save(user);
+        otpVerificationRepository.delete(otpVerification);
         return ResponseEntity.ok(Map.of("message", "OTP verified successfully."));
     }
 
     @PostMapping("/verify-login-otp")
-    public ResponseEntity<?> verifyLoginOtp(@RequestBody OtpRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> verifyLoginOtp(@Valid @RequestBody OtpRequest request, HttpServletRequest httpRequest, HttpServletResponse httpResponse) {
         String email = request.getEmail().trim().toLowerCase();
         String otp = request.getOtp();
         
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP request found for this email."));
         
-        // Check if this is a login OTP
         if (!"login".equals(otpVerification.getType())) {
             throw new CustomException("Invalid OTP type for login verification.");
         }
-        
+        if (otpVerification.getPasswordVerifiedAt() == null) {
+            throw new CustomException("Login OTP was not issued after password verification.");
+        }
+
         // Verify OTP correctness and expiry
         if (!otpVerification.getOtpCode().equals(otp)) {
             throw new CustomException("Invalid OTP.");
@@ -511,36 +559,29 @@ public class AuthController {
         log.setDetails(detailsJson);
         activityLogService.createActivityLog(log);
         
-        // Return tokens for successful login OTP verification     
-        return ResponseEntity.ok(Map.of(
-            "accessToken", accessToken,
-            "refreshToken", refreshToken.getToken(),
-            "message", "Login OTP verified successfully."
-        ));
+        return issueAuthResponse(httpResponse, user, accessToken, refreshToken.getToken());
     }
 
     @PostMapping("/resend-otp")
-    public ResponseEntity<?> resendOtp(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> resendOtp(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail();
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException("User not found"));
 
-        System.out.println("Resend called. Verified? " + otpVerification.isVerified());
 
         // Optionally allow resending even if verified
         if (otpVerification.isVerified()) {
-            System.out.println("Warning: user already verified. Resending anyway.");
             // You can return here if desired, or allow resend
             // return ResponseEntity.ok(Map.of("message", "User already verified"));
         }
 
-        String newOtp = String.format("%06d", new Random().nextInt(999999));
+        String newOtp = generateOtpCode();
         otpVerification.setOtpCode(newOtp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
+        if (otpVerification.getType() == null || otpVerification.getType().isBlank()) {
+            otpVerification.setType("email_verification");
+        }
         otpVerificationRepository.save(otpVerification);
-
-        // Log to confirm email is actually sent
-        System.out.println("Sending OTP email to: " + otpVerification.getEmail() + ", OTP: " + newOtp);
 
         emailService.sendEmail(
                 email,
@@ -552,9 +593,8 @@ public class AuthController {
     }
 
     @PostMapping("/sendOtp")
-    public ResponseEntity<?> sendOtp(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> sendOtp(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        System.out.println("email is :"+email);
         if (!emailVerificationService.isEmailReal(email)) {
             throw new CustomException("Email not found.");
         }
@@ -570,7 +610,7 @@ public class AuthController {
         }
 
         // Generate OTP
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp = generateOtpCode();
 
         // Save to DB
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
@@ -579,6 +619,8 @@ public class AuthController {
         otpVerification.setOtpCode(otp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
         otpVerification.setVerified(false);
+        otpVerification.setType("email_verification");
+        otpVerification.setPasswordVerifiedAt(null);
         otpVerificationRepository.save(otpVerification);
 
         emailService.sendEmail(email, "Your OTP Code", "Your OTP is: " + otp);
@@ -587,10 +629,8 @@ public class AuthController {
     }
     //add (for otp code for password reset)
     @PostMapping("/send-reset-otp")
-    public ResponseEntity<?> sendResetOtp(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> sendResetOtp(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        System.out.println("[DEBUG] send-reset-otp called with email: " + email);
-        System.out.println("email is :"+email);
 
         if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
             throw new CustomException("Invalid email format.");
@@ -603,7 +643,7 @@ public class AuthController {
 
 
         // Generate OTP
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp = generateOtpCode();
 
         // Save to DB
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
@@ -612,6 +652,8 @@ public class AuthController {
         otpVerification.setOtpCode(otp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
         otpVerification.setVerified(false);
+        otpVerification.setType("password_reset");
+        otpVerification.setPasswordVerifiedAt(null);
         otpVerificationRepository.save(otpVerification);
 
         emailService.sendEmail(email, "Password Reset OTP", "Your OTP is: " + otp);
@@ -620,7 +662,7 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")   //for forgot passward
-    public ResponseEntity<?> forgotPassword(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> forgotPassword(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
 
         // ✅ Check if user exists and is verified
@@ -629,7 +671,7 @@ public class AuthController {
 
 
         // ✅ Generate OTP
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        String otp = generateOtpCode();
 
         // ✅ Save or update OTP
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
@@ -638,10 +680,11 @@ public class AuthController {
         otpVerification.setEmail(email);
         otpVerification.setOtpCode(otp);
         otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
-        otpVerification.setVerified(false); // mark for reset, not for registration
+        otpVerification.setVerified(false);
+        otpVerification.setType("password_reset");
+        otpVerification.setPasswordVerifiedAt(null);
         otpVerificationRepository.save(otpVerification);
 
-        // ✅ Send OTP via email
         emailService.sendEmail(email, "Reset Password OTP", "Your OTP for password reset is: " + otp);
         return ResponseEntity.ok(Map.of("message", "OTP sent for password reset."));
     }
@@ -650,26 +693,31 @@ public class AuthController {
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         String newPassword = request.getNewPassword();
+        String otp = request.getOtp();
 
-        // ✅ Get user
+        if (otp == null || otp.isBlank()) {
+            throw new CustomException("OTP is required");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("User not found"));
 
-        // ✅ Check OTP is verified
         OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
                 .orElseThrow(() -> new CustomException("No OTP found for this email"));
 
-        if ( otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
+        if (!"password_reset".equals(otpVerification.getType())) {
+            throw new CustomException("Invalid OTP type for password reset.");
+        }
+        if (otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
             throw new CustomException("OTP expired");
         }
+        if (!otpVerification.getOtpCode().equals(otp)) {
+            throw new CustomException("Invalid OTP");
+        }
 
-        // ✅ Set new password
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
-
-        // ✅ Invalidate OTP after reset
-        otpVerification.setVerified(false);
-        otpVerificationRepository.save(otpVerification);
+        otpVerificationRepository.delete(otpVerification);
 
         return ResponseEntity.ok(Map.of("message", "Password reset successful"));
     }
@@ -691,7 +739,7 @@ public class AuthController {
     }
 
     @PostMapping("/validate-real-email")
-    public ResponseEntity<?> validateRealEmail(@RequestBody EmailRequest request) {
+    public ResponseEntity<?> validateRealEmail(@Valid @RequestBody EmailRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         boolean isReal = emailVerificationService.isEmailReal(email);
         if (isReal) {
@@ -701,35 +749,17 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/send-login-otp")
-    public ResponseEntity<?> sendLoginOtp(@RequestBody EmailRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
-        if (email == null || !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new CustomException("Invalid email format.");
-        }
-        Optional<User> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            throw new CustomException("No account found with this email.");
-        }
-        // Generate OTP
-        String otp = String.format("%06d", new Random().nextInt(999999));
-        // Save to DB
-        OtpVerification otpVerification = otpVerificationRepository.findByEmail(email)
-                .orElse(new OtpVerification());
-        otpVerification.setEmail(email);
-        otpVerification.setOtpCode(otp);
-        otpVerification.setExpiryTime(LocalDateTime.now().plusMinutes(10));
-        otpVerification.setVerified(false);
-        otpVerification.setType("login"); // Set type to login
-        otpVerificationRepository.save(otpVerification);
-        emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
-        return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
-    }
-
     @GetMapping("/check-blacklist-status")
-    public ResponseEntity<?> checkBlacklistStatus(@RequestHeader("Authorization") String tokenHeader, HttpServletRequest request) {
+    public ResponseEntity<?> checkBlacklistStatus(
+            HttpServletRequest request,
+            @RequestHeader(value = "Authorization", required = false) String tokenHeader) {
         try {
-            String token = tokenHeader.replace("Bearer ", "");
+            String token = authCookieService.getAccessToken(request)
+                    .orElse(tokenHeader != null && tokenHeader.startsWith("Bearer ")
+                            ? tokenHeader.substring(7) : null);
+            if (token == null || !jwtTokenProvider.validateToken(token)) {
+                return ResponseEntity.status(401).body(Map.of("message", "Not authenticated"));
+            }
             String email = jwtTokenProvider.getEmailFromToken(token);
             String clientIp = getClientIpAddress(request);
             
@@ -737,9 +767,7 @@ public class AuthController {
             String phoneNumber = null;
             try {
                 phoneNumber = jwtTokenProvider.getPhoneNumberFromToken(token);
-                System.out.println("[AuthController] Extracted phone number from token: " + phoneNumber);
             } catch (Exception e) {
-                System.out.println("[AuthController] Could not extract phone number from token: " + e.getMessage());
                 // Phone number not available in token, continue without it
             }
             
@@ -752,15 +780,11 @@ public class AuthController {
             // Check if user is blacklisted by phone number
             BlacklistEntry phoneBlacklistEntry = null;
             if (phoneNumber != null) {
-                System.out.println("[AuthController] Checking blacklist for phone: " + phoneNumber);
                 phoneBlacklistEntry = blacklistServiceImpl.getActiveBlacklistByPhone(phoneNumber);
                 if (phoneBlacklistEntry != null) {
-                    System.out.println("[AuthController] Found blacklist entry for phone: " + phoneNumber);
                 } else {
-                    System.out.println("[AuthController] No blacklist entry found for phone: " + phoneNumber);
                 }
             } else {
-                System.out.println("[AuthController] No phone number available for blacklist check");
             }
             
             // If any of email, IP, or phone is blacklisted, return blacklisted status
@@ -801,5 +825,24 @@ public class AuthController {
                 "error", "Failed to check blacklist status: " + e.getMessage()
             ));
         }
+    }
+
+    private String generateOtpCode() {
+        return String.format("%06d", new SecureRandom().nextInt(1_000_000));
+    }
+
+    private ResponseEntity<Map<String, Object>> issueAuthResponse(
+            HttpServletResponse response, User user, String accessToken, String refreshToken) {
+        authCookieService.setAuthCookies(response, accessToken, refreshToken);
+        Map<String, Object> body = new java.util.HashMap<>();
+        body.put("message", "Authenticated");
+        body.put("authenticated", true);
+        if (user.getRole() != null) {
+            body.put("roles", "ROLE_" + user.getRole().getName());
+            body.put("permissions", user.getRole().getPermissions().stream()
+                    .map(com.Ojt.Ecommerce.entity.Permission::getKey)
+                    .collect(java.util.stream.Collectors.joining(",")));
+        }
+        return ResponseEntity.ok(body);
     }
 }

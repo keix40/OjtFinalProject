@@ -232,13 +232,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
     }
 
     // 2. Apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
       // Find the best VIP discount for this tier
       const vipDiscount = this.activeDiscounts.find(d =>
@@ -253,13 +247,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   getVipDiscountDisplay(product: ProductDTO): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -504,15 +492,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
   }
 
   checkFirstTimeBuyerDiscount(): void {
-    const token = localStorage.getItem('token');
-    let userId: number | null = null;
-    if (token) {
-      try {
-        userId = JSON.parse(atob(token.split('.')[1])).id;
-      } catch (e) {
-        userId = null;
-      }
-    }
+    const userId = this.authService.getUserId();
     if (!userId || this.cartItems.length === 0) {
       this.isFirstTimeBuyerDiscount = false;
       return;
@@ -525,7 +505,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         price: item.price
       }))
     };
-    this.http.post<any>('http://localhost:8080/order/preview', userOrderDto).subscribe({
+    this.http.post<any>('/order/preview', userOrderDto).subscribe({
       next: (preview) => {
         const wasFirstTimeBuyerDiscount = this.isFirstTimeBuyerDiscount;
         this.isFirstTimeBuyerDiscount = preview.discountReason && preview.discountReason.toLowerCase().includes('first time buyer');
@@ -866,13 +846,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
     }
 
     // Apply VIP tier discount (if any)
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (userVipTier && this.activeDiscounts && this.activeDiscounts.length > 0) {
       const vipDiscount = this.activeDiscounts.find(d =>
         (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -886,13 +860,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
 
   // VIP discount display for related products
   getRelatedProductVipDiscount(product: any): string {
-    const token = localStorage.getItem('token');
-    let userVipTier = null;
-    if (token) {
-      try {
-        userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-      } catch {}
-    }
+    const userVipTier = this.authService.getUserVipTier();
     if (!userVipTier) return '';
     const vipDiscount = this.activeDiscounts.find(d =>
       (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -1000,7 +968,7 @@ export class CartPageComponent implements OnInit, OnDestroy {
         return; // Do NOT call backend
       }
       // Only now call the backend to validate the coupon
-      this.http.post<any>('http://localhost:8080/api/coupons/validate', {
+      this.http.post<any>('/api/coupons/validate', {
         couponCode: this.promoCode,
         userId: userId,
         total: total
@@ -1072,13 +1040,7 @@ getCouponDiscountAmount(): number {
 }
 
 getVipTierDiscountAmount(): number {
-  const token = localStorage.getItem('token');
-  let userVipTier = null;
-  if (token) {
-    try {
-      userVipTier = JSON.parse(atob(token.split('.')[1])).vipTier;
-    } catch {}
-  }
+  const userVipTier = this.authService.getUserVipTier();
   if (!userVipTier || !this.activeDiscounts.length) return 0;
   const vipDiscount = this.activeDiscounts.find(d =>
     (d.rules || []).some((r: any) => r.targetType === 'VIP_TIER' && r.vipTierName === userVipTier)
@@ -1255,7 +1217,7 @@ getVipTierDiscountAmount(): number {
       productDetailsCount: this.productDetails.size
     });
     
-    this.http.post<any>('http://localhost:8080/api/coupons/validate', {
+    this.http.post<any>('/api/coupons/validate', {
       couponCode: this.promoCode,
       userId: this.userId,
       total: total
@@ -1346,7 +1308,7 @@ getVipTierDiscountAmount(): number {
   // Public method to test backend connectivity
   public testBackendConnection(): void {
     console.log('Testing backend connection...');
-    this.http.get('http://localhost:8080/product/productlist').subscribe({
+    this.http.get('/product/productlist').subscribe({
       next: (response) => console.log('Backend connection successful:', response),
       error: (error) => console.error('Backend connection failed:', error)
     });

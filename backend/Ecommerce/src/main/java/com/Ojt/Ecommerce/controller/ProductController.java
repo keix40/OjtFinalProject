@@ -85,13 +85,11 @@ public class ProductController {
 
     //fixing error get all product 6.15.25
     @GetMapping("/getallproduct")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<ProductDTO>> getAllProduct() {
         return ResponseEntity.ok(service.getAllProduct());
     }
 
     @GetMapping("/productlist")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public List<ProductDTO> getAllActiveProducts() {
         return service.getAllActiveProductDTOs();
     }
@@ -156,45 +154,38 @@ public class ProductController {
     }
 
     @GetMapping("/adminProductDetail/{id}")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ProductDTO getProductDetail(@PathVariable Long id, @RequestParam(required = false) Long userId) {
         return service.getProductDetailById(id, userId);
     }
 
     @GetMapping("/productquantity/{id}")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<?> getProductQuantity(@PathVariable("id") Long productId) {
         Long quantity = service.getProductQuantity(productId);
         return ResponseEntity.ok(quantity);
     }
 
     @GetMapping("/variantstock/{id}")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<?> getProductVariantStock(@PathVariable("id") Long variantId) {
         Integer stock = service.getProductVariantStock(variantId);
         return ResponseEntity.ok(stock);
     }
 
     @GetMapping("/latest")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<Product>> getLatestProducts() {
         return ResponseEntity.ok(service.getLatest4Products());
     }
 
     @GetMapping("/topordered")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<Product>> getTopOrderedProducts() {
         return ResponseEntity.ok(service.getTop5OrderedProducts());
     }
 
     @GetMapping("/trending")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<TrendingProductDTO>> getTrendingProducts() {
         return ResponseEntity.ok(service.getTrendingProductsWithReviews());
     }
 
     @GetMapping("/featured")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<TrendingProductDTO>> getFeaturedProducts(@RequestParam(required = false) Long userId) {
         try {
             System.out.println("=== Featured Products Request ===");
@@ -215,28 +206,24 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<ProductDTO>> searchProducts(@RequestParam String keyword) {
         List<ProductDTO> results = service.searchProducts(keyword);
         return ResponseEntity.ok(results);
     }
 
     @GetMapping("/search-comprehensive")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<ProductDTO>> searchProductsComprehensive(@RequestParam String keyword) {
         List<ProductDTO> results = service.searchProductsComprehensive(keyword);
         return ResponseEntity.ok(results);
     }
 
     @GetMapping("/live-search")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<ProductDTO>> liveSearch(@RequestParam String keyword) {
         List<ProductDTO> results = service.liveSearch(keyword);
         return ResponseEntity.ok(results);
     }
 
     @GetMapping("/related")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<ProductDTO>> getRelatedProducts(
             @RequestParam(required = false) List<Long> categoryIds,
             @RequestParam(required = false) List<Long> brandIds,
@@ -246,6 +233,7 @@ public class ProductController {
         return ResponseEntity.ok(products);
     }
     
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     @GetMapping("/debug/discounts")
     public ResponseEntity<Map<String, Object>> debugDiscounts() {
         try {
@@ -292,6 +280,7 @@ public class ProductController {
         }
     }
 
+    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     @GetMapping("/debug/products-with-discounts")
     public ResponseEntity<Map<String, Object>> debugProductsWithDiscounts() {
         try {
@@ -349,7 +338,6 @@ public class ProductController {
     }
 
     @GetMapping("/report/with-variants")
-    @RequiresPermission(value = PRODUCTS_VIEW, level = "basic")
     public ResponseEntity<List<Map<String, Object>>> getProductReportWithVariants() {
         return ResponseEntity.ok(service.getProductReportWithVariants());
     }

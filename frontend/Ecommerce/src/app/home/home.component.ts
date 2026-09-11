@@ -22,6 +22,7 @@ import { EventService } from '../services/event.service';
 import { EventDTO } from '../event-dto';
 import { PriceFormatService } from '../services/price-format.service';
 import { LuxUiModule } from '../shared/ui/lux-ui.module';
+import { mediaUrl } from '../shared/media-url.util';
 
 @Component({
   selector: 'app-home',
@@ -89,7 +90,7 @@ export class HomeComponent implements OnInit {
 
   checkFirstTimeBuyerNotification() {
     console.log('[HomeComponent] Checking first time buyer notification...');
-    this.http.get<any>('http://localhost:8080/api/notifications/check-first-time-buyer').subscribe({
+    this.http.get<any>('/api/notifications/check-first-time-buyer').subscribe({
       next: (notification) => {
         if (notification && notification.message && notification.type === 'first time buyer discount') {
         const lastShown = localStorage.getItem('ftb_discount_last_shown');
@@ -339,7 +340,7 @@ export class HomeComponent implements OnInit {
   getCategoryImageUrl(cat: Category): string {
     if (!cat.image || cat.image.includes('null')) return 'assets/images/default-brand.svg';
     if (cat.image.startsWith('http://') || cat.image.startsWith('https://')) return cat.image;
-    return `http://localhost:8080${cat.image}`;
+    return mediaUrl(cat.image);
   }
 
     getSafeIconUrl(cat: Category): SafeUrl | string | undefined {
@@ -351,7 +352,7 @@ export class HomeComponent implements OnInit {
         return cat.iconUrl;
       }
       // If it's a relative path (uploaded file)
-      return `http://localhost:8080${cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl}`;
+      return mediaUrl(cat.iconUrl.startsWith('/') ? cat.iconUrl : '/' + cat.iconUrl);
     }
     return undefined;
   }
@@ -366,7 +367,7 @@ export class HomeComponent implements OnInit {
     if (brand.image.startsWith('/assets/')) {
       return brand.image;
     }
-    return `http://localhost:8080${brand.image.startsWith('/') ? brand.image : '/' + brand.image}`;
+    return mediaUrl(brand.image.startsWith('/') ? brand.image : '/' + brand.image);
   }
 
   getInitials(name: string): string {
@@ -383,7 +384,7 @@ export class HomeComponent implements OnInit {
     }
     // Always ensure a leading slash for local images
     const path = review.userImage.startsWith('/') ? review.userImage : '/' + review.userImage;
-    return `http://localhost:8080${path}`;
+    return mediaUrl(path);
   }
 
   getAllCategoriesUrl() {
@@ -413,7 +414,7 @@ export class HomeComponent implements OnInit {
 
   getTrendingProductImageUrl(product: any): string {
     if (product.productImages && product.productImages.length > 0) {
-      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+      return '' + product.productImages[0].imageUrl;
     }
     return 'assets/images/default-brand.svg';
   }
@@ -504,7 +505,7 @@ export class HomeComponent implements OnInit {
   subscribeToNewsletter() {
     if (!this.newsletterEmail) return;
     // Directly subscribe without OTP modal
-    this.http.post('http://localhost:8080/api/newsletter/subscribe?email=' + encodeURIComponent(this.newsletterEmail), {})
+    this.http.post('/api/newsletter/subscribe?email=' + encodeURIComponent(this.newsletterEmail), {})
       .subscribe({
         next: (res: any) => {
           alert(res); // Or show a nice toast
@@ -523,7 +524,7 @@ export class HomeComponent implements OnInit {
     if (event.eventImage.startsWith('http') || event.eventImage.startsWith('data:')) {
       return event.eventImage;
     }
-    return 'http://localhost:8080' + event.eventImage;
+    return '' + event.eventImage;
   }
 
   onImageError(event: Event): void {

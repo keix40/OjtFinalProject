@@ -4,11 +4,12 @@ import { FooterComponent } from '../footer/footer.component';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from '../header/header.component';
+import { SafeHtmlPipe } from '../shared/safe-html.pipe';
 
 @Component({
   selector: 'app-user-policy',
   standalone: true,
-  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent],
+  imports: [CommonModule, RouterModule, HeaderComponent, FooterComponent, SafeHtmlPipe],
   templateUrl: './user-policy.component.html',
   styleUrls: ['./user-policy.component.css']
 })

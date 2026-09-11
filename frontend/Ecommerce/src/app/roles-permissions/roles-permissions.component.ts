@@ -932,89 +932,25 @@ export class RolesPermissionsComponent implements OnInit{
     return this.allRoles;
   }
 
-  // NEW: Initialize current user from JWT token
   initializeCurrentUserFromToken(): void {
-    const token = localStorage.getItem('token');
-    console.log('Token found:', !!token);
-    
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('JWT Payload:', payload);
-        console.log('JWT Payload keys:', Object.keys(payload));
-        
-        // Check if required fields exist
-        if (payload.id && payload.sub && payload.roles && payload.roleLevel !== undefined) {
-          this.currentUser = {
-            id: payload.id,
-            name: payload.sub,
-            role: {
-              id: payload.id,
-              name: payload.roles,
-              level: payload.roleLevel
-            }
-          };
-          console.log('Current User initialized successfully:', this.currentUser);
-        } else {
-          console.error('Missing required fields in JWT payload');
-          console.log('Available fields:', {
-            id: payload.id,
-            sub: payload.sub,
-            roles: payload.roles,
-            roleLevel: payload.roleLevel
-          });
-          // Set fallback with available data
-          this.currentUser = {
-            id: payload.id || 0,
-            name: payload.sub || 'Unknown User',
-            role: {
-              id: payload.id || 0,
-              name: payload.roles || 'UNKNOWN',
-              level: payload.roleLevel || 0
-            }
-          };
-        }
-      } catch (error) {
-        console.error('Error parsing JWT token:', error);
-        // If token parsing fails, set a minimal user object
-        this.currentUser = {
-          id: 0,
-          name: 'Parse Error',
-          role: {
-            id: 0,
-            name: 'PARSE_ERROR',
-            level: 0
-          }
-        };
+    const applySession = (session: ReturnType<AuthService['getSession']>) => {
+      if (!session) {
+        return;
       }
-    } else {
-      console.error('No access token found in localStorage');
-      // If no token, set a minimal user object
       this.currentUser = {
-        id: 0,
-        name: 'No Token',
+        id: session.id,
+        name: session.sub,
         role: {
-          id: 0,
-          name: 'NO_TOKEN',
-          level: 0
+          id: session.id,
+          name: session.roles,
+          level: session.roleLevel ?? 0
         }
       };
-    }
-    
-    // Ensure currentUser is never null
+    };
+    applySession(this.authService.getSession());
     if (!this.currentUser) {
-      this.currentUser = {
-        id: 0,
-        name: 'Fallback User',
-        role: {
-          id: 0,
-          name: 'FALLBACK',
-          level: 0
-        }
-      };
+      this.authService.loadSession().subscribe(s => applySession(s));
     }
-    
-    console.log('Final currentUser:', this.currentUser);
   }
 
   // NEW: Clear selected role if it becomes inaccessible
@@ -1266,7 +1202,6 @@ export class RolesPermissionsComponent implements OnInit{
             if (typeof response === 'string') {
               const parsedResponse = JSON.parse(response);
               if (parsedResponse.userAffected && parsedResponse.newToken) {
-                console.log('Debug: New token received from backend');
                 // Update the token in localStorage
                 localStorage.setItem('token', parsedResponse.newToken);
                 newTokenReceived = true;
@@ -1287,7 +1222,6 @@ export class RolesPermissionsComponent implements OnInit{
         });
         
         if (currentUserAssigned && !newTokenReceived) {
-          console.log('Debug: Current user affected but no new token received, using fallback');
           // If current user's role was changed but no new token received, use fallback
           this.refreshCurrentUserData();
         }
@@ -1368,7 +1302,6 @@ export class RolesPermissionsComponent implements OnInit{
         if (tokenResponse && tokenResponse.accessToken) {
           // Update the token in localStorage
           localStorage.setItem('token', tokenResponse.accessToken);
-          console.log('JWT token refreshed successfully');
           
           // Re-initialize current user from the new token
           this.initializeCurrentUserFromToken();
@@ -1382,7 +1315,6 @@ export class RolesPermissionsComponent implements OnInit{
       },
       error: (err) => {
         console.error('Error refreshing JWT token:', err);
-        console.log('JWT refresh failed, using fallback method...');
         
         // Try to get fresh user data from backend
         this.refreshUserDataFromBackend();
@@ -1624,20 +1556,13 @@ export class RolesPermissionsComponent implements OnInit{
   }
 
   debugJWT(): void {
-    console.log('=== DEBUG JWT TOKEN ===');
     const token = localStorage.getItem('token');
     const accessToken = localStorage.getItem('accessToken');
-    console.log('Token (token):', !!token);
-    console.log('Token (accessToken):', !!accessToken);
     
     if (token) {
-      console.log('Token length:', token.length);
-      console.log('Token parts:', token.split('.').length);
       
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('JWT Payload:', payload);
-        console.log('JWT Payload keys:', Object.keys(payload));
         console.log('JWT Payload values:', {
           id: payload.id,
           sub: payload.sub,
@@ -1657,11 +1582,6 @@ export class RolesPermissionsComponent implements OnInit{
   verifyNewToken(newToken: string): void {
     try {
       const payload = JSON.parse(atob(newToken.split('.')[1]));
-      console.log('Verified New Token Payload:', payload);
-      console.log('Verified New Token ID:', payload.id);
-      console.log('Verified New Token Sub:', payload.sub);
-      console.log('Verified New Token Roles:', payload.roles);
-      console.log('Verified New Token Role Level:', payload.roleLevel);
       
       // Compare with old token information
       this.compareTokenInformation(payload);
@@ -1676,7 +1596,6 @@ export class RolesPermissionsComponent implements OnInit{
     if (oldToken) {
       try {
         const oldPayload = JSON.parse(atob(oldToken.split('.')[1]));
-        console.log('=== TOKEN COMPARISON ===');
         console.log('Old Role Level:', oldPayload.roleLevel);
         console.log('New Role Level:', newPayload.roleLevel);
         console.log('Old Roles:', oldPayload.roles);
@@ -1701,7 +1620,6 @@ export class RolesPermissionsComponent implements OnInit{
     console.log('Selected Role Name:', this.selectedRole?.name);
     console.log('Can Manage Selected Role:', this.canManageRole(this.selectedRole!));
     console.log('Has USERS_ASSIGN_ROLE Permission:', this.permissionService.hasPermission(PermissionConstants.USERS_ASSIGN_ROLE));
-    console.log('Current Token:', localStorage.getItem('token')?.substring(0, 50) + '...');
     console.log('==============================');
   }
 

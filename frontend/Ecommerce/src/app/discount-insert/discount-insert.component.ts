@@ -846,7 +846,7 @@ export class DiscountInsertComponent implements OnInit {
 
   getProductImageUrl(product: ProductDTO): string {
     if (product.productImages?.length > 0) {
-      return 'http://localhost:8080' + product.productImages[0].imageUrl;
+      return '' + product.productImages[0].imageUrl;
     }
     return '/assets/project_img/fashion_store.jpg';
   }
@@ -1320,7 +1320,7 @@ export class DiscountInsertComponent implements OnInit {
   getUserProfileImage(user: any): string {
     if (user.profileImage && user.profileImage !== '/upload/defaultProfile.png') {
       if (user.profileImage.startsWith('http')) return user.profileImage;
-      return 'http://localhost:8080' + user.profileImage;
+      return '' + user.profileImage;
     }
     return '/assets/project_img/fashion_store.jpg';
   }

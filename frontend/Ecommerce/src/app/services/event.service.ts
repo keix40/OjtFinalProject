@@ -7,7 +7,7 @@ import { HttpClient } from '@angular/common/http';
   providedIn: 'root'
 })
 export class EventService {
-  baseUrl = 'http://localhost:8080/events';
+  baseUrl = '/events';
 
   constructor(private http: HttpClient) {}
 

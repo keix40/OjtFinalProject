@@ -11,8 +11,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.Ojt.Ecommerce.util.FileUploadSanitizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,7 +41,8 @@ public class EventServiceImpl implements EventService {
     private final DiscountRepository discountRepository;
     private final EventProductRepository eventProductRepository;
 
-    private final String uploadDir = "event";
+    @Value("${app.upload.event-dir:event}")
+    private String eventUploadDir;
 
     @Override
     @Transactional
@@ -378,12 +381,8 @@ public class EventServiceImpl implements EventService {
 
     private String saveImage(MultipartFile file) {
         try {
-            File folder = new File(uploadDir);
-            if (!folder.exists()) folder.mkdirs();
-            String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filepath = Paths.get(uploadDir, filename);
-            Files.write(filepath, file.getBytes());
-            return filename;
+            String publicUrl = FileUploadSanitizer.saveValidatedImage(file, eventUploadDir, "/event");
+            return publicUrl.substring("/event/".length());
         } catch (IOException e) {
             throw new RuntimeException("Failed to store file", e);
         }

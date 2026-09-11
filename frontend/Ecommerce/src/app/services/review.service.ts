@@ -22,12 +22,8 @@ export class ReviewService {
   connect(productId: number, username: string): void {
     this.productId = productId;
   
-    // 🔐 Get token from localStorage (or AuthService if you're using one)
-    const token = localStorage.getItem('token');
-  
     this.stompClient = new Client({
-      // 🛠️ Use SockJS with token in query param
-      webSocketFactory: () => new SockJS(`http://localhost:8080/ws-review?token=${token}`),
+      webSocketFactory: () => new SockJS('/ws-review'),
       reconnectDelay: 5000,
     });
   
@@ -75,19 +71,19 @@ export class ReviewService {
   }  
   
   sendReview(formData: FormData): Observable<any> {
-    return this.http.post('http://localhost:8080/review', formData); // Adjust URL as needed
+    return this.http.post('/review', formData); // Adjust URL as needed
   }
 
   getTop5StarReviews(): Observable<ReviewDTO[]> {
-    return this.http.get<ReviewDTO[]>(`http://localhost:8080/review/top5star`);
+    return this.http.get<ReviewDTO[]>(`/review/top5star`);
   }
 
   getUserReviews(userId: number) {
-    return this.http.get<ReviewDTO[]>(`http://localhost:8080/review/getallreviewbyid/${userId}`);
+    return this.http.get<ReviewDTO[]>(`/review/getallreviewbyid/${userId}`);
   }
 
   getReviewsByProduct(productId: number) {
-    return this.http.get<any[]>(`http://localhost:8080/review/getallbyproductid/${productId}`);
+    return this.http.get<any[]>(`/review/getallbyproductid/${productId}`);
   }
   
 }
