@@ -104,6 +104,18 @@ docker run --rm -p 8080:8080 \
 
 Then open `http://localhost:8080/actuator/health`.
 
-## 6. Upload storage note
+## 6. Static assets and upload storage
 
-File uploads are stored on the container filesystem by default. Render’s disk is **ephemeral** — uploaded images are lost on redeploy unless you add persistent disk or external object storage later.
+The API serves user-uploaded and catalog images from local directories mapped in `WebConfig` (`product_image`, `uploads`, `brand_and_category_image`, `review`, `return_images`, `event`). The Dockerfile creates these as **empty** directories at `/app` so handlers resolve cleanly; it does **not** bundle the repo’s large `product_image.zip` sample set.
+
+### Ephemeral disk on Render
+
+Render’s filesystem is **ephemeral**. Any file written at runtime (profile photos, product uploads, etc.) is **lost on redeploy, restart, or spin-down**. Missing files return **HTTP 404** (`Static asset not found`), not 500.
+
+For production:
+
+1. **Recommended:** Object storage (Cloudflare R2, AWS S3, etc.) with the app storing URLs instead of local paths.
+2. **Alternative:** [Render persistent disk](https://render.com/docs/disks) mounted at `/app/uploads` (and the other dirs if needed).
+3. **Not recommended:** Baking a full catalog image zip into the Docker image — the sample archive is ~98MB and bloats every deploy.
+
+After a fresh deploy with an empty MySQL database, catalog rows may reference image filenames that are not on disk until you re-upload assets or restore from backup/storage.
