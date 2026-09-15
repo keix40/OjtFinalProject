@@ -8,9 +8,11 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +20,39 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final String[] STATIC_ASSET_PREFIXES = {
+            "/product_image/",
+            "/uploads/",
+            "/review/",
+            "/return_images/",
+            "/brand_and_category_image/",
+            "/event/"
+    };
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<?> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
+        String path = request.getRequestURI();
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("timestamp", LocalDateTime.now());
+        errorDetails.put(
+                "message",
+                isStaticAssetPath(path) ? "Static asset not found" : "Resource not found");
+        errorDetails.put("status", HttpStatus.NOT_FOUND.value());
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
+    }
+
+    private static boolean isStaticAssetPath(String path) {
+        if (path == null) {
+            return false;
+        }
+        for (String prefix : STATIC_ASSET_PREFIXES) {
+            if (path.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<?> handleValidationException(MethodArgumentNotValidException ex) {
