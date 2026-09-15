@@ -18,6 +18,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
@@ -29,6 +31,8 @@ import java.util.Map;
 
 @Service
 public class LoginAttemptServiceImpl implements LoginAttemptService {
+
+    private static final Logger log = LoggerFactory.getLogger(LoginAttemptServiceImpl.class);
 
     @Autowired
     private LoginAttemptRepository repository;
@@ -428,7 +432,9 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                         System.out.println("[LoginAttempt] Email alert triggered for IP: " + ip);
                         String lastSuccessIp = getLastSuccessIp(username);
                         if (lastSuccessIp == null || !lastSuccessIp.equals(ip)) {
-                            emailService.sendEmail(username, "Suspicious Login Attempt", "A suspicious login attempt was detected from " + location + ". If this wasn't you, please secure your account.");
+                            sendSecurityAlertEmail(username, "Suspicious Login Attempt",
+                                    "A suspicious login attempt was detected from " + location + ". If this wasn't you, please secure your account.",
+                                    "email_alert");
                         }
                     }
                     break;
@@ -438,7 +444,9 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                         otpCaptchaRequired.put(ip, LocalDateTime.now().plusMinutes(rule.getWindowMinutes()));
                         System.out.println("[LoginAttempt] Added IP " + ip + " to otpCaptchaRequired map until: " + LocalDateTime.now().plusMinutes(rule.getWindowMinutes()));
                         System.out.println("[LoginAttempt] Current map size: " + otpCaptchaRequired.size());
-                        emailService.sendEmail(username, "Security Alert: Extra Verification Required", "Multiple failed login attempts detected. OTP and CAPTCHA will be required for your next login from this device.");
+                        sendSecurityAlertEmail(username, "Security Alert: Extra Verification Required",
+                                "Multiple failed login attempts detected. OTP and CAPTCHA will be required for your next login from this device.",
+                                "require_otp");
                         // TODO: Notify admin (implement as needed)
                     } else {
                         System.out.println("[LoginAttempt] OTP requirement not triggered yet for IP: " + ip + " (fails: " + fails + ", threshold: " + rule.getAttempts() + ")");
@@ -454,11 +462,21 @@ public class LoginAttemptServiceImpl implements LoginAttemptService {
                             }
                         } catch (Exception ignored) {}
                         blockIPCustom(ip, username, banMinutes, "Too many failed login attempts");
-                        emailService.sendEmail(username, "IP Banned", "Your IP (" + ip + ") has been banned for " + (banMinutes/60) + " hours due to repeated failed login attempts.");
+                        sendSecurityAlertEmail(username, "IP Banned",
+                                "Your IP (" + ip + ") has been banned for " + (banMinutes/60) + " hours due to repeated failed login attempts.",
+                                "ban_ip");
                     }
                     break;
                 // Add more dynamic actions as needed
             }
+        }
+    }
+
+    private void sendSecurityAlertEmail(String to, String subject, String body, String action) {
+        try {
+            emailService.sendEmail(to, subject, body);
+        } catch (Exception ex) {
+            log.warn("Failed to send failed-login security email (action={}, to={}): {}", action, to, ex.getMessage());
         }
     }
 
