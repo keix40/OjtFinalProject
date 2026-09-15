@@ -75,7 +75,8 @@ public class BrandController {
     private BrandHasCategoryService bcService;
 
     @GetMapping("/getallbrand")
-    @RequiresPermission(value = BRANDS_VIEW, level = "basic")
+    // Public storefront catalog read — SecurityConfig permits GET /brand/**
+    // @RequiresPermission(value = BRANDS_VIEW, level = "basic")
     public List<BrandListDTO> getAllBrand(){
         return service.getAllBrandsWithCategories();
     }

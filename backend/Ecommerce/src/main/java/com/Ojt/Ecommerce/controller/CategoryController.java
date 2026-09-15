@@ -51,12 +51,14 @@ public class CategoryController {
     private BrandHasCategoryService bcService;
 
     @GetMapping("/getallcategory")
-    @RequiresPermission(value = CATEGORIES_VIEW, level = "basic")
+    // Public storefront catalog read — SecurityConfig permits GET /category/**
+    // @RequiresPermission(value = CATEGORIES_VIEW, level = "basic")
     public List<Category> getAllCategory(){
         return service.getAllCategory();
     }
 
     @GetMapping("/tree")
+    // Public storefront catalog read — SecurityConfig permits GET /category/**
     // @RequiresPermission(value = CATEGORIES_VIEW, level = "basic")
     public ResponseEntity<List<CategoryListDTO>> getCategoryTree() {
         return ResponseEntity.ok(service.getCategoryTree());
