@@ -191,7 +191,11 @@ public class AuthController {
                 otpVerification.setType("login");
                 otpVerification.setPasswordVerifiedAt(LocalDateTime.now());
                 otpVerificationRepository.save(otpVerification);
-                emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
+                try {
+                    emailService.sendEmail(email, "Your Login OTP Code", "Your OTP for login verification is: " + otp);
+                } catch (Exception ex) {
+                    log.warn("Failed to send login OTP email to {}: {}", email, ex.getMessage());
+                }
                 return ResponseEntity.status(401).body(Map.of(
                     "otpRequired", true,
                     "captchaRequired", true,
