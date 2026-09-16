@@ -6,6 +6,7 @@ import com.Ojt.Ecommerce.entity.Status;
 import com.Ojt.Ecommerce.entity.StatusType;
 import com.Ojt.Ecommerce.repository.RoleRepository;
 import com.Ojt.Ecommerce.repository.StatusRepository;
+import com.Ojt.Ecommerce.service.DeliveryServiceSeedService;
 import com.Ojt.Ecommerce.service.SecurityPolicyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationRunner;
@@ -21,6 +22,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final SecurityPolicyService securityPolicyService;
+    private final DeliveryServiceSeedService deliveryServiceSeedService;
 
     @Override
     public void run(String... args) {
@@ -47,6 +49,8 @@ public class DataInitializer implements CommandLineRunner {
         // Seed security policy rules
         securityPolicyService.seedDefaultsIfEmpty();
         System.out.println("Security policy rules seeded successfully.");
+
+        deliveryServiceSeedService.seedDefaultsIfEmpty();
     }
 
     @Bean

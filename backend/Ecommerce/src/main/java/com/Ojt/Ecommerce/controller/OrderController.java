@@ -866,8 +866,8 @@ public class OrderController {
         int colorIndex = 0;
         
         for (Object[] result : results) {
-            String name = (String) result[0];
-            Long value = (Long) result[1];
+            String name = result[0] != null ? result[0].toString() : "Unknown";
+            long value = result[1] instanceof Number number ? number.longValue() : 0L;
             String color = colors[colorIndex % colors.length];
 
             deliveryServices.add(new DeliveryServiceDTO(

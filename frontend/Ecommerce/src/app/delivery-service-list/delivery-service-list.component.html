@@ -26,10 +26,13 @@
         {{ service.feePerKm }}
       </ng-template>
       <ng-template luxColumn="address" header="Base address" let-service>
-        <div class="cell-stack">
+        <div class="cell-stack" *ngIf="service.baseAddress; else noBaseAddress">
           <span>{{ service.baseAddress.address }}</span>
           <span class="cell-muted">{{ service.baseAddress.city }}, {{ service.baseAddress.state }}, {{ service.baseAddress.country }}</span>
         </div>
+        <ng-template #noBaseAddress>
+          <span class="cell-muted">No base address configured</span>
+        </ng-template>
       </ng-template>
       <ng-template luxColumn="phone" header="Phone" let-service>
         {{ service.phoneNumber }}

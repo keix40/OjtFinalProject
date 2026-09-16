@@ -176,9 +176,9 @@ export class RolesPermissionsComponent implements OnInit{
     this.initializeCurrentUserFromToken();
     
     // Use the correct permission constants
-    this.canCreateRole = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
+    this.canCreateRole = this.permissionService.hasPermission(PermissionConstants.ROLES_CREATE);
     this.canEditRolePermission = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
-    this.canDeleteRole = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
+    this.canDeleteRole = this.permissionService.hasPermission(PermissionConstants.ROLES_DELETE);
     this.canAssignPermissions = this.permissionService.hasPermission(PermissionConstants.ROLES_ASSIGN_PERMISSIONS);
     
     // Load data after user is initialized
@@ -222,7 +222,10 @@ export class RolesPermissionsComponent implements OnInit{
     this.permissionCategoryService.getPermissionCategories().subscribe({
       next: (categories) => {
         console.log('[PermissionCategories] Loaded:', categories);
-        this.permissionCategories = categories;
+        this.permissionCategories = (categories || []).map(category => ({
+          ...category,
+          permissions: category.permissions || []
+        }));
       },
       error: (err) => {
         console.error('Error loading permission categories:', err);
@@ -283,7 +286,7 @@ export class RolesPermissionsComponent implements OnInit{
           name: role.name,
           description: role.description || `Description for ${role.name}`,
           status: role.status || 'active',
-          permissions: role.permissions || [],
+          permissions: this.normalizePermissionKeys(role.permissions),
           userCount: role.userCount || 0,
           createdAt: role.createdAt ? new Date(role.createdAt) : new Date(),
           updatedAt: role.updatedAt ? new Date(role.updatedAt) : new Date(),
@@ -529,9 +532,7 @@ export class RolesPermissionsComponent implements OnInit{
     this.selectedRole = role;
 
     this.permissionCheckState.clear();
-    const permissionKeys = (role.permissions ?? []).map((perm: any) =>
-      typeof perm === 'string' ? perm.toLowerCase().trim() : (perm.key?.toLowerCase().trim() ?? '')
-    );
+    const permissionKeys = this.normalizePermissionKeys(role.permissions);
     this.getAllPermissions().forEach(p => {
       const hasPerm = permissionKeys.includes(p.key.toLowerCase().trim());
       this.permissionCheckState.set(p.key, hasPerm);
@@ -701,7 +702,26 @@ export class RolesPermissionsComponent implements OnInit{
 
   // Permission methods
   hasPermission(role: Role, permissionKey: string): boolean {
-    return role.permissions.includes(permissionKey);
+    const keys = this.normalizePermissionKeys(role.permissions);
+    return keys.includes(permissionKey.toLowerCase().trim());
+  }
+
+  private normalizePermissionKeys(permissions: unknown): string[] {
+    if (!Array.isArray(permissions)) {
+      return [];
+    }
+    return permissions
+      .map((perm: unknown) => {
+        if (typeof perm === 'string') {
+          return perm.toLowerCase().trim();
+        }
+        if (perm && typeof perm === 'object' && 'key' in perm) {
+          const key = (perm as { key?: string }).key;
+          return key ? key.toLowerCase().trim() : '';
+        }
+        return '';
+      })
+      .filter(Boolean);
   }
 
   getCheckedPermissionCount(): number {
@@ -837,11 +857,6 @@ export class RolesPermissionsComponent implements OnInit{
     console.log('Selected permission keys:', finalPermissions);
     console.log('Mapped permission IDs:', permissionIds);
 
-    if (permissionIds.length === 0) {
-      alert('No valid permissions selected or permission IDs missing!');
-      return;
-    }
-
     this.roleService.assignPermissionsToRole(Number(this.selectedRole.id), permissionIds).subscribe({
       next: () => {
         // After saving, refresh JWT and permissions
@@ -939,7 +954,7 @@ export class RolesPermissionsComponent implements OnInit{
       }
       this.currentUser = {
         id: session.id,
-        name: session.sub,
+        name: session.name || session.sub,
         role: {
           id: session.id,
           name: session.roles,
@@ -948,9 +963,11 @@ export class RolesPermissionsComponent implements OnInit{
       };
     };
     applySession(this.authService.getSession());
-    if (!this.currentUser) {
-      this.authService.loadSession().subscribe(s => applySession(s));
-    }
+    this.authService.loadSession().subscribe(session => {
+      applySession(session);
+      this.clearInaccessibleSelectedRole();
+      this.filterRoles();
+    });
   }
 
   // NEW: Clear selected role if it becomes inaccessible
@@ -1419,9 +1436,7 @@ export class RolesPermissionsComponent implements OnInit{
 
   getRolePermissionCount(role: Role): number {
     let count = 0;
-    const permissionKeys = (role.permissions ?? []).map((perm: any) =>
-      typeof perm === 'string' ? perm.toLowerCase().trim() : (perm.key?.toLowerCase().trim() ?? '')
-    );
+    const permissionKeys = this.normalizePermissionKeys(role.permissions);
     for (const key of this.getAllPermissionKeys()) {
       if (permissionKeys.includes(key.toLowerCase().trim())) count++;
     }

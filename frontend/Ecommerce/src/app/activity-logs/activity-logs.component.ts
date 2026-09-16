@@ -148,9 +148,9 @@ export class ActivityLogsComponent implements OnInit {
       }
     });
 
+    this.setDefaultDateRange();
     this.loadActivityLogs();
     this.loadStatistics();
-    this.setDefaultDateRange();
     
     // Auto-refresh logs every 30 seconds to show new activity
     setInterval(() => {
@@ -193,11 +193,12 @@ export class ActivityLogsComponent implements OnInit {
         // Clear cache when new data is loaded
         this.hasActualChangesCache.clear();
         
-        console.log('Activity logs loaded:', response.logs.length, 'logs');
-        console.log('Entity types found:', [...new Set(response.logs.map(log => log.entityType))]);
+        const logs = Array.isArray(response?.logs) ? response.logs : [];
+        console.log('Activity logs loaded:', logs.length, 'logs');
+        console.log('Entity types found:', [...new Set(logs.map(log => log.entityType))]);
         
         // Parse changes for all logs
-        response.logs.forEach(log => {
+        logs.forEach(log => {
           if (typeof log.changes === 'string') {
             try {
               log.changes = JSON.parse(log.changes);
@@ -219,7 +220,7 @@ export class ActivityLogsComponent implements OnInit {
         });
         
         // Store all logs for client-side filtering
-        this.allLogs = response.logs;
+        this.allLogs = logs;
         
         // Apply initial filters
         this.applyFilters();
@@ -249,18 +250,29 @@ export class ActivityLogsComponent implements OnInit {
     });
   }
 
+  private coerceStatNumber(value: unknown): number {
+    if (typeof value === 'number' && !Number.isNaN(value)) {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = parseInt(value.replace(/,/g, ''), 10);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    if (Array.isArray(value) && value.length > 0) {
+      return this.coerceStatNumber(value[0]);
+    }
+    return 0;
+  }
+
   loadStatistics(): void {
     this.activityLogService.getActivityStatistics().subscribe({
       next: (stats: ActivityStatistics) => {
         console.log('Statistics received from backend:', stats);
-        // Ensure totalLogs is a number
-        if (typeof stats.totalLogs === 'string') {
-          const parsed = parseInt(stats.totalLogs, 10);
-          stats.totalLogs = isNaN(parsed) ? 0 : parsed;
-        } else if (Array.isArray(stats.totalLogs)) {
-          stats.totalLogs = stats.totalLogs[0] || 0;
-        }
-        this.statistics = stats;
+        this.statistics = {
+          totalLogs: this.coerceStatNumber(stats.totalLogs),
+          uniqueUsers: this.coerceStatNumber(stats.uniqueUsers),
+          criticalEvents: this.coerceStatNumber(stats.criticalEvents),
+        };
         console.log('Processed statistics:', this.statistics);
       },
       error: (error) => {
@@ -270,14 +282,7 @@ export class ActivityLogsComponent implements OnInit {
   }
 
   setDefaultDateRange(): void {
-    const today = new Date();
-    
-    // Set default to "Today" to show recent activity
-    this.filters.dateFrom = today.toISOString().split('T')[0];
-    this.filters.dateTo = today.toISOString().split('T')[0];
-    this.selectedDateRange = 'today';
-    
-    console.log('Default date range set to TODAY:', this.filters.dateFrom, 'to', this.filters.dateTo);
+    this.selectDateRange('30days');
   }
 
   selectDateRange(range: string): void {
@@ -385,8 +390,8 @@ export class ActivityLogsComponent implements OnInit {
     // IP address filter
     if (this.filters.ipAddress) {
       const beforeIpFilter = filtered.length;
-      filtered = filtered.filter(log => 
-        log.ipAddress.toLowerCase().includes(this.filters.ipAddress.toLowerCase())
+      filtered = filtered.filter(log =>
+        (log.ipAddress || '').toLowerCase().includes(this.filters.ipAddress.toLowerCase())
       );
       console.log('IP address filter: removed', beforeIpFilter - filtered.length, 'logs');
     }
@@ -395,11 +400,11 @@ export class ActivityLogsComponent implements OnInit {
     if (this.filters.searchTerm) {
       const beforeSearchFilter = filtered.length;
       const searchTerm = this.filters.searchTerm.toLowerCase();
-      filtered = filtered.filter(log => 
-        log.description.toLowerCase().includes(searchTerm) ||
-        log.userName.toLowerCase().includes(searchTerm) ||
-        log.entityType.toLowerCase().includes(searchTerm) ||
-        log.entityId.toLowerCase().includes(searchTerm)
+      filtered = filtered.filter(log =>
+        (log.description || '').toLowerCase().includes(searchTerm) ||
+        (log.userName || '').toLowerCase().includes(searchTerm) ||
+        (log.entityType || '').toLowerCase().includes(searchTerm) ||
+        String(log.entityId ?? '').toLowerCase().includes(searchTerm)
       );
       console.log('Search term filter: removed', beforeSearchFilter - filtered.length, 'logs');
     }
@@ -468,8 +473,7 @@ export class ActivityLogsComponent implements OnInit {
       ipAddress: '',
       searchTerm: ''
     };
-    this.selectedDateRange = '';
-    this.setDefaultDateRange();
+    this.selectedDateRange = 'all';
     this.showUserFilterNotification = false;
     this.applyFilters();
     

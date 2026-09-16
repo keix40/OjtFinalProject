@@ -228,7 +228,7 @@
                       <span class="font-semibold text-blue-900">{{ category.name }}</span>
                     </div>
                     <div class="flex items-center gap-2 text-xs text-gray-500">
-                      <span>{{ getCategoryPermissionCount(category) }} / {{ category.permissions.length }} permissions</span>
+                      <span>{{ getCategoryPermissionCount(category) }} / {{ category.permissions?.length || 0 }} permissions</span>
                       <i data-lucide="chevron-down" [ngClass]="expandedCategory === i ? 'rotate-180' : ''" class="w-4 h-4 transition-transform"></i>
                     </div>
                   </div>

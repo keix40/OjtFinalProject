@@ -423,6 +423,10 @@ public class AuthController {
                     body.put("name", user.getName());
                     body.put("roles", roles);
                     body.put("permissions", permissions);
+                    if (user.getRole() != null) {
+                        body.put("roleLevel", user.getRole().getLevel());
+                        body.put("roleName", user.getRole().getName());
+                    }
                     body.put("verified", user.isVerified());
                     VipTier vipTier = vipTierRepository.findTopByMinPointsLessThanEqualOrderByMinPointsDesc(
                             user.getTotalPoints() != null ? user.getTotalPoints() : 0
