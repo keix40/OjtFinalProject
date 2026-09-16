@@ -48,6 +48,7 @@ export interface ActivityStatistics {
   totalLogs: number;
   uniqueUsers: number;
   criticalEvents: number;
+  [key: string]: number | undefined;
 }
 
 @Injectable({

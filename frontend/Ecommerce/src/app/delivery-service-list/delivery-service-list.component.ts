@@ -68,9 +68,10 @@ export class DeliveryServiceListComponent implements OnInit {
     this.loading = true;
     this.deliveryServiceService.getAll().subscribe({
       next: (data) => {
-        this.deliveryServices = data;
-        this.filteredServices = [...data];
-        this.totalItems = data.length;
+        const services = Array.isArray(data) ? data : [];
+        this.deliveryServices = services;
+        this.filteredServices = [...services];
+        this.totalItems = services.length;
         this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
         this.currentPage = 0;
         this.loading = false;
@@ -86,11 +87,12 @@ export class DeliveryServiceListComponent implements OnInit {
       this.filteredServices = [...this.deliveryServices];
     } else {
       const searchLower = this.searchTerm.toLowerCase();
-      this.filteredServices = this.deliveryServices.filter(service =>
-        service.name.toLowerCase().includes(searchLower) ||
-        service.baseAddress.address.toLowerCase().includes(searchLower) ||
-        service.baseAddress.city.toLowerCase().includes(searchLower)
-      );
+      this.filteredServices = this.deliveryServices.filter(service => {
+        const base = service.baseAddress;
+        return (service.name || '').toLowerCase().includes(searchLower) ||
+          (base?.address || '').toLowerCase().includes(searchLower) ||
+          (base?.city || '').toLowerCase().includes(searchLower);
+      });
     }
     this.totalItems = this.filteredServices.length;
     this.totalPages = Math.ceil(this.totalItems / this.itemsPerPage) || 0;
@@ -141,21 +143,24 @@ export class DeliveryServiceListComponent implements OnInit {
     this.deliveryServiceService.getById(serviceId).subscribe({
       next: (service) => {
         this.updateService = service;
+        const base = service.baseAddress;
         this.updateForm.patchValue({
           name: service.name,
           feePerKm: service.feePerKm,
           phoneNumber: service.phoneNumber || ''
         });
-        this.updateAddressForm.patchValue({
-          address: service.baseAddress.address,
-          city: service.baseAddress.city,
-          state: service.baseAddress.state,
-          postalCode: service.baseAddress.postalCode,
-          country: service.baseAddress.country,
-          latitude: service.baseAddress.latitude,
-          longitude: service.baseAddress.longitude,
-          type: service.baseAddress.type || 'SHIPPING',
-        });
+        if (base) {
+          this.updateAddressForm.patchValue({
+            address: base.address,
+            city: base.city,
+            state: base.state,
+            postalCode: base.postalCode,
+            country: base.country,
+            latitude: base.latitude,
+            longitude: base.longitude,
+            type: base.type || 'SHIPPING',
+          });
+        }
         setTimeout(() => this.initUpdateMap(), 200);
         this.updateLoading = false;
       },

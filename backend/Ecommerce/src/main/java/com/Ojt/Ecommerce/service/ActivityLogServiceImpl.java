@@ -150,11 +150,29 @@ public class ActivityLogServiceImpl implements ActivityLogService {
     @Override
     public Map<String, Object> getActivityStatistics() {
         Object[] stats = activityLogRepository.getActivityStatistics();
+        if (stats != null && stats.length == 1 && stats[0] instanceof Object[]) {
+            stats = (Object[]) stats[0];
+        }
         Map<String, Object> statistics = new HashMap<>();
-        statistics.put("totalLogs", stats.length > 0 ? stats[0] : 0);
-        statistics.put("uniqueUsers", stats.length > 1 ? stats[1] : 0);
-        statistics.put("criticalEvents", stats.length > 2 ? stats[2] : 0);
+        statistics.put("totalLogs", toStatLong(stats, 0));
+        statistics.put("uniqueUsers", toStatLong(stats, 1));
+        statistics.put("criticalEvents", toStatLong(stats, 2));
         return statistics;
+    }
+
+    private static long toStatLong(Object[] stats, int index) {
+        if (stats == null || index >= stats.length || stats[index] == null) {
+            return 0L;
+        }
+        Object value = stats[index];
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
     }
 
     @Override

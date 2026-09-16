@@ -116,7 +116,10 @@ public class DeliveryService {
         dto.setCountry(address.getCountry());
         dto.setLatitude(address.getLatitude());
         dto.setLongitude(address.getLongitude());
-        // Optionally include type and userId if needed
+        dto.setType(address.getType());
+        if (address.getUser() != null) {
+            dto.setUserId(address.getUser().getId());
+        }
         return dto;
     }
 

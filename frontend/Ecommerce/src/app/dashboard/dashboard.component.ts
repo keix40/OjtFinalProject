@@ -2772,7 +2772,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     
     // Use actual data (not static generation)
-    const filteredData = this.deliveryServiceData.filter(item => item.value > 0);
+    const filteredData = (this.deliveryServiceData || []).filter(item => Number(item?.value ?? 0) > 0);
     console.log('📊 Filtered delivery service data:', filteredData);
     
     // Check if we have data
