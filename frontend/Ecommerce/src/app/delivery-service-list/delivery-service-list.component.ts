@@ -245,6 +245,11 @@ export class DeliveryServiceListComponent implements OnInit {
     if (!this.updateService || !this.selectedServiceId) return;
     this.updateLoading = true;
     // Update address first
+    if (!this.updateService.baseAddress?.id) {
+      this.updateLoading = false;
+      this.luxDialog.error('Error', 'Delivery service is missing a base address.');
+      return;
+    }
     const addressPayload: Address = {
       ...this.updateAddressForm.value,
       id: this.updateService.baseAddress.id,
