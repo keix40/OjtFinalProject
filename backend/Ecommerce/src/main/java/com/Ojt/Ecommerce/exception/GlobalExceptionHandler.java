@@ -17,9 +17,13 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private static final String[] STATIC_ASSET_PREFIXES = {
             "/product_image/",
@@ -127,10 +131,11 @@ public class GlobalExceptionHandler {
                 .body(new ByteArrayResource("Error generating report".getBytes()));
         }
         
-        // Otherwise, return JSON response for other exceptions
+        log.error("Unhandled exception", ex);
+
         Map<String, Object> errorDetails = new HashMap<>();
         errorDetails.put("timestamp", LocalDateTime.now());
-        errorDetails.put("message", "Something went wrong: " + ex.getMessage());
+        errorDetails.put("message", "An unexpected error occurred. Please try again later.");
         errorDetails.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
 
         return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -152,6 +157,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Forbidden: " + ex.getMessage());
+        log.warn("Access denied", ex);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied.");
     }
 }
