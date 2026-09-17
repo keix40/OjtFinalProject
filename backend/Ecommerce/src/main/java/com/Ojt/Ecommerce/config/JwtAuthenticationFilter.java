@@ -6,6 +6,8 @@ import com.Ojt.Ecommerce.security.JwtTokenProvider;
 import com.Ojt.Ecommerce.service.BlacklistService;
 import com.Ojt.Ecommerce.service.TokenBlacklistService;
 import com.Ojt.Ecommerce.service.UserDetailsServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -24,7 +26,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -37,6 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenBlacklistService tokenBlacklistService;
     private final BlacklistService blacklistService;
     private final AuthCookieService authCookieService;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -92,16 +97,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     logger.warn("Blacklisted user blocked: {}", email);
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType("application/json");
-                    String banType = blacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary";
-                    String responseBody = String.format(
-                            "{\"blocked\":true,\"reason\":\"%s\",\"expiryDate\":%s,\"banType\":\"%s\",\"isPermanent\":%s,\"status\":\"%s\"}",
-                            blacklistEntry.getReason(),
-                            blacklistEntry.getExpiryDate() != null ? "\"" + blacklistEntry.getExpiryDate() + "\"" : "null",
-                            banType,
-                            blacklistEntry.getExpiryDate() == null ? "true" : "false",
-                            blacklistEntry.getStatus()
-                    );
-                    response.getWriter().write(responseBody);
+                    response.getWriter().write(serializeBlacklistResponse(blacklistEntry));
                     return;
                 }
             } catch (Exception e) {
@@ -119,6 +115,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    String serializeBlacklistResponse(BlacklistEntry blacklistEntry) throws JsonProcessingException {
+        String banType = blacklistEntry.getExpiryDate() == null ? "Permanent" : "Temporary";
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("blocked", true);
+        body.put("reason", blacklistEntry.getReason());
+        body.put("expiryDate", blacklistEntry.getExpiryDate());
+        body.put("banType", banType);
+        body.put("isPermanent", blacklistEntry.getExpiryDate() == null);
+        body.put("status", blacklistEntry.getStatus());
+        return objectMapper.writeValueAsString(body);
     }
 
     private String resolveToken(HttpServletRequest request) {
