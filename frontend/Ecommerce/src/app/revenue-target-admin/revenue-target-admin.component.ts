@@ -125,8 +125,9 @@ import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
       align-items: baseline;
       gap: 0.75rem;
       margin: 0;
-      font-family: var(--lux-font-serif);
+      font-family: var(--lux-font-sans);
       font-size: 1.125rem;
+      font-weight: 600;
       color: var(--lux-ink);
     }
     .lux-period-preview__code {

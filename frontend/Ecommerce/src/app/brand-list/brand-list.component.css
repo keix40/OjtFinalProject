@@ -43,7 +43,7 @@
 }
 
 .brand-avatar--fallback {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1rem;
   color: var(--lux-ink);
 }

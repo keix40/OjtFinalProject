@@ -34,7 +34,7 @@
 }
 
 .lux-policy-title {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.05rem;
   color: var(--lux-ink);
 }
@@ -67,7 +67,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--lux-stone);
-  background: rgba(247, 243, 236, 0.85);
+  background: #eef1f5;
   border-bottom: 1px solid var(--lux-fog);
   white-space: nowrap;
 }
@@ -83,7 +83,7 @@
 }
 
 .lux-admin-table tbody tr:hover td {
-  background: rgba(232, 220, 194, 0.28);
+  background: rgba(244, 246, 248, 0.95);
 }
 
 .lux-admin-table__check {
@@ -170,7 +170,7 @@
 .policy-content-full ::ng-deep h2,
 .policy-content-full ::ng-deep h3 {
   margin: 1.25rem 0 0.75rem;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-weight: 500;
   color: var(--lux-ink);
 }
@@ -219,7 +219,7 @@
   gap: 1rem;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--lux-fog);
-  background: rgba(247, 243, 236, 0.9);
+  background: #eef1f5;
 }
 
 .lux-modal-footer {

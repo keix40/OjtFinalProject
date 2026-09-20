@@ -51,7 +51,19 @@ import { Component, Input } from '@angular/core';
       gap: 0.5rem;
     }
     .lux-page-header--admin .lux-page-header__title {
-      font-size: clamp(1.35rem, 1.8vw, 1.75rem);
+      font-family: var(--lux-font-sans);
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: -0.015em;
+    }
+
+    .lux-page-header--admin {
+      border-bottom-color: var(--lux-fog);
+    }
+
+    .lux-page-header--admin .lux-page-header__subtitle {
+      font-size: 0.875rem;
+      color: var(--lux-graphite);
     }
   `],
 })

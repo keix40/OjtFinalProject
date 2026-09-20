@@ -73,7 +73,7 @@
 
 .lux-profile-name {
   margin: 0.35rem 0 0;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.5rem;
   font-weight: 500;
   color: var(--lux-ink);

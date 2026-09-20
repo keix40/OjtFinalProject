@@ -1,0 +1,369 @@
+/**
+ * Soft enterprise admin UI — all routes using `lux-page-shell` + `admin-page`.
+ */
+
+.admin-page .admin-breadcrumb {
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--lux-fog);
+}
+
+.admin-page .admin-breadcrumb a.lux-link {
+  color: var(--lux-graphite);
+  font-weight: 500;
+}
+
+.admin-page .admin-breadcrumb a.lux-link:hover {
+  color: var(--lux-champagne-deep);
+}
+
+.admin-page .pm-section-title,
+.admin-page h2.pm-section-title {
+  font-family: var(--lux-font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--lux-ink);
+}
+
+.admin-page .page-panel,
+.admin-page .glassmorphism,
+.admin-page .glassmorphism-light,
+.admin-page .glassmorphism-card {
+  background: var(--lux-cream) !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-lg) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+  backdrop-filter: none !important;
+}
+
+.admin-page .admin-kpi-grid {
+  gap: 0.85rem;
+}
+
+.admin-page .admin-kpi,
+.admin-page .admin-dash__kpi,
+.admin-page .admin-dash__metric {
+  padding: 1rem 1.15rem;
+  background: var(--lux-cream);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
+  box-shadow: var(--lux-shadow-sm);
+}
+
+.admin-page .admin-kpi__label,
+.admin-page .admin-dash__kpi-head h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--lux-stone);
+}
+
+.admin-page .admin-kpi__value,
+.admin-page .admin-dash__kpi-value {
+  font-family: var(--lux-font-sans) !important;
+  font-size: 1.625rem !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+  color: var(--lux-ink);
+}
+
+.admin-page .admin-kpi__meta {
+  font-size: 0.8125rem;
+  color: var(--lux-graphite);
+}
+
+.admin-page .admin-table-wrap,
+.admin-page .lux-policy-table-wrap,
+.admin-page .lux-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
+  background: var(--lux-cream);
+  box-shadow: var(--lux-shadow-sm);
+}
+
+.admin-page .admin-table,
+.admin-page .lux-admin-table,
+.admin-page table.lux-table,
+.admin-page table.min-w-full,
+.admin-page .table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--lux-font-sans);
+  font-size: 0.875rem;
+  color: var(--lux-ink);
+}
+
+.admin-page .admin-table th,
+.admin-page .lux-admin-table th,
+.admin-page table.min-w-full thead th,
+.admin-page .table thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--lux-stone);
+  background: #eef1f5;
+  border-bottom: 1px solid var(--lux-fog);
+}
+
+.admin-page .admin-table td,
+.admin-page .lux-admin-table td,
+.admin-page table.min-w-full tbody td,
+.admin-page .table tbody td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--lux-fog);
+  vertical-align: middle;
+}
+
+.admin-page .admin-table tbody tr:hover td,
+.admin-page table.min-w-full tbody tr:hover td,
+.admin-page .table tbody tr:hover td {
+  background: #f4f6f8 !important;
+}
+
+/* Strong status badges — amber / green / red / blue */
+.admin-page .lux-badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+  font-size: 0.75rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  line-height: 1.2;
+}
+
+.admin-page .lux-badge--success {
+  background: #e3f1ec;
+  color: #008060;
+}
+
+.admin-page .lux-badge--warning {
+  background: #fff4e0;
+  color: #b98900;
+}
+
+.admin-page .lux-badge--danger {
+  background: #fce8e8;
+  color: #d72c0d;
+}
+
+.admin-page .lux-badge--info {
+  background: #e3f0ff;
+  color: #1f5199;
+}
+
+.admin-page .lux-btn {
+  letter-spacing: 0.01em;
+  text-transform: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  border-radius: var(--lux-radius-md);
+}
+
+.admin-page .lux-btn--primary {
+  background: var(--lux-champagne);
+  color: #fff;
+  border-color: var(--lux-champagne);
+}
+
+.admin-page .lux-btn--primary:hover:not(:disabled) {
+  background: var(--lux-champagne-deep);
+  border-color: var(--lux-champagne-deep);
+}
+
+.admin-page .lux-btn--secondary {
+  background: #fff;
+  border-color: var(--lux-fog);
+  color: var(--lux-ink);
+}
+
+.admin-page .lux-btn--secondary:hover:not(:disabled) {
+  background: #f4f6f8;
+  border-color: #c5ced9;
+}
+
+.admin-page .lux-page-header {
+  border-bottom-color: var(--lux-fog);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.15rem;
+}
+
+.admin-page .lux-page-header__title {
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
+  font-size: 1.5rem !important;
+  letter-spacing: -0.015em;
+  color: var(--lux-ink);
+}
+
+.admin-page .lux-page-header__subtitle {
+  color: var(--lux-graphite);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.admin-page .lux-filter-bar,
+.admin-page lux-filter-bar {
+  background: var(--lux-cream);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
+  padding: 0.875rem 1.15rem;
+  box-shadow: var(--lux-shadow-sm);
+}
+
+.admin-page .lux-input,
+.admin-page .lux-select {
+  border-bottom: none;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  padding: 0.625rem 0.875rem;
+  min-height: 2.75rem;
+  background: #fff;
+  font-size: 0.9375rem;
+}
+
+.admin-page .lux-input:focus,
+.admin-page .lux-select:focus {
+  border-color: var(--lux-champagne);
+  box-shadow: 0 0 0 3px var(--lux-champagne-soft);
+}
+
+.admin-page .btn {
+  font-family: var(--lux-font-sans);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+  font-size: 0.875rem;
+  min-height: 2.75rem;
+  border-radius: var(--lux-radius-md);
+}
+
+.admin-page .btn-primary {
+  background: var(--lux-champagne);
+  border-color: var(--lux-champagne);
+}
+
+.admin-page .btn-primary:hover {
+  background: var(--lux-champagne-deep);
+  border-color: var(--lux-champagne-deep);
+}
+
+.admin-page .form-control,
+.admin-page .form-select {
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  min-height: 2.75rem;
+  background: #fff;
+}
+
+.admin-page .pagination .page-link {
+  border-radius: var(--lux-radius-sm);
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-page .alert-banner {
+  border-radius: var(--lux-radius-lg);
+  border: 1px solid #f5c4bc;
+  background: #fce8e8;
+  color: #8a1f0f;
+}
+
+.admin-page .admin-actions-row,
+.admin-page .admin-toolbar {
+  gap: 0.65rem;
+}
+
+.admin-page .admin-modal,
+.admin-page .admin-modal-backdrop .modal-content {
+  border-radius: var(--lux-radius-lg);
+  border: 1px solid var(--lux-fog);
+  box-shadow: var(--lux-shadow-lg);
+}
+
+/* Dashboard — friendly business portal */
+.admin-dashboard-page .admin-dash__section-head h2 {
+  font-family: var(--lux-font-sans) !important;
+  font-size: 1.125rem !important;
+  font-weight: 600 !important;
+}
+
+.admin-dashboard-page .admin-dash__panel {
+  border: 1px solid var(--lux-fog);
+  box-shadow: var(--lux-shadow-sm);
+  border-radius: var(--lux-radius-lg);
+}
+
+.admin-dashboard-page .admin-dash__kpi-grid--business {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-dashboard-page .admin-dash__live {
+  color: var(--lux-success);
+  font-weight: 600;
+}
+
+.admin-dashboard-page .admin-dash__period {
+  background: var(--lux-champagne-soft);
+  color: var(--lux-champagne-deep);
+  border-radius: 999px;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+}
+
+.admin-dashboard-page .time-frame-btn.is-active {
+  background: var(--lux-champagne);
+  color: #fff;
+  border-color: var(--lux-champagne);
+}
+
+.admin-dashboard-page .time-frame-btn {
+  border: 1px solid var(--lux-fog);
+  color: var(--lux-graphite);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  min-height: 2.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--lux-radius-md);
+}
+
+@media (max-width: 760px) {
+  .admin-dashboard-page .admin-dash__kpi-grid--business {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.admin-shell .lux-kpi__value,
+.admin-shell .lux-card__title {
+  font-family: var(--lux-font-sans) !important;
+}
+
+.admin-shell .content-wrapper {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.admin-dashboard-page .admin-dash__command {
+  border-bottom-color: var(--lux-fog);
+}
+
+.admin-dashboard-page .admin-dash__panel-head h3 {
+  font-family: var(--lux-font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.admin-shell .admin-topbar {
+  background: var(--admin-chrome-bg, #eef1f5);
+  border-bottom-color: var(--lux-fog);
+}

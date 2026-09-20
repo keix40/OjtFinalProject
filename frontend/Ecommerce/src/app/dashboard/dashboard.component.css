@@ -13,14 +13,14 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding: 0.25rem 0 1.75rem;
-  border-bottom: 1px solid var(--lux-ink);
-  margin-bottom: 1.75rem;
+  border-bottom: 1px solid var(--lux-fog);
+  margin-bottom: 1.25rem;
 }
 
 .admin-dash__command h1 {
   margin: 0.35rem 0 0.45rem;
-  font: 500 clamp(2.4rem, 4vw, 3.75rem) / 0.95 var(--lux-font-serif);
-  letter-spacing: -0.03em;
+  font: 600 clamp(1.375rem, 2.2vw, 1.75rem) / 1.2 var(--lux-font-sans);
+  letter-spacing: -0.02em;
 }
 
 .admin-dash__command > div > p:last-child {
@@ -85,7 +85,7 @@
 
 .admin-dash__section-head h2 {
   margin: 0 0 0.25rem;
-  font: 600 1.65rem / 1.1 var(--lux-font-serif);
+  font: 600 1.65rem / 1.1 var(--lux-font-sans);
 }
 
 .admin-dash__section-head p {
@@ -95,10 +95,10 @@
 }
 
 .admin-dash__panel {
-  background: var(--lux-porcelain);
-  border: var(--lux-border-hair);
-  border-radius: var(--lux-radius-md);
-  box-shadow: var(--lux-shadow-xs);
+  background: #ffffff;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
+  box-shadow: var(--lux-shadow-sm);
 }
 
 .admin-dash__panel-head {
@@ -111,7 +111,7 @@
 
 .admin-dash__panel-head h3 {
   margin: 0;
-  font: 600 1.15rem / 1.2 var(--lux-font-serif);
+  font: 600 1.15rem / 1.2 var(--lux-font-sans);
 }
 
 .admin-dash__kpi-grid {
@@ -145,11 +145,11 @@
 .admin-dash__kpi,
 .admin-dash__metric,
 .admin-dash__tier {
-  padding: 1rem 1.05rem;
-  background: var(--lux-porcelain);
-  border: var(--lux-border-hair);
-  border-radius: var(--lux-radius-md);
-  box-shadow: var(--lux-shadow-xs);
+  padding: 1.15rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
+  box-shadow: var(--lux-shadow-sm);
   transition: box-shadow var(--lux-dur) var(--lux-ease), transform var(--lux-dur) var(--lux-ease);
 }
 
@@ -221,7 +221,7 @@
 
 .admin-dash__timeframe-copy h2 {
   margin: 0 0 0.15rem;
-  font: 600 1.15rem / 1.15 var(--lux-font-serif);
+  font: 600 1.15rem / 1.15 var(--lux-font-sans);
 }
 
 .admin-dash__timeframe-copy p {
@@ -324,8 +324,8 @@
 
 .admin-dash__icon-chip.is-info { background: rgba(74, 90, 102, 0.14); color: var(--lux-info); }
 .admin-dash__icon-chip.is-success { background: rgba(95, 115, 85, 0.14); color: var(--lux-success); }
-.admin-dash__icon-chip.is-accent { background: rgba(198, 166, 103, 0.22); color: var(--lux-champagne-deep); }
-.admin-dash__icon-chip.is-warning { background: rgba(176, 130, 52, 0.16); color: var(--lux-warning); }
+.admin-dash__icon-chip.is-accent { background: rgba(44, 110, 203, 0.14); color: var(--lux-champagne-deep); }
+.admin-dash__icon-chip.is-warning { background: rgba(217, 119, 6, 0.12); color: var(--lux-warning); }
 
 .admin-dash__ghost-btn {
   display: grid;
@@ -483,7 +483,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(28, 27, 25, 0.45);
+  background: rgba(15, 23, 42, 0.45);
 }
 
 .admin-dash__modal {
@@ -520,7 +520,7 @@
 
 .admin-dash__modal-title h3 {
   margin: 0;
-  font: 600 1.15rem / 1.2 var(--lux-font-serif);
+  font: 600 1.15rem / 1.2 var(--lux-font-sans);
 }
 
 .admin-dash__modal-title p {

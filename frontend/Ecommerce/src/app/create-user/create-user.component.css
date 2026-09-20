@@ -16,8 +16,8 @@
   backdrop-filter: none !important;
 }
 .create-user-page h1, .create-user-page .page-title, .create-user-page h2 {
-  font-family: var(--lux-font-serif) !important;
-  font-weight: 500 !important;
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
   color: var(--lux-ink) !important;
 }
 .create-user-page table,
@@ -30,7 +30,7 @@
 .create-user-page thead,
 .create-user-page .table-header,
 .create-user-page th {
-  background: rgba(247, 243, 236, 0.85) !important;
+  background: #eef1f5 !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
   letter-spacing: 0.12em;
@@ -42,7 +42,7 @@
   border-color: var(--lux-fog) !important;
 }
 .create-user-page tbody tr:hover td {
-  background: rgba(232, 220, 194, 0.28) !important;
+  background: rgba(244, 246, 248, 0.95) !important;
 }
 .create-user-page input[type="text"],
 .create-user-page input[type="email"],
@@ -141,7 +141,7 @@
 }
 .create-user-page .stat-number,
 .create-user-page .admin-kpi__value {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   color: var(--lux-ink);
 }
 .create-user-page .page-header,
@@ -178,7 +178,7 @@
   background: var(--lux-espresso) !important;
 }
 .create-user-page h3 {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-weight: 500;
   color: var(--lux-ink) !important;
 }

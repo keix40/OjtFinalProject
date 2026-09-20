@@ -215,10 +215,9 @@ a.text-primary,
 .toast-info    { background-color: var(--lux-info) !important; }
 .toast-warning { background-color: var(--lux-warning) !important; }
 
-/* Admin shell page background */
+/* Admin shell — Soft enterprise canvas (tokens in _admin-enterprise-tokens.css) */
 app-layout,
 .admin-shell {
-  background: var(--lux-ivory);
   min-height: 100vh;
 }
 

@@ -58,7 +58,7 @@
 
 .section-title {
   margin: 0 0 0.75rem;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.15rem;
   font-weight: 500;
 }

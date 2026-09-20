@@ -54,7 +54,7 @@
 
 .admin-form h2,
 .admin-form .text-xl {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   color: var(--lux-ink);
 }
 
