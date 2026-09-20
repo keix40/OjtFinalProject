@@ -95,7 +95,7 @@
 }
 
 .admin-dash__panel {
-  background: #ffffff;
+  background: var(--lux-cream);
   border: 1px solid var(--lux-fog);
   border-radius: var(--lux-radius-lg);
   box-shadow: var(--lux-shadow-sm);
@@ -146,7 +146,7 @@
 .admin-dash__metric,
 .admin-dash__tier {
   padding: 1.15rem 1.25rem;
-  background: #ffffff;
+  background: var(--lux-cream);
   border: 1px solid var(--lux-fog);
   border-radius: var(--lux-radius-lg);
   box-shadow: var(--lux-shadow-sm);
