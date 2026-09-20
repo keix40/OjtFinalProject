@@ -1,12 +1,12 @@
-/* Admin Inbox — Dark ops console */
+/* Admin Inbox — Stripe dashboard */
 
 .lux-inbox-modal {
-  background: #111827;
-  border: 1px solid #1f2937;
-  border-radius: var(--lux-radius-md);
+  background: #ffffff;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
   box-shadow: var(--lux-shadow-lg);
   animation: lux-inbox-in 0.28s var(--lux-ease);
-  color: #f3f4f6;
+  color: var(--lux-ink);
 }
 
 @keyframes lux-inbox-in {
@@ -21,19 +21,19 @@
 }
 
 .lux-inbox-header {
-  background: #0b0f14;
-  color: #f9fafb;
-  border-bottom: 1px solid #1f2937;
+  background: linear-gradient(135deg, #635bff 0%, #4f46e5 100%);
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .lux-inbox-header .lux-h3 {
-  color: #f9fafb;
+  color: #ffffff;
   font-family: var(--lux-font-sans);
   font-weight: 600;
 }
 
 .lux-inbox-header .lux-body-sm {
-  color: #9ca3af;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .lux-inbox-mark {
@@ -42,9 +42,9 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  background: rgba(6, 182, 212, 0.15);
-  border: 1px solid rgba(6, 182, 212, 0.35);
-  color: #22d3ee;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .lux-inbox-icon-btn {
@@ -55,32 +55,33 @@
   height: 2rem;
   border: none;
   background: transparent;
-  color: #67e8f9;
+  color: rgba(255, 255, 255, 0.85);
   cursor: pointer;
   transition: color var(--lux-dur) var(--lux-ease), background-color var(--lux-dur) var(--lux-ease);
 }
 
 .lux-inbox-icon-btn:hover {
-  color: #f9fafb;
-  background: rgba(6, 182, 212, 0.12);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .lux-inbox-list-panel {
-  background: #0b0f14;
-  border-right: 1px solid #1f2937;
+  background: #f6f9fc;
+  border-right: 1px solid var(--lux-fog);
 }
 
 .lux-inbox-filters {
-  background: #111827;
-  border-bottom: 1px solid #1f2937;
+  background: var(--lux-cream);
+  border-bottom: 1px solid var(--lux-fog);
 }
 
 .lux-inbox-tabs {
   display: flex;
   gap: 0.25rem;
   padding: 0.25rem;
-  background: #0b0f14;
-  border: 1px solid #1f2937;
+  background: var(--lux-ivory);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
 }
 
 .lux-inbox-tab {
@@ -89,43 +90,44 @@
   font-family: var(--lux-font-sans);
   font-size: 0.75rem;
   font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #9ca3af;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--lux-stone);
   background: transparent;
   border: none;
   cursor: pointer;
+  border-radius: var(--lux-radius-sm);
   transition:
     color var(--lux-dur) var(--lux-ease),
     background-color var(--lux-dur) var(--lux-ease);
 }
 
 .lux-inbox-tab--active {
-  background: #111827;
-  color: #f3f4f6;
+  background: var(--lux-cream);
+  color: var(--lux-ink);
   box-shadow: var(--lux-shadow-xs);
 }
 
 .lux-inbox-item {
   padding: 1rem;
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--lux-fog);
   cursor: pointer;
   transition: background-color var(--lux-dur) var(--lux-ease);
 }
 
 .lux-inbox-item:hover {
-  background: rgba(6, 182, 212, 0.08);
+  background: rgba(99, 91, 255, 0.06);
 }
 
 .lux-inbox-item--selected {
-  background: rgba(16, 185, 129, 0.12);
-  border-left: 3px solid #06b6d4;
+  background: rgba(99, 91, 255, 0.1);
+  border-left: 3px solid var(--lux-champagne);
 }
 
 .lux-inbox-subject {
   font-family: var(--lux-font-sans);
   font-size: 0.875rem;
-  color: #f3f4f6;
+  color: var(--lux-ink);
 }
 
 .lux-inbox-dot {
@@ -135,57 +137,57 @@
 }
 
 .lux-inbox-dot--unread {
-  background: #06b6d4;
+  background: var(--lux-champagne);
 }
 
 .lux-inbox-dot--read {
-  background: #374151;
+  background: var(--lux-fog);
 }
 
 .lux-inbox-detail {
-  background: #111827;
+  background: var(--lux-cream);
 }
 
 .lux-inbox-detail-header {
-  border-bottom: 1px solid #1f2937;
+  border-bottom: 1px solid var(--lux-fog);
 }
 
 .lux-inbox-footer-bar {
-  background: #0b0f14;
-  border-top: 1px solid #1f2937;
+  background: var(--lux-ivory);
+  border-top: 1px solid var(--lux-fog);
 }
 
 .lux-inbox-danger {
   color: var(--lux-danger) !important;
-  border-color: rgba(248, 113, 113, 0.35) !important;
+  border-color: rgba(223, 27, 65, 0.35) !important;
 }
 
 .lux-inbox-danger:hover:not(:disabled) {
-  background: rgba(248, 113, 113, 0.1) !important;
+  background: rgba(223, 27, 65, 0.08) !important;
 }
 
 .priority-high,
 .lux-badge.priority-high {
-  background: rgba(248, 113, 113, 0.15);
-  color: #fca5a5;
+  background: rgba(223, 27, 65, 0.1);
+  color: var(--lux-danger);
 }
 
 .priority-medium,
 .lux-badge.priority-medium {
-  background: rgba(251, 191, 36, 0.15);
-  color: #fcd34d;
+  background: rgba(223, 151, 83, 0.15);
+  color: var(--lux-warning);
 }
 
 .priority-low,
 .lux-badge.priority-low {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+  background: rgba(48, 181, 102, 0.12);
+  color: var(--lux-success);
 }
 
 .priority-default,
 .lux-badge.priority-default {
-  background: rgba(6, 182, 212, 0.15);
-  color: #67e8f9;
+  background: var(--lux-champagne-soft);
+  color: var(--lux-champagne-deep);
 }
 
 .overflow-y-auto::-webkit-scrollbar {
@@ -193,23 +195,23 @@
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: #0b0f14;
+  background: var(--lux-ivory);
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: var(--lux-fog);
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
+  background: var(--lux-stone);
 }
 
 .mb-1 { margin-bottom: 0.25rem; }
 .mb-2 { margin-bottom: 0.5rem; }
 .mb-3 { margin-bottom: 0.75rem; }
 .mb-4 { margin-bottom: 1rem; }
-.text-ink { color: #f3f4f6; }
+.text-ink { color: var(--lux-ink); }
 .font-medium { font-weight: 500; }
 .font-semibold { font-weight: 600; }
 .truncate {

@@ -2,9 +2,9 @@
 @import './app/theme/_typography.css';
 @import './app/theme/_components.css';
 @import './app/theme/_project-lux.css';
-@import './app/theme/_admin-dark-ops-tokens.css';
+@import './app/theme/_admin-stripe-tokens.css';
 @import './app/theme/_admin-unified.css';
-@import './app/theme/_admin-dark-ops-overrides.css';
+@import './app/theme/_admin-stripe-overrides.css';
 @import './app/theme/_customer-routes.css';
 @import 'ngx-toastr/toastr';
 

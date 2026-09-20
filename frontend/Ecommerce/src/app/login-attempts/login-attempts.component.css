@@ -30,7 +30,7 @@
 .login-attempts-page thead,
 .login-attempts-page .table-header,
 .login-attempts-page th {
-  background: #eef1f5 !important;
+  background: #fafbfc !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
   letter-spacing: 0.12em;

@@ -67,7 +67,7 @@
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--lux-stone);
-  background: #eef1f5;
+  background: #fafbfc;
   border-bottom: 1px solid var(--lux-fog);
   white-space: nowrap;
 }
@@ -219,7 +219,7 @@
   gap: 1rem;
   padding: 1.25rem 1.5rem;
   border-bottom: 1px solid var(--lux-fog);
-  background: #eef1f5;
+  background: #fafbfc;
 }
 
 .lux-modal-footer {
