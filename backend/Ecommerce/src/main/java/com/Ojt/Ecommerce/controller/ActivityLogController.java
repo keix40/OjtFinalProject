@@ -41,7 +41,7 @@ public class ActivityLogController {
     }
 
     // Get activity log by ID
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     @RequiresPermission(value = ACTIVITY_LOGS_VIEW, level = "basic")
     public ResponseEntity<ActivityLogDto> getActivityLogById(@PathVariable Long id) {
         ActivityLogDto activityLog = activityLogService.getActivityLogById(id);
@@ -197,7 +197,7 @@ public class ActivityLogController {
     }
 
     // Update activity log status
-    @PutMapping("/{id}/status")
+    @PutMapping("/{id:\\d+}/status")
     @RequiresPermission(value = ACTIVITY_LOGS_UPDATE, level = "advanced")
     public ResponseEntity<ActivityLog> updateActivityLogStatus(
             @PathVariable Long id,
