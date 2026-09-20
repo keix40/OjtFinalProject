@@ -1,0 +1,210 @@
+/**
+ * Dark ops — override boutique / Soft enterprise globals inside admin only.
+ */
+
+.admin-shell,
+.admin-shell .lux-page-shell,
+.admin-shell .admin-page {
+  font-family: var(--lux-font-sans);
+  color: var(--lux-ink);
+}
+
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4,
+.admin-shell h5,
+.admin-shell h6,
+.admin-shell .page-title,
+.admin-shell .lux-card__title,
+.admin-shell .lux-kpi__value {
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
+  color: var(--lux-ink) !important;
+}
+
+.admin-shell .bg-cream,
+.admin-shell .bg-porcelain,
+.admin-shell .bg-white {
+  background-color: var(--lux-cream) !important;
+  color: var(--lux-ink) !important;
+}
+
+.admin-shell .bg-ivory,
+.admin-shell .bg-gray-50,
+.admin-shell .bg-slate-50 {
+  background-color: var(--lux-ivory) !important;
+}
+
+.admin-shell .text-gray-900,
+.admin-shell .text-slate-900,
+.admin-shell .text-slate-800 {
+  color: var(--lux-ink) !important;
+}
+
+.admin-shell .text-gray-600,
+.admin-shell .text-gray-700,
+.admin-shell .text-slate-600 {
+  color: var(--lux-graphite) !important;
+}
+
+.admin-shell .text-champagne,
+.admin-shell .text-champagne-deep {
+  color: var(--lux-champagne) !important;
+}
+
+.admin-shell .border-fog,
+.admin-shell .border-gray-200,
+.admin-shell .border-slate-200 {
+  border-color: var(--lux-fog) !important;
+}
+
+.admin-shell .btn {
+  min-height: 2.5rem;
+  border-radius: var(--lux-radius-sm) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.admin-shell .btn-primary,
+.admin-shell .btn-primary:focus {
+  background-color: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #0b0f14 !important;
+}
+
+.admin-shell .btn-primary:hover,
+.admin-shell .btn-primary:active {
+  background-color: var(--lux-success) !important;
+  border-color: var(--lux-success) !important;
+  color: #0b0f14 !important;
+}
+
+.admin-shell .btn-outline-primary {
+  color: var(--lux-champagne) !important;
+  border-color: var(--lux-fog) !important;
+  background: transparent !important;
+}
+
+.admin-shell .btn-outline-primary:hover {
+  background: var(--lux-champagne-soft) !important;
+  border-color: var(--lux-champagne) !important;
+}
+
+.admin-shell .btn-secondary,
+.admin-shell .btn-light {
+  background: var(--admin-surface-raised) !important;
+  border-color: var(--lux-fog) !important;
+  color: var(--lux-ink) !important;
+}
+
+.admin-shell .lux-table thead th,
+.admin-shell .lux-admin-table thead th,
+.admin-shell table thead th {
+  background: #0b0f14 !important;
+  color: var(--lux-stone) !important;
+  border-bottom: 1px solid var(--lux-fog) !important;
+  font-size: 0.6875rem !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+.admin-shell .lux-table td,
+.admin-shell .lux-admin-table td,
+.admin-shell table tbody td {
+  background: var(--lux-cream) !important;
+  border-bottom: 1px solid var(--lux-fog) !important;
+  color: var(--lux-ink) !important;
+  padding: 0.65rem 0.875rem !important;
+}
+
+.admin-shell .lux-table tbody tr:hover td,
+.admin-shell table tbody tr:hover td {
+  background: var(--admin-surface-raised) !important;
+}
+
+.admin-shell .lux-card,
+.admin-shell lux-card .lux-card {
+  background: var(--lux-cream) !important;
+  border: 1px solid var(--lux-fog) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+.admin-shell .admin-dash__kpi,
+.admin-shell .admin-dash__metric,
+.admin-shell .admin-dash__tier,
+.admin-shell .admin-dash__panel {
+  background: var(--lux-cream) !important;
+  border: 1px solid var(--lux-fog) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+.admin-shell .admin-dash__panel-head h3,
+.admin-shell .admin-dash__section-head p {
+  color: var(--lux-stone) !important;
+}
+
+.admin-shell .admin-dash__view-btn {
+  background: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #0b0f14 !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.06em !important;
+}
+
+.admin-shell .lux-badge--success {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #34d399 !important;
+}
+
+.admin-shell .lux-badge--warning {
+  background: rgba(251, 191, 36, 0.15) !important;
+  color: #fcd34d !important;
+}
+
+.admin-shell .lux-badge--danger {
+  background: rgba(248, 113, 113, 0.15) !important;
+  color: #fca5a5 !important;
+}
+
+.admin-shell .lux-badge--info {
+  background: rgba(6, 182, 212, 0.15) !important;
+  color: #67e8f9 !important;
+}
+
+.admin-shell .form-control,
+.admin-shell .form-select,
+.admin-shell .lux-input,
+.admin-shell .lux-select {
+  background: #0b0f14 !important;
+  border-color: var(--lux-fog) !important;
+  color: var(--lux-ink) !important;
+}
+
+.admin-shell .form-control:focus,
+.admin-shell .lux-input:focus,
+.admin-shell .lux-select:focus {
+  border-color: var(--lux-champagne) !important;
+  box-shadow: 0 0 0 2px var(--lux-champagne-soft) !important;
+}
+
+.admin-shell .glassmorphism,
+.admin-shell .glassmorphism-light,
+.admin-shell .glassmorphism-card {
+  background: var(--lux-cream) !important;
+  border: 1px solid var(--lux-fog) !important;
+  backdrop-filter: none !important;
+}
+
+.admin-shell .admin-topbar__toggle {
+  background: var(--admin-surface-raised) !important;
+  border-color: var(--lux-fog) !important;
+  color: var(--lux-ink) !important;
+}
+
+.admin-shell .admin-topbar__toggle:hover {
+  border-color: var(--lux-champagne) !important;
+  background: var(--lux-champagne-soft) !important;
+}
