@@ -1,0 +1,343 @@
+/**
+ * Clean SaaS admin UI — tables, forms, KPIs, legacy Bootstrap/Tailwind inside admin.
+ */
+
+.admin-page .admin-breadcrumb {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--lux-fog);
+}
+
+.admin-page .admin-breadcrumb a.lux-link {
+  color: var(--lux-graphite);
+  font-weight: 500;
+}
+
+.admin-page .admin-breadcrumb a.lux-link:hover {
+  color: var(--lux-champagne-deep);
+}
+
+.admin-page .pm-section-title,
+.admin-page h2.pm-section-title {
+  font-family: var(--lux-font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--lux-ink);
+}
+
+.admin-page .page-panel,
+.admin-page .glassmorphism,
+.admin-page .glassmorphism-light,
+.admin-page .glassmorphism-card {
+  background: var(--lux-cream) !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-md) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+  backdrop-filter: none !important;
+}
+
+.admin-page .admin-kpi-grid {
+  gap: 0.65rem;
+}
+
+.admin-page .admin-kpi,
+.admin-page .admin-dash__kpi,
+.admin-page .admin-dash__metric {
+  padding: 0.85rem 1rem;
+  background: var(--lux-cream);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  box-shadow: var(--lux-shadow-xs);
+}
+
+.admin-page .admin-kpi__label,
+.admin-page .admin-dash__kpi-head h3 {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lux-stone);
+}
+
+.admin-page .admin-kpi__value,
+.admin-page .admin-dash__kpi-value {
+  font-family: var(--lux-font-sans) !important;
+  font-size: 1.5rem !important;
+  font-weight: 600 !important;
+  font-variant-numeric: tabular-nums;
+  color: var(--lux-ink);
+}
+
+.admin-page .admin-kpi__meta {
+  font-size: 0.75rem;
+  color: var(--lux-graphite);
+}
+
+.admin-page .admin-table-wrap,
+.admin-page .lux-policy-table-wrap,
+.admin-page .lux-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  background: var(--lux-cream);
+  box-shadow: var(--lux-shadow-xs);
+}
+
+.admin-page .admin-table,
+.admin-page .lux-admin-table,
+.admin-page table.lux-table,
+.admin-page table.min-w-full,
+.admin-page .table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--lux-font-sans);
+  font-size: 0.8125rem;
+  color: var(--lux-ink);
+}
+
+.admin-page .admin-table th,
+.admin-page .lux-admin-table th,
+.admin-page table.min-w-full thead th,
+.admin-page .table thead th {
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--lux-stone);
+  background: #f8fafc;
+  border-bottom: 1px solid var(--lux-fog);
+}
+
+.admin-page .admin-table td,
+.admin-page .lux-admin-table td,
+.admin-page table.min-w-full tbody td,
+.admin-page .table tbody td {
+  padding: 0.65rem 0.875rem;
+  border-bottom: 1px solid var(--lux-fog);
+  vertical-align: middle;
+}
+
+.admin-page .admin-table tbody tr:hover td,
+.admin-page table.min-w-full tbody tr:hover td,
+.admin-page .table tbody tr:hover td {
+  background: #f8fafc !important;
+}
+
+.admin-page .lux-badge {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-size: 0.625rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+}
+
+.admin-page .lux-badge--success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.admin-page .lux-badge--warning {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.admin-page .lux-badge--danger {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.admin-page .lux-badge--info {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.admin-page .lux-btn {
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  min-height: 2.25rem;
+  border-radius: var(--lux-radius-sm);
+}
+
+.admin-page .lux-btn--primary {
+  background: var(--lux-champagne-deep);
+  color: #fff;
+  border-color: var(--lux-champagne-deep);
+}
+
+.admin-page .lux-btn--primary:hover:not(:disabled) {
+  background: #4338ca;
+  border-color: #4338ca;
+}
+
+.admin-page .lux-btn--secondary {
+  background: #fff;
+  border-color: var(--lux-fog);
+  color: var(--lux-ink);
+}
+
+.admin-page .lux-btn--secondary:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.admin-page .lux-page-header {
+  border-bottom-color: var(--lux-fog);
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+}
+
+.admin-page .lux-page-header__title {
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
+  font-size: 1.375rem !important;
+  letter-spacing: -0.02em;
+  color: var(--lux-ink);
+}
+
+.admin-page .lux-page-header__subtitle {
+  color: var(--lux-graphite);
+  font-size: 0.875rem;
+}
+
+.admin-page .lux-filter-bar,
+.admin-page lux-filter-bar {
+  background: var(--lux-cream);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  padding: 0.75rem 1rem;
+  box-shadow: var(--lux-shadow-xs);
+}
+
+.admin-page .lux-input,
+.admin-page .lux-select {
+  border-bottom: none;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  font-size: 0.875rem;
+}
+
+.admin-page .lux-input:focus,
+.admin-page .lux-select:focus {
+  border-color: var(--lux-champagne);
+  box-shadow: 0 0 0 3px var(--lux-champagne-soft);
+}
+
+.admin-page .btn {
+  font-family: var(--lux-font-sans);
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  border-radius: var(--lux-radius-sm);
+}
+
+.admin-page .btn-primary {
+  background: var(--lux-champagne-deep);
+  border-color: var(--lux-champagne-deep);
+}
+
+.admin-page .form-control,
+.admin-page .form-select {
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
+  background: #fff;
+}
+
+.admin-page .alert-banner {
+  border-radius: var(--lux-radius-md);
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.admin-page .admin-actions-row,
+.admin-page .admin-toolbar {
+  gap: 0.5rem;
+}
+
+.admin-page .admin-modal,
+.admin-page .admin-modal-backdrop .modal-content {
+  border-radius: var(--lux-radius-lg);
+  border: 1px solid var(--lux-fog);
+  box-shadow: var(--lux-shadow-lg);
+}
+
+/* Dashboard — SaaS density */
+.admin-dashboard-page .admin-dash__section-head h2 {
+  font-family: var(--lux-font-sans) !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+}
+
+.admin-dashboard-page .admin-dash__panel {
+  border: 1px solid var(--lux-fog);
+  box-shadow: var(--lux-shadow-sm);
+  border-radius: var(--lux-radius-md);
+}
+
+.admin-dashboard-page .admin-dash__kpi-grid--business {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.admin-dashboard-page .admin-dash__live {
+  color: var(--lux-success);
+  font-weight: 600;
+}
+
+.admin-dashboard-page .admin-dash__period {
+  background: var(--lux-champagne-soft);
+  color: var(--lux-champagne-deep);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.admin-dashboard-page .time-frame-btn.is-active {
+  background: var(--lux-champagne-deep);
+  color: #fff;
+}
+
+.admin-dashboard-page .time-frame-btn {
+  border: 1px solid var(--lux-fog);
+  color: var(--lux-graphite);
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 760px) {
+  .admin-dashboard-page .admin-dash__kpi-grid--business {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Admin shell — override legacy lux component defaults */
+.admin-shell .lux-kpi__value,
+.admin-shell .lux-card__title {
+  font-family: var(--lux-font-sans) !important;
+}
+
+.admin-shell .content-wrapper {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.admin-dashboard-page .admin-dash__command {
+  border-bottom-color: var(--lux-fog);
+}
+
+.admin-dashboard-page .admin-dash__section-head h2 {
+  font-size: 1rem;
+}
+
+.admin-dashboard-page .admin-dash__panel-head h3 {
+  font-family: var(--lux-font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
