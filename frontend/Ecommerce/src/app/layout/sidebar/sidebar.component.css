@@ -59,6 +59,26 @@
   border-bottom: 1px solid rgba(232, 220, 194, 0.12);
 }
 
+.admin-rail__pin {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid rgba(232, 220, 194, 0.2);
+  border-radius: var(--lux-radius-sm);
+  background: transparent;
+  color: var(--lux-champagne-soft);
+  cursor: pointer;
+}
+
+.admin-rail__pin:hover,
+.admin-rail__pin:focus-visible {
+  background: rgba(232, 220, 194, 0.12);
+  outline: none;
+}
+
 .admin-rail__brand img {
   width: 2.25rem;
   height: 2.25rem;
