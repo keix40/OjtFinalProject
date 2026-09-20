@@ -2,22 +2,22 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 3.25rem;
-  padding: 0.5rem 1rem;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  min-height: 3.5rem;
+  padding: 0.625rem 1.25rem;
+  background: var(--admin-chrome-bg, #eef1f5);
+  border-bottom: 1px solid var(--lux-fog, #d8dee6);
   color: var(--lux-ink);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--lux-shadow-xs, 0 1px 2px rgba(61, 79, 101, 0.06));
 }
 
 .admin-topbar__toggle {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--lux-fog, #d8dee6);
+  border-radius: 10px;
   background: #fff;
   color: var(--lux-ink);
   cursor: pointer;

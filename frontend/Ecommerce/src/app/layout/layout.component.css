@@ -1,5 +1,5 @@
 .admin-shell {
-  background: #f1f5f9;
+  background: var(--lux-ivory, #f4f6f8);
   color: var(--lux-ink);
 }
 
@@ -10,7 +10,7 @@
 
 .admin-shell__content {
   margin-left: 4.5rem;
-  padding: 1rem 1.25rem 1.5rem;
+  padding: 1.25rem 1.5rem 2rem;
   min-width: 0;
 }
 

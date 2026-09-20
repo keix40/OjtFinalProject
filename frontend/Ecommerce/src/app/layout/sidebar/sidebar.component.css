@@ -1,4 +1,4 @@
-/* Admin navigation rail — Clean SaaS (slate sidebar) */
+/* Admin navigation rail — Soft enterprise (gray-blue sidebar) */
 
 :host {
   display: block;
@@ -32,9 +32,9 @@
   max-height: 100vh;
   overflow-x: hidden;
   overflow-y: auto;
-  background: var(--admin-sidebar-bg, #0f172a);
-  color: var(--admin-sidebar-text, #94a3b8);
-  border-right: 1px solid var(--admin-sidebar-border, #1e293b);
+  background: var(--admin-sidebar-bg, #3d4f65);
+  color: var(--admin-sidebar-text, #c5ced9);
+  border-right: 1px solid var(--admin-sidebar-border, #4a5d78);
   box-shadow: var(--lux-shadow-md);
   transition: width var(--lux-dur) var(--lux-ease);
   scrollbar-width: none;
@@ -75,7 +75,7 @@
 
 .admin-rail__pin:hover,
 .admin-rail__pin:focus-visible {
-  background: var(--admin-sidebar-hover, rgba(99, 102, 241, 0.12));
+  background: var(--admin-sidebar-hover, rgba(255, 255, 255, 0.08));
   outline: none;
 }
 
@@ -160,7 +160,7 @@
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  min-height: 2.75rem; /* 44px */
+  min-height: 2.875rem; /* 46px touch target */
   padding: 0.55rem 0.75rem;
   border: 0;
   border-radius: var(--lux-radius-sm);
@@ -192,7 +192,7 @@
 .admin-rail__btn:hover,
 .admin-rail__link:focus-visible,
 .admin-rail__btn:focus-visible {
-  background: var(--admin-sidebar-hover, rgba(99, 102, 241, 0.12));
+  background: var(--admin-sidebar-hover, rgba(255, 255, 255, 0.08));
   color: var(--admin-sidebar-text-strong, #f1f5f9);
   outline: none;
 }
@@ -204,9 +204,9 @@
 
 .admin-rail__link.is-active,
 .admin-rail a.router-link-active {
-  background: var(--admin-sidebar-active, rgba(99, 102, 241, 0.2)) !important;
-  color: var(--admin-sidebar-text-strong, #f8fafc) !important;
-  box-shadow: inset 3px 0 0 var(--lux-champagne-deep);
+  background: var(--admin-sidebar-active, rgba(44, 110, 203, 0.28)) !important;
+  color: var(--admin-sidebar-text-strong, #ffffff) !important;
+  box-shadow: inset 3px 0 0 #5b9aeb;
 }
 
 .admin-rail__link i,
@@ -214,7 +214,7 @@
   width: 1.15rem;
   height: 1.15rem;
   flex-shrink: 0;
-  color: var(--admin-sidebar-icon, #a5b4fc) !important;
+  color: var(--admin-sidebar-icon, #9bb9e8) !important;
 }
 
 .admin-rail__label {
@@ -245,8 +245,8 @@
   place-items: center;
   padding: 0 0.35rem;
   border-radius: 999px;
-  background: rgba(99, 102, 241, 0.2);
-  color: #e0e7ff;
+  background: rgba(44, 110, 203, 0.35);
+  color: #e3f0ff;
   font-size: 0.62rem;
   font-weight: 600;
 }
@@ -332,8 +332,8 @@
   place-items: center;
   border: 1px solid rgba(148, 163, 184, 0.25);
   border-radius: 50%;
-  background: rgba(99, 102, 241, 0.12);
-  color: var(--admin-sidebar-icon, #a5b4fc);
+  background: rgba(44, 110, 203, 0.2);
+  color: var(--admin-sidebar-icon, #9bb9e8);
   cursor: pointer;
 }
 

@@ -324,7 +324,7 @@
 
 .admin-dash__icon-chip.is-info { background: rgba(74, 90, 102, 0.14); color: var(--lux-info); }
 .admin-dash__icon-chip.is-success { background: rgba(95, 115, 85, 0.14); color: var(--lux-success); }
-.admin-dash__icon-chip.is-accent { background: rgba(99, 102, 241, 0.14); color: var(--lux-champagne-deep); }
+.admin-dash__icon-chip.is-accent { background: rgba(44, 110, 203, 0.14); color: var(--lux-champagne-deep); }
 .admin-dash__icon-chip.is-warning { background: rgba(217, 119, 6, 0.12); color: var(--lux-warning); }
 
 .admin-dash__ghost-btn {

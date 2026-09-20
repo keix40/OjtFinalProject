@@ -18,24 +18,24 @@ import { UserOrderListDTO } from '../user-order';
 
 const ORDER_STATUS_CHART_COLORS: Record<string, string> = {
   PENDING: '#f59e0b',
-  PAID: '#6366f1',
+  PAID: '#2c6ecb',
   PROCESSING: '#3b82f6',
-  SHIPPED: '#059669',
-  DELIVERED: '#10b981',
-  CANCELLED: '#dc2626',
+  SHIPPED: '#008060',
+  DELIVERED: '#16a34a',
+  CANCELLED: '#d72c0d',
   RETURNED: '#64748b',
 };
 
-/** Primary palette for admin dashboard charts (Clean SaaS). */
+/** Primary palette for admin dashboard charts (Soft enterprise). */
 const ADMIN_CHART_PALETTE = [
-  '#6366f1',
-  '#059669',
-  '#3b82f6',
-  '#f59e0b',
-  '#dc2626',
-  '#64748b',
-  '#8b5cf6',
+  '#2c6ecb',
+  '#008060',
   '#0ea5e9',
+  '#b98900',
+  '#d72c0d',
+  '#6b7c8f',
+  '#5b9aeb',
+  '#16a34a',
 ];
 
 @Component({
@@ -618,7 +618,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       isPositive: true, // Set to true as default
       chartData: trend.map(d => ({ value: d.activeUserCount || 0 })),
       chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-      chartColor: '#6366f1'
+      chartColor: '#2c6ecb'
     };
 
     // Create initial metrics with placeholder chart data
@@ -713,7 +713,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#6366f1'
+        chartColor: '#2c6ecb'
       },
       activeUsersData,
       {
@@ -769,7 +769,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#6366f1'
+        chartColor: '#2c6ecb'
       },
       {
         id: 'orders',
@@ -1632,7 +1632,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         label: 'Revenue',
         data: revenueData,
-        borderColor: '#6366f1',
+        borderColor: '#2c6ecb',
         backgroundColor: 'rgba(198,166,103,0.12)',
         fill: true,
         tension: 0.4,
@@ -1873,7 +1873,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const colors = [];
     if (this.showActiveUsers) {
       dataKeys.push('activeUsers');
-      colors.push('#6366f1');
+      colors.push('#2c6ecb');
     }
     if (this.showNewUsers) {
       dataKeys.push('newUsers');
@@ -1903,7 +1903,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       const colors = [];
       if (this.showViews) {
         dataKeys.push('views');
-        colors.push('#6366f1');
+        colors.push('#2c6ecb');
       }
       if (this.showEngagement) {
         dataKeys.push('engagement');
@@ -1919,7 +1919,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       console.log('⚠️ No engagement trends data, using fallback data');
       // Fallback to empty chart if no data
       const emptyData = [{ period: 'No Data', views: 0, engagement: 0 }];
-      this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#6366f1', '#f59e0b'], 'area');
+      this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#2c6ecb', '#f59e0b'], 'area');
     }
   }
 
@@ -2023,7 +2023,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (this.showRetained) {
       dataKeys.push('retained');
-      colors.push('#6366f1');
+      colors.push('#2c6ecb');
     }
     
     console.log('🎨 dataKeys:', dataKeys);
@@ -3224,7 +3224,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0, // Remove incorrect percentage calculation
         isPositive: true, // Set to true as default
         chartData: this.salesTrendData.map(d => ({ value: d.activeUserCount || 0 })),
-        chartColor: '#6366f1'
+        chartColor: '#2c6ecb'
       },
       {
         id: 'new-users',

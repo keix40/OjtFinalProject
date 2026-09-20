@@ -52,9 +52,9 @@ import { Component, Input } from '@angular/core';
     }
     .lux-page-header--admin .lux-page-header__title {
       font-family: var(--lux-font-sans);
-      font-size: 1.375rem;
+      font-size: 1.5rem;
       font-weight: 600;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.015em;
     }
 
     .lux-page-header--admin {
