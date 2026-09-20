@@ -1,0 +1,78 @@
+/**
+ * Stripe dashboard admin tokens — scoped to `.admin-shell` only.
+ * Light canvas, violet primary, finance-SaaS polish. Storefront unchanged.
+ */
+
+.admin-shell {
+  /* Canvas & surfaces */
+  --lux-ink: #0a2540;
+  --lux-espresso: #0a2540;
+  --lux-graphite: #425466;
+  --lux-stone: #697386;
+  --lux-fog: #e3e8ee;
+  --lux-ivory: #f6f9fc;
+  --lux-cream: #ffffff;
+  --lux-porcelain: #ffffff;
+
+  /* Stripe violet primary */
+  --lux-champagne: #635bff;
+  --lux-champagne-deep: #4f46e5;
+  --lux-champagne-soft: #f0efff;
+
+  --lux-success: #30b566;
+  --lux-warning: #df9753;
+  --lux-danger: #df1b41;
+  --lux-info: #5469d4;
+
+  --lux-font-serif: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --lux-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --lux-radius-sm: 8px;
+  --lux-radius-md: 10px;
+  --lux-radius-lg: 12px;
+  --lux-border-hair: 1px solid var(--lux-fog);
+  --lux-shadow-xs: 0 1px 2px rgba(10, 37, 64, 0.04);
+  --lux-shadow-sm: 0 2px 5px rgba(10, 37, 64, 0.06), 0 1px 1px rgba(10, 37, 64, 0.04);
+  --lux-shadow-md: 0 4px 12px rgba(10, 37, 64, 0.08);
+  --lux-shadow-lg: 0 8px 24px rgba(10, 37, 64, 0.1);
+
+  /* Light sidebar rail */
+  --admin-sidebar-bg: #fafbfc;
+  --admin-sidebar-border: #e3e8ee;
+  --admin-sidebar-text: #425466;
+  --admin-sidebar-text-strong: #0a2540;
+  --admin-sidebar-hover: rgba(99, 91, 255, 0.06);
+  --admin-sidebar-active: rgba(99, 91, 255, 0.12);
+  --admin-sidebar-icon: #697386;
+  --admin-chrome-bg: #ffffff;
+  --admin-surface-raised: #fafbfc;
+
+  color: var(--lux-ink);
+  font-family: var(--lux-font-sans);
+  background: var(--lux-ivory);
+}
+
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4,
+.admin-shell .lux-display,
+.admin-shell .lux-h1,
+.admin-shell .lux-h2,
+.admin-shell .lux-h3 {
+  font-family: var(--lux-font-sans) !important;
+  letter-spacing: -0.015em;
+  color: var(--lux-ink);
+}
+
+.admin-shell .lux-overline {
+  color: var(--lux-stone);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 0.6875rem;
+}
+
+.admin-shell--stripe {
+  background: var(--lux-ivory);
+}

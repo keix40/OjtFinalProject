@@ -41,9 +41,10 @@
   align-items: center;
   gap: 0.4rem;
   color: var(--lux-success);
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  font-weight: 600;
 }
 
 .admin-dash__live i {
@@ -60,10 +61,12 @@
   min-height: 1.75rem;
   padding: 0.25rem 0.7rem;
   background: var(--lux-champagne-soft);
-  color: var(--lux-ink);
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--lux-champagne-deep);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  border-radius: 999px;
+  font-weight: 600;
 }
 
 .admin-dash__body {

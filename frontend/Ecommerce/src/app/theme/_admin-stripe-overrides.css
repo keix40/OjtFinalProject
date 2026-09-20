@@ -1,5 +1,5 @@
 /**
- * Dark ops — override boutique / Soft enterprise globals inside admin only.
+ * Stripe dashboard — override boutique / legacy admin globals inside `.admin-shell` only.
  */
 
 .admin-shell,
@@ -16,17 +16,19 @@
 .admin-shell h5,
 .admin-shell h6,
 .admin-shell .page-title,
+.admin-shell .lux-display,
 .admin-shell .lux-card__title,
 .admin-shell .lux-kpi__value {
   font-family: var(--lux-font-sans) !important;
   font-weight: 600 !important;
   color: var(--lux-ink) !important;
+  letter-spacing: -0.015em;
 }
 
 .admin-shell .bg-cream,
 .admin-shell .bg-porcelain,
 .admin-shell .bg-white {
-  background-color: var(--lux-cream) !important;
+  background-color: #ffffff !important;
   color: var(--lux-ink) !important;
 }
 
@@ -50,7 +52,7 @@
 
 .admin-shell .text-champagne,
 .admin-shell .text-champagne-deep {
-  color: var(--lux-champagne) !important;
+  color: var(--lux-champagne-deep) !important;
 }
 
 .admin-shell .border-fog,
@@ -59,11 +61,16 @@
   border-color: var(--lux-fog) !important;
 }
 
+.admin-shell .shadow-lux-sm {
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
 .admin-shell .btn {
-  min-height: 2.5rem;
-  border-radius: var(--lux-radius-sm) !important;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--lux-radius-md) !important;
   font-weight: 600 !important;
-  letter-spacing: 0.02em !important;
+  letter-spacing: 0.01em !important;
   text-transform: none !important;
 }
 
@@ -71,63 +78,82 @@
 .admin-shell .btn-primary:focus {
   background-color: var(--lux-champagne) !important;
   border-color: var(--lux-champagne) !important;
-  color: #0b0f14 !important;
+  color: #ffffff !important;
+  box-shadow: var(--lux-shadow-xs) !important;
 }
 
 .admin-shell .btn-primary:hover,
 .admin-shell .btn-primary:active {
-  background-color: var(--lux-success) !important;
-  border-color: var(--lux-success) !important;
-  color: #0b0f14 !important;
+  background-color: var(--lux-champagne-deep) !important;
+  border-color: var(--lux-champagne-deep) !important;
+  color: #ffffff !important;
 }
 
 .admin-shell .btn-outline-primary {
   color: var(--lux-champagne) !important;
   border-color: var(--lux-fog) !important;
-  background: transparent !important;
+  background: #ffffff !important;
 }
 
 .admin-shell .btn-outline-primary:hover {
-  background: var(--lux-champagne-soft) !important;
+  background-color: var(--lux-champagne-soft) !important;
   border-color: var(--lux-champagne) !important;
+  color: var(--lux-champagne-deep) !important;
 }
 
 .admin-shell .btn-secondary,
 .admin-shell .btn-light {
-  background: var(--admin-surface-raised) !important;
+  background: #ffffff !important;
   border-color: var(--lux-fog) !important;
   color: var(--lux-ink) !important;
+}
+
+.admin-shell .btn-success {
+  background-color: var(--lux-success) !important;
+  border-color: var(--lux-success) !important;
+}
+
+.admin-shell .btn-danger {
+  background-color: var(--lux-danger) !important;
+  border-color: var(--lux-danger) !important;
 }
 
 .admin-shell .lux-table thead th,
 .admin-shell .lux-admin-table thead th,
 .admin-shell table thead th {
-  background: #0b0f14 !important;
+  background: #fafbfc !important;
   color: var(--lux-stone) !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
   border-bottom: 1px solid var(--lux-fog) !important;
-  font-size: 0.6875rem !important;
-  letter-spacing: 0.06em !important;
-  text-transform: uppercase !important;
 }
 
 .admin-shell .lux-table td,
 .admin-shell .lux-admin-table td,
 .admin-shell table tbody td {
-  background: var(--lux-cream) !important;
+  background: #ffffff !important;
   border-bottom: 1px solid var(--lux-fog) !important;
   color: var(--lux-ink) !important;
-  padding: 0.65rem 0.875rem !important;
+  padding: 0.875rem 1rem !important;
 }
 
 .admin-shell .lux-table tbody tr:hover td,
 .admin-shell table tbody tr:hover td {
-  background: var(--admin-surface-raised) !important;
+  background: #f6f9fc !important;
 }
 
 .admin-shell .lux-card,
 .admin-shell lux-card .lux-card {
-  background: var(--lux-cream) !important;
+  background: #ffffff !important;
   border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-lg) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+.admin-shell .lux-kpi {
+  border-radius: var(--lux-radius-lg) !important;
   box-shadow: var(--lux-shadow-sm) !important;
 }
 
@@ -135,8 +161,9 @@
 .admin-shell .admin-dash__metric,
 .admin-shell .admin-dash__tier,
 .admin-shell .admin-dash__panel {
-  background: var(--lux-cream) !important;
+  background: #ffffff !important;
   border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-lg) !important;
   box-shadow: var(--lux-shadow-sm) !important;
 }
 
@@ -148,37 +175,51 @@
 .admin-shell .admin-dash__view-btn {
   background: var(--lux-champagne) !important;
   border-color: var(--lux-champagne) !important;
-  color: #0b0f14 !important;
-  text-transform: uppercase !important;
-  font-size: 0.75rem !important;
-  letter-spacing: 0.06em !important;
+  color: #ffffff !important;
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+  letter-spacing: 0.01em !important;
+  border-radius: var(--lux-radius-md) !important;
 }
 
-.admin-shell .lux-badge--success {
-  background: rgba(16, 185, 129, 0.15) !important;
-  color: #34d399 !important;
+.admin-shell .time-frame-btn {
+  min-height: 2.5rem !important;
+  border-radius: var(--lux-radius-md) !important;
 }
 
-.admin-shell .lux-badge--warning {
-  background: rgba(251, 191, 36, 0.15) !important;
-  color: #fcd34d !important;
+.admin-shell .lux-badge--success,
+.admin-shell .badge-success {
+  background: #e6f9ef !important;
+  color: #09825a !important;
+  border-radius: 999px !important;
 }
 
-.admin-shell .lux-badge--danger {
-  background: rgba(248, 113, 113, 0.15) !important;
-  color: #fca5a5 !important;
+.admin-shell .lux-badge--warning,
+.admin-shell .badge-warning {
+  background: #fef6e9 !important;
+  color: #9a6700 !important;
+  border-radius: 999px !important;
 }
 
-.admin-shell .lux-badge--info {
-  background: rgba(6, 182, 212, 0.15) !important;
-  color: #67e8f9 !important;
+.admin-shell .lux-badge--danger,
+.admin-shell .badge-danger {
+  background: #fde8ee !important;
+  color: #b3093c !important;
+  border-radius: 999px !important;
+}
+
+.admin-shell .lux-badge--info,
+.admin-shell .badge-info {
+  background: #eef0ff !important;
+  color: #434dbb !important;
+  border-radius: 999px !important;
 }
 
 .admin-shell .form-control,
 .admin-shell .form-select,
 .admin-shell .lux-input,
 .admin-shell .lux-select {
-  background: #0b0f14 !important;
+  background: #ffffff !important;
   border-color: var(--lux-fog) !important;
   color: var(--lux-ink) !important;
 }
@@ -187,19 +228,19 @@
 .admin-shell .lux-input:focus,
 .admin-shell .lux-select:focus {
   border-color: var(--lux-champagne) !important;
-  box-shadow: 0 0 0 2px var(--lux-champagne-soft) !important;
+  box-shadow: 0 0 0 3px var(--lux-champagne-soft) !important;
 }
 
 .admin-shell .glassmorphism,
 .admin-shell .glassmorphism-light,
 .admin-shell .glassmorphism-card {
-  background: var(--lux-cream) !important;
+  background: #ffffff !important;
   border: 1px solid var(--lux-fog) !important;
   backdrop-filter: none !important;
 }
 
 .admin-shell .admin-topbar__toggle {
-  background: var(--admin-surface-raised) !important;
+  background: #ffffff !important;
   border-color: var(--lux-fog) !important;
   color: var(--lux-ink) !important;
 }
@@ -207,4 +248,18 @@
 .admin-shell .admin-topbar__toggle:hover {
   border-color: var(--lux-champagne) !important;
   background: var(--lux-champagne-soft) !important;
+}
+
+.admin-shell app-admin-inbox,
+.admin-shell .admin-inbox-panel {
+  font-family: var(--lux-font-sans);
+}
+
+.admin-shell app-admin-inbox .inbox-item:hover {
+  background: #f6f9fc !important;
+}
+
+.admin-shell .mat-mdc-button.mat-primary,
+.admin-shell .mat-mdc-raised-button.mat-primary {
+  background-color: var(--lux-champagne) !important;
 }

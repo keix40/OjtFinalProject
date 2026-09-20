@@ -215,7 +215,7 @@ a.text-primary,
 .toast-info    { background-color: var(--lux-info) !important; }
 .toast-warning { background-color: var(--lux-warning) !important; }
 
-/* Admin shell — Dark ops canvas (tokens in _admin-dark-ops-tokens.css) */
+/* Admin shell — Stripe dashboard canvas (tokens in _admin-stripe-tokens.css) */
 app-layout,
 .admin-shell {
   min-height: 100vh;

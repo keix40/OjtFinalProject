@@ -17,31 +17,31 @@ import { ProductService } from '../services/product.service';
 import { UserOrderListDTO } from '../user-order';
 
 const ORDER_STATUS_CHART_COLORS: Record<string, string> = {
-  PENDING: '#fbbf24',
-  PAID: '#06b6d4',
-  PROCESSING: '#22d3ee',
-  SHIPPED: '#10b981',
-  DELIVERED: '#34d399',
-  CANCELLED: '#f87171',
-  RETURNED: '#6b7280',
+  PENDING: '#df9753',
+  PAID: '#635bff',
+  PROCESSING: '#5469d4',
+  SHIPPED: '#30b566',
+  DELIVERED: '#20b26c',
+  CANCELLED: '#df1b41',
+  RETURNED: '#697386',
 };
 
-/** Dashboard charts — readable on dark ops canvas. */
+/** Stripe-like palette for admin dashboard charts on light canvas. */
 const ADMIN_CHART_PALETTE = [
-  '#06b6d4',
-  '#10b981',
-  '#22d3ee',
-  '#fbbf24',
-  '#f87171',
-  '#a78bfa',
-  '#34d399',
-  '#67e8f9',
+  '#635bff',
+  '#5469d4',
+  '#3ecf8e',
+  '#80e9ff',
+  '#df9753',
+  '#df1b41',
+  '#7a73ff',
+  '#0a2540',
 ];
 
-const ADMIN_CHART_GRID = 'rgba(148, 163, 184, 0.12)';
-const ADMIN_CHART_TICK = '#9ca3af';
-const ADMIN_CHART_TOOLTIP_BG = 'rgba(17, 24, 39, 0.96)';
-const ADMIN_CHART_TOOLTIP_TEXT = '#e5e7eb';
+const ADMIN_CHART_GRID = 'rgba(66, 84, 102, 0.08)';
+const ADMIN_CHART_TICK = '#697386';
+const ADMIN_CHART_TOOLTIP_BG = '#ffffff';
+const ADMIN_CHART_TOOLTIP_TEXT = '#0a2540';
 
 @Component({
   selector: 'app-dashboard',
@@ -623,7 +623,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       isPositive: true, // Set to true as default
       chartData: trend.map(d => ({ value: d.activeUserCount || 0 })),
       chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-      chartColor: '#06b6d4'
+      chartColor: '#635bff'
     };
 
     // Create initial metrics with placeholder chart data
@@ -718,7 +718,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#06b6d4'
+        chartColor: '#635bff'
       },
       activeUsersData,
       {
@@ -774,7 +774,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         isPositive: true, // Set to true as default
         chartData: trend.map(d => ({ value: d.total * 0.72 })),
         chartLabels: trend.map(d => this.getFormattedLabel(d.label)),
-        chartColor: '#06b6d4'
+        chartColor: '#635bff'
       },
       {
         id: 'orders',
@@ -1200,7 +1200,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         pointHoverRadius: 6, // Only show points on hover
         pointBackgroundColor: colors[index], // Changed to match border color
         pointBorderWidth: 2,
-        pointBorderColor: '#111827',
+        pointBorderColor: '#ffffff',
         pointStyle: 'circle',
         // Ensure lines are visible
         borderDash: [],
@@ -1245,7 +1245,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: ADMIN_CHART_TOOLTIP_BG,
             titleColor: ADMIN_CHART_TOOLTIP_TEXT,
             bodyColor: ADMIN_CHART_TOOLTIP_TEXT,
-            borderColor: '#1f2937',
+            borderColor: '#e3e8ee',
             borderWidth: 1,
             padding: 12,
             titleFont: { size: 14, weight: 600 },
@@ -1637,7 +1637,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       {
         label: 'Revenue',
         data: revenueData,
-        borderColor: '#06b6d4',
+        borderColor: '#635bff',
         backgroundColor: 'rgba(198,166,103,0.12)',
         fill: true,
         tension: 0.4,
@@ -1878,7 +1878,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     const colors = [];
     if (this.showActiveUsers) {
       dataKeys.push('activeUsers');
-      colors.push('#06b6d4');
+      colors.push('#635bff');
     }
     if (this.showNewUsers) {
       dataKeys.push('newUsers');
@@ -1908,7 +1908,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       const colors = [];
       if (this.showViews) {
         dataKeys.push('views');
-        colors.push('#06b6d4');
+        colors.push('#635bff');
       }
       if (this.showEngagement) {
         dataKeys.push('engagement');
@@ -1924,7 +1924,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       console.log('⚠️ No engagement trends data, using fallback data');
       // Fallback to empty chart if no data
       const emptyData = [{ period: 'No Data', views: 0, engagement: 0 }];
-      this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#06b6d4', '#f59e0b'], 'area');
+      this.createEnhancedChart('profileViewsChart', emptyData, ['views', 'engagement'], ['#635bff', '#f59e0b'], 'area');
     }
   }
 
@@ -2028,7 +2028,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     if (this.showRetained) {
       dataKeys.push('retained');
-      colors.push('#06b6d4');
+      colors.push('#635bff');
     }
     
     console.log('🎨 dataKeys:', dataKeys);
@@ -2114,7 +2114,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         pointHoverRadius: 6,
         pointBackgroundColor: colors[index],
         pointBorderWidth: 2,
-        pointBorderColor: '#111827',
+        pointBorderColor: '#ffffff',
         pointStyle: 'circle',
         borderDash: [],
         borderDashOffset: 0,
@@ -2158,7 +2158,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: ADMIN_CHART_TOOLTIP_BG,
             titleColor: ADMIN_CHART_TOOLTIP_TEXT,
             bodyColor: ADMIN_CHART_TOOLTIP_TEXT,
-            borderColor: '#1f2937',
+            borderColor: '#e3e8ee',
             borderWidth: 1,
             padding: 12,
             titleFont: { size: 14, weight: 600 },
@@ -2275,7 +2275,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           datasets: [{
             data: [1],
             backgroundColor: ['#e5e7eb'],
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 3
           }]
         },
@@ -2325,9 +2325,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           data: data,
           backgroundColor: colors,
-          borderColor: '#111827',
+          borderColor: '#ffffff',
           borderWidth: 3,
-          hoverBorderColor: '#111827',
+          hoverBorderColor: '#ffffff',
           hoverBorderWidth: 4,
           hoverOffset: 8
         }]
@@ -2377,7 +2377,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             titleColor: '#ffffff',
             bodyColor: '#ffffff',
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 1,
             cornerRadius: 8,
             displayColors: true,
@@ -2439,7 +2439,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           datasets: [{
             data: [1],
             backgroundColor: ['#f3f4f6'],
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 2
           }]
         },
@@ -2497,9 +2497,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           data: data,
           backgroundColor: colors,
-          borderColor: '#111827',
+          borderColor: '#ffffff',
           borderWidth: 2,
-          hoverBorderColor: '#111827',
+          hoverBorderColor: '#ffffff',
           hoverBorderWidth: 3,
           hoverOffset: 6
         }]
@@ -2515,7 +2515,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             titleColor: '#ffffff',
             bodyColor: '#ffffff',
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 1,
             cornerRadius: 6,
             displayColors: true,
@@ -2567,7 +2567,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           datasets: [{
             data: [1],
             backgroundColor: ['#f3f4f6'],
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 2
           }]
         },
@@ -2625,9 +2625,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           data: data,
           backgroundColor: colors,
-          borderColor: '#111827',
+          borderColor: '#ffffff',
           borderWidth: 2,
-          hoverBorderColor: '#111827',
+          hoverBorderColor: '#ffffff',
           hoverBorderWidth: 3,
           hoverOffset: 6
         }]
@@ -2643,7 +2643,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             titleColor: '#ffffff',
             bodyColor: '#ffffff',
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 1,
             cornerRadius: 6,
             displayColors: true,
@@ -2695,7 +2695,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           datasets: [{
             data: [1],
             backgroundColor: ['#f3f4f6'],
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 2
           }]
         },
@@ -2753,9 +2753,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           data: data,
           backgroundColor: colors,
-          borderColor: '#111827',
+          borderColor: '#ffffff',
           borderWidth: 2,
-          hoverBorderColor: '#111827',
+          hoverBorderColor: '#ffffff',
           hoverBorderWidth: 3,
           hoverOffset: 6
         }]
@@ -2771,7 +2771,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             titleColor: '#ffffff',
             bodyColor: '#ffffff',
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 1,
             cornerRadius: 6,
             displayColors: true,
@@ -2823,7 +2823,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
           datasets: [{
             data: [1],
             backgroundColor: ['#f3f4f6'],
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 2
           }]
         },
@@ -2881,9 +2881,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         datasets: [{
           data: data,
           backgroundColor: colors,
-          borderColor: '#111827',
+          borderColor: '#ffffff',
           borderWidth: 2,
-          hoverBorderColor: '#111827',
+          hoverBorderColor: '#ffffff',
           hoverBorderWidth: 3,
           hoverOffset: 6
         }]
@@ -2899,7 +2899,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
             titleColor: '#ffffff',
             bodyColor: '#ffffff',
-            borderColor: '#111827',
+            borderColor: '#ffffff',
             borderWidth: 1,
             cornerRadius: 6,
             displayColors: true,
@@ -3229,7 +3229,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         change: 0, // Remove incorrect percentage calculation
         isPositive: true, // Set to true as default
         chartData: this.salesTrendData.map(d => ({ value: d.activeUserCount || 0 })),
-        chartColor: '#06b6d4'
+        chartColor: '#635bff'
       },
       {
         id: 'new-users',

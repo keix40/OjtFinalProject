@@ -1,5 +1,5 @@
 .admin-shell {
-  background: #0b0f14;
+  background: var(--lux-ivory, #f6f9fc);
   color: var(--lux-ink);
 }
 
