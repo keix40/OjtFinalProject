@@ -1,44 +1,125 @@
-<div class="admin-dash">
-  <!-- Command bar -->
-  <header class="admin-dash__command">
-    <div>
-      <p class="lux-overline">Operations</p>
-      <h1>Analytics Dashboard</h1>
-      <p>Universal data visualization with live updates</p>
-    </div>
-    <div class="admin-dash__command-meta">
+<lux-page-shell variant="admin" shellClass="admin-page admin-dashboard-page">
+  <lux-page-header
+    variant="admin"
+    eyebrow="Operations"
+    title="Business Dashboard"
+    subtitle="Live KPIs, sales analytics, inventory alerts, and fulfillment overview.">
+    <div actions class="admin-dash__command-meta">
       <span class="admin-dash__live"><i aria-hidden="true"></i> Live</span>
       <span class="admin-dash__period">{{ timeFrameLabels[currentTimeFrame] }} view</span>
     </div>
-  </header>
+  </lux-page-header>
 
+<div class="admin-dash">
   <div class="admin-dash__body">
-    <!-- Primary KPIs -->
-    <section class="admin-dash__section" aria-label="Primary metrics">
-      <div class="admin-dash__kpi-grid">
-        @for (metric of topMetricsData; track metric.id) {
-          <article class="admin-dash__kpi">
-            <div class="admin-dash__kpi-head">
-              <h3>{{ metric.title }}</h3>
-              <div class="mini-chart-top">
-                <canvas [id]="'chart-' + metric.id" width="64" height="32"></canvas>
-              </div>
-            </div>
-            <div class="admin-dash__kpi-value">
-              {{ metric.value }}<span *ngIf="metric.currency">{{ metric.currency }}</span>
-            </div>
-            <div class="admin-dash__kpi-trend">
-              @if (metric.change > 0) {
-                <i lucide="trending-up" class="h-3 w-3 text-emerald-500"></i>
-              } @else if (metric.change < 0) {
-                <i lucide="trending-down" class="h-3 w-3 text-red-500"></i>
-              } @else {
-                <i lucide="minus" class="h-3 w-3 text-slate-500"></i>
-              }
-            </div>
-          </article>
-        }
+    <!-- Business KPIs -->
+    <section class="admin-dash__section" aria-label="Business KPIs">
+      <div class="admin-dash__kpi-grid admin-dash__kpi-grid--business">
+        <article class="admin-dash__kpi">
+          <p class="admin-kpi__label">Total Revenue</p>
+          <div class="admin-dash__kpi-value">{{ formatNumber(businessKpis.totalRevenue) }}<span>MMK</span></div>
+          <p class="admin-kpi__meta">Daily sales: {{ formatNumber(businessKpis.dailySales) }} MMK</p>
+        </article>
+        <article class="admin-dash__kpi">
+          <p class="admin-kpi__label">Total Orders</p>
+          <div class="admin-dash__kpi-value">{{ formatNumber(businessKpis.totalOrders) }}</div>
+          <p class="admin-kpi__meta">Pending delivery: {{ formatNumber(businessKpis.pendingDelivery) }}</p>
+        </article>
+        <article class="admin-dash__kpi">
+          <p class="admin-kpi__label">Active Customers</p>
+          <div class="admin-dash__kpi-value">{{ formatNumber(businessKpis.activeCustomers) }}</div>
+          <p class="admin-kpi__meta">New registrations: {{ formatNumber(businessKpis.newRegistrations) }}</p>
+        </article>
+        <article class="admin-dash__kpi">
+          <p class="admin-kpi__label">Inventory Alerts</p>
+          <div class="admin-dash__kpi-value is-compact">{{ formatNumber(businessKpis.lowStock) }} / {{ formatNumber(businessKpis.outOfStock) }}</div>
+          <p class="admin-kpi__meta">Low stock / out of stock SKUs</p>
+        </article>
       </div>
+    </section>
+
+    <!-- Fulfillment & catalog insights -->
+    <section class="admin-dash__section" aria-label="Fulfillment insights">
+      <header class="admin-dash__section-head">
+        <div>
+          <h2>Fulfillment &amp; Catalog Insights</h2>
+          <p>Revenue trend, bestsellers, and order pipeline for the selected period</p>
+        </div>
+        <span class="admin-dash__period">{{ timeFrameLabels[currentTimeFrame] }} view</span>
+      </header>
+
+      <div class="admin-dash__chart-grid admin-dash__chart-grid--triple">
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Sales Revenue Trend</h3>
+          </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="salesTrendChart"></canvas>
+          </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Top-Selling Products</h3>
+          </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="topProductsBarChart"></canvas>
+          </div>
+        </article>
+
+        <article class="admin-dash__panel chart-container">
+          <div class="admin-dash__panel-head">
+            <h3>Order Status Distribution</h3>
+          </div>
+          <div class="admin-dash__canvas-wrap" style="height: 280px">
+            <canvas id="orderStatusChart"></canvas>
+          </div>
+        </article>
+      </div>
+
+      <article class="admin-dash__panel admin-dash__recent-orders">
+        <div class="admin-dash__panel-head">
+          <h3>Recent Orders</h3>
+          <a routerLink="/orders" class="admin-dash__view-btn">View all</a>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let order of recentOrders">
+                <td><span class="cell-strong">{{ order.orderCode }}</span></td>
+                <td>{{ order.user?.name || '—' }}</td>
+                <td>{{ formatOrderDate(order.orderDate) }}</td>
+                <td>{{ formatCurrency(order.total) }}</td>
+                <td>
+                  <lux-badge [tone]="statusTone(order.status)">{{ formatStatusLabel(order.status) }}</lux-badge>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    class="admin-dash__ghost-btn"
+                    [disabled]="!canAdvanceOrderStatus(order) || orderStatusUpdating[order.orderId]"
+                    (click)="advanceOrderStatus(order)">
+                    Advance
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="recentOrders.length === 0">
+                <td colspan="6">No recent orders yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
     </section>
 
     <!-- Timeframe control -->
@@ -105,18 +186,6 @@
       </div>
 
       <div class="admin-dash__chart-grid">
-        <article class="admin-dash__panel chart-container">
-          <div class="admin-dash__panel-head">
-            <h3>Sales Trend Analysis</h3>
-            <button type="button" class="admin-dash__ghost-btn" aria-label="More options">
-              <i lucide="more-horizontal" class="h-4 w-4"></i>
-            </button>
-          </div>
-          <div class="admin-dash__canvas-wrap" style="height: 280px">
-            <canvas id="salesTrendChart"></canvas>
-          </div>
-        </article>
-
         <article class="admin-dash__panel chart-container">
           <div class="admin-dash__panel-head">
             <h3>Revenue vs Target</h3>
@@ -415,6 +484,7 @@
     </section>
   </div>
 </div>
+</lux-page-shell>
 
 <!-- Chart Details Modal -->
 <div *ngIf="showChartModal" class="admin-dash__modal-backdrop" (click)="closeChartModal()">

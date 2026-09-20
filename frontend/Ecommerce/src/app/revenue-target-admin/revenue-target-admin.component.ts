@@ -8,7 +8,7 @@ import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
 @Component({
   selector: 'app-revenue-target-admin',
   template: `
-  <lux-page-shell variant="admin">
+  <lux-page-shell variant="admin" shellClass="admin-page">
     <lux-page-header
       variant="admin"
       eyebrow="Settings"

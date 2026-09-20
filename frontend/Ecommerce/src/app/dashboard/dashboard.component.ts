@@ -12,8 +12,19 @@ import { switchMap, mergeMap, map, filter, take, catchError } from 'rxjs/operato
 import { Client, IMessage, StompSubscription } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { UserService } from '../services/user.service';
+import { OrderService } from '../services/order.service';
+import { ProductService } from '../services/product.service';
+import { UserOrderListDTO } from '../user-order';
 
-
+const ORDER_STATUS_CHART_COLORS: Record<string, string> = {
+  PENDING: '#B08234',
+  PAID: '#4A5A66',
+  PROCESSING: '#C6A667',
+  SHIPPED: '#5F7355',
+  DELIVERED: '#5F7355',
+  CANCELLED: '#9E4A43',
+  RETURNED: '#708090',
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -61,6 +72,22 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   categorySalesData: any[] = [];
   productSalesData: any[] = [];
   deliveryServiceData: any[] = [];
+
+  businessKpis = {
+    totalRevenue: 0,
+    dailySales: 0,
+    totalOrders: 0,
+    pendingDelivery: 0,
+    activeCustomers: 0,
+    newRegistrations: 0,
+    lowStock: 0,
+    outOfStock: 0,
+  };
+  recentOrders: UserOrderListDTO[] = [];
+  orderStatusSlices: { label: string; value: number; color: string }[] = [];
+  orderStatusUpdating: Record<number, boolean> = {};
+  private topProductsBarChart: Chart | null = null;
+  private orderStatusChart: Chart | null = null;
 
   // Modal properties for chart data
   showChartModal = false;
@@ -124,6 +151,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     private dashboardService: DashboardService,
     private revenueTargetService: RevenueTargetService,
     private userService: UserService,
+    private orderService: OrderService,
+    private productService: ProductService,
     // private adminUserService: AdminUserService,
   ) { }
 
@@ -188,11 +217,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   refreshDashboard(): void {
     console.log('🔄 refreshDashboard called with timeFrame:', this.currentTimeFrame);
     console.log('🔄 refreshDashboard: Starting dashboard refresh process');
-    
-    // Set static data immediately at the beginning
-    console.log('📊 Component: Setting static data immediately');
-    this.setStaticData();
-    
+
+    this.loadEngagementAndSegmentation();
+    this.loadOperationsMetrics();
+
     this.dashboardService.getTotalSales().subscribe(totalSales => {
       console.log('📊 Total sales fetched:', totalSales);
       
@@ -264,63 +292,9 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                     }
                   });
                   
-                  // Use static engagement analytics data
-                  console.log('📊 Component: Using static engagement analytics data');
-                  this.engagementAnalytics = {
-                    totalPageViews: 1250,
-                    avgPageViewsPerSession: 3.2,
-                    engagementScore: 78.5,
-                    totalSessions: 390
-                  };
-                  
-                  // Use static engagement trends data
-                  this.engagementTrends = [
-                    { date: '2025-08-01', views: 120, engagement: 85 },
-                    { date: '2025-08-02', views: 135, engagement: 78 },
-                    { date: '2025-08-03', views: 150, engagement: 82 },
-                    { date: '2025-08-04', views: 140, engagement: 79 },
-                    { date: '2025-08-05', views: 160, engagement: 88 },
-                    { date: '2025-08-06', views: 145, engagement: 81 },
-                    { date: '2025-08-07', views: 155, engagement: 85 }
-                  ];
-                  
-                  console.log('📊 Component: Static engagement data set:', this.engagementAnalytics);
-                  console.log('📊 Component: Static engagement trends set:', this.engagementTrends);
-                  console.log('📊 Component: engagementTrends length:', this.engagementTrends.length);
-                  
-                      this.updateEngagementChart();
-
-                  // Use static VIP tier data instead of fetching from backend
-                  console.log('📊 Component: Using static VIP tier data');
-                  const staticVipTierData = [
-                    { name: 'Regular', color: '#708090', value: 1 },
-                    { name: 'Silver', color: '#C0C0C0', value: 3 },
-                    { name: 'Gold', color: '#FFD700', value: 1 },
-                    { name: 'Platinum', color: '#E5E4E2', value: 0 }
-                  ];
-                  
-                  this.customerSegmentation = staticVipTierData;
-                  this.segmentationData = staticVipTierData;
-                  this.totalCustomers = staticVipTierData.filter((tier: any) => tier.value > 0).reduce((sum: number, tier: any) => sum + tier.value, 0);
-                  
-                  console.log('📊 Component: Static VIP tier data set:', staticVipTierData);
-                  console.log('📊 Component: Total customers calculated:', this.totalCustomers);
-                  console.log('📊 Component: segmentationData length:', this.segmentationData.length);
-                      
-                      // Force change detection for tier mini cards
-                      this.segmentationData = [...this.segmentationData];
-                  console.log('📊 Component: Force updated segmentationData:', this.segmentationData);
-                      
-                      // Force update the customer distribution chart with proper timing
-                  console.log('🔄 Component: Calling updateCustomerDistributionChart');
-                      this.updateCustomerDistributionChart();
-                      
-                  // Also force update engagement chart
-                  console.log('🔄 Component: Calling updateEngagementChart');
                   this.updateEngagementChart();
-                  
-                      this.updateCustomerAcqChart();
-                  
+                  this.updateCustomerAcqChart();
+
                   // Fetch customer acquisition data
                   this.dashboardService.getCustomerAcquisition(this.currentTimeFrame).subscribe({
                     next: (acquisition: any[]) => {
@@ -338,6 +312,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
                     next: (newUsersCount: number) => {
                       console.log('New users count received:', newUsersCount);
                       this.newUsersCount = newUsersCount;
+                      this.businessKpis.newRegistrations = newUsersCount;
                     },
                     error: (error: any) => {
                       console.error('Error fetching new users count:', error);
@@ -375,62 +350,92 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     // this.fetchOnlineAdminCount();
   }
 
-  setStaticData(): void {
-    console.log('📊 Component: setStaticData called for timeFrame:', this.currentTimeFrame);
-    
-    // Set static VIP tier data (same for all time frames)
-    console.log('📊 Component: Setting static VIP tier data');
-    const staticVipTierData = [
-      { name: 'Regular', color: '#708090', value: 1 },
-      { name: 'Silver', color: '#C0C0C0', value: 3 },
-      { name: 'Gold', color: '#FFD700', value: 1 },
-      { name: 'Platinum', color: '#E5E4E2', value: 0 }
-    ];
-    
-    this.customerSegmentation = staticVipTierData;
-    this.segmentationData = staticVipTierData;
-    this.totalCustomers = staticVipTierData.filter((tier: any) => tier.value > 0).reduce((sum: number, tier: any) => sum + tier.value, 0);
-    
-    console.log('📊 Component: Static VIP tier data set:', staticVipTierData);
-    console.log('📊 Component: Total customers calculated:', this.totalCustomers);
-    console.log('📊 Component: segmentationData length:', this.segmentationData.length);
-    
-    // Force change detection for tier mini cards
-    this.segmentationData = [...this.segmentationData];
-    console.log('📊 Component: Force updated segmentationData:', this.segmentationData);
-    
-    // Set static engagement analytics data (same for all time frames)
-    console.log('📊 Component: Setting static engagement analytics data');
-    this.engagementAnalytics = {
-      totalPageViews: 1250,
-      avgPageViewsPerSession: 3.2,
-      engagementScore: 78.5,
-      totalSessions: 390
-    };
-    
-    // Set static engagement trends data (same for all time frames)
-    this.engagementTrends = [
-      { date: '2025-08-01', views: 120, engagement: 85 },
-      { date: '2025-08-02', views: 135, engagement: 78 },
-      { date: '2025-08-03', views: 150, engagement: 82 },
-      { date: '2025-08-04', views: 140, engagement: 79 },
-      { date: '2025-08-05', views: 160, engagement: 88 },
-      { date: '2025-08-06', views: 145, engagement: 81 },
-      { date: '2025-08-07', views: 155, engagement: 85 }
-    ];
-    
-    console.log('📊 Component: Static engagement data set:', this.engagementAnalytics);
-    console.log('📊 Component: Static engagement trends set:', this.engagementTrends);
-    console.log('📊 Component: engagementTrends length:', this.engagementTrends.length);
-    
-    // Force update charts for all time frames
-    console.log('🔄 Component: Calling updateCustomerDistributionChart for timeFrame:', this.currentTimeFrame);
-    this.updateCustomerDistributionChart();
-    
-    console.log('🔄 Component: Calling updateEngagementChart for timeFrame:', this.currentTimeFrame);
-    this.updateEngagementChart();
-    
-    console.log('📊 Component: setStaticData completed for timeFrame:', this.currentTimeFrame);
+  private loadEngagementAndSegmentation(): void {
+    this.dashboardService.getEngagementAnalytics(this.currentTimeFrame).subscribe({
+      next: (analytics) => {
+        this.engagementAnalytics = analytics ?? {};
+        this.updateEngagementChart();
+      },
+      error: () => {
+        this.engagementAnalytics = {};
+        this.updateEngagementChart();
+      },
+    });
+
+    this.dashboardService.getEngagementTrends(this.currentTimeFrame).subscribe({
+      next: (trends) => {
+        this.engagementTrends = trends ?? [];
+        this.updateEngagementChart();
+      },
+      error: () => {
+        this.engagementTrends = [];
+        this.updateEngagementChart();
+      },
+    });
+
+    this.dashboardService.getVipTierData(this.currentTimeFrame).subscribe({
+      next: (tiers) => {
+        const palette = ['#708090', '#C0C0C0', '#FFD700', '#E5E4E2', '#4A5A66'];
+        const mapped = (tiers ?? []).map((tier: any, index: number) => ({
+          name: tier.name ?? `Tier ${index + 1}`,
+          value: Number(tier.value ?? tier.count ?? 0),
+          color: tier.color ?? palette[index % palette.length],
+        }));
+        this.customerSegmentation = mapped;
+        this.segmentationData = mapped;
+        this.totalCustomers = mapped.reduce((sum, tier) => sum + tier.value, 0);
+        this.updateCustomerDistributionChart();
+      },
+      error: () => {
+        this.customerSegmentation = [];
+        this.segmentationData = [];
+        this.totalCustomers = 0;
+        this.updateCustomerDistributionChart();
+      },
+    });
+  }
+
+  private loadOperationsMetrics(): void {
+    this.orderService.getAllOrder().subscribe({
+      next: (orders) => {
+        const sorted = [...orders].sort(
+          (a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+        );
+        this.recentOrders = sorted.slice(0, 8);
+        this.businessKpis.pendingDelivery = orders.filter((o) =>
+          ['PENDING', 'PAID', 'PROCESSING'].includes((o.status ?? '').toUpperCase())
+        ).length;
+
+        const counts = new Map<string, number>();
+        orders.forEach((order) => {
+          const key = (order.status ?? 'UNKNOWN').toUpperCase();
+          counts.set(key, (counts.get(key) ?? 0) + 1);
+        });
+        this.orderStatusSlices = Array.from(counts.entries()).map(([label, value]) => ({
+          label,
+          value,
+          color: ORDER_STATUS_CHART_COLORS[label] ?? '#708090',
+        }));
+        this.createOrderStatusChart();
+      },
+      error: () => {
+        this.recentOrders = [];
+        this.orderStatusSlices = [];
+        this.businessKpis.pendingDelivery = 0;
+        this.createOrderStatusChart();
+      },
+    });
+
+    this.productService.getAllProduct().subscribe({
+      next: (products) => {
+        this.businessKpis.lowStock = products.filter((p) => p.quantity > 0 && p.quantity <= 5).length;
+        this.businessKpis.outOfStock = products.filter((p) => p.quantity === 0).length;
+      },
+      error: () => {
+        this.businessKpis.lowStock = 0;
+        this.businessKpis.outOfStock = 0;
+      },
+    });
   }
 
   ngAfterViewInit(): void {
@@ -443,6 +448,8 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('🔄 Creating customer distribution chart in ngAfterViewInit');
         this.createCustomerDistributionPieChart();
       }
+      this.createOrderStatusChart();
+      this.createTopProductsBarChart();
     }, 100);
   }
 
@@ -507,6 +514,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.deliveryServiceChart) {
       this.deliveryServiceChart.destroy();
     }
+    if (this.topProductsBarChart) {
+      this.topProductsBarChart.destroy();
+    }
+    if (this.orderStatusChart) {
+      this.orderStatusChart.destroy();
+    }
   }
 
 
@@ -523,11 +536,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
       this.forceRefreshCharts();
     }, 1000);
     
-    // Also ensure static data is set and charts are updated for all time frames
     setTimeout(() => {
-      console.log('🔄 Force updating static data for time frame:', frame);
-      this.setStaticData();
-    }, 1500);
+      this.loadEngagementAndSegmentation();
+      this.loadOperationsMetrics();
+    }, 300);
   }
 
   private forceRefreshCharts(): void {
@@ -566,7 +578,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   updateDashboard(totalSales: number, trend: any[]): void {
     console.log('🔄 updateDashboard called with:', { totalSales, trendLength: trend.length, timeFrame: this.currentTimeFrame });
-    
+
+    const lastTrendPoint = trend.length ? trend[trend.length - 1] : null;
+    this.businessKpis.totalRevenue = totalSales;
+    this.businessKpis.dailySales = Number(lastTrendPoint?.total ?? 0);
+    this.businessKpis.totalOrders = this.orderCount;
+    this.businessKpis.activeCustomers = this.activeUserCount;
+    this.businessKpis.newRegistrations = this.newUsersCount;
+
     // Use real totalSales, orderCount, activeUserCount, customersCount, and trend for all metrics and chart data
     const prev = this.previousMetrics || {};
     const prevTotalSales = prev.totalSales || 0;
@@ -1510,6 +1529,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log('✅ Product sales data received:', data);
         this.productSalesData = data;
         this.createProductSalesPieChart();
+        this.createTopProductsBarChart();
       },
       error: (error) => {
         console.error('❌ Error loading product sales data:', error);
@@ -1522,6 +1542,7 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         // Remove static data fallback - show empty chart instead
         this.productSalesData = [];
         this.createProductSalesPieChart();
+        this.createTopProductsBarChart();
       }
     });
   }
@@ -3675,5 +3696,161 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
         chart.resize();
       }
     });
+  }
+
+  private createTopProductsBarChart(): void {
+    const canvas = document.getElementById('topProductsBarChart') as HTMLCanvasElement | null;
+    if (!canvas) {
+      return;
+    }
+
+    const ranked = [...(this.productSalesData ?? [])]
+      .sort((a, b) => Number(b.value ?? b.total ?? 0) - Number(a.value ?? a.total ?? 0))
+      .slice(0, 8);
+
+    const labels = ranked.map((item) => item.name ?? item.productName ?? 'Product');
+    const values = ranked.map((item) => Number(item.value ?? item.total ?? 0));
+    const colors = ranked.map((_, index) =>
+      ['#5F7355', '#C6A667', '#4A5A66', '#B08234', '#9E4A43', '#708090', '#8B7355', '#A9884A'][index % 8]
+    );
+
+    if (this.topProductsBarChart) {
+      this.topProductsBarChart.destroy();
+    }
+
+    this.topProductsBarChart = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Units sold',
+          data: values,
+          backgroundColor: colors,
+          borderRadius: 6,
+          maxBarThickness: 36,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { color: '#4A5A66', font: { size: 11 } },
+          },
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(74, 90, 102, 0.12)' },
+            ticks: { color: '#4A5A66', font: { size: 11 } },
+          },
+        },
+      },
+    });
+  }
+
+  private createOrderStatusChart(): void {
+    const canvas = document.getElementById('orderStatusChart') as HTMLCanvasElement | null;
+    if (!canvas) {
+      return;
+    }
+
+    if (this.orderStatusChart) {
+      this.orderStatusChart.destroy();
+    }
+
+    const labels = this.orderStatusSlices.map((slice) => this.formatStatusLabel(slice.label));
+    const values = this.orderStatusSlices.map((slice) => slice.value);
+    const colors = this.orderStatusSlices.map((slice) => slice.color);
+
+    this.orderStatusChart = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values.length ? values : [1],
+          backgroundColor: values.length ? colors : ['#E8DCC2'],
+          borderWidth: 0,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#4A5A66', boxWidth: 12, font: { size: 11 } },
+          },
+        },
+      },
+    });
+  }
+
+  advanceOrderStatus(order: UserOrderListDTO): void {
+    const flow: Record<string, string> = {
+      PENDING: 'PAID',
+      PAID: 'PROCESSING',
+      PROCESSING: 'SHIPPED',
+      SHIPPED: 'DELIVERED',
+    };
+    const current = (order.status ?? '').toUpperCase();
+    const next = flow[current];
+    if (!next || this.orderStatusUpdating[order.orderId]) {
+      return;
+    }
+    this.orderStatusUpdating[order.orderId] = true;
+    this.orderService.updateOrderStatus(order.orderId, next).subscribe({
+      next: () => {
+        order.status = next;
+        this.orderStatusUpdating[order.orderId] = false;
+        this.loadOperationsMetrics();
+      },
+      error: () => {
+        this.orderStatusUpdating[order.orderId] = false;
+      },
+    });
+  }
+
+  canAdvanceOrderStatus(order: UserOrderListDTO): boolean {
+    const current = (order.status ?? '').toUpperCase();
+    return ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED'].includes(current);
+  }
+
+  formatStatusLabel(status: string): string {
+    return status.charAt(0) + status.slice(1).toLowerCase();
+  }
+
+  statusTone(status: string): 'success' | 'warning' | 'danger' | 'info' | 'default' {
+    switch ((status ?? '').toUpperCase()) {
+      case 'DELIVERED':
+        return 'success';
+      case 'PENDING':
+      case 'PROCESSING':
+        return 'warning';
+      case 'CANCELLED':
+      case 'RETURNED':
+        return 'danger';
+      case 'SHIPPED':
+      case 'PAID':
+        return 'info';
+      default:
+        return 'default';
+    }
+  }
+
+  formatOrderDate(value: string | Date | undefined): string {
+    if (!value) {
+      return '—';
+    }
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? '—' : format(date, 'MMM d, yyyy HH:mm');
+  }
+
+  formatCurrency(amount: number | undefined): string {
+    const value = Number(amount ?? 0);
+    return `${value.toLocaleString()} MMK`;
   }
 }

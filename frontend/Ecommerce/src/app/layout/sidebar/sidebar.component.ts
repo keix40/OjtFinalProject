@@ -36,6 +36,7 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   tiers: any[] = []; // Store VIP tiers for filtering
   sidebarVisible: boolean = window.innerWidth >= 640; // Show sidebar by default on desktop
   sidebarCollapsed: boolean = true; // Start with collapsed sidebar
+  sidebarPinned = false;
   currentMenu: string | null = null;
   currentSubmenu: string | null = null; // Track which submenu is active
   private railToggleHandler: (() => void) | null = null;
@@ -67,11 +68,25 @@ export class SidebarComponent implements OnInit, AfterViewInit {
   }
 
   onSidebarMouseLeave() {
+    if (this.sidebarPinned) {
+      return;
+    }
     this.collapseTimeout = setTimeout(() => {
       this.sidebarCollapsed = true;
       // Reduced delay for smoother transition
       setTimeout(() => this.initializeIcons(), 50);
     }, 120); // 120ms delay for smoothness
+  }
+
+  togglePinned(): void {
+    this.sidebarPinned = !this.sidebarPinned;
+    if (this.sidebarPinned) {
+      if (this.collapseTimeout) {
+        clearTimeout(this.collapseTimeout);
+      }
+      this.sidebarCollapsed = false;
+    }
+    this.forceReinitializeIcons();
   }
 
   onProfileMouseEnter() {
@@ -360,49 +375,33 @@ export class SidebarComponent implements OnInit, AfterViewInit {
 
   get collapsedSubmenuItems() {
     switch (this.currentMenu) {
-      case 'products':
+      case 'catalog':
+        return [
+          { icon: 'chevron-left', link: null },
+          { icon: 'folder', link: '/categorylist' },
+          { icon: 'tag', link: '/brandlist' },
+          { icon: 'list', link: '/discount-list' },
+          { icon: 'ticket', link: '/discount-coupon' },
+        ];
+      case 'inventory':
         return [
           { icon: 'chevron-left', link: null },
           { icon: 'plus-square', link: '/product' },
           { icon: 'list', link: '/productlist' },
-          { icon: 'tag', link: '/brandlist' },
-          { icon: 'tag', link: '/categorylist' },
         ];
       case 'orders':
         return [
           { icon: 'chevron-left', link: null },
           { icon: 'clipboard-list', link: '/orders' },
           { icon: 'rotate-ccw', link: '/return' },
+          { icon: 'truck', link: '/deliveryservicelist' },
         ];
-      case 'discounts':
-        return [
-          { icon: 'chevron-left', link: null },
-          { icon: 'list', link: '/discount-list' },
-          { icon: 'plus', link: 'discount-add' },
-          { icon: 'ticket', link: '/discount-coupon' },
-        ];
-      case 'event':
-        return [
-          { icon: 'chevron-left', link: null },
-          { icon: 'circle-check', link: '/admin/event' },
-          { icon: 'list-check', link: '/admin/eventlist' },
-        ];
-      case 'delivery':
-        return [
-          { icon: 'chevron-left', link: null },
-          { icon: 'plus-square', link: '/createdeliveryservice' },
-          { icon: 'list', link: '/deliveryservicelist' },
-        ];
-      case 'users':
+      case 'insights':
         return [
           { icon: 'chevron-left', link: null },
           { icon: 'user', link: '/users/customers' },
           { icon: 'crown', link: '/users/vip' },
-          { icon: 'ban', link: '/users/blacklist' },
-          { icon: 'user-plus', link: '/users/create' },
           { icon: 'shield', link: '/users/admins' },
-          { icon: 'key-round', link: '/users/roles' },
-          { icon: 'alert-triangle', link: '/users/login-attempts' },
           { icon: 'activity', link: '/users/activity' },
         ];
       default:

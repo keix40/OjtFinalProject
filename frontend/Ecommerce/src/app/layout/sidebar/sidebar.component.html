@@ -16,12 +16,22 @@
         <strong>Britium</strong>
         <span>Gallery</span>
       </div>
+      <button
+        type="button"
+        class="admin-rail__pin"
+        *ngIf="!sidebarCollapsed"
+        (click)="togglePinned()"
+        [attr.aria-pressed]="sidebarPinned"
+        [title]="sidebarPinned ? 'Unpin sidebar' : 'Pin sidebar open'"
+      >
+        <i [attr.data-lucide]="sidebarPinned ? 'panel-left-close' : 'panel-left'"></i>
+      </button>
     </div>
 
     <ul class="admin-rail__nav">
       <!-- Main menu -->
       <ng-container *ngIf="!currentSubmenu && !sidebarCollapsed">
-        <li class="admin-rail__section">Command</li>
+        <li class="admin-rail__section">Dashboard</li>
         <li class="admin-rail__item">
           <a
             class="admin-rail__link"
@@ -29,68 +39,64 @@
             routerLinkActive="is-active"
             [routerLinkActiveOptions]="{ exact: true }"
           >
-            <i data-lucide="home"></i>
-            <span class="admin-rail__label">Dashboard</span>
+            <i data-lucide="layout-dashboard"></i>
+            <span class="admin-rail__label">Overview</span>
           </a>
         </li>
 
-        <li class="admin-rail__section">Catalogue</li>
+        <li class="admin-rail__section">Catalog Management</li>
         <li class="admin-rail__item">
-          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('products')">
+          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('catalog')">
+            <i data-lucide="tags"></i>
+            <span class="admin-rail__label">Catalog</span>
+            <i data-lucide="chevron-right" class="admin-rail__chevron"></i>
+          </button>
+        </li>
+
+        <li class="admin-rail__section">Inventory &amp; Products</li>
+        <li class="admin-rail__item">
+          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('inventory')">
             <i data-lucide="package"></i>
             <span class="admin-rail__label">Products</span>
             <i data-lucide="chevron-right" class="admin-rail__chevron"></i>
           </button>
         </li>
+
+        <li class="admin-rail__section">Order Management</li>
         <li class="admin-rail__item">
           <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('orders')">
             <i data-lucide="shopping-cart"></i>
-            <span class="admin-rail__label">Orders</span>
-            <i data-lucide="chevron-right" class="admin-rail__chevron"></i>
-          </button>
-        </li>
-        <li class="admin-rail__item">
-          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('discounts')">
-            <i data-lucide="percent"></i>
-            <span class="admin-rail__label">Discounts</span>
-            <i data-lucide="chevron-right" class="admin-rail__chevron"></i>
-          </button>
-        </li>
-        <li class="admin-rail__item">
-          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('event')">
-            <i data-lucide="circle-check"></i>
-            <span class="admin-rail__label">Event Management</span>
-            <i data-lucide="chevron-right" class="admin-rail__chevron"></i>
-          </button>
-        </li>
-        <li class="admin-rail__item">
-          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('delivery')">
-            <i data-lucide="truck"></i>
-            <span class="admin-rail__label">Delivery Service</span>
+            <span class="admin-rail__label">Orders &amp; Fulfillment</span>
             <i data-lucide="chevron-right" class="admin-rail__chevron"></i>
           </button>
         </li>
 
-        <li class="admin-rail__section">People</li>
+        <li class="admin-rail__section">Customer Insights</li>
         <li class="admin-rail__item">
-          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('users')">
+          <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('insights')">
             <i data-lucide="users"></i>
-            <span class="admin-rail__label">User Management</span>
+            <span class="admin-rail__label">Customers &amp; Security</span>
             <i data-lucide="chevron-right" class="admin-rail__chevron"></i>
           </button>
         </li>
 
-        <li class="admin-rail__section">Settings</li>
+        <li class="admin-rail__section">System Settings</li>
         <li class="admin-rail__item">
           <a class="admin-rail__link" [routerLink]="'/revenue-target-admin'" routerLinkActive="is-active">
             <i data-lucide="target"></i>
-            <span class="admin-rail__label">Revenue Target</span>
+            <span class="admin-rail__label">Revenue Targets</span>
+          </a>
+        </li>
+        <li class="admin-rail__item">
+          <a class="admin-rail__link" [routerLink]="'/admin/vip-tiers'" routerLinkActive="is-active">
+            <i data-lucide="crown"></i>
+            <span class="admin-rail__label">VIP Tiers</span>
           </a>
         </li>
         <li class="admin-rail__item">
           <a class="admin-rail__link" [routerLink]="'/admin/policies'" routerLinkActive="is-active">
             <i data-lucide="file-text"></i>
-            <span class="admin-rail__label">Policy Management</span>
+            <span class="admin-rail__label">Policies</span>
           </a>
         </li>
       </ng-container>
@@ -105,8 +111,54 @@
         </li>
 
         <ng-container [ngSwitch]="currentSubmenu">
-          <ng-container *ngSwitchCase="'products'">
-            <li class="admin-rail__section">Products</li>
+          <ng-container *ngSwitchCase="'catalog'">
+            <li class="admin-rail__section">Catalog</li>
+            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.CATEGORIES_VIEW)">
+              <a class="admin-rail__link" [routerLink]="'/categorylist'" routerLinkActive="is-active">
+                <i data-lucide="folder"></i>
+                <span class="admin-rail__label">Categories</span>
+              </a>
+            </li>
+            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.BRANDS_VIEW)">
+              <a class="admin-rail__link" [routerLink]="'/brandlist'" routerLinkActive="is-active">
+                <i data-lucide="tag"></i>
+                <span class="admin-rail__label">Brands</span>
+              </a>
+            </li>
+            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_VIEW)">
+              <a class="admin-rail__link" [routerLink]="'/discount-list'" routerLinkActive="is-active">
+                <i data-lucide="list"></i>
+                <span class="admin-rail__label">Discount Events</span>
+              </a>
+            </li>
+            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
+              <a class="admin-rail__link" [routerLink]="'discount-add'" routerLinkActive="is-active">
+                <i data-lucide="plus"></i>
+                <span class="admin-rail__label">Add Discount</span>
+              </a>
+            </li>
+            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
+              <a class="admin-rail__link" [routerLink]="'/discount-coupon'" routerLinkActive="is-active">
+                <i data-lucide="ticket"></i>
+                <span class="admin-rail__label">Coupons</span>
+              </a>
+            </li>
+            <li class="admin-rail__item">
+              <a class="admin-rail__link" [routerLink]="'/admin/eventlist'" routerLinkActive="is-active">
+                <i data-lucide="list-check"></i>
+                <span class="admin-rail__label">Events</span>
+              </a>
+            </li>
+            <li class="admin-rail__item">
+              <a class="admin-rail__link" [routerLink]="'/admin/event'" routerLinkActive="is-active">
+                <i data-lucide="circle-check"></i>
+                <span class="admin-rail__label">Add Event</span>
+              </a>
+            </li>
+          </ng-container>
+
+          <ng-container *ngSwitchCase="'inventory'">
+            <li class="admin-rail__section">Inventory</li>
             <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.PRODUCTS_CREATE)">
               <a class="admin-rail__link" [routerLink]="'/product'" routerLinkActive="is-active">
                 <i data-lucide="plus-square"></i>
@@ -117,18 +169,6 @@
               <a class="admin-rail__link" [routerLink]="'/productlist'" routerLinkActive="is-active">
                 <i data-lucide="list"></i>
                 <span class="admin-rail__label">Product List</span>
-              </a>
-            </li>
-            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.BRANDS_VIEW)">
-              <a class="admin-rail__link" [routerLink]="'/brandlist'" routerLinkActive="is-active">
-                <i data-lucide="tag"></i>
-                <span class="admin-rail__label">Brand List</span>
-              </a>
-            </li>
-            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.CATEGORIES_VIEW)">
-              <a class="admin-rail__link" [routerLink]="'/categorylist'" routerLinkActive="is-active">
-                <i data-lucide="tag"></i>
-                <span class="admin-rail__label">Category List</span>
               </a>
             </li>
           </ng-container>
@@ -144,50 +184,24 @@
             <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.REFUND_VIEW)">
               <a class="admin-rail__link" [routerLink]="'/return'" routerLinkActive="is-active">
                 <i data-lucide="rotate-ccw"></i>
-                <span class="admin-rail__label">Refund Management</span>
+                <span class="admin-rail__label">Returns &amp; Refunds</span>
               </a>
             </li>
-          </ng-container>
-
-          <ng-container *ngSwitchCase="'discounts'">
-            <li class="admin-rail__section">Discounts</li>
-            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_VIEW)">
-              <a class="admin-rail__link" [routerLink]="'/discount-list'" routerLinkActive="is-active">
-                <i data-lucide="list"></i>
-                <span class="admin-rail__label">Discount List</span>
-              </a>
-            </li>
-            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
-              <a class="admin-rail__link" [routerLink]="'discount-add'" routerLinkActive="is-active">
-                <i data-lucide="plus"></i>
-                <span class="admin-rail__label">Add Discount</span>
-              </a>
-            </li>
-            <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DISCOUNTS_CREATE)">
-              <a class="admin-rail__link" [routerLink]="'/discount-coupon'" routerLinkActive="is-active">
-                <i data-lucide="ticket"></i>
-                <span class="admin-rail__label">Coupon</span>
-              </a>
-            </li>
-          </ng-container>
-
-          <ng-container *ngSwitchCase="'delivery'">
-            <li class="admin-rail__section">Delivery</li>
             <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DELIVERY_CREATE)">
               <a class="admin-rail__link" [routerLink]="'/createdeliveryservice'" routerLinkActive="is-active">
                 <i data-lucide="truck"></i>
-                <span class="admin-rail__label">Add Delivery</span>
+                <span class="admin-rail__label">Add Delivery Service</span>
               </a>
             </li>
             <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.DELIVERY_VIEW)">
               <a class="admin-rail__link" [routerLink]="'/deliveryservicelist'" routerLinkActive="is-active">
                 <i data-lucide="list"></i>
-                <span class="admin-rail__label">Delivery Service List</span>
+                <span class="admin-rail__label">Delivery Services</span>
               </a>
             </li>
           </ng-container>
 
-          <ng-container *ngSwitchCase="'users'">
+          <ng-container *ngSwitchCase="'insights'">
             <li class="admin-rail__section">Customers</li>
             <li class="admin-rail__item" *ngIf="permissionService.hasPermission(PermissionConstants.CUSTOMERS_VIEW)">
               <a class="admin-rail__link" [routerLink]="'/users/customers'" routerLinkActive="is-active">
@@ -248,19 +262,39 @@
             </li>
           </ng-container>
 
-          <ng-container *ngSwitchCase="'event'">
-            <li class="admin-rail__section">Events</li>
+          <ng-container *ngSwitchCase="'products'">
             <li class="admin-rail__item">
-              <a class="admin-rail__link" [routerLink]="'/admin/event'" routerLinkActive="is-active">
-                <i data-lucide="circle-check"></i>
-                <span class="admin-rail__label">Add Event</span>
-              </a>
+              <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('inventory')">
+                <span class="admin-rail__label">Open Inventory &amp; Products</span>
+              </button>
             </li>
+          </ng-container>
+          <ng-container *ngSwitchCase="'users'">
             <li class="admin-rail__item">
-              <a class="admin-rail__link" [routerLink]="'/admin/eventlist'" routerLinkActive="is-active">
-                <i data-lucide="list-check"></i>
-                <span class="admin-rail__label">Event List</span>
-              </a>
+              <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('insights')">
+                <span class="admin-rail__label">Open Customer Insights</span>
+              </button>
+            </li>
+          </ng-container>
+          <ng-container *ngSwitchCase="'discounts'">
+            <li class="admin-rail__item">
+              <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('catalog')">
+                <span class="admin-rail__label">Open Catalog Management</span>
+              </button>
+            </li>
+          </ng-container>
+          <ng-container *ngSwitchCase="'delivery'">
+            <li class="admin-rail__item">
+              <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('orders')">
+                <span class="admin-rail__label">Open Order Management</span>
+              </button>
+            </li>
+          </ng-container>
+          <ng-container *ngSwitchCase="'event'">
+            <li class="admin-rail__item">
+              <button type="button" class="admin-rail__btn" (click)="navigateToSubmenu('catalog')">
+                <span class="admin-rail__label">Open Catalog Management</span>
+              </button>
             </li>
           </ng-container>
         </ng-container>
@@ -282,32 +316,22 @@
             </a>
           </li>
           <li class="admin-rail__item">
-            <button type="button" class="admin-rail__btn" title="Products" (click)="navigateToSubmenu('products'); forceReinitializeIcons()">
+            <button type="button" class="admin-rail__btn" title="Catalog Management" (click)="navigateToSubmenu('catalog'); forceReinitializeIcons()">
+              <i data-lucide="tags"></i>
+            </button>
+          </li>
+          <li class="admin-rail__item">
+            <button type="button" class="admin-rail__btn" title="Inventory & Products" (click)="navigateToSubmenu('inventory'); forceReinitializeIcons()">
               <i data-lucide="package"></i>
             </button>
           </li>
           <li class="admin-rail__item">
-            <button type="button" class="admin-rail__btn" title="Orders" (click)="navigateToSubmenu('orders'); forceReinitializeIcons()">
+            <button type="button" class="admin-rail__btn" title="Order Management" (click)="navigateToSubmenu('orders'); forceReinitializeIcons()">
               <i data-lucide="shopping-cart"></i>
             </button>
           </li>
           <li class="admin-rail__item">
-            <button type="button" class="admin-rail__btn" title="Discounts" (click)="navigateToSubmenu('discounts'); forceReinitializeIcons()">
-              <i data-lucide="percent"></i>
-            </button>
-          </li>
-          <li class="admin-rail__item">
-            <button type="button" class="admin-rail__btn" title="Event Management" (click)="navigateToSubmenu('event'); forceReinitializeIcons()">
-              <i data-lucide="circle-check"></i>
-            </button>
-          </li>
-          <li class="admin-rail__item">
-            <button type="button" class="admin-rail__btn" title="Delivery Service" (click)="navigateToSubmenu('delivery'); forceReinitializeIcons()">
-              <i data-lucide="truck"></i>
-            </button>
-          </li>
-          <li class="admin-rail__item">
-            <button type="button" class="admin-rail__btn" title="User Management" (click)="navigateToSubmenu('users'); forceReinitializeIcons()">
+            <button type="button" class="admin-rail__btn" title="Customer Insights" (click)="navigateToSubmenu('insights'); forceReinitializeIcons()">
               <i data-lucide="users"></i>
             </button>
           </li>
@@ -331,7 +355,25 @@
           </li>
 
           <ng-container [ngSwitch]="currentSubmenu">
-            <ng-container *ngSwitchCase="'products'">
+            <ng-container *ngSwitchCase="'catalog'">
+              <li class="admin-rail__item">
+                <a class="admin-rail__link" [routerLink]="'/categorylist'" title="Categories" (click)="forceReinitializeIcons()">
+                  <i data-lucide="folder"></i>
+                </a>
+              </li>
+              <li class="admin-rail__item">
+                <a class="admin-rail__link" [routerLink]="'/brandlist'" title="Brands" (click)="forceReinitializeIcons()">
+                  <i data-lucide="tag"></i>
+                </a>
+              </li>
+              <li class="admin-rail__item">
+                <a class="admin-rail__link" [routerLink]="'/discount-list'" title="Discounts" (click)="forceReinitializeIcons()">
+                  <i data-lucide="percent"></i>
+                </a>
+              </li>
+            </ng-container>
+
+            <ng-container *ngSwitchCase="'inventory'">
               <li class="admin-rail__item">
                 <a class="admin-rail__link" [routerLink]="'/product'" title="Add Product" (click)="forceReinitializeIcons()">
                   <i data-lucide="plus-square"></i>
@@ -340,16 +382,6 @@
               <li class="admin-rail__item">
                 <a class="admin-rail__link" [routerLink]="'/productlist'" title="Product List" (click)="forceReinitializeIcons()">
                   <i data-lucide="list"></i>
-                </a>
-              </li>
-              <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'/brandlist'" title="Brand List" (click)="forceReinitializeIcons()">
-                  <i data-lucide="tag"></i>
-                </a>
-              </li>
-              <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'/categorylist'" title="Category List" (click)="forceReinitializeIcons()">
-                  <i data-lucide="tag"></i>
                 </a>
               </li>
             </ng-container>
@@ -365,40 +397,19 @@
                   <i data-lucide="rotate-ccw"></i>
                 </a>
               </li>
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'discounts'">
-              <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'/discount-list'" title="Discount List" (click)="forceReinitializeIcons()">
-                  <i data-lucide="list"></i>
-                </a>
-              </li>
-              <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'discount-add'" title="Add Discount" (click)="forceReinitializeIcons()">
-                  <i data-lucide="plus"></i>
-                </a>
-              </li>
-              <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'/discount-coupon'" title="Coupon List" (click)="forceReinitializeIcons()">
-                  <i data-lucide="ticket"></i>
-                </a>
-              </li>
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'delivery'">
               <li class="admin-rail__item">
                 <a class="admin-rail__link" [routerLink]="'/createdeliveryservice'" title="Add Delivery" (click)="forceReinitializeIcons()">
                   <i data-lucide="truck"></i>
                 </a>
               </li>
               <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'/deliveryservicelist'" title="Delivery Service List" (click)="forceReinitializeIcons()">
+                <a class="admin-rail__link" [routerLink]="'/deliveryservicelist'" title="Delivery Services" (click)="forceReinitializeIcons()">
                   <i data-lucide="list"></i>
                 </a>
               </li>
             </ng-container>
 
-            <ng-container *ngSwitchCase="'users'">
+            <ng-container *ngSwitchCase="'insights'">
               <li class="admin-rail__item">
                 <a class="admin-rail__link" [routerLink]="'/users/customers'" title="All Customers" (click)="forceReinitializeIcons()">
                   <i data-lucide="user"></i>
@@ -437,19 +448,6 @@
               <li class="admin-rail__item">
                 <a class="admin-rail__link" [routerLink]="'/users/activity'" title="Activity Logs" (click)="forceReinitializeIcons()">
                   <i data-lucide="activity"></i>
-                </a>
-              </li>
-            </ng-container>
-
-            <ng-container *ngSwitchCase="'event'">
-              <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'/admin/event'" title="Add Event" (click)="forceReinitializeIcons()">
-                  <i data-lucide="circle-check"></i>
-                </a>
-              </li>
-              <li class="admin-rail__item">
-                <a class="admin-rail__link" [routerLink]="'/admin/eventlist'" title="Event List" (click)="forceReinitializeIcons()">
-                  <i data-lucide="list-check"></i>
                 </a>
               </li>
             </ng-container>
