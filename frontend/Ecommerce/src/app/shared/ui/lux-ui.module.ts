@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { BreadcrumbComponent } from '../../breadcrumb.component';
 import { LuxButtonComponent } from './lux-button.component';
 import { LuxCardComponent } from './lux-card.component';
 import { LuxBadgeComponent } from './lux-badge.component';
@@ -39,7 +40,7 @@ const UI = [
 
 @NgModule({
   declarations: UI,
-  imports: [CommonModule],
+  imports: [CommonModule, BreadcrumbComponent],
   exports: UI,
 })
 export class LuxUiModule {}

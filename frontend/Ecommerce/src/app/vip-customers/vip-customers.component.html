@@ -1,5 +1,5 @@
 <lux-page-shell variant="admin" shellClass="admin-page vip-customers-page">
-  <lux-page-header variant="admin" eyebrow="People" title="VIP Customers" subtitle="Manage high-value customers and build lasting loyalty relationships">
+  <lux-page-header variant="admin" eyebrow="Customer Insights" title="VIP Customers" subtitle="Manage high-value customers and build lasting loyalty relationships">
     <lux-button variant="secondary" (pressed)="refreshData()">Refresh</lux-button>
   </lux-page-header>
   <div class="vip-customers-body space-y-6">
@@ -198,23 +198,13 @@
         <!-- Table View -->
         <div *ngIf="viewMode === 'table'" class="overflow-x-auto">
           <!-- Bulk Actions and Export -->
-          <div class="flex flex-wrap items-center justify-between mb-4 gap-2">
-            <div class="flex gap-2">
-              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length" (click)="bulkDelete()">
-                <i data-lucide="trash" class="w-4 h-4 mr-1 inline text-red-600"></i>
-                Delete Selected
-              </button>
-              <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all disabled:opacity-50 disabled:pointer-events-none" [disabled]="!selectedCustomers.length" (click)="bulkChangeStatus()">
-                <i data-lucide="power" class="w-4 h-4 mr-1 inline"></i>
-                Toggle Status
-        </button>
-      </div>
-            <button type="button" class="glassmorphism-light px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-white/80 transition-all" (click)="exportVipCustomers()">
-              <i data-lucide="download" class="w-4 h-4 mr-1 inline"></i>
-              Export CSV
-            </button>
+          <div class="admin-actions-row admin-toolbar">
+            <lux-button variant="ghost" [disabled]="!selectedCustomers.length" (pressed)="bulkDelete()">Delete selected</lux-button>
+            <lux-button variant="secondary" [disabled]="!selectedCustomers.length" (pressed)="bulkChangeStatus()">Toggle status</lux-button>
+            <lux-button variant="secondary" (pressed)="exportVipCustomers()">Export CSV</lux-button>
           </div>
-          <table class="min-w-full divide-y divide-gray-200">
+          <div class="admin-table-wrap">
+          <table class="admin-table min-w-full">
             <thead>
               <tr>
                 <th class="px-4 py-3">
@@ -286,6 +276,7 @@
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
         <!-- Pagination, modals, and other icons should use the same Lucide approach -->
       </div>

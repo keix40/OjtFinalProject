@@ -13,10 +13,52 @@ export class BreadcrumbService {
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
       let breadcrumbs = this.buildBreadcrumbs(this.route.root);
-      // Always prepend Home as the root
-      breadcrumbs = [{ label: 'Home', link: '/home' }, ...breadcrumbs];
+      const url = this.router.url.split('?')[0] || '/';
+      if (this.isAdminRoute(url)) {
+        const root = { label: 'Dashboard', link: '/dashboard' };
+        breadcrumbs = breadcrumbs.filter((crumb, index, all) =>
+          index === 0 || crumb.label !== all[index - 1]?.label
+        );
+        if (breadcrumbs.length && breadcrumbs[0].label === 'Dashboard') {
+          breadcrumbs = [root, ...breadcrumbs.slice(1)];
+        } else {
+          breadcrumbs = [root, ...breadcrumbs];
+        }
+      } else {
+        breadcrumbs = [{ label: 'Home', link: '/home' }, ...breadcrumbs];
+      }
       this._breadcrumbs$.next(breadcrumbs);
     });
+  }
+
+  private isAdminRoute(url: string): boolean {
+    const path = url.replace(/^\//, '');
+    if (!path) {
+      return false;
+    }
+    if (/^product\/[^/]+/.test(path) && !path.startsWith('productlist') && !path.startsWith('product-edit')) {
+      return false;
+    }
+    const adminPrefixes = [
+      'dashboard',
+      'productlist',
+      'product-edit',
+      'categorylist',
+      'brandlist',
+      'addsubcategory',
+      'orders',
+      'return',
+      'discount-',
+      'createdeliveryservice',
+      'deliveryservicelist',
+      'users/',
+      'revenue-target-admin',
+      'admin/',
+    ];
+    if (path === 'product') {
+      return true;
+    }
+    return adminPrefixes.some((prefix) => path === prefix.replace(/\/$/, '') || path.startsWith(prefix));
   }
 
   private buildBreadcrumbs(route: ActivatedRoute, url: string = '', breadcrumbs: any[] = []): any[] {

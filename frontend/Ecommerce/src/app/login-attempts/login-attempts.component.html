@@ -14,7 +14,7 @@
     <div class="alert-banner" *ngIf="criticalAlerts.length > 0">
       <div class="alert-content">
         <span class="alert-text">{{ criticalAlerts.length }} Critical Security Alert(s) Detected</span>
-        <button class="btn btn-alert-action" (click)="viewAlerts()">View Details</button>
+        <lux-button variant="primary" (pressed)="viewAlerts()">View details</lux-button>
       </div>
     </div>
   

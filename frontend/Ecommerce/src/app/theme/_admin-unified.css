@@ -1,0 +1,436 @@
+/**
+ * Unified admin chrome — applies to every route under app-layout / .admin-page
+ * so legacy Bootstrap/Tailwind markup reads as one business admin system.
+ */
+
+.admin-shell .customer-breadcrumb,
+.admin-page .customer-breadcrumb,
+.admin-breadcrumb {
+  font-family: var(--lux-font-sans);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  color: var(--lux-stone);
+  margin-bottom: 0.75rem;
+  padding: 0.35rem 0;
+}
+
+.admin-breadcrumb a.lux-link {
+  color: var(--lux-graphite);
+}
+
+.admin-breadcrumb a.lux-link:hover {
+  color: var(--lux-ink);
+}
+
+.admin-page .pm-section-title,
+.admin-page h2.pm-section-title {
+  margin: 0;
+  font-family: var(--lux-font-serif);
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--lux-ink);
+  letter-spacing: 0.01em;
+}
+
+.admin-page .page-panel,
+.admin-page .glassmorphism,
+.admin-page .glassmorphism-light,
+.admin-page .glassmorphism-card {
+  background: var(--lux-cream) !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-md) !important;
+  box-shadow: var(--lux-shadow-xs) !important;
+  backdrop-filter: none !important;
+  color: var(--lux-ink);
+}
+
+.admin-page .text-gray-900,
+.admin-page .text-slate-900,
+.admin-page .text-slate-800 {
+  color: var(--lux-ink) !important;
+}
+
+.admin-page .text-gray-700,
+.admin-page .text-gray-600,
+.admin-page .text-slate-700,
+.admin-page .text-slate-600,
+.admin-page .text-stone {
+  color: var(--lux-graphite) !important;
+}
+
+.admin-page .text-gray-500,
+.admin-page .text-slate-500 {
+  color: var(--lux-stone) !important;
+}
+
+.admin-page .divide-y.divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+.admin-page .border-gray-200,
+.admin-page .border-slate-200 {
+  border-color: var(--lux-fog) !important;
+}
+
+.admin-page .admin-table-wrap,
+.admin-page .lux-policy-table-wrap,
+.admin-page .lux-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+  background: var(--lux-cream);
+}
+
+.admin-page .admin-table,
+.admin-page .lux-admin-table,
+.admin-page table.lux-table,
+.admin-page table.min-w-full,
+.admin-page .table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--lux-font-sans);
+  font-size: 0.875rem;
+  color: var(--lux-ink);
+}
+
+.admin-page .admin-table th,
+.admin-page .lux-admin-table th,
+.admin-page table.min-w-full thead th,
+.admin-page .table thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lux-stone);
+  background: rgba(247, 243, 236, 0.85);
+  border-bottom: 1px solid var(--lux-fog);
+  white-space: nowrap;
+}
+
+.admin-page .admin-table td,
+.admin-page .lux-admin-table td,
+.admin-page table.min-w-full tbody td,
+.admin-page .table tbody td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--lux-fog);
+  vertical-align: middle;
+}
+
+.admin-page .admin-table tbody tr:last-child td,
+.admin-page table.min-w-full tbody tr:last-child td,
+.admin-page .table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-page .admin-table tbody tr:hover td,
+.admin-page table.min-w-full tbody tr:hover td,
+.admin-page .table tbody tr:hover td,
+.admin-page table.min-w-full tbody tr.even\:bg-gray-50:hover td {
+  background: rgba(232, 220, 194, 0.28) !important;
+}
+
+.admin-page table.min-w-full tbody tr.bg-white,
+.admin-page table.min-w-full tbody tr.even\:bg-gray-50 {
+  background: transparent !important;
+}
+
+.admin-page .cell-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.admin-page .cell-strong {
+  font-weight: 500;
+  color: var(--lux-ink);
+}
+
+.admin-page .cell-muted {
+  font-size: 0.75rem;
+  color: var(--lux-stone);
+}
+
+.admin-page .admin-actions-row,
+.admin-page .admin-toolbar,
+.admin-page .la-toolbar,
+.admin-page .brand-toolbar,
+.admin-page .cat-toolbar,
+.admin-page .pm-header-actions,
+.admin-page .admin-export-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-page .admin-filter-fields,
+.admin-page .admin-filter-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.admin-page .lux-data {
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--lux-graphite);
+}
+
+/* Legacy Bootstrap buttons inside admin pages */
+.admin-page .btn,
+.admin-shell .content-wrapper .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.35rem;
+  padding: 0.45rem 1rem;
+  font-family: var(--lux-font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: var(--lux-radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color var(--lux-dur) var(--lux-ease),
+    color var(--lux-dur) var(--lux-ease),
+    border-color var(--lux-dur) var(--lux-ease);
+}
+
+.admin-page .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-page .btn-primary,
+.admin-page .btn.btn-primary {
+  background: var(--lux-ink);
+  border-color: var(--lux-ink);
+  color: var(--lux-ivory);
+}
+
+.admin-page .btn-primary:hover:not(:disabled),
+.admin-page .btn.btn-primary:hover:not(:disabled) {
+  background: var(--lux-champagne-deep);
+  border-color: var(--lux-champagne-deep);
+}
+
+.admin-page .btn-secondary,
+.admin-page .btn-light,
+.admin-page .btn-outline-secondary {
+  background: transparent;
+  border-color: var(--lux-fog);
+  color: var(--lux-ink);
+}
+
+.admin-page .btn-secondary:hover:not(:disabled),
+.admin-page .btn-light:hover:not(:disabled) {
+  background: var(--lux-champagne-soft);
+}
+
+.admin-page .btn-danger,
+.admin-page .btn-delete-confirm {
+  background: var(--lux-danger);
+  border-color: var(--lux-danger);
+  color: #fff;
+}
+
+.admin-page .btn-success {
+  background: var(--lux-success);
+  border-color: var(--lux-success);
+  color: #fff;
+}
+
+.admin-page .btn-warning,
+.admin-page .btn-outline-warning.active {
+  background: var(--lux-warning);
+  border-color: var(--lux-warning);
+  color: var(--lux-ink);
+}
+
+.admin-page .btn-sm,
+.admin-page .btn-xs {
+  min-height: 2rem;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.6875rem;
+}
+
+.admin-page .btn-alert-action,
+.admin-page .btn-action,
+.admin-page .btn-glassmorphism,
+.admin-page .btn-clear-feed {
+  background: var(--lux-ink);
+  color: var(--lux-ivory);
+  border-color: var(--lux-ink);
+}
+
+.admin-page .btn-action.btn-block {
+  background: var(--lux-danger);
+  border-color: var(--lux-danger);
+}
+
+.admin-page .btn-action.btn-whitelist {
+  background: var(--lux-success);
+  border-color: var(--lux-success);
+}
+
+.admin-page .btn-action.btn-details {
+  background: transparent;
+  border-color: var(--lux-fog);
+  color: var(--lux-ink);
+}
+
+.admin-page .glassmorphism-light.px-4,
+.admin-page button.glassmorphism-light {
+  min-height: 2.35rem;
+  padding: 0.45rem 1rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--lux-ink) !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-sm) !important;
+  background: var(--lux-porcelain) !important;
+}
+
+.admin-page button.glassmorphism-light:hover:not(:disabled) {
+  background: var(--lux-champagne-soft) !important;
+}
+
+.admin-page .inline-flex.items-center.px-3.py-1.rounded-full.text-xs.font-medium {
+  font-family: var(--lux-font-sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.6875rem !important;
+  border-radius: var(--lux-radius-sm) !important;
+}
+
+.admin-page .bg-green-100\/80.text-green-700 {
+  background: rgba(95, 115, 85, 0.15) !important;
+  color: var(--lux-success) !important;
+  border-color: rgba(95, 115, 85, 0.35) !important;
+}
+
+.admin-page .bg-red-100\/80.text-red-700 {
+  background: rgba(158, 74, 67, 0.12) !important;
+  color: var(--lux-danger) !important;
+  border-color: rgba(158, 74, 67, 0.35) !important;
+}
+
+.admin-page .bg-gray-100\/80.text-gray-500 {
+  background: rgba(74, 90, 102, 0.1) !important;
+  color: var(--lux-stone) !important;
+}
+
+.admin-page .form-control,
+.admin-page .form-select,
+.admin-page select.form-select-xs {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--lux-porcelain);
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-sm);
+  color: var(--lux-ink);
+  font-size: 0.875rem;
+}
+
+.admin-page .form-control:focus,
+.admin-page .form-select:focus {
+  border-color: var(--lux-champagne);
+  box-shadow: 0 0 0 3px var(--lux-champagne-soft);
+  outline: none;
+}
+
+.admin-page .alert-banner {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(158, 74, 67, 0.35);
+  border-radius: var(--lux-radius-md);
+  background: rgba(158, 74, 67, 0.08);
+  color: var(--lux-ink);
+}
+
+.admin-page .status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lux-stone);
+}
+
+.admin-page .status-indicator.active {
+  color: var(--lux-success);
+}
+
+.admin-page .status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--lux-stone);
+}
+
+.admin-page .status-indicator.active .status-dot {
+  background: var(--lux-success);
+  box-shadow: 0 0 0 4px rgba(95, 115, 85, 0.2);
+}
+
+.admin-page .lux-loading-block {
+  padding: 1rem 0;
+}
+
+.admin-page .lux-settings-form,
+.admin-page .lux-settings-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-page .lux-settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+  .admin-page .lux-settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-page .lux-settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.admin-page .admin-kpi__unit {
+  font-size: 0.75rem;
+  color: var(--lux-stone);
+  margin-left: 0.25rem;
+}
+
+.admin-page .text-lux-success {
+  color: var(--lux-success) !important;
+}
+
+.admin-page .text-lux-danger {
+  color: var(--lux-danger) !important;
+}
+
+/* Modal overlays opened from admin pages */
+.admin-modal-backdrop .modal-content,
+.admin-modal-backdrop .admin-modal,
+.modal.show .modal-content {
+  border-radius: var(--lux-radius-md);
+  border: 1px solid var(--lux-fog);
+  box-shadow: var(--lux-shadow-lg);
+}
+
+.admin-page .table-responsive {
+  overflow-x: auto;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-md);
+}

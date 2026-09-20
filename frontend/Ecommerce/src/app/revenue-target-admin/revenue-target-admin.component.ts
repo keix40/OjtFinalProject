@@ -11,7 +11,7 @@ import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
   <lux-page-shell variant="admin" shellClass="admin-page">
     <lux-page-header
       variant="admin"
-      eyebrow="Settings"
+      eyebrow="System Settings"
       title="Revenue Target"
       subtitle="Configure revenue targets for daily, weekly, monthly, or yearly periods.">
     </lux-page-header>

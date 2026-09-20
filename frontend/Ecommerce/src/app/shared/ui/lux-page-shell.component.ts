@@ -1,4 +1,5 @@
 import { Component, Input } from '@angular/core';
+import { BreadcrumbService } from '../../breadcrumb.service';
 
 @Component({
   selector: 'lux-page-shell',
@@ -10,6 +11,13 @@ import { Component, Input } from '@angular/core';
       [class.lux-page-shell--customer]="variant === 'customer'"
       [ngClass]="shellClass"
     >
+      <nav
+        *ngIf="variant === 'admin' && showBreadcrumbs"
+        class="admin-breadcrumb"
+        aria-label="Breadcrumb"
+      >
+        <app-breadcrumb [items]="(breadcrumbService.breadcrumbs$ | async) ?? []"></app-breadcrumb>
+      </nav>
       <ng-content select="lux-page-header"></ng-content>
       <ng-content select="[filters]"></ng-content>
       <div class="lux-page-shell__body">
@@ -41,4 +49,7 @@ import { Component, Input } from '@angular/core';
 export class LuxPageShellComponent {
   @Input() variant: 'customer' | 'admin' = 'customer';
   @Input() shellClass = '';
+  @Input() showBreadcrumbs = true;
+
+  constructor(public breadcrumbService: BreadcrumbService) {}
 }

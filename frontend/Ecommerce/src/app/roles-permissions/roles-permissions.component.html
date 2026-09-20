@@ -1,5 +1,5 @@
 <lux-page-shell variant="admin" shellClass="admin-page roles-page">
-  <lux-page-header variant="admin" eyebrow="Access" title="Roles & Permissions" subtitle="Define roles and customize permissions for granular access control">
+  <lux-page-header variant="admin" eyebrow="Customer Insights" title="Roles & Permissions" subtitle="Define roles and customize permissions for granular access control">
     <lux-button variant="secondary" (pressed)="refreshData()">Refresh</lux-button>
     <lux-button variant="secondary" (pressed)="exportRoles()">Export</lux-button>
     <lux-button variant="primary" [disabled]="!permissionService.hasPermission(PermissionConstants.ROLES_CREATE)" (pressed)="permissionService.hasPermission(PermissionConstants.ROLES_CREATE) ? openCreateRoleModal() : null">Create Role</lux-button>

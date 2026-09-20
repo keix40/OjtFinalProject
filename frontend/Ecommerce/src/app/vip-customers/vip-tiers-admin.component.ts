@@ -10,7 +10,7 @@ import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
   selector: 'app-vip-tiers-admin',
   template: `
   <lux-page-shell variant="admin" shellClass="admin-page vip-tiers-admin-page">
-    <lux-page-header variant="admin" eyebrow="People" title="Manage VIP Tiers" subtitle="Configure loyalty tiers, points thresholds, and presentation"></lux-page-header>
+    <lux-page-header variant="admin" eyebrow="Customer Insights" title="Manage VIP Tiers" subtitle="Configure loyalty tiers, points thresholds, and presentation"></lux-page-header>
     <div class="page-panel" style="padding:1rem">
       <form [formGroup]="tierForm" (ngSubmit)="onSubmit()" class="admin-form-grid" style="margin-bottom:1rem">
         <input formControlName="name" placeholder="Name" class="admin-filter-input" required />
