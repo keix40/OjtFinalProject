@@ -674,7 +674,7 @@ export class OrderManagementComponent implements OnInit, AfterViewInit, OnDestro
           startY: 40,
           styles: { fontSize: 8, cellPadding: 3 },
           headStyles: { fillColor: [28, 27, 25], textColor: 255, fontStyle: 'bold' },
-          alternateRowStyles: { fillColor: [247, 243, 236] },
+          alternateRowStyles: { fillColor: [238, 241, 245] },
         });
         doc.save(
           `Britium_Gallery_Detailed_Order_Report_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`

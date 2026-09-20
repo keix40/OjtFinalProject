@@ -15,7 +15,7 @@
 .product-form__section-title,
 .product-form__subhead {
   margin: 0 0 1rem;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-weight: 500;
   color: var(--lux-ink);
 }

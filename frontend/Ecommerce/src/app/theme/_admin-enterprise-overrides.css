@@ -1,0 +1,213 @@
+/**
+ * Soft enterprise — pierce admin lux/boutique globals (_project-lux, _components).
+ * Scoped to `.admin-shell` so storefront stays boutique.
+ */
+
+/* Typography: no display serif in admin */
+.admin-shell,
+.admin-shell .lux-page-shell,
+.admin-shell .admin-page {
+  font-family: var(--lux-font-sans);
+}
+
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell h4,
+.admin-shell h5,
+.admin-shell h6,
+.admin-shell .page-title,
+.admin-shell .lux-display,
+.admin-shell .lux-card__title,
+.admin-shell .lux-kpi__value {
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em;
+}
+
+/* Tailwind lux palette utilities → enterprise surfaces */
+.admin-shell .bg-cream,
+.admin-shell .bg-porcelain {
+  background-color: #ffffff !important;
+}
+
+.admin-shell .bg-ivory {
+  background-color: var(--lux-ivory) !important;
+}
+
+.admin-shell .text-champagne,
+.admin-shell .text-champagne-deep {
+  color: var(--lux-champagne-deep) !important;
+}
+
+.admin-shell .border-fog {
+  border-color: var(--lux-fog) !important;
+}
+
+.admin-shell .shadow-lux-sm {
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+/* Bootstrap — friendly portal buttons (override _project-lux uppercase ink) */
+.admin-shell .btn {
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--lux-radius-md) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  text-transform: none !important;
+}
+
+.admin-shell .btn-primary,
+.admin-shell .btn-primary:focus {
+  background-color: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #ffffff !important;
+  box-shadow: var(--lux-shadow-xs) !important;
+}
+
+.admin-shell .btn-primary:hover,
+.admin-shell .btn-primary:active {
+  background-color: var(--lux-champagne-deep) !important;
+  border-color: var(--lux-champagne-deep) !important;
+  color: #ffffff !important;
+}
+
+.admin-shell .btn-outline-primary {
+  color: var(--lux-champagne-deep) !important;
+  border-color: var(--lux-fog) !important;
+  background: #ffffff !important;
+}
+
+.admin-shell .btn-outline-primary:hover {
+  background-color: var(--lux-champagne-soft) !important;
+  border-color: var(--lux-champagne) !important;
+  color: var(--lux-champagne-deep) !important;
+}
+
+.admin-shell .btn-success {
+  background-color: var(--lux-success) !important;
+  border-color: var(--lux-success) !important;
+}
+
+.admin-shell .btn-danger {
+  background-color: var(--lux-danger) !important;
+  border-color: var(--lux-danger) !important;
+}
+
+/* Lux tables / data grids — kill cream header & hover */
+.admin-shell .lux-table thead th,
+.admin-shell .lux-admin-table thead th,
+.admin-shell table thead th {
+  background: #eef1f5 !important;
+  color: var(--lux-stone) !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid var(--lux-fog) !important;
+}
+
+.admin-shell .lux-table tbody tr:hover td,
+.admin-shell .lux-admin-table tbody tr:hover td,
+.admin-shell table tbody tr:hover td {
+  background: #f4f6f8 !important;
+}
+
+.admin-shell .lux-table td,
+.admin-shell .lux-admin-table td,
+.admin-shell table tbody td {
+  padding: 0.875rem 1rem !important;
+}
+
+/* Lux cards & KPI blocks */
+.admin-shell .lux-card,
+.admin-shell lux-card .lux-card {
+  background: #ffffff !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-lg) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+.admin-shell .lux-kpi {
+  border-radius: var(--lux-radius-lg) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+/* Dashboard KPI tiles */
+.admin-shell .admin-dash__kpi,
+.admin-shell .admin-dash__metric,
+.admin-shell .admin-dash__tier,
+.admin-shell .admin-dash__panel {
+  background: #ffffff !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-lg) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+}
+
+.admin-shell .admin-dash__kpi-value,
+.admin-shell .admin-kpi__label {
+  font-family: var(--lux-font-sans) !important;
+}
+
+.admin-shell .admin-dash__view-btn {
+  border-radius: var(--lux-radius-md) !important;
+  min-height: 2.75rem !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+  font-size: 0.875rem !important;
+}
+
+.admin-shell .admin-dash__view-btn,
+.admin-shell .admin-dash__view-btn:hover {
+  background: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #fff !important;
+}
+
+.admin-shell .time-frame-btn {
+  min-height: 2.5rem !important;
+  border-radius: var(--lux-radius-md) !important;
+  padding: 0.4rem 0.85rem !important;
+}
+
+/* Status chips — strong amber / green / red / blue */
+.admin-shell .lux-badge--success,
+.admin-shell .badge-success {
+  background: #e3f1ec !important;
+  color: #008060 !important;
+}
+
+.admin-shell .lux-badge--warning,
+.admin-shell .badge-warning {
+  background: #fff4e0 !important;
+  color: #b98900 !important;
+}
+
+.admin-shell .lux-badge--danger,
+.admin-shell .badge-danger {
+  background: #fce8e8 !important;
+  color: #d72c0d !important;
+}
+
+.admin-shell .lux-badge--info,
+.admin-shell .badge-info {
+  background: #e3f0ff !important;
+  color: #1f5199 !important;
+}
+
+/* Admin inbox drawer */
+.admin-shell app-admin-inbox,
+.admin-shell .admin-inbox-panel {
+  font-family: var(--lux-font-sans);
+}
+
+.admin-shell app-admin-inbox .inbox-item:hover {
+  background: #f4f6f8 !important;
+}
+
+/* Material / focus rings — business blue */
+.admin-shell .mat-mdc-button.mat-primary,
+.admin-shell .mat-mdc-raised-button.mat-primary {
+  background-color: var(--lux-champagne) !important;
+}

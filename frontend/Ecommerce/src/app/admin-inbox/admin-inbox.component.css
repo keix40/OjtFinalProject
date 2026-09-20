@@ -1,9 +1,9 @@
-/* Admin Inbox — espresso / cream / champagne */
+/* Admin Inbox — Soft enterprise */
 
 .lux-inbox-modal {
-  background: var(--lux-cream);
+  background: #ffffff;
   border: 1px solid var(--lux-fog);
-  border-radius: var(--lux-radius-md);
+  border-radius: var(--lux-radius-lg);
   box-shadow: var(--lux-shadow-lg);
   animation: lux-inbox-in 0.28s var(--lux-ease);
   color: var(--lux-ink);
@@ -21,17 +21,19 @@
 }
 
 .lux-inbox-header {
-  background: var(--lux-espresso);
-  color: var(--lux-ivory);
-  border-bottom: 1px solid rgba(232, 220, 194, 0.15);
+  background: var(--admin-sidebar-bg, #3d4f65);
+  color: #ffffff;
+  border-bottom: 1px solid var(--admin-sidebar-border, #4a5d78);
 }
 
 .lux-inbox-header .lux-h3 {
-  color: var(--lux-ivory);
+  color: #ffffff;
+  font-family: var(--lux-font-sans);
+  font-weight: 600;
 }
 
 .lux-inbox-header .lux-body-sm {
-  color: var(--lux-champagne-soft);
+  color: #c5ced9;
 }
 
 .lux-inbox-mark {
@@ -40,9 +42,9 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  background: rgba(198, 166, 103, 0.18);
-  border: 1px solid rgba(198, 166, 103, 0.35);
-  color: var(--lux-champagne);
+  background: rgba(44, 110, 203, 0.2);
+  border: 1px solid rgba(155, 185, 232, 0.45);
+  color: #9bb9e8;
 }
 
 .lux-inbox-icon-btn {
@@ -60,11 +62,11 @@
 
 .lux-inbox-icon-btn:hover {
   color: var(--lux-ivory);
-  background: rgba(247, 243, 236, 0.08);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .lux-inbox-list-panel {
-  background: var(--lux-ivory);
+  background: #f4f6f8;
   border-right: 1px solid var(--lux-fog);
 }
 
@@ -112,11 +114,11 @@
 }
 
 .lux-inbox-item:hover {
-  background: rgba(232, 220, 194, 0.25);
+  background: rgba(44, 110, 203, 0.12);
 }
 
 .lux-inbox-item--selected {
-  background: rgba(232, 220, 194, 0.4);
+  background: rgba(44, 110, 203, 0.2);
   border-left: 3px solid var(--lux-champagne);
 }
 

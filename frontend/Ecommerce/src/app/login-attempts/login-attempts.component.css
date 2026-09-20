@@ -16,8 +16,8 @@
   backdrop-filter: none !important;
 }
 .login-attempts-page h1, .login-attempts-page .page-title, .login-attempts-page h2 {
-  font-family: var(--lux-font-serif) !important;
-  font-weight: 500 !important;
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
   color: var(--lux-ink) !important;
 }
 .login-attempts-page table,
@@ -30,7 +30,7 @@
 .login-attempts-page thead,
 .login-attempts-page .table-header,
 .login-attempts-page th {
-  background: rgba(247, 243, 236, 0.85) !important;
+  background: #eef1f5 !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
   letter-spacing: 0.12em;
@@ -42,7 +42,7 @@
   border-color: var(--lux-fog) !important;
 }
 .login-attempts-page tbody tr:hover td {
-  background: rgba(232, 220, 194, 0.28) !important;
+  background: rgba(244, 246, 248, 0.95) !important;
 }
 .login-attempts-page input[type="text"],
 .login-attempts-page input[type="email"],
@@ -141,7 +141,7 @@
 }
 .login-attempts-page .stat-number,
 .login-attempts-page .admin-kpi__value {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   color: var(--lux-ink);
 }
 .login-attempts-page .page-header,
@@ -177,7 +177,7 @@
 
 .login-attempts-page .pm-section-title {
   margin: 0;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.25rem;
   font-weight: 500;
   color: var(--lux-ink);
@@ -217,7 +217,7 @@
 
 .login-attempts-page .hover\:bg-blue-50:hover,
 .login-attempts-page tr:hover {
-  background: rgba(232, 220, 194, 0.28);
+  background: rgba(244, 246, 248, 0.95);
 }
 
 .login-attempts-page input[type="checkbox"],

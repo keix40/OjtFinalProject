@@ -16,8 +16,8 @@
   backdrop-filter: none !important;
 }
 .blacklist-page h1, .blacklist-page .page-title, .blacklist-page h2 {
-  font-family: var(--lux-font-serif) !important;
-  font-weight: 500 !important;
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
   color: var(--lux-ink) !important;
 }
 .blacklist-page table,
@@ -30,7 +30,7 @@
 .blacklist-page thead,
 .blacklist-page .table-header,
 .blacklist-page th {
-  background: rgba(247, 243, 236, 0.85) !important;
+  background: #eef1f5 !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
   letter-spacing: 0.12em;
@@ -42,7 +42,7 @@
   border-color: var(--lux-fog) !important;
 }
 .blacklist-page tbody tr:hover td {
-  background: rgba(232, 220, 194, 0.28) !important;
+  background: rgba(244, 246, 248, 0.95) !important;
 }
 .blacklist-page input[type="text"],
 .blacklist-page input[type="email"],
@@ -141,7 +141,7 @@
 }
 .blacklist-page .stat-number,
 .blacklist-page .admin-kpi__value {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   color: var(--lux-ink);
 }
 .blacklist-page .page-header,
@@ -171,7 +171,7 @@
 }
 .blacklist-page .pm-section-title {
   margin: 0;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.25rem;
   font-weight: 500;
   color: var(--lux-ink);

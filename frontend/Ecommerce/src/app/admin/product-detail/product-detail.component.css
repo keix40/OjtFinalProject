@@ -2,7 +2,7 @@
   margin: 0 0 1rem;
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--lux-fog);
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.35rem;
   font-weight: 500;
   color: var(--lux-ink);
@@ -10,7 +10,7 @@
 
 .product-detail-page .product-form__subhead {
   margin: 0 0 0.65rem;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.05rem;
   font-weight: 500;
   color: var(--lux-ink);
@@ -145,7 +145,7 @@
 }
 
 .pd-price {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.85rem;
   color: var(--lux-ink);
 }

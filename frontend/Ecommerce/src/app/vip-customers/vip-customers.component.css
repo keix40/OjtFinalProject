@@ -79,7 +79,7 @@
 
 .vip-customers-page .pm-section-title {
   margin: 0;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.25rem;
   font-weight: 500;
   color: var(--lux-ink);
@@ -144,7 +144,7 @@
 
 .vip-customers-page thead,
 .vip-customers-page th {
-  background: rgba(247, 243, 236, 0.85) !important;
+  background: #eef1f5 !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
   letter-spacing: 0.12em;
@@ -159,7 +159,7 @@
 }
 
 .vip-customers-page tbody tr:hover td {
-  background: rgba(232, 220, 194, 0.28) !important;
+  background: rgba(244, 246, 248, 0.95) !important;
 }
 
 .vip-customers-page input,
@@ -277,7 +277,7 @@
 
 :host .pm-section-title {
   margin: 0;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.25rem;
   font-weight: 500;
   color: var(--lux-ink);

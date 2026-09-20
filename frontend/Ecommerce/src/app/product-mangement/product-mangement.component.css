@@ -131,7 +131,7 @@
 
 .pm-section-title {
   margin: 0;
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   font-size: 1.25rem;
   font-weight: 500;
   color: var(--lux-ink);

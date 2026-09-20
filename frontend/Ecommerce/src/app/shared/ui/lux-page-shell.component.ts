@@ -29,7 +29,8 @@ import { Component, Input } from '@angular/core';
     }
     .lux-page-shell--admin {
       background: transparent;
-      padding: 0.25rem 0 1.5rem;
+      padding: 0.5rem 0 2rem;
+      max-width: 100%;
     }
     .lux-page-shell__body {
       display: flex;

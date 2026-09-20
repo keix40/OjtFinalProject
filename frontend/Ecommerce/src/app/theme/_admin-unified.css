@@ -1,5 +1,5 @@
 /**
- * Soft enterprise admin UI — tables, forms, KPIs, legacy Bootstrap/Tailwind inside admin.
+ * Soft enterprise admin UI — all routes using `lux-page-shell` + `admin-page`.
  */
 
 .admin-page .admin-breadcrumb {

@@ -16,8 +16,8 @@
   backdrop-filter: none !important;
 }
 .activity-logs-page h1, .activity-logs-page .page-title, .activity-logs-page h2 {
-  font-family: var(--lux-font-serif) !important;
-  font-weight: 500 !important;
+  font-family: var(--lux-font-sans) !important;
+  font-weight: 600 !important;
   color: var(--lux-ink) !important;
 }
 .activity-logs-page table,
@@ -30,7 +30,7 @@
 .activity-logs-page thead,
 .activity-logs-page .table-header,
 .activity-logs-page th {
-  background: rgba(247, 243, 236, 0.85) !important;
+  background: #eef1f5 !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
   letter-spacing: 0.12em;
@@ -42,7 +42,7 @@
   border-color: var(--lux-fog) !important;
 }
 .activity-logs-page tbody tr:hover td {
-  background: rgba(232, 220, 194, 0.28) !important;
+  background: rgba(244, 246, 248, 0.95) !important;
 }
 .activity-logs-page input[type="text"],
 .activity-logs-page input[type="email"],
@@ -141,7 +141,7 @@
 }
 .activity-logs-page .stat-number,
 .activity-logs-page .admin-kpi__value {
-  font-family: var(--lux-font-serif);
+  font-family: var(--lux-font-sans);
   color: var(--lux-ink);
 }
 .activity-logs-page .page-header,

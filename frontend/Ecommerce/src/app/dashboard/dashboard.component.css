@@ -95,10 +95,10 @@
 }
 
 .admin-dash__panel {
-  background: var(--lux-porcelain);
-  border: var(--lux-border-hair);
-  border-radius: var(--lux-radius-md);
-  box-shadow: var(--lux-shadow-xs);
+  background: #ffffff;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
+  box-shadow: var(--lux-shadow-sm);
 }
 
 .admin-dash__panel-head {
@@ -145,11 +145,11 @@
 .admin-dash__kpi,
 .admin-dash__metric,
 .admin-dash__tier {
-  padding: 1rem 1.05rem;
-  background: var(--lux-porcelain);
-  border: var(--lux-border-hair);
-  border-radius: var(--lux-radius-md);
-  box-shadow: var(--lux-shadow-xs);
+  padding: 1.15rem 1.25rem;
+  background: #ffffff;
+  border: 1px solid var(--lux-fog);
+  border-radius: var(--lux-radius-lg);
+  box-shadow: var(--lux-shadow-sm);
   transition: box-shadow var(--lux-dur) var(--lux-ease), transform var(--lux-dur) var(--lux-ease);
 }
 
