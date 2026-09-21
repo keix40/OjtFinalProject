@@ -65,7 +65,7 @@
 
 .fixed.inset-0 .bg-blue-600,
 .fixed.inset-0 button.bg-blue-600 {
-  background: var(--lux-ink) !important;
+  background: var(--lux-champagne) !important;
 }
 
 .admin-form input[type="checkbox"],

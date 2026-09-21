@@ -33,8 +33,8 @@
   background: #fafbfc !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   border-bottom: 1px solid var(--lux-fog) !important;
 }
 .roles-page td, .roles-page th {
@@ -77,9 +77,9 @@
 .roles-page .bg-indigo-600,
 .roles-page .bg-purple-600,
 .roles-page .bg-gradient-to-r {
-  background: var(--lux-ink) !important;
-  border-color: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
+  background: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #ffffff !important;
   background-image: none !important;
 }
 .roles-page .btn-secondary,
@@ -126,9 +126,9 @@
   border-color: var(--lux-fog) !important;
 }
 .roles-page .pagination .page-item.active .page-link {
-  background: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
-  border-color: var(--lux-ink) !important;
+  background: var(--lux-champagne) !important;
+  color: #ffffff !important;
+  border-color: var(--lux-champagne) !important;
 }
 .roles-page .empty-state { color: var(--lux-stone); text-align: center; padding: 2rem 1rem; }
 .roles-page .stat-card,
@@ -157,3 +157,11 @@
 
 .roles-page .divide-y > * { border-color: var(--lux-fog) !important; }
 .roles-page .bg-blue-100\/40, .roles-page .bg-blue-50 { background: var(--lux-champagne-soft) !important; }
+.roles-page .text-cyan-600,
+.roles-page .text-cyan-500 {
+  color: var(--lux-champagne-deep) !important;
+}
+.roles-page .bg-cyan-100\/80,
+.roles-page .bg-cyan-100 {
+  background: var(--lux-champagne-soft) !important;
+}

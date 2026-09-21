@@ -5,6 +5,7 @@
 @import './app/theme/_admin-stripe-tokens.css';
 @import './app/theme/_admin-unified.css';
 @import './app/theme/_admin-stripe-overrides.css';
+@import './app/theme/_admin-stripe-pages.css';
 @import './app/theme/_customer-routes.css';
 @import 'ngx-toastr/toastr';
 

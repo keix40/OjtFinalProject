@@ -32,9 +32,9 @@
 }
 
 .product-detail-page .product-form__pill.is-selected {
-  background: var(--lux-ink);
-  border-color: var(--lux-ink);
-  color: var(--lux-ivory);
+  background: var(--lux-champagne);
+  border-color: var(--lux-champagne);
+  color: #ffffff;
 }
 
 .product-detail-page .product-form__swatch {

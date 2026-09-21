@@ -49,15 +49,15 @@
 .fixed.inset-0 .bg-gradient-to-r,
 .fixed.inset-0 .from-blue-500,
 .fixed.inset-0 .to-purple-600 {
-  background: var(--lux-ink) !important;
+  background: var(--lux-champagne) !important;
 }
 
 .fixed.inset-0 button.bg-blue-100,
 .fixed.inset-0 button.bg-blue-600,
 .fixed.inset-0 .bg-blue-600 {
-  background: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
-  border-color: var(--lux-ink) !important;
+  background: var(--lux-champagne) !important;
+  color: #ffffff !important;
+  border-color: var(--lux-champagne) !important;
 }
 
 .fixed.inset-0 .bg-green-100 {

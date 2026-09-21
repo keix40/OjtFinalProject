@@ -33,8 +33,8 @@
   background: #fafbfc !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   border-bottom: 1px solid var(--lux-fog) !important;
 }
 .login-attempts-page td, .login-attempts-page th {
@@ -77,9 +77,9 @@
 .login-attempts-page .bg-indigo-600,
 .login-attempts-page .bg-purple-600,
 .login-attempts-page .bg-gradient-to-r {
-  background: var(--lux-ink) !important;
-  border-color: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
+  background: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #ffffff !important;
   background-image: none !important;
 }
 .login-attempts-page .btn-secondary,
@@ -126,9 +126,9 @@
   border-color: var(--lux-fog) !important;
 }
 .login-attempts-page .pagination .page-item.active .page-link {
-  background: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
-  border-color: var(--lux-ink) !important;
+  background: var(--lux-champagne) !important;
+  color: #ffffff !important;
+  border-color: var(--lux-champagne) !important;
 }
 .login-attempts-page .empty-state { color: var(--lux-stone); text-align: center; padding: 2rem 1rem; }
 .login-attempts-page .stat-card,
