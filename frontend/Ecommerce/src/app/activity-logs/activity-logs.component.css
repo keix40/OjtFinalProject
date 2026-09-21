@@ -33,8 +33,8 @@
   background: #fafbfc !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   border-bottom: 1px solid var(--lux-fog) !important;
 }
 .activity-logs-page td, .activity-logs-page th {
@@ -77,9 +77,9 @@
 .activity-logs-page .bg-indigo-600,
 .activity-logs-page .bg-purple-600,
 .activity-logs-page .bg-gradient-to-r {
-  background: var(--lux-ink) !important;
-  border-color: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
+  background: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #ffffff !important;
   background-image: none !important;
 }
 .activity-logs-page .btn-secondary,
@@ -126,9 +126,9 @@
   border-color: var(--lux-fog) !important;
 }
 .activity-logs-page .pagination .page-item.active .page-link {
-  background: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
-  border-color: var(--lux-ink) !important;
+  background: var(--lux-champagne) !important;
+  color: #ffffff !important;
+  border-color: var(--lux-champagne) !important;
 }
 .activity-logs-page .empty-state { color: var(--lux-stone); text-align: center; padding: 2rem 1rem; }
 .activity-logs-page .stat-card,
@@ -156,12 +156,12 @@
 .activity-logs-page .fas, .activity-logs-page .far { font-family: inherit; }
 
 .activity-logs-page .container { max-width:none; padding:0; margin:0; }
-.activity-logs-page .bg-purple-600 { background:var(--lux-ink) !important; }
+.activity-logs-page .bg-purple-600 { background: var(--lux-champagne) !important; }
 .activity-logs-page .fixed.top-4 { border-radius:var(--lux-radius-sm); }
 
 .activity-logs-page input[type='checkbox'],
 .activity-logs-page input[type='radio'] {
-  accent-color: var(--lux-ink) !important;
+  accent-color: var(--lux-champagne) !important;
 }
 .activity-logs-page .text-indigo-700,
 .activity-logs-page .text-indigo-600,
@@ -190,8 +190,8 @@
 }
 .activity-logs-page .bg-indigo-600,
 .activity-logs-page .hover\:bg-indigo-700:hover {
-  background: var(--lux-ink) !important;
-  color: var(--lux-ivory) !important;
+  background: var(--lux-champagne) !important;
+  color: #ffffff !important;
 }
 .activity-logs-page .activity-logs-body > .grid {
   gap: 1rem;
@@ -204,4 +204,13 @@
     display: flex;
     flex-direction: column;
   }
+}
+
+.activity-logs-page .activity-logs img {
+  transition: none !important;
+  animation: none !important;
+}
+
+.activity-logs-page .activity-logs img[src] {
+  opacity: 1 !important;
 }

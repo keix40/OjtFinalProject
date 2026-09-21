@@ -263,3 +263,33 @@
 .admin-shell .mat-mdc-raised-button.mat-primary {
   background-color: var(--lux-champagne) !important;
 }
+
+/* _project-lux maps blue fills to ink — restore Stripe violet in admin only */
+.admin-shell .bg-blue-500,
+.admin-shell .bg-blue-600,
+.admin-shell .bg-blue-700,
+.admin-shell .bg-sky-500,
+.admin-shell .bg-sky-600,
+.admin-shell .bg-indigo-500,
+.admin-shell .bg-indigo-600 {
+  background-color: var(--lux-champagne) !important;
+  --tw-gradient-from: var(--lux-champagne) !important;
+  --tw-gradient-to: var(--lux-champagne-deep) !important;
+}
+
+.admin-shell .hover\:bg-blue-700:hover,
+.admin-shell .hover\:bg-blue-600:hover {
+  background-color: var(--lux-champagne-deep) !important;
+}
+
+.admin-shell .btn-primary,
+.admin-shell .badge.bg-primary {
+  background-color: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #ffffff !important;
+}
+
+.admin-shell .form-check-input:checked {
+  background-color: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+}

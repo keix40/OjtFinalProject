@@ -1,0 +1,155 @@
+/**
+ * Stripe dashboard — consistency for every route under `.admin-shell .admin-page`.
+ * Complements _admin-unified.css / _admin-stripe-overrides.css (no storefront impact).
+ */
+
+.admin-shell .admin-page {
+  padding-bottom: 1.5rem;
+  color: var(--lux-ink);
+  background: transparent !important;
+}
+
+/* Surfaces — no glass / frosted lux leftovers */
+.admin-shell .admin-page .glassmorphism,
+.admin-shell .admin-page .glassmorphism-light,
+.admin-shell .admin-page .glassmorphism-card {
+  background: #ffffff !important;
+  border: 1px solid var(--lux-fog) !important;
+  border-radius: var(--lux-radius-lg) !important;
+  box-shadow: var(--lux-shadow-sm) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.admin-shell .admin-page .border-white\/20,
+.admin-shell .admin-page .border-white\/30 {
+  border-color: var(--lux-fog) !important;
+}
+
+.admin-shell .admin-page .border-2.border-slate-200,
+.admin-shell .admin-page .border-2.border-slate-300 {
+  border-width: 1px !important;
+  border-color: var(--lux-fog) !important;
+}
+
+.admin-shell .admin-page .shadow-2xl {
+  box-shadow: var(--lux-shadow-lg) !important;
+}
+
+/* Stripe violet primary — override _project-lux ink fills inside admin */
+.admin-shell .bg-blue-500,
+.admin-shell .bg-blue-600,
+.admin-shell .bg-blue-700,
+.admin-shell .bg-sky-500,
+.admin-shell .bg-sky-600,
+.admin-shell .bg-indigo-500,
+.admin-shell .bg-indigo-600,
+.admin-shell .from-blue-500,
+.admin-shell .from-blue-600,
+.admin-shell .to-blue-600,
+.admin-shell .to-blue-700,
+.admin-shell .bg-gradient-to-r.from-blue-500,
+.admin-shell .hover\:bg-blue-600:hover,
+.admin-shell .hover\:bg-blue-700:hover {
+  background-color: var(--lux-champagne) !important;
+  --tw-gradient-from: var(--lux-champagne) !important;
+  --tw-gradient-to: var(--lux-champagne-deep) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #ffffff !important;
+}
+
+.admin-shell .text-cyan-500,
+.admin-shell .text-cyan-600,
+.admin-shell .text-cyan-700,
+.admin-shell .text-cyan-800 {
+  color: var(--lux-champagne-deep) !important;
+}
+
+.admin-shell .bg-cyan-50,
+.admin-shell .bg-cyan-100,
+.admin-shell .bg-cyan-100\/80 {
+  background-color: var(--lux-champagne-soft) !important;
+}
+
+.admin-shell .border-blue-600,
+.admin-shell .border-cyan-500 {
+  border-color: var(--lux-champagne) !important;
+}
+
+.admin-shell .focus\:ring-blue-500:focus,
+.admin-shell .focus\:ring-blue-400:focus,
+.admin-shell .focus\:border-blue-500:focus {
+  --tw-ring-color: var(--lux-champagne-soft) !important;
+  border-color: var(--lux-champagne) !important;
+}
+
+.admin-shell .accent-blue-500,
+.admin-shell input[type='checkbox'],
+.admin-shell input[type='radio'] {
+  accent-color: var(--lux-champagne) !important;
+}
+
+.admin-shell .pagination .page-item.active .page-link,
+.admin-shell .admin-page .pagination .page-item.active .page-link {
+  background: var(--lux-champagne) !important;
+  border-color: var(--lux-champagne) !important;
+  color: #ffffff !important;
+}
+
+.admin-shell .admin-page thead th,
+.admin-shell .admin-page .table-header th {
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.admin-shell .admin-modal-backdrop {
+  background: rgba(10, 37, 64, 0.35) !important;
+  backdrop-filter: blur(4px);
+}
+
+.admin-shell .fixed.inset-0.bg-black\/40,
+.admin-shell .fixed.inset-0.bg-black\/60 {
+  background: rgba(10, 37, 64, 0.35) !important;
+}
+
+/* Admin notification drawer (navbar) */
+.admin-shell .notification-sidebar .fixed.top-0.right-0.h-screen,
+.admin-shell app-notification-sidebar .fixed.top-0.right-0.h-screen {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  box-shadow: var(--lux-shadow-lg) !important;
+  border-left: 1px solid var(--lux-fog) !important;
+}
+
+.admin-shell .notification-sidebar .glow-bar,
+.admin-shell app-notification-sidebar .glow-bar {
+  box-shadow: none !important;
+}
+
+.admin-shell app-notification-sidebar .hover\:bg-blue-50\/50:hover,
+.admin-shell app-notification-sidebar .bg-blue-50 {
+  background: var(--lux-champagne-soft) !important;
+}
+
+.admin-shell app-notification-sidebar button.bg-blue-100 {
+  background: var(--lux-champagne-soft) !important;
+  color: var(--lux-champagne-deep) !important;
+}
+
+.admin-shell app-notification-sidebar button.bg-blue-100:hover {
+  background: #e8e6ff !important;
+}
+
+.admin-shell .table tbody tr:hover {
+  background-color: #f6f9fc !important;
+}
+
+.admin-shell .admin-page .hover\:bg-slate-50:hover {
+  background: #f6f9fc !important;
+}
+
+.admin-shell .admin-page .bg-ink.text-ivory {
+  background: var(--lux-champagne) !important;
+  color: #ffffff !important;
+}

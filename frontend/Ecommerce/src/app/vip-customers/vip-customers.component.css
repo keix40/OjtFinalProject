@@ -147,8 +147,8 @@
   background: #fafbfc !important;
   color: var(--lux-stone) !important;
   font-size: 0.6875rem !important;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   border-bottom: 1px solid var(--lux-fog) !important;
 }
 
@@ -182,7 +182,19 @@
 
 .vip-customers-page input[type="checkbox"],
 .vip-customers-page input[type="radio"] {
-  accent-color: var(--lux-ink) !important;
+  accent-color: var(--lux-champagne) !important;
+}
+
+.vip-customers-page .text-blue-400,
+.vip-customers-page .text-blue-500,
+.vip-customers-page .text-blue-600 {
+  color: var(--lux-champagne-deep) !important;
+}
+
+.vip-customers-page .focus\:ring-blue-500:focus,
+.vip-customers-page .accent-blue-500 {
+  --tw-ring-color: var(--lux-champagne-soft) !important;
+  accent-color: var(--lux-champagne) !important;
 }
 
 .vip-customers-page .text-lux-success { color: var(--lux-success) !important; }

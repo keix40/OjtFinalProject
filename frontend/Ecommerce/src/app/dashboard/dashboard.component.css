@@ -263,8 +263,9 @@
 }
 
 .time-frame-btn.is-active {
-  background: var(--lux-ink);
-  color: var(--lux-ivory);
+  background: var(--lux-champagne);
+  color: #ffffff;
+  border-color: var(--lux-champagne);
 }
 
 .admin-dash__chart-grid {
@@ -327,7 +328,7 @@
 
 .admin-dash__icon-chip.is-info { background: rgba(74, 90, 102, 0.14); color: var(--lux-info); }
 .admin-dash__icon-chip.is-success { background: rgba(95, 115, 85, 0.14); color: var(--lux-success); }
-.admin-dash__icon-chip.is-accent { background: rgba(44, 110, 203, 0.14); color: var(--lux-champagne-deep); }
+.admin-dash__icon-chip.is-accent { background: var(--lux-champagne-soft); color: var(--lux-champagne-deep); }
 .admin-dash__icon-chip.is-warning { background: rgba(217, 119, 6, 0.12); color: var(--lux-warning); }
 
 .admin-dash__ghost-btn {
@@ -392,13 +393,13 @@
   min-height: 2.35rem;
   margin-top: 0.65rem;
   padding: 0.45rem 0.9rem;
-  border: 1px solid var(--lux-ink);
-  background: var(--lux-ink);
-  color: var(--lux-ivory);
-  font-size: 0.68rem;
+  border: 1px solid var(--lux-champagne);
+  background: var(--lux-champagne);
+  color: #ffffff;
+  font-size: 0.875rem;
   font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   cursor: pointer;
   transition: background var(--lux-dur-fast) var(--lux-ease), border-color var(--lux-dur-fast) var(--lux-ease);
 }
@@ -603,19 +604,21 @@
 .admin-dash__modal-foot button {
   min-height: 2.25rem;
   padding: 0.45rem 1rem;
-  border: 1px solid var(--lux-ink);
-  background: transparent;
+  border: 1px solid var(--lux-fog);
+  background: #ffffff;
   color: var(--lux-ink);
-  font-size: 0.7rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   cursor: pointer;
+  border-radius: var(--lux-radius-md);
 }
 
 .admin-dash__modal-foot button:hover,
 .admin-dash__modal-foot button:focus-visible {
-  background: var(--lux-ink);
-  color: var(--lux-ivory);
+  background: var(--lux-champagne-soft);
+  border-color: var(--lux-champagne);
+  color: var(--lux-champagne-deep);
   outline: none;
 }
 
