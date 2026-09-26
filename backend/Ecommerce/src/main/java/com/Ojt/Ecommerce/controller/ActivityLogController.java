@@ -32,7 +32,42 @@ public class ActivityLogController {
     @Autowired
     private ActivityLogService activityLogService;
 
+    // List activity logs (paginated; same defaults as POST /search)
+    @GetMapping
+    @RequiresPermission(value = ACTIVITY_LOGS_VIEW, level = "basic")
+    public ResponseEntity<ActivityLogResponseDto> listActivityLogs(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size) {
+        ActivityLogFilterDto filterDto = new ActivityLogFilterDto();
+        filterDto.setPage(page);
+        filterDto.setSize(size);
+        return ResponseEntity.ok(activityLogService.getActivityLogs(filterDto));
+    }
+
     // Get all activity logs with filters
+    @GetMapping("/search")
+    @RequiresPermission(value = ACTIVITY_LOGS_VIEW, level = "basic")
+    public ResponseEntity<ActivityLogResponseDto> searchActivityLogsGet(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "25") int size,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String entityType,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String ipAddress,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo) {
+        ActivityLogFilterDto filterDto = new ActivityLogFilterDto();
+        filterDto.setPage(page);
+        filterDto.setSize(size);
+        filterDto.setUserId(userId);
+        filterDto.setEntityType(entityType);
+        filterDto.setSearchTerm(searchTerm);
+        filterDto.setIpAddress(ipAddress);
+        filterDto.setDateFrom(dateFrom);
+        filterDto.setDateTo(dateTo);
+        return ResponseEntity.ok(activityLogService.getActivityLogs(filterDto));
+    }
+
     @PostMapping("/search")
     @RequiresPermission(value = ACTIVITY_LOGS_VIEW, level = "basic")
     public ResponseEntity<ActivityLogResponseDto> getActivityLogs(@RequestBody ActivityLogFilterDto filterDto) {

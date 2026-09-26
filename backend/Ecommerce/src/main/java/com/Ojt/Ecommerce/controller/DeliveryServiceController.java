@@ -29,7 +29,7 @@ public class DeliveryServiceController {
         return deliveryService.getAll();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public DeliveryServiceDTO getById(@PathVariable Long id) {
         return deliveryService.getById(id); // Now returns DTO
     }
@@ -43,14 +43,14 @@ public class DeliveryServiceController {
 
 
     @LogActivity(actionType = "UPDATE", entityType = "DELIVERY_SERVICE", description = "Updated delivery service", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
-    @PutMapping("/{id}")
+    @PutMapping("/{id:\\d+}")
     @RequiresPermission(value = DELIVERY_UPDATE, level = "advanced")
     public DeliveryServiceDTO update(@PathVariable Long id, @RequestBody DeliveryServiceDTO deliveryServices) {
         return deliveryService.update(id, deliveryServices);
     }
 
     @LogActivity(actionType = "DELETE", entityType = "DELIVERY_SERVICE", description = "Deleted delivery service", severityLevel = "HIGH", entityIdParam = "id")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:\\d+}")
     @RequiresPermission(value = DELIVERY_DELETE, level = "critical")
     public ResponseEntity<String> softDelete(@PathVariable Long id) {
         deliveryService.softDelete(id);
