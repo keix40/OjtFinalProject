@@ -29,7 +29,8 @@ public class DeliveryServiceController {
         return deliveryService.getAll();
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:[0-9]+}")
+    @RequiresPermission(value = DELIVERY_VIEW, level = "basic")
     public DeliveryServiceDTO getById(@PathVariable Long id) {
         return deliveryService.getById(id); // Now returns DTO
     }
