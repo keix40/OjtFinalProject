@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
@@ -56,6 +57,30 @@ public class GlobalExceptionHandler {
             }
         }
         return false;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<?> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("timestamp", LocalDateTime.now());
+        errorDetails.put("status", HttpStatus.BAD_REQUEST.value());
+        if (ex.getRequiredType() != null && Number.class.isAssignableFrom(ex.getRequiredType())) {
+            errorDetails.put("message", "Invalid id: must be numeric");
+        } else {
+            errorDetails.put(
+                    "message",
+                    "Invalid value for parameter '" + ex.getName() + "': type mismatch");
+        }
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(NumberFormatException.class)
+    public ResponseEntity<?> handleNumberFormatException(NumberFormatException ex) {
+        Map<String, Object> errorDetails = new HashMap<>();
+        errorDetails.put("timestamp", LocalDateTime.now());
+        errorDetails.put("message", "Invalid id: must be numeric");
+        errorDetails.put("status", HttpStatus.BAD_REQUEST.value());
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
