@@ -44,14 +44,14 @@ public class DeliveryServiceController {
 
 
     @LogActivity(actionType = "UPDATE", entityType = "DELIVERY_SERVICE", description = "Updated delivery service", severityLevel = "MEDIUM", entityIdParam = "id", logChanges = true)
-    @PutMapping("/{id}")
+    @PutMapping("/{id:[0-9]+}")
     @RequiresPermission(value = DELIVERY_UPDATE, level = "advanced")
     public DeliveryServiceDTO update(@PathVariable Long id, @RequestBody DeliveryServiceDTO deliveryServices) {
         return deliveryService.update(id, deliveryServices);
     }
 
     @LogActivity(actionType = "DELETE", entityType = "DELIVERY_SERVICE", description = "Deleted delivery service", severityLevel = "HIGH", entityIdParam = "id")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:[0-9]+}")
     @RequiresPermission(value = DELIVERY_DELETE, level = "critical")
     public ResponseEntity<String> softDelete(@PathVariable Long id) {
         deliveryService.softDelete(id);
