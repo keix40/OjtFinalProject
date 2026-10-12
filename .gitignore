@@ -25,3 +25,6 @@ dist/
 .env
 .env.local
 backend/Ecommerce/.env
+
+# Local secrets
+.env

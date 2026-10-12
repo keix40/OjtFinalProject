@@ -152,7 +152,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       error: (error) => {
         this.isSendingOtp = false;
         console.error('Error sending OTP:', error);
-        this.showOtpMessage('Failed to send OTP. Please try again.', false);
+        this.showOtpMessage(error?.error?.message || (typeof error?.error === 'string' ? error.error : '') || 'Failed to send OTP. Please try again.', false);
       }
     });
   }
@@ -214,7 +214,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       error: (error) => {
         this.isVerifyingOtp = false;
         console.error('Error verifying OTP:', error);
-        this.showOtpMessage('Failed to verify OTP. Please try again.', false);
+        this.showOtpMessage(error?.error?.message || (typeof error?.error === 'string' ? error.error : '') || 'Failed to verify OTP. Please try again.', false);
       }
     });
   }
@@ -237,7 +237,7 @@ export class UserPersonalInfoComponent implements OnInit, OnChanges {
       error: (error) => {
         this.isResendingOtp = false;
         console.error('Error resending OTP:', error);
-        this.showOtpMessage('Failed to resend OTP. Please try again.', false);
+        this.showOtpMessage(error?.error?.message || (typeof error?.error === 'string' ? error.error : '') || 'Failed to resend OTP. Please try again.', false);
       }
     });
   }
