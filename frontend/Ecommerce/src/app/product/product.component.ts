@@ -610,7 +610,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     if (this.newAttributeValueInputs[attrIndex] !== undefined) {
       delete this.newAttributeValueInputs[attrIndex];
     }
-    // Do NOT remove or regenerate variants. Just update the UI and icons.
+    this.regenerateVariants();
     this.cdr.detectChanges();
     setTimeout(() => this.initializeLucideIcons(), 100);
   }
@@ -696,7 +696,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
   // ===== Variant Management Methods =====
   private regenerateVariants(): void {
     if (!this.hasVariant || this.productAttributes.length === 0) {
-      this.clearVariants();
+      this.createVariants([]);
       return;
     }
 
@@ -711,7 +711,7 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     const validAttributes = selectedAttributes.filter(attr => attr.values.length > 0);
 
     if (validAttributes.length === 0) {
-      this.clearVariants();
+      this.createVariants([]);
       return;
     }
 
@@ -819,90 +819,108 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
     return `${pn}${cat}${br}${va}${vi}`.substring(0, 11);
   }
 
+  /** Stable key for a combination, independent of attribute order. */
+  private getCombinationKey(attrs: any[]): string {
+    return (attrs || [])
+      .map((a: any) => `${a?.attributeId}:${a?.valueId}`)
+      .sort()
+      .join('|');
+  }
+
+  /**
+   * Rebuild the variants FormArray from scratch as the full cartesian product
+   * of the selected attribute values. Data already entered for a combination
+   * that still exists (id, price, stock, images) is preserved by combination key.
+   */
   private createVariants(combinations: any[][]): void {
-    // Preserve existing variant data by SKU
-    const oldVariantsMap = new Map<string, any>();
+    const oldByKey = new Map<string, any>();
     this.variants.controls.forEach((variant: any, idx: number) => {
-      const sku = variant.get('sku')?.value;
-      if (sku) {
-        oldVariantsMap.set(sku, {
-          stock: variant.get('stock')?.value,
-          price: variant.get('price')?.value,
-          images: variant.get('images')?.value,
-          // Preserve new variant images and previews
-          newVariantImages: this.newVariantImages[idx] || [],
-          newVariantImagesPreview: this.newVariantImagesPreview[idx] || []
-        });
+      const key = this.getCombinationKey(variant.get('attributes')?.value || []);
+      if (oldByKey.has(key)) {
+        // duplicate row: drop it (soft-delete if persisted)
+        const dupId = variant.get('id')?.value;
+        if (dupId && dupId !== '0') this.removedVariantIds.push(Number(dupId));
+        return;
       }
+      oldByKey.set(key, {
+        id: variant.get('id')?.value,
+        sku: variant.get('sku')?.value,
+        stock: variant.get('stock')?.value,
+        price: variant.get('price')?.value,
+        images: variant.get('images')?.value,
+        status: variant.get('status')?.value,
+        newVariantImages: this.newVariantImages[idx] || [],
+        newVariantImagesPreview: this.newVariantImagesPreview[idx] || [],
+        existingVariantImages: this.existingVariantImages[idx],
+        variantImagesMarkedForDeletion: this.variantImagesMarkedForDeletion[idx]
+      });
     });
 
-    // Do NOT clear the variants FormArray. Only add new variants that do not already exist.
     const formData = this.productForm.value;
     const productName = typeof formData.productName === 'string' ? formData.productName : null;
     const categories = this.getCategoryNamesFromPairs();
     const brands = this.getBrandNamesFromPairs();
     const basePrice = Number(this.productForm.get('price')?.value ?? 0);
-    // Only generate variants if every attribute has at least one selected value
-    if (!combinations.length || combinations.some(attrs => !attrs.length)) {
-      return;
-    }
 
-    // Track existing SKUs
-    const existingSkus = new Set<string>();
-    this.variants.controls.forEach((variant: any) => {
-      const sku = variant.get('sku')?.value;
-      if (sku) existingSkus.add(sku);
-    });
+    const validCombos = (combinations || []).filter(c => Array.isArray(c) && c.length > 0);
+    const newKeys = new Set(validCombos.map(c => this.getCombinationKey(c)));
 
-    combinations.forEach((attributes, idx) => {
-      // Defensive: always ensure attributes is an array of objects with attributeName and value
-      const attrPairs = (attributes || []).map(a => ({
-        attributeName: a.attributeName || '',
-        value: a.value || ''
-      }));
-
-      const sku = this.generateSKU12(
-        productName,
-        categories,
-        brands,
-        attrPairs,
-        idx
-      );
-
-      // If this SKU already exists, skip adding
-      if (existingSkus.has(sku)) return;
-
-      // Try to restore old data by SKU
-      const oldData = oldVariantsMap.get(sku);
-
-      const variant = this.fb.group({
-        attributes: this.fb.array(attributes),
-        sku: [sku, Validators.required],
-        price: [oldData?.price ?? basePrice, [Validators.required, Validators.min(0.01)]],
-        stock: [oldData?.stock ?? null, [Validators.required, Validators.min(1)]],
-        images: [oldData?.images ?? []],
-        status: [1] // Always active when created
-      });
-      this.variants.push(variant);
-
-      // Restore newVariantImages and newVariantImagesPreview for this index
-      if (oldData) {
-        this.newVariantImages[this.variants.length - 1] = oldData.newVariantImages || [];
-        this.newVariantImagesPreview[this.variants.length - 1] = oldData.newVariantImagesPreview || [];
-      } else {
-        this.newVariantImages[this.variants.length - 1] = [];
-        this.newVariantImagesPreview[this.variants.length - 1] = [];
+    // Persisted variants whose combination no longer exists -> soft delete
+    oldByKey.forEach((old, key) => {
+      if (!newKeys.has(key) && old.id && old.id !== '0') {
+        const id = Number(old.id);
+        if (!this.removedVariantIds.includes(id)) this.removedVariantIds.push(id);
       }
     });
 
-    // Subscribe to stock changes for all variants
-    this.variants.controls.forEach((variant) => {
-      (variant as FormGroup).get('stock')?.valueChanges.subscribe(() => {
-        this.checkTotalVariantStock(variant as FormGroup);
-      });
+    this.variants.clear();
+    this.newVariantImages = {};
+    this.newVariantImagesPreview = {};
+    this.existingVariantImages = {};
+    this.variantImagesMarkedForDeletion = {};
+
+    const usedSkus = new Set<string>();
+    const seen = new Set<string>();
+    validCombos.forEach((attributes, idx) => {
+      const key = this.getCombinationKey(attributes);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const old = oldByKey.get(key);
+
+      let sku: string = old?.sku;
+      if (!sku || usedSkus.has(sku)) {
+        const attrPairs = attributes.map((a: any) => ({ attributeName: a.attributeName || '', value: a.value || '' }));
+        let n = idx;
+        sku = this.generateSKU12(productName, categories, brands, attrPairs, n);
+        while (usedSkus.has(sku)) {
+          n++;
+          sku = this.generateSKU12(productName, categories, brands, attrPairs, n);
+        }
+      }
+      usedSkus.add(sku);
+
+      const group: any = {
+        attributes: this.fb.array(attributes),
+        sku: [sku, Validators.required],
+        price: [old?.price ?? basePrice, [Validators.required, Validators.min(0.01)]],
+        stock: [old?.stock ?? null, [Validators.required, Validators.min(1)]],
+        images: [old?.images ?? []],
+        status: [old?.status ?? 1]
+      };
+      if (old?.id) group.id = [old.id];
+      const variant = this.fb.group(group);
+      this.variants.push(variant);
+      const i = this.variants.length - 1;
+      this.newVariantImages[i] = old?.newVariantImages || [];
+      this.newVariantImagesPreview[i] = old?.newVariantImagesPreview || [];
+      if (old?.existingVariantImages) this.existingVariantImages[i] = old.existingVariantImages;
+      this.variantImagesMarkedForDeletion[i] = old?.variantImagesMarkedForDeletion || [];
+
+      variant.get('stock')?.valueChanges.subscribe(() => this.checkTotalVariantStock(variant));
     });
-    // Initial check (no adjustment needed)
+
     this.checkTotalVariantStock();
+    this.cdr.detectChanges();
   }
 
   private getCategoryNamesFromPairs(): string[] {
@@ -1118,21 +1136,8 @@ export class ProductComponent implements OnInit, AfterViewInit, AfterViewChecked
       }))
     });
 
-    if (!clickedValue.selected) {
-      // Remove only variants that use this value
-      const valueId = clickedValue.id;
-      for (let i = this.variants.length - 1; i >= 0; i--) {
-        const variant = this.variants.at(i);
-        const attrs = variant.get('attributes')?.value || [];
-        if (attrs.some((a: any) => a.attributeId === attr.attributeId && a.valueId === valueId)) {
-          this.variants.removeAt(i);
-        }
-      }
-      // Do NOT regenerate all variants
-    } else {
-      // Only add new variants for this value
-      this.regenerateVariants();
-    }
+    // Rebuild the full cartesian product from the current selection
+    this.regenerateVariants();
     // Re-initialize icons after toggling attribute value
     setTimeout(() => this.initializeLucideIcons(), 100);
   }
