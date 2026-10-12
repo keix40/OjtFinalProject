@@ -39,8 +39,17 @@ public class EmailService {
     @Value("${app.mail.resend-api-key:}")
     private String resendApiKey;
 
-    @Value("${app.mail.from:${MAIL_FROM:noreply@onboarding.resend.dev}}")
+    @Value("${app.mail.from:${MAIL_FROM:Britium Gallery <onboarding@resend.dev>}}")
     private String mailFrom;
+
+    @jakarta.annotation.PostConstruct
+    void warnIfMailNotConfigured() {
+        if (resendApiKey == null || resendApiKey.isBlank()) {
+            org.slf4j.LoggerFactory.getLogger(EmailService.class).warn(
+                    "RESEND_API_KEY is not set - OTP/emails will fail unless SMTP is configured. "
+                    + "Set it as an env var or in backend/Ecommerce/.env (see .env.example).");
+        }
+    }
 
     public void sendEmail(String toEmail, String subject, String body) {
         if (resendApiKey != null && !resendApiKey.isBlank()) {
