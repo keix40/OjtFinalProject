@@ -40,9 +40,11 @@ import java.util.Random;
 import com.Ojt.Ecommerce.entity.Discount;
 import com.Ojt.Ecommerce.entity.DiscountEventEnum;
 import com.Ojt.Ecommerce.entity.DiscountRule;
+import com.Ojt.Ecommerce.entity.OtpVerification;
 import com.Ojt.Ecommerce.entity.UserStatus;
 import com.Ojt.Ecommerce.repository.DiscountRepository;
 import com.Ojt.Ecommerce.repository.DiscountRuleRepository;
+import com.Ojt.Ecommerce.repository.OtpVerificationRepository;
 import com.Ojt.Ecommerce.entity.DiscountType;
 import com.Ojt.Ecommerce.entity.VipTier;
 import com.Ojt.Ecommerce.repository.VipTierRepository;
@@ -69,6 +71,7 @@ public class UserServiceImpl implements UserService {
     private final AddressService addressService;
     private final DiscountRepository discountRepository;
     private final DiscountRuleRepository discountRuleRepository;
+    private final OtpVerificationRepository otpVerificationRepository;
 
     @Value("${app.upload.dir:uploads}")
     private String uploadDir;
@@ -133,7 +136,13 @@ public class UserServiceImpl implements UserService {
         }
 
 
-        String otp = String.format("%06d", new Random().nextInt(999999));
+        Optional<OtpVerification> preVerifiedOtp =
+                otpVerificationRepository.findByEmail(email).filter(
+                        otp ->
+                                "email_verification".equals(otp.getType())
+                                        && otp.isVerified()
+                                        && otp.getExpiryTime() != null
+                                        && otp.getExpiryTime().isAfter(LocalDateTime.now()));
 
         // Find default role
         Role roleUser = roleRepository.findById(6L)
@@ -150,10 +159,16 @@ public class UserServiceImpl implements UserService {
         user.setGender(request.getGender());
         user.setDateOfBirth(dob);
         user.setCreatedDate(LocalDateTime.now());
-        user.setOtpCode(otp);
-        user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        user.setVerified(false);
         user.setStatus(UserStatus.ACTIVE); // Explicitly set status to ACTIVE
+        if (preVerifiedOtp.isPresent()) {
+            user.setVerified(true);
+            otpVerificationRepository.delete(preVerifiedOtp.get());
+        } else {
+            String otp = String.format("%06d", new Random().nextInt(999999));
+            user.setOtpCode(otp);
+            user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
+            user.setVerified(false);
+        }
 //        User user = User.builder()
 //                .name(request.getName())
 //                .email(request.getEmail())
@@ -203,10 +218,12 @@ public class UserServiceImpl implements UserService {
             System.err.println("Failed to assign first-time buyer discount: " + e.getMessage());
         }
 
-        String message  = "Your OTP code is: " + otp;
-        emailService.sendEmail(user.getEmail(), "Email Verification Code", message);
-
-        return "Registration successful. Please check your email for OTP verification.";
+        if (!user.isVerified()) {
+            String message = "Your OTP code is: " + user.getOtpCode();
+            emailService.sendEmail(user.getEmail(), "Email Verification Code", message);
+            return "Registration successful. Please check your email for OTP verification.";
+        }
+        return "Registration successful.";
     }
 
     @Override

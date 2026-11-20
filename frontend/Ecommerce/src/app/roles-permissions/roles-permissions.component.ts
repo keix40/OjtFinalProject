@@ -14,6 +14,8 @@ import { trigger, state, style, transition, animate } from '@angular/animations'
 import { PermissionConstants } from '../constants/permission.constants';
 import { Observable } from 'rxjs';
 import { LuxDialogService } from '../shared/dialog/lux-dialog.service';
+import { shouldRefreshSessionAfterRoleAssign } from '../auth/role-assign-session.util';
+import { AssignRoleResponse } from '../auth/auth.types';
 
 interface Role {
   id: number;
@@ -255,15 +257,40 @@ export class RolesPermissionsComponent implements OnInit{
       return;
     }
 
-    this.roleService.assignRoleToUser(this.selectedUserId, this.selectedRole.id).subscribe({
-      next: () => {
-        alert('Role assigned successfully!');
-        this.loadAssignedUsers(this.selectedRole!.id); // Refresh user preview
+    const userId = this.selectedUserId;
+    const roleId = this.selectedRole.id;
+    this.roleService.assignRoleToUser(userId, roleId).subscribe({
+      next: (response: AssignRoleResponse) => {
+        this.finishRoleAssignUi(userId, response, () => {
+          alert('Role assigned successfully!');
+          this.loadAssignedUsers(roleId);
+        });
       },
       error: (err) => {
         console.error('Error assigning role:', err);
       }
     });
+  }
+
+  private finishRoleAssignUi(
+    assignedUserId: number,
+    response: AssignRoleResponse,
+    onDone: () => void
+  ): void {
+    if (shouldRefreshSessionAfterRoleAssign(assignedUserId, this.currentUser?.id, response)) {
+      this.authService.establishSession().subscribe({
+        next: () => {
+          this.refreshUserPermissions();
+          onDone();
+        },
+        error: () => {
+          this.refreshCurrentUserData();
+          onDone();
+        },
+      });
+      return;
+    }
+    onDone();
   }
   loadUsersByRole(roleId: number): void {
     this.authService.getUsersByRoleId(roleId).subscribe({
@@ -1212,35 +1239,23 @@ export class RolesPermissionsComponent implements OnInit{
         const currentUserAssigned = userIdsToAssign.includes(this.currentUser.id);
         console.log('Debug: Current user was affected:', currentUserAssigned);
         
-        // Check if any response contains a new token (indicating current user was affected)
-        let newTokenReceived = false;
-        responses.forEach((response: any) => {
-          try {
-            if (typeof response === 'string') {
-              const parsedResponse = JSON.parse(response);
-              if (parsedResponse.userAffected && parsedResponse.newToken) {
-                // Update the token in localStorage
-                localStorage.setItem('token', parsedResponse.newToken);
-                newTokenReceived = true;
-                
-                // Verify the new token
-                this.verifyNewToken(parsedResponse.newToken);
-                
-                // Re-initialize current user from the new token
-                this.initializeCurrentUserFromToken();
-                
-                // Refresh permissions
-                this.refreshUserPermissions();
-              }
-            }
-          } catch (error) {
-            console.log('Debug: Response is not JSON, treating as plain text');
-          }
-        });
-        
-        if (currentUserAssigned && !newTokenReceived) {
-          // If current user's role was changed but no new token received, use fallback
-          this.refreshCurrentUserData();
+        const selfResponse = responses.find(
+          (response: AssignRoleResponse) =>
+            response?.userAffected === true &&
+            userIdsToAssign.includes(this.currentUser.id)
+        );
+        if (
+          selfResponse &&
+          shouldRefreshSessionAfterRoleAssign(
+            this.currentUser.id,
+            this.currentUser.id,
+            selfResponse
+          )
+        ) {
+          this.authService.establishSession().subscribe({
+            next: () => this.refreshUserPermissions(),
+            error: () => this.refreshCurrentUserData(),
+          });
         }
         
         if (currentUserAssigned) {
