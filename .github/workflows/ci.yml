@@ -51,6 +51,12 @@ jobs:
       - run: npm ci
       - name: Production build
         run: npm run build -- --configuration=production
+      - name: Auth contract unit tests
+        run: |
+          npx ng test --watch=false --browsers=ChromeHeadless \
+            --include='src/app/auth/auth.contract.spec.ts' \
+            --include='src/app/auth/auth.registration-flow.spec.ts' \
+            --include='src/app/auth/role-assign-session.util.spec.ts'
 
   dependency-audit:
     name: Dependency audit

@@ -474,11 +474,17 @@ public class AuthController {
         if (otpVerification.getExpiryTime().isBefore(LocalDateTime.now())) {
             throw new CustomException("OTP has expired.");
         }
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new CustomException("User not found"));
-        user.setVerified(true);
-        userRepository.save(user);
-        otpVerificationRepository.delete(otpVerification);
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            user.setVerified(true);
+            userRepository.save(user);
+            otpVerificationRepository.delete(otpVerification);
+        } else {
+            // Pre-registration: prove email ownership; registration consumes verified OTP row.
+            otpVerification.setVerified(true);
+            otpVerificationRepository.save(otpVerification);
+        }
         return ResponseEntity.ok(Map.of("message", "OTP verified successfully."));
     }
 
