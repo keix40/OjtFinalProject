@@ -12,8 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Regression for delivery/activity-log invalid id handling (PRs #37, #38): type conversion
- * errors must be HTTP 400, not unhandled 500.
+ * GlobalExceptionHandler only (no MockMvc): when a matched handler invokes type conversion,
+ * invalid Long values become HTTP 400. Dispatcher path matching is covered by
+ * {@link com.Ojt.Ecommerce.guard.RemediatedNumericIdRoutingWebMvcTest}.
  */
 class GlobalExceptionHandlerNumericIdTest {
 
