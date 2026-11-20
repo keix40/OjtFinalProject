@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { AssignRoleResponse } from '../auth/auth.types';
 
 const API_URL = '/api';
 const httpOptions = { withCredentials: true as const };
@@ -33,10 +34,11 @@ export class RoleService {
     return this.http.get<any[]>(`${API_URL}/auth/user/all`, httpOptions);
   }
 
-  assignRoleToUser(userId: number, roleId: number): Observable<any> {
-    return this.http.put(`${API_URL}/auth/user/${userId}/assign-role?roleId=${roleId}`, {}, {
-      ...httpOptions,
-      responseType: 'text'
-    });
+  assignRoleToUser(userId: number, roleId: number): Observable<AssignRoleResponse> {
+    return this.http.put<AssignRoleResponse>(
+      `${API_URL}/auth/user/${userId}/assign-role?roleId=${roleId}`,
+      {},
+      httpOptions
+    );
   }
 }

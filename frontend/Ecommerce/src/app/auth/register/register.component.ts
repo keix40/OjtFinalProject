@@ -4,6 +4,7 @@ import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RegisterResponse } from '../auth.types';
+import { switchMap } from 'rxjs/operators';
 
 
 @Component({
@@ -251,10 +252,18 @@ export class RegisterComponent  {
     this.authService.register(formData).subscribe({
       next: (response) => {
         this.isRegistering = false;
-        this.authService.saveToken(response.accessToken!);
-        this.successMessage = 'Registration successful! Redirecting to home...';
+        this.successMessage = response.message || 'Registration successful! Signing you in...';
         this.errorMessage = '';
-        setTimeout(() => this.router.navigate(['/home']), 1500);
+        this.authService
+          .login({ email: this.user.email, password: this.user.password })
+          .pipe(switchMap(() => this.authService.establishSession()))
+          .subscribe({
+            next: () => {
+              const path = this.authService.redirectPathForRoles();
+              setTimeout(() => this.router.navigate([path]), 1500);
+            },
+            error: () => this.router.navigate(['/login']),
+          });
       },
       error: (error) => {
         this.isRegistering = false;

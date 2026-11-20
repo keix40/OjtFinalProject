@@ -1212,35 +1212,14 @@ export class RolesPermissionsComponent implements OnInit{
         const currentUserAssigned = userIdsToAssign.includes(this.currentUser.id);
         console.log('Debug: Current user was affected:', currentUserAssigned);
         
-        // Check if any response contains a new token (indicating current user was affected)
-        let newTokenReceived = false;
-        responses.forEach((response: any) => {
-          try {
-            if (typeof response === 'string') {
-              const parsedResponse = JSON.parse(response);
-              if (parsedResponse.userAffected && parsedResponse.newToken) {
-                // Update the token in localStorage
-                localStorage.setItem('token', parsedResponse.newToken);
-                newTokenReceived = true;
-                
-                // Verify the new token
-                this.verifyNewToken(parsedResponse.newToken);
-                
-                // Re-initialize current user from the new token
-                this.initializeCurrentUserFromToken();
-                
-                // Refresh permissions
-                this.refreshUserPermissions();
-              }
-            }
-          } catch (error) {
-            console.log('Debug: Response is not JSON, treating as plain text');
-          }
-        });
-        
-        if (currentUserAssigned && !newTokenReceived) {
-          // If current user's role was changed but no new token received, use fallback
-          this.refreshCurrentUserData();
+        const selfRoleRefresh =
+          currentUserAssigned &&
+          responses.some((response: any) => response?.userAffected === true);
+        if (selfRoleRefresh) {
+          this.authService.establishSession().subscribe({
+            next: () => this.refreshUserPermissions(),
+            error: () => this.refreshCurrentUserData(),
+          });
         }
         
         if (currentUserAssigned) {

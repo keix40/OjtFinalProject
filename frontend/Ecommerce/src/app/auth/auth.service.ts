@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { LoginRequest } from '../login-request';
 import { LoginResponse } from '../login-response';
-import { RegisterResponse } from './auth.types';
+import { AssignRoleResponse, RegisterResponse } from './auth.types';
 import { mergeMap, tap, catchError, map } from 'rxjs/operators';
 import { PermissionService } from '../services/permission.service';
 import { environment } from '../../environments/environment';
@@ -240,8 +240,12 @@ export class AuthService {
     return this.http.post<any>(`${this.baseUrl}/reset-password`, { email, otp, newPassword }, this.httpOptions);
   }
 
-  assignRoleToUser(userId: number, roleId: number): Observable<any> {
-    return this.http.put(`${this.baseUrl}/users/${userId}/assign-role?roleId=${roleId}`, {}, this.httpOptions);
+  assignRoleToUser(userId: number, roleId: number): Observable<AssignRoleResponse> {
+    return this.http.put<AssignRoleResponse>(
+      `${this.baseUrl}/user/${userId}/assign-role?roleId=${roleId}`,
+      {},
+      this.httpOptions
+    );
   }
 
   getUsersByRoleId(roleId: number): Observable<any[]> {

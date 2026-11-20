@@ -131,34 +131,26 @@ public class UserController {
 
     @PutMapping("/{userId}/assign-role")
     @RequiresPermission(value = USERS_ASSIGN_ROLE, level = "advanced", description = "Assign roles to users")
-    public ResponseEntity<String> assignRoleToUser(
+    public ResponseEntity<Map<String, Object>> assignRoleToUser(
             @PathVariable Long userId,
             @RequestParam Long roleId,
-            @RequestHeader("Authorization") String tokenHeader
+            HttpServletResponse httpResponse
     ) {
-        // Get current user from token to check if they're assigning role to themselves
-        String token = tokenHeader.replace("Bearer ", "");
-        String currentUserEmail = jwtTokenProvider.getEmailFromToken(token);
-        User currentUser = userRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new RuntimeException("Current user not found"));
-        
-        // Assign role to user
+        Long currentUserId = SecurityUtils.requireCurrentUserId();
         userService.assignRoleToUser(userId, roleId);
-        
-        // If the current user is assigning role to themselves, return a new token
-        if (currentUser.getId() == userId) {
-            // Get the updated user with new role
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("message", "Role assigned successfully");
+        boolean userAffected = currentUserId.equals(userId);
+        body.put("userAffected", userAffected);
+        if (userAffected) {
             User updatedUser = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("Updated user not found"));
-            
-            // Generate new token with updated role information
             String newToken = jwtTokenProvider.generateToken(updatedUser);
-            
-            // Return the new token in the response
-            return ResponseEntity.ok("{\"message\":\"Role assigned successfully\",\"newToken\":\"" + newToken + "\",\"userAffected\":true}");
+            authCookieService.setAuthCookies(httpResponse, newToken, null);
+            body.put("authenticated", true);
         }
-        
-        return ResponseEntity.ok("{\"message\":\"Role assigned successfully\",\"userAffected\":false}");
+        return ResponseEntity.ok(body);
     }
 
     @GetMapping("/roles/{roleId}/users")
