@@ -20,6 +20,8 @@ import java.util.regex.Pattern;
  */
 public final class NumericIdPathMappingInspector {
 
+    private static final String GUARDED_SEGMENT = "id";
+
     private static final Pattern BARE_VARIABLE = Pattern.compile("\\{([a-zA-Z_][a-zA-Z0-9_]*)\\}");
     private static final Pattern CONSTRAINED_VARIABLE =
             Pattern.compile("\\{([a-zA-Z_][a-zA-Z0-9_]*):([^}]+)\\}");
@@ -40,27 +42,101 @@ public final class NumericIdPathMappingInspector {
             Set<String> patterns = patternsFor(entry.getKey());
             Set<String> methods = httpMethods(entry.getKey());
             String methodsLabel = methods.isEmpty() ? "REQUEST" : String.join(",", methods);
-            for (String name : numericPathVariableNames(handlerMethod)) {
+            if (!hasGuardedNumericIdParameter(handlerMethod)) {
+                continue;
+            }
+            List<String> names = guardedIdParameterNames(handlerMethod);
+            if (names.isEmpty()) {
+                for (String pattern : patterns) {
+                    if (patternContainsVariable(pattern, GUARDED_SEGMENT)
+                            && !variableHasDigitConstraint(pattern, GUARDED_SEGMENT)) {
+                        violations.add(violation(methodsLabel, pattern, GUARDED_SEGMENT));
+                    }
+                }
+                continue;
+            }
+            for (String name : names) {
                 for (String pattern : patterns) {
                     if (!patternContainsVariable(pattern, name)) {
                         continue;
                     }
                     if (!variableHasDigitConstraint(pattern, name)) {
-                        violations.add(
-                                new Violation(
-                                        methodsLabel,
-                                        pattern,
-                                        name,
-                                        "numeric @PathVariable requires {"
-                                                + name
-                                                + ":\\\\d+} or {"
-                                                + name
-                                                + ":[0-9]+} in registered pattern"));
+                        violations.add(violation(methodsLabel, pattern, name));
                     }
                 }
             }
         }
         return violations;
+    }
+
+    private static Violation violation(String methodsLabel, String pattern, String name) {
+        return new Violation(
+                methodsLabel,
+                pattern,
+                name,
+                "numeric @PathVariable requires {"
+                        + name
+                        + ":\\\\d+} or {"
+                        + name
+                        + ":[0-9]+} in registered pattern");
+    }
+
+    private static boolean hasGuardedNumericIdParameter(HandlerMethod handlerMethod) {
+        return !guardedIdParameterNames(handlerMethod).isEmpty()
+                || hasUnnamedNumericIdPathVariable(handlerMethod);
+    }
+
+    private static boolean hasUnnamedNumericIdPathVariable(HandlerMethod handlerMethod) {
+        Method method = handlerMethod.getMethod();
+        for (int i = 0; i < method.getParameterCount(); i++) {
+            MethodParameter parameter = new MethodParameter(method, i);
+            if (!parameter.hasParameterAnnotation(PathVariable.class)) {
+                continue;
+            }
+            if (!isNumericPathType(parameter.getParameterType())) {
+                continue;
+            }
+            PathVariable pathVariable = parameter.getParameterAnnotation(PathVariable.class);
+            String name = resolvePathVariableName(pathVariable, parameter);
+            if (name == null || name.isEmpty()) {
+                return true;
+            }
+            if (GUARDED_SEGMENT.equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static List<String> guardedIdParameterNames(HandlerMethod handlerMethod) {
+        List<String> names = new ArrayList<>();
+        Method method = handlerMethod.getMethod();
+        for (int i = 0; i < method.getParameterCount(); i++) {
+            MethodParameter parameter = new MethodParameter(method, i);
+            if (!parameter.hasParameterAnnotation(PathVariable.class)) {
+                continue;
+            }
+            if (!isNumericPathType(parameter.getParameterType())) {
+                continue;
+            }
+            PathVariable pathVariable = parameter.getParameterAnnotation(PathVariable.class);
+            String name = resolvePathVariableName(pathVariable, parameter);
+            if (GUARDED_SEGMENT.equalsIgnoreCase(name)) {
+                names.add(GUARDED_SEGMENT);
+            }
+        }
+        return names;
+    }
+
+    private static String resolvePathVariableName(PathVariable pathVariable, MethodParameter parameter) {
+        String name = pathVariable.name();
+        if (name == null || name.isEmpty()) {
+            name = pathVariable.value();
+        }
+        if (name == null || name.isEmpty()) {
+            name = parameter.getParameterName();
+        }
+        return name;
     }
 
     static boolean variableHasDigitConstraint(String pattern, String varName) {
@@ -88,33 +164,6 @@ public final class NumericIdPathMappingInspector {
 
     private static boolean patternContainsVariable(String pattern, String varName) {
         return pattern.contains("{" + varName + "}") || pattern.contains("{" + varName + ":");
-    }
-
-    private static List<String> numericPathVariableNames(HandlerMethod handlerMethod) {
-        List<String> names = new ArrayList<>();
-        Method method = handlerMethod.getMethod();
-        for (int i = 0; i < method.getParameterCount(); i++) {
-            MethodParameter parameter = new MethodParameter(method, i);
-            if (!parameter.hasParameterAnnotation(PathVariable.class)) {
-                continue;
-            }
-            Class<?> type = parameter.getParameterType();
-            if (!isNumericPathType(type)) {
-                continue;
-            }
-            PathVariable pathVariable = parameter.getParameterAnnotation(PathVariable.class);
-            String name = pathVariable.name();
-            if (name == null || name.isEmpty()) {
-                name = pathVariable.value();
-            }
-            if (name == null || name.isEmpty()) {
-                name = parameter.getParameterName();
-            }
-            if (name != null && !name.isEmpty()) {
-                names.add(name);
-            }
-        }
-        return names;
     }
 
     private static boolean isNumericPathType(Class<?> type) {
